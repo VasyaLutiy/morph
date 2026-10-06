@@ -1,13 +1,14 @@
 // P2 probe for capture-inputs: captureInputs and compareCaptures by docs/TASK_P2_compiler.md
 // §2.2, one test per record example, values and types. Runs from probe/capture-inputs/ under
-// vitest; example 2 rewrites a file under a tmpRoot().
+// vitest; both examples write src/x.ts = "a\n" under a tmpRoot() (§2.1: no .ts fixture that
+// is not TypeScript, tsconfig includes tests/).
 import { test, expect } from "vitest";
 import { createHash } from "node:crypto";
 import { captureInputs, compareCaptures } from "../../src/compiler/capture.js";
 import type { InputDigest } from "../../src/compiler/types.js";
 import { validateCard } from "../../src/cards/model.js";
 import type { Card } from "../../src/cards/types.js";
-import { fixtureJson, fixturePath, tmpRoot } from "../../tests/helpers.js";
+import { fixtureJson, tmpRoot } from "../../tests/helpers.js";
 
 function card(input: unknown): Card {
   const r = validateCard(input);
@@ -17,18 +18,24 @@ function card(input: unknown): Card {
 const sha16 = (text: string): string => createHash("sha256").update(text).digest("hex").slice(0, 16);
 
 test("Capture Inputs example 1: src/x.ts = 'a\\n' and an absent tests/x.test.ts", () => {
-  const d: InputDigest = captureInputs(card(fixtureJson("compiler/cards/digest.json")), fixturePath("compiler/digest"));
-  expect(JSON.stringify(d), "the record's literal, keys sorted")
-    .toBe('{"src/x.ts":"87428fc522803d31","tests/x.test.ts":"absent"}');
-  const v: string = d["src/x.ts"] ?? "";
-  expect(v.length, "16 hex chars").toBe(16);
+  const r = tmpRoot();
+  try {
+    r.write("src/x.ts", "a\n");
+    const d: InputDigest = captureInputs(card(fixtureJson("compiler/cards/digest.json")), r.root);
+    expect(JSON.stringify(d), "the record's literal, keys sorted")
+      .toBe('{"src/x.ts":"87428fc522803d31","tests/x.test.ts":"absent"}');
+    const v: string = d["src/x.ts"] ?? "";
+    expect(v.length, "16 hex chars").toBe(16);
+  } finally {
+    r.rm();
+  }
 });
 
 test("Capture Inputs example 2: a capture, then src/x.ts rewritten", () => {
   const r = tmpRoot();
   try {
     r.write("src/x.ts", "a\n");
-    const c = card({ customId: "d", intent: "generate", targets: ["tests/x.test.ts"], contextSlice: ["src/x.ts"], instruction: "x" });
+    const c = card(fixtureJson("compiler/cards/digest.json"));
     const before = captureInputs(c, r.root);
     r.write("src/x.ts", "b\n");
     const after = captureInputs(c, r.root);

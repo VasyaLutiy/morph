@@ -70,18 +70,22 @@ P2 + P5: 8 cards each, forecast $0.6 + $0.8; this cut is 8 cards (4 code, 4 judg
     messages: `[0]` the original of src/x.ts, `[1]` the "new file" line for src/z.ts,
     `[2]` instruction + the several-targets directive; `inputs` `src/x.ts`
     `73ab5a7f1128f2bb`, `src/z.ts` `absent`.
-  - `digest.json` — the card of Capture Inputs example 1: `d`, `generate`, targets
+  - `digest.json` — the card of both Capture Inputs examples: `d`, `generate`, targets
     `["tests/x.test.ts"]`, contextSlice `["src/x.ts"]`. Its root is the next bullet.
-- **The digest tree** `tests/fixtures/compiler/digest/` — the `root` of Capture Inputs
-  example 1 (`fixturePath("compiler/digest")`): one file `src/x.ts` of exactly the bytes
-  `a\n` (2 bytes; `printf 'a\n' | sha256sum` =
-  `87428fc522803d31065e7bce3cf03fe475096631e5e07bbd7a0fde60c4cf25c7`), and no
-  `tests/x.test.ts`. `captureInputs(digest card, that root)` → exactly two keys, in this
-  order: `src/x.ts` `87428fc522803d31`, `tests/x.test.ts` `absent`; as JSON
-  `{"src/x.ts":"87428fc522803d31","tests/x.test.ts":"absent"}` (the record's literal,
-  single quotes rendered as JSON). Capture Inputs example 2 has no file: the test writes
-  `src/x.ts` = `a\n` under a `tmpRoot()`, captures, rewrites it (e.g. `b\n`), captures
-  again, and `compareCaptures(before, after)` → exactly `["src/x.ts"]`.
+- **The digest tree has no fixture**: `tsconfig.json` (P0, frozen) includes `tests`, so
+  every `.ts` under `tests/fixtures/` is type-checked by `tsc`, and a file holding the
+  bytes `a\n` is not TypeScript. The `root` of Capture Inputs example 1 is therefore a
+  `tmpRoot()` into which the test writes `src/x.ts` with exactly the bytes `a\n`
+  (`r.write("src/x.ts", "a\n")`; 2 bytes; `printf 'a\n' | sha256sum` =
+  `87428fc522803d31065e7bce3cf03fe475096631e5e07bbd7a0fde60c4cf25c7`) and nothing else,
+  so `tests/x.test.ts` is absent. `captureInputs(digest card, r.root)` → exactly two
+  keys, in this order: `src/x.ts` `87428fc522803d31`, `tests/x.test.ts` `absent`; as
+  JSON `{"src/x.ts":"87428fc522803d31","tests/x.test.ts":"absent"}` (the record's
+  literal, single quotes rendered as JSON). Capture Inputs example 2 continues in the
+  same root: rewrite `src/x.ts` (e.g. `b\n`), capture again, and
+  `compareCaptures(before, after)` → exactly `["src/x.ts"]`. The test removes the root.
+  The only `.ts` under `tests/fixtures/compiler/` is `project/src/x.ts`, valid
+  TypeScript on purpose.
 - **Answers** `tests/fixtures/compiler/answers/*.md` — the first parameter of
   `parseAnswer(answer, targets)` is the **whole file as text** (`fixture("compiler/
   answers/<name>.md")`), the second the targets array; `A` below is `["src/a.ts"]`, `AT`
