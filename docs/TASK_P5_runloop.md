@@ -377,4 +377,87 @@ defects the judge found the probe did not (and the reverse), the row of `docs/ME
 
 ## 11. Actual
 
-Filled after the run.
+Two runs on the VPS, processor glm53, autonomous mode. Run 1 on the deck that passed the
+autonomous gate (8 cards, `deck check` 0 errors); run 2 the one re-cut allowed by AUTONOMY
+"Failure". The re-cut did **not** recover the card: the phase stops with 7 of 8 cards and one
+missing judge test file (**not** product code — all five `src/runloop/*.ts` are written). "Burned"
+below = every variant/attempt that was not a winning write (total requests − written).
+
+**Run 1** `20261006-162537-de8699bf`, branch `morph/20261006-162537-de8699bf`, 16:25:37 → 16:38:28
+(12 min), 21 requests, 308 607 in / 45 079 out, **$0.1227**. 7 written, 1 failed
+(process-generation-judge), 0 skipped; 14 variants burned.
+
+| card | gen | attempts | winning variant | commit | first red of each burned variant |
+|---|---|---|---|---|---|
+| resolve (types+resolve) | 1 | 1 | v2 | 1dbdf0a | v1: losing variant (not surfaced) |
+| build-retry | 2 | 1 | v1 | 087c681 | v2: losing variant (not surfaced) |
+| process-generation | 2 | 3 | r2.v1 | 6c888d9 | v1, v2: eslint, `usage` assigned but never used |
+| resolve-judge | 2 | 3 | r2 | 6035d05 | 0, r1: own test `[a,b,c]` vs expected `[a,b]` (its §2.2 expectation) |
+| build-retry-judge | 3 | 2 | r1 | 65b0c04 | 0: own tests, instruction/field-copy expectations (§2.2) |
+| process-generation-judge | 3 | 3 | — (failed) | — | 0: tsc, file body emitted twice (dup identifiers); r1: guard, own stub named "fake"; r2: tsc, `outcome.reason.startsWith("compile: ")` on `string\|null` (TS18047) |
+| run-deck | 3 | 1 | v1 | 0bf2b27 | v2: losing variant (not surfaced) |
+| run-deck-judge | 4 | 1 | run-deck-judge | a3d1139 | — |
+
+**Re-cut** (one only; data commit `abba745` on the run branch): TASK §2.3 now spells the tsc
+strict-null consequence — a nullable outcome field (`reason`, `winningVariant`, `commit`,
+`diffstat`) is never reached with a direct method/property (`outcome.reason.startsWith(...)` →
+TS18047); assert the whole outcome with `toStrictEqual`, or `toMatch(/^compile: /)` /
+`toContain`. The compile-fault path (no record example) is pinned as one of the judge's own §2.2
+tests. Card instruction byte-identical to run 1 (record and map untouched). Only the failed card
+was re-queued (`deck clear`, `deck reset`, `deck add` of the one card from a dry `plan --spec
+--judge`, `deck check` 1 card 0 errors); run 2 branched off run 1's branch.
+
+**Run 2** `20261006-164811-add4485c`, branch `morph/20261006-164811-add4485c`, 16:48:11 → ~16:58
+(10 min), 3 requests, 38 242 in / 40 500 out, **$0.0609**. 0 written, 1 failed, 0 skipped; 3
+variants burned. All three attempts truncated: each opened a ``` fence and hit the card's output
+ceiling (`max_tokens 13500`) before closing it, so `parseAnswer` discarded the answer unread
+("previous answer was cut off mid-file"). The §2.3 fix was therefore never exercised — the failure
+mode moved from a contract/typing red to an **output-budget** red. `generation.examples.test.ts`
+(the largest judge: ~15 tests over the complex processGeneration setup) does not fit in 13 500
+output tokens; the fix for this is a bigger `max_tokens` for that judge in the map (a card-level
+change, not a data re-cut), left as P5's debt in DECISIONS/MEASURE.
+
+Phase total: **$0.1835** executor (prediction ≈ $0.15 nominal, ≤ $0.30 with a re-cut — held),
+22 min of runs, 24 requests, 346 849 in / 85 579 out, 17 burned variants. tsc-first-red: 2 of 17
+(both process-generation-judge, run 1: the doubled body and the null access). neighbour-red: 0.
+
+§9 check: run 1 cards 8 / generations 4 — as predicted; `deck check` 0 / 0 hazards — as predicted.
+Cards with a retry batch (run 1): 4 of 8 (process-generation, resolve-judge, build-retry-judge,
+process-generation-judge) vs predicted 2; resolve and run-deck won on a later variant at the first
+attempt. Tests after: 215 + **3** judge files (generation judge missing): resolve 15, retry 8,
+deck 7 = 30 tests in 27 files; judge example tests **10 of 13** (4 + 3 + 3; the 3 Process
+Generation examples are the missing ones), so the "≥ 13" prediction **missed** — caused solely by
+the failed card. First red: the code cards' reds were eslint (process-generation unused `usage`),
+not the predicted stale/commit/budget logic; the judges' reds were their own §2.2 expectations,
+imports, a local stub and, in run 2, truncation — never the code. Falsifiable claims: (1) no card
+red on a sibling's file — holds (neighbour-red 0); (2) no judge red traced to §2.1 — holds; (3) no
+socket opened — holds (`network blocked in tests` absent from both run logs and all acceptance
+logs).
+
+Max slice + targets, measured on the finished tree: run-deck-judge 56 357 bytes (gate 200 KB).
+
+Verification on `morph/20261006-164811-add4485c` (the final run branch) by the run session:
+`git status --short` empty; `tsc --noEmit`, `eslint src tests` clean; `vitest run` 245/245 in 27
+files; `npm run build` ok. No runloop test calls `vi.*`, a timer, `new Date`, or a global `fetch`;
+the only `fetch` is `ff.fetch` from the helper (never called on the stub route). `src/runloop/*`
+read once against §2.2: types verbatim; resolve first-non-written rule and reason string; retry
+base-strip, addendum, `dependsOn []`; generation compile/stale/accept/reject order, the single
+`sendGeneration`, the commit hook on accept, earlierFailures slicing; deck budget boundary
+(deadline/maxCards), the retry loop (≤2/card, batch cap) with attempts and earlierFailures
+accumulation, report totals (cost null when no row reported). **No code defect found.** Judge
+defects (code defects a judge caught that the probes did not): 0 (the generation judge never
+produced a passing file).
+
+Debt: `generation.examples.test.ts` is absent. processGeneration is still exercised end-to-end by
+`deck.examples.test.ts` (run-deck's judge runs full generations through it), but its per-example
+pin is missing. P6 (git) and P7 (cli) depend on the runloop **code**, which is complete, so they
+are not blocked. The fix is a larger `max_tokens` for the `process-generation-judge` card.
+
+Lessons: (1) the re-cut closed the typing trap (r2 of run 1) but a one-shot re-cut cannot fix an
+**output-budget** failure, which is a card-level `max_tokens` change, not spec/fixture data — the
+AUTONOMY re-cut rule (data only, instruction untouched) cannot reach it. A judge whose file is near
+the output ceiling should get a higher `max_tokens` at cut time. (2) The largest judge of a phase
+(most §2.2 rows + the heaviest setup) is the one to size the budget for; `generation` had the
+richest contract of the four Functions and the tightest fit. (3) Every judge red of this phase was
+again the judge's own expectation, import, stub or truncation — never the code (the P4 pattern
+holds).
