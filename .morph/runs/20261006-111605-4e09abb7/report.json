@@ -1,0 +1,206 @@
+{
+  "deck_id": "20261006-111605-4e09abb7",
+  "completed_at": "2026-10-06T11:19:07.507",
+  "branch": "morph/20261006-111605-4e09abb7",
+  "backend_label": "glm53",
+  "generations": [
+    [
+      "scaffold"
+    ]
+  ],
+  "batch_ids": [
+    "local-a112e6a674d74c48960bb906eb0ac425",
+    "local-cf904b4acb2d4317a31a3343d5d90f03",
+    "local-0f63c4dec2804166ae5f9b158cc2bf31"
+  ],
+  "outcomes": {
+    "scaffold": {
+      "custom_id": "scaffold",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/package.json",
+        "/home/john/Documents/Work2026/MorphV2/tsconfig.json",
+        "/home/john/Documents/Work2026/MorphV2/tsconfig.build.json",
+        "/home/john/Documents/Work2026/MorphV2/vitest.config.ts",
+        "/home/john/Documents/Work2026/MorphV2/eslint.config.js",
+        "/home/john/Documents/Work2026/MorphV2/tests/setup.ts",
+        "/home/john/Documents/Work2026/MorphV2/tests/helpers.ts",
+        "/home/john/Documents/Work2026/MorphV2/src/index.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 3,
+      "winning_variant": "scaffold.r2.v1",
+      "acceptance_output": null,
+      "earlier_failures": "== npm install\n== tsc\n== strict\n== build\n== eslint\n== eslint rejects any\n== guard\n== probe\n FAIL  probe/scaffold/scaffold.probe.ts > helpers: fakeFetch\nAssertionError: unknown url: expected 'false 404 {\"error\": \"not found\"}' to be 'false 404 {\"error\":\"not found\"}' // Object.is equality\n Test Files  1 failed (1)\n      Tests  1 failed | 8 passed (9)\n",
+      "commit": "fb662c303fbb6f53d344942086be9a69e718ba37",
+      "diffstat": [
+        {
+          "path": "eslint.config.js",
+          "insertions": 14,
+          "deletions": 0
+        },
+        {
+          "path": "package.json",
+          "insertions": 26,
+          "deletions": 0
+        },
+        {
+          "path": "src/index.ts",
+          "insertions": 1,
+          "deletions": 0
+        },
+        {
+          "path": "tests/helpers.ts",
+          "insertions": 229,
+          "deletions": 0
+        },
+        {
+          "path": "tests/setup.ts",
+          "insertions": 26,
+          "deletions": 0
+        },
+        {
+          "path": "tsconfig.build.json",
+          "insertions": 11,
+          "deletions": 0
+        },
+        {
+          "path": "tsconfig.json",
+          "insertions": 15,
+          "deletions": 0
+        },
+        {
+          "path": "vitest.config.ts",
+          "insertions": 10,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "package.json",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-json)"
+          },
+          {
+            "path": "tsconfig.json",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-json)"
+          },
+          {
+            "path": "tsconfig.build.json",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-json)"
+          },
+          {
+            "path": "vitest.config.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "eslint.config.js",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-javascript)"
+          },
+          {
+            "path": "tests/setup.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "tests/helpers.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "src/index.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    }
+  },
+  "usage": {
+    "scaffold.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791281765-8Ype6Gl56zD9Xrk5Kygt",
+      "input_tokens": 4247,
+      "output_tokens": 2402,
+      "cost": 0.00495438,
+      "finish_reason": "stop"
+    },
+    "scaffold.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791281765-WF1uduFicUN04ZbrYjnY",
+      "input_tokens": 4247,
+      "output_tokens": 2433,
+      "cost": 0.003550692,
+      "finish_reason": "stop"
+    },
+    "scaffold.r1.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791281829-sE8A4S3H6EivzHV0EW6i",
+      "input_tokens": 14200,
+      "output_tokens": 2424,
+      "cost": 0.007806624,
+      "finish_reason": "stop"
+    },
+    "scaffold.r1.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791281829-cKyz9x84b96zaWu6fNdx",
+      "input_tokens": 14200,
+      "output_tokens": 2756,
+      "cost": 0.008244864,
+      "finish_reason": "stop"
+    },
+    "scaffold.r2.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791281898-bn7l7CRHCsJXDSuybW5n",
+      "input_tokens": 13867,
+      "output_tokens": 2471,
+      "cost": 0.004358052,
+      "finish_reason": "stop"
+    },
+    "scaffold.r2.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791281898-xSCdyQbBsDZai1bBEHDA",
+      "input_tokens": 13867,
+      "output_tokens": 2492,
+      "cost": 0.005414508,
+      "finish_reason": "stop"
+    }
+  },
+  "usage_totals": {
+    "input_tokens": 64628,
+    "output_tokens": 14978,
+    "cost": 0.03432912,
+    "requests": 6,
+    "requests_with_usage": 6
+  },
+  "orchestrator_usage": {}
+}
