@@ -76,6 +76,21 @@ and can change any line; the session reads it at the start of every phase.
 - A push of anything but `main` fast-forward; a force-push; a rewrite of history.
 - Printing a secret.
 
+## Observability
+
+- The session runs in `tmux` session `morph`, started by `tools/vps-start.sh`; the operator
+  attaches with `tools/vps-start.sh attach` (detach `Ctrl-b d`) or follows the log with
+  `tools/vps-start.sh log`.
+- `tools/tg.sh "<text>"` posts to the operator's Telegram channel (token and chat id only in
+  `/root/.config/morph/tg.env`, written by the operator, mode 600; a missing file is a silent
+  no-op). The session posts at these milestones, one short message each, numbers included:
+  phase start (what is being cut); gate result (go, or stopped with the reason); run result
+  (written/failed, $, minutes, burned variants); merge and push done; any stop of the
+  regulation; the end of the stretch with the totals.
+- Claude Code hooks in `.claude/settings.json` post on `Stop` (the session stopped: finished
+  or waiting for input, with its last message) and `Notification`; so an idle session is
+  never silent.
+
 ## Order of the remaining phases
 
 By the record's Components, see `docs/PLAN.md`, section "Фазы по записи (после P2)".
