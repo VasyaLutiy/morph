@@ -406,3 +406,68 @@ written, defects the judge found that the probe did not (and the reverse), the r
 
 ## 11. Actual
 
+
+Two runs on the VPS, processor glm53, the first on the deck that passed the autonomous gate
+(8 cards, `deck check` 0 errors), the second the one re-cut allowed by AUTONOMY "Failure".
+
+**Run 1** `20261006-152602-5e9c766d`, 15:26:02 → 15:40:42 (14.7 min), 21 requests, 318 871 in /
+47 202 out, **$0.1243**. 7 written, 1 failed (read-registry-judge), 0 skipped; 12 variants burned.
+
+| card | gen | attempts | winning variant | commit | first red of each burned variant |
+|---|---|---|---|---|---|
+| read-registry | 1 | 1 | v2 | 7303983 | v1: answer returned `types.ts` twice, rejected before acceptance |
+| assemble-request | 2 | 2 | r1.v1 | 27d287c | v1, v2: probe, body key order (`usage` placed before `max_tokens`/`reasoning`/`provider`) |
+| read-response | 2 | 1 | v2 | 387f5c9 | v1: eslint, unused `zeroUsage` |
+| read-registry-judge | 2 | 3 | — (failed) | — | 0: tsc, `Fault` imported from `processor/types.js` (not exported); r1: own test expects `MORPH_PROCESSOR_a_PROVIDER_ORDER is not a known key`; r2: own test sets all 12 keys and expects no fault |
+| assemble-request-judge | 3 | 1 | — | 2d4e6f6 | — |
+| read-response-judge | 3 | 2 | r1 | 399c25c | 0: tsc, `stubAnswer` imported twice (one from `stub.ts` with the `.ts` extension) |
+| send-generation | 3 | 2 | r1.v1 | dc5ece9 | v1, v2: tsc, duplicate identifiers — the file body emitted twice in one answer |
+| send-generation-judge | 4 | 3 | r2 | da39626 | 0: tsc, `test`/`expect` not imported; r1: own test expects ` (after 2 attempts)` on a 400 (a refusal is final, no suffix) |
+
+**Re-cut** (one only; commit `75c740d` on the run branch, data only): TASK §2.2 Read Registry rule 6
+spells the consequences of rules 1–3 the judge misread — the key is the whole rest after the first
+`_` (PROVIDER_ORDER, API_KEY, … are known), no valid config sets all 12 keys, `Fault` is imported
+from `src/cards/types.ts`. Card instruction unchanged (byte-identical to run 1's). Only the failed
+card was re-queued (`deck clear`, `deck reset`, `deck add` of the one card from a dry `plan --spec
+--judge`, `deck check` 1 card 0 errors); the run branched off run 1's branch.
+
+**Run 2** `20261006-154602-905eaf52`, 15:46:02 → 15:48:36 (2.6 min), 2 requests, 33 889 in / 6 181
+out, **$0.0163**. 1 of 1 written: read-registry-judge after 1 retry (r1, commit e223ed5); 1 variant
+burned (own test with a wrong fault order: MAX_RETRIES expected after REASONING_EFFORT).
+
+Phase total: **$0.1406** executor (prediction ≈ $0.14 nominal, ≤ $0.30 with a re-cut), 17.3 min of
+runs, 23 requests, 352 760 in / 53 383 out, 13 burned variants. tsc-first-red: 5 of 13 (registry-
+judge 0, response-judge 0, send-generation v1 and v2, send-judge 0). neighbour-red: 0.
+
+§9 check: cards 8 / generations 4 — as predicted; `deck check` 0 / 0 hazards — as predicted.
+Cards with regeneration 5 of 8 in run 1 (predicted 2) plus 2 cards won by v2 at the first attempt.
+Tests after: 215 in 24 files (160 + 55 judge tests in 4 files: registry 15, assemble 12, response
+16, send 12); judge example tests 18 of 18 (4 + 2 + 7 + 5), ≥ 18 holds. First red: all three
+predictions missed — read-registry's first red was a malformed answer (duplicate file), its v2 was
+green; send-generation's was a doubled file body (tsc), not the backoff; read-response's an unused
+helper (eslint), not the null content; assemble-request's key order was not predicted and the probe
+caught it exactly. Falsifiable claims: (1) no card red on a sibling's file — holds; (2) no judge red
+traced to §2.1 — holds (judge reds: own expected values on §2.2 rows, imports); (3) no socket opened —
+holds (`network blocked in tests` absent from the 20 acceptance logs of both runs and from both run
+logs).
+
+Max slice + targets, measured on the finished tree: send-generation-judge 59 990 bytes (gate 200 KB).
+
+Verification on `morph/20261006-154602-905eaf52` by the run session: `git status --short` empty;
+`tsc --noEmit`, `eslint src tests` clean; `vitest run` 215/215 in 24 files; `npm run build` ok. No
+test calls `realTransport`, `vi.*`, a global `fetch` or a timer. `src/processor/*` read once against
+§2.2: code-unit sort, first-`_` split, one fault per variable, type rows only on a valid TYPE,
+reasoning conflict short-circuits; body keys in order, copies of messages and providerOrder;
+`readResponse` usage on any status, the five error rows in order; stub candidates and the final
+`.v<n>` strip; batch before stub, retry on throw/408/429/≥500, backoff 1000·2^(k−1) before attempt
+k > 0, suffix only when maxRetries > 0, workers = min(concurrency, n), results by index;
+`process.env` only as `readRegistry`'s default — no defect found. Judge defects (code defects the
+judges found that the probes did not): 0.
+
+Lessons: (1) every judge red of this phase was the judge's own expectation or import, never the code
+— a judge reads a rule table as "every key is accepted" unless the spec writes the consequence out;
+spelling consequences of a rule table (rule 6) fixed it in one retry. (2) Two failure modes came from
+the answer format, not the contract: a file returned twice (rejected cheaply) and a file body
+doubled inside one answer (reaches tsc); both cost a variant, neither a card. (3) Re-queuing only
+the failed card with `deck add` on top of the run branch kept 7 accepted commits and cost $0.0163
+instead of a full re-run (P3's re-cut re-ran 8 cards for $0.1375).

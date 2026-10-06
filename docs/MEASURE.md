@@ -9,6 +9,7 @@
 | P1b | mrph | 2 / 2 / 1 | 0.0270 / — | 2 | 0 из 1 | 0 | 1 | 0 | 10 | 0 | 57059 |
 | P2 | mrph | 8 / 8 / 5 | 0.1087 / — | 6 | 1 из 5 | 0 | 0 | 0 | — | 0 | 59622 |
 | P3 | mrph | 8 / 8 / 16 (2 runs: 1+8 written) | 0.2254 / opus55 ≈137k/66/47 (run agent; prep on the laptop) | 42 | 0 из 16 | 0 | 1 (diff hunk start) | 0 | — | 0 | 60876 |
+| P4 | mrph | 8 / 8 / 13 (2 runs: 7+1 written; re-cut 1 card) | 0.1406 / opus55 ≈120k/45/32 (run agent) | 17 | 5 из 13 | 0 | 0 | 0 | — | 0 | 59990 |
 
 ## Сравнение оркестраторов на подготовке P3 (06.10, одинаковый бриф, свои worktree, без прогона)
 
@@ -29,4 +30,4 @@ Sonnet 5 — дифф внешним `diff -u`, сирота через `ps`, л
 
 ## Autonomous stretch
 
-Running total of the autonomous stretch: $0.2254 of $30 (P3).
+Running total of the autonomous stretch: $0.3660 of $30 (P3 $0.2254 + P4 $0.1406).
