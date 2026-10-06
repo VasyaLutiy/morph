@@ -1,0 +1,44 @@
+{
+  "package": "src",
+  "docs": ["docs/TASK_P1_cards.md"],
+  "groups": {
+    "card-model": ["Validate Card", "Load Deck"],
+    "layering": ["Layer Generations"],
+    "hazards": ["Find Hazards", "Weigh Slices"]
+  },
+  "cards": {
+    "card-model": {
+      "targets": ["src/cards/model.ts"],
+      "context_slice": ["docs/TASK_P1_cards.md", "tests/helpers.ts", "src/types.ts"],
+      "depends_on": [],
+      "instruction": "Write src/cards/model.ts only: validateCard(input: unknown): {card: Card} | {faults: Fault[]} and loadDeck(text: string): {deck: Deck} | {faults: Fault[]}. Types come from src/types.ts (scaffold). No test file: the judge writes it.",
+      "max_tokens": 16000, "variants": 2
+    },
+    "card-model-judge": {
+      "targets": ["tests/cards/model.examples.test.ts"],
+      "context_slice": ["docs/TASK_P1_cards.md", "src/cards/model.ts", "src/types.ts", "tests/helpers.ts"]
+    },
+    "layering": {
+      "targets": ["src/cards/layer.ts"],
+      "context_slice": ["docs/TASK_P1_cards.md", "src/cards/model.ts", "src/types.ts", "tests/helpers.ts"],
+      "depends_on": ["card-model"],
+      "instruction": "Write src/cards/layer.ts only: layerGenerations(deck: Deck): string[][]. No test file.",
+      "max_tokens": 12000
+    },
+    "layering-judge": {
+      "targets": ["tests/cards/layer.examples.test.ts"],
+      "context_slice": ["docs/TASK_P1_cards.md", "src/cards/layer.ts", "src/cards/model.ts", "src/types.ts", "tests/helpers.ts"]
+    },
+    "hazards": {
+      "targets": ["src/cards/hazards.ts"],
+      "context_slice": ["docs/TASK_P1_cards.md", "src/cards/model.ts", "src/cards/layer.ts", "src/types.ts", "tests/helpers.ts"],
+      "depends_on": ["card-model", "layering"],
+      "instruction": "Write src/cards/hazards.ts only: findHazards(deck: Deck): Hazard[] and weighSlices(deck: Deck, root: string, cap = 500000): Hazard[]. No test file.",
+      "max_tokens": 16000, "variants": 2
+    },
+    "hazards-judge": {
+      "targets": ["tests/cards/hazards.examples.test.ts"],
+      "context_slice": ["docs/TASK_P1_cards.md", "src/cards/hazards.ts", "src/cards/model.ts", "src/cards/layer.ts", "src/types.ts", "tests/helpers.ts"]
+    }
+  }
+}

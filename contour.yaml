@@ -1,0 +1,444 @@
+version: 1
+System:
+  name: MorphV2
+  description: >
+    Headless orchestrator of batch code generation. An operator or an agent writes a
+    Contour record and a map; `morph plan` cuts them into a deck of cards; `morph run`
+    compiles each card into one request per variant, sends the generation to a
+    processor, judges every answer with the card's acceptance command, commits what
+    passes with trailers, regenerates what fails with the diagnosis, and archives the
+    run. `morph primer` digests the project and its archive for a fresh session,
+    `morph scout` localises a change with a cheap model, `morph review` checks a diff
+    against the record, the primer and a scout report. One JSON document on stdout,
+    the human log on stderr, exit codes 0/1/2/3/4. No REPL.
+  requirements: [Strict TypeScript, One Document Out, Deterministic Core, Node Only]
+  guardrails: [No Network In Tests, No Shell Outside Acceptance, Frozen Tree During Run]
+  groups:
+
+    # ---------------------------------------------------------------- P1
+    - name: cards
+      description: >
+        The card and deck model: src/cards/*.ts. Validates a card, loads a deck,
+        layers it into generations by depends_on, finds ownership hazards and weighs
+        slices. Pure: no filesystem beyond reading the files a slice names, no git.
+      language: typescript
+      requirements: [Deterministic Core]
+      functions:
+        - name: Validate Card
+          description: Turns an untrusted object into a Card or a list of faults.
+          behavior: >
+            Required: customId matching ^[A-Za-z0-9._-]+$, intent generate|patch,
+            targets a non-empty list of distinct repo-relative paths, instruction a
+            non-empty string. Optional with defaults: contextSlice [] (empty means
+            "no context, instruction only" — never the whole project), acceptance
+            null, model null, maxTokens null, reasoning null, variants 1, dependsOn [].
+            Unknown keys are faults, never ignored. Every fault names the key and the
+            rule in one line; all faults are reported at once.
+          steps:
+            - produces: Card
+          examples:
+            - given: '{"customId":"a","intent":"generate","targets":["src/a.ts"],"instruction":"x"}'
+              when: "validated"
+              then: "a Card with contextSlice [], variants 1, dependsOn [], acceptance null"
+            - given: '{"customId":"bad id","intent":"generate","targets":["src/a.ts"],"instruction":"x"}'
+              when: "validated"
+              then: "one fault: customId 'bad id' does not match ^[A-Za-z0-9._-]+$"
+            - given: '{"customId":"a","intent":"todo","targets":[],"instruction":""}'
+              when: "validated"
+              then: "exactly three faults, in key order: intent, targets, instruction"
+            - given: '{"customId":"a","intent":"generate","targets":["src/a.ts","./src/a.ts"],"instruction":"x"}'
+              when: "validated"
+              then: "one fault: targets repeat src/a.ts after normalisation"
+        - name: Load Deck
+          description: Reads a deck file (a JSON array of cards) into a Deck.
+          behavior: >
+            Every element is validated with Validate Card; duplicate customIds and a
+            dependsOn cycle are deck faults; a dependsOn naming a card outside the deck
+            is external and allowed. The Deck keeps file order.
+          steps:
+            - calls: Validate Card
+            - reads: Deck File
+            - produces: Deck
+          examples:
+            - given: "a file with cards a, b, b"
+              when: "loaded"
+              then: "one deck fault: duplicate customId b"
+            - given: "cards a (dependsOn [b]) and b (dependsOn [a])"
+              when: "loaded"
+              then: "one deck fault naming the cycle a -> b -> a"
+            - given: "card a with dependsOn [zzz] and no card zzz"
+              when: "loaded"
+              then: "no fault; externalDependsOn of the Deck is ['zzz']"
+        - name: Layer Generations
+          description: Orders a Deck into generations by the longest dependsOn path.
+          behavior: >
+            Generation of a card = 1 + max generation of its in-deck dependencies, 0
+            for none; external dependencies do not count. Within a generation, deck
+            order is kept. Returns a list of lists of customIds.
+          steps:
+            - calls: Load Deck
+          examples:
+            - given: "cards a, b (dependsOn [a]), c (dependsOn [a]), d (dependsOn [b, c])"
+              when: "layered"
+              then: "[['a'], ['b', 'c'], ['d']]"
+            - given: "cards a (dependsOn ['ext']), b"
+              when: "layered"
+              then: "[['a', 'b']]"
+        - name: Find Hazards
+          description: Reports ownership conflicts between the cards of one deck.
+          behavior: >
+            write-write (two cards of one generation share a target) is an error;
+            read-write (a card's contextSlice names a sibling's target in the same
+            generation) is an error with a repair — add dependsOn from reader to
+            writer; implicit-read (empty contextSlice) and unordered-read (a slice
+            names a target of a card in a later generation with no dependsOn path)
+            are warnings. Each hazard: kind, severity error|warning, cards, path,
+            repair or null.
+          steps:
+            - calls: Layer Generations
+            - produces: Hazard
+          examples:
+            - given: "a and b in generation 0, both with target src/x.ts"
+              when: "hazards are found"
+              then: "one hazard {kind: 'write-write', severity: 'error', cards: ['a','b'], path: 'src/x.ts', repair: null}"
+            - given: "a writes src/x.ts, b reads src/x.ts in its slice, both generation 0"
+              when: "hazards are found"
+              then: "one hazard {kind: 'read-write', severity: 'error', cards: ['b','a'], path: 'src/x.ts', repair: {addDependsOn: {card: 'b', on: 'a'}}}"
+        - name: Weigh Slices
+          description: Sums the bytes of each card's contextSlice plus targets on disk.
+          behavior: >
+            Missing files count 0 and are listed. A card over the cap (default
+            500000 bytes) gets an oversized-slice warning carrying the bytes and the
+            cap.
+          steps:
+            - calls: Load Deck
+            - produces: Hazard
+          examples:
+            - given: "a card whose slice files total 600001 bytes and the default cap"
+              when: "weighed"
+              then: "one hazard {kind: 'oversized-slice', severity: 'warning', bytes: 600001, cap: 500000}"
+      dataObjects:
+        - name: Card
+          description: One unit of work for an executor; what morph run compiles into a request.
+          schema:
+            customId: "string, ^[A-Za-z0-9._-]+$"
+            intent: "'generate' | 'patch'"
+            targets: "string[] non-empty, repo-relative, distinct after normalisation"
+            contextSlice: "string[] default []"
+            instruction: "string non-empty"
+            acceptance: "string | null — a shell command run from the repo root"
+            model: "string | null"
+            maxTokens: "number | null"
+            reasoning: "{ maxTokens: number } | { effort: 'low'|'medium'|'high' } | null"
+            variants: "number >= 1, default 1"
+            dependsOn: "string[] default []"
+        - name: Deck
+          description: The loaded backlog.
+          schema:
+            cards: "Card[] in file order"
+            externalDependsOn: "string[] — dependsOn names not in the deck"
+        - name: Deck File
+          description: "decks/<name>.json or .morph/deck.json — a JSON array of Card objects (flat form only)."
+          schema: "Card[]"
+        - name: Hazard
+          description: One ownership or size finding.
+          schema:
+            kind: "'write-write' | 'read-write' | 'implicit-read' | 'unordered-read' | 'oversized-slice'"
+            severity: "'error' | 'warning'"
+            cards: "string[]"
+            path: "string | null"
+            repair: "{ addDependsOn: { card: string, on: string } } | null"
+            bytes: "number | undefined"
+            cap: "number | undefined"
+
+    # ---------------------------------------------------------------- P2
+    - name: compiler
+      description: >
+        Turns a Card and the files it names into provider-neutral requests, one per
+        variant, and parses an answer back into target files: src/compiler/*.ts.
+        Reads the slice and target files; never the network, never git.
+      language: typescript
+      requirements: [Deterministic Core]
+      functions:
+        - name: Compile Card
+          description: Builds the conversation for one card.
+          behavior: >
+            generate: one user message per slice file, in sorted path order, each
+            "Contents of file <path>:" followed by the file in a fenced block; then a
+            user message with the instruction and the output directive. patch: the
+            same, but each existing target is first given as "Original file <path>:"
+            with its content; a target that does not exist yet is announced as "new
+            file". Variants: N requests with customId <id>.v1..vN and identical
+            messages. A slice file that does not exist is a compile fault, not a
+            silent skip.
+          steps:
+            - reads: Card
+            - calls: Capture Inputs
+            - produces: Request
+          examples:
+            - given: "card a, intent generate, slice [docs/B.md, docs/A.md], variants 2"
+              when: "compiled"
+              then: "two Requests a.v1 and a.v2; messages[0] is docs/A.md, messages[1] docs/B.md, messages[2] the instruction + directive"
+            - given: "card p, intent patch, targets [src/x.ts] which exists with 3 lines"
+              when: "compiled"
+              then: "the first message is 'Original file src/x.ts:' with those 3 lines fenced"
+            - given: "a slice naming docs/missing.md"
+              when: "compiled"
+              then: "a compile fault naming docs/missing.md; no Request"
+        - name: Output Directive
+          description: The fixed tail of every instruction that tells the model how to answer.
+          behavior: >
+            One target: "Answer with the complete new content of <path> in one fenced
+            block and nothing else." Several targets: "Answer with one section per
+            file, each starting with a line `FILE: <path>` followed by one fenced
+            block; every target exactly once, no other text."
+          examples:
+            - given: "targets [src/a.ts, tests/a.test.ts]"
+              when: "the directive is rendered"
+              then: "it names both paths in that order and the literal line prefix 'FILE: '"
+        - name: Capture Inputs
+          description: Digests the declared inputs of a card so a run can detect a change under its feet.
+          behavior: >
+            For every path in contextSlice and targets: sha256 hex of the bytes, the
+            first 16 hex chars, or 'absent'. Sorted by path. Comparing two captures
+            yields the list of changed paths.
+          steps:
+            - produces: Input Digest
+          examples:
+            - given: "src/x.ts with bytes 'a\\n' and an absent tests/x.test.ts"
+              when: "captured"
+              then: "{'src/x.ts': '87428fc522803d31', 'tests/x.test.ts': 'absent'}"
+            - given: "a capture, then src/x.ts rewritten"
+              when: "compared"
+              then: "changed is ['src/x.ts']"
+        - name: Parse Answer
+          description: Splits a model answer into target contents.
+          behavior: >
+            Single target: the content is the first fenced block if any, else the
+            whole text. Several targets: sections introduced by `FILE: <path>`; the set
+            of paths must equal the targets exactly, otherwise the answer is corrupt
+            and says which path is missing or extra. An odd number of fence lines
+            means truncated. A leading line that is only `---` is dropped for any
+            extension. Result: {files: {path: content}} or {corrupt: reason} or
+            {truncated: true}.
+          examples:
+            - given: "targets [src/a.ts]; answer '```ts\\nexport const a = 1;\\n```'"
+              when: "parsed"
+              then: "files {'src/a.ts': 'export const a = 1;\\n'}"
+            - given: "targets [src/a.ts, tests/a.test.ts]; answer with FILE: src/a.ts only"
+              when: "parsed"
+              then: "corrupt: 'missing section for tests/a.test.ts'"
+            - given: "an answer with three fence lines"
+              when: "parsed"
+              then: "truncated: true"
+      dataObjects:
+        - name: Request
+          description: One provider-neutral chat request.
+          schema:
+            customId: "string — '<cardId>.v<n>'"
+            model: "string | null"
+            maxTokens: "number | null"
+            reasoning: "Card.reasoning"
+            messages: "{ role: 'system'|'user'|'assistant', content: string }[]"
+        - name: Input Digest
+          description: Declared inputs of a card at compile time.
+          schema: "{ [path: string]: string } — 16 hex chars or 'absent', keys sorted"
+        - name: Parsed Answer
+          description: The outcome of Parse Answer.
+          schema: "{ files: { [path: string]: string } } | { corrupt: string } | { truncated: true }"
+
+    # ---------------------------------------------------------------- P3 (skeleton — examples before the phase)
+    - name: acceptance
+      description: >
+        Judges one card's answers: src/acceptance/*.ts. Snapshots the targets' bytes,
+        writes a variant, runs the acceptance command with a timeout, keeps the first
+        green variant, rolls everything back otherwise, and builds the diagnosis the
+        retry carries.
+      language: typescript
+      guardrails: [No Shell Outside Acceptance]
+      functions:
+        - name: Snapshot Targets
+          description: Remembers the bytes (or absence) of every target before writing.
+          behavior: In memory, never through git. Restoring puts the bytes back or deletes the file.
+        - name: Run Acceptance
+          description: Executes the card's acceptance command from the repo root.
+          behavior: >
+            `sh -c` with cwd = root, env NO_COLOR=1 CI=1, timeout 300 s (a kill is
+            exit null with the log kept); stdout+stderr merged; the log is clipped to
+            4000 chars head+tail, keeping every line that looks like a diagnosis
+            (FAIL, Error, assert, expected). Returns {exit, log, timedOut}.
+          steps:
+            - produces: Acceptance Result
+        - name: Verify Card
+          description: Best-of-N over the parsed variants.
+          behavior: >
+            For each variant in order: skip corrupt/truncated with a stand-in result;
+            write the files; run the acceptance; on exit 0 keep and stop; else roll
+            back and continue. Returns the winning variant or every result.
+          steps:
+            - calls: Snapshot Targets
+            - calls: Run Acceptance
+            - produces: Verify Outcome
+        - name: Build Attempt Diff
+          description: A unified diff of the failed variant against the snapshot, capped at 6000 chars.
+      dataObjects:
+        - name: Acceptance Result
+          description: What one acceptance command run returned.
+          schema: "{ exit: number | null, log: string, timedOut: boolean }"
+        - name: Verify Outcome
+          description: The result of best-of-N verification of one card.
+          schema: "{ accepted: { variant: string } | null, results: { variant: string, exit: number | null, log: string, diff: string | null }[] }"
+
+    # ---------------------------------------------------------------- P4 (skeleton)
+    - name: processor
+      description: >
+        Talks to a model provider: src/processor/*.ts. Reads the registry from the
+        environment, assembles the provider request, sends one generation (sync route
+        first: one request at a time under a concurrency limit; batch route second),
+        collects answers and usage. OpenRouter first; the processor interface is the
+        only place the network is allowed.
+      language: typescript
+      functions:
+        - name: Read Registry
+          description: MORPH_PROCESSOR_<id>_* env vars into Processor Configs; invalid ones are listed, not dropped silently.
+        - name: Assemble Request
+          description: Request → provider JSON (OpenRouter chat completions) with provider.order + allow_fallbacks false when pinned, reasoning, usage.include; never tool_choice.
+        - name: Send Generation
+          description: Sends every Request of a generation, returns Answers and Usage per customId; retries transport errors with backoff; a provider refusal is recorded, not retried.
+          steps:
+            - calls: Assemble Request
+            - produces: Answer
+            - produces: Usage
+      dataObjects:
+        - name: Processor Config
+          description: One processor as read from the environment.
+          schema: "{ id, type: 'openrouter', model, apiKey, route: 'sync'|'batch', concurrency, providerOrder: string[] | null, reasoning, timeoutMs, maxRetries }"
+        - name: Answer
+          description: One model answer to one Request, or its failure.
+          schema: "{ customId, text: string | null, finishReason: string | null, error: string | null }"
+        - name: Usage
+          description: Tokens and cost of one Request as the provider reported them.
+          schema: "{ customId, inputTokens, outputTokens, cost: number | null, provider: string | null, generationId: string | null }"
+
+    # ---------------------------------------------------------------- P5 (skeleton)
+    - name: runloop
+      description: >
+        The run: src/run/*.ts. Resolves runnable cards per generation, compiles,
+        sends, verifies, commits, retries with the diagnosis, records outcomes and
+        archives. Owns the run state file and the archive layout.
+      language: typescript
+      guardrails: [Frozen Tree During Run]
+      functions:
+        - name: Resolve Runnable
+          description: A card whose dependency failed or was skipped is skipped with reason = that dependency.
+        - name: Process Generation
+          description: compile → send → parse → verify per card; stale inputs discard the answer; accepted cards fire the commit hook.
+          steps:
+            - uses: compiler
+            - uses: processor
+            - uses: acceptance
+            - produces: Card Outcome
+        - name: Build Retry
+          description: The retry card <id>.r<n> with <acceptance_output> and <previous_attempt_diff>; at most 2 retries per card; run-wide cap on retry batches.
+        - name: Run Deck
+          description: Generations in order, budget checked at boundaries (maxCards, maxRetryBatches, deadline), archive at the end.
+          steps:
+            - calls: Resolve Runnable
+            - calls: Process Generation
+            - calls: Build Retry
+            - produces: Run Report
+      dataObjects:
+        - name: Card Outcome
+          description: How one card ended in a run.
+          schema: "{ customId, status: 'written'|'failed'|'skipped'|'budget-exceeded', reason: string | null, attempts, winningVariant, acceptanceLog, earlierFailures: string[], commit: string | null, diffstat }"
+        - name: Run Report
+          description: The archived summary of one run.
+          schema: "{ runId, completedAt, branch, processor, generations, outcomes, usageTotals: { inputTokens, outputTokens, cost, requests } }"
+
+    # ---------------------------------------------------------------- P6 (skeleton)
+    - name: git
+      description: >
+        Branch, commit with trailers, diffstat, archive commit: src/git/*.ts over the git CLI.
+      language: typescript
+      functions:
+        - name: Open Run Branch
+          description: morph/<runId> from HEAD; refuses a dirty tree outside .morph/.
+        - name: Commit Card
+          description: >
+            Stages exactly the card's targets; subject 'morph <id>: <targets>'; trailers Morph-Card, Morph-Model, Morph-Variant (if >1), Morph-Acceptance-Exit; returns sha and diffstat, or null when nothing changed.
+        - name: Archive Run
+          description: Writes .morph/runs/<runId>/{deck.json, report.json} and commits them with Morph-Run trailers.
+
+    - name: cli
+      description: >
+        The `morph` binary: src/cli/*.ts. Parses argv, dispatches, prints exactly one
+        JSON document on stdout, logs on stderr, maps every error to an exit code.
+      language: typescript
+      requirements: [One Document Out]
+      functions:
+        - name: Parse Command
+          description: Subcommands deck add|check|status|reset|clear, run, scout, plan, primer, review, report; global --root and --pretty.
+        - name: Emit Document
+          description: One JSON document + newline on stdout, flushed; --pretty indents by 2.
+        - name: Classify Error
+          description: >
+            A fault before any spend (ownership, dirty tree, invalid deck) → 2; a
+            transport or provider failure → 3; a usage error (bad flag, missing file,
+            invalid record) → 4; a run with any failed/skipped card → 1. Error document
+            {"error": {"code", "kind", "message"}}.
+          examples:
+            - given: "`morph deck check` on a deck with a write-write hazard"
+              when: "run"
+              then: "stdout is one JSON document with errors >= 1; exit code 2"
+            - given: "`morph frobnicate`"
+              when: "run"
+              then: '{"error":{"code":4,"kind":"UsageError","message":...}}; exit 4'
+      interfaces:
+        - name: morph CLI
+          description: The only entry point.
+          exposes: [Parse Command]
+
+    # ---------------------------------------------------------------- later epics (skeleton)
+    - name: language
+      description: Language profiles (typescript first, python second) — what counts as code, the parse step, the test runner, default file names, the judge instruction, the acceptance template; the planner cuts by profile.
+      language: typescript
+      dataObjects:
+        - name: Language Profile
+          description: Everything the planner and the acceptance need to know about one language.
+          schema: "{ id, extensions, testDirs, testFilePattern, codeTarget, testTarget, judgeTarget, parseLine, ownTestLine, fullRunLine, finale, judgeInstruction, helpersModule }"
+    - name: primer
+      description: Digest of the tree, git history (Morph-Card trailers) and the run archive for a fresh session; every owned path, most recent first; markdown under a cap with explicit "… N more" lines.
+      language: typescript
+    - name: scout
+      description: Recon session with a cheap model and read-only tools under call/read/char/round budgets; seed from the primer's ownership head; one final answer-only turn after the budget closes; scout.json with provenance and spend.
+      language: typescript
+    - name: planner
+      description: Contour record + map → deck (`plan --spec`), and scout report → one patch card (`plan --from-scout`); judge cards; budget formula; dry run without --add.
+      language: typescript
+    - name: reviewer
+      description: >
+        `morph review <base> <head>`: obligations from the record, scope table from a scout report, ownership and envelope from the primer, mutation of new tests, a findings document with EXPECTED/GOT and a source tag.
+      language: typescript
+
+Actor:
+  - name: Operator
+    description: A human or an agent session driving Morph from a shell.
+    uses: [morph CLI]
+
+Requirement:
+  - name: Strict TypeScript
+    description: tsconfig strict, ESM, no `any`; every module compiles with tsc --noEmit.
+  - name: One Document Out
+    description: Every command prints exactly one JSON document on stdout and nothing else; the human log goes to stderr.
+  - name: Deterministic Core
+    description: cards, compiler and acceptance give byte-identical results for the same inputs; no clock, no randomness, no environment reads.
+  - name: Node Only
+    description: Runtime dependencies none beyond Node 20 built-ins; dev dependencies pinned exactly.
+
+Guardrail:
+  - name: No Network In Tests
+    description: tests/setup.ts makes fetch, XMLHttpRequest, WebSocket and net.connect throw "network blocked in tests"; only the processor's own transport is mocked.
+  - name: No Shell Outside Acceptance
+    description: child processes are spawned only by Run Acceptance, the git module and the processor's none; everything else is pure.
+  - name: Frozen Tree During Run
+    description: while a run is in flight no file outside the cards' targets and .morph/ changes; a changed declared input discards the answer unread.
