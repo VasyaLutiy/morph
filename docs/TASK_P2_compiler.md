@@ -420,4 +420,64 @@ written, defects the judge found that the probe did not (and the reverse), the r
 
 ## 11. Actual
 
-(empty until the run)
+Run `20261006-132127-82ee751b`, branch `morph/20261006-132127-82ee751b`, processor
+glm53, 13:21:27 → 13:27:39 (6.2 min). Result: 8 of 8 cards written, 0 failed, 0 skipped;
+mrph exit 0. 17 requests, 254 057 input / 26 453 output tokens, **$0.1087** (prediction
+≤ $0.40, nominal $0.20).
+
+| card | gen | attempts | outcome | winning variant | commit |
+|---|---|---|---|---|---|
+| capture-inputs | 1 | 1 | written | capture-inputs.v1 | 24b65b2 |
+| output-directive | 1 | 1 | written | output-directive.v1 | a033a99 |
+| compile-card | 2 | 1 | written | compile-card.v1 | 9bc22f7 |
+| output-directive-judge | 2 | 1 | written | output-directive-judge | 67323c4 |
+| capture-inputs-judge | 2 | 2 (v0 burned; r1) | written | capture-inputs-judge.r1 | 73a7885 |
+| parse-answer | 2 | 3 (v1,v2,r1.v1,r1.v2 burned; r2.v1) | written | parse-answer.r2.v1 | 0bc9630 |
+| compile-card-judge | 3 | 1 | written | compile-card-judge | c8f9b63 |
+| parse-answer-judge | 3 | 1 | written | parse-answer-judge | 75b8ad2 |
+
+Minutes per generation (submit → last acceptance of the generation): gen 1 1.8
+(13:21:27 → 13:23:14); gen 2 3.5 (13:23:14 → 13:26:41); gen 3 1.0 (13:26:41 → 13:27:39).
+
+Burned variants: 5. First red per burned variant (`/tmp/morph/<card>-p2/acc-*.log`):
+
+| variant | step | first red line |
+|---|---|---|
+| capture-inputs-judge (attempt 1) | eslint | `54:11  error  'card' is assigned a value but never used  @typescript-eslint/no-unused-vars` |
+| parse-answer.v1 | eslint | `54:7  error  'nextPath' is never reassigned. Use 'const' instead  prefer-const` (+ `blockClosed` unused) |
+| parse-answer.v2 | tsc | `src/compiler/parse.ts(55,9): error TS18047: 'current' is possibly 'null'.` |
+| parse-answer.r1.v1 | own (smoke) | `AssertionError: expected 'extra section for tests/a.test.ts' to be 'missing section for tests/b.test.ts'` |
+| parse-answer.r1.v2 | own (smoke) | same as r1.v1 |
+
+**tsc-first-red: 1 of 5** (§9 predicted a `tsc` red on compile-card's message order or the
+`Fault` import path; the actual `tsc` red landed on parse-answer instead, a possibly-null
+narrowing miss — the mechanism §9 named, `tsc` catching a real-world TypeScript mistake,
+did fire, just on a different card). **neighbour-red: 0 of 5** — every red line names a
+file the failing card owns (its own `.ts` or its own smoke/judge test); the per-card
+`tsconfig` exclusion (falsifiable claim 1) holds. Cards with regeneration: 2 of 8
+(capture-inputs-judge, parse-answer) — matches §9's prediction exactly.
+
+The `parse-answer.r1` failures are not a code or judge defect: the card's own smoke test
+(`tests/compiler/parse.test.ts`) asserted `"missing section for tests/b.test.ts"` for an
+answer (`twoFiles.md`, sections `src/a.ts` then `tests/a.test.ts`) read against targets
+`["src/a.ts", "tests/b.test.ts"]`. Per §2.2 the corrupt checks run duplicate → extra →
+missing, in that order, first match wins; `tests/a.test.ts` is a section not in targets,
+so `extra section for tests/a.test.ts` fires before `missing` is ever checked. The code
+(`src/compiler/parse.ts`) was right from v1 onward; the executor's own test was wrong in
+r1, and it corrected the assertion to `"extra section for tests/a.test.ts"` in the
+winning `r2.v1` — self-corrected, not a judge defect, falsifiable claim (2) holds (no
+judge red traced to §2.1).
+
+Judge example tests written: 9 (capture 2, directive 1, compile 3, parse 3), each named
+`<Function> example <n>` — matches §9's "≥ 9 judge example tests" exactly. Judge files:
+4 of 4 (predicted 4). Tests after the run: 114 in 16 files, all green (§9 floor: 57 +
+≥ 4 smoke + 4 judge). `write-write` / `read-write` at `deck check`: 0 / 0, as planned.
+Max slice (slice + targets) at submission: compile-card-judge, 59 622 bytes.
+
+Independent verification (step 3, separate from the run): `tsc --noEmit` clean,
+`eslint src tests` clean, `vitest run` 114/114 passed in 16 files, `npm run build`
+succeeded (`dist/{cards,compiler,index.js}`), `git status --short` empty on the run
+branch. Reading `src/compiler/*.ts` and `tests/compiler/*.ts` against §2.2 line by line
+(fence rendering, message order and sorting, the four `corrupt` reasons and their
+priority order, the digest sort/absent rule, the two directive texts) found no
+discrepancy: every rule checked matches the record. No judge defect, no code defect.
