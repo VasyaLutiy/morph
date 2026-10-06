@@ -1,0 +1,78 @@
+{
+  "deck_id": "20261006-154602-905eaf52",
+  "completed_at": "2026-10-06T15:48:35.987",
+  "branch": "morph/20261006-154602-905eaf52",
+  "backend_label": "glm53",
+  "generations": [
+    [
+      "read-registry-judge"
+    ]
+  ],
+  "batch_ids": [
+    "local-8de9e9a309974689aa3fe94377ad3652",
+    "local-0b077a23755e463685ff6005600f19c7"
+  ],
+  "outcomes": {
+    "read-registry-judge": {
+      "custom_id": "read-registry-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/processor/registry.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 2,
+      "winning_variant": "read-registry-judge.r1",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\n== eslint\n== guard\n== own\n FAIL  tests/processor/registry.examples.test.ts > readRegistry > ROUTE, MAX_RETRIES and REASONING_EFFORT fault messages\nAssertionError: expected [ { key: 'MORPH_PROCESSOR_a_MAX_RETRIES', message: 'MORPH_PROCESSOR_a_MAX_RETRIES must be a non-negative integer (got \\'-1\\')' }, …(2) ] to strictly equal [ { key: 'MORPH_PROCESSOR_a_REASONING_EFFORT', message: 'MORPH_PROCESSOR_a_REASONING_EFFORT must be one of low, medium, high (got \\'huge\\')' }, …(2) ]\n Test Files  1 failed (1)\n      Tests  1 failed | 14 passed (15)\n",
+      "commit": "e223ed54f82a82724873689ca26ef4ee2583054f",
+      "diffstat": [
+        {
+          "path": "tests/processor/registry.examples.test.ts",
+          "insertions": 290,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/processor/registry.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    }
+  },
+  "usage": {
+    "read-registry-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791301562-F9DQgGRZi89KgOyPe20E",
+      "input_tokens": 14199,
+      "output_tokens": 2895,
+      "cost": 0.008449812,
+      "finish_reason": "stop"
+    },
+    "read-registry-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791301629-E5BJyB9yUw2vcLjh2KIF",
+      "input_tokens": 19690,
+      "output_tokens": 3286,
+      "cost": 0.007813848,
+      "finish_reason": "stop"
+    }
+  },
+  "usage_totals": {
+    "input_tokens": 33889,
+    "output_tokens": 6181,
+    "cost": 0.01626366,
+    "requests": 2,
+    "requests_with_usage": 2
+  },
+  "orchestrator_usage": {}
+}
