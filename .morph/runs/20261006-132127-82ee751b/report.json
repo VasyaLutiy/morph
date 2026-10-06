@@ -1,0 +1,523 @@
+{
+  "deck_id": "20261006-132127-82ee751b",
+  "completed_at": "2026-10-06T13:27:42.299",
+  "branch": "morph/20261006-132127-82ee751b",
+  "backend_label": "glm53",
+  "generations": [
+    [
+      "capture-inputs",
+      "output-directive"
+    ],
+    [
+      "capture-inputs-judge",
+      "compile-card",
+      "output-directive-judge",
+      "parse-answer"
+    ],
+    [
+      "compile-card-judge",
+      "parse-answer-judge"
+    ]
+  ],
+  "batch_ids": [
+    "local-eb652edf000847aeabfa0bdd26732624",
+    "local-a4af0ebce119404b907db1c4bfee7a9b",
+    "local-28907a73f88848b8a6017f3a23c0efc0",
+    "local-ce1dd3205e494e4e9eff1f632cf4e4f6",
+    "local-08fe98b52e78450a9a1aa54414795005"
+  ],
+  "outcomes": {
+    "capture-inputs": {
+      "custom_id": "capture-inputs",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/src/compiler/types.ts",
+        "/home/john/Documents/Work2026/MorphV2/src/compiler/capture.ts",
+        "/home/john/Documents/Work2026/MorphV2/tests/compiler/capture.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "capture-inputs.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "24b65b22dfb36bb157680298cc3540d637d91f3f",
+      "diffstat": [
+        {
+          "path": "src/compiler/capture.ts",
+          "insertions": 40,
+          "deletions": 0
+        },
+        {
+          "path": "src/compiler/types.ts",
+          "insertions": 18,
+          "deletions": 0
+        },
+        {
+          "path": "tests/compiler/capture.test.ts",
+          "insertions": 60,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/compiler/types.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "src/compiler/capture.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "tests/compiler/capture.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "output-directive": {
+      "custom_id": "output-directive",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/src/compiler/directive.ts",
+        "/home/john/Documents/Work2026/MorphV2/tests/compiler/directive.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "output-directive.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "a033a9966e63178efeb1db73dac4da49419555cc",
+      "diffstat": [
+        {
+          "path": "src/compiler/directive.ts",
+          "insertions": 19,
+          "deletions": 0
+        },
+        {
+          "path": "tests/compiler/directive.test.ts",
+          "insertions": 22,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/compiler/directive.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "tests/compiler/directive.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "compile-card": {
+      "custom_id": "compile-card",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/src/compiler/compile.ts",
+        "/home/john/Documents/Work2026/MorphV2/tests/compiler/compile.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "compile-card.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "9bc22f73ca699b1a2438544407682372d415f934",
+      "diffstat": [
+        {
+          "path": "src/compiler/compile.ts",
+          "insertions": 102,
+          "deletions": 0
+        },
+        {
+          "path": "tests/compiler/compile.test.ts",
+          "insertions": 43,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/compiler/compile.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "tests/compiler/compile.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "output-directive-judge": {
+      "custom_id": "output-directive-judge",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/tests/compiler/directive.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "output-directive-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "67323c4364c20208b4ae16f20b6b6b21dc0343f6",
+      "diffstat": [
+        {
+          "path": "tests/compiler/directive.examples.test.ts",
+          "insertions": 72,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/compiler/directive.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "capture-inputs-judge": {
+      "custom_id": "capture-inputs-judge",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/tests/compiler/capture.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 2,
+      "winning_variant": "capture-inputs-judge.r1",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\n== eslint\n\n/home/john/Documents/Work2026/MorphV2/tests/compiler/capture.examples.test.ts\n  54:11  error  'card' is assigned a value but never used  @typescript-eslint/no-unused-vars\n\n✖ 1 problem (1 error, 0 warnings)\n\n",
+      "commit": "73a78857b7e730a7303918657d59b08117ff1ea6",
+      "diffstat": [
+        {
+          "path": "tests/compiler/capture.examples.test.ts",
+          "insertions": 103,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/compiler/capture.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "parse-answer": {
+      "custom_id": "parse-answer",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/src/compiler/parse.ts",
+        "/home/john/Documents/Work2026/MorphV2/tests/compiler/parse.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 3,
+      "winning_variant": "parse-answer.r2.v1",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\n== eslint\n== guard\n== probe\n== own\n FAIL  tests/compiler/parse.test.ts > parseAnswer > missing section for the second target\nAssertionError: expected 'extra section for tests/a.test.ts' to be 'missing section for tests/b.test.ts' // Object.is equality\n     33|     if (\"files\" in r) throw new Error(\"expected corrupt\");\n     34|     if (\"truncated\" in r) throw new Error(\"expected corrupt\");\n Test Files  1 failed (1)\n      Tests  1 failed | 4 passed (5)\n",
+      "commit": "0bc96303cf0ae9cac7a289406c10f830f4e266eb",
+      "diffstat": [
+        {
+          "path": "src/compiler/parse.ts",
+          "insertions": 121,
+          "deletions": 0
+        },
+        {
+          "path": "tests/compiler/parse.test.ts",
+          "insertions": 47,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/compiler/parse.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "tests/compiler/parse.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "compile-card-judge": {
+      "custom_id": "compile-card-judge",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/tests/compiler/compile.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "compile-card-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "c8f9b632d60201e5193498ea791fa8a4028eaa11",
+      "diffstat": [
+        {
+          "path": "tests/compiler/compile.examples.test.ts",
+          "insertions": 140,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/compiler/compile.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "parse-answer-judge": {
+      "custom_id": "parse-answer-judge",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/tests/compiler/parse.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "parse-answer-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "75b8ad271d0835a2e5ef69aeee482a231075a1d2",
+      "diffstat": [
+        {
+          "path": "tests/compiler/parse.examples.test.ts",
+          "insertions": 157,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/compiler/parse.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    }
+  },
+  "usage": {
+    "output-directive.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791289288-geomWpoafNH1EwZBsMUN",
+      "input_tokens": 11030,
+      "output_tokens": 571,
+      "cost": 0.00538632,
+      "finish_reason": "stop"
+    },
+    "capture-inputs.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791289288-wsbzupTohhmDaa8nowo3",
+      "input_tokens": 14370,
+      "output_tokens": 998,
+      "cost": 0.00713388,
+      "finish_reason": "stop"
+    },
+    "output-directive.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791289318-P9JXywWeUrdNZY3onZth",
+      "input_tokens": 11030,
+      "output_tokens": 355,
+      "cost": 0.002190096,
+      "finish_reason": "stop"
+    },
+    "capture-inputs.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791289288-c1559RPn9XGs67x3UbUB",
+      "input_tokens": 14370,
+      "output_tokens": 3682,
+      "cost": 0.007984536,
+      "finish_reason": "stop"
+    },
+    "capture-inputs-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791289398-G11qdOJ2qUuZEqYeGApc",
+      "input_tokens": 14448,
+      "output_tokens": 840,
+      "cost": 0.00695808,
+      "finish_reason": "stop"
+    },
+    "compile-card.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791289398-2L7ZSyn3hwv9EY7bgvfi",
+      "input_tokens": 15550,
+      "output_tokens": 1688,
+      "cost": 0.00481932,
+      "finish_reason": "stop"
+    },
+    "output-directive-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791289418-re0i5bII3KQ52qkQz42P",
+      "input_tokens": 10748,
+      "output_tokens": 839,
+      "cost": 0.00540276,
+      "finish_reason": "stop"
+    },
+    "compile-card.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791289398-KNRbsqqSxwmDP3y1SdOB",
+      "input_tokens": 15550,
+      "output_tokens": 2033,
+      "cost": 0.00899568,
+      "finish_reason": "stop"
+    },
+    "parse-answer.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791289439-wNMgNdXjCYJycO1sI3xa",
+      "input_tokens": 12157,
+      "output_tokens": 1413,
+      "cost": 0.002834268,
+      "finish_reason": "stop"
+    },
+    "parse-answer.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791289436-WiZomKbO9WZFzFX2njno",
+      "input_tokens": 12157,
+      "output_tokens": 1516,
+      "cost": 0.004195956,
+      "finish_reason": "stop"
+    },
+    "parse-answer.r1.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791289479-KUsaXpJ5yNuqfiLNBLpy",
+      "input_tokens": 18640,
+      "output_tokens": 2020,
+      "cost": 0.01027632,
+      "finish_reason": "stop"
+    },
+    "capture-inputs-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791289479-oBujvGvl7FjgX0iB2EB4",
+      "input_tokens": 18961,
+      "output_tokens": 1059,
+      "cost": 0.00542166,
+      "finish_reason": "stop"
+    },
+    "parse-answer.r1.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791289479-VqK3tWhsKDKlrdGhvBXm",
+      "input_tokens": 18640,
+      "output_tokens": 2561,
+      "cost": 0.004839912,
+      "finish_reason": "stop"
+    },
+    "parse-answer.r2.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791289562-24j5Ado69lvLN7hZtYmo",
+      "input_tokens": 18725,
+      "output_tokens": 1619,
+      "cost": 0.0097827,
+      "finish_reason": "stop"
+    },
+    "parse-answer.r2.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791289562-ev2Tq0nlda2wxuT3sOdl",
+      "input_tokens": 18725,
+      "output_tokens": 1666,
+      "cost": 0.00984474,
+      "finish_reason": "stop"
+    },
+    "parse-answer-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791289605-Y29u1w5ITe8fozAY5mRF",
+      "input_tokens": 12952,
+      "output_tokens": 1532,
+      "cost": 0.0072432,
+      "finish_reason": "stop"
+    },
+    "compile-card-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791289605-GtUdCfoeBX8gJxxFRC4R",
+      "input_tokens": 16004,
+      "output_tokens": 2061,
+      "cost": 0.005371032,
+      "finish_reason": "stop"
+    }
+  },
+  "usage_totals": {
+    "input_tokens": 254057,
+    "output_tokens": 26453,
+    "cost": 0.10868046000000002,
+    "requests": 17,
+    "requests_with_usage": 17
+  },
+  "orchestrator_usage": {}
+}
