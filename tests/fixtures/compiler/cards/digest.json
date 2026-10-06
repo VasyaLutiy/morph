@@ -1,0 +1,11 @@
+{
+  "customId": "d",
+  "intent": "generate",
+  "targets": [
+    "tests/x.test.ts"
+  ],
+  "contextSlice": [
+    "src/x.ts"
+  ],
+  "instruction": "Write tests/x.test.ts."
+}

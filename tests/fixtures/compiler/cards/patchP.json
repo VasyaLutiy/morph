@@ -1,0 +1,11 @@
+{
+  "customId": "p",
+  "intent": "patch",
+  "targets": [
+    "src/x.ts"
+  ],
+  "contextSlice": [
+    "docs/A.md"
+  ],
+  "instruction": "Patch src/x.ts."
+}

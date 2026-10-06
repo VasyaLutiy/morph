@@ -5,6 +5,7 @@ shared steps here. Hand-written data, never product code.
     python3 decks/tools/build.py p0     -> decks/p0-scaffold.json (one card, run alone)
     python3 decks/tools/build.py p1     -> acceptance of every P1 card injected into morph-map.json
                                            (mrph plan --spec copies it onto the card)
+    python3 decks/tools/build.py p2     -> the same for the P2 cards (Component compiler)
 
 Paths are relative to the repository root (the parent of decks/); nothing here points
 outside the tree.
@@ -181,6 +182,25 @@ P1_JUDGE_LITERALS = {
 P1_JUDGE_EXAMPLES = {"card-model-judge": 7, "layering-judge": 2, "hazards-judge": 2, "weigh-judge": 1}
 P1_SMOKE_MAX = 5
 
+P2_TEST_DIR = "tests/compiler"
+# docs/TASK_P2_compiler.md §3: the example literals of Component compiler
+P2_JUDGE_LITERALS = {
+    "compile-card-judge": ["a.v1", "a.v2", "docs/A.md", "docs/B.md", "Original file src/x.ts:", "docs/missing.md"],
+    "output-directive-judge": ["FILE: ", "src/a.ts", "tests/a.test.ts"],
+    "capture-inputs-judge": ["87428fc522803d31", "absent", "src/x.ts", "tests/x.test.ts"],
+    "parse-answer-judge": ["export const a = 1;", "missing section for tests/a.test.ts", "truncated"],
+}
+# Compile Card 3, Output Directive 1, Capture Inputs 2, Parse Answer 3 (contour.yaml, Component compiler)
+P2_JUDGE_EXAMPLES = {"compile-card-judge": 3, "output-directive-judge": 1, "capture-inputs-judge": 2,
+                     "parse-answer-judge": 3}
+
+# one phase = the cards of one Component in morph-map.json (judges are <code>-judge); the
+# generation layering and the sibling exclusion are computed within the phase only
+PHASES = {
+    "p1": {"parts": "p1", "test_dir": P1_TEST_DIR, "examples": P1_JUDGE_EXAMPLES, "literals": P1_JUDGE_LITERALS},
+    "p2": {"parts": "p2", "test_dir": P2_TEST_DIR, "examples": P2_JUDGE_EXAMPLES, "literals": P2_JUDGE_LITERALS},
+}
+
 
 def layer(cards):
     """custom_id -> generation by the longest depends_on path (the planner's rule); a judge
@@ -205,9 +225,9 @@ def layer(cards):
     return gen
 
 
-def code_acceptance(card, targets, siblings, parts):
+def code_acceptance(card, targets, siblings, parts, phase="p1", test_dir=P1_TEST_DIR):
     code = [t for t in targets if t.startswith("src/")]
-    smoke = [t for t in targets if t.startswith(P1_TEST_DIR)]
+    smoke = [t for t in targets if t.startswith(test_dir)]
     assert len(smoke) == 1, (card, targets)
     body = (probe_dir(card, parts, f"{card}.probe.ts", exclude=siblings)
             + tsc_probe()
@@ -219,14 +239,15 @@ def code_acceptance(card, targets, siblings, parts):
             + "echo '== full'; " + vt("--passWithNoTests")
             + "echo '== frozen'; " + frozen()
             + untracked(targets))
-    return wrap(card, "p1", targets, body)
+    return wrap(card, phase, targets, body)
 
 
-def judge_acceptance(card, targets, siblings, parts):
+def judge_acceptance(card, targets, siblings, parts, phase="p1", examples=P1_JUDGE_EXAMPLES,
+                     literals=P1_JUDGE_LITERALS):
     assert len(targets) == 1, (card, targets)
     test = targets[0]
-    n = P1_JUDGE_EXAMPLES[card]
-    lits = json.dumps(P1_JUDGE_LITERALS[card])
+    n = examples[card]
+    lits = json.dumps(literals[card])
     body = (probe_dir(card, parts, None, exclude=siblings)
             + tsc_probe()
             + "echo '== eslint'; node_modules/.bin/eslint " + test + "\n"
@@ -236,22 +257,32 @@ def judge_acceptance(card, targets, siblings, parts):
             + "echo '== full'; " + vt("--passWithNoTests")
             + "echo '== frozen'; " + frozen()
             + untracked(targets))
-    return wrap(card, "p1", targets, body)
+    return wrap(card, phase, targets, body)
 
 
-def build_p1():
-    parts = os.path.join(ROOT, "decks", "p1", "parts")
+def build_phase(phase):
+    """Inject the acceptance of every card of ``phase`` (its judges and their code cards)
+    into morph-map.json; the other phases' cards are left byte for byte."""
+    spec = PHASES[phase]
+    parts = os.path.join(ROOT, "decks", spec["parts"], "parts")
     with open(MAP, encoding="utf-8") as fh:
         doc = json.load(fh)
-    cards = doc["cards"]
+    judges = list(spec["examples"])
+    members = [j[:-6] for j in judges] + judges
+    cards = {cid: c for cid, c in doc["cards"].items() if cid in members}
+    missing = [m for m in members if m not in cards]
+    assert not missing, f"{phase}: cards missing from {MAP}: {missing}"
     gen = layer(cards)
     rows = []
     for cid, c in cards.items():
         targets = list(c["targets"])
         siblings = [t for other, o in cards.items() if other != cid and gen[other] == gen[cid]
                     for t in o["targets"]]
-        build = judge_acceptance if cid.endswith("-judge") else code_acceptance
-        c["acceptance"] = build(cid, targets, siblings, parts)
+        if cid.endswith("-judge"):
+            c["acceptance"] = judge_acceptance(cid, targets, siblings, parts, phase,
+                                               spec["examples"], spec["literals"])
+        else:
+            c["acceptance"] = code_acceptance(cid, targets, siblings, parts, phase, spec["test_dir"])
         rows.append((gen[cid], cid, len(c["acceptance"]), len(siblings)))
     with open(MAP, "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2, ensure_ascii=False)
@@ -261,7 +292,7 @@ def build_p1():
     print(f"wrote {MAP}: {len(rows)} cards")
 
 
-BUILDERS = {"p0": build_p0, "p1": build_p1}
+BUILDERS = {"p0": build_p0, "p1": lambda: build_phase("p1"), "p2": lambda: build_phase("p2")}
 
 
 def main(argv):
