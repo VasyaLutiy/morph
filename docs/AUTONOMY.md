@@ -59,25 +59,50 @@ cycle below with a fresh run agent (`morph-orch-opus55`). Every later phase star
   cleaning.
 - **Orchestrator model**: decided at P3 (see `docs/MEASURE.md`, "Сравнение оркестраторов"):
   `morph-orch-opus55` prepares and runs every phase. `morph-orch-opus48` took P5 only; the
-  operator dropped it after P5 (06.10: P3 cost $16.98 against $6.26 for Opus 5.5).
+  operator dropped it after P5 (06.10: P3 cost $16.98 against $6.26 for Opus 5.5). The
+  agent's tokens, tool calls and minutes go into the "$ оркестр." column of
+  `docs/MEASURE.md` as "<model> <tokens>/<calls>/<min>".
 - **Operator order 06.10 (P5 debt)**: at the first phase boundary after this line lands
   (P6 merged and pushed), before preparing the next phase, raise `max_tokens` of the
   `process-generation-judge` card in `morph-map.json` to 25500 and run that one card on glm53
   (cut, dry `plan`, `deck check`, run, ff-merge as usual). This card-level change is the
   operator's decision, not a data-only re-cut. If it passes, the P5 debt is closed. Write
-  that into TASK_P5 §11, MEASURE and DECISIONS, and P5 no longer counts as a stopped phase. The agent's tokens, tool calls and
-  minutes go into the "$ оркестр." column of `docs/MEASURE.md` as "<model> <tokens>/<calls>/<min>".
+  that into TASK_P5 §11, MEASURE and DECISIONS, and P5 no longer counts as a stopped phase.
+- **Operator order 06.10 (first live smoke)**: right after P7 is merged and pushed, before
+  P8, run one smoke of the V2 binary on the real glm53. Build with `npm run build`; in a
+  temporary git repo outside `~/MorphV2`, a hand-written deck in the V2 schema of 2–3 tiny
+  TypeScript cards with a dependency (a,b→c) and shell acceptances; run it with the V2
+  `run` command and `--processor glm53`, the key from `morph-lab/.env` (never printed).
+  Ceiling $0.10 for the smoke. Record it as its own row in `docs/MEASURE.md` ("P7 smoke":
+  written/failed, $, minutes, exit code, the JSON on stdout in one line) and the deck in
+  `decks/p7/smoke/`. A red smoke is debt with its failure class (below), not a stopped
+  phase; the session goes on to P8 and posts the result to Telegram.
 
 ## Failure
 
-- A phase with failed cards after the run: ONE re-cut of the failed cards only, by the
-  P1b pattern (fix the spec's wording or fixtures, never the card instruction), merged if
-  green. A second failure of the same cards: the phase stops, its debt is written into
+Every failed card gets one class, decided from the run log and the attempt files, and
+written as a tag in its `docs/DECISIONS.md` line (`DEBT[data]`, `FIX[budget]`, ...) and in
+the "класс провала" column of its `docs/MEASURE.md` row:
+
+| Class | Sign | Fix, by the session alone |
+|---|---|---|
+| data | the answer is whole; the acceptance is red on logic, types or the guard | ONE re-cut by the P1b pattern (spec wording or fixtures, never the card instruction) |
+| budget | the answer is cut at `max_tokens` (finish reason length, an unclosed fence) | ONE raise of that card's `max_tokens` in `morph-map.json` ×1.5–2, ceiling 32000, then a re-run of that card |
+| environment | npm, network, provider error, `exit null` timeouts on a green log | no re-cut; one plain re-run later, then stop the phase |
+| code defect | the judge finds a real bug in accepted code | ONE re-cut of the code card by the P1b pattern |
+
+A budget fix that passes is not a failure: the phase is not stopped and the fix is one
+`FIX[budget]` line. Prevention at cut time: the judge card with the most examples in a
+phase gets `max_tokens` ≥ 20000.
+
+- A phase with failed cards after the run: ONE fix of the failed cards by their class,
+  merged if green. A second failure of the same cards: the phase stops, its debt is written into
   `docs/MEASURE.md` and `docs/DECISIONS.md`, the session goes on if later phases do not
   depend on the missing code; otherwise it stops.
 - A red that comes from the environment (npm, network, provider error, `exit null`
   timeouts on a green log): stop the phase, do not retry in a loop, write the symptom.
-- Two phases stopped in a row: the session stops and reports.
+- Two phases stopped in a row: the session stops and reports. Only classes the session
+  could not fix alone count; a smoke debt does not.
 
 ## Money
 
