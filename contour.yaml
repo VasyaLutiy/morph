@@ -433,7 +433,9 @@ Requirement:
   - name: Deterministic Core
     description: cards, compiler and acceptance give byte-identical results for the same inputs; no clock, no randomness, no environment reads.
   - name: Node Only
-    description: Runtime dependencies none beyond Node 20 built-ins; dev dependencies pinned exactly.
+    description: >
+      Runtime dependencies: Node 20 built-ins and the package `yaml` (the record reader), nothing
+      else; dev dependencies pinned exactly, no ^ or ~.
 
 Guardrail:
   - name: No Network In Tests
