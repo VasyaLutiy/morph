@@ -844,6 +844,7 @@
     },
     "process-generation-judge": {
       "intent": "generate",
+      "max_tokens": 25500,
       "targets": [
         "tests/runloop/generation.examples.test.ts"
       ],
