@@ -101,6 +101,11 @@ phase gets `max_tokens` ≥ 20000.
   depend on the missing code; otherwise it stops.
 - A red that comes from the environment (npm, network, provider error, `exit null`
   timeouts on a green log): stop the phase, do not retry in a loop, write the symptom.
+- Every debt (a card left failed after its fix, a red smoke, a stopped phase) gets a GitHub
+  issue in origin: `gh issue create --label debt` with the title "P<N> <card>: <class> —
+  <one-line symptom>" and a body of: run ids, what was tried, the attempts' reasons
+  verbatim, the proposed fix and who owns it (session or operator). Its URL goes into the
+  DECISIONS line. A debt closed later closes its issue with the commit that closed it.
 - Two phases stopped in a row: the session stops and reports. Only classes the session
   could not fix alone count; a smoke debt does not.
 
