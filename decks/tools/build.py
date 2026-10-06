@@ -9,6 +9,9 @@ shared steps here. Hand-written data, never product code.
     python3 decks/tools/build.py p3     -> the same for the P3 cards (Component acceptance; code
                                            cards write no test file, the probe covers them)
     python3 decks/tools/build.py p4     -> the same for the P4 cards (Component processor, sync route)
+    python3 decks/tools/build.py p5     -> the same for the P5 cards (Component runloop)
+    python3 decks/tools/build.py p6     -> the same for the P6 cards (Component git; every chain also
+                                           checks that the repository's own HEAD and refs are unchanged)
 
 Paths are relative to the repository root (the parent of decks/); nothing here points
 outside the tree.
@@ -240,6 +243,21 @@ P5_JUDGE_LITERALS = {
 P5_JUDGE_EXAMPLES = {"resolve-judge": 4, "process-generation-judge": 3, "build-retry-judge": 3,
                      "run-deck-judge": 3}
 
+P6_TEST_DIR = "tests/git"
+# docs/TASK_P6_git.md §3: the example literals of Component git
+P6_JUDGE_LITERALS = {
+    "run-git-judge": ["C 0 bar unset", "error: pathspec 'nope' did not match", "git checkout failed (exit 1): ",
+                      "ada@example.invalid"],
+    "open-branch-judge": ["morph/r1", ".morph/deck.json", "dirty tree outside .morph/: README.md, src/a.ts",
+                          "branch morph/r4 already exists", "invalid runId: a b"],
+    "commit-card-judge": ["other.txt", "morph a: src/a.ts, src/b.ts", "Morph-Variant: c.v2",
+                          "Morph-Model: stub", "makeCommitHook"],
+    "archive-run-judge": ["morph run r1: deck and report", "Morph-Budget-Exceeded: 0",
+                          "archive .morph/runs/r1 already exists", "written but not committed: git add failed (exit 1): "],
+}
+# Run Git 3, Open Run Branch 4, Commit Paths 2 + Commit Card 3, Archive Run 3
+P6_JUDGE_EXAMPLES = {"run-git-judge": 3, "open-branch-judge": 4, "commit-card-judge": 5, "archive-run-judge": 3}
+
 # one phase = the cards of one Component in morph-map.json (judges are <code>-judge); the
 # generation layering and the sibling exclusion are computed within the phase only.
 # smoke: whether a code card writes its own smoke test (P1-P2 yes; from P3 a code card covered
@@ -255,7 +273,22 @@ PHASES = {
            "smoke": False},
     "p5": {"parts": "p5", "test_dir": P5_TEST_DIR, "examples": P5_JUDGE_EXAMPLES, "literals": P5_JUDGE_LITERALS,
            "smoke": False},
+    "p6": {"parts": "p6", "test_dir": P6_TEST_DIR, "examples": P6_JUDGE_EXAMPLES, "literals": P6_JUDGE_LITERALS,
+           "smoke": False, "own_git": True},
 }
+
+
+def own_git_before():
+    """P6: the tests spawn git; they must touch only tmp repos, never this repository's own .git."""
+    return ("G0=$( (git symbolic-ref -q HEAD || true; git rev-parse HEAD; "
+            "git for-each-ref --format='%(refname) %(objectname)') 2>&1)\n")
+
+
+def own_git_after():
+    return ("echo '== own git'; G1=$( (git symbolic-ref -q HEAD || true; git rev-parse HEAD; "
+            "git for-each-ref --format='%(refname) %(objectname)') 2>&1); "
+            "[ \"$G0\" = \"$G1\" ] || { echo \"tests changed this repository's HEAD or refs:\"; "
+            "echo \"before: $G0\" | head -5; echo \"after: $G1\" | head -5; exit 1; }\n")
 
 
 def layer(cards):
@@ -281,7 +314,8 @@ def layer(cards):
     return gen
 
 
-def code_acceptance(card, targets, siblings, parts, phase="p1", test_dir=P1_TEST_DIR, smoke_test=True):
+def code_acceptance(card, targets, siblings, parts, phase="p1", test_dir=P1_TEST_DIR, smoke_test=True,
+                    own_git=False):
     """A code card: probe-dir, tsc, eslint, guard, probe, [own smoke test], full suite, frozen.
     ``smoke_test=False`` (P3 on: a code card covered by a probe writes no test file) drops the
     own-test guard and step and asserts the card targets no test file."""
@@ -295,6 +329,7 @@ def code_acceptance(card, targets, siblings, parts, phase="p1", test_dir=P1_TEST
         assert not smoke and code == list(targets), (card, targets)
         guard_tests, own = "", ""
     body = (probe_dir(card, parts, f"{card}.probe.ts", exclude=siblings)
+            + (own_git_before() if own_git else "")
             + tsc_probe()
             + "echo '== eslint'; node_modules/.bin/eslint " + " ".join(targets) + "\n"
             + "echo '== guard'; node $P/guard.mjs src " + ",".join(code)
@@ -302,24 +337,27 @@ def code_acceptance(card, targets, siblings, parts, phase="p1", test_dir=P1_TEST
             + "echo '== probe'; " + vt("--config $P/probe.config.mts")
             + own
             + "echo '== full'; " + vt("--passWithNoTests")
+            + (own_git_after() if own_git else "")
             + "echo '== frozen'; " + frozen()
             + untracked(targets))
     return wrap(card, phase, targets, body)
 
 
 def judge_acceptance(card, targets, siblings, parts, phase="p1", examples=P1_JUDGE_EXAMPLES,
-                     literals=P1_JUDGE_LITERALS):
+                     literals=P1_JUDGE_LITERALS, own_git=False):
     assert len(targets) == 1, (card, targets)
     test = targets[0]
     n = examples[card]
     lits = json.dumps(literals[card])
     body = (probe_dir(card, parts, None, exclude=siblings)
+            + (own_git_before() if own_git else "")
             + tsc_probe()
             + "echo '== eslint'; node_modules/.bin/eslint " + test + "\n"
             + heredoc("$P/lits.json", lits, "MORPH_LITS_EOF")
             + f"echo '== guard'; node $P/guard.mjs tests {test} {n} {n + 12} $P/lits.json\n"
             + "echo '== own'; " + vt(test)
             + "echo '== full'; " + vt("--passWithNoTests")
+            + (own_git_after() if own_git else "")
             + "echo '== frozen'; " + frozen()
             + untracked(targets))
     return wrap(card, phase, targets, body)
@@ -345,10 +383,10 @@ def build_phase(phase):
                     for t in o["targets"]]
         if cid.endswith("-judge"):
             c["acceptance"] = judge_acceptance(cid, targets, siblings, parts, phase,
-                                               spec["examples"], spec["literals"])
+                                               spec["examples"], spec["literals"], spec.get("own_git", False))
         else:
             c["acceptance"] = code_acceptance(cid, targets, siblings, parts, phase, spec["test_dir"],
-                                              spec["smoke"])
+                                              spec["smoke"], spec.get("own_git", False))
         rows.append((gen[cid], cid, len(c["acceptance"]), len(siblings)))
     with open(MAP, "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2, ensure_ascii=False)
@@ -359,7 +397,8 @@ def build_phase(phase):
 
 
 BUILDERS = {"p0": build_p0, "p1": lambda: build_phase("p1"), "p2": lambda: build_phase("p2"),
-            "p3": lambda: build_phase("p3"), "p4": lambda: build_phase("p4"), "p5": lambda: build_phase("p5")}
+            "p3": lambda: build_phase("p3"), "p4": lambda: build_phase("p4"), "p5": lambda: build_phase("p5"),
+            "p6": lambda: build_phase("p6")}
 
 
 def main(argv):

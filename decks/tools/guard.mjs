@@ -26,13 +26,15 @@ const ROOT_FILES = new Set(["src/index.ts"]);
 const SHELL = new Set(["acceptance", "git"]);          // node:child_process
 const NET = new Set(["processor"]);                    // fetch, WebSocket, XMLHttpRequest
 const CONSOLE = new Set(["cli"]);                      // console, process.exit
-const PROCESS = new Set(["cli", "processor", "acceptance", "git"]);
+const PROCESS = new Set(["cli", "processor", "acceptance"]);
 const NO_CLOCK = new Set(["cards", "compiler", "response", "language", "contour", "planner"]);
 const YAML = new Set(["contour"]);
 // P3: the acceptance gets the child's environment as a parameter (docs/TASK_P3_acceptance.md §4)
-const NO_ENV = new Set(["acceptance", "processor"]);
+const NO_ENV = new Set(["acceptance", "processor", "git"]);
 // P4: the one file of a NO_ENV layer that may read process.env (Read Registry, docs/TASK_P4_processor.md §4)
 const ENV_READERS = new Set(["src/processor/registry.ts"]);
+// P6: the one file of src/git that spawns (Run Git, docs/TASK_P6_git.md §4); git takes the env whole
+const GIT_SPAWNER = "src/git/run.ts";
 
 function parse(file) {
   return ts.createSourceFile(file, fs.readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true,
@@ -100,6 +102,8 @@ function checkSrc(files) {
       if (spec.startsWith("node:")) {
         if (spec === "node:child_process" && !SHELL.has(layer))
           report(sf, node, `node:child_process outside src/acceptance and src/git`);
+        if (spec === "node:child_process" && layer === "git" && rel !== GIT_SPAWNER)
+          report(sf, node, `node:child_process in ${rel} (only ${GIT_SPAWNER} spawns git)`);
         continue;
       }
       if (spec === "yaml") { if (!YAML.has(layer)) report(sf, node, `"yaml" outside src/contour`); continue; }
@@ -117,7 +121,7 @@ function checkSrc(files) {
         if (["fetch", "WebSocket", "XMLHttpRequest"].includes(n) && !NET.has(layer))
           report(sf, node, `global ${n} outside src/processor`);
         if (n === "console" && !CONSOLE.has(layer)) report(sf, node, "console outside src/cli");
-        if (n === "process" && !PROCESS.has(layer)) report(sf, node, "process outside src/cli, src/processor, src/acceptance, src/git");
+        if (n === "process" && !PROCESS.has(layer)) report(sf, node, "process outside src/cli, src/processor, src/acceptance");
         if (n === "Date" && NO_CLOCK.has(layer)) report(sf, node, `Date in the deterministic layer ${layer}`);
         if (n === "Math" && node.parent && ts.isPropertyAccessExpression(node.parent) &&
             node.parent.name.text === "random") report(sf, node, "Math.random");

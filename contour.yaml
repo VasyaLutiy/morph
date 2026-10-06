@@ -694,19 +694,165 @@ System:
           description: The summary of one run (its schema and archive layout are runloop's; the file write and commit are P6 git's).
           schema: "{ runId: string, completedAt: number, branch: string, processor: string, generations: number, outcomes: CardOutcome[], usageTotals: { inputTokens: number, outputTokens: number, cost: number | null, requests: number } }"
 
-    # ---------------------------------------------------------------- P6 (skeleton)
+    # ---------------------------------------------------------------- P6
     - name: git
       description: >
-        Branch, commit with trailers, diffstat, archive commit: src/git/*.ts over the git CLI.
+        The run's git side: src/git/*.ts over the git CLI. Opens the run branch, commits one
+        accepted card's targets with Morph trailers and returns its sha and diffstat (the
+        commit hook runloop fires), and writes and commits the run archive
+        .morph/runs/<runId>/{deck.json, report.json}. Every git call is a synchronous child
+        process with cwd = the repo root and an environment given whole as a parameter
+        (never process.env), so a test pins the author, the committer, HOME and the locale
+        and never depends on the host's git config. Expected refusals (a dirty tree, an
+        existing branch or archive) are results; a failing git command is a thrown Error
+        naming the subcommand, its exit and git's first stderr line.
       language: typescript
+      requirements: [Deterministic Core]
+      guardrails: [No Shell Outside Acceptance]
       functions:
+        - name: Run Git
+          description: One synchronous git call with an explicit environment; the only spawner of the Component.
+          behavior: >
+            runGit(root, args, env) spawns `git` with args, cwd = root, env = the given env with
+            LC_ALL=C and GIT_TERMINAL_PROMPT=0 laid over it (nothing of the parent process is
+            inherited), synchronously, stdout and stderr captured as UTF-8 text. Returns Git
+            Result {code: the exit status (null when killed or not started), stdout, stderr};
+            a spawn failure gives code null and stderr "git could not start: <message>". It
+            never throws. gitOk(root, args, env) runs runGit and returns stdout when code is 0;
+            otherwise it throws Error("git <args[0]> failed (exit <code>): <first line of the
+            trimmed stderr>").
+          steps:
+            - produces: Git Result
+          examples:
+            - given: 'a fresh repo (tmpRepo, branch main); env {PATH, HOME: the repo root, GIT_CONFIG_NOSYSTEM: "1", GIT_AUTHOR_NAME: "Ada", GIT_AUTHOR_EMAIL: "ada@example.invalid", GIT_COMMITTER_NAME: "Ada", GIT_COMMITTER_EMAIL: "ada@example.invalid"}; args ["rev-parse", "--abbrev-ref", "HEAD"]'
+              when: "runGit"
+              then: '{code: 0, stdout: "main\n", stderr: ""}'
+            - given: 'the same repo and env plus FOO "bar" and LC_ALL "de_DE.UTF-8"; args ["-c", "alias.envs=!echo \"$LC_ALL $GIT_TERMINAL_PROMPT $FOO ${USER-unset}\"", "envs"]'
+              when: "runGit"
+              then: '{code: 0, stdout: "C 0 bar unset\n", stderr: ""} — LC_ALL and GIT_TERMINAL_PROMPT forced, the given env passed, nothing of the parent environment (USER) leaks'
+            - given: 'the same repo and env; args ["checkout", "nope"]'
+              when: "runGit, then gitOk"
+              then: 'runGit gives code 1, stdout "", stderr beginning "error: pathspec ''nope'' did not match"; gitOk throws an Error whose message begins "git checkout failed (exit 1): error: pathspec ''nope'' did not match"'
         - name: Open Run Branch
-          description: morph/<runId> from HEAD; refuses a dirty tree outside .morph/.
+          description: morph/<runId> from HEAD; refuses a dirty tree outside .morph/ and an existing branch.
+          behavior: >
+            openRunBranch(root, runId, env): runId must match ^[A-Za-z0-9._-]+$, else
+            {ok: false, error: "invalid runId: <runId>"} and no git call. Then `git status
+            --porcelain --untracked-files=all`: every entry's path (the text after the
+            two status letters and a space; for a rename the path after " -> ") that does
+            not start with ".morph/" is dirty; any dirty path → {ok: false, error: "dirty tree
+            outside .morph/: <dirty paths sorted, joined by ", ">"}. Then base = `git rev-parse
+            HEAD` (trimmed); a branch refs/heads/morph/<runId> that already exists → {ok: false,
+            error: "branch morph/<runId> already exists"}; else `git checkout -q -b
+            morph/<runId>` and {ok: true, branch: "morph/<runId>", base}. A refusal leaves the
+            checkout and the refs as they were.
+          steps:
+            - calls: Run Git
+            - produces: Branch Result
+          examples:
+            - given: 'a fresh repo on main whose HEAD is <h>; runId "r1"'
+              when: "opened"
+              then: '{ok: true, branch: "morph/r1", base: <h>} (40 hex chars); `git rev-parse --abbrev-ref HEAD` now reads "morph/r1"'
+            - given: 'a fresh repo with the untracked files .morph/deck.json and .morph/runs/x/report.json; runId "r2"'
+              when: "opened"
+              then: '{ok: true, branch: "morph/r2", base: <h>} — files under .morph/ do not make the tree dirty'
+            - given: 'a repo with README.md committed and then modified, and an untracked src/a.ts; runId "r3"'
+              when: "opened"
+              then: '{ok: false, error: "dirty tree outside .morph/: README.md, src/a.ts"}; the checkout is still main and no branch morph/r3 exists'
+            - given: 'a fresh repo where the branch morph/r4 already exists (git branch morph/r4); runId "r4"; then runId "a b"'
+              when: "opened"
+              then: '{ok: false, error: "branch morph/r4 already exists"}, the checkout still main; then {ok: false, error: "invalid runId: a b"}'
+        - name: Commit Paths
+          description: Stages exactly the given paths and commits them with a subject and trailers; null when nothing changed.
+          behavior: >
+            commitPaths(root, paths, subject, trailers, env): `git add -A -- <paths>`; `git diff
+            --cached --name-only -- <paths>` empty → null, no commit. Else `git commit -q -m
+            <subject> -m <trailer block> -- <paths>`, the trailer block being one "<key>: <value>"
+            line per trailer in the given order joined by "\n" (hooks run; nothing is bypassed),
+            so the message is "<subject>\n\n<trailer lines>". Only the paths are committed: a
+            file staged by hand or modified outside them stays as it was. Then commit = `git
+            rev-parse HEAD` (trimmed) and the diffstat from `git show --numstat --format=
+            <commit>`: files = the number of non-empty lines, insertions and deletions the sums
+            of the first two columns ("-" for a binary file counts 0). Returns Commit Info.
+          steps:
+            - calls: Run Git
+            - produces: Commit Info
+          examples:
+            - given: 'a fresh repo; other.txt written and staged by hand (git add other.txt); notes.txt untracked; src/a.ts written "export const a = 1;\n"; paths ["src/a.ts"], subject "s", trailers [["K", "v"]]'
+              when: "committed"
+              then: 'Commit Info {commit: HEAD (40 hex), diffstat {files: 1, insertions: 1, deletions: 0}}; the HEAD message is "s\n\nK: v"; `git show --name-only --format= HEAD` lists only src/a.ts; other.txt is still staged (`git diff --cached --name-only` reads "other.txt") and notes.txt still untracked'
+            - given: 'a repo where src/a.ts is committed with "export const a = 1;\n" and is unchanged; paths ["src/a.ts"]'
+              when: "committed"
+              then: 'null; HEAD is the commit it was before'
         - name: Commit Card
           description: >
-            Stages exactly the card's targets; subject 'morph <id>: <targets>'; trailers Morph-Card, Morph-Model, Morph-Variant (if >1), Morph-Acceptance-Exit; returns sha and diffstat, or null when nothing changed.
+            Stages exactly the card's targets; subject 'morph <id>: <targets>'; trailers Morph-Card, Morph-Model, Morph-Variant (if given), Morph-Acceptance-Exit; returns sha and diffstat, or null when nothing changed. makeCommitHook binds it into runloop's commit hook.
+          behavior: >
+            commitCard(root, {customId, targets, model, variant, acceptanceExit}, env) is
+            Commit Paths over targets with subject "morph <customId>: <targets joined by ",
+            ">" and trailers Morph-Card <customId>, Morph-Model <model>, Morph-Variant
+            <variant> only when variant is not null, Morph-Acceptance-Exit <acceptanceExit>, in
+            that order. makeCommitHook(root, model, env) returns (customId, targets) =>
+            commitCard(root, {customId, targets, model, variant: null, acceptanceExit: 0}, env):
+            runloop fires its hook only for an accepted card (exit 0) and does not pass the
+            winning variant, so the hook writes no Morph-Variant.
+          steps:
+            - calls: Commit Paths
+            - produces: Commit Info
+          examples:
+            - given: 'a repo on morph/r1; src/a.ts written "export const a = 1;\n" (new) and src/b.ts written "export const b = 2;\nexport const c = 3;\n" (new); customId "a", targets ["src/a.ts", "src/b.ts"], model "glm53", variant null, acceptanceExit 0'
+              when: "committed"
+              then: '{commit: HEAD (40 hex), diffstat {files: 2, insertions: 3, deletions: 0}}; the HEAD message is "morph a: src/a.ts, src/b.ts\n\nMorph-Card: a\nMorph-Model: glm53\nMorph-Acceptance-Exit: 0"; `git log -1 --format=%(trailers:key=Morph-Card,valueonly)` reads "a"'
+            - given: 'a repo where src/a.ts is committed with "export const a = 1;\n"; then src/a.ts rewritten "export const a = 2;\nexport const z = 0;\n"; customId "c", targets ["src/a.ts"], model "glm53", variant "c.v2", acceptanceExit 0'
+              when: "committed"
+              then: 'diffstat {files: 1, insertions: 2, deletions: 1}; the HEAD message is "morph c: src/a.ts\n\nMorph-Card: c\nMorph-Model: glm53\nMorph-Variant: c.v2\nMorph-Acceptance-Exit: 0"'
+            - given: 'a fresh repo; hook = makeCommitHook(root, "stub", env); out/h.ts written "x\n"; then the hook called again with nothing changed'
+              when: 'hook("h", ["out/h.ts"]), then hook("h", ["out/h.ts"])'
+              then: 'first {commit: HEAD, diffstat {files: 1, insertions: 1, deletions: 0}} with the HEAD message "morph h: out/h.ts\n\nMorph-Card: h\nMorph-Model: stub\nMorph-Acceptance-Exit: 0"; second null and HEAD unchanged'
         - name: Archive Run
-          description: Writes .morph/runs/<runId>/{deck.json, report.json} and commits them with Morph-Run trailers.
+          description: Writes .morph/runs/<runId>/{deck.json, report.json} and commits them with Morph-Run trailers; append-only.
+          behavior: >
+            archiveRun(root, {runId, deck, report}, env): runId must match ^[A-Za-z0-9._-]+$,
+            else {ok: false, error: "invalid runId: <runId>"}. dir = ".morph/runs/<runId>"; an
+            existing root/dir → {ok: false, error: "archive <dir> already exists"}, nothing
+            written (a run id names one run forever). Else mkdir -p, write <dir>/deck.json =
+            JSON.stringify(deck.cards, null, 2) + "\n" (the Deck File form, a JSON array of
+            cards) and <dir>/report.json = JSON.stringify(report, null, 2) + "\n", then Commit
+            Paths over [<dir>/deck.json, <dir>/report.json] with subject "morph run <runId>:
+            deck and report" and trailers Morph-Run <runId>, Morph-Cards <deck.cards.length>,
+            Morph-Written, Morph-Failed, Morph-Skipped, Morph-Budget-Exceeded (the number of
+            report.outcomes with that status). → {ok: true, dir, commit: the sha, or null when
+            Commit Paths returned null}. A git failure of the commit (an ignored .morph/ makes
+            git add refuse) → {ok: false, error: "archive <dir> written but not committed: <the
+            Error's message>"}; the files stay on disk.
+          steps:
+            - reads: Deck
+            - reads: Run Report
+            - calls: Commit Paths
+            - produces: Archive Result
+          examples:
+            - given: 'a repo on morph/r1; deck {cards: [card a, card b], externalDependsOn: []}; report {runId: "r1", …, outcomes: [a written, b failed]}; runId "r1"'
+              when: "archived"
+              then: '{ok: true, dir: ".morph/runs/r1", commit: HEAD}; deck.json reads JSON.stringify([a, b], null, 2) + "\n"; report.json reads JSON.stringify(report, null, 2) + "\n"; the HEAD message is "morph run r1: deck and report\n\nMorph-Run: r1\nMorph-Cards: 2\nMorph-Written: 1\nMorph-Failed: 1\nMorph-Skipped: 0\nMorph-Budget-Exceeded: 0"; the commit lists exactly .morph/runs/r1/deck.json and .morph/runs/r1/report.json'
+            - given: 'the repo after example 1; the same input again'
+              when: "archived"
+              then: '{ok: false, error: "archive .morph/runs/r1 already exists"}; HEAD unchanged; deck.json unchanged'
+            - given: 'a repo whose committed .gitignore holds ".morph/"; runId "r2"'
+              when: "archived"
+              then: '{ok: false, error beginning "archive .morph/runs/r2 written but not committed: git add failed (exit 1): "}; .morph/runs/r2/deck.json and report.json exist on disk; HEAD unchanged'
+      dataObjects:
+        - name: Git Result
+          description: What one git call returned.
+          schema: "{ code: number | null, stdout: string, stderr: string }"
+        - name: Branch Result
+          description: The run branch opened, or the refusal.
+          schema: "{ ok: true, branch: string, base: string } | { ok: false, error: string }"
+        - name: Commit Info
+          description: One commit and what it changed; structurally runloop's CommitInfo, so makeCommitHook is a CommitHook.
+          schema: "{ commit: string, diffstat: { files: number, insertions: number, deletions: number } }"
+        - name: Archive Result
+          description: The archive written and committed, or the refusal.
+          schema: "{ ok: true, dir: string, commit: string | null } | { ok: false, error: string }"
 
     - name: cli
       description: >
@@ -778,6 +924,8 @@ Requirement:
       processor reads the environment only in Read Registry; Assemble Request, Read Response
       and Stub Answer are pure of clock and network; the transport and its sleep are
       parameters of Send Generation (P4).
+      git spawns only in Run Git, synchronously, with the child's environment given whole as
+      a parameter; it reads no process.env and no clock of its own (P6).
   - name: Node Only
     description: >
       Runtime dependencies: Node 20 built-ins and the package `yaml` (the record reader), nothing
@@ -787,6 +935,6 @@ Guardrail:
   - name: No Network In Tests
     description: tests/setup.ts makes fetch, XMLHttpRequest, WebSocket and net.connect throw "network blocked in tests"; only the processor's own transport is mocked.
   - name: No Shell Outside Acceptance
-    description: child processes are spawned only by Run Acceptance, the git module and the processor's none; everything else is pure.
+    description: child processes are spawned only by Run Acceptance, the git module (in Run Git alone, P6) and the processor's none; everything else is pure.
   - name: Frozen Tree During Run
     description: while a run is in flight no file outside the cards' targets and .morph/ changes; a changed declared input discards the answer unread.
