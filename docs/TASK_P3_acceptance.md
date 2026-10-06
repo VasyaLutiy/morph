@@ -399,3 +399,55 @@ written, defects the judge found that the probe did not (and the reverse), the r
 
 ## 11. Actual
 
+
+Two runs on the VPS, processor glm53, both on decks that passed the gate (8 cards, 0 errors).
+
+**Run 1** `20261006-135524-8c114477`, 13:55:24 → 14:15:44 (20.3 min), 11 requests, 154 845 in /
+51 875 out, **$0.0879**. 1 written (build-attempt-diff.v2), 2 failed, 5 skipped behind them;
+10 variants burned.
+
+| card | outcome | first red |
+|---|---|---|
+| snapshot-targets | failed, 3 attempts | probe example 1: `src/b.ts with bytes null: expected 'missing entry' to be null` — a **probe defect** (orchestrator data): the probe's `entry?.bytes ?? 'missing entry'` turned a correct `null` into the marker |
+| build-attempt-diff-judge | failed, 3 attempts | own test `lines 2 and 9 of 20 … share one hunk`: the judge's expected value dropped `-line 9` (judge defect); its other tests caught a **real code defect** the probe missed: a hunk opening with a deletion printed `+0,1` instead of `+1,1` |
+
+**Re-cut** (AUTONOMY "Failure", one only; commit `358a1a3`, data only): snapshot probe checks
+`null` explicitly; build-attempt-diff probe pins the top-of-file hunk start; TASK §2.2 rule 4
+spells the new-side start for a hunk opening with a deletion. Card instructions unchanged. The
+re-cut deck re-ran all 8 cards: build-attempt-diff because its accepted code carried the defect,
+the rest because they failed or were skipped.
+
+**Run 2** `20261006-141841-4f95dce8`, 14:18:41 → 14:40:41 (22.0 min), 14 requests, 182 373 in /
+71 619 out, **$0.1375**. **8 of 8 written**, 0 failed, 0 skipped; 6 variants burned.
+
+| card | gen | attempts | winning variant | commit |
+|---|---|---|---|---|
+| build-attempt-diff | 1 | 1 (v1 truncated at 12 000 tokens) | v2 | 44bdfc4 |
+| snapshot-targets | 1 | 1 | v1 | e5d1302 |
+| build-attempt-diff-judge | 2 | 1 | — | 17785cc |
+| run-acceptance | 2 | 1 | v1 | f1c0dea |
+| snapshot-targets-judge | 2 | 1 | — | 55935d7 |
+| verify-card | 3 | 1 (v1 red at eslint) | v2 | feccd0b |
+| run-acceptance-judge | 3 | 2 (own test on clipLog of 4001 chars, judge's expectation) | r1 | ec55a7e |
+| verify-card-judge | 4 | 2 (eslint: `'ParsedAnswer' is defined but never used`) | r1 | 31ef422 |
+
+Phase total: **$0.2254** executor (prediction ≤ $0.30), 42.3 min of runs, 25 requests, 16 burned
+variants. tsc-first-red: 0 (the known first reds were probe, own test, eslint). neighbour-red: 0.
+
+§9 check: cards 8 / generations 4 — as predicted. Regeneration 2 of 8 in run 2 (predicted 2).
+Judge example tests: 46 (`diff` 13, `snapshot` 8, `run` 14, `verify` 11), ≥ 14 holds. Tests after
+the run: 160 in 20 files, all green. First red: predicted for build-attempt-diff at the hunk start —
+it was exactly there, but the probe did not pin it; the judge did. Falsifiable claims: (1) no card
+red on a sibling's file — holds; (2) no judge red traced to §2.1 — holds (judge reds were its own
+expected values and an unused import); (3) no `sleep 30` left by an acceptance — holds (the only
+`sleep 30` on the host belongs to an unrelated `ethsc` loop).
+
+Max slice + targets, measured on the finished tree: verify-card-judge 60 876 bytes (gate 200 KB).
+
+Verification on `morph/20261006-141841-4f95dce8` by the session: `git status --short` empty;
+`tsc --noEmit`, `eslint src tests` clean; `vitest run` 160/160 in 20 files; `npm run build` ok;
+`buildAttemptDiff({a:"old\n"},{a:"bad\n"})` gives `@@ -1,1 +1,1 @@`. Read against §2.2: group kill
+by `process.kill(-pid)`, resolve on `close`, env without `process.env`, diff before rollback,
+first green variant returns at once — no defect found. Lessons: a probe written with `??` against
+a nullable field lies; the judge, not the probe, caught the diff defect — the probe of a
+formatting Function should pin every boundary row of §2.2.
