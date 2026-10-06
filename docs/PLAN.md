@@ -851,6 +851,32 @@ ETHSmartChecker фазы 16; `instruction` из map — открывающая �
    каждая следующая фаза собирается **и** старым `mrph`, **и** новым `morph` на той же
    колоде, с сравнением отчётов; расхождение — находка.
 
+## Фазы по записи (после P2, 06.10)
+
+Таблица «Фазы» выше — черновик до первой карты. Запись `contour.yaml` держит 12 Component,
+и P1–P2 показали, что резать надо по ней: план делил `compiler` на две фазы (response и
+compiler), а `store` и `wait` выделял в свои, хотя в записи их нет (состояние прогона и
+архив — у runloop и git, backoff — у processor). Дальше фазы идут по Component записи, в
+порядке зависимостей; номера плана выше для P3+ не действуют.
+
+| фаза | Component записи | что добавляет | веха |
+|---|---|---|---|
+| P3 | acceptance | snapshot, shell с таймаутом, best-of-N, дифф попытки | первый child_process |
+| P4 | processor | реестр из env, сборка запроса OpenRouter, sync-отправка, usage, stub-процессор | первый fetch (замокан) |
+| P5 | runloop | runnable, process generation, retry, run deck, state и архив | **e2e на stub в vitest** |
+| P6 | git | ветка прогона, коммит с трейлерами, архив | tmpRepo |
+| P7 | cli | argv, dispatch, один JSON, коды выхода | **e2e из бинаря `morph` на stub**; затем первый свой прогон на glm |
+| P8 | language | профили typescript/python, цели, приёмка по профилю | |
+| P9 | contour | чтение и валидация записи и map | |
+| P10 | planner | `plan --spec`, судьи, override, бюджет | **переключатель dogfooding** |
+| P11 | processor (batch) | `/api/beta/batches`, submit/collect | **первая фаза, собранная V2** |
+| P12 | primer | дерево, владение по трейлерам, архив, markdown | |
+| P13 | scout | протокол, бюджеты, цикл, seed из primer, plan --from-scout | |
+| P14 | reviewer | obligations, envelope, guardrails, findings | последняя |
+
+Итого 15 фаз P0–P14; после P3 остаётся 11. Оценка по P1–P2: ≈$0.1–0.2 исполнителя на фазу
+при 8 картах; потолок $5 не меняется.
+
 ## Совет автора Contour (переписка 06.10.2026) и два правила записи V2
 
 Автор на 450 КБ `contour.yaml` ETHSmartChecker: «не должен быть таким, если это не
