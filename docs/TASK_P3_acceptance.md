@@ -373,7 +373,7 @@ venv/bin/mrph run --root <repo> --processor glm53   # operator only
 | cards with regeneration | 2 of 8 |
 | `write-write` / `read-write` at `deck check` | 0 / 0 |
 | tests after the run | 114 + 4 judge files; ≥ 14 judge example tests |
-| chain on a dry tree with stubs | < 60 s per card |
+| chain on a dry tree with stubs | < 60 s per card (measured before the gate on one-line throwing stubs: 3.4–4.1 s code cards, red at the probe on every example, 14 of 14; 2.4 s judges, red at the guard; a broken sibling of generation 0 left `snapshot-targets` green at `tsc`) |
 | first red | run-acceptance: the probe's example 3 (resolving on `"exit"` instead of `"close"`, or `child.kill` instead of the group) or example 4 (the clip marker); build-attempt-diff: the hunk start when a hunk begins at line 1 or has no old lines (`@@ -0,0`); verify-card: the diff of a failed variant computed after the rollback (empty) |
 
 **Falsifiable claims:** (1) no card goes red on a sibling's file; (2) no judge red traces
