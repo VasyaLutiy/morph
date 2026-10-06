@@ -310,4 +310,88 @@ written, defects the judge found that the probe did not (and the reverse), the r
 
 ## 11. Actual
 
-(filled after the run)
+Run `20261006-114825-18650295`, branch `morph/20261006-114825-18650295`, processor
+glm53, 11:48:25 → 12:01:47 (13.4 min). Result: 6 of 8 cards written, 2 failed
+(`card-model-judge`, `hazards-judge`), 0 skipped; mrph exit 1. 18 requests,
+248 688 input / 47 671 output tokens, **$0.1438** (prediction ≤ $0.30, nominal $0.12).
+
+| card | gen | attempts | outcome | winning variant | commit |
+|---|---|---|---|---|---|
+| card-model | 1 | 2 (v1, v2 burned; r1.v1) | written | card-model.r1.v1 | 3641ad3 |
+| card-model-judge | 2 | 3 | **failed** | — | — |
+| layering | 2 | 1 | written | layering.v1 | bd6e7e0 |
+| weigh | 2 | 1 | written | weigh.v1 | 4e31b53 |
+| hazards | 3 | 1 | written | hazards.v1 | db49aef |
+| layering-judge | 3 | 1 | written | layering-judge | cd5e926 |
+| weigh-judge | 3 | 1 | written | weigh-judge | 74cb604 |
+| hazards-judge | 4 | 3 | **failed** | — | — |
+
+Minutes per generation (deck commit → last acceptance of the generation):
+gen 1 6.5; gen 2 3.0; gen 3 1.4; gen 4 2.5.
+
+Burned variants: 8. Four more variants were paid for but never judged (the sibling
+variant of each accepted code card: `card-model.r1.v2`, `layering.v2`, `weigh.v2`,
+`hazards.v2`), so 18 requests = 6 winners + 8 burned + 4 spare.
+
+First red per burned variant (`/tmp/morph/<card>-p1/acc-*.log`):
+
+| variant | step | first red line |
+|---|---|---|
+| card-model.v1 | tsc | `src/cards/model.ts(102,27): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.` |
+| card-model.v2 | tsc | `src/cards/model.ts(307,41): error TS2339: Property 'join' does not exist on type 'never'.` |
+| card-model-judge | own | `Validate Card example 1 — AssertionError: expected "tiny card is valid" not to be reached` (+ `missing customId faults first in schema order: expected 3 to be 2`) |
+| card-model-judge.r1 | guard | `guard: tests/cards/model.examples.test.ts does not mention the example literal "./src/a.ts"` |
+| card-model-judge.r2 | own | `Validate Card example 1 — AssertionError: expected "tiny card is valid" not to be reached` |
+| hazards-judge | own | `kind order: expected 'write-write,unordered-read,implicit-read,implicit-read,implicit-read' to be 'write-write,read-write,unordered-read,implicit-read,…'` (+2 more own tests) |
+| hazards-judge.r1 | own | `kind order: expected 'write-write,read-write,read-write,unordered-read' to be 'write-write,read-write,unordered-read'` |
+| hazards-judge.r2 | own | same as r1 |
+
+**tsc-first-red: 2 of 8** (both card-model variants; §9 predicted tsc on at least one
+code card — confirmed). **neighbour-red: 0 of 8** — every red line names a file the
+card owns; the falsifiable claim of §9 (per-card `tsconfig` exclusion) holds.
+Guard rejections of a judge: 1 (`card-model-judge.r1`, literal `./src/a.ts` missing —
+the §9 "literal in another spelling" prediction, confirmed). Cards with regeneration:
+3 of 8 (predicted 2). Judge files written: 2 of 4 (predicted 4); judge tests: 16
+(layer 5, weigh 11; predicted ≥ 12). Tests after the run: 30 in 6 files, all green.
+
+Judge defects (every judge red was the judge's own error; the code under test was
+right by §2.2 in each case):
+
+1. `card-model-judge`, all 3 attempts: `validateCard(fixtureJson("decks/tiny.json"))`
+   passes the one-element **array** to the card validator → `card is not an object`.
+   Root cause is §2.1 of this spec, which calls `tests/fixtures/decks/tiny.json` the
+   "valid minimal example" of a card object while the file is a deck. Spec wording
+   defect; the executor copied it three times.
+2. `card-model-judge` attempt 1: `{instruction: "x"}` expected 2 faults; §2.2 gives
+   3 (`customId`, `intent`, `targets` are all required).
+3. `hazards-judge` r1, r2: R's slice entry targeted by two W's of the same generation
+   expected **one** `read-write`; §2.2 says one hazard per (R, slice entry, W) → two.
+4. `hazards-judge` attempt 1, two tests: `hazards.length` compared to 0 / 2 while the
+   cards have `contextSlice []` → the `implicit-read` warnings were forgotten.
+5. `hazards-judge` attempt 1, kind-order test: expected `read-write` for a reader in
+   generation 0 of a target in generation 1 (`c` dependsOn `a`); §2.2: that is
+   `unordered-read`.
+
+Defects the judge found that the probe did not: 0. Defects the probe found that the
+judge did not: 0 (no code variant reached the probe red; both code reds were `tsc`).
+Found by reading the accepted code against §2.2, caught by neither probe nor judge:
+
+- `src/cards/hazards.ts:28-35` — the `owned` loop that orders `write-write` hazards
+  walks **all** deck cards, not the generation's. A card of another generation that
+  targets the same path earlier in the deck can change the order between two
+  write-write paths (§2.2: "deck position of the first owner, then that owner's
+  targets order"). Edge case; no fixture exercises it.
+- `tests/cards/weigh.examples.test.ts:33,59` — tests named `Weigh Slices example 2`
+  and `example 3` are §2.2 cases, not record examples (the record has one Weigh Slices
+  example); §2.3 naming rule. Cosmetic.
+
+Verification on the run branch (`NO_COLOR=1 CI=1`): `tsc --noEmit` clean; `eslint src
+tests` clean; `vitest run` 30 passed in 6 files; `npm run build` emits `dist/cards`,
+`dist/index.js`; `git status --short` empty; §2.4 frozen files untouched (every card's
+acceptance step 8 passed, and the run archive commit touches only `.morph/` and
+`decks/`). Max slice + targets: 48 943 bytes (`weigh-judge`); `deck check` hazards 0.
+
+Open for the next cut: `tests/cards/model.examples.test.ts` and
+`tests/cards/hazards.examples.test.ts` (both judges failed) — fix §2.1's tiny.json
+wording and add to the judge instruction that a card example is the object literal,
+not a deck fixture; add a `read-write` fixture with two writers of one path.
