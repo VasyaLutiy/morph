@@ -6,7 +6,9 @@ The only `docs` entry every card reads. Keep it under 3 KB.
   `moduleResolution` `NodeNext`: every relative import carries the `.js` extension
   (`import { x } from "./model.js"`), and types are imported with `import type`.
   No `any`: use `unknown` and narrow. Package imports are `node:*` only; the one
-  runtime dependency, `yaml`, is imported only under `src/contour/`.
+  runtime dependency, `yaml`, is imported only under `src/contour/`. The typings are
+  Node's without DOM: `XMLHttpRequest` and `WebSocket` are not names; reach a global
+  through `globalThis as unknown as Record<string, unknown>`.
 - **Layout.** One Component of the record = one directory `src/<component>/`; file
   names camelCase. Tests live in `tests/<component>/<name>.test.ts` (the author's smoke
   test) and `tests/<component>/<name>.examples.test.ts` (the judge's test, one
