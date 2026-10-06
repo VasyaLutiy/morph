@@ -76,7 +76,7 @@ cycle below with a fresh run agent (`morph-orch-opus55`). Every later phase star
   Ceiling $0.10 for the smoke. Record it as its own row in `docs/MEASURE.md` ("P7 smoke":
   written/failed, $, minutes, exit code, the JSON on stdout in one line) and the deck in
   `decks/p7/smoke/`. A red smoke is debt with its failure class (below), not a stopped
-  phase; the session goes on to P8 and posts the result to Telegram.
+  phase; the session posts the result to Telegram and stops (see "Smoke stops").
 
 ## Failure
 
@@ -106,6 +106,14 @@ phase gets `max_tokens` ≥ 20000.
   <one-line symptom>" and a body of: run ids, what was tried, the attempts' reasons
   verbatim, the proposed fix and who owns it (session or operator). Its URL goes into the
   DECISIONS line. A debt closed later closes its issue with the commit that closed it.
+  The body also names the code left without a judge or a proof ("unguarded: <paths>") —
+  the first suspects when a later smoke goes red.
+- **Debt ceiling**: three open issues with the label `debt` stop the session, whatever
+  their phases, with a Telegram report listing them. The session does not pick the next
+  phase until the operator closes or accepts them. This stop is the rule's, not a choice.
+- **Smoke stops**: a live glm53 smoke of the V2 binary after P7, after P10 (the
+  dogfooding switch) and after P11 (the first phase built by V2). After each smoke the
+  session stops for the operator, red or green, and posts the open `debt` issues with it.
 - Two phases stopped in a row: the session stops and reports. Only classes the session
   could not fix alone count; a smoke debt does not.
 
