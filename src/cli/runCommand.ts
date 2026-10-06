@@ -1,0 +1,124 @@
+import { readRegistry, PREFIX } from "../processor/registry.js";
+import { realTransport } from "../processor/send.js";
+import { findHazards } from "../cards/hazards.js";
+import { runDeck } from "../runloop/deck.js";
+import { openRunBranch } from "../git/branch.js";
+import { makeCommitHook } from "../git/commit.js";
+import { archiveRun } from "../git/archive.js";
+import { errorDocument, readDeckFile, runExitCode } from "./document.js";
+import type { CliDeps, CommandResult, RunArgs, RunDocument } from "./types.js";
+
+export function mintRunId(ms: number): string {
+  // the UTC time of ms as YYYYMMDD-HHMMSS: new Date(ms).toISOString() is
+  // "YYYY-MM-DDTHH:MM:SS.sssZ", so the digits are picked in place
+  const iso = new Date(ms).toISOString();
+  return (
+    iso.slice(0, 4) +
+    iso.slice(5, 7) +
+    iso.slice(8, 10) +
+    "-" +
+    iso.slice(11, 13) +
+    iso.slice(14, 16) +
+    iso.slice(17, 19)
+  );
+}
+
+export async function runCommand(
+  root: string,
+  args: RunArgs,
+  deps: CliDeps
+): Promise<CommandResult> {
+  // 1. the registry reads deps.env only, never the process environment
+  const registry = readRegistry(deps.env);
+  const config = registry.configs.find((c) => c.id === args.processor);
+  if (config === undefined) {
+    const relevant = registry.faults
+      .filter((f) => f.key.startsWith(PREFIX + args.processor + "_"))
+      .map((f) => f.message);
+    const suffix = relevant.length > 0 ? ": " + relevant.join("; ") : "";
+    return {
+      code: 4,
+      document: errorDocument(
+        4,
+        "UsageError",
+        "processor " + args.processor + " is not configured" + suffix
+      ),
+    };
+  }
+
+  // 2. the deck file; its failure is the result
+  const deckFile = readDeckFile(root, args.deck);
+  if (!deckFile.ok) {
+    return deckFile.result;
+  }
+  const deck = deckFile.deck;
+
+  // 3. hazard errors refuse the run before any git call or spend
+  const hazardErrors = findHazards(deck).filter((h) => h.severity === "error");
+  if (hazardErrors.length > 0) {
+    const items = hazardErrors.map(
+      (h) =>
+        h.kind +
+        " " +
+        h.cards.join(",") +
+        (h.path === null ? "" : " " + h.path)
+    );
+    return {
+      code: 2,
+      document: errorDocument(
+        2,
+        "RefusalError",
+        "deck has " + hazardErrors.length + " hazard error(s): " + items.join("; ")
+      ),
+    };
+  }
+
+  // 4. the one call of deps.now by runCommand itself (runDeck calls it at
+  // every generation boundary and at the end)
+  const start = deps.now();
+  const runId = args.runId ?? mintRunId(start);
+
+  // 5. open the run branch; a refusal here is still before any spend
+  const branch = openRunBranch(root, runId, deps.env);
+  if (!branch.ok) {
+    return {
+      code: 2,
+      document: errorDocument(2, "RefusalError", branch.error),
+    };
+  }
+
+  // 6. run the deck with git's commit hook and the injected clock
+  const result = await runDeck(
+    {
+      root,
+      runId,
+      branch: branch.branch,
+      deck,
+      budget: {
+        maxCards: args.maxCards ?? deck.cards.length,
+        maxRetryBatches: args.maxRetryBatches,
+        deadline: start + args.deadlineSeconds * 1000
+      }
+    },
+    {
+      config,
+      transport: deps.transport ?? realTransport(config.timeoutMs),
+      commit: makeCommitHook(root, config.model, deps.env),
+      now: deps.now,
+      env: deps.env
+    }
+  );
+
+  // 7. archive deck and report; the checkout stays on morph/<runId>
+  const archive = archiveRun(root, { runId, deck, report: result.report }, deps.env);
+
+  // 8. the Run Document, its keys in the type's order
+  const document: RunDocument = {
+    runId,
+    branch: branch.branch,
+    base: branch.base,
+    report: result.report,
+    archive
+  };
+  return { code: runExitCode(result.report, archive), document };
+}
