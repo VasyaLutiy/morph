@@ -32,5 +32,10 @@ print(msg[:1500])
 # A Stop while a background agent still works is not a stop: the main turn ended by handing
 # the work to an agent. Skip those; everything else is posted.
 if [ "$EVENT" = "stop" ] && printf '%s' "$LAST" | grep -qiE "background agent|waiting for .*agent|agent .*is now working"; then exit 0; fi
+# ... and when the tmux screen shows an agent still running (its token counter line), the main
+# turn ended only to wait: nothing to post.
+if [ "$EVENT" = "stop" ] && tmux capture-pane -pt morph 2>/dev/null | grep -qE "tokens\s*$|Waiting for [0-9]+ background agent"; then exit 0; fi
+# "Claude is waiting for your input" is the idle notice of an empty queue, not an event.
+if [ "$EVENT" = "notification" ] && printf '%s' "$LAST" | grep -qi "waiting for your input"; then exit 0; fi
 "$HERE/tg.sh" "claude ${EVENT}: ${LAST:-(no text)}"
 exit 0
