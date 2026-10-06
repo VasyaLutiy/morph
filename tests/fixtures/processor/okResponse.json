@@ -1,0 +1,30 @@
+{
+  "id": "gen-0000000001-TESTtestTESTtestTEST",
+  "provider": "Novita",
+  "model": "z-ai/glm-5.3",
+  "object": "chat.completion",
+  "created": 1791289288,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "native_finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "```ts\nexport const a = 1;\n```",
+        "refusal": null,
+        "reasoning": "The target is one constant."
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 11030,
+    "completion_tokens": 571,
+    "total_tokens": 11601,
+    "cost": 0.00538632,
+    "is_byok": false,
+    "prompt_tokens_details": { "cached_tokens": 0 },
+    "completion_tokens_details": { "reasoning_tokens": 312 }
+  }
+}

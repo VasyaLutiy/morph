@@ -14,7 +14,7 @@ const LAYERS = {
   cards: [], wait: [],
   response: ["cards"], store: ["cards"], compiler: ["cards"], language: ["cards"],
   contour: ["cards"], git: ["cards"], acceptance: ["cards", "wait", "compiler"],
-  processor: ["cards", "wait"], planner: ["cards", "contour", "language"],
+  processor: ["cards", "wait", "compiler"], planner: ["cards", "contour", "language"],
   primer: ["cards", "git", "store", "language"],
   scout: ["cards", "processor", "wait", "primer"],
   reviewer: ["cards", "contour", "primer", "scout", "git"],
@@ -30,7 +30,9 @@ const PROCESS = new Set(["cli", "processor", "acceptance", "git"]);
 const NO_CLOCK = new Set(["cards", "compiler", "response", "language", "contour", "planner"]);
 const YAML = new Set(["contour"]);
 // P3: the acceptance gets the child's environment as a parameter (docs/TASK_P3_acceptance.md §4)
-const NO_ENV = new Set(["acceptance"]);
+const NO_ENV = new Set(["acceptance", "processor"]);
+// P4: the one file of a NO_ENV layer that may read process.env (Read Registry, docs/TASK_P4_processor.md §4)
+const ENV_READERS = new Set(["src/processor/registry.ts"]);
 
 function parse(file) {
   return ts.createSourceFile(file, fs.readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true,
@@ -124,7 +126,8 @@ function checkSrc(files) {
           node.expression.text === "process" && node.name.text === "exit" && !CONSOLE.has(layer))
         report(sf, node, "process.exit outside src/cli");
       if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&
-          node.expression.text === "process" && node.name.text === "env" && NO_ENV.has(layer))
+          node.expression.text === "process" && node.name.text === "env" && NO_ENV.has(layer) &&
+          !ENV_READERS.has(rel))
         report(sf, node, `process.env in src/${layer} (the environment is a parameter)`);
     });
   }

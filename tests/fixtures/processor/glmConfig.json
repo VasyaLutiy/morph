@@ -1,0 +1,14 @@
+{
+  "id": "glm53",
+  "type": "openrouter",
+  "model": "z-ai/glm-5.3",
+  "apiKey": "sk-or-test",
+  "baseUrl": "https://openrouter.ai/api/v1",
+  "route": "sync",
+  "concurrency": 4,
+  "providerOrder": ["Novita", "Together"],
+  "reasoning": { "maxTokens": 2500 },
+  "timeoutMs": 600000,
+  "maxRetries": 2,
+  "answersDir": null
+}

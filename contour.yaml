@@ -374,35 +374,172 @@ System:
           description: The result of best-of-N verification of one card.
           schema: "{ accepted: { variant: string } | null, results: { variant: string, exit: number | null, log: string, diff: string | null }[] }"
 
-    # ---------------------------------------------------------------- P4 (skeleton)
+    # ---------------------------------------------------------------- P4 (sync route; batch is P11)
     - name: processor
       description: >
         Talks to a model provider: src/processor/*.ts. Reads the registry from the
-        environment, assembles the provider request, sends one generation (sync route
-        first: one request at a time under a concurrency limit; batch route second),
-        collects answers and usage. OpenRouter first; the processor interface is the
-        only place the network is allowed.
+        environment, assembles the OpenRouter chat-completions request, sends one
+        generation on the sync route (one request at a time per worker, at most
+        `concurrency` workers), reads answers and usage back; a stub processor answers
+        from files for runs without a provider. The transport (fetch and sleep) is a
+        parameter: the processor's own transport is the only thing a test mocks. The
+        batch route (/api/beta/batches, submit/collect) is P11.
       language: typescript
+      requirements: [Deterministic Core]
       functions:
         - name: Read Registry
           description: MORPH_PROCESSOR_<id>_* env vars into Processor Configs; invalid ones are listed, not dropped silently.
+          behavior: >
+            readRegistry(env) takes the environment as a parameter (default: the process
+            environment; the only environment read of the Component). A variable
+            MORPH_PROCESSOR_<id>_<KEY> names processor <id> ([A-Za-z0-9-]+, no underscore)
+            and one of the keys TYPE, MODEL, API_KEY, BASE_URL, ROUTE, CONCURRENCY,
+            PROVIDER_ORDER, REASONING_MAX_TOKENS, REASONING_EFFORT, TIMEOUT_MS,
+            MAX_RETRIES, ANSWERS_DIR; values are trimmed and an empty value is absent.
+            TYPE openrouter|stub is required; openrouter requires MODEL and API_KEY,
+            stub requires ANSWERS_DIR (model defaults to "stub"). Defaults: BASE_URL
+            https://openrouter.ai/api/v1, ROUTE sync (sync|batch), CONCURRENCY 1,
+            TIMEOUT_MS 600000, MAX_RETRIES 2, PROVIDER_ORDER null (else the comma list,
+            trimmed), reasoning null (else {maxTokens} or {effort}, never both). Every
+            fault is {key: the variable, message starting with it}; a processor with any
+            fault yields no config. Configs sorted by id, faults by key.
+          steps:
+            - produces: Processor Config
+          examples:
+            - given: 'env {PATH: "/usr/bin:/bin", MORPH_PROCESSOR_glm53_TYPE: "openrouter", MORPH_PROCESSOR_glm53_MODEL: "z-ai/glm-5.3", MORPH_PROCESSOR_glm53_API_KEY: "sk-or-test", MORPH_PROCESSOR_glm53_CONCURRENCY: "4", MORPH_PROCESSOR_glm53_PROVIDER_ORDER: "Novita, Together", MORPH_PROCESSOR_glm53_REASONING_MAX_TOKENS: "2500"}'
+              when: "read"
+              then: 'faults []; configs exactly [the config of the fixture]: id glm53, route sync, concurrency 4, providerOrder ["Novita", "Together"], reasoning {maxTokens: 2500}, timeoutMs 600000, maxRetries 2, answersDir null'
+              ref: "tests/fixtures/processor/glmConfig.json (the one config)"
+            - given: 'env {MORPH_PROCESSOR_stub_TYPE: "stub", MORPH_PROCESSOR_stub_ANSWERS_DIR: " /tmp/answers "}'
+              when: "read"
+              then: 'faults []; one config {id: "stub", type: "stub", model: "stub", apiKey: null, baseUrl: "https://openrouter.ai/api/v1", route: "sync", concurrency: 1, providerOrder: null, reasoning: null, timeoutMs: 600000, maxRetries: 2, answersDir: "/tmp/answers"}'
+            - given: 'env {MORPH_PROCESSOR_a_TYPE: "openrouter", MORPH_PROCESSOR_b_TYPE: "stub", MORPH_PROCESSOR_b_ANSWERS_DIR: "/x", MORPH_PROCESSOR_b_CONCURRENCY: "0", MORPH_PROCESSOR_c_TYPE: "openai", MORPH_PROCESSOR_d_TYPE: "stub", MORPH_PROCESSOR_d_ANSWERS_DIR: "/x"}'
+              when: "read"
+              then: 'configs: only d; faults exactly four, in this order: MORPH_PROCESSOR_a_API_KEY "MORPH_PROCESSOR_a_API_KEY is required", MORPH_PROCESSOR_a_MODEL "MORPH_PROCESSOR_a_MODEL is required", MORPH_PROCESSOR_b_CONCURRENCY "MORPH_PROCESSOR_b_CONCURRENCY must be a positive integer (got ''0'')", MORPH_PROCESSOR_c_TYPE "MORPH_PROCESSOR_c_TYPE must be one of openrouter, stub (got ''openai'')"'
+            - given: 'env {MORPH_PROCESSOR_e_TYPE: "stub", MORPH_PROCESSOR_e_ANSWERS_DIR: "/x", MORPH_PROCESSOR_e_REASONING_EFFORT: "low", MORPH_PROCESSOR_e_REASONING_MAX_TOKENS: "100", MORPH_PROCESSOR_e_FOO: "1", MORPH_PROCESSOR_x_y_TYPE: "stub"}'
+              when: "read"
+              then: 'configs []; faults exactly four, in this order: "MORPH_PROCESSOR_e_FOO is not a known key", "MORPH_PROCESSOR_e_REASONING_EFFORT conflicts with MORPH_PROCESSOR_e_REASONING_MAX_TOKENS: set one", "MORPH_PROCESSOR_x_TYPE is required", "MORPH_PROCESSOR_x_y_TYPE is not a known key" (the id is x, its key y_TYPE)'
         - name: Assemble Request
           description: Request → provider JSON (OpenRouter chat completions) with provider.order + allow_fallbacks false when pinned, reasoning, usage.include; never tool_choice.
-        - name: Send Generation
-          description: Sends every Request of a generation, returns Answers and Usage per customId; retries transport errors with backoff; a provider refusal is recorded, not retried.
+          behavior: >
+            assembleRequest(request, config) is pure. url = baseUrl without trailing
+            slashes + "/chat/completions"; headers Authorization "Bearer <apiKey>" (absent
+            when apiKey is null) and Content-Type application/json. body: model = the
+            request's model or the config's; messages copied as {role, content};
+            max_tokens = the request's maxTokens, absent when null; reasoning = the
+            request's or else the config's, {maxTokens: n} as {max_tokens: n}, {effort}
+            as is, absent when both are null; provider {order, allow_fallbacks: false}
+            only when providerOrder is not null; usage {include: true} always. No other
+            key: never tool_choice, tools or stream.
           steps:
-            - calls: Assemble Request
+            - reads: Request
+            - reads: Processor Config
+          examples:
+            - given: 'request {customId: "a.v1", model: null, maxTokens: 12000, reasoning: null, messages: [{role: "user", content: "hi"}]}; the config of tests/fixtures/processor/glmConfig.json'
+              when: "assembled"
+              then: 'url "https://openrouter.ai/api/v1/chat/completions"; headers Authorization "Bearer sk-or-test", Content-Type "application/json"; JSON.stringify(body) is exactly {"model":"z-ai/glm-5.3","messages":[{"role":"user","content":"hi"}],"max_tokens":12000,"reasoning":{"max_tokens":2500},"provider":{"order":["Novita","Together"],"allow_fallbacks":false},"usage":{"include":true}}'
+            - given: 'request {customId: "b.v2", model: "x/y", maxTokens: null, reasoning: {effort: "low"}, messages: [{role: "system", content: "s"}, {role: "user", content: "u"}]}; the glm config with baseUrl "http://127.0.0.1:9/v1/" and providerOrder null'
+              when: "assembled"
+              then: 'url "http://127.0.0.1:9/v1/chat/completions"; JSON.stringify(body) is exactly {"model":"x/y","messages":[{"role":"system","content":"s"},{"role":"user","content":"u"}],"reasoning":{"effort":"low"},"usage":{"include":true}} — no max_tokens, no provider, no tool_choice'
+        - name: Read Response
+          description: One provider reply (HTTP status + body text) into an Answer and its Usage.
+          behavior: >
+            readResponse(customId, status, text) is pure and never throws. Usage is read
+            from any JSON body: id → generationId, provider, usage.prompt_tokens →
+            inputTokens and usage.completion_tokens → outputTokens (0 when absent),
+            usage.cost (null when absent). Status outside 200..299 → error
+            "http <status>: <error.message of the JSON body, else the first 200 chars of
+            the text>". Status 2xx: a body that is not JSON → "unreadable response:
+            <first 200 chars>"; a body with an error object → "provider error:
+            <error.message>"; no choices → "provider error: no choices"; otherwise text =
+            choices[0].message.content (null when not a string: a reasoning model that
+            spent its budget answers finish_reason "length" with no content, which is a
+            truncation, not an error) and finishReason = choices[0].finish_reason.
+          steps:
             - produces: Answer
             - produces: Usage
+          examples:
+            - given: 'customId "a.v1", status 200, the text of the fixture (a recorded glm answer, cleaned)'
+              when: "read"
+              then: 'answer {customId: "a.v1", text: "```ts\nexport const a = 1;\n```", finishReason: "stop", error: null}; usage {customId: "a.v1", inputTokens: 11030, outputTokens: 571, cost: 0.00538632, provider: "Novita", generationId: "gen-0000000001-TESTtestTESTtestTEST"}'
+              ref: "tests/fixtures/processor/okResponse.json"
+            - given: 'customId "a.v2", status 200, the text of the fixture (content null, finish_reason "length")'
+              when: "read"
+              then: 'answer {text: null, finishReason: "length", error: null}; usage inputTokens 15550, outputTokens 12000, cost 0.0172'
+              ref: "tests/fixtures/processor/lengthResponse.json"
+            - given: 'customId "a.v1", status 402, the text of the fixture (an OpenRouter error body)'
+              when: "read"
+              then: 'answer {text: null, finishReason: null, error: "http 402: Insufficient credits. Add more using https://openrouter.ai/settings/credits"}; usage {inputTokens: 0, outputTokens: 0, cost: null, provider: null, generationId: null}'
+              ref: "tests/fixtures/processor/errorResponse.json"
+            - given: 'customId "a.v1", status 200, text "<html>bad gateway</html>"'
+              when: "read"
+              then: 'answer error "unreadable response: <html>bad gateway</html>", text null, finishReason null; usage tokens 0 and 0'
+        - name: Stub Answer
+          description: The stub processor's answer to one Request, read from a directory of answer files; no network.
+          behavior: >
+            stubAnswer(request, config) reads <answersDir>/<customId>.md, else
+            <answersDir>/<customId without its final .v<n>>.md; found → text = the file
+            (UTF-8, as is), finishReason "stop", error null; usage 0 and 0 tokens, cost 0,
+            provider "stub", generationId "stub-<customId>". Neither file → text null,
+            finishReason null, error "stub has no answer: <answersDir>/<customId>.md".
+          steps:
+            - reads: Request
+            - produces: Answer
+            - produces: Usage
+          examples:
+            - given: 'answersDir holding a.v1.md = "```ts\nexport const a = 1;\n```\n"; request a.v1'
+              when: "answered"
+              then: 'answer {customId: "a.v1", text: "```ts\nexport const a = 1;\n```\n", finishReason: "stop", error: null}; usage {inputTokens: 0, outputTokens: 0, cost: 0, provider: "stub", generationId: "stub-a.v1"}'
+            - given: 'answersDir holding only a.md = "A\n"; request a.v2'
+              when: "answered"
+              then: 'text "A\n", finishReason "stop", generationId "stub-a.v2"'
+            - given: 'an empty answersDir <d>; request b.v1'
+              when: "answered"
+              then: 'text null, finishReason null, error "stub has no answer: <d>/b.v1.md"'
+        - name: Send Generation
+          description: Sends every Request of a generation, returns Answers and Usage per customId; retries transport errors with backoff; a provider refusal is recorded, not retried.
+          behavior: >
+            sendGeneration(config, requests, transport) never rejects; answers and usage
+            come back in the order of requests, one each. Route batch → every answer
+            "route batch is not available on the sync sender", no call. Type stub →
+            Stub Answer per request, no call. Type openrouter: at most concurrency
+            requests in flight; each is Assemble Request, then transport.fetch(url,
+            {method POST, headers, body JSON}) and Read Response. A thrown fetch
+            ("transport: <message>") or status 408, 429 or 5xx is retried up to
+            maxRetries times, sleeping transport.sleep(1000 * 2^k) before retry k+1; any
+            other status, refusals included, is final at once. A request still failing
+            after retries gets " (after <attempts> attempts)" appended to its error.
+          steps:
+            - calls: Assemble Request
+            - calls: Read Response
+            - calls: Stub Answer
+            - produces: Answer
+            - produces: Usage
+          examples:
+            - given: 'the glm config; requests a.v1 and a.v2 (messages [{role: "user", content: "hi"}]); a fakeFetch whose route https://openrouter.ai/api/v1/chat/completions answers status 200 with the text of tests/fixtures/processor/okResponse.json'
+              when: "sent"
+              then: 'two calls, both POST with header Authorization "Bearer sk-or-test" and a body whose usage is {include: true}; answers [a.v1, a.v2] both with finishReason "stop" and error null; usage both 11030 in, 571 out; no sleep'
+            - given: 'the glm config (maxRetries 2); request a.v1; a fakeFetch with failAll(new Error("socket hang up"))'
+              when: "sent"
+              then: 'three calls; sleeps [1000, 2000]; answer error "transport: socket hang up (after 3 attempts)", text null; usage 0 in, 0 out, cost null'
+            - given: 'the glm config; request a.v1; the route answers status 402 with the text of tests/fixtures/processor/errorResponse.json'
+              when: "sent"
+              then: 'one call, no sleep; answer error "http 402: Insufficient credits. Add more using https://openrouter.ai/settings/credits"'
+            - given: 'the glm config; request a.v1; a transport whose first call answers status 503 with text "upstream down" and every later call status 200 with okResponse.json'
+              when: "sent"
+              then: 'two calls; sleeps [1000]; answer finishReason "stop", error null; usage 11030 in'
+            - given: 'the glm config with concurrency 2; requests r1.v1, r2.v1, r3.v1; a transport that counts calls in flight and yields before answering status 200 with okResponse.json'
+              when: "sent"
+              then: 'at most 2 in flight, 3 calls; answers in the order r1.v1, r2.v1, r3.v1'
       dataObjects:
         - name: Processor Config
           description: One processor as read from the environment.
-          schema: "{ id, type: 'openrouter', model, apiKey, route: 'sync'|'batch', concurrency, providerOrder: string[] | null, reasoning, timeoutMs, maxRetries }"
+          schema: "{ id, type: 'openrouter'|'stub', model, apiKey: string | null, baseUrl, route: 'sync'|'batch', concurrency, providerOrder: string[] | null, reasoning: Card.reasoning, timeoutMs, maxRetries, answersDir: string | null }"
         - name: Answer
           description: One model answer to one Request, or its failure.
           schema: "{ customId, text: string | null, finishReason: string | null, error: string | null }"
         - name: Usage
-          description: Tokens and cost of one Request as the provider reported them.
+          description: Tokens and cost of one Request as the provider reported them (0 tokens and null cost when it reported none).
           schema: "{ customId, inputTokens, outputTokens, cost: number | null, provider: string | null, generationId: string | null }"
 
     # ---------------------------------------------------------------- P5 (skeleton)
@@ -521,6 +658,9 @@ Requirement:
       randomness, no environment reads. acceptance is bound only in its pure parts (Snapshot
       Targets, Build Attempt Diff): Run Acceptance spawns a shell and its only timer is the
       child's timeout; env and the timeout are parameters, never process.env (06.10, P3).
+      processor reads the environment only in Read Registry; Assemble Request, Read Response
+      and Stub Answer are pure of clock and network; the transport and its sleep are
+      parameters of Send Generation (P4).
   - name: Node Only
     description: >
       Runtime dependencies: Node 20 built-ins and the package `yaml` (the record reader), nothing

@@ -8,6 +8,7 @@ shared steps here. Hand-written data, never product code.
     python3 decks/tools/build.py p2     -> the same for the P2 cards (Component compiler)
     python3 decks/tools/build.py p3     -> the same for the P3 cards (Component acceptance; code
                                            cards write no test file, the probe covers them)
+    python3 decks/tools/build.py p4     -> the same for the P4 cards (Component processor, sync route)
 
 Paths are relative to the repository root (the parent of decks/); nothing here points
 outside the tree.
@@ -211,6 +212,22 @@ P3_JUDGE_LITERALS = {
 P3_JUDGE_EXAMPLES = {"snapshot-targets-judge": 3, "run-acceptance-judge": 4, "verify-card-judge": 3,
                      "build-attempt-diff-judge": 4}
 
+P4_TEST_DIR = "tests/processor"
+# docs/TASK_P4_processor.md §3: the example literals of Component processor
+P4_JUDGE_LITERALS = {
+    "read-registry-judge": ["glmConfig.json", "must be a positive integer", "MORPH_PROCESSOR_e_FOO is not a known key",
+                            "MORPH_PROCESSOR_x_TYPE is required", "/tmp/answers"],
+    "assemble-request-judge": ["Bearer sk-or-test", "http://127.0.0.1:9/v1/", "allow_fallbacks", "tool_choice"],
+    "read-response-judge": ["okResponse.json", "lengthResponse.json", "errorResponse.json",
+                            "gen-0000000001-TESTtestTESTtestTEST", "unreadable response: <html>bad gateway</html>",
+                            "stub-a.v1", "stub has no answer: "],
+    "send-generation-judge": ["fakeFetch", "failAll", "socket hang up (after 3 attempts)", "upstream down",
+                              "Insufficient credits"],
+}
+# Read Registry 4, Assemble Request 2, Read Response 4 + Stub Answer 3, Send Generation 5
+P4_JUDGE_EXAMPLES = {"read-registry-judge": 4, "assemble-request-judge": 2, "read-response-judge": 7,
+                     "send-generation-judge": 5}
+
 # one phase = the cards of one Component in morph-map.json (judges are <code>-judge); the
 # generation layering and the sibling exclusion are computed within the phase only.
 # smoke: whether a code card writes its own smoke test (P1-P2 yes; from P3 a code card covered
@@ -221,6 +238,8 @@ PHASES = {
     "p2": {"parts": "p2", "test_dir": P2_TEST_DIR, "examples": P2_JUDGE_EXAMPLES, "literals": P2_JUDGE_LITERALS,
            "smoke": True},
     "p3": {"parts": "p3", "test_dir": P3_TEST_DIR, "examples": P3_JUDGE_EXAMPLES, "literals": P3_JUDGE_LITERALS,
+           "smoke": False},
+    "p4": {"parts": "p4", "test_dir": P4_TEST_DIR, "examples": P4_JUDGE_EXAMPLES, "literals": P4_JUDGE_LITERALS,
            "smoke": False},
 }
 
@@ -326,7 +345,7 @@ def build_phase(phase):
 
 
 BUILDERS = {"p0": build_p0, "p1": lambda: build_phase("p1"), "p2": lambda: build_phase("p2"),
-            "p3": lambda: build_phase("p3")}
+            "p3": lambda: build_phase("p3"), "p4": lambda: build_phase("p4")}
 
 
 def main(argv):
