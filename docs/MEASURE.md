@@ -11,6 +11,7 @@
 | P3 | mrph | 8 / 8 / 16 (2 runs: 1+8 written) | 0.2254 / opus55 ≈137k/66/47 (run agent; prep on the laptop) | 42 | 0 из 16 | 0 | 1 (diff hunk start) | 0 | — | 0 | 60876 |
 | P4 | mrph | 8 / 8 / 13 (2 runs: 7+1 written; re-cut 1 card) | 0.1406 / opus55 ≈120k/45/32 (run agent) | 17 | 5 из 13 | 0 | 0 | 0 | — | 0 | 59990 |
 | P5 | mrph | 8 / 7 / 20 (3 runs: 7+0+0 written; re-cut 1 card, failed again; debt run at max_tokens 25500 failed — debt open: generation judge) | 0.2787 (incl. debt run 0.0952) / opus48 prep 261k/76/33 + run ≈160k/30/45 + opus55 debt ≈90k/35/40 | 44 | 2 из 17 | 0 | 0 | 0 | — | 0 | 56357 |
+| P5 debt (fable) | claude -p | 1 / 1 / 0 (process-generation-judge, processor swap: Fable 5.1 xhigh; 14 tests, 1 acceptance run, 0 defects, 2/2 mutations killed; closes #2) | 4.1723 (Fable, subscription list price) / — | 7 | — | 0 | 0 | 0 | — | 0 | — |
 | P6 | mrph | 8 / 8 / 6 (1 run, no re-cut) | 0.0984 / opus55 prep ≈226k/70/22 + run ≈100k/20/30 | 18 | 1 из 6 | 0 | 0 | 0 | — | 0 | 38522 |
 | P7 | mrph | 10 / 10 / 6 (1 run, no re-cut) | 0.1276 / opus55 prep 252k/68/23 + run ≈110k/40/30 | 17 | 0 из 6 | 0 | 0 | 0 | — | 0 | 66256 |
 | P7 smoke | V2 binary (`dist/cli.js run`, glm53 z-ai/glm-5.3 via OpenRouter, Novita) | 3 / 3 / 0 (exit 0, 2 generations, 3 requests, 355 in / 106 out tokens) | 0.0003 (usageTotals.cost 0.00028902) / opus55 smoke ≈90k | 0.2 (10 s) | — | 0 | — | — | 0 | 0 errors, 2 implicit-read warnings | 0 |
