@@ -70,6 +70,18 @@ test("§2.2: gitOk returns stdout untrimmed on exit 0", () => {
   }
 });
 
+test("§2.2: gitOk keeps only the first line of a multi-line stderr and names args[0]", () => {
+  const r = tmpRepo();
+  try {
+    const args = ["-c", "alias.two=!echo one >&2; echo two >&2; exit 3", "two"];
+    const got = runGit(r.root, args, gitEnv(r.root));
+    expect(`${got.code} ${JSON.stringify(got.stderr)}`, "runGit").toBe('3 "one\\ntwo\\n"');
+    expect(thrown(() => gitOk(r.root, args, gitEnv(r.root))), "gitOk message").toBe("git -c failed (exit 3): one");
+  } finally {
+    r.rm();
+  }
+});
+
 test("§2.2: a spawn failure is code null and 'git could not start: ', never a throw; gitOk names exit null", () => {
   const r = tmpRepo();
   try {

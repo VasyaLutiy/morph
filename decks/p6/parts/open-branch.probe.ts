@@ -104,6 +104,24 @@ test("§2.2: a staged rename names the new path; a modified tracked file under .
   }
 });
 
+test("§2.2: dirty paths are sorted, not in git's order (tracked changes before untracked)", () => {
+  const r = tmpRepo();
+  try {
+    r.write("z.md", "one\n");
+    r.git(["add", "z.md"]);
+    r.git(["commit", "-q", "-m", "z"]);
+    r.write("z.md", "two\n");
+    r.write("a.txt", "x\n");
+    expect(r.git(["status", "--porcelain", "--untracked-files=all"]), "git's order").toBe("M z.md\n?? a.txt");
+    expect(openRunBranch(r.root, "s1", gitEnv(r.root)), "sorted").toStrictEqual({
+      ok: false,
+      error: "dirty tree outside .morph/: a.txt, z.md",
+    });
+  } finally {
+    r.rm();
+  }
+});
+
 test("§2.2: an invalid runId makes no git call; a git fault is a thrown Error", () => {
   const t = tmpRoot();
   try {

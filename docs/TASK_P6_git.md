@@ -236,11 +236,11 @@ Code cards (targets under `src/git/` only; `run-git` also writes `types.ts`):
    only in `src/git/run.ts`; no `process` at all in `src/git` (so no `process.env`: the env is a
    parameter); no `fetch`, no `console`, no `any`, no package imports; `node:fs`, `node:path` allowed.
 5. `decks/p6/parts/<card>.probe.ts` under vitest: one `test` per record example of the card's
-   Function(s), values **and** types, then the §2.2 rows (run-git: gitOk's stdout, a spawn failure;
-   open-branch: a staged rename, a modified tracked file under `.morph/`, no git call for an
+   Function(s), values **and** types, then the §2.2 rows (run-git: gitOk's stdout, the first line of a
+   multi-line stderr, a spawn failure; open-branch: dirty paths sorted against git's order, a staged rename, a modified tracked file under `.morph/`, no git call for an
    invalid id, a non-repo thrown; commit-card: a binary file counts 0, a deleted target,
    `Morph-Acceptance-Exit` as given, the hook is a `CommitHook`; archive-run: all four statuses
-   counted, an invalid id writes nothing, `RunReport` is an `ArchivedReport`). 6 + 7 + 7 + 5 = 25 tests.
+   counted, an invalid id writes nothing, `RunReport` is an `ArchivedReport`). 7 + 8 + 7 + 5 = 27 tests.
 6. `vitest run` — everything in the tree.
 7. Own git: HEAD, symbolic HEAD and refs equal `G0`, else `tests changed this repository's HEAD or refs:`.
 8. Frozen: `git diff --quiet HEAD -- contour.yaml morph-map.json docs decks tests/fixtures`; no
@@ -331,11 +331,11 @@ venv/bin/mrph run --root <repo> --processor glm53 --deadline 2400   # by the gat
 |---|---|
 | cards in the deck | 8 (4 code, 4 judge) |
 | generations | 4 (run-git; open-branch + commit-card + run-git-judge; archive-run + open-branch-judge + commit-card-judge; archive-run-judge) |
-| executor bill | ≈ $0.13 nominal (≈ 220k in, 50k out at $0.31/M in, $1.13/M out), ≤ $0.30 with a re-cut |
+| executor bill | ≈ $0.15 nominal (≈ 230k in, 70k out at $0.31/M in, $1.13/M out: 12 first requests × ≈ 14k in + ≈ 4 retries), ≤ $0.30 with a re-cut |
 | cards with regeneration | 2 of 8 |
 | `write-write` / `read-write` at `deck check` | 0 / 0 |
 | tests after the run | 245 + 4 judge files; ≥ 15 judge example tests |
-| chain on a dry tree with stubs | code cards red at the probe per example (readable `Error: stub`), judges red at the guard (file missing); with a reference implementation every probe green and single-rule mutations redden it |
+| chain on a dry tree with stubs | code cards red at the probe per example (readable `Error: stub <fn> …`), judges red at eslint (`No files matching the pattern "tests/git/<m>.examples.test.ts"`); with a reference implementation every probe green and single-rule mutations redden it |
 | first red | run-git: the env laid over (LC_ALL/USER) or gitOk's message; open-branch: the rename/.morph rule or sorting; commit-card: the pathspec on commit (hand-staged file swept in) or the diffstat of a binary; archive: the count trailers or the catch |
 
 **Falsifiable claims:** (1) no card goes red on a sibling's file; (2) no judge red traces to §2.1;
