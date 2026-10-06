@@ -1,0 +1,121 @@
+{
+  "deck_id": "20261006-123045-da9a6404",
+  "completed_at": "2026-10-06T12:32:47.530",
+  "branch": "morph/20261006-123045-da9a6404",
+  "backend_label": "glm53",
+  "generations": [
+    [
+      "card-model-judge",
+      "hazards-judge"
+    ]
+  ],
+  "batch_ids": [
+    "local-61d8e094584848039f6888397de2d879",
+    "local-8d1a0c53c8ee4392b06589c14175a646"
+  ],
+  "outcomes": {
+    "hazards-judge": {
+      "custom_id": "hazards-judge",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/tests/cards/hazards.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "hazards-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "2fbaa4da4247d3ba33345cbf0d1ef9d3d3211144",
+      "diffstat": [
+        {
+          "path": "tests/cards/hazards.examples.test.ts",
+          "insertions": 106,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/cards/hazards.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "card-model-judge": {
+      "custom_id": "card-model-judge",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/tests/cards/model.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 2,
+      "winning_variant": "card-model-judge.r1",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\n== eslint\n== guard\n== own\n FAIL  tests/cards/model.examples.test.ts > loadDeck section 2.2 rules > not valid JSON gives one deck fault\nAssertionError: expected 'deck is not valid JSON: Expected property name or \\'}\\' in JSON at position 2 (line 1 column 3)' to be 'deck is not valid JSON: Unexpected token n in JSON at position 2' // Object.is equality\nExpected: \"deck is not valid JSON: Unexpected token n in JSON at position 2\"\n    262|       \"deck is not valid JSON: Unexpected token n in JSON at position …\n Test Files  1 failed (1)\n      Tests  1 failed | 18 passed (19)\n",
+      "commit": "2000dd08ab74b340e52ec55560bb306c2f77de2e",
+      "diffstat": [
+        {
+          "path": "tests/cards/model.examples.test.ts",
+          "insertions": 269,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/cards/model.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    }
+  },
+  "usage": {
+    "hazards-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791286246-txOwrseDE6y9D4TLM4w4",
+      "input_tokens": 16826,
+      "output_tokens": 1148,
+      "cost": 0.00825396,
+      "finish_reason": "stop"
+    },
+    "card-model-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791286246-7Kccp88PrYAXbDaSTQfv",
+      "input_tokens": 15610,
+      "output_tokens": 2756,
+      "cost": 0.006867144,
+      "finish_reason": "stop"
+    },
+    "card-model-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791286312-SId1k8MHVhnnHXpVFCND",
+      "input_tokens": 21038,
+      "output_tokens": 2570,
+      "cost": 0.01190004,
+      "finish_reason": "stop"
+    }
+  },
+  "usage_totals": {
+    "input_tokens": 53474,
+    "output_tokens": 6474,
+    "cost": 0.027021144,
+    "requests": 3,
+    "requests_with_usage": 3
+  },
+  "orchestrator_usage": {}
+}
