@@ -377,11 +377,11 @@ venv/bin/mrph run --root <repo> --processor glm53 --deadline 2400   # by the gat
 |---|---|
 | cards in the deck | 8 (4 code, 4 judge) |
 | generations | 4 (read-registry; assemble-request + read-response + read-registry-judge; send-generation + assemble-request-judge + read-response-judge; send-generation-judge) |
-| executor bill | ≤ $0.30 (forecast at the gate below; P3 was $0.2254 for 8 cards with a re-cut) |
+| executor bill | ≈ $0.14 nominal (≈ 228k tokens in, 57k out at the glm53 rates fitted on the six V2 runs, $0.31/M in, $1.13/M out; 1.5 attempts per card), ≤ $0.30 with a re-cut (P3: $0.2254) |
 | cards with regeneration | 2 of 8 |
 | `write-write` / `read-write` at `deck check` | 0 / 0 |
 | tests after the run | 160 + 4 judge files; ≥ 18 judge example tests |
-| chain on a dry tree with stubs | see the gate numbers below |
+| chain on a dry tree with stubs | measured before the gate in a scratch worktree: code cards 5.6–6.6 s, red at the probe on every example (18 of 18, each a readable `Error: stub <fn> …` line); judges 4.3–5.0 s, red at the guard (count and literals); with a reference implementation of §2.2 every code chain is green end to end in 13.7–14.3 s, and 18 of 18 single-rule mutations of it (sort by `localeCompare`, id split, sleep before the first attempt, suffix on maxRetries 0, 408 not retried, null content as `""`, 2xx as `=== 200`, …) redden the probe |
 | first red | read-registry: fault order (`localeCompare` instead of code units) or the id split on the last `_`; send-generation: the sleep before the first attempt, or the suffix on a maxRetries 0 failure; read-response: a null content turned into `""` or an error |
 
 **Falsifiable claims:** (1) no card goes red on a sibling's file; (2) no judge red traces to
