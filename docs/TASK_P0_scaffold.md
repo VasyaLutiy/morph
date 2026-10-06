@@ -162,7 +162,7 @@ tests, each with a readable line (`bin: expected undefined to strictly equal {..
 ```
 python3 decks/tools/build.py p0
 mrph deck add --root . --file decks/p0-scaffold.json && mrph deck check --root .
-mrph run --root . --processor glm
+mrph run --root . --processor glm53
 ```
 
 ## 9. Pre-registration
