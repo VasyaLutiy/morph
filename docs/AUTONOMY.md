@@ -58,8 +58,8 @@ cycle below with a fresh run agent (`morph-orch-opus55`). Every later phase star
 - **Fixtures**: by `docs/TASK_TEMPLATE.md` §2.1; recorded glm answers may be used after
   cleaning.
 - **Orchestrator model**: decided at P3 (see `docs/MEASURE.md`, "Сравнение оркестраторов"):
-  `morph-orch-opus55` prepares and runs every phase; `morph-orch-opus48` takes every third
-  phase (P5, P8, P11, P14) so the comparison continues. The agent's tokens, tool calls and
+  `morph-orch-opus55` prepares and runs every phase. `morph-orch-opus48` took P5 only; the
+  operator dropped it after P5 (06.10: P3 cost $16.98 against $6.26 for Opus 5.5). The agent's tokens, tool calls and
   minutes go into the "$ оркестр." column of `docs/MEASURE.md` as "<model> <tokens>/<calls>/<min>".
 
 ## Failure
