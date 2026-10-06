@@ -868,7 +868,7 @@ compiler), а `store` и `wait` выделял в свои, хотя в запи
 | P7 | cli | argv, dispatch, один JSON, коды выхода | **e2e из бинаря `morph` на stub**; затем первый свой прогон на glm |
 | P8 | language | профили typescript/python, цели, приёмка по профилю | |
 | P9 | contour | чтение и валидация записи и map | |
-| P10 | planner | `plan --spec`, судьи, override, бюджет | **переключатель dogfooding** |
+| P10 | planner | `plan --spec`, судьи, override, бюджет; **до записи Component прочитать issues с меткой `P10-planner`** (#3: контракты вызываемых Component и предусловия в срезе судьи, каркас теста из хелперов) | **переключатель dogfooding** |
 | P11 | processor (batch) | `/api/beta/batches`, submit/collect | **первая фаза, собранная V2** |
 | P12 | primer | дерево, владение по трейлерам, архив, markdown | |
 | P13 | scout | протокол, бюджеты, цикл, seed из primer, plan --from-scout | |

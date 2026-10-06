@@ -78,6 +78,11 @@ cycle below with a fresh run agent (`morph-orch-opus55`). Every later phase star
   `decks/p7/smoke/`. The session posts the result to Telegram and stops (see "Smoke
   stops"); a red smoke is an emergency stop.
 
+- **Lessons labelled for a phase**: before preparing phase P<N>, read the open GitHub
+  issues labelled `P<N>-<component>` (`gh issue list --label P<N>-<component>`) and build
+  them into that Component's record; the phase's DECISIONS lines name the issues they
+  answer, and the phase's merge closes them.
+
 ## Failure
 
 Every failed card gets one class, decided from the run log and the attempt files, and
