@@ -545,37 +545,154 @@ System:
     # ---------------------------------------------------------------- P5 (skeleton)
     - name: runloop
       description: >
-        The run: src/run/*.ts. Resolves runnable cards per generation, compiles,
-        sends, verifies, commits, retries with the diagnosis, records outcomes and
-        archives. Owns the run state file and the archive layout.
+        The run: src/runloop/*.ts. Resolves runnable cards per generation, compiles,
+        sends, verifies, retries with the diagnosis, records outcomes and produces the
+        run report. The git step (branch, commit, archive write) is P6: runloop fires an
+        injected commit hook for each accepted card and returns the Run Report; it owns
+        the Run Report schema and the archive layout but writes and commits nothing
+        itself. The clock (now) and the processor transport (fetch, sleep) are injected
+        parameters, so a test waits on no timer and opens no socket. The milestone is an
+        end-to-end run of a deck on the stub processor inside vitest: no network, no git.
       language: typescript
       guardrails: [Frozen Tree During Run]
       functions:
         - name: Resolve Runnable
-          description: A card whose dependency failed or was skipped is skipped with reason = that dependency.
+          description: A card whose dependency failed, was skipped or ran out of budget is skipped with the reason naming that dependency.
+          behavior: >
+            resolveRunnable(cards, done) takes the cards of one generation and `done`, a
+            Record of the final status of every card processed so far (written | failed |
+            skipped | budget-exceeded). A card is skipped when any id in its dependsOn has
+            a status in `done` other than "written"; its reason is "dependency <id>
+            <status>" for the FIRST such dependency in dependsOn order. A dependency absent
+            from `done` (external, or satisfied outside the run) is ignored. Returns
+            {runnable: Card[], skipped: CardOutcome[]} keeping the input order; a skipped
+            card's outcome is {status: "skipped", reason, attempts 0, winningVariant null,
+            acceptanceLog "", earlierFailures [], commit null, diffstat null}.
+          steps:
+            - reads: Card
+            - produces: Card Outcome
+          examples:
+            - given: 'cards [a, b] (no dependsOn); done {}'
+              when: "resolved"
+              then: 'runnable [a, b]; skipped []'
+            - given: 'cards [b] with dependsOn ["a"], and an external dep "ext"; done {a: "written"} (ext absent from done)'
+              when: "resolved"
+              then: 'runnable [b]; skipped [] (a is written, ext is ignored)'
+            - given: 'cards [b] with dependsOn ["a"]; done {a: "failed"}'
+              when: "resolved"
+              then: 'runnable []; skipped [{customId: "b", status: "skipped", reason: "dependency a failed", attempts: 0, winningVariant: null, acceptanceLog: "", earlierFailures: [], commit: null, diffstat: null}]'
+            - given: 'cards [c] with dependsOn ["x", "b"]; done {x: "written", b: "skipped"}'
+              when: "resolved"
+              then: 'runnable []; skipped [c] with reason "dependency b skipped" (the first non-written dependency in order)'
         - name: Process Generation
-          description: compile → send → parse → verify per card; stale inputs discard the answer; accepted cards fire the commit hook.
+          description: compile → send → parse → verify per card; a compile fault or stale inputs discard the answer; accepted cards fire the commit hook.
+          behavior: >
+            processGeneration(cards, deps, root) compiles every card with compileCard,
+            keeping each card's input digest; sends all variants of all cards in ONE
+            sendGeneration(deps.config, requests, deps.transport) call (so deps.config's
+            concurrency pools across the whole generation) and slices answers and usage
+            back to each card by request index; then verifies each card in input order.
+            Per card: a compile fault → {status: "failed", reason "compile: <first fault
+            message>", acceptanceLog = the fault messages joined by "\n"}; else recompute
+            the digest (captureInputs) and compareCaptures against the compile digest — a
+            non-empty change → {status: "failed", reason "stale inputs", acceptanceLog
+            "stale inputs: <changed paths, comma+space joined>"} and no acceptance is run;
+            else build one VariantAnswer per variant (variant id "<customId>.v<n>"; a
+            null-text answer becomes {corrupt: the answer's error ?? "no text returned"},
+            else parseAnswer(text, targets)) and call verifyCard. Accepted → {status:
+            "written", winningVariant = the accepted variant id, acceptanceLog = the
+            winner's log, earlierFailures = the logs of the rejected variants tried before
+            it, commit = the sha from deps.commit(customId, targets), diffstat from the
+            hook}; no variant accepted → {status: "failed", reason "acceptance failed",
+            acceptanceLog = the last variant's log, earlierFailures = the earlier variants'
+            logs, commit null, diffstat null}. attempts is 1 for every outcome of one
+            round. Returns {outcomes: CardOutcome[], usage: Usage[]} with the usage of
+            every request sent.
           steps:
             - uses: compiler
             - uses: processor
             - uses: acceptance
             - produces: Card Outcome
+          examples:
+            - given: 'a stub config (answersDir a tmp root with a.v1.md and b.v1.md, each a fenced ts block); cards [a → out/a.ts, b → out/b.ts], each acceptance passes when its file holds the marker; a recording commit hook'
+              when: "processed"
+              then: 'outcomes a and b both status "written", winningVariant "a.v1"/"b.v1", attempts 1, commit set; the commit hook fired twice; usage length 2 (provider "stub" for each)'
+            - given: 'a stub config; one card whose written file does NOT satisfy its acceptance (acceptance "exit 1")'
+              when: "processed"
+              then: 'one outcome status "failed", reason "acceptance failed", winningVariant null, commit null; the commit hook did not fire'
+            - given: 'a stub config; cards [a → shared.ts, b] where b.contextSlice holds shared.ts and a (processed first) is accepted and writes shared.ts'
+              when: "processed"
+              then: 'a status "written"; b status "failed", reason "stale inputs", acceptanceLog beginning "stale inputs: shared.ts"; b''s acceptance was never run'
         - name: Build Retry
-          description: The retry card <id>.r<n> with <acceptance_output> and <previous_attempt_diff>; at most 2 retries per card; run-wide cap on retry batches.
+          description: The retry card <base>.r<n> carrying the acceptance output and the previous attempt diff; at most 2 retries per card; a run-wide cap on retry batches is enforced by Run Deck.
+          behavior: >
+            buildRetry(card, attempt, acceptanceOutput, previousDiff) returns a NEW Card.
+            attempt must be 1 or 2, else it throws Error "buildRetry: attempt must be 1 or
+            2". The base id is card.customId with a trailing ".r<digits>" removed; the new
+            customId is "<base>.r<attempt>". intent, targets, contextSlice, acceptance,
+            model, maxTokens, reasoning and variants are copied from `card`; dependsOn is
+            []. instruction = card.instruction + "\n\nYour previous attempt failed its
+            acceptance. Fix exactly what the acceptance reports and return the whole file
+            again.\nAcceptance output:\n" + acceptanceOutput, and when previousDiff is not
+            null, + "\n\nYour previous attempt (rejected):\n" + previousDiff.
+          steps:
+            - reads: Card
+            - produces: Card
+          examples:
+            - given: 'card {customId: "c", instruction: "Write c."}; attempt 1; acceptanceOutput "exit 1\n"; previousDiff "@@ -1,1 +1,1 @@\n-old\n+new"'
+              when: "built"
+              then: 'customId "c.r1"; dependsOn []; instruction contains "Acceptance output:\nexit 1" and "Your previous attempt (rejected):\n@@ -1,1 +1,1 @@"; targets/contextSlice/acceptance/variants copied'
+            - given: 'card {customId: "c.r1", instruction: "Write c."}; attempt 2; acceptanceOutput "still red"; previousDiff null'
+              when: "built"
+              then: 'customId "c.r2" (the trailing .r1 stripped from the base); instruction ends with "Acceptance output:\nstill red" and has no "Your previous attempt" section'
+            - given: 'any card; attempt 3'
+              when: "built"
+              then: 'throws Error "buildRetry: attempt must be 1 or 2"'
         - name: Run Deck
-          description: Generations in order, budget checked at boundaries (maxCards, maxRetryBatches, deadline), archive at the end.
+          description: Generations in order (layerGenerations), budget checked at each generation boundary (maxCards, maxRetryBatches, deadline), the Run Report produced at the end.
+          behavior: >
+            runDeck(input, deps) runs input.deck generation by generation in the order of
+            layerGenerations(input.deck). At each generation boundary it checks the budget:
+            deps.now() >= input.budget.deadline → every not-yet-done card of this and the
+            later generations becomes {status: "budget-exceeded", reason "deadline"};
+            cardsProcessed >= input.budget.maxCards → reason "maxCards <maxCards>". Otherwise
+            it resolves the runnable cards (resolveRunnable with the statuses so far),
+            records the skipped outcomes, runs processGeneration on the runnable cards,
+            accumulates their usage, and adds the runnable count to cardsProcessed. A card
+            that failed is retried: for the failed cards of a round, while retryBatches <
+            input.budget.maxRetryBatches and the card has been retried fewer than 2 times,
+            a retry batch runs (retryBatches += 1): buildRetry(card, retryNumber, last
+            acceptanceLog, last diff of the winning/last variant) for each, processGeneration
+            on the retries, and a retry that is written updates the card's outcome (status
+            "written", its commit, attempts = the retry number + 1) while every attempt's
+            log is appended to earlierFailures. At the end it builds the Run Report: runId,
+            completedAt = deps.now(), branch = input.branch, processor = deps.config.id,
+            generations = the generation count, outcomes in deck order, usageTotals
+            {inputTokens, outputTokens summed; cost the sum of the reported costs or null
+            when none was reported; requests = the number of usage rows}. Returns {report,
+            outcomes}. It writes and commits nothing: the archive is P6 git's.
           steps:
             - calls: Resolve Runnable
             - calls: Process Generation
             - calls: Build Retry
             - produces: Run Report
+          examples:
+            - given: 'a two-generation deck [a, then b dependsOn a] on the stub (answers that satisfy each acceptance); budget wide; now constant'
+              when: "run"
+              then: 'report.generations 2; outcomes a and b both "written" with a commit each; usageTotals.requests 2; the commit hook fired for a then b'
+            - given: 'a one-card deck on the stub whose acceptance fails the first attempt and passes the second (a marker file the rollback keeps); budget maxRetryBatches 1'
+              when: "run"
+              then: 'the card ends "written", attempts 2, earlierFailures length 1; retryBatches reached 1'
+            - given: 'a two-generation deck [a, then b dependsOn a] on the stub; deps.now returns a value below the deadline at the first boundary and a value at or past it at the second'
+              when: "run"
+              then: 'a "written"; b "budget-exceeded", reason "deadline"; report.generations 2'
       dataObjects:
         - name: Card Outcome
           description: How one card ended in a run.
-          schema: "{ customId, status: 'written'|'failed'|'skipped'|'budget-exceeded', reason: string | null, attempts, winningVariant, acceptanceLog, earlierFailures: string[], commit: string | null, diffstat }"
+          schema: "{ customId: string, status: 'written'|'failed'|'skipped'|'budget-exceeded', reason: string | null, attempts: number, winningVariant: string | null, acceptanceLog: string, earlierFailures: string[], commit: string | null, diffstat: { files: number, insertions: number, deletions: number } | null }"
         - name: Run Report
-          description: The archived summary of one run.
-          schema: "{ runId, completedAt, branch, processor, generations, outcomes, usageTotals: { inputTokens, outputTokens, cost, requests } }"
+          description: The summary of one run (its schema and archive layout are runloop's; the file write and commit are P6 git's).
+          schema: "{ runId: string, completedAt: number, branch: string, processor: string, generations: number, outcomes: CardOutcome[], usageTotals: { inputTokens: number, outputTokens: number, cost: number | null, requests: number } }"
 
     # ---------------------------------------------------------------- P6 (skeleton)
     - name: git

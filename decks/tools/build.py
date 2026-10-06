@@ -228,6 +228,18 @@ P4_JUDGE_LITERALS = {
 P4_JUDGE_EXAMPLES = {"read-registry-judge": 4, "assemble-request-judge": 2, "read-response-judge": 7,
                      "send-generation-judge": 5}
 
+P5_TEST_DIR = "tests/runloop"
+# docs/TASK_P5_runloop.md §3: the example literals of Component runloop
+P5_JUDGE_LITERALS = {
+    "resolve-judge": ["dependency a failed", "dependency b skipped", "budget-exceeded"],
+    "process-generation-judge": ["written", "acceptance failed", "stale inputs", "stub"],
+    "build-retry-judge": ["c.r1", "c.r2", "Acceptance output:", "buildRetry: attempt must be 1 or 2"],
+    "run-deck-judge": ["budget-exceeded", "deadline", "written"],
+}
+# Resolve Runnable 4, Process Generation 3, Build Retry 3, Run Deck 3
+P5_JUDGE_EXAMPLES = {"resolve-judge": 4, "process-generation-judge": 3, "build-retry-judge": 3,
+                     "run-deck-judge": 3}
+
 # one phase = the cards of one Component in morph-map.json (judges are <code>-judge); the
 # generation layering and the sibling exclusion are computed within the phase only.
 # smoke: whether a code card writes its own smoke test (P1-P2 yes; from P3 a code card covered
@@ -240,6 +252,8 @@ PHASES = {
     "p3": {"parts": "p3", "test_dir": P3_TEST_DIR, "examples": P3_JUDGE_EXAMPLES, "literals": P3_JUDGE_LITERALS,
            "smoke": False},
     "p4": {"parts": "p4", "test_dir": P4_TEST_DIR, "examples": P4_JUDGE_EXAMPLES, "literals": P4_JUDGE_LITERALS,
+           "smoke": False},
+    "p5": {"parts": "p5", "test_dir": P5_TEST_DIR, "examples": P5_JUDGE_EXAMPLES, "literals": P5_JUDGE_LITERALS,
            "smoke": False},
 }
 
@@ -345,7 +359,7 @@ def build_phase(phase):
 
 
 BUILDERS = {"p0": build_p0, "p1": lambda: build_phase("p1"), "p2": lambda: build_phase("p2"),
-            "p3": lambda: build_phase("p3"), "p4": lambda: build_phase("p4")}
+            "p3": lambda: build_phase("p3"), "p4": lambda: build_phase("p4"), "p5": lambda: build_phase("p5")}
 
 
 def main(argv):
