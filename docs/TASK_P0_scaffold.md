@@ -177,4 +177,18 @@ Attempts, which step was first red per variant, minutes, $; the row of
 
 ## 11. Actual
 
-(filled after the run)
+Run `20261006-111605-4e09abb7`, 06.10.2026 11:16–11:19, processor glm53 (z-ai/glm-5.3, sync),
+branch `morph/20261006-111605-4e09abb7` merged into main fast-forward.
+
+- 1 card, 2 variants, accepted on attempt 3 (variant `scaffold.r2.v1`); 4 variants burned.
+- 6 requests, 64 628 input / 14 978 output tokens, **$0.0343** (forecast ≤ $0.05).
+- First red per burned variant: `v1` tsc (helpers `Error` → `{stderr}` cast; `tests/setup.ts`
+  indexes `globalThis`, names `XMLHttpRequest`); `v2` tsc (same `setup.ts` faults plus a
+  `node:net` cast); `r1.v1` tsc (`setup.ts` `globalThis` index, `net.default`); `r1.v2` probe,
+  one test of nine: `text()` of the 404 reply was `{"error": "not found"}` with a space, the
+  contract says `JSON.stringify`. tsc-first-red 3 of 4, as pre-registered in §9: the Node
+  typings without DOM are the trap of a TypeScript scaffold.
+- Lines by hand before the run: 766 (TASK 180, CONVENTIONS 29, build.py 175, guard.mjs 185,
+  probe 195, fixtures 2). Hazards: 0. Slice: 12383 bytes.
+- After the run: `tsc --noEmit`, `eslint src tests`, `vitest run --passWithNoTests` and
+  `npm run build` green on the branch; `package-lock.json` (3 109 lines) committed as data.
