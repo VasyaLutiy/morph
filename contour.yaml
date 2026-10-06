@@ -1093,7 +1093,7 @@ System:
               ref: "tests/fixtures/decks/hazardsWriteWrite.json"
               when: "main"
               then: '2; one stdout chunk beginning "{\n  \"deck\": \"d.json\",\n  \"cards\": 2,"; stderr ["morph deck check: exit 2\n"]'
-            - given: 'a run with a valid stub env and deck, --run-id r1, cwd a tmp root that is not a git repository'
+            - given: 'a run with a valid stub env and deck, --run-id r1, --root and cwd both a tmp root that is not a git repository'
               when: "main"
               then: '3; one document {error: {code: 3, kind: "RuntimeError", message beginning "git status failed (exit 128): "}}; stderr ["morph run: exit 3\n"]'
             - given: 'the binary built by tsc -p tsconfig.build.json into a tmp out dir (with {"type":"module"}); a tmpRepo, a side root with answers a.md, b.md and the deck a, then b dependsOn a; `node <out>/cli.js run --root <repo> --deck <deck> --processor s --run-id e2e` with the stub env'

@@ -65,7 +65,7 @@ test("Main example 3: a thrown fault is exit 3 (run outside a git repository)", 
     side.write("answers/a.md", "```ts\nexport const a = 1;\n```\n");
     side.write("deck.json", JSON.stringify([{ customId: "a", intent: "generate", targets: ["out/a.ts"], instruction: "x" }]));
     const o = io();
-    const code = await main(["run", "--deck", side.path("deck.json"), "--processor", "s", "--run-id", "r1"],
+    const code = await main(["run", "--root", r.root, "--deck", side.path("deck.json"), "--processor", "s", "--run-id", "r1"],
       deps(r.root, env(r.root, side.path("answers"))), o);
     expect(code).toBe(3);
     const doc = JSON.parse(o.out[0]) as { error: { code: number; kind: string; message: string } };

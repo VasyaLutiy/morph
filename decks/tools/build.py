@@ -283,7 +283,7 @@ P7_JUDGE_OWN = {"document-judge": 8, "parse-command-judge": 8, "deck-check-judge
                 "main-judge": 3}
 # the main card builds the real binary once and runs it on a bad command (TASK_P7 §3 step 6)
 P7_BIN_STEP = ("echo '== bin'; npm run build > $P/build.log 2>&1 || { echo 'bin: npm run build failed:'; tail -20 $P/build.log; exit 1; }; "
-               "B=$(node dist/cli.js frobnicate 2>/dev/null); BC=$?; "
+               "BC=0; B=$(node dist/cli.js frobnicate 2>/dev/null) || BC=$?; "
                "[ \"$BC\" = 4 ] && [ \"$B\" = '{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"unknown command: frobnicate\"}}' ] || "
                "{ echo \"bin: node dist/cli.js frobnicate gave exit $BC and stdout: $B\" | head -c 600; echo; exit 1; }\n")
 

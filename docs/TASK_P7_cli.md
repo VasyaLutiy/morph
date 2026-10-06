@@ -410,11 +410,11 @@ venv/bin/mrph run --root <repo> --processor glm53 --deadline 2400   # by the gat
 |---|---|
 | cards in the deck | 10 (5 code, 5 judge) |
 | generations | 4 (document; parse-command + deck-check + run-command + document-judge; main + three judges; main-judge) |
-| executor bill | ≈ $0.16 nominal (≈ 300k in, 75k out at $0.31/M in, $1.13/M out: 15 first requests × ≈ 15k in + ≈ 5 retries), ≤ $0.35 with a re-cut |
+| executor bill | ≈ $0.18 nominal (≈ 270k in, 85k out at $0.31/M in, $1.13/M out: 15 first requests, ≈ 202k in, + ≈ 35 % retries), ≤ $0.35 with a re-cut |
 | cards with regeneration | 3 of 10 |
 | `write-write` / `read-write` at `deck check` | 0 / 0 |
 | tests after the run | 295 + 5 judge files; ≥ 31 judge example tests |
-| chain on a dry tree with stubs | code cards red at the probe per example (readable `Error: stub <fn>`), judges red at eslint (`No files matching the pattern`); with the scratch reference every probe green and single-rule mutations redden it |
+| chain on a dry tree with stubs | code cards red at the probe per example (readable `Error: stub <fn>`): 31 of 31 examples red, 45 of 50 probe tests (the 5 type-only tests pass on typed stubs); judges red at eslint (`No files matching the pattern`). With the scratch reference every chain green, 21–42 s (main with `npm run build` 32 s; main-judge 42 s); 21 of 21 single-rule mutations killed by the card's probe |
 | first red | parse-command: the check order (flags that do not apply before missing --deck) or a message text; run-command: the registry fault suffix or the refusal order; main: the `--pretty` of a parse error or the stderr line; judges: `document` (unknown) read without a cast |
 
 **Falsifiable claims:** (1) no card goes red on a sibling's file; (2) no judge red traces to §2.1;
