@@ -1,132 +1,170 @@
-// src/acceptance/diff.ts — Build Attempt Diff (TASK_P3 §2.2).
-// Pure: no imports, no clock, no randomness, no environment.
+// src/acceptance/diff.ts — Build Attempt Diff (TASK_P3 §2.2, rules 1–5).
+//
+// A unified diff of the failed variant against the snapshot, capped at
+// DIFF_CAP chars. Pure: no imports, no clock, no randomness, no environment.
+//
+// Rules (the record is the contract; the illustrations below were computed
+// by a reference implementation of exactly these rules):
+//   1. one file section per key of `after`, in Object.keys order; a missing
+//      or null `before` is an absent file; equal line arrays contribute
+//      nothing (so "a" vs "a\n" is no change);
+//   2. header `--- a/<p>` (or `--- /dev/null`) then `+++ b/<p>`;
+//   3. edit script by LCS: match, else delete when L[i+1][j] >= L[i][j+1]
+//      (deletions before additions inside a changed region);
+//   4. hunks of 3 context ops around changes; changes with 6 or fewer
+//      context ops between them share one hunk; both counts always printed;
+//   5. over DIFF_CAP chars: slice, "\n", then the clip marker, exactly
+//      DIFF_CAP chars.
 
+/** The cap of the returned diff, in chars. */
 export const DIFF_CAP = 6000;
 
+/** One edit-script operation: context, deletion or addition. */
 interface Op {
-  kind: " " | "-" | "+";
-  line: string;
-  o: number; // 1-based old line number, 0 when the op has no old line
-  n: number; // 1-based new line number, 0 when the op has no new line
+  readonly kind: " " | "-" | "+";
+  readonly line: string;
 }
 
+/**
+ * The lines of a file's text: `[]` for `null` (absent) and for `""`; else
+ * `split("\n")` without the last element when the text ends in `\n`.
+ */
 function linesOf(text: string | null): string[] {
   if (text === null || text === "") return [];
-  if (text.endsWith("\n")) return text.slice(0, -1).split("\n");
-  return text.split("\n");
+  const parts: string[] = text.split("\n");
+  if (text.endsWith("\n")) parts.pop();
+  return parts;
 }
 
-function editScript(a: readonly string[], b: readonly string[]): Op[] {
-  // L[i][j] = LCS length of a[i..], b[j..]
-  const L: number[][] = [];
-  for (let i = 0; i <= a.length; i++) L.push(new Array<number>(b.length + 1).fill(0));
-  for (let i = a.length - 1; i >= 0; i--) {
-    for (let j = b.length - 1; j >= 0; j--) {
-      L[i][j] = a[i] === b[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+/**
+ * The edit script of `a` (old lines) and `b` (new lines) by LCS.
+ * `L[i][j]` is the LCS length of `a[i..]` and `b[j..]`; the walk matches
+ * equal heads, else deletes when `L[i + 1][j] >= L[i][j + 1]`, so that
+ * within a changed region deletions come before additions. The leftovers
+ * of `a` are deletions, then the leftovers of `b` additions.
+ */
+function editOps(a: readonly string[], b: readonly string[]): Op[] {
+  const n: number = a.length;
+  const m: number = b.length;
+  const L: number[][] = Array.from(
+    { length: n + 1 },
+    (): number[] => new Array<number>(m + 1).fill(0)
+  );
+  for (let i: number = n - 1; i >= 0; i--) {
+    for (let j: number = m - 1; j >= 0; j--) {
+      L[i][j] =
+        a[i] === b[j]
+          ? L[i + 1][j + 1] + 1
+          : Math.max(L[i + 1][j], L[i][j + 1]);
     }
   }
   const ops: Op[] = [];
-  let i = 0;
-  let j = 0;
-  let o = 1;
-  let n = 1;
-  while (i < a.length && j < b.length) {
+  let i: number = 0;
+  let j: number = 0;
+  while (i < n && j < m) {
     if (a[i] === b[j]) {
-      ops.push({ kind: " ", line: a[i], o, n });
-      i++; j++; o++; n++;
+      ops.push({ kind: " ", line: a[i] });
+      i++;
+      j++;
     } else if (L[i + 1][j] >= L[i][j + 1]) {
-      ops.push({ kind: "-", line: a[i], o, n: 0 });
-      i++; o++;
+      ops.push({ kind: "-", line: a[i] });
+      i++;
     } else {
-      ops.push({ kind: "+", line: b[j], o: 0, n });
-      j++; n++;
+      ops.push({ kind: "+", line: b[j] });
+      j++;
     }
   }
-  while (i < a.length) {
-    ops.push({ kind: "-", line: a[i], o, n: 0 });
-    i++; o++;
+  while (i < n) {
+    ops.push({ kind: "-", line: a[i] });
+    i++;
   }
-  while (j < b.length) {
-    ops.push({ kind: "+", line: b[j], o: 0, n });
-    j++; n++;
+  while (j < m) {
+    ops.push({ kind: "+", line: b[j] });
+    j++;
   }
   return ops;
 }
 
-function hunkText(ops: readonly Op[], start: number, end: number): string {
-  let on = 0;
-  let nn = 0;
-  for (let k = start; k < end; k++) {
-    const op = ops[k];
-    if (op.kind === " " || op.kind === "-") on++;
-    if (op.kind === " " || op.kind === "+") nn++;
+/**
+ * The hunks of an edit script: every changed op keeps up to 3 context ops
+ * before and after; two changes with 6 or fewer context ops between them
+ * share one hunk. The header prints both counts always; `os` is the 1-based
+ * old line number of the hunk's first old line (the number of old lines
+ * before the hunk when `on` is 0), `ns` the 1-based new line number of the
+ * hunk's first context or addition op — a leading deletion does not move it
+ * (the number of new lines before the hunk only when `nn` is 0). Every op
+ * line ends in `\n`; there is no "\ No newline" marker.
+ */
+function hunksOf(ops: readonly Op[]): string {
+  const changed: number[] = [];
+  for (let k: number = 0; k < ops.length; k++) {
+    if (ops[k].kind !== " ") changed.push(k);
   }
-  let os: number;
-  let ns: number;
-  if (on === 0) {
-    os = start > 0 ? ops[start - 1].o : 0;
-  } else {
-    os = ops[start].o;
+  if (changed.length === 0) return "";
+  const groups: Array<[number, number]> = [];
+  let start: number = changed[0];
+  let end: number = changed[0];
+  for (let k: number = 1; k < changed.length; k++) {
+    if (changed[k] - changed[k - 1] - 1 <= 6) {
+      end = changed[k];
+    } else {
+      groups.push([start, end]);
+      start = changed[k];
+      end = changed[k];
+    }
   }
-  if (nn === 0) {
-    ns = start > 0 ? ops[start - 1].n : 0;
-  } else {
-    ns = ops[start].n;
-  }
-  let out = `@@ -${os},${on} +${ns},${nn} @@\n`;
-  for (let k = start; k < end; k++) {
-    out += ops[k].kind + ops[k].line + "\n";
+  groups.push([start, end]);
+  let out: string = "";
+  for (const group of groups) {
+    const first: number = Math.max(0, group[0] - 3);
+    const last: number = Math.min(ops.length - 1, group[1] + 3);
+    let oldBefore: number = 0;
+    let newBefore: number = 0;
+    for (let k: number = 0; k < first; k++) {
+      if (ops[k].kind !== "+") oldBefore++;
+      if (ops[k].kind !== "-") newBefore++;
+    }
+    let on: number = 0;
+    let nn: number = 0;
+    for (let k: number = first; k <= last; k++) {
+      if (ops[k].kind !== "+") on++;
+      if (ops[k].kind !== "-") nn++;
+    }
+    const os: number = on > 0 ? oldBefore + 1 : oldBefore;
+    // The first context or addition op of the hunk is preceded inside the
+    // hunk only by deletions, which consume no new lines.
+    const ns: number = nn > 0 ? newBefore + 1 : newBefore;
+    out += "@@ -" + os + "," + on + " +" + ns + "," + nn + " @@\n";
+    for (let k: number = first; k <= last; k++) {
+      out += ops[k].kind + ops[k].line + "\n";
+    }
   }
   return out;
 }
 
-function diffFile(oldText: string | null, newText: string): string {
-  const a = linesOf(oldText);
-  const b = linesOf(newText);
-  if (a.length === b.length) {
-    let equal = true;
-    for (let k = 0; k < a.length; k++) {
-      if (a[k] !== b[k]) { equal = false; break; }
-    }
-    if (equal) return "";
-  } else if (oldText === newText) {
-    return "";
-  }
-  const ops = editScript(a, b);
-  // Indices of changed ops.
-  const changes: number[] = [];
-  for (let k = 0; k < ops.length; k++) {
-    if (ops[k].kind !== " ") changes.push(k);
-  }
-  let out = "";
-  let g = 0;
-  while (g < changes.length) {
-    let last = g;
-    while (last + 1 < changes.length && changes[last + 1] - changes[last] - 1 <= 6) {
-      last++;
-    }
-    const start = Math.max(0, changes[g] - 3);
-    const end = Math.min(ops.length, changes[last] + 3 + 1);
-    out += hunkText(ops, start, end);
-    g = last + 1;
-  }
-  return out;
-}
-
+/**
+ * Build the attempt diff: for each path of `after` in its key order whose
+ * lines differ from `before` (a missing or null entry is an absent file),
+ * the file headers and the hunks; `""` when nothing changed; capped at
+ * DIFF_CAP chars by the clip marker, to exactly DIFF_CAP chars.
+ */
 export function buildAttemptDiff(
   before: Record<string, string | null>,
-  after: Record<string, string>,
+  after: Record<string, string>
 ): string {
-  let text = "";
+  let text: string = "";
   for (const p of Object.keys(after)) {
-    const oldText = before[p] ?? null;
-    const header = oldText === null ? "--- /dev/null\n" : `--- a/${p}\n`;
-    const body = diffFile(oldText, after[p]);
-    if (body !== "") {
-      text += header + `+++ b/${p}\n` + body;
-    }
+    const old: string | null = before[p] ?? null;
+    const a: string[] = linesOf(old);
+    const b: string[] = linesOf(after[p]);
+    const same: boolean =
+      a.length === b.length && a.every((line: string, k: number): boolean => line === b[k]);
+    if (same) continue;
+    text += old === null ? "--- /dev/null\n" : "--- a/" + p + "\n";
+    text += "+++ b/" + p + "\n";
+    text += hunksOf(editOps(a, b));
   }
   if (text.length <= DIFF_CAP) return text;
-  const marker = `[diff clipped: ${text.length} chars]\n`;
+  const marker: string = "[diff clipped: " + text.length + " chars]\n";
   return text.slice(0, DIFF_CAP - marker.length - 1) + "\n" + marker;
 }
