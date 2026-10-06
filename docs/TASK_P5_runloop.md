@@ -244,7 +244,14 @@ and `resolve.ts`. The judge's file holds one `test(...)` per example of its Func
 record order, named `<Function> example <n>: <what>`, then at most twelve tests of its own on
 §2.2. Compare outcomes, reports and configs whole with `toStrictEqual`; strings and numbers
 with `toBe`; a `null` is checked `=== null` or inside `toStrictEqual`, never through `??` (the
-P3 lesson). Every test that runs a deck or a generation uses the stub processor, a `fakeFetch`
+P3 lesson). A field that may be `null` (`reason`, `winningVariant`, `commit`, `diffstat`) is
+**never** reached with a direct method or property access — `outcome.reason.startsWith("compile: ")`
+is rejected by `tsc` strict-null (TS18047). Assert the whole outcome with `toStrictEqual`, or use
+a matcher that accepts the nullable value: `expect(outcome.reason).toMatch(/^compile: /)`,
+`expect(outcome.reason).toContain("compile:")`. The compile-fault path has no record example, so
+it is one of the judge's own §2.2 tests: its `reason` is `"compile: " + the first compiler fault
+message` — match it with `toMatch(/^compile: /)`, do not call a string method on `reason` itself.
+Every test that runs a deck or a generation uses the stub processor, a `fakeFetch`
 transport whose `fetch` is never called, and an `env` carrying `PATH`; no `vi.mock`,
 `vi.stubGlobal`, `vi.useFakeTimers`, no real timer, no function or variable named `fetch` or
 `Fake*`. The global `fetch` stays blocked; child processes come only from `verifyCard`
