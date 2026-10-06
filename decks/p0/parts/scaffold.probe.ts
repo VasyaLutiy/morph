@@ -66,10 +66,17 @@ test("vitest.config.ts and src/index.ts", () => {
 });
 
 test("tests/setup.ts blocks the network", async () => {
+  // XMLHttpRequest and WebSocket are not in the Node typings: reach them through globalThis
+  const g = globalThis as unknown as Record<string, unknown>;
+  const ctor = (name: string): (new (...a: string[]) => unknown) => {
+    const c = g[name];
+    if (typeof c !== "function") throw new Error(`${name} is ${typeof c} (setup.ts did not install a blocker)`);
+    return c as new (...a: string[]) => unknown;
+  };
   const got = [
     await why(() => fetch("http://127.0.0.1:9/")),
-    await why(() => new XMLHttpRequest()),
-    await why(() => new WebSocket("ws://127.0.0.1:9/")),
+    await why(() => new (ctor("XMLHttpRequest"))()),
+    await why(() => new (ctor("WebSocket"))("ws://127.0.0.1:9/")),
     await why(() => net.connect(9, "127.0.0.1")),
     await why(() => net.createConnection(9, "127.0.0.1")),
   ].map((m) => (m.includes("network blocked in tests") ? "blocked" : m));

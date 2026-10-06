@@ -136,8 +136,11 @@ broad, each printing a readable line on failure:
 9. Frozen: `git diff --quiet HEAD -- contour.yaml morph-map.json docs decks tests/fixtures`.
 10. Untracked files other than the eight targets and `package-lock.json`: none.
 
-Timeout of the whole chain: 300 s (the builder's own limit); measured on a dry tree in
-§11.
+Timeout of the whole chain: 300 s (the builder's own limit). Measured 06.10 in a scratch
+worktree with one-line stubs (throwing helpers, empty setup.ts, package.json without `bin`):
+34 s cold (npm install), 4 s warm; steps 1–6 green on the stubs, step 7 red on 7 of 9 probe
+tests, each with a readable line (`bin: expected undefined to strictly equal {...}`,
+`fetch, XMLHttpRequest, ...: expected ['fetch failed', ...]`, `Error: not implemented`).
 
 ## 4. Constraints
 
