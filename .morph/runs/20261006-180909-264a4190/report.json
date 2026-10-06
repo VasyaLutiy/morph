@@ -1,0 +1,80 @@
+{
+  "deck_id": "20261006-180909-264a4190",
+  "completed_at": "2026-10-06T18:31:02.573",
+  "branch": "morph/20261006-180909-264a4190",
+  "backend_label": "glm53",
+  "generations": [
+    [
+      "process-generation-judge"
+    ]
+  ],
+  "batch_ids": [
+    "local-2e2684468e594e60ae3f45a892ae2f7a",
+    "local-54c03fb3687b4a7d9e641d9ca34baaf6",
+    "local-607b5bf630e24e46bac3f26c8556a9ef"
+  ],
+  "outcomes": {
+    "process-generation-judge": {
+      "custom_id": "process-generation-judge",
+      "status": "failed",
+      "paths": [],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 3,
+      "winning_variant": null,
+      "acceptance_output": "== tsc\n== eslint\n== guard\n== own\n FAIL  tests/runloop/generation.examples.test.ts > Process Generation own 2: a losing first variant leaves its log in earlierFailures and the winner is recorded\nAssertionError: expected 'a.v1' to be 'a.v2' // Object.is equality\n    260|   if (outcome === undefined) throw new Error(\"expected one outcome\");\n Test Files  1 failed (1)\n      Tests  1 failed | 7 passed (8)\n",
+      "earlier_failures": null,
+      "commit": null,
+      "diffstat": null,
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/runloop/generation.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    }
+  },
+  "usage": {
+    "process-generation-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791310150-uUm00EzLBSsNqEfhMAB5",
+      "input_tokens": 14702,
+      "output_tokens": 25500,
+      "cost": 0.03983484,
+      "finish_reason": "length"
+    },
+    "process-generation-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791310718-4LgbDOjF3WONauHhRQ4I",
+      "input_tokens": 14776,
+      "output_tokens": 17469,
+      "cost": 0.029265,
+      "finish_reason": "stop"
+    },
+    "process-generation-judge.r2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791311128-3WrJHpOgGOPc2OT3qd1o",
+      "input_tokens": 20217,
+      "output_tokens": 13350,
+      "cost": 0.02611314,
+      "finish_reason": "stop"
+    }
+  },
+  "usage_totals": {
+    "input_tokens": 49695,
+    "output_tokens": 56319,
+    "cost": 0.09521298,
+    "requests": 3,
+    "requests_with_usage": 3
+  },
+  "orchestrator_usage": {}
+}
