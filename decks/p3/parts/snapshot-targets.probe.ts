@@ -18,7 +18,7 @@ test("Snapshot Targets example 1: a changed file and a created file are rolled b
     expect(s.root, "the root as given").toBe(r.root);
     expect(e.map((x) => x.path).join(","), "entries in targets order").toBe("src/a.ts,src/b.ts");
     expect(hex(e[0]?.bytes ?? null), 'src/a.ts with 4 bytes "old\\n"').toBe("6f6c640a");
-    expect(e[1]?.bytes ?? "missing entry", "src/b.ts with bytes null").toBe(null);
+    expect(e[1] === undefined ? "missing entry" : hex(e[1].bytes), "src/b.ts with bytes null").toBe("null");
     r.write("src/a.ts", "new\n");
     r.write("src/b.ts", "x\n");
     restoreSnapshot(s);

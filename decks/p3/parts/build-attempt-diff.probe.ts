@@ -32,6 +32,13 @@ test("Build Attempt Diff example 3: two distant changes give two hunks", () => {
   const near = buildAttemptDiff({ t: lines(20) }, { t: lines(20, { 2: "LINE 2", 9: "LINE 9" }) });
   expect(near.split("\n").filter((l) => l.startsWith("@@")).join(" | "),
     "changes 6 unchanged lines apart share one hunk").toBe("@@ -1,12 +1,12 @@");
+  expect(buildAttemptDiff({ "src/a.ts": "old\n" }, { "src/a.ts": "bad\n" }),
+    "a hunk opening with a deletion at the top starts at +1 (TASK 2.2 rule 4)")
+    .toBe("--- a/src/a.ts\n+++ b/src/a.ts\n@@ -1,1 +1,1 @@\n-old\n+bad\n");
+  expect(buildAttemptDiff({ t: "a\nb\n" }, { t: "b\n" }), "a deletion of line 1: new side starts at 1")
+    .toBe("--- a/t\n+++ b/t\n@@ -1,2 +1,1 @@\n-a\n b\n");
+  expect(buildAttemptDiff({ t: lines(10) }, { t: lines(10, { 1: "LINE 1" }) }).split("\n")[2],
+    "line 1 of 10 changed").toBe("@@ -1,4 +1,4 @@");
 });
 
 test("Build Attempt Diff example 4: over 6000 chars the diff is clipped to exactly 6000", () => {

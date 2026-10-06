@@ -192,8 +192,13 @@ string>): string`** and **`DIFF_CAP = 6000`** (`src/acceptance/diff.ts`; no impo
    or fewer context ops between them share a hunk. Header `@@ -<os>,<on> +<ns>,<nn> @@\n`
    with both counts always printed: `on`/`nn` = old/new lines in the hunk; `os` = the
    1-based old line number of the hunk's first old line, or, when `on` is 0, the number of
-   old lines before the hunk (0 at the top); `ns` likewise. Every op line ends in `\n`.
-   No `\ No newline at end of file` marker.
+   old lines before the hunk (0 at the top); `ns` likewise, counted on the NEW side on
+   its own: `ns` = the 1-based new line number of the hunk's first `+` or context op
+   (whatever op opens the hunk; a leading `-` op does not move it), or, only when `nn`
+   is 0, the number of new lines before the hunk. So `os` and `ns` are both 1 for any
+   hunk that starts at the top of a non-empty file on both sides, even when its first op
+   is a deletion: `"a\nb\n"` → `"b\n"` gives `@@ -1,2 +1,1 @@\n-a\n b\n`, never `+0,1`.
+   Every op line ends in `\n`. No `\ No newline at end of file` marker.
 5. The pieces are concatenated; nothing changed → `""`. Over 6000 chars: `m = "[diff
    clipped: " + total + " chars]\n"`, result `= text.slice(0, 6000 - m.length - 1) + "\n"
    + m`, exactly 6000 chars.
@@ -202,7 +207,12 @@ Illustrations, every one computed by a reference implementation of rules 1–5 b
 gate: example 1 → `--- a/src/a.ts\n+++ b/src/a.ts\n@@ -2,7 +2,7 @@\n line 2\n line 3\n
 line 4\n-line 5\n+LINE 5\n line 6\n line 7\n line 8\n`; example 3 (lines 2 and 18 of 20
 changed) → two hunks `@@ -1,5 +1,5 @@` (5 + 1 lines) and `@@ -15,6 +15,6 @@`; lines 2
-and 9 of 20 changed (6 unchanged between) → ONE hunk `@@ -1,12 +1,12 @@`; `{"src/a.ts":
+and 9 of 20 changed (6 unchanged between) → ONE hunk, the whole text `--- a/t\n+++
+b/t\n@@ -1,12 +1,12 @@\n line 1\n-line 2\n+LINE 2\n line 3\n line 4\n line 5\n line 6\n
+line 7\n line 8\n-line 9\n+LINE 9\n line 10\n line 11\n line 12\n` (every changed line is
+a `-` then a `+`: a test's expected text never shows a changed old line as context);
+line 1 of 10 changed → `@@ -1,4 +1,4 @@\n-line 1\n+LINE 1\n line 2\n line 3\n line 4\n`;
+`{"src/a.ts":
 "old\n"}` vs `{"src/a.ts": "bad\n"}` → `--- a/src/a.ts\n+++ b/src/a.ts\n@@ -1,1 +1,1 @@\n
 -old\n+bad\n`; example 4 → 6000 chars ending `+export const v231 = 231;\n\n[diff clipped:
 10339 chars]\n`. A test of one's own uses inputs whose diff is unique (one changed region
