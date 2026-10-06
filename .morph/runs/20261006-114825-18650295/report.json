@@ -1,0 +1,522 @@
+{
+  "deck_id": "20261006-114825-18650295",
+  "completed_at": "2026-10-06T12:01:47.154",
+  "branch": "morph/20261006-114825-18650295",
+  "backend_label": "glm53",
+  "generations": [
+    [
+      "card-model"
+    ],
+    [
+      "card-model-judge",
+      "layering",
+      "weigh"
+    ],
+    [
+      "hazards",
+      "layering-judge",
+      "weigh-judge"
+    ],
+    [
+      "hazards-judge"
+    ]
+  ],
+  "batch_ids": [
+    "local-d7eb96de1f214b78831865d33163810e",
+    "local-b695a5a915a8469a8a729bb6b7e432aa",
+    "local-3a9a6e7e900c49769ac02ab039ad4e79",
+    "local-8873c190fd564624bbe9a1eca56203c3",
+    "local-5dd7a47cfb3f455e944762d56f10943b",
+    "local-409bd870ef83447798f7ff4018d203a5",
+    "local-50bda84b0290406a88bc21548d73b4c8",
+    "local-50dde802b75e423d84708c73f764ea30",
+    "local-8ee845339f1d460d8750990c98c4b3ee"
+  ],
+  "outcomes": {
+    "card-model": {
+      "custom_id": "card-model",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/src/cards/model.ts",
+        "/home/john/Documents/Work2026/MorphV2/src/cards/types.ts",
+        "/home/john/Documents/Work2026/MorphV2/tests/cards/model.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 2,
+      "winning_variant": "card-model.r1.v1",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\nsrc/cards/model.ts(307,41): error TS2339: Property 'join' does not exist on type 'never'.\n",
+      "commit": "3641ad3a839759daf76aaea02b60c17f6ea5151b",
+      "diffstat": [
+        {
+          "path": "src/cards/model.ts",
+          "insertions": 299,
+          "deletions": 0
+        },
+        {
+          "path": "src/cards/types.ts",
+          "insertions": 29,
+          "deletions": 0
+        },
+        {
+          "path": "tests/cards/model.test.ts",
+          "insertions": 70,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/cards/model.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "src/cards/types.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "tests/cards/model.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "layering": {
+      "custom_id": "layering",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/src/cards/layer.ts",
+        "/home/john/Documents/Work2026/MorphV2/tests/cards/layer.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "layering.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "bd6e7e0ef7bace44942229ec850f87c5ca0b53fd",
+      "diffstat": [
+        {
+          "path": "src/cards/layer.ts",
+          "insertions": 40,
+          "deletions": 0
+        },
+        {
+          "path": "tests/cards/layer.test.ts",
+          "insertions": 36,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/cards/layer.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "tests/cards/layer.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "weigh": {
+      "custom_id": "weigh",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/src/cards/weigh.ts",
+        "/home/john/Documents/Work2026/MorphV2/tests/cards/weigh.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "weigh.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "4e31b53f283cc536f2de4ccbe01747f083e05e9a",
+      "diffstat": [
+        {
+          "path": "src/cards/weigh.ts",
+          "insertions": 50,
+          "deletions": 0
+        },
+        {
+          "path": "tests/cards/weigh.test.ts",
+          "insertions": 85,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/cards/weigh.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "tests/cards/weigh.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "card-model-judge": {
+      "custom_id": "card-model-judge",
+      "status": "failed",
+      "paths": [],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 3,
+      "winning_variant": null,
+      "acceptance_output": "== tsc\n== eslint\n== guard\n== own\n FAIL  tests/cards/model.examples.test.ts > validateCard and loadDeck examples > Validate Card example 1\nAssertionError: expected \"tiny card is valid\" not to be reached\n Test Files  1 failed (1)\n      Tests  1 failed | 15 passed (16)\n",
+      "earlier_failures": null,
+      "commit": null,
+      "diffstat": null,
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/cards/model.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "hazards": {
+      "custom_id": "hazards",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/src/cards/hazards.ts",
+        "/home/john/Documents/Work2026/MorphV2/tests/cards/hazards.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "hazards.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "db49aef23d24d4ff94f47532d3a71b125a73cb87",
+      "diffstat": [
+        {
+          "path": "src/cards/hazards.ts",
+          "insertions": 91,
+          "deletions": 0
+        },
+        {
+          "path": "tests/cards/hazards.test.ts",
+          "insertions": 26,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/cards/hazards.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "tests/cards/hazards.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "layering-judge": {
+      "custom_id": "layering-judge",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/tests/cards/layer.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "layering-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "cd5e926b7f2814428805e45a66deb78c173008bc",
+      "diffstat": [
+        {
+          "path": "tests/cards/layer.examples.test.ts",
+          "insertions": 60,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/cards/layer.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "weigh-judge": {
+      "custom_id": "weigh-judge",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/tests/cards/weigh.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "weigh-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "74cb6046f33444bb41c332cba726ca29051a302e",
+      "diffstat": [
+        {
+          "path": "tests/cards/weigh.examples.test.ts",
+          "insertions": 257,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/cards/weigh.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "hazards-judge": {
+      "custom_id": "hazards-judge",
+      "status": "failed",
+      "paths": [],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 3,
+      "winning_variant": null,
+      "acceptance_output": "== tsc\n== eslint\n== guard\n== own\n FAIL  tests/cards/hazards.examples.test.ts > findHazards (judge) > kind order: write-write before read-write before unordered-read\nAssertionError: expected 'write-write,read-write,read-write,unordered-read' to be 'write-write,read-write,unordered-read' // Object.is equality\n Test Files  1 failed (1)\n      Tests  1 failed | 8 passed (9)\n",
+      "earlier_failures": null,
+      "commit": null,
+      "diffstat": null,
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/cards/hazards.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    }
+  },
+  "usage": {
+    "card-model.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791283706-mktOCMyyhvJYPp1akx1J",
+      "input_tokens": 9603,
+      "output_tokens": 3645,
+      "cost": 0.008800884,
+      "finish_reason": "stop"
+    },
+    "card-model.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791283706-rB0j2twtM3Os4vt91CwD",
+      "input_tokens": 9603,
+      "output_tokens": 7674,
+      "cost": 0.014119164,
+      "finish_reason": "stop"
+    },
+    "card-model.r1.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791283898-tDDt0zPYmDPIc5Ei7udi",
+      "input_tokens": 17577,
+      "output_tokens": 7687,
+      "cost": 0.017485404,
+      "finish_reason": "stop"
+    },
+    "card-model.r1.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791283898-AYZ5HTYR51eLLlmOG8yf",
+      "input_tokens": 17577,
+      "output_tokens": 7041,
+      "cost": 0.010701036,
+      "finish_reason": "stop"
+    },
+    "layering.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791284095-VwXjjeqFQubwVbcNnG76",
+      "input_tokens": 11985,
+      "output_tokens": 641,
+      "cost": 0.005836044,
+      "finish_reason": "stop"
+    },
+    "layering.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791284095-TdUEHUG2t7lFOxJbzgvL",
+      "input_tokens": 11985,
+      "output_tokens": 730,
+      "cost": 0.005953524,
+      "finish_reason": "stop"
+    },
+    "weigh.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791284119-7slc4SDSjY06ML7HgQ0a",
+      "input_tokens": 12026,
+      "output_tokens": 1084,
+      "cost": 0.006438024,
+      "finish_reason": "stop"
+    },
+    "weigh.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791284123-43SiNPBHgtqqOU6Swq58",
+      "input_tokens": 12026,
+      "output_tokens": 1057,
+      "cost": 0.002353104,
+      "finish_reason": "stop"
+    },
+    "card-model-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791284095-D7RO73QjNWDMy6DHYz6V",
+      "input_tokens": 12194,
+      "output_tokens": 2239,
+      "cost": 0.0049032,
+      "finish_reason": "stop"
+    },
+    "card-model-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791284164-eWQcu43ib9ewFffrcRLb",
+      "input_tokens": 17568,
+      "output_tokens": 2374,
+      "cost": 0.010468464,
+      "finish_reason": "stop"
+    },
+    "card-model-judge.r2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791284221-8J2PCknogOokkMHebix7",
+      "input_tokens": 17482,
+      "output_tokens": 1979,
+      "cost": 0.009910944,
+      "finish_reason": "stop"
+    },
+    "layering-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791284272-DxehfNfA5giQCd55vXGi",
+      "input_tokens": 12034,
+      "output_tokens": 774,
+      "cost": 0.006032184,
+      "finish_reason": "stop"
+    },
+    "hazards.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791284272-V9uJAdLUbh0zrOahgN4x",
+      "input_tokens": 12678,
+      "output_tokens": 1015,
+      "cost": 0.006620784,
+      "finish_reason": "stop"
+    },
+    "hazards.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791284272-YvckwocZ9ci1c3UH0fv9",
+      "input_tokens": 12678,
+      "output_tokens": 1316,
+      "cost": 0.007018104,
+      "finish_reason": "stop"
+    },
+    "weigh-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791284293-fuBlRwXI6JBPdxsNEbDu",
+      "input_tokens": 12032,
+      "output_tokens": 2175,
+      "cost": 0.007880664,
+      "finish_reason": "stop"
+    },
+    "hazards-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791284354-6VY8jtFj9PriTr7cLi6h",
+      "input_tokens": 13023,
+      "output_tokens": 2156,
+      "cost": 0.006170556,
+      "finish_reason": "stop"
+    },
+    "hazards-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791284407-MpKKbxhlcwPzQPM0Op3x",
+      "input_tokens": 18365,
+      "output_tokens": 2106,
+      "cost": 0.008348196,
+      "finish_reason": "stop"
+    },
+    "hazards-judge.r2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791284461-ReTHRpvIdS9qJ43Nture",
+      "input_tokens": 18252,
+      "output_tokens": 1978,
+      "cost": 0.004717248,
+      "finish_reason": "stop"
+    }
+  },
+  "usage_totals": {
+    "input_tokens": 248688,
+    "output_tokens": 47671,
+    "cost": 0.143757528,
+    "requests": 18,
+    "requests_with_usage": 18
+  },
+  "orchestrator_usage": {}
+}
