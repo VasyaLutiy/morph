@@ -7,7 +7,7 @@ Headless-оркестратор пакетной генерации кода н�
 эпикам и фазам — `docs/PLAN.md`; замеры — `docs/MEASURE.md`.
 
 - Старый Морф: `/home/john/Documents/Work2026/MorphProject/morph-lab/venv/bin/mrph`
-  (на VPS — `/root/MorphProject/morph-lab/venv/bin/mrph`; ключи процессоров в
+  (на VPS — `/home/morph/MorphProject/morph-lab/venv/bin/mrph`; ключи процессоров в
   `morph-lab/.env`, не печатать). `mrph` читает `.env` из текущего каталога: запускать
   из `morph-lab` с `--root <репо>`. Скиллы оркестратора — в `mrph/.claude/skills/`.
 - Автономный режим (с P3 на VPS) — по `docs/AUTONOMY.md`; решения по дырам записи —

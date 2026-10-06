@@ -3,10 +3,11 @@
 #   tools/vps-start.sh            start the session "morph" if it is not running
 #   tools/vps-start.sh attach     attach to it (detach with Ctrl-b d)
 #   tools/vps-start.sh log        follow the session log
-# The session survives an SSH drop. Log: /root/morph-logs/session-<date>.log
+# Runs as the non-root user morph (claude refuses --dangerously-skip-permissions under root).
+# The session survives an SSH drop. Log: $HOME/morph-logs/session-<date>.log
 set -eu
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-LOGDIR=/root/morph-logs; mkdir -p "$LOGDIR"
+LOGDIR=$HOME/morph-logs; mkdir -p "$LOGDIR"
 LOG="$LOGDIR/session-$(date +%Y%m%d-%H%M).log"
 export PATH="$HOME/.local/bin:$PATH" TERM="${TERM:-xterm-256color}"
 case "${1:-start}" in

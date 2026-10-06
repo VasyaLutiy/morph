@@ -11,17 +11,18 @@ and can change any line; the session reads it at the start of every phase.
 P0–P2 merged. P3 (`acceptance`) is PREPARED and passed the gate on the laptop: the record's
 Component is complete (14 examples), `docs/TASK_P3_acceptance.md`, fixtures, map entries, the
 `p3` builder and probes are on `main`. The first autonomous act is therefore P3's RUN, not its
-preparation: in `/root/MorphV2` do `deck clear`, `deck reset`, `plan --spec … --component
+preparation: in `/home/morph/MorphV2` do `deck clear`, `deck reset`, `plan --spec … --component
 acceptance --judge --add`, `deck check` (expect 8 cards, 0 errors), then steps 3–6 of the
 cycle below with a fresh run agent (`morph-orch-opus55`). Every later phase starts at step 1.
 
 ## Machine
 
-- Repo `/root/MorphV2` (origin `https://github.com/VasyaLutiy/morph`, branch `main`).
-- Old Morph: `/root/MorphProject/mrph` (frozen, `main`), `/root/MorphProject/morph-lab`
+- User `morph` (not root: Claude Code refuses to skip permissions under root). Repo
+  `/home/morph/MorphV2` (origin `https://github.com/VasyaLutiy/morph`, branch `main`).
+- Old Morph: `/home/morph/MorphProject/mrph` (frozen, `main`), `/home/morph/MorphProject/morph-lab`
   with `venv/bin/mrph` and `.env` (mode 600; never printed). `mrph` reads `.env` from the
-  current directory: every call runs from `/root/MorphProject/morph-lab` with
-  `--root /root/MorphV2`. Processor `glm53`.
+  current directory: every call runs from `/home/morph/MorphProject/morph-lab` with
+  `--root /home/morph/MorphV2`. Processor `glm53`.
 - Node 22, npm, git (auth through `gh`), tmux. Anything longer than a minute runs under
   `nohup`/`tmux` with a log file; the session must survive an SSH drop.
 
@@ -92,7 +93,7 @@ cycle below with a fresh run agent (`morph-orch-opus55`). Every later phase star
   attaches with `tools/vps-start.sh attach` (detach `Ctrl-b d`) or follows the log with
   `tools/vps-start.sh log`.
 - `tools/tg.sh "<text>"` posts to the operator's Telegram channel (token and chat id only in
-  `/root/.config/morph/tg.env`, written by the operator, mode 600; a missing file is a silent
+  `~/.config/morph/tg.env`, written by the operator, mode 600; a missing file is a silent
   no-op). The session posts at these milestones, one short message each, numbers included:
   phase start (what is being cut); gate result (go, or stopped with the reason); run result
   (written/failed, $, minutes, burned variants); merge and push done; any stop of the
