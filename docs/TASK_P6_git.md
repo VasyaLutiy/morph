@@ -350,4 +350,58 @@ reverse), the row of `docs/MEASURE.md`.
 
 ## 11. Actual
 
-Filled after the run.
+One run on the VPS, processor glm53, autonomous mode, on the deck that passed the autonomous gate
+(8 cards, `deck check` 0 errors). No re-cut was needed. "Burned" = every request that was not a
+winning write (requests − written).
+
+**Run 1** `20261006-172728-672ec2d2`, branch `morph/20261006-172728-672ec2d2`, 17:27:28 → 17:45:41
+(18.2 min), 14 requests, 161 852 in / 49 243 out, **$0.0984**. 8 written, 0 failed, 0 skipped; 6
+variants burned. Every finish reason `stop`: no truncation (largest answer archive-run-judge 14 423
+out of its 24 000).
+
+| card | gen | attempts | winning variant | commit | first red of each burned variant |
+|---|---|---|---|---|---|
+| run-git (types+run) | 1 | 1 | v1 | 8ba9b32 | v2: losing variant (not surfaced) |
+| commit-card | 2 | 1 | v1 | fe9c80f | v2: losing variant (not surfaced) |
+| open-branch | 2 | 1 | v1 | 8b71c5c | v2: losing variant (not surfaced) |
+| run-git-judge | 2 | 3 | r2 | 1ae8b5e | 0: tsc, `test`/`expect` not imported (TS2593/TS2304); r1: guard, literal `git checkout failed (exit 1): ` absent |
+| archive-run | 3 | 1 | v1 | 30b80d0 | v2: losing variant (not surfaced) |
+| commit-card-judge | 3 | 1 | — | 205642f | — |
+| open-branch-judge | 3 | 1 | — | c3c4201 | — |
+| archive-run-judge | 4 | 1 | — | 309f68a | — |
+
+Minutes per generation: 1.5 / 10.5 (run-git-judge's two retries) / 3.6 / 4.2. Archive commit
+c27c068 (old Morph's own).
+
+Phase total: **$0.0984** executor (prediction ≈ $0.15 nominal — under it), 18.2 min, 14 requests,
+6 burned variants. tsc-first-red: 1 of 6 (run-git-judge 0). neighbour-red: 0.
+
+§9 check: cards 8 / generations 4 — as predicted; `deck check` 0 / 0 hazards — as predicted. Cards
+with regeneration 1 of 8 (predicted 2). Tests after: 295 in 31 files (245 + 50 judge tests in 4
+files: run 12, branch 12, commit 13, archive 13); judge example tests 15 of 15 (3 + 4 + 5 + 3), ≥ 15
+holds. First red: no code card went red at all (every predicted code first red missed — they were
+green at v1); the only reds were a judge's imports and a missing example literal. Falsifiable
+claims: (1) no card red on a sibling's file — holds; (2) no judge red traced to §2.1 — holds; (3) no
+test changed this repository's HEAD or refs — holds: `own git` printed its failure in none of the 10
+run acceptance logs (old Morph commits between cards, after an acceptance exits, never during one,
+so the G0/G1 comparison saw no foreign commit); (4) no judge cut off at `max_tokens` — holds.
+
+Max slice + targets, measured on the finished tree: archive-run-judge 38 522 bytes (gate 200 KB).
+
+Verification on `morph/20261006-172728-672ec2d2` by the run session: `git status --short` empty;
+`tsc --noEmit`, `eslint src tests` clean; `vitest run` 295/295 in 31 files; `npm run build` ok;
+`git for-each-ref` and HEAD identical before and after `vitest run`. Every git test works in a
+`tmpRepo()` removed in `finally` (50 of 50); no test uses `process.cwd`, `import.meta`, `vi.*`.
+`src/git/*` read once against §2.2: types verbatim; runGit env spread + LC_ALL/GIT_TERMINAL_PROMPT,
+spawn error → null/`git could not start: `, gitOk first line of trimmed stderr; openRunBranch id
+check before any git call, rename after ` -> `, `.morph/` prefix, sorted dirty list, base, existing
+branch via `rev-parse --verify --quiet`; commitPaths `add -A --`, empty cached diff → null, two `-m`
+with the pathspec repeated, numstat with `-` = 0; commitCard trailer order and conditional
+Morph-Variant; hook variant null/exit 0; archiveRun id, exists check, both JSON files, six trailers,
+the catch. **No code defect found.** Judge defects (code defects a judge caught that the probes did
+not): 0.
+
+Lessons: (1) per-card `max_tokens` sized from the expected answer (§3 table) removed P5's
+truncation failure mode: the largest judge used 60 % of its ceiling. (2) The judge's two reds were
+again its own file (imports, a literal of the record) — the guard's literal list caught a judge that
+did not exercise Run Git example 3's message, and the retry fixed it.
