@@ -10,7 +10,7 @@
 | P2 | mrph | 8 / 8 / 5 | 0.1087 / — | 6 | 1 из 5 | 0 | 0 | 0 | — | 0 | 59622 |
 | P3 | mrph | 8 / 8 / 16 (2 runs: 1+8 written) | 0.2254 / opus55 ≈137k/66/47 (run agent; prep on the laptop) | 42 | 0 из 16 | 0 | 1 (diff hunk start) | 0 | — | 0 | 60876 |
 | P4 | mrph | 8 / 8 / 13 (2 runs: 7+1 written; re-cut 1 card) | 0.1406 / opus55 ≈120k/45/32 (run agent) | 17 | 5 из 13 | 0 | 0 | 0 | — | 0 | 59990 |
-| P5 | mrph | 8 / 7 / 17 (2 runs: 7+0 written; re-cut 1 card, failed again — debt: generation judge) | 0.1835 / opus48 prep 261k/76/33 + run ≈160k/30/45 | 22 | 2 из 17 | 0 | 0 | 0 | — | 0 | 56357 |
+| P5 | mrph | 8 / 7 / 20 (3 runs: 7+0+0 written; re-cut 1 card, failed again; debt run at max_tokens 25500 failed — debt open: generation judge) | 0.2787 (incl. debt run 0.0952) / opus48 prep 261k/76/33 + run ≈160k/30/45 + opus55 debt ≈90k/35/40 | 44 | 2 из 17 | 0 | 0 | 0 | — | 0 | 56357 |
 | P6 | mrph | 8 / 8 / 6 (1 run, no re-cut) | 0.0984 / opus55 prep ≈226k/70/22 + run ≈100k/20/30 | 18 | 1 из 6 | 0 | 0 | 0 | — | 0 | 38522 |
 
 ## Сравнение оркестраторов на подготовке P3 (06.10, одинаковый бриф, свои worktree, без прогона)
@@ -32,4 +32,4 @@ Sonnet 5 — дифф внешним `diff -u`, сирота через `ps`, л
 
 ## Autonomous stretch
 
-Running total of the autonomous stretch: $0.6479 of $30 (P3 $0.2254 + P4 $0.1406 + P5 $0.1835 + P6 $0.0984).
+Running total of the autonomous stretch: $0.7431 of $30 (P3 $0.2254 + P4 $0.1406 + P5 $0.2787 incl. debt run $0.0952 + P6 $0.0984).

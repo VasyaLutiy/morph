@@ -461,3 +461,26 @@ the output ceiling should get a higher `max_tokens` at cut time. (2) The largest
 richest contract of the four Functions and the tightest fit. (3) Every judge red of this phase was
 again the judge's own expectation, import, stub or truncation — never the code (the P4 pattern
 holds).
+
+**Debt closure (operator order)** — AUTONOMY "Operator order 06.10 (P5 debt)": `max_tokens` of
+`process-generation-judge` raised 13 500 → 25 500 in `morph-map.json` (commit `e8eefb2` on main; the
+dry `plan --spec --judge` card is otherwise byte-identical to run 2's — instruction, slice,
+acceptance, `reasoning_max_tokens` 2500, depends_on). One card cut (`deck clear`, `deck reset`,
+`deck add`, `deck check` 1 card 0 errors); its acceptance was red on the tree with the file absent
+(eslint "No files matching the pattern"). Run `20261006-180909-264a4190`, branch
+`morph/20261006-180909-264a4190` off main `e8eefb2`, 18:09:09 → 18:31:02 (22 min), 3 requests,
+49 695 in / 56 319 out, **$0.0952**. 0 written, 1 failed, 3 attempts burned:
+attempt 0 finish `length` at 25 500 / 25 500 output tokens (truncated again, no acceptance run);
+r1 finish `stop`, 17 469 tokens, 9 tests, 2 red — example 3 never created `shared.ts` before the
+generation, so `b` failed at compile (`contextSlice 'shared.ts' does not exist`) instead of
+`stale inputs`; own 1 expected a `../escape.ts` target to be a compile fault (no contract says so;
+it reached acceptance); r2 finish `stop`, 13 350 tokens, 8 tests, 1 red — own 2 used acceptance
+`grep -q MARK` with a losing variant answering `NOMARK`, which also matches, so `a.v1` won
+(expected `a.v2`). Judge test file written: none. Code defects: **0** — every red is the judge's
+own setup or expectation; `src/runloop/generation.ts` untouched. Verification on the run branch:
+`git status --short` empty; tsc, `eslint src tests` clean; `vitest run` 295/295 in 31 files;
+`npm run build` ok. Debt **not closed**: per the order no further re-cut. Lessons: (1) at 25 500
+the first attempt still hit the ceiling, while the retries (with the acceptance output in the
+prompt) fit in 13–17 k — the size is the model's verbosity on a first try, not the file; (2) the
+remaining reds are fixture-construction mistakes a §2.2 note could pin (a stale input must exist
+before the generation; a variant marker must not be a substring of the other's).
