@@ -148,7 +148,9 @@ card comes back with `contextSlice []`,
 of a deck file; the caller reads the file (this module reads none).
 
 - Not JSON → one fault, key `deck`, message `deck is not valid JSON: ` + the
-  `SyntaxError` message. Not an array → key `deck`, `deck is not a JSON array`.
+  `SyntaxError` message of the running Node (its text differs between Node versions;
+  only the prefix `deck is not valid JSON: ` is pinned). Not an array → key `deck`,
+  `deck is not a JSON array`.
 - Element `i` is validated with `validateCard`; each of its faults is re-keyed
   `cards[<i>].<key>` (message unchanged), so a bad id in the first element reads
   key `cards[0].customId`.
@@ -474,3 +476,44 @@ already merged). Wording changes, before → after:
    `["e"]`" (judge defect 4).
 
 No rule changed: every count above is what the accepted P1 code already returns.
+
+Run `20261006-123045-da9a6404`, branch `morph/20261006-123045-da9a6404`, processor
+glm53, 12:30:44 → 12:32:47 (2.05 min), one generation (both `depends_on` external).
+Result: 2 of 2 written, 0 failed. 3 requests, 53 474 input / 6 474 output tokens,
+**$0.0270** (cap $0.30, forecast ≈ $0.05).
+
+| card | attempts | outcome | winning variant | $ | commit |
+|---|---|---|---|---|---|
+| hazards-judge | 1 | written | hazards-judge | 0.0083 | 2fbaa4d |
+| card-model-judge | 2 | written | card-model-judge.r1 | 0.0069 + 0.0119 | 2000dd0 |
+
+Burned variants: 1. First red (`/tmp/morph/card-model-judge-p1/acc-1791286307-*.log`):
+
+| variant | step | first red line |
+|---|---|---|
+| card-model-judge | own | `not valid JSON gives one deck fault — expected 'deck is not valid JSON: Expected property name or '}' in JSON at position 2 (line 1 column 3)' to be 'deck is not valid JSON: Unexpected token n in JSON at position 2'` |
+
+**The experiment's answer: the spec fix alone was enough.** With the instructions and
+acceptances byte-identical to P1 (checked on the deck file), `Validate Card example 1`
+passed on the first attempt — the judge took the first element of the parsed
+`tiny.json`, as §2.1 now says — and every hazards test passed on the first attempt,
+the two-writers and kind-order tests on the new fixtures. The one retry is a new
+defect of the judge's own: it pinned the V8 `SyntaxError` text of an older Node
+(`Unexpected token n …`) where Node 23 says `Expected property name or '}' …`; the
+retry compares the prefix. §2.2 invited it by saying "+ the `SyntaxError` message"
+without saying the text is the runtime's — wording fixed above (change 8), after the
+run, for the next cut. tsc-first-red 0 of 1; neighbour-red 0 of 1; guard rejections 0;
+judge defects 1 (the pinned runtime message); stubs 0.
+
+Judge tests written: 27 (model 18 = 7 examples + 11 own; hazards 9 = 2 + 7). Tests
+after the run: 57 in 8 files. Verification on the run branch (`NO_COLOR=1 CI=1`):
+`tsc --noEmit` clean; `eslint src tests` clean; `vitest run` 57 passed; `npm run
+build` ok; `git status --short` empty. Max slice + targets: 57 059 bytes
+(`hazards-judge`; the spec grew by 3 KB); `deck check` hazards 0.
+
+Read against §2.2 and the record, nothing contradicts. Two soft spots:
+`tests/cards/hazards.examples.test.ts:56` ("implicit-read is reported in addition to
+other hazards") runs on `hazardsUnordered`, which has no empty slice, and asserts only
+that every hazard names a card — vacuous; `tests/cards/model.examples.test.ts:201`
+pins the instruction `"  do it  "` untrimmed, a rule §2.2 leaves open (only "empty
+after trim" is a fault). Neither is a defect of the code.
