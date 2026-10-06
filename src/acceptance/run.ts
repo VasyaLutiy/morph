@@ -1,0 +1,127 @@
+import type { AcceptanceResult, RunOptions } from "./types.js";
+import { spawn } from "node:child_process";
+
+export const DEFAULT_TIMEOUT_MS = 300000;
+export const LOG_CAP = 4000;
+
+const DIAGNOSIS = /FAIL|Error|assert|expected/;
+const HEAD_CHARS = 1500;
+const TAIL_CHARS = 1500;
+const DIAGNOSIS_BUDGET = 800;
+const DIAGNOSIS_LINE_CAP = 200;
+
+/**
+ * Clips a raw command log to at most LOG_CAP chars: the first 1500 and the last
+ * 1500 chars kept whole, and between them one elision marker, the middle's
+ * diagnosis lines (FAIL, Error, assert, expected) within 800 chars, and a
+ * closing marker.
+ */
+export function clipLog(text: string): string {
+  if (text.length <= LOG_CAP) {
+    return text;
+  }
+  const head = text.slice(0, HEAD_CHARS);
+  const tail = text.slice(text.length - TAIL_CHARS);
+  const middle = text.slice(HEAD_CHARS, text.length - TAIL_CHARS);
+  const kept: string[] = [];
+  let budget = 0;
+  for (const raw of middle.split("\n")) {
+    const line = raw.length > DIAGNOSIS_LINE_CAP ? raw.slice(0, DIAGNOSIS_LINE_CAP) : raw;
+    if (!DIAGNOSIS.test(line)) {
+      continue;
+    }
+    if (budget + line.length + 1 > DIAGNOSIS_BUDGET) {
+      break;
+    }
+    kept.push(line);
+    budget += line.length + 1;
+  }
+  return (
+    head +
+    "\n[... " +
+    middle.length +
+    " chars clipped; diagnosis lines kept:]\n" +
+    kept.map((l) => l + "\n").join("") +
+    "[...]\n" +
+    tail
+  );
+}
+
+/**
+ * Runs the card's acceptance command in `/bin/sh -c` with cwd = root, the given
+ * environment (with NO_COLOR=1 and CI=1 laid over it), detached in its own
+ * process group. On expiry of timeoutMs the whole group is killed. Resolves on
+ * the child's "close" event; the promise never rejects.
+ */
+export function runAcceptance(
+  command: string,
+  root: string,
+  options: RunOptions,
+): Promise<AcceptanceResult> {
+  return new Promise<AcceptanceResult>((resolve) => {
+    const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    let timedOut = false;
+    const chunks: Buffer[] = [];
+
+    let child;
+    try {
+      child = spawn("/bin/sh", ["-c", "exec 2>&1\n" + command], {
+        cwd: root,
+        env: { ...options.env, NO_COLOR: "1", CI: "1" },
+        detached: true,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      resolve({
+        exit: null,
+        log: "acceptance could not start: " + message + "\n",
+        timedOut: false,
+      });
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      timedOut = true;
+      if (child.pid !== undefined) {
+        try {
+          process.kill(-child.pid, "SIGKILL");
+        } catch {
+          // the group is already gone: no error
+        }
+      }
+    }, timeoutMs);
+
+    child.stdout?.on("data", (chunk: Buffer) => {
+      chunks.push(chunk);
+    });
+    child.stderr?.on("data", (chunk: Buffer) => {
+      chunks.push(chunk);
+    });
+
+    child.on("error", (err: Error) => {
+      clearTimeout(timer);
+      resolve({
+        exit: null,
+        log: "acceptance could not start: " + err.message + "\n",
+        timedOut: false,
+      });
+    });
+
+    child.on("close", (code: number | null) => {
+      clearTimeout(timer);
+      let log = clipLog(Buffer.concat(chunks).toString("utf8"));
+      if (timedOut) {
+        if (log.length > 0 && !log.endsWith("\n")) {
+          log += "\n";
+        }
+        log += "acceptance timed out after " + timeoutMs + " ms\n";
+      }
+      resolve({
+        exit: timedOut ? null : code,
+        log,
+        timedOut,
+      });
+    });
+  });
+}
