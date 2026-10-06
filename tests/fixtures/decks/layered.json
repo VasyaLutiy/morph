@@ -1,0 +1,6 @@
+[
+  {"customId": "a", "intent": "generate", "targets": ["src/a.ts"], "instruction": "x"},
+  {"customId": "b", "intent": "generate", "targets": ["src/b.ts"], "instruction": "x", "dependsOn": ["a"]},
+  {"customId": "c", "intent": "generate", "targets": ["src/c.ts"], "instruction": "x", "dependsOn": ["a"]},
+  {"customId": "d", "intent": "generate", "targets": ["src/d.ts"], "instruction": "x", "dependsOn": ["b", "c"]}
+]

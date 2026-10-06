@@ -1,6 +1,6 @@
 // MorphV2 guard: the layer rules of docs/CONVENTIONS.md and the test-file rules, checked on
 // the TypeScript syntax tree. Inlined into every acceptance by decks/tools/build.py.
-//   node guard.mjs src                                   every .ts under src/
+//   node guard.mjs src [file,file,...]                   every .ts under src/, or only these
 //   node guard.mjs helpers <file> <name,name,...>        the stub module: node:* only, exports
 //   node guard.mjs tests <file> <min> <max> [lits.json]  one test file; lits = strings it must hold
 import ts from "typescript";
@@ -84,8 +84,8 @@ function layerOf(rel) {
   return parts.length >= 3 && parts[0] === "src" ? parts[1] : null;
 }
 
-function checkSrc() {
-  for (const file of tsFiles("src")) {
+function checkSrc(files) {
+  for (const file of files ?? tsFiles("src")) {
     const sf = parse(file);
     const rel = file.split(path.sep).join("/");
     const layer = layerOf(rel);
@@ -177,7 +177,7 @@ function checkTest(file, min, max, lits) {
 }
 
 const [mode, a, b, c, d] = process.argv.slice(2);
-if (mode === "src") checkSrc();
+if (mode === "src") checkSrc(a ? a.split(",").filter(Boolean) : null);
 else if (mode === "helpers") checkHelpers(a, (b ?? "").split(",").filter(Boolean));
 else if (mode === "tests") checkTest(a, Number(b), Number(c), d ? JSON.parse(fs.readFileSync(d, "utf8")) : []);
 else bad.push(`guard: unknown mode ${mode}`);

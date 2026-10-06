@@ -1,0 +1,3 @@
+[
+  {"customId": "a", "intent": "generate", "targets": ["tests/fixtures/weigh/missing.txt"], "contextSlice": ["tests/fixtures/weigh/ten.txt", "tests/fixtures/weigh/hundred.txt"], "instruction": "x"}
+]

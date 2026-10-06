@@ -1,0 +1,4 @@
+[
+  {"customId": "a", "intent": "generate", "targets": ["src/a.ts"], "contextSlice": ["src/b.ts"], "instruction": "x"},
+  {"customId": "b", "intent": "generate", "targets": ["src/b.ts"], "contextSlice": ["src/a.ts"], "instruction": "x", "dependsOn": ["a"]}
+]

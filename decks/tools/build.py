@@ -3,6 +3,8 @@
 shared steps here. Hand-written data, never product code.
 
     python3 decks/tools/build.py p0     -> decks/p0-scaffold.json (one card, run alone)
+    python3 decks/tools/build.py p1     -> acceptance of every P1 card injected into morph-map.json
+                                           (mrph plan --spec copies it onto the card)
 
 Paths are relative to the repository root (the parent of decks/); nothing here points
 outside the tree.
@@ -52,9 +54,10 @@ def wrap(card, phase, targets, body):
             + ") > $L 2>&1; rc=$?; cat $L; exit $rc")
 
 
-def probe_dir(card, parts, probe_file=None):
-    """probe/<card>/ with the guard, a vitest config and a tsconfig that type-checks the probe
-    together with the project; removed on exit."""
+def probe_dir(card, parts, probe_file=None, exclude=()):
+    """probe/<card>/ with the guard, a vitest config and tsconfig.card.json, which type-checks
+    the probe together with the project MINUS ``exclude`` (the targets of the other cards of
+    the same generation: a sibling's broken file cannot redden this card); removed on exit."""
     conf = (
         'import { defineConfig } from "vitest/config";\n'
         'import { fileURLToPath } from "node:url";\n'
@@ -63,12 +66,14 @@ def probe_dir(card, parts, probe_file=None):
         f'  test: {{ environment: "node", include: ["probe/{card}/**/*.probe.ts"],\n'
         '    setupFiles: ["tests/setup.ts"], chaiConfig: { truncateThreshold: 200 } },\n'
         '});\n')
-    tsconf = json.dumps({"extends": "../../tsconfig.json",
-                         "include": ["../../src", "../../tests", "./*.probe.ts"]}, indent=2) + "\n"
+    tsconf = {"extends": "../../tsconfig.json", "include": ["../../src", "../../tests", "./*.probe.ts"]}
+    if exclude:
+        tsconf["exclude"] = ["../../" + t for t in exclude]
+    tsconf = json.dumps(tsconf, indent=2) + "\n"
     s = (f"P=$PWD/probe/{card}; rm -rf $P; mkdir -p $P; trap 'rm -rf $P' EXIT\n"
          + heredoc("$P/guard.mjs", read(GUARD), "MORPH_GUARD_EOF")
          + heredoc("$P/probe.config.mts", conf, "MORPH_CONF_EOF")
-         + heredoc("$P/tsconfig.probe.json", tsconf, "MORPH_TSCONF_EOF"))
+         + heredoc("$P/tsconfig.card.json", tsconf, "MORPH_TSCONF_EOF"))
     if probe_file:
         s += heredoc(f"$P/{card}.probe.ts", read(os.path.join(parts, probe_file)), "MORPH_PROBE_EOF")
     return s
@@ -80,7 +85,7 @@ def vt(args):
 
 
 def tsc_probe():
-    return "echo '== tsc'; node_modules/.bin/tsc --noEmit -p $P/tsconfig.probe.json\n"
+    return "echo '== tsc'; node_modules/.bin/tsc --noEmit -p $P/tsconfig.card.json\n"
 
 
 def eslint_src_tests():
@@ -159,7 +164,104 @@ def build_p0():
     print(f"wrote {os.path.relpath(out, ROOT)}: 1 card, acceptance {len(card['acceptance'])} chars")
 
 
-BUILDERS = {"p0": build_p0}
+# ----------------------------------------------------------------------------- P1
+
+MAP = "morph-map.json"
+P1_TEST_DIR = "tests/cards"
+# literals of the record's examples a judge's test must mention (docs/TASK_P1_cards.md §3)
+P1_JUDGE_LITERALS = {
+    "card-model-judge": ["bad id", "^[A-Za-z0-9._-]+$", "todo", "./src/a.ts",
+                         "duplicate customId b", "a -> b -> a", "zzz"],
+    "layering-judge": ['[["a"],["b","c"],["d"]]', '[["a","b"]]'],
+    "hazards-judge": ["write-write", "read-write", "src/x.ts", "addDependsOn"],
+    "weigh-judge": ["600001", "500000", "oversized-slice"],
+}
+# examples per judge = examples of its Function(s) in contour.yaml (Validate Card 4 + Load
+# Deck 3; Layer Generations 2; Find Hazards 2; Weigh Slices 1): min = examples, max = min + 12
+P1_JUDGE_EXAMPLES = {"card-model-judge": 7, "layering-judge": 2, "hazards-judge": 2, "weigh-judge": 1}
+P1_SMOKE_MAX = 5
+
+
+def layer(cards):
+    """custom_id -> generation by the longest depends_on path (the planner's rule); a judge
+    depends on its code card plus whatever the map adds."""
+    deps = {}
+    for cid, c in cards.items():
+        d = list(c.get("depends_on") or [])
+        if cid.endswith("-judge") and cid[:-6] in cards and cid[:-6] not in d:
+            d.insert(0, cid[:-6])
+        deps[cid] = [x for x in d if x in cards]
+    gen = {}
+
+    def of(cid, stack=()):
+        if cid in gen:
+            return gen[cid]
+        assert cid not in stack, f"cycle at {cid}"
+        gen[cid] = 0 if not deps[cid] else 1 + max(of(d, stack + (cid,)) for d in deps[cid])
+        return gen[cid]
+
+    for cid in cards:
+        of(cid)
+    return gen
+
+
+def code_acceptance(card, targets, siblings, parts):
+    code = [t for t in targets if t.startswith("src/")]
+    smoke = [t for t in targets if t.startswith(P1_TEST_DIR)]
+    assert len(smoke) == 1, (card, targets)
+    body = (probe_dir(card, parts, f"{card}.probe.ts", exclude=siblings)
+            + tsc_probe()
+            + "echo '== eslint'; node_modules/.bin/eslint " + " ".join(targets) + "\n"
+            + "echo '== guard'; node $P/guard.mjs src " + ",".join(code)
+            + f"; node $P/guard.mjs tests {smoke[0]} 1 {P1_SMOKE_MAX}\n"
+            + "echo '== probe'; " + vt("--config $P/probe.config.mts")
+            + "echo '== own'; " + vt(smoke[0])
+            + "echo '== full'; " + vt("--passWithNoTests")
+            + "echo '== frozen'; " + frozen()
+            + untracked(targets))
+    return wrap(card, "p1", targets, body)
+
+
+def judge_acceptance(card, targets, siblings, parts):
+    assert len(targets) == 1, (card, targets)
+    test = targets[0]
+    n = P1_JUDGE_EXAMPLES[card]
+    lits = json.dumps(P1_JUDGE_LITERALS[card])
+    body = (probe_dir(card, parts, None, exclude=siblings)
+            + tsc_probe()
+            + "echo '== eslint'; node_modules/.bin/eslint " + test + "\n"
+            + heredoc("$P/lits.json", lits, "MORPH_LITS_EOF")
+            + f"echo '== guard'; node $P/guard.mjs tests {test} {n} {n + 12} $P/lits.json\n"
+            + "echo '== own'; " + vt(test)
+            + "echo '== full'; " + vt("--passWithNoTests")
+            + "echo '== frozen'; " + frozen()
+            + untracked(targets))
+    return wrap(card, "p1", targets, body)
+
+
+def build_p1():
+    parts = os.path.join(ROOT, "decks", "p1", "parts")
+    with open(MAP, encoding="utf-8") as fh:
+        doc = json.load(fh)
+    cards = doc["cards"]
+    gen = layer(cards)
+    rows = []
+    for cid, c in cards.items():
+        targets = list(c["targets"])
+        siblings = [t for other, o in cards.items() if other != cid and gen[other] == gen[cid]
+                    for t in o["targets"]]
+        build = judge_acceptance if cid.endswith("-judge") else code_acceptance
+        c["acceptance"] = build(cid, targets, siblings, parts)
+        rows.append((gen[cid], cid, len(c["acceptance"]), len(siblings)))
+    with open(MAP, "w", encoding="utf-8") as fh:
+        json.dump(doc, fh, indent=2, ensure_ascii=False)
+        fh.write("\n")
+    for g, cid, n, k in sorted(rows):
+        print(f"gen {g}  {cid:18} acceptance {n:6} chars, {k} sibling targets excluded from tsc")
+    print(f"wrote {MAP}: {len(rows)} cards")
+
+
+BUILDERS = {"p0": build_p0, "p1": build_p1}
 
 
 def main(argv):
