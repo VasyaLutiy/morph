@@ -516,7 +516,11 @@ Requirement:
   - name: One Document Out
     description: Every command prints exactly one JSON document on stdout and nothing else; the human log goes to stderr.
   - name: Deterministic Core
-    description: cards, compiler and acceptance give byte-identical results for the same inputs; no clock, no randomness, no environment reads.
+    description: >
+      cards and compiler give byte-identical results for the same inputs: no clock, no
+      randomness, no environment reads. acceptance is bound only in its pure parts (Snapshot
+      Targets, Build Attempt Diff): Run Acceptance spawns a shell and its only timer is the
+      child's timeout; env and the timeout are parameters, never process.env (06.10, P3).
   - name: Node Only
     description: >
       Runtime dependencies: Node 20 built-ins and the package `yaml` (the record reader), nothing

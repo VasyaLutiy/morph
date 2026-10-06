@@ -6,6 +6,15 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
+## State at handoff (06.10, evening)
+
+P0–P2 merged. P3 (`acceptance`) is PREPARED and passed the gate on the laptop: the record's
+Component is complete (14 examples), `docs/TASK_P3_acceptance.md`, fixtures, map entries, the
+`p3` builder and probes are on `main`. The first autonomous act is therefore P3's RUN, not its
+preparation: in `/root/MorphV2` do `deck clear`, `deck reset`, `plan --spec … --component
+acceptance --judge --add`, `deck check` (expect 8 cards, 0 errors), then steps 3–6 of the
+cycle below with a fresh run agent (`morph-orch-opus55`). Every later phase starts at step 1.
+
 ## Machine
 
 - Repo `/root/MorphV2` (origin `https://github.com/VasyaLutiy/morph`, branch `main`).
@@ -47,9 +56,10 @@ and can change any line; the session reads it at the start of every phase.
   example is wrong or missing, with the change named in DECISIONS.
 - **Fixtures**: by `docs/TASK_TEMPLATE.md` §2.1; recorded glm answers may be used after
   cleaning.
-- **Orchestrator model**: the one that gave the best deck per dollar at P3; the runner-up
-  takes every third phase so the comparison continues. The model name goes into the
-  "$ оркестр." column of `docs/MEASURE.md` next to the cost.
+- **Orchestrator model**: decided at P3 (see `docs/MEASURE.md`, "Сравнение оркестраторов"):
+  `morph-orch-opus55` prepares and runs every phase; `morph-orch-opus48` takes every third
+  phase (P5, P8, P11, P14) so the comparison continues. The agent's tokens, tool calls and
+  minutes go into the "$ оркестр." column of `docs/MEASURE.md` as "<model> <tokens>/<calls>/<min>".
 
 ## Failure
 
