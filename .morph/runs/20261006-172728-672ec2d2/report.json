@@ -1,0 +1,447 @@
+{
+  "deck_id": "20261006-172728-672ec2d2",
+  "completed_at": "2026-10-06T17:45:41.217",
+  "branch": "morph/20261006-172728-672ec2d2",
+  "backend_label": "glm53",
+  "generations": [
+    [
+      "run-git"
+    ],
+    [
+      "commit-card",
+      "open-branch",
+      "run-git-judge"
+    ],
+    [
+      "archive-run",
+      "commit-card-judge",
+      "open-branch-judge"
+    ],
+    [
+      "archive-run-judge"
+    ]
+  ],
+  "batch_ids": [
+    "local-e13b51efe8d24fa09862472bb68d666d",
+    "local-9f30c1819a9c4eff89977e6e29478ce0",
+    "local-3e8398438c464312a0d8232138edc285",
+    "local-12de10b30ba343c8a9a18cc439b89104",
+    "local-62312c47cde84a05b2c20f7dd7fd0caf",
+    "local-59ab57d3b5e74457af1469d2c5bbc4c8"
+  ],
+  "outcomes": {
+    "run-git": {
+      "custom_id": "run-git",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/git/types.ts",
+        "/home/morph/MorphV2/src/git/run.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "run-git.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "8ba9b328d4f396cebe02b6bcc5e35e9d81daae28",
+      "diffstat": [
+        {
+          "path": "src/git/run.ts",
+          "insertions": 25,
+          "deletions": 0
+        },
+        {
+          "path": "src/git/types.ts",
+          "insertions": 12,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/git/types.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "src/git/run.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "commit-card": {
+      "custom_id": "commit-card",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/git/commit.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "commit-card.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "fe9c80f8ef184d331e0947baea1dc9719285306d",
+      "diffstat": [
+        {
+          "path": "src/git/commit.ts",
+          "insertions": 59,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/git/commit.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "open-branch": {
+      "custom_id": "open-branch",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/git/branch.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "open-branch.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "8b71c5c8d50b79e2a7ba8a2f8547474808d3b1ef",
+      "diffstat": [
+        {
+          "path": "src/git/branch.ts",
+          "insertions": 39,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/git/branch.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "run-git-judge": {
+      "custom_id": "run-git-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/git/run.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 3,
+      "winning_variant": "run-git-judge.r2",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\n== eslint\n== guard\nguard: tests/git/run.examples.test.ts does not mention the example literal \"git checkout failed (exit 1): \"\n",
+      "commit": "1ae8b5e009fdbfd01b100cef2e85b446879d82b4",
+      "diffstat": [
+        {
+          "path": "tests/git/run.examples.test.ts",
+          "insertions": 279,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/git/run.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "archive-run": {
+      "custom_id": "archive-run",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/git/archive.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "archive-run.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "30b80d0ffe59bc25f0cafabae672b918fad52734",
+      "diffstat": [
+        {
+          "path": "src/git/archive.ts",
+          "insertions": 60,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/git/archive.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "commit-card-judge": {
+      "custom_id": "commit-card-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/git/commit.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "commit-card-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "205642fae4dee71f464b612659eadb53a7e0aed0",
+      "diffstat": [
+        {
+          "path": "tests/git/commit.examples.test.ts",
+          "insertions": 266,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/git/commit.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "open-branch-judge": {
+      "custom_id": "open-branch-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/git/branch.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "open-branch-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "c3c420165fe154a81f8fdd0cca861acef501b398",
+      "diffstat": [
+        {
+          "path": "tests/git/branch.examples.test.ts",
+          "insertions": 263,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/git/branch.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "archive-run-judge": {
+      "custom_id": "archive-run-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/git/archive.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "archive-run-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "309f68a54918e72c96545d07e21d1b354d2bb615",
+      "diffstat": [
+        {
+          "path": "tests/git/archive.examples.test.ts",
+          "insertions": 501,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/git/archive.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    }
+  },
+  "usage": {
+    "run-git.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791307649-txKS6EWH8pn2CEuzOsMZ",
+      "input_tokens": 9690,
+      "output_tokens": 513,
+      "cost": 0.00474696,
+      "finish_reason": "stop"
+    },
+    "run-git.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791307649-eQQky85CcRiunuIMXXYZ",
+      "input_tokens": 9690,
+      "output_tokens": 921,
+      "cost": 0.001980432,
+      "finish_reason": "stop"
+    },
+    "commit-card.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791307735-xbSCgUXgqIaoF4m4SAP2",
+      "input_tokens": 10913,
+      "output_tokens": 571,
+      "cost": 0.002688732,
+      "finish_reason": "stop"
+    },
+    "commit-card.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791307735-pgULY3ewy4jctBgIHteJ",
+      "input_tokens": 10913,
+      "output_tokens": 707,
+      "cost": 0.002868252,
+      "finish_reason": "stop"
+    },
+    "open-branch.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791307735-Re0V6bYpYKH8Km9BMSEJ",
+      "input_tokens": 9731,
+      "output_tokens": 856,
+      "cost": 0.00248094,
+      "finish_reason": "stop"
+    },
+    "open-branch.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791307787-DLszqqyBTkZkCDQSJGgX",
+      "input_tokens": 9731,
+      "output_tokens": 446,
+      "cost": 0.001348764,
+      "finish_reason": "stop"
+    },
+    "run-git-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791307791-lYsOzPbOl2WK60i6HUf8",
+      "input_tokens": 10860,
+      "output_tokens": 8873,
+      "cost": 0.013450008,
+      "finish_reason": "stop"
+    },
+    "run-git-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791308025-UHqYVezBfSc6Nw7Uak0i",
+      "input_tokens": 17627,
+      "output_tokens": 4513,
+      "cost": 0.009705204,
+      "finish_reason": "stop"
+    },
+    "run-git-judge.r2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791308142-ID62GySstdHfD1zYnFBT",
+      "input_tokens": 16529,
+      "output_tokens": 4552,
+      "cost": 0.01295082,
+      "finish_reason": "stop"
+    },
+    "archive-run.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791308275-aD9KNi44JkgEKDi0Yb5X",
+      "input_tokens": 10670,
+      "output_tokens": 584,
+      "cost": 0.002603832,
+      "finish_reason": "stop"
+    },
+    "archive-run.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791308275-M5NhLUAZ0fRTAnB4MnFD",
+      "input_tokens": 10670,
+      "output_tokens": 770,
+      "cost": 0.002849352,
+      "finish_reason": "stop"
+    },
+    "commit-card-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791308275-W3Ilw5SqosLMzinT4hvl",
+      "input_tokens": 11915,
+      "output_tokens": 6979,
+      "cost": 0.011568132,
+      "finish_reason": "stop"
+    },
+    "open-branch-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791308324-0KG17gENs2nVS6tSV8qc",
+      "input_tokens": 10910,
+      "output_tokens": 4535,
+      "cost": 0.007919952,
+      "finish_reason": "stop"
+    },
+    "archive-run-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791308490-28S7GNIL0QDNp5BEOE1u",
+      "input_tokens": 12003,
+      "output_tokens": 14423,
+      "cost": 0.021277956,
+      "finish_reason": "stop"
+    }
+  },
+  "usage_totals": {
+    "input_tokens": 161852,
+    "output_tokens": 49243,
+    "cost": 0.09843933599999999,
+    "requests": 14,
+    "requests_with_usage": 14
+  },
+  "orchestrator_usage": {}
+}
