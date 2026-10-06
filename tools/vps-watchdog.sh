@@ -37,8 +37,11 @@ else
   else
     printf '0' > "$STATE/same"; rm -f "$STATE/stalled"
   fi
-  if [ "$S" -ge 3 ] && ! pgrep -f "mrph run" >/dev/null && [ ! -f "$STATE/stalled" ] &&
-     ! printf '%s' "$PANE" | grep -qiE "waiting for .*agent|background agent|tokens$"; then
+  # A run in flight = the mrph interpreter itself; `pgrep -f "mrph run"` also matched the
+  # sessions' own wait loops (same words in their command line) and hid a 30-min stall (06.10).
+  # An agent on screen excuses 30 min of silence, not 60: a hung agent shows its row too.
+  if [ "$S" -ge 3 ] && ! pgrep -f '^[^ ]*python3? [^ ]*mrph run' >/dev/null && [ ! -f "$STATE/stalled" ] &&
+     { [ "$S" -ge 6 ] || ! printf '%s' "$PANE" | grep -qiE "waiting for .*agent|background agent|tokens$"; }; then
     tmux send-keys -t morph C-u
     tmux send-keys -t morph -l "Nothing has happened on this screen for 30 minutes and no run is in flight. Check the state of your agents and the run branch, then continue by docs/AUTONOMY.md from where you are; post the current state to tools/tg.sh first."
     sleep 2; tmux send-keys -t morph C-m
