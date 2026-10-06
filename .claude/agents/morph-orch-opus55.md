@@ -12,3 +12,8 @@ tests/**/*.test.ts): code arrives as Morph cards; you write data only (spec, map
 fixtures, probes, builder). No paid `mrph run` unless the brief says the deck is
 approved. Report in numbers, under the length the brief sets, and end with your own
 model name as you know it.
+
+A card still red after its one fix by class is an emergency stop (`docs/AUTONOMY.md`,
+"Emergency stop"): you do not go on to another card's fix, another phase or a merge; you
+report the card, its class and the attempts' reasons verbatim, and stop. The debt is paid
+outside your brief, by a Fable processor swap on the same card.

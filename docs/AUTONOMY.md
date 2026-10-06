@@ -75,8 +75,8 @@ cycle below with a fresh run agent (`morph-orch-opus55`). Every later phase star
   `run` command and `--processor glm53`, the key from `morph-lab/.env` (never printed).
   Ceiling $0.10 for the smoke. Record it as its own row in `docs/MEASURE.md` ("P7 smoke":
   written/failed, $, minutes, exit code, the JSON on stdout in one line) and the deck in
-  `decks/p7/smoke/`. A red smoke is debt with its failure class (below), not a stopped
-  phase; the session posts the result to Telegram and stops (see "Smoke stops").
+  `decks/p7/smoke/`. The session posts the result to Telegram and stops (see "Smoke
+  stops"); a red smoke is an emergency stop.
 
 ## Failure
 
@@ -96,26 +96,28 @@ A budget fix that passes is not a failure: the phase is not stopped and the fix 
 phase gets `max_tokens` ≥ 20000.
 
 - A phase with failed cards after the run: ONE fix of the failed cards by their class,
-  merged if green. A second failure of the same cards: the phase stops, its debt is written into
-  `docs/MEASURE.md` and `docs/DECISIONS.md`, the session goes on if later phases do not
-  depend on the missing code; otherwise it stops.
+  merged if green.
+- **Emergency stop (operator, 06.10)**: a card still red after its one fix stops the whole
+  autonomous generation — no next phase, no merge of that phase's run branch beyond the
+  green code already merged. Debts are not carried forward. The session:
+  1. opens a GitHub issue in origin: `gh issue create --label debt`, title "P<N> <card>:
+     <class> — <one-line symptom>", body: run ids, what was tried, the attempts' reasons
+     verbatim, the code left without a judge or a proof ("unguarded: <paths>");
+  2. posts to Telegram "EMERGENCY STOP" with the card, the class and the issue URL;
+  3. stops and waits for the operator.
+  The card is then paid by a processor swap, outside the autonomous loop: the SAME card
+  (instruction, context_slice, acceptance unchanged) executed by Claude Fable 5.1 at
+  effort xhigh (skill `morph-agent-run`, section "Paying a debt"), committed with the
+  Morph trailers and `Morph-Model: claude-fable-5-1`. Fable writes only the card's target;
+  a defect it finds in other code is reported, not fixed. Its commit closes the issue; its
+  cost is a "debt (fable)" row in `docs/MEASURE.md`; its paragraph on why glm failed goes
+  into DECISIONS as the data lesson. Only then does the operator restart the session.
 - A red that comes from the environment (npm, network, provider error, `exit null`
-  timeouts on a green log): stop the phase, do not retry in a loop, write the symptom.
-- Every debt (a card left failed after its fix, a red smoke, a stopped phase) gets a GitHub
-  issue in origin: `gh issue create --label debt` with the title "P<N> <card>: <class> —
-  <one-line symptom>" and a body of: run ids, what was tried, the attempts' reasons
-  verbatim, the proposed fix and who owns it (session or operator). Its URL goes into the
-  DECISIONS line. A debt closed later closes its issue with the commit that closed it.
-  The body also names the code left without a judge or a proof ("unguarded: <paths>") —
-  the first suspects when a later smoke goes red.
-- **Debt ceiling**: three open issues with the label `debt` stop the session, whatever
-  their phases, with a Telegram report listing them. The session does not pick the next
-  phase until the operator closes or accepts them. This stop is the rule's, not a choice.
+  timeouts on a green log): one plain re-run later; still red → emergency stop with class
+  `environment` (the processor swap does not apply; the operator fixes the environment).
 - **Smoke stops**: a live glm53 smoke of the V2 binary after P7, after P10 (the
   dogfooding switch) and after P11 (the first phase built by V2). After each smoke the
-  session stops for the operator, red or green, and posts the open `debt` issues with it.
-- Two phases stopped in a row: the session stops and reports. Only classes the session
-  could not fix alone count; a smoke debt does not.
+  session stops for the operator, red or green. A red smoke is an emergency stop.
 
 ## Money
 
