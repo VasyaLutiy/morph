@@ -247,41 +247,126 @@ System:
           description: The outcome of Parse Answer.
           schema: "{ files: { [path: string]: string } } | { corrupt: string } | { truncated: true }"
 
-    # ---------------------------------------------------------------- P3 (skeleton — examples before the phase)
+    # ---------------------------------------------------------------- P3
     - name: acceptance
       description: >
         Judges one card's answers: src/acceptance/*.ts. Snapshots the targets' bytes,
         writes a variant, runs the acceptance command with a timeout, keeps the first
         green variant, rolls everything back otherwise, and builds the diagnosis the
-        retry carries.
+        retry carries. The environment of the child is a parameter, never read here.
       language: typescript
       guardrails: [No Shell Outside Acceptance]
       functions:
         - name: Snapshot Targets
           description: Remembers the bytes (or absence) of every target before writing.
-          behavior: In memory, never through git. Restoring puts the bytes back or deletes the file.
+          behavior: >
+            snapshotTargets(root, targets) reads each target under root, in targets
+            order: a regular file gives its bytes (any bytes, never decoded), anything
+            else gives null (absent). In memory, never through git. restoreSnapshot
+            puts every entry back: bytes are written again (parent directories
+            created), null deletes the file if it exists. Restoring twice is the same
+            as restoring once.
+          steps:
+            - produces: Target Snapshot
+          examples:
+            - given: 'root with src/a.ts = "old\n" and no src/b.ts; snapshot of targets [src/a.ts, src/b.ts]; then src/a.ts written "new\n" and src/b.ts written "x\n"'
+              when: "the snapshot is restored"
+              then: 'entries are [src/a.ts with 4 bytes "old\n", src/b.ts with bytes null]; after restore src/a.ts reads "old\n" and src/b.ts does not exist'
+            - given: 'root with src/deep/a.ts = "old\n"; snapshot of [src/deep/a.ts]; then the directory src/deep removed'
+              when: "the snapshot is restored, then restored again"
+              then: 'src/deep/a.ts reads "old\n" after each restore (the parent directory is recreated)'
+            - given: 'root with bin.dat holding the 4 bytes ff 00 fe 0a (not UTF-8); snapshot of [bin.dat]; then bin.dat written "text\n"'
+              when: "the snapshot is restored"
+              then: 'bin.dat holds exactly the bytes ff 00 fe 0a (hex "ff00fe0a")'
         - name: Run Acceptance
           description: Executes the card's acceptance command from the repo root.
           behavior: >
-            `sh -c` with cwd = root, env NO_COLOR=1 CI=1, timeout 300 s (a kill is
-            exit null with the log kept); stdout+stderr merged; the log is clipped to
-            4000 chars head+tail, keeping every line that looks like a diagnosis
-            (FAIL, Error, assert, expected). Returns {exit, log, timedOut}.
+            runAcceptance(command, root, {env, timeoutMs}) spawns /bin/sh -c with cwd =
+            root, env = the given env with NO_COLOR=1 and CI=1 laid over it (nothing
+            else; the caller passes what it wants inherited), detached in its own
+            process group; stdout and stderr merged in write order. timeoutMs
+            defaults to 300000: on expiry the whole process group is killed, so no
+            child outlives the call, and the result is exit null, timedOut true, the
+            output so far kept with the line "acceptance timed out after <ms> ms"
+            appended. The log is clipped by clipLog: over 4000 chars it keeps the
+            first 1500 and the last 1500 chars and, between them, a marker and every
+            middle line that looks like a diagnosis (FAIL, Error, assert, expected),
+            within 800 chars. Returns Acceptance Result.
           steps:
             - produces: Acceptance Result
+          examples:
+            - given: 'command `echo out; echo err >&2; exit 3`, env {PATH: "/usr/bin:/bin"}'
+              when: "run"
+              then: '{exit: 3, log: "out\nerr\n", timedOut: false}'
+            - given: 'root holding marker.txt = "here\n"; env {PATH: "/usr/bin:/bin", FOO: "bar", NO_COLOR: "0"}; command `echo "$NO_COLOR $CI $FOO ${HOME-unset}"; cat marker.txt`'
+              when: "run"
+              then: '{exit: 0, log: "1 1 bar unset\nhere\n", timedOut: false} — NO_COLOR and CI forced, the given env passed, nothing of the parent environment (HOME) leaks, cwd is root'
+            - given: 'command `echo started; sleep 30 & echo $! > sleep.pid; wait`, env {PATH: "/usr/bin:/bin"}, timeoutMs 200'
+              when: "run"
+              then: '{exit: null, timedOut: true, log: "started\nacceptance timed out after 200 ms\n"}, returned in under 2000 ms; the sleep whose pid is in root/sleep.pid is gone (no /proc/<pid>, or its state is Z): the process group was killed, no orphan'
+            - given: 'command `cat <absolute path of the fixture>`, env {PATH: "/usr/bin:/bin"}; the fixture is 6403 chars, 200 lines, with three diagnosis lines in the middle'
+              when: "run"
+              then: 'exit 0, timedOut false, log exactly the 3154 chars of the clipped fixture: first 1500 chars, "\n[... 3403 chars clipped; diagnosis lines kept:]\n", the three lines " FAIL  tests/a.test.ts > adds..", "AssertionError: expected 3 to be 4", "Error: boom at src/a.ts:7......", "[...]\n", last 1500 chars'
+              ref: "tests/fixtures/acceptance/longLog.txt (input) and tests/fixtures/acceptance/longLogClipped.txt (the log)"
         - name: Verify Card
           description: Best-of-N over the parsed variants.
           behavior: >
-            For each variant in order: skip corrupt/truncated with a stand-in result;
-            write the files; run the acceptance; on exit 0 keep and stop; else roll
-            back and continue. Returns the winning variant or every result.
+            verifyCard({root, targets, command, variants, env, timeoutMs}) snapshots the
+            targets once, then for each variant in order: a corrupt answer gives the
+            stand-in result {exit null, log "answer corrupt: <reason>", diff null} and a
+            truncated one {exit null, log "answer truncated", diff null}, nothing
+            written; otherwise every file of the answer is written under root and the
+            acceptance is run; exit 0 → that variant is accepted, its files stay, its
+            result has diff null and no later variant is tried; any other exit → the
+            result carries the Build Attempt Diff of the written files against the
+            snapshot, the snapshot is restored, and the next variant is tried. Returns
+            Verify Outcome; with no green variant accepted is null and the tree equals
+            the snapshot.
           steps:
+            - reads: Parsed Answer
             - calls: Snapshot Targets
             - calls: Run Acceptance
+            - calls: Build Attempt Diff
             - produces: Verify Outcome
+          examples:
+            - given: 'root with src/a.ts = "old\n"; targets [src/a.ts]; command `grep good src/a.ts || { echo "FAIL: no good in src/a.ts"; exit 1; }`; variants c.v1 {corrupt: "missing section for src/a.ts"}, c.v2 {files: {src/a.ts: "bad\n"}}, c.v3 {files: {src/a.ts: "good\n"}}'
+              when: "verified"
+              then: 'accepted {variant: "c.v3"}; results [{c.v1, exit null, log "answer corrupt: missing section for src/a.ts", diff null}, {c.v2, exit 1, log "FAIL: no good in src/a.ts\n", diff "--- a/src/a.ts\n+++ b/src/a.ts\n@@ -1,1 +1,1 @@\n-old\n+bad\n"}, {c.v3, exit 0, log "good\n", diff null}]; src/a.ts reads "good\n"'
+            - given: 'the same root and command; targets [src/a.ts, src/b.ts], src/b.ts absent; variants c.v1 {truncated: true}, c.v2 {files: {src/a.ts: "bad\n", src/b.ts: "x\n"}}'
+              when: "verified"
+              then: 'accepted null; results [{c.v1, exit null, log "answer truncated", diff null}, {c.v2, exit 1, log "FAIL: no good in src/a.ts\n", diff "--- a/src/a.ts\n+++ b/src/a.ts\n@@ -1,1 +1,1 @@\n-old\n+bad\n--- /dev/null\n+++ b/src/b.ts\n@@ -0,0 +1,1 @@\n+x\n"}]; src/a.ts reads "old\n" and src/b.ts does not exist'
+            - given: 'the same root, command and targets [src/a.ts]; variants c.v1 {files: {src/a.ts: "good\n"}}, c.v2 {files: {src/a.ts: "good\n"}}'
+              when: "verified"
+              then: 'accepted {variant: "c.v1"}; results has exactly one entry, c.v1 with exit 0: c.v2 is never run'
         - name: Build Attempt Diff
           description: A unified diff of the failed variant against the snapshot, capped at 6000 chars.
+          behavior: >
+            buildAttemptDiff(before, after): for each path of after in its key order
+            whose lines differ from before (a missing or null before is an absent
+            file), "--- a/<p>" (or "--- /dev/null" when absent) and "+++ b/<p>", then
+            hunks of a minimal line diff with 3 lines of context, "@@ -l,n +l,n @@"
+            with both counts always printed; changes 6 or fewer unchanged lines apart
+            share one hunk. Lines are split on \n, a final \n ends the last line. No
+            change at all gives "". Over 6000 chars: the first 6000 - m - 1 chars, a
+            \n, then m = "[diff clipped: <total> chars]\n", exactly 6000 chars.
+          examples:
+            - given: 'before {src/a.ts: "line 1\n" … "line 10\n" (10 lines)}; after the same with line 5 = "LINE 5"'
+              when: "diffed"
+              then: '"--- a/src/a.ts\n+++ b/src/a.ts\n@@ -2,7 +2,7 @@\n line 2\n line 3\n line 4\n-line 5\n+LINE 5\n line 6\n line 7\n line 8\n"'
+            - given: 'before {src/a.ts: "a\nb\n", src/b.ts: null}; after {src/a.ts: "a\nb\n", src/b.ts: "x\n"}'
+              when: "diffed"
+              then: '"--- /dev/null\n+++ b/src/b.ts\n@@ -0,0 +1,1 @@\n+x\n" — the unchanged src/a.ts is not mentioned'
+            - given: 'before {t: "line 1\n" … "line 20\n"}; after the same with line 2 = "LINE 2" and line 18 = "LINE 18"'
+              when: "diffed"
+              then: 'two hunks: "@@ -1,5 +1,5 @@" (line 1, -line 2, +LINE 2, lines 3-5) and "@@ -15,6 +15,6 @@" (lines 15-17, -line 18, +LINE 18, lines 19-20)'
+            - given: 'before {src/big.ts: null}; after {src/big.ts: the 400 lines "export const v000 = 0;" … "export const v399 = 399;"} (9890 chars; the full diff is 10339 chars)'
+              when: "diffed"
+              then: 'exactly 6000 chars, starting "--- /dev/null\n+++ b/src/big.ts\n@@ -0,0 +1,400 @@\n+export const v000 = 0;\n" and ending "\n[diff clipped: 10339 chars]\n"'
+              ref: "tests/fixtures/acceptance/bigAfter.txt (the after content)"
       dataObjects:
+        - name: Target Snapshot
+          description: The bytes of a card's targets before any variant is written.
+          schema: "{ root: string, entries: { path: string, bytes: Uint8Array | null }[] } — entries in targets order, null = absent"
         - name: Acceptance Result
           description: What one acceptance command run returned.
           schema: "{ exit: number | null, log: string, timedOut: boolean }"

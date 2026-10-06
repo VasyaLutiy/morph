@@ -13,7 +13,7 @@ const bad = [];
 const LAYERS = {
   cards: [], wait: [],
   response: ["cards"], store: ["cards"], compiler: ["cards"], language: ["cards"],
-  contour: ["cards"], git: ["cards"], acceptance: ["cards", "wait"],
+  contour: ["cards"], git: ["cards"], acceptance: ["cards", "wait", "compiler"],
   processor: ["cards", "wait"], planner: ["cards", "contour", "language"],
   primer: ["cards", "git", "store", "language"],
   scout: ["cards", "processor", "wait", "primer"],
@@ -29,6 +29,8 @@ const CONSOLE = new Set(["cli"]);                      // console, process.exit
 const PROCESS = new Set(["cli", "processor", "acceptance", "git"]);
 const NO_CLOCK = new Set(["cards", "compiler", "response", "language", "contour", "planner"]);
 const YAML = new Set(["contour"]);
+// P3: the acceptance gets the child's environment as a parameter (docs/TASK_P3_acceptance.md §4)
+const NO_ENV = new Set(["acceptance"]);
 
 function parse(file) {
   return ts.createSourceFile(file, fs.readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true,
@@ -121,6 +123,9 @@ function checkSrc(files) {
       if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&
           node.expression.text === "process" && node.name.text === "exit" && !CONSOLE.has(layer))
         report(sf, node, "process.exit outside src/cli");
+      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&
+          node.expression.text === "process" && node.name.text === "env" && NO_ENV.has(layer))
+        report(sf, node, `process.env in src/${layer} (the environment is a parameter)`);
     });
   }
 }

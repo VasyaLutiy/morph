@@ -6,6 +6,8 @@ shared steps here. Hand-written data, never product code.
     python3 decks/tools/build.py p1     -> acceptance of every P1 card injected into morph-map.json
                                            (mrph plan --spec copies it onto the card)
     python3 decks/tools/build.py p2     -> the same for the P2 cards (Component compiler)
+    python3 decks/tools/build.py p3     -> the same for the P3 cards (Component acceptance; code
+                                           cards write no test file, the probe covers them)
 
 Paths are relative to the repository root (the parent of decks/); nothing here points
 outside the tree.
@@ -194,11 +196,32 @@ P2_JUDGE_LITERALS = {
 P2_JUDGE_EXAMPLES = {"compile-card-judge": 3, "output-directive-judge": 1, "capture-inputs-judge": 2,
                      "parse-answer-judge": 3}
 
+P3_TEST_DIR = "tests/acceptance"
+# docs/TASK_P3_acceptance.md §3: the example literals of Component acceptance
+P3_JUDGE_LITERALS = {
+    "snapshot-targets-judge": ["src/b.ts", "src/deep/a.ts", "ff00fe0a"],
+    "run-acceptance-judge": ["echo out; echo err >&2; exit 3", "1 1 bar unset", "sleep.pid",
+                             "acceptance timed out after 200 ms", "longLogClipped.txt"],
+    "verify-card-judge": ["c.v3", "answer corrupt: missing section for src/a.ts", "answer truncated",
+                          "@@ -1,1 +1,1 @@"],
+    "build-attempt-diff-judge": ["@@ -2,7 +2,7 @@", "--- /dev/null", "@@ -15,6 +15,6 @@",
+                                 "[diff clipped: 10339 chars]", "bigAfter.txt"],
+}
+# Snapshot Targets 3, Run Acceptance 4, Verify Card 3, Build Attempt Diff 4 (contour.yaml, Component acceptance)
+P3_JUDGE_EXAMPLES = {"snapshot-targets-judge": 3, "run-acceptance-judge": 4, "verify-card-judge": 3,
+                     "build-attempt-diff-judge": 4}
+
 # one phase = the cards of one Component in morph-map.json (judges are <code>-judge); the
-# generation layering and the sibling exclusion are computed within the phase only
+# generation layering and the sibling exclusion are computed within the phase only.
+# smoke: whether a code card writes its own smoke test (P1-P2 yes; from P3 a code card covered
+# by a probe writes no test file)
 PHASES = {
-    "p1": {"parts": "p1", "test_dir": P1_TEST_DIR, "examples": P1_JUDGE_EXAMPLES, "literals": P1_JUDGE_LITERALS},
-    "p2": {"parts": "p2", "test_dir": P2_TEST_DIR, "examples": P2_JUDGE_EXAMPLES, "literals": P2_JUDGE_LITERALS},
+    "p1": {"parts": "p1", "test_dir": P1_TEST_DIR, "examples": P1_JUDGE_EXAMPLES, "literals": P1_JUDGE_LITERALS,
+           "smoke": True},
+    "p2": {"parts": "p2", "test_dir": P2_TEST_DIR, "examples": P2_JUDGE_EXAMPLES, "literals": P2_JUDGE_LITERALS,
+           "smoke": True},
+    "p3": {"parts": "p3", "test_dir": P3_TEST_DIR, "examples": P3_JUDGE_EXAMPLES, "literals": P3_JUDGE_LITERALS,
+           "smoke": False},
 }
 
 
@@ -225,17 +248,26 @@ def layer(cards):
     return gen
 
 
-def code_acceptance(card, targets, siblings, parts, phase="p1", test_dir=P1_TEST_DIR):
+def code_acceptance(card, targets, siblings, parts, phase="p1", test_dir=P1_TEST_DIR, smoke_test=True):
+    """A code card: probe-dir, tsc, eslint, guard, probe, [own smoke test], full suite, frozen.
+    ``smoke_test=False`` (P3 on: a code card covered by a probe writes no test file) drops the
+    own-test guard and step and asserts the card targets no test file."""
     code = [t for t in targets if t.startswith("src/")]
     smoke = [t for t in targets if t.startswith(test_dir)]
-    assert len(smoke) == 1, (card, targets)
+    if smoke_test:
+        assert len(smoke) == 1, (card, targets)
+        guard_tests = f"; node $P/guard.mjs tests {smoke[0]} 1 {P1_SMOKE_MAX}"
+        own = "echo '== own'; " + vt(smoke[0])
+    else:
+        assert not smoke and code == list(targets), (card, targets)
+        guard_tests, own = "", ""
     body = (probe_dir(card, parts, f"{card}.probe.ts", exclude=siblings)
             + tsc_probe()
             + "echo '== eslint'; node_modules/.bin/eslint " + " ".join(targets) + "\n"
             + "echo '== guard'; node $P/guard.mjs src " + ",".join(code)
-            + f"; node $P/guard.mjs tests {smoke[0]} 1 {P1_SMOKE_MAX}\n"
+            + guard_tests + "\n"
             + "echo '== probe'; " + vt("--config $P/probe.config.mts")
-            + "echo '== own'; " + vt(smoke[0])
+            + own
             + "echo '== full'; " + vt("--passWithNoTests")
             + "echo '== frozen'; " + frozen()
             + untracked(targets))
@@ -282,7 +314,8 @@ def build_phase(phase):
             c["acceptance"] = judge_acceptance(cid, targets, siblings, parts, phase,
                                                spec["examples"], spec["literals"])
         else:
-            c["acceptance"] = code_acceptance(cid, targets, siblings, parts, phase, spec["test_dir"])
+            c["acceptance"] = code_acceptance(cid, targets, siblings, parts, phase, spec["test_dir"],
+                                              spec["smoke"])
         rows.append((gen[cid], cid, len(c["acceptance"]), len(siblings)))
     with open(MAP, "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2, ensure_ascii=False)
@@ -292,7 +325,8 @@ def build_phase(phase):
     print(f"wrote {MAP}: {len(rows)} cards")
 
 
-BUILDERS = {"p0": build_p0, "p1": lambda: build_phase("p1"), "p2": lambda: build_phase("p2")}
+BUILDERS = {"p0": build_p0, "p1": lambda: build_phase("p1"), "p2": lambda: build_phase("p2"),
+            "p3": lambda: build_phase("p3")}
 
 
 def main(argv):

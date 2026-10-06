@@ -26,3 +26,13 @@ the index the operator reads in one pass. Format: `P<N> · <Function> · <decisi
 - P2 · Compile Card · fence tag = extension without the dot, none for no extension · unspecified.
 - P2 · Compile Card · under patch a slice entry that is also a target is sent twice · no dedupe rule in the record.
 - P2 · plan · `renderRetry` of the draft PLAN is not in the record and belongs to runloop · reconciliation.
+
+## P3 acceptance (`docs/TASK_P3_acceptance.md` §2.2, proposed 06.10 by the orchestrator, pending the gate)
+
+- P3 · Snapshot Targets · `snapshotTargets(root, targets)` → `{root, entries: [{path, bytes: Uint8Array | null}]}` in targets order; `restoreSnapshot(snapshot)` rewrites bytes (mkdir -p) or `rmSync(force)`; a directory target is absent · the record named no shape; added Data Object Target Snapshot.
+- P3 · Run Acceptance · `runAcceptance(command, root, {env, timeoutMs?})`, `/bin/sh -c "exec 2>&1\n" + command`, env = given + NO_COLOR/CI, never `process.env` (guard `NO_ENV`) · "merged" needed an order; Deterministic Core forbids environment reads.
+- P3 · Run Acceptance · detached spawn, `process.kill(-pid, "SIGKILL")` on timeout, resolve on `close`; timed-out log gets `acceptance timed out after <ms> ms`; spawn error → exit null, `acceptance could not start: <message>` · the PLAN's orphan risk; a timeout must be visible in the log (old Morph: "exit None" over a green log).
+- P3 · Run Acceptance · `clipLog`: >4000 chars → head 1500 + `\n[... N chars clipped; diagnosis lines kept:]\n` + middle lines matching `/FAIL|Error|assert|expected/` (≤200 each, ≤800 total) + `[...]\n` + tail 1500 · the record gave the budget, not the arithmetic; simpler than the old whole-line clipper, pinned byte for byte.
+- P3 · Verify Card · input `{root, targets, command, variants: [{variant, answer: ParsedAnswer}], env, timeoutMs?}`; stand-in logs `answer corrupt: <reason>` / `answer truncated`; diff only on a failed run, computed before the rollback; winner's diff null · the record said "stand-in" without text.
+- P3 · Verify Card · layer `acceptance` may import `compiler` (types only) · Parsed Answer exists in the tree; no second serialisation.
+- P3 · Build Attempt Diff · `buildAttemptDiff(before: Record<p, string|null>, after: Record<p, string>)`, LCS with deletions first, 3 lines of context, merge at ≤ 6 context lines, both hunk counts always printed, no "No newline" marker, clip to exactly 6000 with `[diff clipped: <total> chars]\n` · "unified diff" had several valid renderings.
