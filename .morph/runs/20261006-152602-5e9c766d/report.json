@@ -1,0 +1,518 @@
+{
+  "deck_id": "20261006-152602-5e9c766d",
+  "completed_at": "2026-10-06T15:40:42.848",
+  "branch": "morph/20261006-152602-5e9c766d",
+  "backend_label": "glm53",
+  "generations": [
+    [
+      "read-registry"
+    ],
+    [
+      "assemble-request",
+      "read-registry-judge",
+      "read-response"
+    ],
+    [
+      "assemble-request-judge",
+      "read-response-judge",
+      "send-generation"
+    ],
+    [
+      "send-generation-judge"
+    ]
+  ],
+  "batch_ids": [
+    "local-7c63d0a2001a4a29bd9d7b9eb5f5f228",
+    "local-e104150b6b4e4114911a8991e480bcaf",
+    "local-eea5519f47f94921917f66f802db4c21",
+    "local-63f41022129f4fee9a2c9ff9e2b25606",
+    "local-932d83bcead6495e880c34cdfde75901",
+    "local-f9ccdaeefa9f42ccb6030239bbf78c96",
+    "local-221c1258d2a84febbe87e590c1b38961",
+    "local-a99f13f937c0499fb1f12111ae01fe38",
+    "local-3c15900bdcf14bf8b8bb9078a64ac183"
+  ],
+  "outcomes": {
+    "read-registry": {
+      "custom_id": "read-registry",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/processor/types.ts",
+        "/home/morph/MorphV2/src/processor/registry.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "read-registry.v2",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "7303983489b38a9d8e25e9d89868b1ee36dd31b2",
+      "diffstat": [
+        {
+          "path": "src/processor/registry.ts",
+          "insertions": 164,
+          "deletions": 0
+        },
+        {
+          "path": "src/processor/types.ts",
+          "insertions": 28,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/processor/types.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "src/processor/registry.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "read-response": {
+      "custom_id": "read-response",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/processor/response.ts",
+        "/home/morph/MorphV2/src/processor/stub.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "read-response.v2",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "387f5c999c2429ecade38d3fe946bb9969a23c3f",
+      "diffstat": [
+        {
+          "path": "src/processor/response.ts",
+          "insertions": 57,
+          "deletions": 0
+        },
+        {
+          "path": "src/processor/stub.ts",
+          "insertions": 45,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/processor/response.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "src/processor/stub.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "assemble-request": {
+      "custom_id": "assemble-request",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/processor/assemble.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 2,
+      "winning_variant": "assemble-request.r1.v1",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/assemble-request/assemble-request.probe.ts > Assemble Request example 1: the glm config pins the provider and the reasoning lever\nAssertionError: body: expected '{\"model\":\"z-ai/glm-5.3\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],\"usage\":{\"include\":true},\"max_tokens\":12000,\"reasoning\":{\"max_tokens\":2500},\"provider\":{\"order\":[\"Novita\",\"Together\"],\"allow_fall…' to be '{\"model\":\"z-ai/glm-5.3\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],\"max_tokens\":12000,\"reasoning\":{\"max_tokens\":2500},\"provider\":{\"order\":[\"Novita\",\"Together\"],\"allow_fallbacks\":false},\"usage\":{\"i…' // Object.is equality\n FAIL  probe/assemble-request/assemble-request.probe.ts > Assemble Request example 2: the request's model and effort win, nothing unasked is sent\nAssertionError: body: expected '{\"model\":\"x/y\",\"messages\":[{\"role\":\"system\",\"content\":\"s\"},{\"role\":\"user\",\"content\":\"u\"}],\"usage\":{\"include\":true},\"reasoning\":{\"effort\":\"low\"}}' to be '{\"model\":\"x/y\",\"messages\":[{\"role\":\"system\",\"content\":\"s\"},{\"role\":\"user\",\"content\":\"u\"}],\"reasoning\":{\"effort\":\"low\"},\"usage\":{\"include\":true}}' // Object.is equality\n FAIL  probe/assemble-request/assemble-request.probe.ts > §2.2 rows: no lever at all, a null key, inputs untouched\nAssertionError: maxTokens 0 is sent; no reasoning: expected '{\"model\":\"z-ai/glm-5.3\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],\"usage\":{\"include\":true},\"max_tokens\":0}' to be '{\"model\":\"z-ai/glm-5.3\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],\"max_tokens\":0,\"usage\":{\"include\":true}}' // Object.is equality\n Test Files  1 failed (1)\n      Tests  3 failed (3)\n",
+      "commit": "27d287c5079bc5d5b1c37fd40d0c6ee895e58685",
+      "diffstat": [
+        {
+          "path": "src/processor/assemble.ts",
+          "insertions": 36,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/processor/assemble.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "read-registry-judge": {
+      "custom_id": "read-registry-judge",
+      "status": "failed",
+      "paths": [],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 3,
+      "winning_variant": null,
+      "acceptance_output": "== tsc\n== eslint\n== guard\n== own\n FAIL  tests/processor/registry.examples.test.ts > Read Registry examples > every key of KEYS is accepted on an openrouter id\nAssertionError: expected [ { key: 'MORPH_PROCESSOR_a_REASONING_EFFORT', message: 'MORPH_PROCESSOR_a_REASONING_EFFORT must be one of low, medium, high (got \\'1\\')' }, …(2) ] to strictly equal []\n Test Files  1 failed (1)\n      Tests  1 failed | 10 passed (11)\n",
+      "earlier_failures": null,
+      "commit": null,
+      "diffstat": null,
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/processor/registry.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "assemble-request-judge": {
+      "custom_id": "assemble-request-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/processor/assemble.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "assemble-request-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "2d4e6f60c6c3550e3300f5b95753561ca6d0bfc2",
+      "diffstat": [
+        {
+          "path": "tests/processor/assemble.examples.test.ts",
+          "insertions": 141,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/processor/assemble.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "read-response-judge": {
+      "custom_id": "read-response-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/processor/response.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 2,
+      "winning_variant": "read-response-judge.r1",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\ntests/processor/response.examples.test.ts(4,10): error TS2300: Duplicate identifier 'stubAnswer'.\ntests/processor/response.examples.test.ts(4,28): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.\ntests/processor/response.examples.test.ts(238,10): error TS2300: Duplicate identifier 'stubAnswer'.\n",
+      "commit": "399c25c37498d7e573a5e07f58d921f46eeca8bf",
+      "diffstat": [
+        {
+          "path": "tests/processor/response.examples.test.ts",
+          "insertions": 243,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/processor/response.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "send-generation": {
+      "custom_id": "send-generation",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/processor/send.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 2,
+      "winning_variant": "send-generation.r1.v1",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\nsrc/processor/send.ts(1,24): error TS2300: Duplicate identifier 'delay'.\nsrc/processor/send.ts(2,15): error TS2300: Duplicate identifier 'Request'.\nsrc/processor/send.ts(3,10): error TS2300: Duplicate identifier 'assembleRequest'.\nsrc/processor/send.ts(4,10): error TS2300: Duplicate identifier 'readResponse'.\nsrc/processor/send.ts(5,10): error TS2300: Duplicate identifier 'stubAnswer'.\nsrc/processor/send.ts(7,3): error TS2300: Duplicate identifier 'Answer'.\nsrc/processor/send.ts(8,3): error TS2300: Duplicate identifier 'GenerationResult'.\nsrc/processor/send.ts(9,3): error TS2300: Duplicate identifier 'HttpReply'.\nsrc/processor/send.ts(10,3): error TS2300: Duplicate identifier 'ProcessorConfig'.\nsrc/processor/send.ts(11,3): error TS2300: Duplicate identifier 'Reply'.\nsrc/processor/send.ts(12,3): error TS2300: Duplicate identifier 'Transport'.\nsrc/processor/send.ts(13,3): error TS2300: Duplicate identifier 'Usage'.\nsrc/processor/send.ts(16,14): error TS2451: Cannot redeclare block-scoped variable 'BACKOFF_MS'.\nsrc/processor/send.ts(18,17): error TS2323: Cannot redeclare exported variable 'realTransport'.\nsrc/processor/send.ts(18,17): error TS2393: Duplicate function implementation.\nsrc/processor/send.ts(26,10): error TS2393: Duplicate function implementation.\nsrc/processor/send.ts(45,10): error TS2393: Duplicate function implementation.\nsrc/processor/send.ts(49,16): error TS2393: Duplicate function implementation.\nsrc/processor/send.ts(93,23): error TS2323: Cannot redeclare exported variable 'sendGeneration'.\nsrc/processor/send.ts(93,23): error TS2393: Duplicate function implementation.\nsrc/processor/send.ts(140,24): error TS2300: Duplicate identifier 'delay'.\nsrc/processor/send.ts(141,15): error TS2300: Duplicate identifier 'Request'.\nsrc/processor/send.ts(142,10): error TS2300: Duplicate identifier 'assembleRequest'.\nsrc/processor/send.ts(143,10): error TS2300: Duplicate identifier 'readResponse'.\nsrc/processor/send.ts(144,10): error TS2300: Duplicate identifier 'stubAnswer'.\nsrc/processor/send.ts(146,3): error TS2300: Duplicate identifier 'Answer'.\nsrc/processor/send.ts(147,3): error TS2300: Duplicate identifier 'GenerationResult'.\nsrc/processor/send.ts(148,3): error TS2300: Duplicate identifier 'HttpReply'.\nsrc/processor/send.ts(149,3): error TS2300: Duplicate identifier 'ProcessorConfig'.\nsrc/processor/send.ts(150,3): error TS2300: Duplicate identifier 'Reply'.\nsrc/processor/send.ts(151,3): error TS2300: Duplicate identifier 'Transport'.\nsrc/processor/send.ts(152,3): error TS2300: Duplicate identifier 'Usage'.\nsrc/processor/send.ts(155,14): error TS2451: Cannot redeclare block-scoped variable 'BACKOFF_MS'.\nsrc/processor/send.ts(157,17): error TS2323: Cannot redeclare exported variable 'realTransport'.\nsrc/processor/send.ts(157,17): error TS2393: Duplicate function implementation.\nsrc/processor/send.ts(165,10): error TS2393: Duplicate function implementation.\nsrc/processor/send.ts(176,10): error TS2393: Duplicate function implementation.\nsrc/processor/send.ts(180,16): error TS2393: Duplicate function implementation.\nsrc/processor/send.ts(225,23): error TS2323: Cannot redeclare exported variable 'sendGeneration'.\nsrc/processor/send.ts(225,23): error TS2393: Duplicate function implementation.\n",
+      "commit": "dc5ece990ea559158eec4cc728b98bb077471401",
+      "diffstat": [
+        {
+          "path": "src/processor/send.ts",
+          "insertions": 136,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/processor/send.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "send-generation-judge": {
+      "custom_id": "send-generation-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/processor/send.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 3,
+      "winning_variant": "send-generation-judge.r2",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\n== eslint\n== guard\n== own\n FAIL  tests/processor/send.examples.test.ts > Send Generation: 429 is retryable, 400 is not\nAssertionError: expected 'http 400: bad request' to be 'http 400: bad request (after 2 attempts)' // Object.is equality\n Test Files  1 failed (1)\n      Tests  1 failed | 11 passed (12)\n",
+      "commit": "da396261b949934ded671dc4430afa598fde512b",
+      "diffstat": [
+        {
+          "path": "tests/processor/send.examples.test.ts",
+          "insertions": 292,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/processor/send.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    }
+  },
+  "usage": {
+    "read-registry.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300362-1j4rkLCsHUu23NaJAq8S",
+      "input_tokens": 10928,
+      "output_tokens": 4457,
+      "cost": 0.010473,
+      "finish_reason": "stop"
+    },
+    "read-registry.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300362-aEA5c9aaFzU307apHYwk",
+      "input_tokens": 10928,
+      "output_tokens": 8551,
+      "cost": 0.01587708,
+      "finish_reason": "stop"
+    },
+    "assemble-request.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300588-ihGSSSRq0UMnV4KF14rV",
+      "input_tokens": 10780,
+      "output_tokens": 294,
+      "cost": 0.00185136,
+      "finish_reason": "stop"
+    },
+    "assemble-request.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300588-h5Kb6UQ7rTCvtjBIjz1v",
+      "input_tokens": 10780,
+      "output_tokens": 294,
+      "cost": 0.001238496,
+      "finish_reason": "stop"
+    },
+    "read-response.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300596-PsPtJ98Ceq5khGDL9zMU",
+      "input_tokens": 11815,
+      "output_tokens": 1261,
+      "cost": 0.003409284,
+      "finish_reason": "stop"
+    },
+    "read-response.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300600-38oZs8v89fNbZzz26jyP",
+      "input_tokens": 11815,
+      "output_tokens": 1094,
+      "cost": 0.002378988,
+      "finish_reason": "stop"
+    },
+    "read-registry-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300588-5HvSrKOCMb8OqChY34Mc",
+      "input_tokens": 13926,
+      "output_tokens": 3145,
+      "cost": 0.006914112,
+      "finish_reason": "stop"
+    },
+    "assemble-request.r1.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300688-RD0Z18QsO3oash4ZkNbV",
+      "input_tokens": 16099,
+      "output_tokens": 365,
+      "cost": 0.003609972,
+      "finish_reason": "stop"
+    },
+    "assemble-request.r1.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300688-rKz2qZhrgFT29Byn7hgw",
+      "input_tokens": 16099,
+      "output_tokens": 406,
+      "cost": 0.003664092,
+      "finish_reason": "stop"
+    },
+    "read-registry-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300688-No6pe84hQq6o3nN3MEci",
+      "input_tokens": 19334,
+      "output_tokens": 2194,
+      "cost": 0.00631044,
+      "finish_reason": "stop"
+    },
+    "read-registry-judge.r2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300750-awOJ4rzXC7HfQnXmZhMf",
+      "input_tokens": 19551,
+      "output_tokens": 2576,
+      "cost": 0.005680092,
+      "finish_reason": "stop"
+    },
+    "assemble-request-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300815-4kTkXuPNhyrj7YFGm1s6",
+      "input_tokens": 12282,
+      "output_tokens": 1446,
+      "cost": 0.003980952,
+      "finish_reason": "stop"
+    },
+    "send-generation.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300815-V1NsUsAxMsW12mJ71nht",
+      "input_tokens": 12311,
+      "output_tokens": 2119,
+      "cost": 0.004881492,
+      "finish_reason": "stop"
+    },
+    "read-response-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300815-V5oxGNSFs4zKzzGRD6Bq",
+      "input_tokens": 13725,
+      "output_tokens": 2176,
+      "cost": 0.005550612,
+      "finish_reason": "stop"
+    },
+    "send-generation.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300850-LdrzWPG3qzVajdp40rV6",
+      "input_tokens": 12311,
+      "output_tokens": 1922,
+      "cost": 0.004621452,
+      "finish_reason": "stop"
+    },
+    "send-generation.r1.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300916-qEpLP1M1Evne60lDGoIw",
+      "input_tokens": 20895,
+      "output_tokens": 943,
+      "cost": 0.00586194,
+      "finish_reason": "stop"
+    },
+    "send-generation.r1.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300917-i5WdH3U8nBnsSI7JHPkD",
+      "input_tokens": 20895,
+      "output_tokens": 942,
+      "cost": 0.002883852,
+      "finish_reason": "stop"
+    },
+    "read-response-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300917-uibnxshaMyqOklinFVpY",
+      "input_tokens": 19194,
+      "output_tokens": 2077,
+      "cost": 0.007716912,
+      "finish_reason": "stop"
+    },
+    "send-generation-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791300993-XBTRqFs4alvJhYziLv4I",
+      "input_tokens": 14461,
+      "output_tokens": 5018,
+      "cost": 0.009282852,
+      "finish_reason": "stop"
+    },
+    "send-generation-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791301092-PkkEuloAavMJMO0Zmy7Y",
+      "input_tokens": 20872,
+      "output_tokens": 2912,
+      "cost": 0.009195552,
+      "finish_reason": "stop"
+    },
+    "send-generation-judge.r2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791301168-KLh60JRA9x5ESN9XnKCV",
+      "input_tokens": 19870,
+      "output_tokens": 3010,
+      "cost": 0.008904072,
+      "finish_reason": "stop"
+    }
+  },
+  "usage_totals": {
+    "input_tokens": 318871,
+    "output_tokens": 47202,
+    "cost": 0.124286604,
+    "requests": 21,
+    "requests_with_usage": 21
+  },
+  "orchestrator_usage": {}
+}
