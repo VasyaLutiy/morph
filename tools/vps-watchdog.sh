@@ -21,11 +21,29 @@ if printf '%s' "$PANE" | grep -qiE "limit reached|usage limit|rate limit|out of 
   if [ "$SUM" = "$PREV" ]; then
     N=$(( $(cat "$STATE/nudges" 2>/dev/null || echo 0) + 1 )); printf '%s' "$N" > "$STATE/nudges"
     if [ "$N" -le 12 ]; then
-      tmux send-keys -t morph "Continue by docs/AUTONOMY.md from where you stopped; the usage window has reset. Post the current state to tools/tg.sh first." Enter
+      tmux send-keys -t morph C-u
+      tmux send-keys -t morph -l "Continue by docs/AUTONOMY.md from where you stopped; the usage window has reset. Post the current state to tools/tg.sh first."
+      sleep 2; tmux send-keys -t morph C-m
       "$TG" "watchdog: limit message on screen, nudged the session (nudge $N)"
     fi
   fi
 else
   rm -f "$STATE/nudges"
+  # A stall: the screen unchanged for three checks (~30 min), no mrph run in flight and no
+  # background agent on screen → the main turn ended without anyone to wake it. Nudge once per stall.
+  S=0
+  if [ "$SUM" = "$PREV" ]; then
+    S=$(( $(cat "$STATE/same" 2>/dev/null || echo 0) + 1 )); printf '%s' "$S" > "$STATE/same"
+  else
+    printf '0' > "$STATE/same"; rm -f "$STATE/stalled"
+  fi
+  if [ "$S" -ge 3 ] && ! pgrep -f "mrph run" >/dev/null && [ ! -f "$STATE/stalled" ] &&
+     ! printf '%s' "$PANE" | grep -qiE "waiting for .*agent|background agent|tokens$"; then
+    tmux send-keys -t morph C-u
+    tmux send-keys -t morph -l "Nothing has happened on this screen for 30 minutes and no run is in flight. Check the state of your agents and the run branch, then continue by docs/AUTONOMY.md from where you are; post the current state to tools/tg.sh first."
+    sleep 2; tmux send-keys -t morph C-m
+    touch "$STATE/stalled"
+    "$TG" "watchdog: screen unchanged for 30 min with no run in flight, nudged the session"
+  fi
 fi
 exit 0
