@@ -59,7 +59,13 @@ cycle below with a fresh run agent (`morph-orch-opus55`). Every later phase star
   cleaning.
 - **Orchestrator model**: decided at P3 (see `docs/MEASURE.md`, "Сравнение оркестраторов"):
   `morph-orch-opus55` prepares and runs every phase. `morph-orch-opus48` took P5 only; the
-  operator dropped it after P5 (06.10: P3 cost $16.98 against $6.26 for Opus 5.5). The agent's tokens, tool calls and
+  operator dropped it after P5 (06.10: P3 cost $16.98 against $6.26 for Opus 5.5).
+- **Operator order 06.10 (P5 debt)**: at the first phase boundary after this line lands
+  (P6 merged and pushed), before preparing the next phase, raise `max_tokens` of the
+  `process-generation-judge` card in `morph-map.json` to 25500 and run that one card on glm53
+  (cut, dry `plan`, `deck check`, run, ff-merge as usual). This card-level change is the
+  operator's decision, not a data-only re-cut. If it passes, the P5 debt is closed. Write
+  that into TASK_P5 §11, MEASURE and DECISIONS, and P5 no longer counts as a stopped phase. The agent's tokens, tool calls and
   minutes go into the "$ оркестр." column of `docs/MEASURE.md` as "<model> <tokens>/<calls>/<min>".
 
 ## Failure
