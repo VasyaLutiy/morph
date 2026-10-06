@@ -1,0 +1,43 @@
+[
+  {
+    "customId": "a",
+    "intent": "generate",
+    "targets": [
+      "src/a.ts"
+    ],
+    "instruction": "Write src/a.ts: a TypeScript ES module that exports `function add(x: number, y: number): number` returning x + y. Use only type annotations that Node's type stripping accepts (no enums, no namespaces). No other exports, no imports.",
+    "acceptance": "test -f src/a.ts && node --experimental-strip-types --no-warnings --input-type=module -e 'const m = await import(\"./src/a.ts\"); if (m.add(2, 3) !== 5 || m.add(-1, 1) !== 0) { console.error(\"add wrong\"); process.exit(1); } console.log(\"a ok\");'",
+    "maxTokens": 6000,
+    "variants": 1
+  },
+  {
+    "customId": "b",
+    "intent": "generate",
+    "targets": [
+      "src/b.ts"
+    ],
+    "instruction": "Write src/b.ts: a TypeScript ES module that exports `function mul(x: number, y: number): number` returning x * y. Use only type annotations that Node's type stripping accepts (no enums, no namespaces). No other exports, no imports.",
+    "acceptance": "test -f src/b.ts && node --experimental-strip-types --no-warnings --input-type=module -e 'const m = await import(\"./src/b.ts\"); if (m.mul(2, 3) !== 6 || m.mul(-2, 4) !== -8) { console.error(\"mul wrong\"); process.exit(1); } console.log(\"b ok\");'",
+    "maxTokens": 6000,
+    "variants": 1
+  },
+  {
+    "customId": "c",
+    "intent": "generate",
+    "targets": [
+      "src/c.ts"
+    ],
+    "contextSlice": [
+      "src/a.ts",
+      "src/b.ts"
+    ],
+    "instruction": "Write src/c.ts: a TypeScript ES module that imports `add` with `import { add } from \"./a.ts\";` and `mul` with `import { mul } from \"./b.ts\";` (keep the .ts extensions exactly), and exports `function addThenMul(x: number, y: number, z: number): number` returning mul(add(x, y), z). Use only type annotations that Node's type stripping accepts. No other exports.",
+    "acceptance": "test -f src/c.ts && node --experimental-strip-types --no-warnings --input-type=module -e 'const m = await import(\"./src/c.ts\"); if (m.addThenMul(1, 2, 3) !== 9 || m.addThenMul(0, 0, 5) !== 0) { console.error(\"addThenMul wrong\"); process.exit(1); } console.log(\"c ok\");' && grep -q 'from \"./a.ts\"' src/c.ts && grep -q 'from \"./b.ts\"' src/c.ts",
+    "maxTokens": 6000,
+    "variants": 1,
+    "dependsOn": [
+      "a",
+      "b"
+    ]
+  }
+]
