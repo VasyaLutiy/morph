@@ -21,20 +21,48 @@ PLAN row P1: 8 cards, forecast $0.7, 3 code cards in parallel in generation 1.
 
 ### 2.1. INPUT data shapes the code must build
 
-- **A card object** (`Deck File` of the record, flat form): a JSON object with the keys
-  of §2.2 `Card`. Valid minimal example, `tests/fixtures/decks/tiny.json` (91 bytes):
-  `[{"customId": "a", "intent": "generate", "targets": ["src/a.ts"], "instruction": "x"}]`.
-  Untrusted input is `unknown`; the validator narrows it. Three invalid cards are
-  `tests/fixtures/cards/badId.json`, `threeFaults.json`, `repeatTarget.json` (the
-  record's Validate Card examples 2–4, verbatim).
-- **Deck files** under `tests/fixtures/decks/`: `tiny`, `duplicate` (a, b, b), `cycle`
-  (a→b→a), `external` (a→zzz), `layered` (a; b→a; c→a; d→b,c), `layeredExternal`
-  (a→ext; b), `hazardsWriteWrite` (a and b both target `src/x.ts`, slices `docs/a.md` /
-  `docs/b.md`), `hazardsReadWrite` (a targets `src/x.ts`, b targets `src/y.ts` and reads
-  `src/x.ts`), `hazardsUnordered` (a reads `src/b.ts`; b→a targets `src/b.ts`), `weigh`
-  (card a: slice `tests/fixtures/weigh/ten.txt` = 10 bytes and `hundred.txt` = 100 bytes,
-  target `tests/fixtures/weigh/missing.txt` which does not exist). Read them with
-  `fixture("decks/<name>.json")` / `fixtureJson(...)` from `tests/helpers.ts`.
+- **A card object** — the input of `validateCard`: ONE JSON object with the keys of §2.2
+  `Card`, never an array. Untrusted input is `unknown`; the validator narrows it. The
+  input of every Validate Card example is the object literal in that example's `given`
+  (`contour.yaml`, Component `cards`, Function `Validate Card`, `examples`; the card's
+  instruction prints the same literals under "Examples of Function Validate Card").
+  Example 1's object, `{"customId": "a", "intent": "generate", "targets": ["src/a.ts"],
+  "instruction": "x"}`, has no file of its own under `tests/fixtures/cards/`: it is the
+  only element of the deck file `tests/fixtures/decks/tiny.json` (an array, next
+  bullet); a test that wants it from disk takes the first element of the parsed deck
+  fixture, never the array itself. Examples 2–4 are `tests/fixtures/cards/badId.json`,
+  `threeFaults.json`, `repeatTarget.json`: one object per file, verbatim.
+- **Deck files** (`Deck File` of the record, flat form) — the input of `loadDeck` once
+  the caller has read the file as text: a JSON **array** of card objects, an array even
+  for one card. Every file under `tests/fixtures/decks/` is such an array;
+  `fixture("decks/<name>.json")` from `tests/helpers.ts` gives the text for `loadDeck`,
+  `fixtureJson(...)` the parsed array. The files, with what `findHazards` yields on the
+  `hazards*` ones (every card of a file is in generation 0 unless a `dependsOn` is named):
+  - `tiny` (91 bytes): one card, a, with no `contextSlice` (so `[]`) → exactly one
+    hazard, `implicit-read` `["a"]`.
+  - `duplicate` (a, b, b), `cycle` (a→b→a), `external` (a→zzz): Load Deck examples 1–3.
+  - `layered` (a; b→a; c→a; d→b,c), `layeredExternal` (a→ext; b): the Layer Generations
+    examples.
+  - `hazardsWriteWrite`: a and b both target `src/x.ts`, slices `docs/a.md` / `docs/b.md`
+    (both non-empty) → exactly one hazard, the `write-write` of Find Hazards example 1.
+  - `hazardsReadWrite`: a targets `src/x.ts`, slice `docs/a.md`; b targets `src/y.ts`,
+    slice `src/x.ts` → exactly one hazard, the `read-write` of Find Hazards example 2.
+  - `hazardsUnordered`: a targets `src/a.ts`, slice `src/b.ts`; b (dependsOn a) targets
+    `src/b.ts`, slice `src/a.ts`. Generations `[["a"],["b"]]` → exactly one hazard,
+    `unordered-read` `["a","b"]`, path `src/b.ts`: a reads a target of a **later**
+    generation, so it is not a `read-write`; b reading a's target is no hazard at all.
+  - `hazardsTwoWriters`: a and b both target `src/x.ts` (slices `docs/a.md`, `docs/b.md`);
+    c targets `src/y.ts`, slice `src/x.ts`; all three in generation 0 → exactly three
+    hazards, in this order: `write-write` `["a","b"]`; `read-write` `["c","a"]`, repair
+    `{addDependsOn: {card: "c", on: "a"}}`; `read-write` `["c","b"]`, repair on `"b"`.
+    One `read-write` per writer, not one per slice entry.
+  - `hazardsAllKinds`: the three cards of `hazardsTwoWriters`, then d (targets `src/z.ts`,
+    slice `src/w.ts`) and e (dependsOn c, targets `src/w.ts`, slice `[]`). Generations
+    `[["a","b","c","d"],["e"]]` → exactly five hazards, kinds in this order:
+    `write-write` `["a","b"]`, `read-write` `["c","a"]`, `read-write` `["c","b"]`,
+    `unordered-read` `["d","e"]` path `src/w.ts`, `implicit-read` `["e"]`.
+  - `weigh`: card a, slice `tests/fixtures/weigh/ten.txt` = 10 bytes and `hundred.txt` =
+    100 bytes, target `tests/fixtures/weigh/missing.txt` which does not exist.
 - **Types**: everything in §2.2 is defined in `src/cards/types.ts`, written in this
   phase by the card that owns `src/cards/model.ts`. Every other module imports its types
   from there with `import type { ... } from "./types.js"`; tests import from
@@ -107,9 +135,12 @@ Path normalisation: `path.posix.normalize(p)`, then a leading `./` removed. A pa
 repo-relative when, after normalisation, it is not empty, not `.`, does not start with
 `/` and does not start with `../`. The `Card` holds the **normalised** strings. So
 `{"targets": ["src/a.ts", "./src/a.ts"]}` gives one fault
-`targets repeat src/a.ts after normalisation`; `{"intent": "todo", "targets": [],
-"instruction": ""}` gives exactly three faults with keys `intent`, `targets`,
-`instruction` in that order. A valid minimal card comes back with `contextSlice []`,
+`targets repeat src/a.ts after normalisation`; `{"customId": "a", "intent": "todo",
+"targets": [], "instruction": ""}` gives exactly three faults with keys `intent`,
+`targets`, `instruction` in that order. Four keys are required — `customId`, `intent`,
+`targets`, `instruction` — and each absent one is a fault of its own: `{"instruction":
+"x"}` gives exactly three faults, keys `customId`, `intent`, `targets`. A valid minimal
+card comes back with `contextSlice []`,
 `acceptance null`, `model null`, `maxTokens null`, `reasoning null`, `variants 1`,
 `dependsOn []`.
 
@@ -155,15 +186,21 @@ returns one) throws an `Error` whose message starts with `dependsOn cycle`.
 - `read-write`, `error`: card R's `contextSlice` names a path that a card W of the
   **same** generation targets; one hazard per (R, slice entry, W) with `cards: [R, W]`,
   `repair: {addDependsOn: {card: R, on: W}}`; R in deck order, then slice order, then W
-  in deck order. hazardsReadWrite → exactly one hazard `{kind: "read-write", severity:
-  "error", cards: ["b","a"], path: "src/x.ts", repair: {addDependsOn: {card: "b", on:
-  "a"}}}`.
+  in deck order. A path targeted by two cards of R's generation gives R **two**
+  `read-write` hazards, one per W, next to the writers' own `write-write`
+  (hazardsTwoWriters → three hazards). hazardsReadWrite → exactly one hazard `{kind:
+  "read-write", severity: "error", cards: ["b","a"], path: "src/x.ts", repair:
+  {addDependsOn: {card: "b", on: "a"}}}`.
 - `unordered-read`, `warning`: R's slice names a path targeted by a card W of a **later**
   generation (which implies no dependsOn path from R to W); `cards: [R, W]`, `repair:
-  null`, same ordering. hazardsUnordered → exactly one hazard, cards `["a","b"]`, path
+  null`, same ordering. The kind is decided per (R, W) pair by their generations: a
+  reader in generation 0 of a target in generation 1 is `unordered-read`, never
+  `read-write`. hazardsUnordered → exactly one hazard, cards `["a","b"]`, path
   `src/b.ts`.
 - `implicit-read`, `warning`: a card with `contextSlice []`; `cards: [id]`, `path: null`,
-  `repair: null`; deck order. tiny → exactly one, cards `["a"]`.
+  `repair: null`; deck order. Reported in every deck, in addition to whatever other
+  hazards the deck has: a card with an empty slice always adds one. tiny → exactly one,
+  cards `["a"]`; hazardsAllKinds → five hazards, the fifth `implicit-read` `["e"]`.
 
 **`weighSlices(deck: Deck, root: string, cap = 500000): Weighing`**
 (`src/cards/weigh.ts`). For every card in deck order, the files are `contextSlice` then
@@ -395,3 +432,45 @@ Open for the next cut: `tests/cards/model.examples.test.ts` and
 `tests/cards/hazards.examples.test.ts` (both judges failed) — fix §2.1's tiny.json
 wording and add to the judge instruction that a card example is the object literal,
 not a deck fixture; add a `read-write` fixture with two writers of one path.
+
+### P1b — the two judges re-cut after a spec fix (06.10)
+
+Experiment: does a correct §2.1 alone make the judges pass? Nothing was added to the
+judge instructions or to the map `instruction` overrides; the map changed only in the
+`hazards-judge` slice (two new fixtures). Deck `decks/p1b-judges.json`: the two judge
+cards of a fresh dry `plan --spec` (external `depends_on` on `card-model` / `hazards`,
+already merged). Wording changes, before → after:
+
+1. §2.1 card object. Before: "**A card object** (`Deck File` of the record, flat
+   form): a JSON object with the keys of §2.2 `Card`. Valid minimal example,
+   `tests/fixtures/decks/tiny.json` (91 bytes): `[{"customId": "a", …}]`." After: the
+   input of `validateCard` is ONE object, never an array; each Validate Card example's
+   input is the literal in its `given` (address in the record and in the card's
+   instruction); example 1 has no file under `tests/fixtures/cards/` and is the only
+   element of the deck file `tiny.json` — a test that wants it from disk takes the
+   first element of the parsed deck fixture, never the array.
+2. §2.1 deck files. Before: a one-line list of names with their cards. After: deck
+   files are JSON arrays, an array even for one card, the input of `loadDeck` after
+   reading; one bullet per file with what `findHazards` yields, counted, with
+   generations where they matter (`hazardsUnordered` `[["a"],["b"]]`).
+3. New fixtures `tests/fixtures/decks/hazardsTwoWriters.json` (3 hazards:
+   write-write, read-write ×2 — one per writer) and `hazardsAllKinds.json` (5 hazards,
+   the four kinds in output order, two `read-write`), named in §2.1 with their yields;
+   both verified on the accepted `src/cards/hazards.ts` before the cut.
+4. §2.2 validateCard. Before: "`{"intent": "todo", "targets": [], "instruction": ""}`
+   gives exactly three faults" — the literal omitted `customId`, which the table makes
+   required (four faults by the table). After: the literal carries `"customId": "a"`,
+   plus: "Four keys are required … each absent one is a fault of its own:
+   `{"instruction": "x"}` gives exactly three faults, keys `customId`, `intent`,
+   `targets`" (judge defect 2 of P1).
+5. §2.2 read-write. Added: "A path targeted by two cards of R's generation gives R
+   **two** `read-write` hazards, one per W, next to the writers' own `write-write`
+   (hazardsTwoWriters → three hazards)" (judge defect 3).
+6. §2.2 unordered-read. Added: "The kind is decided per (R, W) pair by their
+   generations: a reader in generation 0 of a target in generation 1 is
+   `unordered-read`, never `read-write`" (judge defect 5).
+7. §2.2 implicit-read. Added: "Reported in every deck, in addition to whatever other
+   hazards the deck has … hazardsAllKinds → five hazards, the fifth `implicit-read`
+   `["e"]`" (judge defect 4).
+
+No rule changed: every count above is what the accepted P1 code already returns.
