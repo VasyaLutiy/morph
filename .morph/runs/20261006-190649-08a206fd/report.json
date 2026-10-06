@@ -1,0 +1,545 @@
+{
+  "deck_id": "20261006-190649-08a206fd",
+  "completed_at": "2026-10-06T19:23:32.685",
+  "branch": "morph/20261006-190649-08a206fd",
+  "backend_label": "glm53",
+  "generations": [
+    [
+      "document"
+    ],
+    [
+      "deck-check",
+      "document-judge",
+      "parse-command",
+      "run-command"
+    ],
+    [
+      "deck-check-judge",
+      "main",
+      "parse-command-judge",
+      "run-command-judge"
+    ],
+    [
+      "main-judge"
+    ]
+  ],
+  "batch_ids": [
+    "local-39f7df11bf494349a074463d572a0dc1",
+    "local-316d04ab377a469695d3b273cbd99f1f",
+    "local-312635aef63243c9ab79062fc102d2f5",
+    "local-995d39a8273c4af09fc14b1cc368fe70",
+    "local-9bebce2461d84865b4d10901a8465414"
+  ],
+  "outcomes": {
+    "document": {
+      "custom_id": "document",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/cli/types.ts",
+        "/home/morph/MorphV2/src/cli/document.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "document.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "7cde5749976a3efadd8df9bb9ba87fc1e237d400",
+      "diffstat": [
+        {
+          "path": "src/cli/document.ts",
+          "insertions": 69,
+          "deletions": 0
+        },
+        {
+          "path": "src/cli/types.ts",
+          "insertions": 24,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/cli/types.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "src/cli/document.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "deck-check": {
+      "custom_id": "deck-check",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/cli/deckCheck.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "deck-check.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "335a4d9d3af1940e80a123d4d2c2174bad914804",
+      "diffstat": [
+        {
+          "path": "src/cli/deckCheck.ts",
+          "insertions": 29,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/cli/deckCheck.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "document-judge": {
+      "custom_id": "document-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/cli/document.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "document-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "ffbe4ba5cf414de88a8096868a79a805b982f388",
+      "diffstat": [
+        {
+          "path": "tests/cli/document.examples.test.ts",
+          "insertions": 236,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/cli/document.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "parse-command": {
+      "custom_id": "parse-command",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/cli/parse.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "parse-command.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "37d32fe21edb2fa3b681fbc342e74fbe8b795e9e",
+      "diffstat": [
+        {
+          "path": "src/cli/parse.ts",
+          "insertions": 241,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/cli/parse.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "run-command": {
+      "custom_id": "run-command",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/cli/runCommand.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "run-command.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "a70c6e054e5515bc15f5f2843d74461e777b6e78",
+      "diffstat": [
+        {
+          "path": "src/cli/runCommand.ts",
+          "insertions": 124,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/cli/runCommand.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "deck-check-judge": {
+      "custom_id": "deck-check-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/cli/deckCheck.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "deck-check-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "98cc6a6fde51a3cd70af87e83866d25188d87892",
+      "diffstat": [
+        {
+          "path": "tests/cli/deckCheck.examples.test.ts",
+          "insertions": 145,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/cli/deckCheck.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "main": {
+      "custom_id": "main",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/cli/main.ts",
+        "/home/morph/MorphV2/src/cli.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "main.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "f68903da4cdd7512853b0936517bc43eec186f2a",
+      "diffstat": [
+        {
+          "path": "src/cli.ts",
+          "insertions": 27,
+          "deletions": 0
+        },
+        {
+          "path": "src/cli/main.ts",
+          "insertions": 32,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/cli/main.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "src/cli.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "parse-command-judge": {
+      "custom_id": "parse-command-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/cli/parse.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "parse-command-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "5030f4baf887df5f6bc6e0f91e682b30862f6a40",
+      "diffstat": [
+        {
+          "path": "tests/cli/parse.examples.test.ts",
+          "insertions": 233,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/cli/parse.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "run-command-judge": {
+      "custom_id": "run-command-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/cli/runCommand.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "run-command-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "21f41227a730d2afa6f528ca98711f925aacc354",
+      "diffstat": [
+        {
+          "path": "tests/cli/runCommand.examples.test.ts",
+          "insertions": 289,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/cli/runCommand.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "main-judge": {
+      "custom_id": "main-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/cli/main.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 2,
+      "winning_variant": "main-judge.r1",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\n== eslint\n== guard\n== own\n FAIL  tests/cli/main.examples.test.ts > Main example 4: the built binary runs a stub deck end to end and exits 0\nTypeError: Cannot read properties of undefined (reading 'map')\n Test Files  1 failed (1)\n      Tests  1 failed | 4 passed (5)\n",
+      "commit": "f038cfca3f2cc5ce14903efe3bada36f48fc5058",
+      "diffstat": [
+        {
+          "path": "tests/cli/main.examples.test.ts",
+          "insertions": 218,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/cli/main.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    }
+  },
+  "usage": {
+    "document.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791313609-RrIFWqJSHbYZxf2ITLvB",
+      "input_tokens": 16033,
+      "output_tokens": 903,
+      "cost": 0.00792582,
+      "finish_reason": "stop"
+    },
+    "document.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791313609-0VIk3qrwAzOPBIkjlXmR",
+      "input_tokens": 16033,
+      "output_tokens": 910,
+      "cost": 0.00246306,
+      "finish_reason": "stop"
+    },
+    "deck-check.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791313652-c3iBp6OaPXwuEcMtaHfW",
+      "input_tokens": 14066,
+      "output_tokens": 266,
+      "cost": 0.002931864,
+      "finish_reason": "stop"
+    },
+    "deck-check.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791313652-okAnzHxhqCITpKCE32pk",
+      "input_tokens": 14066,
+      "output_tokens": 266,
+      "cost": 0.001465368,
+      "finish_reason": "stop"
+    },
+    "parse-command.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791313662-gFfPKz91HWCuUB6Rkge9",
+      "input_tokens": 12685,
+      "output_tokens": 2073,
+      "cost": 0.004737084,
+      "finish_reason": "stop"
+    },
+    "parse-command.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791313662-ooSeaWJygGO3z05tjckT",
+      "input_tokens": 12685,
+      "output_tokens": 1872,
+      "cost": 0.003464916,
+      "finish_reason": "stop"
+    },
+    "run-command.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791313711-Ui9xpFpfpqh2MGLrGcTi",
+      "input_tokens": 19843,
+      "output_tokens": 959,
+      "cost": 0.006272964,
+      "finish_reason": "stop"
+    },
+    "run-command.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791313705-5IxN7LPlsufmyk9ZHInB",
+      "input_tokens": 19843,
+      "output_tokens": 1838,
+      "cost": 0.007433244,
+      "finish_reason": "stop"
+    },
+    "document-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791313652-LrgBFFDhpBDYdKLDtiLY",
+      "input_tokens": 14326,
+      "output_tokens": 7938,
+      "cost": 0.01649508,
+      "finish_reason": "stop"
+    },
+    "main.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791313873-WDJPZNNLLX19Q4TkJPRq",
+      "input_tokens": 15604,
+      "output_tokens": 856,
+      "cost": 0.003875088,
+      "finish_reason": "stop"
+    },
+    "main.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791313874-oGBdADz3iHGhMBlcXdfn",
+      "input_tokens": 15604,
+      "output_tokens": 1841,
+      "cost": 0.005656824,
+      "finish_reason": "stop"
+    },
+    "deck-check-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791313873-GitHYMPf97rnfBQ1bfT8",
+      "input_tokens": 13628,
+      "output_tokens": 2552,
+      "cost": 0.005612208,
+      "finish_reason": "stop"
+    },
+    "parse-command-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791313892-DACDaanjM50C94WjKP2p",
+      "input_tokens": 12950,
+      "output_tokens": 3654,
+      "cost": 0.006935304,
+      "finish_reason": "stop"
+    },
+    "run-command-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791313912-2NPt4CJ4fqmuTuNeVJ37",
+      "input_tokens": 14812,
+      "output_tokens": 14315,
+      "cost": 0.021789864,
+      "finish_reason": "stop"
+    },
+    "main-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791314263-HLLY6eVut680NNYHMjtP",
+      "input_tokens": 13675,
+      "output_tokens": 15088,
+      "cost": 0.022332684,
+      "finish_reason": "stop"
+    },
+    "main-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791314523-OmbbDDe4TI2EWqLmSlNC",
+      "input_tokens": 19667,
+      "output_tokens": 3475,
+      "cost": 0.008228772,
+      "finish_reason": "stop"
+    }
+  },
+  "usage_totals": {
+    "input_tokens": 245520,
+    "output_tokens": 58806,
+    "cost": 0.127620144,
+    "requests": 16,
+    "requests_with_usage": 16
+  },
+  "orchestrator_usage": {}
+}
