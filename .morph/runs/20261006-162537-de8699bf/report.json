@@ -1,0 +1,504 @@
+{
+  "deck_id": "20261006-162537-de8699bf",
+  "completed_at": "2026-10-06T16:38:28.296",
+  "branch": "morph/20261006-162537-de8699bf",
+  "backend_label": "glm53",
+  "generations": [
+    [
+      "resolve"
+    ],
+    [
+      "build-retry",
+      "process-generation",
+      "resolve-judge"
+    ],
+    [
+      "build-retry-judge",
+      "process-generation-judge",
+      "run-deck"
+    ],
+    [
+      "run-deck-judge"
+    ]
+  ],
+  "batch_ids": [
+    "local-f87e896d2a7e4c61bbf610c2e89ba30b",
+    "local-b1ab0c4ca1da4f399086e1afd7e3ae92",
+    "local-d8793d16cbd6460cae189aa187022c41",
+    "local-95c90fa6188448ec867c9757504a9545",
+    "local-837ba844e94f4b0d8f3c9c7f781397f1",
+    "local-940ab48060e6403794423def669996ab",
+    "local-3ad5ceaadb814ac4b987df8ac74bba7e",
+    "local-d9ad7530b1114fe99e127990618dca8d"
+  ],
+  "outcomes": {
+    "resolve": {
+      "custom_id": "resolve",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/runloop/types.ts",
+        "/home/morph/MorphV2/src/runloop/resolve.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "resolve.v2",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "1dbdf0acfea48e160f4f8de1907db46246db70da",
+      "diffstat": [
+        {
+          "path": "src/runloop/resolve.ts",
+          "insertions": 36,
+          "deletions": 0
+        },
+        {
+          "path": "src/runloop/types.ts",
+          "insertions": 31,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/runloop/types.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "src/runloop/resolve.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "build-retry": {
+      "custom_id": "build-retry",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/runloop/retry.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "build-retry.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "087c6814ce8bca031048a9dc80d7d241daa1685e",
+      "diffstat": [
+        {
+          "path": "src/runloop/retry.ts",
+          "insertions": 33,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/runloop/retry.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "process-generation": {
+      "custom_id": "process-generation",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/runloop/generation.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 3,
+      "winning_variant": "process-generation.r2.v1",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\n== eslint\n\n/home/morph/MorphV2/src/runloop/generation.ts\n  76:9  error  'usage' is assigned a value but never used  @typescript-eslint/no-unused-vars\n\n✖ 1 problem (1 error, 0 warnings)\n\n",
+      "commit": "6c888d977a690e7bac869adfc6eb22417ac7f227",
+      "diffstat": [
+        {
+          "path": "src/runloop/generation.ts",
+          "insertions": 169,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/runloop/generation.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "resolve-judge": {
+      "custom_id": "resolve-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/runloop/resolve.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 3,
+      "winning_variant": "resolve-judge.r2",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\n== eslint\n== guard\n== own\n FAIL  tests/runloop/resolve.examples.test.ts > resolveRunnable > mixed done map skips only the cards whose dependencies are non-written\nAssertionError: expected [ 'a', 'b', 'c' ] to strictly equal [ 'a', 'b' ]\n Test Files  1 failed (1)\n      Tests  1 failed | 14 passed (15)\n",
+      "commit": "6035d05628d1f9c91a339b1ba4016b71a7bb4526",
+      "diffstat": [
+        {
+          "path": "tests/runloop/resolve.examples.test.ts",
+          "insertions": 150,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/runloop/resolve.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "run-deck": {
+      "custom_id": "run-deck",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/runloop/deck.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "run-deck.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "0bf2b27292cdf13459a0bc23e3292db3c6af4323",
+      "diffstat": [
+        {
+          "path": "src/runloop/deck.ts",
+          "insertions": 197,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/runloop/deck.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "build-retry-judge": {
+      "custom_id": "build-retry-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/runloop/retry.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 2,
+      "winning_variant": "build-retry-judge.r1",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\n== eslint\n== guard\n== own\n FAIL  tests/runloop/retry.examples.test.ts > buildRetry > Build Retry example 2: second retry strips the trailing .r1 and has no diff section\nAssertionError: expected true to be false // Object.is equality\n FAIL  tests/runloop/retry.examples.test.ts > buildRetry > Build Retry: other card fields are copied\nAssertionError: expected 'Write c.\\n\\nYour previous attempt failed its acceptance. Fix exactly what the acceptance reports and return the whole file again.\\nAcceptance output:\\nlog' to be 'Write c.' // Object.is equality\n Test Files  1 failed (1)\n      Tests  2 failed | 6 passed (8)\n",
+      "commit": "65b0c0414644f6c41eb903125e0f1cf76af0eddf",
+      "diffstat": [
+        {
+          "path": "tests/runloop/retry.examples.test.ts",
+          "insertions": 97,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/runloop/retry.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "process-generation-judge": {
+      "custom_id": "process-generation-judge",
+      "status": "failed",
+      "paths": [],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 3,
+      "winning_variant": null,
+      "acceptance_output": "== tsc\ntests/runloop/generation.examples.test.ts(201,12): error TS18047: 'outcome.reason' is possibly 'null'.\n",
+      "earlier_failures": null,
+      "commit": null,
+      "diffstat": null,
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/runloop/generation.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "run-deck-judge": {
+      "custom_id": "run-deck-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/runloop/deck.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "run-deck-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "a3d11393d442bae4e90dda027d40c6365f2f7971",
+      "diffstat": [
+        {
+          "path": "tests/runloop/deck.examples.test.ts",
+          "insertions": 317,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/runloop/deck.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    }
+  },
+  "usage": {
+    "resolve.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791303937-aESbJQKgCdgjFdNRF5jD",
+      "input_tokens": 9887,
+      "output_tokens": 622,
+      "cost": 0.004776588,
+      "finish_reason": "stop"
+    },
+    "resolve.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791303937-kEGkVPr4lqUgP7kjS5dA",
+      "input_tokens": 9887,
+      "output_tokens": 627,
+      "cost": 0.001981524,
+      "finish_reason": "stop"
+    },
+    "build-retry.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791303967-lB2bPn5FGX935tzxRCHc",
+      "input_tokens": 9242,
+      "output_tokens": 255,
+      "cost": 0.004021248,
+      "finish_reason": "stop"
+    },
+    "build-retry.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791303967-MQizDo0Gac2wrKycGB4m",
+      "input_tokens": 9242,
+      "output_tokens": 255,
+      "cost": 0.001088256,
+      "finish_reason": "stop"
+    },
+    "process-generation.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791303967-NQBnzhklu1PBsNxoWNyC",
+      "input_tokens": 14428,
+      "output_tokens": 1478,
+      "cost": 0.005471712,
+      "finish_reason": "stop"
+    },
+    "resolve-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791303974-qv9igjQu70DAj0CSVxic",
+      "input_tokens": 10477,
+      "output_tokens": 1702,
+      "cost": 0.004042308,
+      "finish_reason": "stop"
+    },
+    "process-generation.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791303974-ICTZAo5LsSJYgiy0DA7n",
+      "input_tokens": 14428,
+      "output_tokens": 2837,
+      "cost": 0.0048798,
+      "finish_reason": "stop"
+    },
+    "process-generation.r1.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791304055-u0DqJNxiele2RJv83osC",
+      "input_tokens": 22007,
+      "output_tokens": 1302,
+      "cost": 0.006080556,
+      "finish_reason": "stop"
+    },
+    "resolve-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791304055-zD3S2CSutmpZ0Tg2Jj92",
+      "input_tokens": 15752,
+      "output_tokens": 1517,
+      "cost": 0.006166824,
+      "finish_reason": "stop"
+    },
+    "process-generation.r1.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791304055-mBoLX6Zi4q1RjtxJFxZb",
+      "input_tokens": 22007,
+      "output_tokens": 1325,
+      "cost": 0.003484356,
+      "finish_reason": "stop"
+    },
+    "process-generation.r2.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791304099-IficujDIWB3wNRQo3jH0",
+      "input_tokens": 21117,
+      "output_tokens": 1320,
+      "cost": 0.005730516,
+      "finish_reason": "stop"
+    },
+    "process-generation.r2.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791304099-fHPWXAkbsNPCWPhTC4br",
+      "input_tokens": 21117,
+      "output_tokens": 1342,
+      "cost": 0.004030404,
+      "finish_reason": "stop"
+    },
+    "resolve-judge.r2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791304099-5gNOwjnzCXpNBzosxSko",
+      "input_tokens": 15810,
+      "output_tokens": 1614,
+      "cost": 0.006319224,
+      "finish_reason": "stop"
+    },
+    "build-retry-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791304161-wPnlAbhadZ53l2wtRVeH",
+      "input_tokens": 10500,
+      "output_tokens": 1066,
+      "cost": 0.005620128,
+      "finish_reason": "stop"
+    },
+    "run-deck.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791304187-hLl1TJJJ3rb293Lt2mmN",
+      "input_tokens": 12703,
+      "output_tokens": 1704,
+      "cost": 0.003250716,
+      "finish_reason": "stop"
+    },
+    "run-deck.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791304161-B7axCHYL1bepNqtJtYet",
+      "input_tokens": 12703,
+      "output_tokens": 3789,
+      "cost": 0.007797732,
+      "finish_reason": "stop"
+    },
+    "process-generation-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791304161-vd53WiraHoRiRzIHijYd",
+      "input_tokens": 12527,
+      "output_tokens": 7337,
+      "cost": 0.012056964,
+      "finish_reason": "stop"
+    },
+    "build-retry-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791304331-dX4YhGWoBS87gMj9nVVI",
+      "input_tokens": 15383,
+      "output_tokens": 1083,
+      "cost": 0.005438964,
+      "finish_reason": "stop"
+    },
+    "process-generation-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791304331-AZUPLPrCl6j8pMbagqIM",
+      "input_tokens": 18830,
+      "output_tokens": 3649,
+      "cost": 0.009836064,
+      "finish_reason": "stop"
+    },
+    "process-generation-judge.r2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791304424-0KXw7948iEMgZcTl5fQg",
+      "input_tokens": 17831,
+      "output_tokens": 3649,
+      "cost": 0.009416484,
+      "finish_reason": "stop"
+    },
+    "run-deck-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791304503-SE2gsVrOLrxQNIJpJyrY",
+      "input_tokens": 12729,
+      "output_tokens": 6606,
+      "cost": 0.011176884,
+      "finish_reason": "stop"
+    }
+  },
+  "usage_totals": {
+    "input_tokens": 308607,
+    "output_tokens": 45079,
+    "cost": 0.12266725200000002,
+    "requests": 21,
+    "requests_with_usage": 21
+  },
+  "orchestrator_usage": {}
+}
