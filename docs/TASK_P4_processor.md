@@ -171,6 +171,16 @@ order, `as const`), **`DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"`**
    id, `faults` by key, both by plain code-unit comparison (`a < b`, never `localeCompare`):
    so `MORPH_PROCESSOR_x_TYPE` precedes `MORPH_PROCESSOR_x_y_TYPE`, and id `B` precedes id `a`. At
    most one fault per variable.
+6. Consequences a test must respect (rules 1–3 applied, nothing new): the key is the WHOLE
+   rest after the first `_`, so `MORPH_PROCESSOR_a_PROVIDER_ORDER`, `_a_API_KEY`, `_a_BASE_URL`,
+   `_a_REASONING_MAX_TOKENS` are known keys of id `a` and give no fault by their name; only
+   `MORPH_PROCESSOR_x_y_TYPE` (id `x`, key `y_TYPE`) is unknown. No valid config sets all 12
+   keys: on `openrouter` `ANSWERS_DIR` is a fault, and the two `REASONING_*` keys together are
+   a fault. The fullest valid openrouter id sets the other 10 keys with one of the two
+   `REASONING_*` (11 variables at most); the fullest valid stub id sets `ANSWERS_DIR` and no
+   `API_KEY` requirement applies. A test that sets "every key" and expects `faults: []` is
+   wrong. `Fault` is the type of `src/cards/types.ts` (`{key, message}`); a test imports it
+   from `../../src/cards/types.js` — `src/processor/types.ts` imports it but does not export it.
 
 **`assembleRequest(request: Request, config: ProcessorConfig): ProviderRequest`**
 (`src/processor/assemble.ts`; pure, no imports but types).
