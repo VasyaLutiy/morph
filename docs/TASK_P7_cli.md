@@ -429,4 +429,68 @@ reverse), the row of `docs/MEASURE.md`.
 
 ## 11. Actual
 
-(after the run)
+One run on the VPS, processor glm53, autonomous mode, on the deck that passed the autonomous gate
+(10 cards, `deck check` 0 errors). No re-cut was needed. "Burned" = every request that was not a
+winning write (requests − written).
+
+**Run 1** `20261006-190649-08a206fd`, branch `morph/20261006-190649-08a206fd`, 19:06:49 → 19:23:32
+(16.7 min), 16 requests, 245 520 in / 58 806 out, **$0.1276**. 10 written, 0 failed, 0 skipped; 6
+variants burned. Every finish reason `stop`: no truncation (largest answers main-judge 15 088 and
+run-command-judge 14 315 out of their 28 000).
+
+| card | gen | attempts | winning variant | commit | first red of each burned variant |
+|---|---|---|---|---|---|
+| document (types+document) | 1 | 1 | v1 | 7cde574 | v2: losing variant (not surfaced) |
+| deck-check | 2 | 1 | v1 | 335a4d9 | v2: losing variant (not surfaced) |
+| parse-command | 2 | 1 | v1 | 37d32fe | v2: losing variant (not surfaced) |
+| run-command | 2 | 1 | v1 | a70c6e0 | v2: losing variant (not surfaced) |
+| document-judge | 2 | 1 | — | ffbe4ba | — |
+| main (main+cli.ts) | 3 | 1 | v1 | f68903d | v2: losing variant (not surfaced) |
+| deck-check-judge | 3 | 1 | — | 98cc6a6 | — |
+| parse-command-judge | 3 | 1 | — | 5030f4b | — |
+| run-command-judge | 3 | 1 | — | 21f4122 | — |
+| main-judge | 4 | 2 | r1 | f038cfc | 0: own test, Main example 4 cast the stdout document as `{outcomes}` and read `doc.outcomes.map` (TypeError: undefined) instead of `doc.report.outcomes` — the judge's own §2.2 reading, not the code |
+
+Minutes per generation: 0.7 / 3.7 / 6.5 / 5.8 (main-judge's retry). Archive commit e62d1e2 (old
+Morph's own).
+
+Phase total: **$0.1276** executor (prediction ≈ $0.18 nominal — under it), 16.7 min, 16 requests,
+6 burned variants. tsc-first-red: 0 of 6. neighbour-red: 0.
+
+§9 check: cards 10 / generations 4 — as predicted; `deck check` 0 / 0 hazards — as predicted.
+Cards with regeneration 1 of 10 (predicted 3). Tests after: 349 in 36 files (295 + 54 judge tests
+in 5 files: document 17, parse 16, deckCheck 7, runCommand 9, main 5); judge example tests 31 of 31
+(9 + 8 + 3 + 6 + 5), ≥ 31 holds. First red: no code card went red at all (every predicted code first
+red missed); the only red was a judge reading `document` (unknown) through a wrong cast — the
+predicted judge trap, in its runtime form (the cast compiled). Falsifiable claims: (1) no card red
+on a sibling's file — holds; (2) no judge red traced to §2.1 — holds; (3) no test changed this
+repository's HEAD or refs — holds (`git for-each-ref`, HEAD and symbolic HEAD identical before and
+after `vitest run` on the run branch); (4) no judge cut off at `max_tokens` — holds; (5) no test
+writes `dist/` — holds (every `dist/` file's mtime identical before and after `vitest run`).
+
+Max slice + targets, measured on the finished tree: run-command 66 256 bytes (gate 200 KB).
+
+Verification on `morph/20261006-190649-08a206fd` by the run session: `git status --short` empty;
+`tsc --noEmit`, `eslint src tests` clean; `vitest run` 349/349 in 36 files; `npm run build` ok; no
+`network blocked` line. Binary by hand (`node dist/cli.js`): `deck check --deck <empty []>` → exit 0,
+one stdout line `{"deck":…,"cards":0,"generations":[],"errors":0,"warnings":0,"hazards":[],
+"weights":[]}`, stderr `morph deck check: exit 0`; `frobnicate` → exit 4, the UsageError document,
+stderr `morph: unknown command: frobnicate`; `run` with the stub processor in a fresh tmp repo
+(side root outside it) → exit 0, one JSON line, card `a` written, commits `morph a: out/a.ts` and
+`morph run smoke: deck and report`, checkout on `morph/smoke`; the same run with stray files in the
+tmp repo → exit 2 `dirty tree outside .morph/: …` before any branch. `src/cli*` read once against
+§2.2: types verbatim; renderDocument/errorDocument/classifyThrown/runExitCode (archive first) and
+readDeckFile (stat catch, path as given, fault join); parseCommand scan → command → extra word →
+non-applying flag in argv order → --deck → --processor → values in the fixed order, defaults;
+deckCheck hazards then weigh's; runCommand registry (suffix by `PREFIX + id + "_"`) → deck → hazard
+errors → one `deps.now()` → branch → runDeck → archive; main parse error with `--pretty` from argv,
+one stdout, one stderr line; the entry sets `process.exitCode`, no `process.exit`. Every cli test
+uses `tmpRoot()`/`tmpRepo()` removed in `finally`/`afterAll`; none uses `process.cwd` or `vi.*`.
+**No code defect found** (one cosmetic: `main` returns the literal 4 on a parse error instead of
+the document's code — always 4 by §2.2). Judge defects (code defects a judge caught that the probes
+did not): 0.
+
+Lessons: (1) the P6 sizing rule held again: judges at 28 000 used ≤ 54 % of their ceiling, no
+truncation in a phase with the heaviest judges so far (e2e build + spawn). (2) The one red was the
+predicted `unknown`-document trap; §2.3 told the judge to cast, and it cast to the wrong shape —
+a cast compiles, so the guard against this trap is the runtime test, which the retry fixed.
