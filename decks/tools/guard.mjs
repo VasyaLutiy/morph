@@ -35,6 +35,10 @@ const NO_ENV = new Set(["acceptance", "processor", "git"]);
 const ENV_READERS = new Set(["src/processor/registry.ts"]);
 // P6: the one file of src/git that spawns (Run Git, docs/TASK_P6_git.md §4); git takes the env whole
 const GIT_SPAWNER = "src/git/run.ts";
+// P7: the binary's entry is src/cli.ts (package.json bin dist/cli.js), layer cli; it alone touches
+// process (env, argv, cwd, stdout, exitCode) and the wall clock: src/cli/* gets them as parameters
+// (docs/TASK_P7_cli.md §4)
+const CLI_ENTRY = "src/cli.ts";
 
 function parse(file) {
   return ts.createSourceFile(file, fs.readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true,
@@ -86,6 +90,7 @@ function moduleSpecifiers(sf) {
   return out;
 }
 function layerOf(rel) {
+  if (rel === CLI_ENTRY) return "cli";
   const parts = rel.split("/");
   return parts.length >= 3 && parts[0] === "src" ? parts[1] : null;
 }
@@ -122,6 +127,8 @@ function checkSrc(files) {
           report(sf, node, `global ${n} outside src/processor`);
         if (n === "console" && !CONSOLE.has(layer)) report(sf, node, "console outside src/cli");
         if (n === "process" && !PROCESS.has(layer)) report(sf, node, "process outside src/cli, src/processor, src/acceptance");
+        if ((n === "process" || n === "console") && layer === "cli" && rel !== CLI_ENTRY)
+          report(sf, node, `${n} in ${rel} (only ${CLI_ENTRY} touches it; env, cwd, clock and io are parameters)`);
         if (n === "Date" && NO_CLOCK.has(layer)) report(sf, node, `Date in the deterministic layer ${layer}`);
         if (n === "Math" && node.parent && ts.isPropertyAccessExpression(node.parent) &&
             node.parent.name.text === "random") report(sf, node, "Math.random");
@@ -129,6 +136,12 @@ function checkSrc(files) {
       if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&
           node.expression.text === "process" && node.name.text === "exit" && !CONSOLE.has(layer))
         report(sf, node, "process.exit outside src/cli");
+      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&
+          node.expression.text === "process" && node.name.text === "exit" && rel === CLI_ENTRY)
+        report(sf, node, `process.exit in ${CLI_ENTRY} (set process.exitCode: exit cuts a piped stdout)`);
+      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&
+          node.expression.text === "Date" && node.name.text === "now" && layer === "cli" && rel !== CLI_ENTRY)
+        report(sf, node, `Date.now in ${rel} (the clock is the parameter now)`);
       if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&
           node.expression.text === "process" && node.name.text === "env" && NO_ENV.has(layer) &&
           !ENV_READERS.has(rel))

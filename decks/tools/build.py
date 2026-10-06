@@ -12,6 +12,9 @@ shared steps here. Hand-written data, never product code.
     python3 decks/tools/build.py p5     -> the same for the P5 cards (Component runloop)
     python3 decks/tools/build.py p6     -> the same for the P6 cards (Component git; every chain also
                                            checks that the repository's own HEAD and refs are unchanged)
+    python3 decks/tools/build.py p7     -> the same for the P7 cards (Component cli; own git as P6; the
+                                           main card also builds the binary and runs it once; judges
+                                           have their own-test caps)
 
 Paths are relative to the repository root (the parent of decks/); nothing here points
 outside the tree.
@@ -258,6 +261,32 @@ P6_JUDGE_LITERALS = {
 # Run Git 3, Open Run Branch 4, Commit Paths 2 + Commit Card 3, Archive Run 3
 P6_JUDGE_EXAMPLES = {"run-git-judge": 3, "open-branch-judge": 4, "commit-card-judge": 5, "archive-run-judge": 3}
 
+P7_TEST_DIR = "tests/cli"
+# docs/TASK_P7_cli.md §3: the example literals of Component cli
+P7_JUDGE_LITERALS = {
+    "document-judge": ['{"a":1,"b":[true,null]}', "RuntimeError", "deck file not found: nope.json",
+                       "invalid deck: dependsOn: dependsOn cycle a -> b -> a"],
+    "parse-command-judge": ["unknown command: frobnicate", "command deck status is not available yet",
+                            "flag --processor does not apply to deck check", "no command (commands: deck check, run)"],
+    "deck-check-judge": ["write-write", "oversized-slice", "docs/b.md"],
+    "run-command-judge": ["morph run r1: deck and report", "processor nope is not configured",
+                          "dirty tree outside .morph/: notes.txt", "deck has 1 hazard error(s): write-write a,b out/x.ts",
+                          "20261006-180909"],
+    "main-judge": ["morph: unknown command: frobnicate", "tsconfig.build.json", '{"type":"module"}',
+                   "morph run e2e: deck and report", "git status failed (exit 128): "],
+}
+# Emit Document 3 + Classify Error 3 + Read Deck File 3, Parse Command 8, Deck Check 3, Run Command 6, Main 5
+P7_JUDGE_EXAMPLES = {"document-judge": 9, "parse-command-judge": 8, "deck-check-judge": 3, "run-command-judge": 6,
+                     "main-judge": 5}
+# own tests on top of the examples (TASK_P7 §2.3): the heavy run and e2e files stay small (P5 truncation lesson)
+P7_JUDGE_OWN = {"document-judge": 8, "parse-command-judge": 8, "deck-check-judge": 6, "run-command-judge": 4,
+                "main-judge": 3}
+# the main card builds the real binary once and runs it on a bad command (TASK_P7 §3 step 6)
+P7_BIN_STEP = ("echo '== bin'; npm run build > $P/build.log 2>&1 || { echo 'bin: npm run build failed:'; tail -20 $P/build.log; exit 1; }; "
+               "B=$(node dist/cli.js frobnicate 2>/dev/null); BC=$?; "
+               "[ \"$BC\" = 4 ] && [ \"$B\" = '{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"unknown command: frobnicate\"}}' ] || "
+               "{ echo \"bin: node dist/cli.js frobnicate gave exit $BC and stdout: $B\" | head -c 600; echo; exit 1; }\n")
+
 # one phase = the cards of one Component in morph-map.json (judges are <code>-judge); the
 # generation layering and the sibling exclusion are computed within the phase only.
 # smoke: whether a code card writes its own smoke test (P1-P2 yes; from P3 a code card covered
@@ -275,6 +304,8 @@ PHASES = {
            "smoke": False},
     "p6": {"parts": "p6", "test_dir": P6_TEST_DIR, "examples": P6_JUDGE_EXAMPLES, "literals": P6_JUDGE_LITERALS,
            "smoke": False, "own_git": True},
+    "p7": {"parts": "p7", "test_dir": P7_TEST_DIR, "examples": P7_JUDGE_EXAMPLES, "literals": P7_JUDGE_LITERALS,
+           "smoke": False, "own_git": True, "own": P7_JUDGE_OWN, "extra": {"main": P7_BIN_STEP}},
 }
 
 
@@ -315,7 +346,7 @@ def layer(cards):
 
 
 def code_acceptance(card, targets, siblings, parts, phase="p1", test_dir=P1_TEST_DIR, smoke_test=True,
-                    own_git=False):
+                    own_git=False, extra=""):
     """A code card: probe-dir, tsc, eslint, guard, probe, [own smoke test], full suite, frozen.
     ``smoke_test=False`` (P3 on: a code card covered by a probe writes no test file) drops the
     own-test guard and step and asserts the card targets no test file."""
@@ -336,6 +367,7 @@ def code_acceptance(card, targets, siblings, parts, phase="p1", test_dir=P1_TEST
             + guard_tests + "\n"
             + "echo '== probe'; " + vt("--config $P/probe.config.mts")
             + own
+            + extra
             + "echo '== full'; " + vt("--passWithNoTests")
             + (own_git_after() if own_git else "")
             + "echo '== frozen'; " + frozen()
@@ -344,7 +376,7 @@ def code_acceptance(card, targets, siblings, parts, phase="p1", test_dir=P1_TEST
 
 
 def judge_acceptance(card, targets, siblings, parts, phase="p1", examples=P1_JUDGE_EXAMPLES,
-                     literals=P1_JUDGE_LITERALS, own_git=False):
+                     literals=P1_JUDGE_LITERALS, own_git=False, own_cap=12):
     assert len(targets) == 1, (card, targets)
     test = targets[0]
     n = examples[card]
@@ -354,7 +386,7 @@ def judge_acceptance(card, targets, siblings, parts, phase="p1", examples=P1_JUD
             + tsc_probe()
             + "echo '== eslint'; node_modules/.bin/eslint " + test + "\n"
             + heredoc("$P/lits.json", lits, "MORPH_LITS_EOF")
-            + f"echo '== guard'; node $P/guard.mjs tests {test} {n} {n + 12} $P/lits.json\n"
+            + f"echo '== guard'; node $P/guard.mjs tests {test} {n} {n + own_cap} $P/lits.json\n"
             + "echo '== own'; " + vt(test)
             + "echo '== full'; " + vt("--passWithNoTests")
             + (own_git_after() if own_git else "")
@@ -383,10 +415,12 @@ def build_phase(phase):
                     for t in o["targets"]]
         if cid.endswith("-judge"):
             c["acceptance"] = judge_acceptance(cid, targets, siblings, parts, phase,
-                                               spec["examples"], spec["literals"], spec.get("own_git", False))
+                                               spec["examples"], spec["literals"], spec.get("own_git", False),
+                                               spec.get("own", {}).get(cid, 12))
         else:
             c["acceptance"] = code_acceptance(cid, targets, siblings, parts, phase, spec["test_dir"],
-                                              spec["smoke"], spec.get("own_git", False))
+                                              spec["smoke"], spec.get("own_git", False),
+                                              spec.get("extra", {}).get(cid, ""))
         rows.append((gen[cid], cid, len(c["acceptance"]), len(siblings)))
     with open(MAP, "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2, ensure_ascii=False)
@@ -398,7 +432,7 @@ def build_phase(phase):
 
 BUILDERS = {"p0": build_p0, "p1": lambda: build_phase("p1"), "p2": lambda: build_phase("p2"),
             "p3": lambda: build_phase("p3"), "p4": lambda: build_phase("p4"), "p5": lambda: build_phase("p5"),
-            "p6": lambda: build_phase("p6")}
+            "p6": lambda: build_phase("p6"), "p7": lambda: build_phase("p7")}
 
 
 def main(argv):

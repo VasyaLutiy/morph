@@ -854,30 +854,270 @@ System:
           description: The archive written and committed, or the refusal.
           schema: "{ ok: true, dir: string, commit: string | null } | { ok: false, error: string }"
 
+    # ---------------------------------------------------------------- P7
     - name: cli
       description: >
-        The `morph` binary: src/cli/*.ts. Parses argv, dispatches, prints exactly one
-        JSON document on stdout, logs on stderr, maps every error to an exit code.
+        The `morph` binary: src/cli/*.ts plus the entry src/cli.ts (package.json bin
+        dist/cli.js). Parses argv, dispatches, prints exactly one JSON document on stdout
+        and one log line on stderr, maps every outcome to an exit code. Only the entry
+        touches the process: it hands main() the environment, the working directory, the
+        clock and the two output streams as parameters, so every command is testable in
+        process and the processor registry (Read Registry) is the only reader of the
+        environment it was given. Two commands exist now, those whose modules exist:
+        `deck check` (cards) and `run` (runloop + processor + git: open the run branch, run
+        the deck with git's commit hook, archive the run). The commands of later phases
+        (plan, scout, primer, review, report, deck add|status|reset|clear) answer a fixed
+        NotYetError. The milestone is an end-to-end run of the built binary on the stub
+        processor inside vitest, in a tmp repo, with no network.
       language: typescript
       requirements: [One Document Out]
       functions:
         - name: Parse Command
-          description: Subcommands deck add|check|status|reset|clear, run, scout, plan, primer, review, report; global --root and --pretty.
+          description: argv into one Command or a usage error; global --root and --pretty anywhere.
+          behavior: >
+            parseCommand(argv) scans argv left to right. A token starting with "--" is a
+            flag: --pretty takes no value; --root, --deck, --processor, --run-id, --deadline,
+            --max-cards, --max-retry-batches, --slice-cap-bytes take the next token whatever
+            it is; any other flag (also --x=y) → "unknown flag: <t>"; a value flag as the
+            last token → "flag <t> needs a value"; a flag seen twice → "flag <t> given
+            twice" (the first such error in argv order wins). Every other token is a word.
+            Then the command from the words: none → "no command (commands: deck check,
+            run)"; "run" → run; "deck" "check" → deck check; a first word plan, scout,
+            primer, review or report → NotYetError "command <word> is not available yet";
+            "deck" followed by add, status, reset or clear → NotYetError "command deck <w>
+            is not available yet"; anything else → "unknown command: <words joined by a
+            space>". More words than the command takes → "unexpected argument: <first
+            extra>". Then, in this order: a flag the command does not take → "flag <f> does
+            not apply to <command>" (deck check takes --root, --pretty, --deck,
+            --slice-cap-bytes; run takes --root, --pretty, --deck, --processor, --run-id,
+            --deadline, --max-cards, --max-retry-batches), in argv order; no --deck →
+            "missing --deck"; run without --processor → "missing --processor"; for run a
+            --run-id not matching ^[A-Za-z0-9._-]+$ → "--run-id must match
+            ^[A-Za-z0-9._-]+$ (got '<v>')"; numbers in the order --slice-cap-bytes (deck
+            check), --deadline, --max-cards, --max-retry-batches (run): digits only, ≥ 1
+            ("<f> must be a positive integer (got '<v>')"), --max-retry-batches ≥ 0 ("must
+            be a non-negative integer"). Every failure is {ok: false, error: {error: {code:
+            4, kind: "UsageError" | "NotYetError", message}}}. Defaults: root ".", pretty
+            false, sliceCapBytes 500000, runId null, deadlineSeconds 2400, maxCards null
+            (= the deck's card count), maxRetryBatches 2.
+          steps:
+            - produces: Command
+          examples:
+            - given: 'argv ["deck", "check", "--deck", "d.json"]'
+              when: "parsed"
+              then: '{ok: true, command: {name: "deck check", root: ".", pretty: false, deck: "d.json", sliceCapBytes: 500000}}'
+            - given: 'argv ["--pretty", "run", "--deck", "d.json", "--processor", "s", "--root", "/r", "--run-id", "r1", "--deadline", "60", "--max-cards", "3", "--max-retry-batches", "0"]'
+              when: "parsed"
+              then: '{ok: true, command: {name: "run", root: "/r", pretty: true, deck: "d.json", processor: "s", runId: "r1", deadlineSeconds: 60, maxCards: 3, maxRetryBatches: 0}}'
+            - given: 'argv ["frobnicate"]'
+              when: "parsed"
+              then: '{ok: false, error: {error: {code: 4, kind: "UsageError", message: "unknown command: frobnicate"}}}'
+            - given: 'argv ["plan"], then ["deck", "status"]'
+              when: "parsed"
+              then: 'NotYetError (code 4) "command plan is not available yet", then NotYetError "command deck status is not available yet"'
+            - given: 'argv ["run", "--deck", "d.json"]'
+              when: "parsed"
+              then: 'UsageError "missing --processor"'
+            - given: 'argv ["deck", "check", "--deck", "d.json", "--processor", "s"]'
+              when: "parsed"
+              then: 'UsageError "flag --processor does not apply to deck check"'
+            - given: 'argv ["run", "--deck", "d", "--processor", "s", "--deadline", "0"]'
+              when: "parsed"
+              then: 'UsageError "--deadline must be a positive integer (got ''0'')"'
+            - given: 'argv ["--root"], then []'
+              when: "parsed"
+              then: 'UsageError "flag --root needs a value", then UsageError "no command (commands: deck check, run)"'
         - name: Emit Document
-          description: One JSON document + newline on stdout, flushed; --pretty indents by 2.
+          description: One JSON document + newline on stdout; --pretty indents by 2.
+          behavior: >
+            renderDocument(doc, pretty) = JSON.stringify(doc, null, 2 when pretty) + "\n".
+            errorDocument(code, kind, message) = {error: {code, kind, message}}, keys in that
+            order. main writes exactly one rendered document to stdout per invocation and
+            nothing else; the human log goes to stderr.
+          steps:
+            - produces: Error Document
+          examples:
+            - given: 'doc {a: 1, b: [true, null]}, pretty false'
+              when: "rendered"
+              then: '"{\"a\":1,\"b\":[true,null]}\n"'
+            - given: 'the same doc, pretty true'
+              when: "rendered"
+              then: '"{\n  \"a\": 1,\n  \"b\": [\n    true,\n    null\n  ]\n}\n"'
+            - given: 'errorDocument(4, "UsageError", "unknown command: x")'
+              when: "rendered compact"
+              then: '"{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"unknown command: x\"}}\n"'
         - name: Classify Error
           description: >
-            A fault before any spend (ownership, dirty tree, invalid deck) → 2; a
-            transport or provider failure → 3; a usage error (bad flag, missing file,
-            invalid record) → 4; a run with any failed/skipped card → 1. Error document
-            {"error": {"code", "kind", "message"}}.
+            Exit codes: 0 ok; 1 a run with any card not written; 2 a refusal before any
+            spend (invalid deck, hazard errors, dirty tree, existing branch); 3 a fault
+            thrown once a command is under way (a failing git command, an archive not
+            committed, I/O); 4 a usage error (bad flag, unknown or not-yet command, missing
+            file, unconfigured processor). Error document {"error": {"code", "kind", "message"}}.
+          behavior: >
+            classifyThrown(e) → {code: 3, document: errorDocument(3, "RuntimeError", e's
+            message when e is an Error, else String(e))}. runExitCode(report, archive) → 3
+            when the archive is not ok; else 1 when any outcome's status is not "written";
+            else 0. Kinds: UsageError and NotYetError (4), DeckError and RefusalError (2),
+            RuntimeError (3).
+          steps:
+            - produces: Command Result
           examples:
-            - given: "`morph deck check` on a deck with a write-write hazard"
+            - given: 'new Error("git add failed (exit 1): fatal: x")'
+              when: "classifyThrown"
+              then: '{code: 3, document: {error: {code: 3, kind: "RuntimeError", message: "git add failed (exit 1): fatal: x"}}}'
+            - given: 'the string "boom"'
+              when: "classifyThrown"
+              then: '{code: 3, document: {error: {code: 3, kind: "RuntimeError", message: "boom"}}}'
+            - given: 'reports with outcomes [written, written] and [written, skipped], archive ok; then [written] with archive {ok: false}'
+              when: "runExitCode"
+              then: '0, 1, 3'
+        - name: Read Deck File
+          description: The deck file a command names, resolved against the root, loaded by Load Deck.
+          behavior: >
+            readDeckFile(root, deckPath): abs = path.resolve(root, deckPath) (an absolute
+            deckPath ignores root). Not a regular file → {ok: false, result: {code: 4,
+            document: errorDocument(4, "UsageError", "deck file not found: <deckPath as
+            given>")}}. Else Load Deck on its UTF-8 text; faults → {ok: false, result:
+            {code: 2, document: errorDocument(2, "DeckError", "invalid deck: " + each fault
+            as "<key>: <message>" joined by "; ")}}. Else {ok: true, deck}.
+          steps:
+            - reads: Deck
+            - produces: Command Result
+          examples:
+            - given: 'a tmp root with d.json = the deck of the tiny fixture'
+              ref: "tests/fixtures/decks/tiny.json (one card a → src/a.ts)"
+              when: 'readDeckFile(root, "d.json")'
+              then: '{ok: true, deck: {cards: [card a with every default filled], externalDependsOn: []}}'
+            - given: 'a tmp root without nope.json'
+              when: 'readDeckFile(root, "nope.json")'
+              then: '{ok: false, result: {code: 4, document: {error: {code: 4, kind: "UsageError", message: "deck file not found: nope.json"}}}}'
+            - given: 'c.json = the cycle fixture; dup.json = the duplicate fixture'
+              ref: "tests/fixtures/decks/cycle.json, tests/fixtures/decks/duplicate.json"
+              when: "read"
+              then: 'code 2, kind "DeckError", message "invalid deck: dependsOn: dependsOn cycle a -> b -> a"; then "invalid deck: cards[2].customId: duplicate customId b"'
+        - name: Deck Check
+          description: "`morph deck check`: generations, hazards and slice weights of a deck file; exit 2 on any error hazard."
+          behavior: >
+            deckCheckCommand(root, deckPath, sliceCapBytes): Read Deck File (its failure is
+            the result); weighing = Weigh Slices(deck, root, sliceCapBytes); hazards = Find
+            Hazards(deck) followed by the weighing's hazards; document {deck: deckPath as
+            given, cards: the card count, generations: Layer Generations(deck), errors and
+            warnings: the hazards of severity error / warning counted, hazards, weights:
+            the weighing's weights}, keys in that order; code 2 when errors > 0, else 0.
+          steps:
+            - calls: Read Deck File
+            - uses: cards
+            - produces: Deck Check Document
+          examples:
+            - given: 'a tmp root holding only d.json = the write-write fixture (a and b both write src/x.ts)'
+              ref: "tests/fixtures/decks/hazardsWriteWrite.json"
+              when: 'deckCheckCommand(root, "d.json", 500000)'
+              then: 'code 2; document {deck: "d.json", cards: 2, generations: [["a", "b"]], errors: 1, warnings: 0, hazards: [{kind: "write-write", severity: "error", cards: ["a", "b"], path: "src/x.ts", repair: null}], weights: [{card: "a", bytes: 0, missing: ["docs/a.md", "src/x.ts"]}, {card: "b", bytes: 0, missing: ["docs/b.md", "src/x.ts"]}]}'
+            - given: 'd.json = the tiny fixture and src/a.ts = "export const a = 1;\n" (20 bytes)'
+              ref: "tests/fixtures/decks/tiny.json"
+              when: 'deckCheckCommand(root, "d.json", 500000)'
+              then: 'code 0; errors 0, warnings 1, hazards [{kind: "implicit-read", severity: "warning", cards: ["a"], path: null, repair: null}], weights [{card: "a", bytes: 20, missing: []}]'
+            - given: 'the same tree, sliceCapBytes 10'
+              when: "checked"
+              then: 'code 0; warnings 2; hazards [the implicit-read, then {kind: "oversized-slice", severity: "warning", cards: ["a"], path: null, repair: null, bytes: 20, cap: 10}]'
+        - name: Run Command
+          description: "`morph run`: processor, deck, hazards, run branch, Run Deck with git's commit hook, archive; one Run Document."
+          behavior: >
+            runCommand(root, args, deps), every check before any git call or spend, in this
+            order. 1. readRegistry(deps.env); no config with id args.processor → code 4
+            UsageError "processor <id> is not configured", plus ": " and the messages of the
+            registry faults whose key starts with "MORPH_PROCESSOR_<id>_" joined by "; " when
+            there are any. 2. Read Deck File (its failure is the result). 3. Find Hazards
+            errors → code 2 RefusalError "deck has <n> hazard error(s): " + each as "<kind>
+            <cards joined by ",">[ <path>]" joined by "; ". 4. start = deps.now() (the only
+            call of runCommand itself); runId = args.runId, or mintRunId(start) = the UTC
+            time of start as "YYYYMMDD-HHMMSS". 5. Open Run Branch(root, runId, deps.env);
+            a refusal → code 2 RefusalError with its error. 6. Run Deck with input {root,
+            runId, branch, deck, budget {maxCards: args.maxCards or the card count,
+            maxRetryBatches, deadline: start + deadlineSeconds × 1000}} and deps {config,
+            transport: deps.transport or realTransport(config.timeoutMs), commit:
+            makeCommitHook(root, config.model, deps.env), now: deps.now, env: deps.env}.
+            7. Archive Run(root, {runId, deck, report}, deps.env). → {code: runExitCode(report,
+            archive), document: {runId, branch, base, report, archive}}. A thrown Error (a git
+            command failing, I/O) propagates to main. The checkout stays on the run branch.
+          steps:
+            - uses: processor
+            - calls: Read Deck File
+            - uses: git
+            - uses: runloop
+            - produces: Run Document
+          examples:
+            - given: 'a tmpRepo; env with an explicit git identity and MORPH_PROCESSOR_s_TYPE stub, MORPH_PROCESSOR_s_ANSWERS_DIR a side tmp root holding a.md and b.md (fenced ts blocks); a deck file in the side root: a → out/a.ts (acceptance "test -f out/a.ts"), b → out/b.ts dependsOn [a]; runId "r1"'
               when: "run"
-              then: "stdout is one JSON document with errors >= 1; exit code 2"
-            - given: "`morph frobnicate`"
+              then: 'code 0; document runId "r1", branch "morph/r1", base = the HEAD before; outcomes a and b "written", generations 2, processor "s", usageTotals.requests 2; archive {ok: true, dir: ".morph/runs/r1", commit: HEAD}; the subjects since base, newest first: "morph run r1: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; HEAD on morph/r1; status clean'
+            - given: 'the same setup, one card a with acceptance "exit 1", maxRetryBatches 0'
               when: "run"
-              then: '{"error":{"code":4,"kind":"UsageError","message":...}}; exit 4'
+              then: 'code 1; outcome a "failed", reason "acceptance failed"; archive ok with the trailer Morph-Failed: 1; out/a.ts absent'
+            - given: 'the same setup, processor "nope"; then processor "bad" with MORPH_PROCESSOR_bad_TYPE "x" added to env'
+              when: "run"
+              then: 'code 4 UsageError "processor nope is not configured"; then "processor bad is not configured: MORPH_PROCESSOR_bad_TYPE must be one of openrouter, stub (got ''x'')"; no morph/* branch'
+            - given: 'the same setup with an untracked notes.txt in the repo'
+              when: "run"
+              then: 'code 2 RefusalError "dirty tree outside .morph/: notes.txt"; the checkout still main; no archive'
+            - given: 'a deck of a and b both targeting out/x.ts'
+              when: "run"
+              then: 'code 2 RefusalError "deck has 1 hazard error(s): write-write a,b out/x.ts"; no morph/* branch'
+            - given: 'one card a; runId null; deps.now always 1791310149000'
+              when: "run"
+              then: 'mintRunId(1791310149000) is "20261006-180909"; code 0; runId, report.runId "20261006-180909", branch "morph/20261006-180909"; .morph/runs/20261006-180909/report.json exists'
+        - name: Main
+          description: Dispatch, one document out, one log line, the exit code; the entry src/cli.ts wires the process.
+          behavior: >
+            main(argv, deps, io) → Promise<ExitCode>. Parse Command; a failure → io.stdout(
+            renderDocument(the error document, pretty = argv holds "--pretty")),
+            io.stderr("morph: <message>\n"), return 4. Else root = path.resolve(deps.cwd,
+            command.root); result = Deck Check (deck check) or await Run Command (run) inside
+            try/catch, a thrown value → classifyThrown. Then exactly one io.stdout(
+            renderDocument(result.document, command.pretty)), one io.stderr("morph <command
+            name>: exit <code>\n"), return result.code. The entry src/cli.ts (shebang `#!/usr/bin/env
+            node`) builds env from process.env without undefined values and calls main(
+            process.argv.slice(2), {env, now: Date.now, cwd: process.cwd(), transport: null},
+            {stdout, stderr: process streams' write}), then sets process.exitCode to the
+            result; it never calls process.exit (a piped stdout would be cut).
+          steps:
+            - calls: Parse Command
+            - calls: Deck Check
+            - calls: Run Command
+            - calls: Emit Document
+            - calls: Classify Error
+          examples:
+            - given: 'argv ["frobnicate"], in process'
+              when: "main"
+              then: '4; stdout exactly ["{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"unknown command: frobnicate\"}}\n"]; stderr ["morph: unknown command: frobnicate\n"]'
+            - given: 'a tmp root with d.json = the write-write fixture; argv ["deck", "check", "--deck", "d.json", "--root", <root>, "--pretty"]'
+              ref: "tests/fixtures/decks/hazardsWriteWrite.json"
+              when: "main"
+              then: '2; one stdout chunk beginning "{\n  \"deck\": \"d.json\",\n  \"cards\": 2,"; stderr ["morph deck check: exit 2\n"]'
+            - given: 'a run with a valid stub env and deck, --run-id r1, cwd a tmp root that is not a git repository'
+              when: "main"
+              then: '3; one document {error: {code: 3, kind: "RuntimeError", message beginning "git status failed (exit 128): "}}; stderr ["morph run: exit 3\n"]'
+            - given: 'the binary built by tsc -p tsconfig.build.json into a tmp out dir (with {"type":"module"}); a tmpRepo, a side root with answers a.md, b.md and the deck a, then b dependsOn a; `node <out>/cli.js run --root <repo> --deck <deck> --processor s --run-id e2e` with the stub env'
+              when: "spawned"
+              then: 'exit 0; stdout one line of JSON: runId "e2e", branch "morph/e2e", outcomes written, written, archive ok; the last three subjects "morph run e2e: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; stderr "morph run: exit 0\n"'
+            - given: 'the built binary, argv ["frobnicate"]'
+              when: "spawned"
+              then: 'exit 4; stdout exactly "{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"unknown command: frobnicate\"}}\n"'
+      dataObjects:
+        - name: Command
+          description: One parsed invocation.
+          schema: "{ name: 'deck check', root, pretty, deck, sliceCapBytes } | { name: 'run', root, pretty, deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches }"
+        - name: Error Document
+          description: The document of every non-result exit.
+          schema: "{ error: { code: 0|1|2|3|4, kind: 'UsageError'|'NotYetError'|'DeckError'|'RefusalError'|'RuntimeError', message: string } }"
+        - name: Command Result
+          description: What a command returns to main.
+          schema: "{ code: 0|1|2|3|4, document: unknown }"
+        - name: Deck Check Document
+          description: stdout of deck check.
+          schema: "{ deck: string, cards: number, generations: string[][], errors: number, warnings: number, hazards: Hazard[], weights: SliceWeight[] }"
+        - name: Run Document
+          description: stdout of run.
+          schema: "{ runId: string, branch: string, base: string, report: RunReport, archive: ArchiveResult }"
       interfaces:
         - name: morph CLI
           description: The only entry point.
@@ -926,6 +1166,9 @@ Requirement:
       parameters of Send Generation (P4).
       git spawns only in Run Git, synchronously, with the child's environment given whole as
       a parameter; it reads no process.env and no clock of its own (P6).
+      cli touches the process only in its entry src/cli.ts: the environment, the working
+      directory, the clock and the output streams reach main() as parameters, and the
+      environment reaches the processor only through Read Registry (P7).
   - name: Node Only
     description: >
       Runtime dependencies: Node 20 built-ins and the package `yaml` (the record reader), nothing
