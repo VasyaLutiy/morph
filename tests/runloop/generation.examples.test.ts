@@ -405,14 +405,35 @@ test("Process Generation: an answer without text becomes a corrupt variant and f
   }
 });
 
-test("Process Generation: a null acceptance is the empty command and accepts", async () => {
+test("Process Generation example 15: no acceptance fails before any request", async () => {
   const h = harness();
   try {
+    // a.v1.md, b.v1.md and d.v1.md may exist or not: nothing is sent for those cards
     h.answer("a.v1", fenced("MARK_A"));
-    const g = await processGeneration([card("a", ["out/a.ts"], null)], h.deps, h.root);
-    expect(g.outcomes).toStrictEqual([written("a", "a.v1", "", [], 1)]);
-    expect(h.fired.map((f) => f.customId)).toStrictEqual(["a"]);
-    expect(h.read("out/a.ts")).toBe(fileOf("MARK_A"));
+    h.answer("b.v1", fenced("MARK_B"));
+    h.answer("c.v1", fenced("MARK_C"));
+    h.answer("d.v1", fenced("MARK_D"));
+    const cards = [
+      card("a", ["out/a.ts"], null),
+      card("b", ["out/b.ts"], " \n"),
+      card("c", ["out/c.ts"], "grep -q MARK_C out/c.ts"),
+      card("d", ["out/d.ts"], null, ["docs/missing.md"]),
+    ];
+    const g = await processGeneration(cards, h.deps, h.root);
+    expect(g.outcomes).toStrictEqual([
+      failed("a", "no acceptance", "no acceptance", []),
+      failed("b", "no acceptance", "no acceptance", []),
+      written("c", "c.v1", "", [], 1),
+      failed("d", "no acceptance", "no acceptance", []),
+    ]);
+    expect(g.requests.map((r) => r.customId)).toStrictEqual(["c.v1"]);
+    expect(h.fired.map((f) => f.customId)).toStrictEqual(["c"]);
+    expect(g.retryContexts).toStrictEqual({
+      a: { acceptanceOutput: "no acceptance", previousDiff: null },
+      b: { acceptanceOutput: "no acceptance", previousDiff: null },
+      d: { acceptanceOutput: "no acceptance", previousDiff: null },
+    });
+    expect(h.exists("out/b.ts")).toBe(false);
   } finally {
     h.rm();
   }
