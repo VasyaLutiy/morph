@@ -871,12 +871,14 @@ compiler), а `store` и `wait` выделял в свои, хотя в запи
 | P10a | planner + cli | `plan --spec` (record + map → deck file), судьи с контрактами вызываемых и предусловиями (#3), override, бюджет, `morph plan --out`; золотая сверка с старым mrph | **переключатель dogfooding: V2 режет** (приёмки ещё из build.py через map); колоду P10a гоняет бинарь V2 |
 | P10b1 | builder | сборщик приёмок на TS (#3 A1–A10, B1–B2): снимок, tsconfig карты, порядок стадий, guard, пробы, имена, исключения, frozen, own-git; файл checks фазы; золотая сверка на колоде P10a | **первая колода, нарезанная V2** |
 | P10b2 | cli (+ builder) | `morph plan --checks`: чтение checks, guard, локатора и проб; checks на фазу; сквозная золотая сверка; скелет судьи | build.py в архив |
-| P11 | processor (batch) | `/api/beta/batches`, submit/collect | **первая фаза, собранная V2** |
+| P10c | runloop + compiler + git (runner) | паритет бегунка, issue #3 C2–C7: бюджет повторов на карту (не на прогон; `--max-retry-batches 8` уходит), контекст повтора от варианта, дошедшего дальше всех, сырые ответы и сообщения запроса в `.morph/runs/<id>/answers/` + строка stderr на вариант, срез в `<file_contents path=…>` вместо блоков кода, свой таймаут приёмки 300 с, текст обрезанного ответа как у старого | после smoke P10b2; метка `P10c-runner` |
+| P11 | processor (batch) | `/api/beta/batches`, submit/collect | **первая фаза, собранная V2** после переключения |
 | P12 | primer | дерево, владение по трейлерам, архив, markdown | |
-| P13 | scout | протокол, бюджеты, цикл, seed из primer, plan --from-scout | |
+| P13a | scout | протокол READ/GREP/LIST/ANSWER, клетка путей (realpath, symlink), бюджеты → stop_reason, seed из primer | разделено заранее (в старом плане две фазы) |
+| P13b | scout | цикл раундов, запись `scout/<id>/scout.json`, `plan --from-scout` (patch-карты на названные файлы) | `plan --from-scout` живёт в Component scout, не в planner |
 | P14 | reviewer | obligations, envelope, guardrails, findings | последняя |
 
-Итого 15 фаз P0–P14; после P3 остаётся 11. Оценка по P1–P2: ≈$0.1–0.2 исполнителя на фазу
+Итого (07.10): P0–P14 с подфазами P1b, P9b, P9c, P10a, P10b1, P10b2, P10c, P13a, P13b; после P10b1 остаются P10b2, P10c, P11, P12, P13a, P13b, P14. Оценка по P1–P2: ≈$0.1–0.2 исполнителя на фазу
 при 8 картах; потолок $5 не меняется.
 
 ## Совет автора Contour (переписка 06.10.2026) и два правила записи V2
@@ -896,3 +898,20 @@ compiler), а `store` и `wait` выделял в свои, хотя в запи
 2. **Большие литералы живут в фикстурах.** Пример ссылается на `tests/fixtures/<файл>`
    через `ref`, а не несёт десятки строк JSON в `then`. Ориентир: Component не больше
    30 КБ записи, иначе это два Component.
+
+## Сверка с первым планом и правила хвоста (07.10)
+
+Первый план — 19 фаз P0–P18 (≈148 карт). Пересборка по записи (06.10) и подфазы 07.10 покрывают его
+так: P0–P2, P5–P9, P11 первого плана — сделаны (P0–P6, P8 по записи); P4 `wait` — backoff внутри
+processor (408/429/5xx); P3 `store` и команды `deck add/status/reset/clear`, `report` — **убраны**:
+колода — файл (`morph plan --out` → `morph deck check` → `morph run --deck`), состояние прогона — в
+Run Document и архиве `.morph/runs/<id>/`; P12–P13 (contour, planner) — P9, P10a, P10b1/b2; P14 batch
+— P11; P15 primer — P12; P16–P17 scout — P13a/P13b; P18 reviewer — P14.
+
+Правила для P11–P14 (решение оператора 07.10):
+- **Команда CLI живёт в своём Component.** `cli` только маршрутизирует (parse + dispatch + один JSON):
+  `submit/collect` — processor, `primer --write` — primer, `scout` и `plan --from-scout` — scout,
+  `review` — reviewer. Запись `cli` (22 КБ) и `planner` (26 КБ) не растут к пределу 30 КБ.
+- **Issues с метками читаются до записи Component:** `P10c-runner` (#3, список C), `P12-primer`
+  (#1: тесты TypeScript считаются по профилю языка, `it(`/`test(`).
+- **Долг на колоде V2** до доработки `/morph-agent-run` решает оператор (AUTONOMY «Paying a debt on a V2 deck»).
