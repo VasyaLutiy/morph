@@ -327,6 +327,22 @@ example <n>: <what>`, then at most 8 tests of its own. Compare a result with a f
 - No `any`; import only what you use (eslint rejects an unused import and `let` never reassigned);
   `test`, `expect` from `"vitest"`.
 
+**A judge's own tests** (re-cut after run 20261007-110744: `cut-judges-judge` and `plan-spec-judge`
+were red on correct code, every red in an own test or in a hand-built expected value):
+- An own test asserts only a value this spec PRINTS for that exact input (a literal of §2.2 or a
+  fixture). A path, a default, an order or an error text the spec does not print is not tested — when
+  unsure, write no own test: zero own tests is allowed (the guard's minimum is the examples).
+- Facts the reds guessed wrong, as the code (correctly) does them: `judgeTarget(TYPESCRIPT,
+  "src/bare.ts")` = `"tests/src/bare.examples.test.ts"` (component = the code target's directory name,
+  here `src`); `planSpec` with `components: []` on a record of two or more Components returns
+  `{ok: false, error: "the record has 2 Components (ledger, store): pass --component"}` — it does not
+  fall back to the map's extras; the selected Components are listed in the order given, not record order.
+- An example's input AND expected value come from the same helper or fixture, never from two hand
+  copies: Order Deck builds its input with the `card(id, dependsOn)` helper of §2.1 verbatim
+  (`intent: "patch"`) and its expected cards with the same helper — orderDeck keeps every field, so
+  the expected deck has `"intent": "patch"` (the red had input built as `"generate"`, expected as
+  `"patch"`).
+
 ### 2.4. What must not break
 
 - P0–P9c untouched byte for byte except the three patched modules (`src/cli/types.ts`, `main.ts`,
