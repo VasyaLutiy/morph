@@ -2,6 +2,7 @@ import type { Deck, Hazard, SliceWeight } from "../cards/types.js";
 import type { Transport } from "../processor/types.js";
 import type { RunReport } from "../runloop/types.js";
 import type { ArchiveResult } from "../git/types.js";
+import type { Plan } from "../planner/types.js";
 
 export type ExitCode = 0 | 1 | 2 | 3 | 4;
 export type ErrorKind = "UsageError" | "NotYetError" | "DeckError" | "RefusalError" | "RuntimeError";
@@ -12,7 +13,11 @@ export interface RunArgs {
   name: "run"; root: string; pretty: boolean; deck: string; processor: string; runId: string | null;
   deadlineSeconds: number; maxCards: number | null; maxRetryBatches: number;
 }
-export type Command = DeckCheckArgs | RunArgs;
+export interface PlanArgs {
+  name: "plan"; root: string; pretty: boolean; spec: string; components: string[]; map: string | null;
+  judge: boolean; out: string | null;
+}
+export type Command = DeckCheckArgs | RunArgs | PlanArgs;
 export type ParseResult = { ok: true; command: Command } | { ok: false; error: ErrorDocument };
 export type DeckFileResult = { ok: true; deck: Deck } | { ok: false; result: CommandResult };
 export interface DeckCheckDocument {
@@ -20,5 +25,6 @@ export interface DeckCheckDocument {
   hazards: Hazard[]; weights: SliceWeight[];
 }
 export interface RunDocument { runId: string; branch: string; base: string; report: RunReport; archive: ArchiveResult }
+export interface PlanDocument extends Plan { out: string | null }
 export interface CliDeps { env: Record<string, string>; now: () => number; cwd: string; transport: Transport | null }
 export interface CliIo { stdout(text: string): void; stderr(text: string): void }

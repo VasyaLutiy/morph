@@ -3,6 +3,7 @@ import { parseCommand } from "./parse.js";
 import { renderDocument, classifyThrown } from "./document.js";
 import { deckCheckCommand } from "./deckCheck.js";
 import { runCommand } from "./runCommand.js";
+import { planCommand } from "./planCommand.js";
 import type { CliDeps, CliIo, CommandResult, ExitCode } from "./types.js";
 
 export async function main(argv: string[], deps: CliDeps, io: CliIo): Promise<ExitCode> {
@@ -19,6 +20,8 @@ export async function main(argv: string[], deps: CliDeps, io: CliIo): Promise<Ex
   try {
     if (command.name === "deck check") {
       result = deckCheckCommand(root, command.deck, command.sliceCapBytes);
+    } else if (command.name === "plan") {
+      result = planCommand(root, command);
     } else {
       result = await runCommand(root, command, deps);
     }
