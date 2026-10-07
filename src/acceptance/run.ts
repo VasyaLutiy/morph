@@ -1,5 +1,6 @@
 import type { AcceptanceResult, RunOptions } from "./types.js";
 import { spawn } from "node:child_process";
+import type { ChildProcess } from "node:child_process";
 
 export const DEFAULT_TIMEOUT_MS = 300000;
 export const LOG_CAP = 4000;
@@ -68,8 +69,11 @@ function childEnv(env: Record<string, string>): Record<string, string> {
  * Runs the card's acceptance command in `/bin/sh -c` with cwd = root, the given
  * environment minus the processor/secret keys (with NO_COLOR=1 and CI=1 laid
  * over it), detached in its own process group. On expiry of timeoutMs the whole
- * group is killed. Resolves on the child's "close" event; the promise never
- * rejects.
+ * group is killed; a SIGINT/SIGTERM of this process during the call kills the
+ * group the same way (the listeners are added before the spawn, so a signal
+ * caught before the child exists kills it as soon as it is spawned, and they are
+ * removed when the child closes or fails to start: none outlives the call).
+ * Resolves on the child's "close" event; the promise never rejects.
  */
 export function runAcceptance(
   command: string,
@@ -79,9 +83,43 @@ export function runAcceptance(
   return new Promise<AcceptanceResult>((resolve) => {
     const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     let timedOut = false;
+    let signalled: NodeJS.Signals | null = null;
     const chunks: Buffer[] = [];
 
-    let child;
+    let child: ChildProcess | undefined;
+
+    /** Kills the child's process group, if it has one: the timeout uses this too. */
+    const killGroup = (): void => {
+      if (child !== undefined && child.pid !== undefined) {
+        try {
+          process.kill(-child.pid, "SIGKILL");
+        } catch {
+          // the group is already gone: no error
+        }
+      }
+    };
+
+    /**
+     * Records the FIRST signal's name and kills the group at once; a signal that
+     * arrives before the spawn kills the child right after it. While a listener
+     * is present Node does not exit on that signal: the caller decides.
+     */
+    const onSignal = (signal: NodeJS.Signals): void => {
+      if (signalled !== null) {
+        return;
+      }
+      signalled = signal;
+      killGroup();
+    };
+
+    const removeListeners = (): void => {
+      process.off("SIGINT", onSignal);
+      process.off("SIGTERM", onSignal);
+    };
+
+    process.on("SIGINT", onSignal);
+    process.on("SIGTERM", onSignal);
+
     try {
       child = spawn("/bin/sh", ["-c", "exec 2>&1\n" + command], {
         cwd: root,
@@ -90,6 +128,7 @@ export function runAcceptance(
         stdio: ["ignore", "pipe", "pipe"],
       });
     } catch (err: unknown) {
+      removeListeners();
       const message = err instanceof Error ? err.message : String(err);
       resolve({
         exit: null,
@@ -99,15 +138,13 @@ export function runAcceptance(
       return;
     }
 
+    if (signalled !== null) {
+      killGroup();
+    }
+
     const timer = setTimeout(() => {
       timedOut = true;
-      if (child.pid !== undefined) {
-        try {
-          process.kill(-child.pid, "SIGKILL");
-        } catch {
-          // the group is already gone: no error
-        }
-      }
+      killGroup();
     }, timeoutMs);
 
     child.stdout?.on("data", (chunk: Buffer) => {
@@ -119,6 +156,7 @@ export function runAcceptance(
 
     child.on("error", (err: Error) => {
       clearTimeout(timer);
+      removeListeners();
       resolve({
         exit: null,
         log: "acceptance could not start: " + err.message + "\n",
@@ -128,6 +166,7 @@ export function runAcceptance(
 
     child.on("close", (code: number | null) => {
       clearTimeout(timer);
+      removeListeners();
       let log = clipLog(Buffer.concat(chunks).toString("utf8"));
       if (timedOut) {
         if (log.length > 0 && !log.endsWith("\n")) {
@@ -135,8 +174,14 @@ export function runAcceptance(
         }
         log += "acceptance timed out after " + timeoutMs + " ms\n";
       }
+      if (signalled !== null) {
+        if (log.length > 0 && !log.endsWith("\n")) {
+          log += "\n";
+        }
+        log += "acceptance interrupted by " + signalled + "\n";
+      }
       resolve({
-        exit: timedOut ? null : code,
+        exit: timedOut || signalled !== null ? null : code,
         log,
         timedOut,
       });
