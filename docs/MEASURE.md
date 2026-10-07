@@ -18,6 +18,7 @@
 | P8 | mrph | 8 / 8 / 6 (1 run, no re-cut) | 0.0456 / opus55 prep 227k/63/36 + run ≈95k/30/12 | 5 | 2 из 6 | 0 | 0 | 0 | — | 0 | 46386 |
 | P9 | mrph | 8 / 8 / 12 (1 run, no re-cut) | 0.1556 / opus55 prep 270k/85/29 + run ≈110k/30/17 | 12 | 0 из 12 | 0 | 0 | 0 | — | 0 | 66539 |
 | P9b | mrph | 9 / 9 / 8 (2 runs: 8+1 written; re-cut 1 card — data, output-directive-judge, TASK §2.2 wording) | 0.0944 (run 1 0.0860 + run 2 0.0084) / opus55 run ≈95k/40/20 | 7 | 0 из 8 | 0 | 0 | 0 | — | 0 | 51114 |
+| P9c | mrph | 7 / 7 / 5 (1 run, no fix; burned: 2 unclosed fences, 1 missing files, 2 losing variants) | 0.0873 / opus55 run ≈60k/10/12 | 4 | 0 из 5 | 0 | 0 | 0 | — | 0 | 48989 |
 
 P7 smoke stdout (exit 0; deck and recipe in `decks/p7/smoke/`, no secret in it): `{"runId":"20261006-192809","branch":"morph/20261006-192809","base":"f3bd88ae78dcbd13324b9745bb0dc66a1a154ab3","report":{"runId":"20261006-192809","completedAt":1791314899462,"branch":"morph/20261006-192809","processor":"glm53","generations":2,"outcomes":[{"customId":"a","status":"written","reason":null,"attempts":1,"winningVariant":"a.v1","acceptanceLog":"a ok\n","earlierFailures":[],"commit":"9ccfd37c1ea669c7af51d95db6dd52ccc68eeeb7","diffstat":{"files":1,"insertions":3,"deletions":0}},{"customId":"b","status":"written","reason":null,"attempts":1,"winningVariant":"b.v1","acceptanceLog":"b ok\n","earlierFailures":[],"commit":"41836124e3fde2d9892baadddfd1373c86017bb0","diffstat":{"files":1,"insertions":3,"deletions":0}},{"customId":"c","status":"written","reason":null,"attempts":1,"winningVariant":"c.v1","acceptanceLog":"c ok\n","earlierFailures":[],"commit":"801f5018927ed96f568f3ea18a328e7da2f0c68f","diffstat":{"files":1,"insertions":6,"deletions":0}}],"usageTotals":{"inputTokens":355,"outputTokens":106,"cost":0.00028901999999999997,"requests":3}},"archive":{"ok":true,"dir":".morph/runs/20261006-192809","commit":"f1a81c18d63110e181e4e293af5360a9ce485b3a"}}`
 
@@ -40,4 +41,4 @@ Sonnet 5 — дифф внешним `diff -u`, сирота через `ps`, л
 
 ## Autonomous stretch
 
-Running total of the autonomous stretch: $1.1666 of $30 (P3 $0.2254 + P4 $0.1406 + P5 $0.2787 incl. debt run $0.0952 + P6 $0.0984 + P7 $0.1276 + P7 smoke $0.0003 + P8 $0.0456 + P9 $0.1556 + P9b $0.0944).
+Running total of the autonomous stretch: $1.2539 of $30 (P3 $0.2254 + P4 $0.1406 + P5 $0.2787 incl. debt run $0.0952 + P6 $0.0984 + P7 $0.1276 + P7 smoke $0.0003 + P8 $0.0456 + P9 $0.1556 + P9b $0.0944 + P9c $0.0873).

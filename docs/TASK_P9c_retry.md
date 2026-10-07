@@ -352,3 +352,31 @@ by the mutation run (`Card.acceptance` is `string | null`); §2.2 now pins `A = 
 
 Max slice + targets + instruction: build-attempt-diff-judge 48 989 bytes, process-generation-judge
 45 233 (gate 200 KB). Forecast ≈ $0.06 nominal, ≤ $0.15 (≤ $1 gate, cap $5).
+
+### Run
+
+07.10, on the laptop, processor glm53, on the operator's word (forecast $0.06–0.15, cap $5). "Burned"
+= every request that was not a winning write (requests − written).
+
+**Run** `20261007-105136-a1e1b533`, branch `morph/20261007-105136-a1e1b533`, 10:51:36 → 10:55:09
+(3.6 min; generation 1 ≈ 2.2 min, generation 2 ≈ 1.4 min), 12 requests, 161 004 in / 31 352 out,
+**$0.0873**. 7 written, 0 failed, 0 skipped; 5 variants burned; no fix, no re-cut. Every finish reason
+`stop`; the largest answer build-attempt-diff.v1 9 540 of 12 000 out tokens.
+
+| card | gen | attempts | winning variant | commit | first red of each burned variant |
+|---|---|---|---|---|---|
+| build-attempt-diff | 1 | 1 | v2 | c0390c2 | v1: cut off mid-file (unclosed fence, finish `stop`, 9 540 out), rejected before acceptance |
+| build-retry | 1 | 1 | v1 | 4bc302b | v2: losing variant (not surfaced) |
+| process-generation | 1 | 1 | v1 | e77edbe | v2: losing variant (not surfaced) |
+| build-attempt-diff-judge | 2 | 1 | — | 03a05c3 | — |
+| build-retry-judge | 2 | 2 | r1 | 3bfa9eb | first: did not return the card's files (both targets missing), rejected before acceptance |
+| process-generation-judge | 2 | 2 | r1 | ceca363 | first: cut off mid-file (unclosed fence, finish `stop`, 2 165 out), rejected before acceptance |
+| run-deck-judge | 2 | 1 | — | edef96b | — |
+
+No acceptance went red: every burned variant was a format reject or a losing variant. On the run branch:
+`git status --short` empty; `tsc --noEmit`, `eslint src tests`, `npm run build` green; `vitest run` 480
+tests in 48 files green (predicted 480). Pre-registration: cards with regeneration 2 of 7 as predicted,
+but other cards (build-retry-judge and process-generation-judge, not build-attempt-diff, whose v1 burned
+and v2 won); claims (1)–(3) hold (no acceptance red, no `length` finish); claim (4) untested (no vitest
+red). Local `main` fast-forwarded to the run archive 0138224; not pushed.
+
