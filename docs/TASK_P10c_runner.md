@@ -403,3 +403,17 @@ holds.
 npm run build && rm -rf /tmp/v2bin-p10c && mkdir -p /tmp/v2bin-p10c && cp -r dist /tmp/v2bin-p10c/ && ln -s $PWD/node_modules /tmp/v2bin-p10c/node_modules
 node /tmp/v2bin-p10c/dist/cli.js run --root . --deck decks/p10c/deck.json --processor glm53 --max-retry-batches 8 --deadline 2400 > /tmp/p10c-run.json
 ```
+
+### Run (07.10, VPS, autonomous) — cut by V2, run by the V2 binary
+
+Deck `decks/p10c/deck.json` (V2 cut of runloop, compiler, acceptance, filtered to 8 cards by `decks/p10c/filter.py`),
+run by the V2 binary copy in `/tmp/v2bin-p10c` (today's binary: run-wide retry cap, hence `--max-retry-batches 8
+--deadline 2400`): run 20261007-134217, **8 / 8 written in one run, no fix, no retry**, $0.1289, 17.1 min (1025 s),
+12 requests (4 code cards with 2 variants, judges 1), 193 740 in / 43 540 out tokens, every finish reason `stop`.
+Every card won on its first variant (v1). On the run branch: `git status` clean; tsc, eslint, `npm run build`
+clean; vitest **578 / 578**. Read once against §2.2: C2 the retry-batch counter is reset per generation, a card the
+cap stopped is picked up by the next generation's batch; C3 the retry context is the ran variant with the most
+`== ` lines, a tie to the later one, log and diff from the same attempt; C5 `<file_contents path="…">` for slice
+files and `<original_file path="…">` for patch targets; C6 `RunDeps.acceptanceTimeoutMs`, default
+`DEFAULT_TIMEOUT_MS` 300 000 of Run Acceptance (no longer the processor's `timeoutMs`); C7 `TRUNCATED_RESPONSE_MESSAGE`
+byte-equal to old mrph `cards/generations.py:336`. 0 defects. Issue #3 stays open for C4 (P10c2).
