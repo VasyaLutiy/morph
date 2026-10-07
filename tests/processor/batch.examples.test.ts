@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { sendBatch } from "../../src/processor/batch.js";
-import type { ProcessorConfig, Transport } from "../../src/processor/types.js";
+import type { BatchRecord, ProcessorConfig, Transport } from "../../src/processor/types.js";
 import type { Request } from "../../src/compiler/types.js";
 import { fixture, fixtureJson } from "../helpers.js";
 
@@ -14,9 +14,11 @@ function script(steps: Step[]): {
   transport: Transport;
   calls: { url: string; method: string; body: string | undefined }[];
   sleeps: number[];
+  saved: BatchRecord[];
 } {
   const calls: { url: string; method: string; body: string | undefined }[] = [];
   const sleeps: number[] = [];
+  const saved: BatchRecord[] = [];
   const transport: Transport = {
     fetch: async (url, init) => {
       calls.push({ url, method: init.method, body: init.body });
@@ -27,8 +29,11 @@ function script(steps: Step[]): {
     sleep: async (ms) => {
       sleeps.push(ms);
     },
+    saveBatch: (record) => {
+      saved.push(record);
+    },
   };
-  return { transport, calls, sleeps };
+  return { transport, calls, sleeps, saved };
 }
 
 function configWith(changes: Partial<ProcessorConfig>): ProcessorConfig {
@@ -41,6 +46,7 @@ function request(customId: string, model: string | null = null): Request {
 
 const BATCH_URL = "https://openrouter.ai/api/beta/batches";
 const BATCH_ID_URL = BATCH_URL + "/batch-1789576284-Ejahe4wq9AgVdp5xGdNm";
+const LIVE_ID_URL = BATCH_URL + "/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W";
 
 test("Send Batch example 1", async () => {
   const config = fixtureJson("processor/batchConfig.json") as ProcessorConfig;
@@ -161,9 +167,13 @@ test("Send Batch example 6", async () => {
   const config = fixtureJson("processor/batchConfig.json") as ProcessorConfig;
   const { transport, calls, sleeps } = script([ok(202, "batchSubmitted.json"), ok(200, "batchInProgress.json")]);
   const result = await sendBatch(config, [request("a.v1")], transport);
-  expect(calls.length).toBe(5);
+  expect(calls.length).toBe(6);
+  expect(calls[5]?.method).toBe("DELETE");
+  expect(calls[5]?.url).toBe(BATCH_ID_URL);
+  expect(calls[5]?.body).toBeUndefined();
   expect(sleeps).toStrictEqual([15000, 15000, 15000, 15000]);
   expect(result.answers[0]?.error).toBe("batch batch-1789576284-Ejahe4wq9AgVdp5xGdNm still in_progress after 4 polls");
+  expect(result.batch?.status).toBe("deleted");
   expect(result.usage[0]).toStrictEqual({
     customId: "a.v1",
     inputTokens: 0,
@@ -198,4 +208,133 @@ test("Send Batch example 7", async () => {
     finishReason: "stop",
     error: null,
   });
+});
+
+test("Send Batch example 8", async () => {
+  const config = configWith({ model: "acme/m:batch" });
+  const { transport, calls, sleeps } = script([ok(202, "batchSubmitted.json"), ok(200, "batchCompleted.json")]);
+  const result = await sendBatch(
+    config,
+    [request("x.v1", "z-ai/glm-5.3:batch"), request("a.v1")],
+    transport
+  );
+  expect(calls.length).toBe(2);
+  const body = JSON.parse(calls[0]?.body ?? "null") as { model: string; requests: { custom_id: string }[] };
+  expect(body.model).toBe("acme/m:batch");
+  expect(body.requests.map((r) => r.custom_id)).toStrictEqual(["a.v1"]);
+  expect(sleeps).toStrictEqual([15000]);
+  expect(result.answers[0]).toStrictEqual({
+    customId: "x.v1",
+    text: null,
+    finishReason: null,
+    error: "batch runs one model: x.v1 pins z-ai/glm-5.3:batch, the batch is acme/m:batch",
+  });
+  expect(result.answers[1]).toStrictEqual({
+    customId: "a.v1",
+    text: "```ts\nexport const a = 1;\n```",
+    finishReason: "stop",
+    error: null,
+  });
+});
+
+test("Send Batch example 9", async () => {
+  const config = fixtureJson("processor/batchConfig.json") as ProcessorConfig;
+  const { transport, calls, sleeps, saved } = script([
+    ok(202, "batchSubmittedLive.json"),
+    ok(200, "batchCompletedLive.json"),
+  ]);
+  const result = await sendBatch(config, [request("clamp-value.v1"), request("sign-of.v1")], transport);
+  expect(calls.length).toBe(2);
+  expect(sleeps).toStrictEqual([15000]);
+  const expected = (fixtureJson("processor/sendBatch.json") as {
+    "9": {
+      answers: { customId: string; text: string | null; finishReason: string | null; error: string | null }[];
+      usage: { customId: string; cost: number | null }[];
+      batch: { batchId: string; status: string; cost: number | null };
+      saved: { batchId: string; status: string; cost: number | null }[];
+    };
+  })["9"];
+  expect(result.answers).toStrictEqual(expected.answers);
+  expect(result.usage).toStrictEqual(expected.usage);
+  expect(result.batch).toStrictEqual(expected.batch);
+  expect(saved).toStrictEqual(expected.saved);
+});
+
+test("Send Batch example 10", async () => {
+  const config = configWith({ id: "night", model: "acme/m:batch", timeoutMs: 30000 });
+  const { transport, calls, sleeps, saved } = script([
+    ok(202, "batchSubmittedLive.json"),
+    ok(200, "batchInProgress.json"),
+    ok(200, "batchInProgress.json"),
+    ok(200, "batchDeleted.json"),
+  ]);
+  const result = await sendBatch(config, [request("x.v1", "other/m"), request("clamp-value.v1")], transport);
+  expect(calls.length).toBe(4);
+  expect(calls[3]?.method).toBe("DELETE");
+  expect(calls[3]?.url).toBe(LIVE_ID_URL);
+  expect(calls[3]?.body).toBeUndefined();
+  expect(sleeps).toStrictEqual([15000, 15000]);
+  expect(result.answers[0]).toStrictEqual({
+    customId: "x.v1",
+    text: null,
+    finishReason: null,
+    error: "batch runs one model: x.v1 pins other/m, the batch is acme/m:batch",
+  });
+  expect(result.answers[1]).toStrictEqual({
+    customId: "clamp-value.v1",
+    text: null,
+    finishReason: null,
+    error: "batch batch-1791388269-cp5qOr5IQ0xoz1ntuc8W still in_progress after 2 polls",
+  });
+  expect(result.batch).toStrictEqual({
+    batchId: "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W",
+    processor: "night",
+    model: "acme/m:batch",
+    customIds: ["clamp-value.v1"],
+    status: "deleted",
+    cost: null,
+  });
+  expect(saved).toStrictEqual([
+    {
+      batchId: "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W",
+      processor: "night",
+      model: "acme/m:batch",
+      customIds: ["clamp-value.v1"],
+      status: "validating",
+      cost: null,
+    },
+    {
+      batchId: "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W",
+      processor: "night",
+      model: "acme/m:batch",
+      customIds: ["clamp-value.v1"],
+      status: "deleted",
+      cost: null,
+    },
+  ]);
+});
+
+test("Send Batch example 11", async () => {
+  const config = fixtureJson("processor/batchConfig.json") as ProcessorConfig;
+  const completed = fixtureJson("processor/batchCompleted.json") as Record<string, unknown>;
+  completed.usage = { cost: 0.5 };
+  const { transport, calls, sleeps } = script([
+    ok(202, "batchSubmitted.json"),
+    { status: 200, text: JSON.stringify(completed) },
+  ]);
+  transport.saveBatch = (): void => {
+    throw new Error("disk full");
+  };
+  const result = await sendBatch(config, [request("a.v1")], transport);
+  expect(calls.length).toBe(2);
+  expect(sleeps).toStrictEqual([15000]);
+  expect(result.answers[0]).toStrictEqual({
+    customId: "a.v1",
+    text: "```ts\nexport const a = 1;\n```",
+    finishReason: "stop",
+    error: null,
+  });
+  expect(result.usage[0]?.cost).toBe(0.00269316);
+  expect(result.batch?.status).toBe("completed");
+  expect(result.batch?.cost).toBe(0.5);
 });
