@@ -1,0 +1,120 @@
+```ts
+import { expect, test } from "vitest";
+import { runDeck } from "../../src/runloop/deck.js";
+import { tmpRoot } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+import type { ProcessorConfig, Transport } from "../../src/processor/types.js";
+import type { RunDeps, RunInput } from "../../src/runloop/types.js";
+
+test("Run Deck example 8: a retry batch stopped by the deadline", async () => {
+  const r = tmpRoot("morph-deck-p11b-");
+  try {
+    let calls = 0;
+    const now = (): number => {
+      calls += 1;
+      return calls === 1 ? 0 : 5000;
+    };
+
+    const answer = "```ts\nexport const c = 1;\n```";
+    const reply = JSON.stringify({
+      id: "gen-1",
+      provider: "stub",
+      choices: [
+        {
+          message: { role: "assistant", content: answer },
+          finish_reason: "stop",
+        },
+      ],
+      usage: { prompt_tokens: 0, completion_tokens: 0, cost: 0 },
+    });
+
+    const transport: Transport = {
+      async fetch() {
+        return { status: 200, text: async () => reply };
+      },
+      async sleep() {
+        return;
+      },
+    };
+
+    const config = {
+      id: "stub",
+      model: "stub",
+      route: "sync",
+      apiKey: "stub-key",
+      baseUrl: "https://stub.invalid/api/v1",
+      concurrency: 1,
+      maxRetries: 0,
+      timeoutMs: 60000,
+      providerOrder: [],
+      reasoning: { maxTokens: 1024 },
+    } as unknown as ProcessorConfig;
+
+    const commits: string[] = [];
+    const deps: RunDeps = {
+      config,
+      transport,
+      commit: (customId) => {
+        commits.push(customId);
+        return {
+          commit: "sha-" + customId,
+          diffstat: { files: 1, insertions: 1, deletions: 0 },
+        };
+      },
+      now,
+      env: { PATH: process.env.PATH ?? "" },
+    };
+
+    const cards: Card[] = [
+      {
+        customId: "c",
+        intent: "generate",
+        targets: ["c.ts"],
+        contextSlice: [],
+        instruction: "write c.ts",
+        acceptance: "exit 1",
+        model: null,
+        maxTokens: null,
+        reasoning: { maxTokens: 1024 },
+        variants: 1,
+        dependsOn: [],
+      },
+      {
+        customId: "d",
+        intent: "generate",
+        targets: ["d.ts"],
+        contextSlice: [],
+        instruction: "write d.ts",
+        acceptance: null,
+        model: null,
+        maxTokens: null,
+        reasoning: { maxTokens: 1024 },
+        variants: 1,
+        dependsOn: ["c"],
+      },
+    ];
+
+    const input: RunInput = {
+      root: r.root,
+      runId: "run-deck-8",
+      branch: "main",
+      deck: { cards, externalDependsOn: [] },
+      budget: { maxCards: 10, maxRetryBatches: 2, deadline: 1000 },
+    };
+
+    const result = await runDeck(input, deps);
+
+    const c = result.outcomes.find((outcome) => outcome.customId === "c");
+    const d = result.outcomes.find((outcome) => outcome.customId === "d");
+    expect(c?.status).toBe("budget-exceeded");
+    expect(c?.reason).toBe("deadline");
+    expect(c?.attempts).toBe(1);
+    expect(d?.status).toBe("budget-exceeded");
+    expect(d?.reason).toBe("deadline");
+    expect(result.report.usageTotals.requests).toBe(1);
+    expect(commits).toStrictEqual([]);
+  } finally {
+    r.rm();
+  }
+});
+```

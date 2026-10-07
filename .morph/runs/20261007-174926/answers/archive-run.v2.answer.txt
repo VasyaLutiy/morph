@@ -1,0 +1,147 @@
+FILE: src/git/types.ts
+```
+import type { Deck } from "../cards/types.js";
+
+export interface GitResult { code: number | null; stdout: string; stderr: string }
+export interface Diffstat { files: number; insertions: number; deletions: number }
+export interface CommitInfo { commit: string; diffstat: Diffstat }
+export type BranchResult = { ok: true; branch: string; base: string } | { ok: false; error: string };
+export type Trailer = [string, string];
+export interface CardCommit { customId: string; targets: string[]; model: string; variant: string | null; acceptanceExit: number }
+export type CardCommitter = (customId: string, targets: string[]) => CommitInfo | null;
+export interface ArchivedReport { outcomes: { status: string }[] }
+export interface ArchivedAnswer { request: { customId: string }; text: string | null; line?: string }
+export interface ArchiveInput { runId: string; deck: Deck; report: ArchivedReport; answers?: ArchivedAnswer[] }
+export type ArchiveResult = { ok: true; dir: string; commit: string | null } | { ok: false; error: string };
+```
+
+FILE: src/git/archive.ts
+```
+import fs from "node:fs";
+import path from "node:path";
+import { gzipSync } from "node:zlib";
+import { commitPaths } from "./commit.js";
+import type { ArchiveInput, ArchiveResult, Trailer } from "./types.js";
+
+function countByStatus(outcomes: { status: string }[], status: string): string {
+  let n = 0;
+  for (const o of outcomes) {
+    if (o.status === status) {
+      n += 1;
+    }
+  }
+  return String(n);
+}
+
+export function saveBatchRecord(root: string, record: { batchId: string }): string | null {
+  if (!/^[A-Za-z0-9._-]+$/.test(record.batchId)) {
+    return null;
+  }
+  fs.mkdirSync(path.join(root, ".morph", "batches"), { recursive: true });
+  const relative = ".morph/batches/" + record.batchId + ".json";
+  fs.writeFileSync(path.join(root, relative), JSON.stringify(record, null, 2) + "\n", "utf8");
+  return relative;
+}
+
+export function archiveRun(
+  root: string,
+  input: ArchiveInput,
+  env: Record<string, string>
+): ArchiveResult {
+  if (!/^[A-Za-z0-9._-]+$/.test(input.runId)) {
+    return { ok: false, error: "invalid runId: " + input.runId };
+  }
+  if (input.answers !== undefined) {
+    for (const answer of input.answers) {
+      if (!/^[A-Za-z0-9._-]+$/.test(answer.request.customId)) {
+        return { ok: false, error: "invalid answer id: " + answer.request.customId };
+      }
+    }
+  }
+  const dir = ".morph/runs/" + input.runId;
+  if (fs.existsSync(path.join(root, dir))) {
+    return { ok: false, error: "archive " + dir + " already exists" };
+  }
+  fs.mkdirSync(path.join(root, dir), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, dir, "deck.json"),
+    JSON.stringify(input.deck.cards, null, 2) + "\n",
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(root, dir, "report.json"),
+    JSON.stringify(input.report, null, 2) + "\n",
+    "utf8"
+  );
+  const paths: string[] = [dir + "/deck.json", dir + "/report.json"];
+  if (input.answers !== undefined && input.answers.length > 0) {
+    const requestsDir = path.join(root, dir, "requests");
+    fs.mkdirSync(requestsDir, { recursive: true });
+    fs.writeFileSync(path.join(requestsDir, ".gitignore"), "*\n", "utf8");
+    for (const answer of input.answers) {
+      fs.writeFileSync(
+        path.join(requestsDir, answer.request.customId + ".request.json.gz"),
+        gzipSync(JSON.stringify(answer.request, null, 2) + "\n")
+      );
+    }
+    const answerFiles: string[] = [];
+    for (const answer of input.answers) {
+      if (answer.text !== null) {
+        answerFiles.push(dir + "/answers/" + answer.request.customId + ".answer.txt");
+      }
+    }
+    const lines: string[] = [];
+    for (const answer of input.answers) {
+      if (answer.line !== undefined) {
+        lines.push(answer.line);
+      }
+    }
+    if (answerFiles.length > 0 || lines.length > 0) {
+      fs.mkdirSync(path.join(root, dir, "answers"), { recursive: true });
+    }
+    for (const answer of input.answers) {
+      if (answer.text !== null) {
+        fs.writeFileSync(
+          path.join(root, dir, "answers", answer.request.customId + ".answer.txt"),
+          answer.text,
+          "utf8"
+        );
+      }
+    }
+    if (lines.length > 0) {
+      fs.writeFileSync(
+        path.join(root, dir, "answers", "lines.txt"),
+        lines.join(""),
+        "utf8"
+      );
+    }
+    for (const file of answerFiles) {
+      paths.push(file);
+    }
+    if (lines.length > 0) {
+      paths.push(dir + "/answers/lines.txt");
+    }
+  }
+  const trailers: Trailer[] = [
+    ["Morph-Run", input.runId],
+    ["Morph-Cards", String(input.deck.cards.length)],
+    ["Morph-Written", countByStatus(input.report.outcomes, "written")],
+    ["Morph-Failed", countByStatus(input.report.outcomes, "failed")],
+    ["Morph-Skipped", countByStatus(input.report.outcomes, "skipped")],
+    ["Morph-Budget-Exceeded", countByStatus(input.report.outcomes, "budget-exceeded")]
+  ];
+  try {
+    const info = commitPaths(
+      root,
+      paths,
+      "morph run " + input.runId + ": deck and report",
+      trailers,
+      env
+    );
+    return { ok: true, dir, commit: info === null ? null : info.commit };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { ok: false, error: "archive " + dir + " written but not committed: " + message };
+  }
+}
+```

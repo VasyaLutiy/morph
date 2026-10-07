@@ -1,0 +1,266 @@
+FILE: src/processor/types.ts
+```typescript
+import type { Effort, Fault, Reasoning } from "../cards/types.js";
+import type { Message } from "../compiler/types.js";
+export type ProcessorType = "openrouter" | "stub";
+export type Route = "sync" | "batch";
+export interface ProcessorConfig {
+  id: string; type: ProcessorType; model: string; apiKey: string | null; baseUrl: string;
+  route: Route; concurrency: number; providerOrder: string[] | null; reasoning: Reasoning | null;
+  timeoutMs: number; maxRetries: number; answersDir: string | null;
+}
+export interface Registry { configs: ProcessorConfig[]; faults: Fault[] }
+export type ProviderReasoning = { max_tokens: number } | { effort: Effort };
+export interface ProviderBody {
+  model: string; messages: Message[]; max_tokens?: number; reasoning?: ProviderReasoning;
+  provider?: { order: string[]; allow_fallbacks: false }; usage: { include: true };
+}
+export interface ProviderRequest { url: string; headers: Record<string, string>; body: ProviderBody }
+export interface Answer { customId: string; text: string | null; finishReason: string | null; error: string | null }
+export interface Usage {
+  customId: string; inputTokens: number; outputTokens: number;
+  cost: number | null; provider: string | null; generationId: string | null;
+}
+export interface Reply { answer: Answer; usage: Usage }
+export interface HttpReply { status: number; text(): Promise<string> }
+export interface BatchRecord {
+  batchId: string; processor: string; model: string; customIds: string[]; status: string; cost: number | null;
+}
+export interface Transport {
+  fetch(url: string, init: { method: string; headers: Record<string, string>; body?: string }): Promise<HttpReply>;
+  sleep(ms: number): Promise<void>;
+  saveBatch?(record: BatchRecord): void;
+}
+export interface GenerationResult { answers: Answer[]; usage: Usage[]; batch?: BatchRecord }
+```
+
+FILE: src/processor/batch.ts
+```typescript
+import type { Request } from "../compiler/types.js";
+import { assembleBatch } from "./batchRequest.js";
+import { readBatch } from "./batchResponse.js";
+import type {
+  Answer,
+  BatchRecord,
+  GenerationResult,
+  ProcessorConfig,
+  Reply,
+  Transport,
+  Usage
+} from "./types.js";
+
+export const BATCH_POLL_MS = 15000;
+export const BATCH_GRACE_MS = 60000;
+
+function errorAnswer(customId: string, error: string): Answer {
+  return { customId, text: null, finishReason: null, error };
+}
+
+function errorUsage(customId: string): Usage {
+  return { customId, inputTokens: 0, outputTokens: 0, cost: null, provider: null, generationId: null };
+}
+
+function pinnedError(config: ProcessorConfig): (customId: string, model: string) => string {
+  return (customId, model) =>
+    "batch runs one model: " + customId + " pins " + model + ", the batch is " + config.model;
+}
+
+function failure(requests: Request[], errorOf: (request: Request) => string): GenerationResult {
+  return {
+    answers: requests.map((r) => errorAnswer(r.customId, errorOf(r))),
+    usage: requests.map((r) => errorUsage(r.customId))
+  };
+}
+
+function snapshot(record: BatchRecord): BatchRecord {
+  return { ...record, customIds: [...record.customIds] };
+}
+
+function pushRecord(transport: Transport, record: BatchRecord): void {
+  try {
+    transport.saveBatch?.(snapshot(record));
+  } catch {
+    // a saveBatch that throws is ignored; the batch goes on
+  }
+}
+
+function shareCost(replies: Reply[], cost: number | undefined): void {
+  if (cost === undefined) return;
+  if (replies.some((r) => r.usage.cost !== null)) return;
+  let total = 0;
+  for (const r of replies) total += r.usage.inputTokens + r.usage.outputTokens;
+  if (total === 0) return;
+  for (const r of replies) {
+    const tokens = r.usage.inputTokens + r.usage.outputTokens;
+    r.usage.cost = Math.round(cost * tokens / total * 1e10) / 1e10;
+  }
+}
+
+function finishWithReplies(
+  requests: Request[],
+  replies: Reply[],
+  batchId: string,
+  status: string,
+  batchError: string | null,
+  cost: number | undefined
+): GenerationResult {
+  shareCost(replies, cost);
+  return {
+    answers: requests.map((r) => {
+      const reply = replies.find((x) => x.answer.customId === r.customId);
+      if (reply !== undefined) return reply.answer;
+      return errorAnswer(
+        r.customId,
+        "batch " + batchId + " " + status + ": " + (batchError ?? "no result")
+      );
+    }),
+    usage: requests.map((r) => {
+      const reply = replies.find((x) => x.answer.customId === r.customId);
+      if (reply !== undefined) return reply.usage;
+      return errorUsage(r.customId);
+    })
+  };
+}
+
+export async function sendBatch(
+  config: ProcessorConfig,
+  requests: Request[],
+  transport: Transport
+): Promise<GenerationResult> {
+  const pinned = pinnedError(config);
+  const included = requests.filter((r) => r.model === null || r.model === config.model);
+  const rejected = requests.filter((r) => !(r.model === null || r.model === config.model));
+
+  if (included.length === 0) {
+    return failure(requests, (r) =>
+      r.model !== null ? pinned(r.customId, r.model) : pinned(r.customId, r.model ?? "")
+    );
+  }
+
+  const call = assembleBatch(included, config);
+
+  let submitStatus = 0;
+  let submitText = "";
+  try {
+    const reply = await transport.fetch(call.url, {
+      method: "POST",
+      headers: call.headers,
+      body: call.body
+    });
+    submitStatus = reply.status;
+    submitText = await reply.text();
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return failure(requests, (r) =>
+      rejected.some((x) => x.customId === r.customId)
+        ? pinned(r.customId, r.model ?? "")
+        : "batch submit: transport: " + message
+    );
+  }
+
+  const submitRead = readBatch(submitStatus, submitText);
+  if (submitRead.state === "error") {
+    return failure(requests, (r) =>
+      rejected.some((x) => x.customId === r.customId)
+        ? pinned(r.customId, r.model ?? "")
+        : "batch submit: " + submitRead.error
+    );
+  }
+  if (submitRead.batchId === null) {
+    return failure(requests, (r) =>
+      rejected.some((x) => x.customId === r.customId)
+        ? pinned(r.customId, r.model ?? "")
+        : "batch submit: no batch id"
+    );
+  }
+
+  const batchId = submitRead.batchId;
+  const record: BatchRecord = {
+    batchId,
+    processor: config.id,
+    model: config.model,
+    customIds: included.map((r) => r.customId),
+    status: submitRead.status !== null ? submitRead.status : "unknown",
+    cost: null
+  };
+  pushRecord(transport, record);
+
+  const polls = Math.max(1, Math.floor(config.timeoutMs / BATCH_POLL_MS));
+  let lastStatus = submitRead.status;
+
+  const pinRejected = (result: GenerationResult): void => {
+    for (const r of rejected) {
+      const i = result.answers.findIndex((a) => a.customId === r.customId);
+      if (i >= 0 && r.model !== null) {
+        result.answers[i] = errorAnswer(r.customId, pinned(r.customId, r.model));
+      }
+    }
+  };
+
+  for (let k = 1; k <= polls; k++) {
+    await transport.sleep(BATCH_POLL_MS);
+    let pollStatus = 0;
+    let pollText = "";
+    try {
+      const reply = await transport.fetch(call.url + "/" + batchId, {
+        method: "GET",
+        headers: call.headers
+      });
+      pollStatus = reply.status;
+      pollText = await reply.text();
+    } catch {
+      continue;
+    }
+    const read = readBatch(pollStatus, pollText);
+    if (read.state === "error") {
+      const retryable =
+        (pollStatus === 404 && k * BATCH_POLL_MS <= BATCH_GRACE_MS) ||
+        pollStatus === 408 ||
+        pollStatus === 429 ||
+        pollStatus >= 500;
+      if (retryable) continue;
+      const result = failure(requests, (r) =>
+        rejected.some((x) => x.customId === r.customId)
+          ? pinned(r.customId, r.model ?? "")
+          : "batch " + batchId + ": " + read.error
+      );
+      result.batch = snapshot(record);
+      return result;
+    }
+    if (read.status !== null) {
+      record.status = read.status;
+      lastStatus = read.status;
+    }
+    if (read.cost !== undefined) record.cost = read.cost;
+    if (read.state === "pending") continue;
+    pushRecord(transport, record);
+    const status = read.status !== null ? read.status : "unknown";
+    const result = finishWithReplies(requests, read.replies, batchId, status, read.error, read.cost);
+    pinRejected(result);
+    result.batch = snapshot(record);
+    return result;
+  }
+
+  const finalStatus = lastStatus !== null ? lastStatus : "unknown";
+  try {
+    const reply = await transport.fetch(call.url + "/" + batchId, {
+      method: "DELETE",
+      headers: call.headers
+    });
+    if (reply.status >= 200 && reply.status <= 299) {
+      record.status = "deleted";
+    }
+  } catch {
+    // a throw or any other reply is ignored
+  }
+  pushRecord(transport, record);
+
+  const result = failure(requests, (r) =>
+    rejected.some((x) => x.customId === r.customId)
+      ? pinned(r.customId, r.model ?? "")
+      : "batch " + batchId + " still " + finalStatus + " after " + polls + " polls"
+  );
+  result.batch = snapshot(record);
+  return result;
+}
+```

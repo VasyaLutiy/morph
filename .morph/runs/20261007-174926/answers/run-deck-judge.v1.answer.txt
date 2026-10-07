@@ -1,0 +1,94 @@
+```ts
+import { expect, test } from "vitest";
+import { runDeck } from "../../src/runloop/deck.js";
+import { fakeFetch, tmpRoot } from "../helpers.js";
+import type { ProcessorConfig } from "../../src/processor/types.js";
+import type { RunDeps, RunInput } from "../../src/runloop/types.js";
+
+test("Run Deck example 8: a retry batch stopped by the deadline", async () => {
+  const r = tmpRoot("morph-deck-p11b-");
+  try {
+    const commits: string[] = [];
+    let n = 0;
+    const now = (): number => {
+      n += 1;
+      return n === 1 ? 0 : 5000;
+    };
+    const net = fakeFetch();
+    const deps: RunDeps = {
+      config: {
+        id: "stub",
+        model: "stub",
+        route: "stub",
+        apiKey: "k",
+        baseUrl: "https://stub.invalid",
+        concurrency: 1,
+        maxRetries: 0,
+        timeoutMs: 60000,
+        providerOrder: []
+      } as unknown as ProcessorConfig,
+      transport: { fetch: net.fetch, sleep: async () => {} },
+      commit: (customId) => {
+        commits.push(customId);
+        return {
+          commit: "sha-" + customId,
+          diffstat: { files: 1, insertions: 1, deletions: 0 }
+        };
+      },
+      now,
+      env: { PATH: process.env.PATH ?? "" }
+    };
+    const input: RunInput = {
+      root: r.root,
+      runId: "run-8",
+      branch: "main",
+      deck: {
+        cards: [
+          {
+            customId: "c",
+            intent: "generate",
+            targets: ["c.ts"],
+            contextSlice: [],
+            instruction: "write c",
+            acceptance: "exit 1",
+            model: null,
+            maxTokens: null,
+            reasoning: null,
+            variants: 1,
+            dependsOn: []
+          },
+          {
+            customId: "d",
+            intent: "generate",
+            targets: ["d.ts"],
+            contextSlice: [],
+            instruction: "write d",
+            acceptance: null,
+            model: null,
+            maxTokens: null,
+            reasoning: null,
+            variants: 1,
+            dependsOn: ["c"]
+          }
+        ],
+        externalDependsOn: []
+      },
+      budget: { maxCards: 10, maxRetryBatches: 2, deadline: 1000 }
+    };
+    const result = await runDeck(input, deps);
+    const c = result.outcomes[0];
+    const d = result.outcomes[1];
+    expect(c.customId).toBe("c");
+    expect(c.status).toBe("budget-exceeded");
+    expect(c.reason).toBe("deadline");
+    expect(c.attempts).toBe(1);
+    expect(d.customId).toBe("d");
+    expect(d.status).toBe("budget-exceeded");
+    expect(d.reason).toBe("deadline");
+    expect(result.report.usageTotals.requests).toBe(1);
+    expect(commits).toStrictEqual([]);
+  } finally {
+    r.rm();
+  }
+});
+```

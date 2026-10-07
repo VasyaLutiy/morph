@@ -1,0 +1,77 @@
+```ts
+import { expect, test } from "vitest";
+import { processGeneration } from "../../src/runloop/generation.js";
+import { fixture, fixtureJson, tmpRoot } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+import type { ProcessorConfig, Transport } from "../../src/processor/types.js";
+import type { RunDeps } from "../../src/runloop/types.js";
+
+type Step = Error | { status: number; text: string };
+
+const ok = (status: number, name: string): Step => ({
+  status,
+  text: fixture("processor/" + name),
+});
+
+function script(steps: Step[]): Transport {
+  let n = 0;
+  return {
+    fetch: async () => {
+      n += 1;
+      const s = steps[Math.min(n, steps.length) - 1];
+      if (s instanceof Error) throw s;
+      return { status: s.status, text: async () => s.text };
+    },
+    sleep: async () => {},
+  };
+}
+
+const card = (customId: string, targets: string[], extra: Partial<Card> = {}): Card => ({
+  customId,
+  intent: "generate",
+  targets,
+  contextSlice: [],
+  instruction: "x",
+  acceptance: "true",
+  model: null,
+  maxTokens: null,
+  reasoning: null,
+  variants: 1,
+  dependsOn: [],
+  ...extra,
+});
+
+test("Process Generation example 14", async () => {
+  const r = tmpRoot();
+  try {
+    const config = fixtureJson("processor/batchConfig.json") as ProcessorConfig;
+    const deps: RunDeps = {
+      config,
+      transport: script([
+        ok(202, "batchSubmittedLive.json"),
+        ok(200, "batchCompletedLive.json"),
+      ]),
+      commit: (id) => ({
+        commit: "sha-" + id,
+        diffstat: { files: 1, insertions: 1, deletions: 0 },
+      }),
+      now: () => 1000,
+      env: { PATH: process.env.PATH ?? "" },
+    };
+    const cards: Card[] = [
+      card("clamp-value", ["out/clamp.ts"]),
+      card("sign-of", ["out/sign.ts"]),
+      card("pin", ["out/pin.ts"], { model: "other/m" }),
+    ];
+
+    const outcome = await processGeneration(cards, deps, r.root);
+
+    expect(outcome.outcomes[0].status).toBe("written");
+    expect(outcome.outcomes[1].status).toBe("written");
+    expect(outcome.outcomes[2].status).toBe("failed");
+    expect(outcome.requests).toStrictEqual(fixtureJson("runloop/batchRows.json"));
+  } finally {
+    r.rm();
+  }
+});
+```

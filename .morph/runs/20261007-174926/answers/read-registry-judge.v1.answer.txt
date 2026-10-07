@@ -1,0 +1,65 @@
+```ts
+import { expect, test } from "vitest";
+import { readRegistry } from "../../src/processor/registry.js";
+
+test("Read Registry example 5: the route decides the default timeout", () => {
+  const registry = readRegistry({
+    MORPH_PROCESSOR_nb_TYPE: "openrouter",
+    MORPH_PROCESSOR_nb_MODEL: "z-ai/glm-5.3:batch",
+    MORPH_PROCESSOR_nb_API_KEY: "sk-or-test",
+    MORPH_PROCESSOR_nb_ROUTE: "batch",
+    MORPH_PROCESSOR_ns_TYPE: "stub",
+    MORPH_PROCESSOR_ns_ANSWERS_DIR: "/x",
+    MORPH_PROCESSOR_ns_ROUTE: "batch",
+    MORPH_PROCESSOR_ns_TIMEOUT_MS: "90000",
+    MORPH_PROCESSOR_sy_TYPE: "stub",
+    MORPH_PROCESSOR_sy_ANSWERS_DIR: "/x",
+  });
+
+  expect(registry.faults).toStrictEqual([]);
+  expect(registry.configs).toStrictEqual([
+    {
+      id: "nb",
+      type: "openrouter",
+      model: "z-ai/glm-5.3:batch",
+      apiKey: "sk-or-test",
+      baseUrl: "https://openrouter.ai/api/v1",
+      route: "batch",
+      concurrency: 1,
+      providerOrder: null,
+      reasoning: null,
+      timeoutMs: 3600000,
+      maxRetries: 2,
+      answersDir: null,
+    },
+    {
+      id: "ns",
+      type: "stub",
+      model: "stub",
+      apiKey: null,
+      baseUrl: "https://openrouter.ai/api/v1",
+      route: "batch",
+      concurrency: 1,
+      providerOrder: null,
+      reasoning: null,
+      timeoutMs: 90000,
+      maxRetries: 2,
+      answersDir: "/x",
+    },
+    {
+      id: "sy",
+      type: "stub",
+      model: "stub",
+      apiKey: null,
+      baseUrl: "https://openrouter.ai/api/v1",
+      route: "sync",
+      concurrency: 1,
+      providerOrder: null,
+      reasoning: null,
+      timeoutMs: 600000,
+      maxRetries: 2,
+      answersDir: "/x",
+    },
+  ]);
+});
+```

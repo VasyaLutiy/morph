@@ -1,0 +1,471 @@
+{
+  "runId": "20261007-174926",
+  "completedAt": 1791396672899,
+  "branch": "morph/20261007-174926",
+  "processor": "ds",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "archive-run",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "archive-run.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "e31ba76f86f793d9e632d50f3e5aeb0ff063d5b5",
+      "diffstat": {
+        "files": 2,
+        "insertions": 44,
+        "deletions": 8
+      }
+    },
+    {
+      "customId": "read-batch",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "read-batch.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "a1b84b8644eaeeb6e1c925d7c7693d7a67ad2470",
+      "diffstat": {
+        "files": 1,
+        "insertions": 11,
+        "deletions": 1
+      }
+    },
+    {
+      "customId": "read-registry",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "read-registry.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "b0159243c16d79b34f0a6464695584084687d9c9",
+      "diffstat": {
+        "files": 1,
+        "insertions": 6,
+        "deletions": 1
+      }
+    },
+    {
+      "customId": "run-deck",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-deck.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "0160fd3dd1bb2123c00d8b216353dce2479af390",
+      "diffstat": {
+        "files": 1,
+        "insertions": 18,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "archive-run-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "archive-run-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/git/archive.p10c2.examples.test.ts\n== names tests/git/archive.p10c2.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "838149f1c7554e3b862e4aea6077a31cadba7a93",
+      "diffstat": {
+        "files": 1,
+        "insertions": 115,
+        "deletions": 5
+      }
+    },
+    {
+      "customId": "read-batch-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "read-batch-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/processor/batchResponse.p11b.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "187eb648b9b0650d1a6f7b901d423a3df7d62a19",
+      "diffstat": {
+        "files": 1,
+        "insertions": 17,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "read-registry-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "read-registry-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/processor/registry.p11b.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "65cfd2ef7bf7d1187b1055ec59921ad3ac966e0d",
+      "diffstat": {
+        "files": 1,
+        "insertions": 63,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "run-deck-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "run-deck-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/runloop/deck.p11b.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard tests/runloop/deck.p11b.examples.test.ts\n== own\n FAIL  tests/runloop/deck.p11b.examples.test.ts > Run Deck example 8: a retry batch stopped by the deadline\nTypeError: Cannot use 'in' operator to search for 'maxTokens' in undefined\n ❯ assembleRequest src/processor/assemble.ts:24:13\n     22|       ? {\n     23|           reasoning:\n     24|             \"maxTokens\" in reasoning\n       |             ^\n     25|               ? { max_tokens: reasoning.maxTokens }\n     26|               : { effort: reasoning.effort },\n ❯ sendOne src/processor/send.ts:47:13\n ❯ run src/processor/send.ts:117:23\n ❯ sendGeneration src/processor/send.ts:124:18\n ❯ processGeneration src/runloop/generation.ts:100:28\n ❯ runDeck src/runloop/deck.ts:112:32\n ❯ tests/runloop/deck.p11b.examples.test.ts:77:26\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed (1)\n\n"
+      ],
+      "commit": "0dd953e3f4e30bdfd1d921b7028766de39db098f",
+      "diffstat": {
+        "files": 1,
+        "insertions": 118,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "send-batch",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "send-batch.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "5173241ee7e4058eb962f247ceff8af7deb1ca5c",
+      "diffstat": {
+        "files": 2,
+        "insertions": 88,
+        "deletions": 13
+      }
+    },
+    {
+      "customId": "process-generation",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "process-generation.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "59525ad089ed0457c42d2d942b5ec513936bb1f6",
+      "diffstat": {
+        "files": 2,
+        "insertions": 10,
+        "deletions": 3
+      }
+    },
+    {
+      "customId": "run-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "2b53918aa267b31694dd302460878a9467bf46a0",
+      "diffstat": {
+        "files": 1,
+        "insertions": 14,
+        "deletions": 7
+      }
+    },
+    {
+      "customId": "send-batch-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "send-batch-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/processor/batch.examples.test.ts\n== names tests/processor/batch.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "43ddd9df21203decd7ff682ecda4e8d80c6636b3",
+      "diffstat": {
+        "files": 1,
+        "insertions": 142,
+        "deletions": 3
+      }
+    },
+    {
+      "customId": "process-generation-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "process-generation-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/runloop/generation.p11b.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "8e1deea257fdee7d0e3e44884746edb7bd3a7252",
+      "diffstat": {
+        "files": 1,
+        "insertions": 75,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "run-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/runCommand.p10c2.examples.test.ts\n== names tests/cli/runCommand.p10c2.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "8f9fde78e6ea3d8d08a31c2b1b8edc65ec130c89",
+      "diffstat": {
+        "files": 1,
+        "insertions": 115,
+        "deletions": 5
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 410508,
+    "outputTokens": 156909,
+    "cost": 0.13787136,
+    "requests": 22
+  },
+  "requests": [
+    {
+      "customId": "archive-run.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791395366-qrK9J4SPS2nNxN4YN3Vs",
+      "inputTokens": 16875,
+      "outputTokens": 5394,
+      "cost": 0.00576765,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "archive-run.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791395366-VjqOELMOtxFokM92zfJW",
+      "inputTokens": 16875,
+      "outputTokens": 4047,
+      "cost": 0.00269577,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-batch.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791395366-GoVJVx4w1TjtQCvwW5QP",
+      "inputTokens": 15884,
+      "outputTokens": 2118,
+      "cost": 0.0036534,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-batch.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791395375-rptJ7UxQVG8nu6auC52l",
+      "inputTokens": 15884,
+      "outputTokens": 1394,
+      "cost": 0.0011454,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-registry.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791395381-wQQx7w4KebPenyXnMnh2",
+      "inputTokens": 16194,
+      "outputTokens": 1834,
+      "cost": 0.0035295,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-registry.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791395382-lUyM2ViSylyfEht2oRhI",
+      "inputTokens": 16194,
+      "outputTokens": 1835,
+      "cost": 0.00135282,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-deck.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791395388-Fd22HnatVKaPkKty3Hkf",
+      "inputTokens": 18348,
+      "outputTokens": 3003,
+      "cost": 0.004554,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-deck.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791395389-TbvoNfc4FtiFetP0kG2x",
+      "inputTokens": 18348,
+      "outputTokens": 3065,
+      "cost": 0.00224112,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "archive-run-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791395639-0trZ8A7fgNrsY2bqf4yn",
+      "inputTokens": 19445,
+      "outputTokens": 10366,
+      "cost": 0.00913635,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-batch-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791395639-tNrDRmuA4dIvyi3Ngmpm",
+      "inputTokens": 16667,
+      "outputTokens": 708,
+      "cost": 0.00292485,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-registry-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791395639-Htt46vBHEdLha6m3ivIe",
+      "inputTokens": 16622,
+      "outputTokens": 2014,
+      "cost": 0.0037017,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-deck-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791395644-JIELYyL49WF60d49U1Jv",
+      "inputTokens": 19997,
+      "outputTokens": 16070,
+      "cost": 0.01112091,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "send-batch.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791395648-nfFiNNwMHy8aBVWGDVH3",
+      "inputTokens": 18779,
+      "outputTokens": 11050,
+      "cost": 0.00944685,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "send-batch.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791395684-JwE26EyuxIzXIFXQVvx3",
+      "inputTokens": 18779,
+      "outputTokens": 11688,
+      "cost": 0.00734133,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-deck-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791395977-5xqzlHM7dQlMkB3V6pIY",
+      "inputTokens": 26838,
+      "outputTokens": 28019,
+      "cost": 0.0208371,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "process-generation.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791396205-ew1zoVWrjJ61uuxmNlto",
+      "inputTokens": 21003,
+      "outputTokens": 3726,
+      "cost": 0.00538605,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "process-generation.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791396205-tRFc0eNjQxliid8YbBMp",
+      "inputTokens": 21003,
+      "outputTokens": 3763,
+      "cost": 0.00264345,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791396205-TZBX1ZIFvdRukzNtGZOD",
+      "inputTokens": 16953,
+      "outputTokens": 3908,
+      "cost": 0.00488775,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791396217-5G5L0XrUGUv2HBCbBBWx",
+      "inputTokens": 16953,
+      "outputTokens": 2908,
+      "cost": 0.00207591,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "send-batch-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791396219-ivritzSdl9CqrQbCnhqU",
+      "inputTokens": 22330,
+      "outputTokens": 12932,
+      "cost": 0.0111087,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "process-generation-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791396451-5I8hHRxggDRv4eU65uZ8",
+      "inputTokens": 20960,
+      "outputTokens": 8462,
+      "cost": 0.0082212,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791396450-53QC2vdvXcgrfgIXfmwX",
+      "inputTokens": 19577,
+      "outputTokens": 18605,
+      "cost": 0.01409955,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}

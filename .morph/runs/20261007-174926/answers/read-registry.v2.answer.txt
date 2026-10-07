@@ -1,0 +1,167 @@
+```typescript
+import type { Effort, Fault } from "../cards/types.js";
+import type { ProcessorConfig, ProcessorType, Registry, Route } from "./types.js";
+
+export const PREFIX = "MORPH_PROCESSOR_";
+export const KEYS = [
+  "TYPE",
+  "MODEL",
+  "API_KEY",
+  "BASE_URL",
+  "ROUTE",
+  "CONCURRENCY",
+  "PROVIDER_ORDER",
+  "REASONING_MAX_TOKENS",
+  "REASONING_EFFORT",
+  "TIMEOUT_MS",
+  "MAX_RETRIES",
+  "ANSWERS_DIR",
+] as const;
+export const DEFAULT_BASE_URL = "https://openrouter.ai/api/v1";
+
+const NAME_PATTERN = /^([A-Za-z0-9-]+)_(.+)$/;
+const DIGITS = /^[0-9]+$/;
+
+interface Entry {
+  values: Map<string, string>;
+  faults: Fault[];
+}
+
+function checkProcessor(id: string, entry: Entry): void {
+  const n = (key: string): string => PREFIX + id + "_" + key;
+  const fault = (key: string, rest: string): void => {
+    entry.faults.push({ key: n(key), message: n(key) + " " + rest });
+  };
+  const get = (key: string): string | undefined => entry.values.get(key);
+  const positiveInt = (key: string): void => {
+    const value = get(key);
+    if (value === undefined) return;
+    if (!DIGITS.test(value) || Number(value) < 1) {
+      fault(key, "must be a positive integer (got '" + value + "')");
+    }
+  };
+
+  for (const key of entry.values.keys()) {
+    if (!(KEYS as readonly string[]).includes(key)) {
+      entry.faults.push({ key: n(key), message: n(key) + " is not a known key" });
+    }
+  }
+
+  const type = get("TYPE");
+  let typeOk = false;
+  if (type === undefined) {
+    fault("TYPE", "is required");
+  } else if (type !== "openrouter" && type !== "stub") {
+    fault("TYPE", "must be one of openrouter, stub (got '" + type + "')");
+  } else {
+    typeOk = true;
+  }
+
+  if (typeOk && type === "openrouter") {
+    if (get("API_KEY") === undefined) fault("API_KEY", "is required");
+    if (get("MODEL") === undefined) fault("MODEL", "is required");
+    if (get("ANSWERS_DIR") !== undefined) fault("ANSWERS_DIR", "is only for TYPE stub");
+  }
+  if (typeOk && type === "stub") {
+    if (get("ANSWERS_DIR") === undefined) fault("ANSWERS_DIR", "is required");
+  }
+
+  const route = get("ROUTE");
+  if (route !== undefined && route !== "sync" && route !== "batch") {
+    fault("ROUTE", "must be one of sync, batch (got '" + route + "')");
+  }
+
+  positiveInt("CONCURRENCY");
+  positiveInt("TIMEOUT_MS");
+
+  const maxTokens = get("REASONING_MAX_TOKENS");
+  const effort = get("REASONING_EFFORT");
+  if (maxTokens !== undefined && effort !== undefined) {
+    fault("REASONING_EFFORT", "conflicts with " + n("REASONING_MAX_TOKENS") + ": set one");
+  } else {
+    if (maxTokens !== undefined) positiveInt("REASONING_MAX_TOKENS");
+    if (effort !== undefined && effort !== "low" && effort !== "medium" && effort !== "high") {
+      fault("REASONING_EFFORT", "must be one of low, medium, high (got '" + effort + "')");
+    }
+  }
+
+  const maxRetries = get("MAX_RETRIES");
+  if (maxRetries !== undefined && !DIGITS.test(maxRetries)) {
+    fault("MAX_RETRIES", "must be a non-negative integer (got '" + maxRetries + "')");
+  }
+}
+
+function buildConfig(id: string, entry: Entry): ProcessorConfig {
+  const get = (key: string): string | undefined => entry.values.get(key);
+  const type = get("TYPE") as ProcessorType;
+  const model = get("MODEL") ?? "stub";
+  const apiKey = get("API_KEY") ?? null;
+  const baseUrl = get("BASE_URL") ?? DEFAULT_BASE_URL;
+  const route = (get("ROUTE") ?? "sync") as Route;
+  const concurrency = get("CONCURRENCY") !== undefined ? Number(get("CONCURRENCY")) : 1;
+  const orderRaw = get("PROVIDER_ORDER");
+  const parts =
+    orderRaw !== undefined
+      ? orderRaw.split(",").map((part) => part.trim()).filter((part) => part !== "")
+      : [];
+  const providerOrder = parts.length > 0 ? parts : null;
+  const maxTokens = get("REASONING_MAX_TOKENS");
+  const effort = get("REASONING_EFFORT");
+  const reasoning =
+    maxTokens !== undefined
+      ? { maxTokens: Number(maxTokens) }
+      : effort !== undefined
+        ? { effort: effort as Effort }
+        : null;
+  const defaultTimeoutMs = route === "batch" ? 3600000 : 600000;
+  const timeoutMs = get("TIMEOUT_MS") !== undefined ? Number(get("TIMEOUT_MS")) : defaultTimeoutMs;
+  const maxRetries = get("MAX_RETRIES") !== undefined ? Number(get("MAX_RETRIES")) : 2;
+  const answersDir = get("ANSWERS_DIR") ?? null;
+  return {
+    id, type, model, apiKey, baseUrl,
+    route, concurrency, providerOrder, reasoning,
+    timeoutMs, maxRetries, answersDir,
+  };
+}
+
+export function readRegistry(env: Record<string, string | undefined> = process.env): Registry {
+  const entries = new Map<string, Entry>();
+  const faults: Fault[] = [];
+
+  for (const name of Object.keys(env)) {
+    if (!name.startsWith(PREFIX)) continue;
+    const match = NAME_PATTERN.exec(name.slice(PREFIX.length));
+    if (match === null) {
+      faults.push({
+        key: name,
+        message: name + " does not name MORPH_PROCESSOR_<id>_<KEY> with an id of [A-Za-z0-9-]",
+      });
+      continue;
+    }
+    const id = match[1] as string;
+    const key = match[2] as string;
+    let entry = entries.get(id);
+    if (entry === undefined) {
+      entry = { values: new Map(), faults: [] };
+      entries.set(id, entry);
+    }
+    const raw = env[name];
+    if (raw !== undefined && raw.trim() !== "") {
+      entry.values.set(key, raw.trim());
+    }
+  }
+
+  const configs: ProcessorConfig[] = [];
+  for (const [id, entry] of entries) {
+    checkProcessor(id, entry);
+    if (entry.faults.length === 0) {
+      configs.push(buildConfig(id, entry));
+    }
+    faults.push(...entry.faults);
+  }
+
+  configs.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  faults.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  return { configs, faults };
+}
+```
