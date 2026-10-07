@@ -30,13 +30,15 @@ not hard-code across the examples (P11's batch model literal passed because ever
 - Old Morph: `/home/morph/MorphProject/mrph` (frozen, `main`), `/home/morph/MorphProject/morph-lab`
   with `venv/bin/mrph` and `.env` (mode 600; never printed). `mrph` reads `.env` from the
   current directory: every call runs from `/home/morph/MorphProject/morph-lab` with
-  `--root /home/morph/MorphV2`. Processor `glm53`.
+  `--root /home/morph/MorphV2`. Processor **`ds`** (operator 07.10: `deepseek/deepseek-v4.1-flash`,
+  PROVIDER_ORDER alibaba, the same OpenRouter key); `glm53` is the fallback.
 - MorphV2 binary: `npm run build` in the repo, then a COPY of `dist/` in `/tmp/v2bin-<phase>/`
   (with `node_modules` symlinked from the repo) runs the deck, so a card whose acceptance runs
   `npm run build` cannot replace the running binary. The processor env is
-  `MORPH_PROCESSOR_glm53_<KEY>` = `MRPH_PROCESSOR_glm53_<KEY>` of `morph-lab/.env` for KEY in
-  TYPE, API_KEY, MODEL, ROUTE, CONCURRENCY, PROVIDER_ORDER, REASONING_MAX_TOKENS, set by
-  indirection in a subshell, never printed (recipe: `decks/p7/smoke/run.sh`).
+  `MORPH_PROCESSOR_<P>_<KEY>` = `MRPH_PROCESSOR_<P>_<KEY>` of `morph-lab/.env` (P = `ds`, or `glm53`
+  for the fallback) for KEY in TYPE, API_KEY, MODEL, ROUTE, CONCURRENCY, PROVIDER_ORDER,
+  REASONING_MAX_TOKENS, only the keys that are set (ds has no REASONING_MAX_TOKENS), by indirection
+  in a subshell, never printed (recipe: `decks/p7/smoke/run.sh`).
 - Node 22, npm, git (auth through `gh`), tmux. Anything longer than a minute runs under
   `nohup`/`tmux` with a log file; the session must survive an SSH drop.
 
@@ -49,21 +51,27 @@ not hard-code across the examples (P11's batch model literal passed because ever
    `node dist/cli.js plan --root . --spec contour.yaml --map morph-map.json --component <C>…
    --judge --out decks/<phase>/deck.json`. `morph plan` has no card filter yet: when the cut holds
    cards outside the phase, keep the phase's cards with a short filter over the deck file and
-   commit the filtered deck. Then `node dist/cli.js deck check --root . --deck <deck>`; a dry
+   commit the filtered deck. **For processor `ds`, every card's maxTokens ×3** after the cut and the
+   filter: `python3 decks/tools/scale_tokens.py decks/<phase>/deck.json 3`, committed with the deck
+   (DeepSeek thinks 15–20k tokens before the code and no provider honours the reasoning budget; with
+   the plain budget its answers come back empty). The mrph cross-check compares max_tokens before
+   the ×3. Then `node dist/cli.js deck check --root . --deck <deck>`; a dry
    `mrph plan --spec` on the same Components as a cross-check (same ids, dependsOn, generations,
    targets, slices, acceptances, max_tokens; instructions differ by the P10a design); every
-   acceptance red per example on stubs in a scratch worktree; mutations killed; the data and the
+   acceptance red per example on stubs in a scratch worktree; mutations killed (**every mutant run
+   under a timeout**, `subprocess.run(..., timeout=120)`, a timeout counted as killed — operator
+   07.10, after a mutant made a batch-wait loop infinite and hung the P11b mutation run 28 min); the data and the
    deck committed on `main`.
 2. **Gate without the operator.** The run starts by itself only when ALL hold:
    `morph plan` exit 0; `morph deck check` errors 0; the mrph cross-check shows no difference
    but the instructions; every probe red per example with a readable line on the stubs; chain
-   under 250 s; forecast ≤ $1 for the phase; no slice over 200 KB. Otherwise the phase stops with a report in `docs/MEASURE.md` (row with
+   under 250 s each; every mutant run under a timeout; forecast ≤ $1 for the phase; no slice over 200 KB. Otherwise the phase stops with a report in `docs/MEASURE.md` (row with
    "stopped at gate: <reason>") and the session moves to the next phase whose dependencies
    are met.
 3. **Run** (the session itself or a run agent): from the repo root, the binary copy
    `node /tmp/v2bin-<phase>/dist/cli.js run --root . --deck decks/<phase>/deck.json --processor
-   glm53 --max-retry-batches 8 --deadline 2400` (`--max-retry-batches 8` until issue #3 C2 makes
-   the retry budget per card); stdout (the Run Document) to a file under /tmp. The run opens
+   ds --deadline 2400` (the retry cap is per generation since P10c1; `--processor glm53` with the
+   plain maxTokens is the fallback when ds is down — an environment red); stdout (the Run Document) to a file under /tmp. The run opens
    `morph/<runId>`, commits each accepted card with trailers and archives `.morph/runs/<runId>/`.
    The tree is not touched while the run is in flight. A re-run of failed cards uses a deck file of
    those cards only (their dependencies are already on `main`). A failed run's archive commit is
