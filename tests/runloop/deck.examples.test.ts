@@ -86,6 +86,9 @@ function answerBody(marker: string): string {
 
 const WIDE = { maxCards: 100, maxRetryBatches: 2, deadline: 1_000_000 };
 
+const once = (mark: string, marker: string, target: string): string =>
+  "if [ ! -f " + mark + " ]; then touch " + mark + "; exit 1; fi\ngrep -q " + marker + " " + target;
+
 test("Run Deck example 1: two generations, both cards written", async () => {
   const h = harness(() => 100, "");
   h.deps.config.answersDir = h.root;
@@ -311,6 +314,81 @@ test("Run Deck: the stub run opens no socket", async () => {
     };
     await runDeck(input, h.deps);
     expect(h.ff.calls.length).toBe(0);
+  } finally {
+    t.rm();
+  }
+});
+
+test("Run Deck example 6: the retry batch cap is per generation", async () => {
+  const t = tmpRoot("morph-deck-");
+  try {
+    t.write("a.md", answerBody("MARK_A"));
+    t.write("a.r1.md", answerBody("MARK_A"));
+    t.write("b.md", answerBody("MARK_B"));
+    t.write("b.r1.md", answerBody("MARK_B"));
+    const h = harness(() => 100, t.root);
+    const input: RunInput = {
+      root: t.root,
+      runId: "run-8",
+      branch: "main",
+      deck: deckOf([
+        makeCard("a", "a.ts", once("mark-a", "MARK_A", "a.ts")),
+        makeCard("b", "b.ts", once("mark-b", "MARK_B", "b.ts"), ["a"])
+      ]),
+      budget: { maxCards: 100, maxRetryBatches: 1, deadline: 1_000_000 }
+    };
+    const { report, outcomes } = await runDeck(input, h.deps);
+    expect(report.generations).toBe(2);
+    expect(outcomes.length).toBe(2);
+    const a = outcomes[0];
+    const b = outcomes[1];
+    expect(a.customId).toBe("a");
+    expect(a.status).toBe("written");
+    expect(a.reason === null).toBe(true);
+    expect(a.attempts).toBe(2);
+    expect(a.winningVariant).toBe("a.r1.v1");
+    expect(a.earlierFailures.length).toBe(1);
+    expect(b.customId).toBe("b");
+    expect(b.status).toBe("written");
+    expect(b.reason === null).toBe(true);
+    expect(b.attempts).toBe(2);
+    expect(b.winningVariant).toBe("b.r1.v1");
+    expect(b.earlierFailures.length).toBe(1);
+    expect(report.usageTotals.requests).toBe(4);
+    expect(h.commits).toStrictEqual(["a.r1", "b.r1"]);
+    expect(t.read("a.ts")).toBe("export const value = \"MARK_A\";\n");
+    expect(t.read("b.ts")).toBe("export const value = \"MARK_B\";\n");
+  } finally {
+    t.rm();
+  }
+});
+
+test("Run Deck example 7: a card is retried at most twice whatever the batch cap", async () => {
+  const t = tmpRoot("morph-deck-");
+  try {
+    t.write("c.md", answerBody("MARK_C"));
+    t.write("c.r1.md", answerBody("MARK_C"));
+    t.write("c.r2.md", answerBody("MARK_C"));
+    const h = harness(() => 100, t.root);
+    const input: RunInput = {
+      root: t.root,
+      runId: "run-9",
+      branch: "main",
+      deck: deckOf([makeCard("c", "c.ts", "exit 1")]),
+      budget: { maxCards: 100, maxRetryBatches: 8, deadline: 1_000_000 }
+    };
+    const { report, outcomes } = await runDeck(input, h.deps);
+    expect(outcomes.length).toBe(1);
+    const c = outcomes[0];
+    expect(c.customId).toBe("c");
+    expect(c.status).toBe("failed");
+    expect(c.reason).toBe("acceptance failed");
+    expect(c.attempts).toBe(3);
+    expect(c.earlierFailures.length).toBe(2);
+    expect(c.commit === null).toBe(true);
+    expect(c.diffstat === null).toBe(true);
+    expect(report.usageTotals.requests).toBe(3);
+    expect(h.commits).toStrictEqual([]);
   } finally {
     t.rm();
   }
