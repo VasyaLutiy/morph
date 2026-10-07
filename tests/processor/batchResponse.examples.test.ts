@@ -1,0 +1,102 @@
+import { describe, expect, test } from "vitest";
+import { readBatch } from "../../src/processor/batchResponse.js";
+import { fixture } from "../helpers.js";
+
+describe("Read Batch", () => {
+  test("Read Batch example 1", () => {
+    const read = readBatch(202, fixture("processor/batchSubmitted.json"));
+    expect(read).toStrictEqual({
+      batchId: "batch-1789576284-Ejahe4wq9AgVdp5xGdNm",
+      state: "pending",
+      status: "validating",
+      error: null,
+      replies: []
+    });
+  });
+
+  test("Read Batch example 2", () => {
+    const read = readBatch(200, fixture("processor/batchCompleted.json"));
+    expect(read.batchId).toBe("batch-1789576284-Ejahe4wq9AgVdp5xGdNm");
+    expect(read.state).toBe("done");
+    expect(read.status).toBe("completed");
+    expect(read.error).toBe(null);
+    expect(read.replies.length).toBe(3);
+    expect(read.replies[0]).toStrictEqual({
+      answer: {
+        customId: "c.v1",
+        text: null,
+        finishReason: null,
+        error: "batch item error: context length exceeded"
+      },
+      usage: {
+        customId: "c.v1",
+        inputTokens: 0,
+        outputTokens: 0,
+        cost: null,
+        provider: null,
+        generationId: null
+      }
+    });
+    expect(read.replies[1]).toStrictEqual({
+      answer: {
+        customId: "a.v1",
+        text: "```ts\nexport const a = 1;\n```",
+        finishReason: "stop",
+        error: null
+      },
+      usage: {
+        customId: "a.v1",
+        inputTokens: 11030,
+        outputTokens: 571,
+        cost: 0.00269316,
+        provider: "Novita",
+        generationId: "gen-0000000003-TESTtestTESTtestTEST"
+      }
+    });
+    expect(read.replies[2]).toStrictEqual({
+      answer: {
+        customId: "b.v1",
+        text: null,
+        finishReason: "length",
+        error: null
+      },
+      usage: {
+        customId: "b.v1",
+        inputTokens: 15550,
+        outputTokens: 12000,
+        cost: 0.0086,
+        provider: "Novita",
+        generationId: "gen-0000000004-TESTtestTESTtestTEST"
+      }
+    });
+  });
+
+  test("Read Batch example 3", () => {
+    const read = readBatch(200, fixture("processor/batchFailed.json"));
+    expect(read.state).toBe("failed");
+    expect(read.status).toBe("failed");
+    expect(read.error).toBe(
+      "HTTP 400: invalid batch inference job: job-submission-count for account acct-0000, in use: 16, quota: 16"
+    );
+    expect(read.replies).toStrictEqual([]);
+  });
+
+  test("Read Batch example 4", () => {
+    const read = readBatch(404, fixture("processor/batchNotFound.json"));
+    expect(read).toStrictEqual({
+      batchId: null,
+      state: "error",
+      status: null,
+      error: "http 404: Batch job batch-1789576284-Ejahe4wq9AgVdp5xGdNm not found.",
+      replies: []
+    });
+  });
+
+  test("Read Batch example 5", () => {
+    const read = readBatch(200, "<html>bad gateway</html>");
+    expect(read.state).toBe("error");
+    expect(read.error).toBe("unreadable response: <html>bad gateway</html>");
+    expect(read.batchId).toBe(null);
+    expect(read.replies).toStrictEqual([]);
+  });
+});
