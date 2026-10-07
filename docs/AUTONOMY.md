@@ -13,7 +13,7 @@ P0–P11c2 and P11b2 merged; `main` = origin = VPS. Issues #3, #4, #5 closed. **
 9/9 on ds, $0.1183) and its smoke are green: submit in one process, collect in a second (13 tries, 733 s), stub replay
 2/2, on `z-ai/glm-5.3:batch`; the ds batch slug `deepseek/deepseek-v4.1-flash:batch` is accepted but stayed in_progress
 60 min (it finished later), so the batch route stays on glm53b. Running total $3.0660 of $30.
-**Stopped at the operator's smoke stop after P11b2; the operator resumes.** Next, in order: **P12** primer (issue #1,
+Resumed by the operator 07.10 (smoke checked green; no code reviews until further notice). Next, in order: **P12** primer (issue #1,
 label `P12-primer`) → **smoke stop** (V2 primer on this repo); P13a, P13b, P14 → **final smoke stop**. At each smoke stop:
 🧪, then stop; the operator resumes.
 Lessons for the next preparations: default code targets add a test file (give a smoke cap or code-only targets); new
@@ -77,6 +77,8 @@ across the examples; every mutant run under a 120 s timeout; kill leftover watch
 4. **Verify** on the run branch: `git status --short` empty; `tsc --noEmit`, `eslint src
    tests`, `vitest run`, `npm run build` green; the written code and tests read once
    against §2.2 and the record; defects recorded, never fixed by hand.
+   **Operator 07.10: no code reviews until further notice** — the read of the written code is skipped; the
+   mechanical checks above stay; the goal is to close all phases through P14.
 5. **Record**: §11 of the TASK and the row of `docs/MEASURE.md` (builder column "V2"), one
    commit on the run branch with the trailer `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`.
 6. **Merge and push**: `git checkout main && git merge --ff-only morph/<run-id> && git
