@@ -1,0 +1,1 @@
+echo '== frozen'; git diff --quiet HEAD -- docs decks || { echo "changed outside the targets: $(git diff --name-only HEAD -- docs decks | tr "\n" " ")"; exit 1; }

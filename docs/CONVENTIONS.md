@@ -25,7 +25,7 @@ The only `docs` entry every card reads. Keep it under 3 KB.
   may import everything. `node:child_process` only under `src/acceptance/` and
   `src/git/`; `fetch` only under `src/processor/`; `console` and `process.exit`
   only under `src/cli/`. The acceptance checks these on the syntax tree.
-- **Determinism.** `cards`, `compiler`, `response`, `language`, `contour`, `planner`
+- **Determinism.** `cards`, `compiler`, `response`, `language`, `contour`, `planner`, `builder`
   read no clock, no randomness, no environment: same inputs, same bytes.
 - **Output.** Every CLI command prints exactly one JSON document on stdout; the
   human log goes to stderr.

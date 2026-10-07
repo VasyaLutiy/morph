@@ -1,0 +1,23 @@
+[
+  "(root): unknown key 'extra' (known: version, phase, parts, frozen, fullExclude, ownGit, cards)",
+  "version: must be 1",
+  "phase: must match ^[A-Za-z0-9._-]+$",
+  "frozen: must be a list",
+  "fullExclude[0]: must be a non-empty string",
+  "ownGit: must be true or false",
+  "cards[0]: unknown key 'probe' (known: id, smoke, extra, files)",
+  "cards[0].smoke: must be a positive integer",
+  "cards[0].extra: must be a non-empty string",
+  "cards[1].id: duplicate id 'a'",
+  "cards[2]: must be an object",
+  "cards[3].id: required",
+  "cards[3].files: must be a non-empty list",
+  "cards[3]: a judge card (files) takes no smoke or extra",
+  "cards[4].files[0]: unknown key 'own' (known: file, min, max, lits, drop, new)",
+  "cards[4].files[0].file: must be a non-empty string",
+  "cards[4].files[0].lits[0]: must be a non-empty string",
+  "cards[4].files[0].drop: must be a list",
+  "cards[4].files[0].new: must be true or false",
+  "cards[4].files[0]: min 3 exceeds max 2",
+  "cards[4].files[1]: must be an object"
+]

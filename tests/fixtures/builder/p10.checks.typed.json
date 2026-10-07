@@ -1,0 +1,192 @@
+{
+  "version": 1,
+  "phase": "p10",
+  "parts": "decks/p10/parts",
+  "frozen": [
+    "contour.yaml",
+    "morph-map.json",
+    "docs",
+    "decks",
+    "tests/fixtures"
+  ],
+  "fullExclude": [
+    "tests/cli/parse.examples.test.ts",
+    "tests/cli/main.examples.test.ts"
+  ],
+  "ownGit": false,
+  "cards": [
+    {
+      "id": "parse-command",
+      "smoke": null,
+      "extra": null,
+      "files": null
+    },
+    {
+      "id": "parse-command-judge",
+      "smoke": null,
+      "extra": null,
+      "files": [
+        {
+          "file": "tests/cli/parse.examples.test.ts",
+          "min": 19,
+          "max": 23,
+          "lits": [
+            "missing --spec",
+            "no command (commands: deck check, plan, run)",
+            "command scout is not available yet",
+            "flag --judge does not apply to run",
+            "Parse Command example 11"
+          ],
+          "drop": [
+            "Parse Command example 4: plan and deck status answer NotYetError"
+          ],
+          "new": false
+        }
+      ]
+    },
+    {
+      "id": "render",
+      "smoke": null,
+      "extra": null,
+      "files": null
+    },
+    {
+      "id": "cut-component",
+      "smoke": null,
+      "extra": null,
+      "files": null
+    },
+    {
+      "id": "cut-judges",
+      "smoke": null,
+      "extra": null,
+      "files": null
+    },
+    {
+      "id": "plan-spec",
+      "smoke": null,
+      "extra": null,
+      "files": null
+    },
+    {
+      "id": "plan-command",
+      "smoke": null,
+      "extra": null,
+      "files": null
+    },
+    {
+      "id": "render-judge",
+      "smoke": null,
+      "extra": null,
+      "files": [
+        {
+          "file": "tests/planner/render.examples.test.ts",
+          "min": 11,
+          "max": 19,
+          "lits": [
+            "sumEntries.section.txt",
+            "checkLedger.section.txt",
+            "Exact Sums",
+            "(definition not found in the record)",
+            "29500"
+          ],
+          "drop": [],
+          "new": true
+        }
+      ]
+    },
+    {
+      "id": "cut-component-judge",
+      "smoke": null,
+      "extra": null,
+      "files": [
+        {
+          "file": "tests/planner/cut.examples.test.ts",
+          "min": 7,
+          "max": 15,
+          "lits": [
+            "ledger.cut.json",
+            "store.cut.json",
+            "badCalls.json",
+            "duplicate customId 'parse-entry'",
+            "Interface 'x' exposes unknown Function 'Nope'"
+          ],
+          "drop": [],
+          "new": true
+        }
+      ]
+    },
+    {
+      "id": "cut-judges-judge",
+      "smoke": null,
+      "extra": null,
+      "files": [
+        {
+          "file": "tests/planner/judges.examples.test.ts",
+          "min": 4,
+          "max": 12,
+          "lits": [
+            "ledger.judges.json",
+            "extras.judges.json",
+            "Preconditions a test's setup depends on:",
+            "Write the CLI tests."
+          ],
+          "drop": [],
+          "new": true
+        }
+      ]
+    },
+    {
+      "id": "plan-spec-judge",
+      "smoke": null,
+      "extra": null,
+      "files": [
+        {
+          "file": "tests/planner/plan.examples.test.ts",
+          "min": 8,
+          "max": 16,
+          "lits": [
+            "ledger.golden.json",
+            "ledger.plan.json",
+            "layered.json",
+            "dependency cycle among a, b",
+            "../../contour.yaml",
+            "validate-record"
+          ],
+          "drop": [],
+          "new": true
+        }
+      ]
+    },
+    {
+      "id": "plan-command-judge",
+      "smoke": null,
+      "extra": null,
+      "files": [
+        {
+          "file": "tests/cli/planCommand.examples.test.ts",
+          "min": 5,
+          "max": 13,
+          "lits": [
+            "ledger.plan.json",
+            "spec file not found: nope.yaml",
+            "morph plan: exit 0\\n",
+            "decks/p.json"
+          ],
+          "drop": [],
+          "new": true
+        },
+        {
+          "file": "tests/cli/main.examples.test.ts",
+          "min": 5,
+          "max": 5,
+          "lits": [
+            "symlinkSync"
+          ],
+          "drop": [],
+          "new": false
+        }
+      ]
+    }
+  ]
+}

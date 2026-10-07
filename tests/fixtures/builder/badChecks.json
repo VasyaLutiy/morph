@@ -1,0 +1,15 @@
+{
+  "phase": "p 1",
+  "extra": 1,
+  "version": 2,
+  "frozen": "docs",
+  "fullExclude": ["", "t.ts"],
+  "ownGit": "yes",
+  "cards": [
+    { "id": "a", "smoke": 0, "extra": "", "probe": "x" },
+    { "id": "a" },
+    "b",
+    { "files": [], "smoke": 5 },
+    { "id": "j", "files": [{ "file": "", "min": 3, "max": 2, "lits": [""], "drop": "x", "new": 1, "own": 2 }, 7] }
+  ]
+}

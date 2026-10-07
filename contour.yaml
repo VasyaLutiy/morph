@@ -2059,6 +2059,285 @@ System:
           description: The result of planSpec and the body of the plan document.
           schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]> }"
 
+    # ---------------------------------------------------------------- P10b
+    - name: builder
+      description: >
+        The acceptance builder: src/builder/*.ts, pure functions that write every card's acceptance
+        shell script — the job decks/tools/build.py does today (issue #3, A1–A10 and B1–B2). Input:
+        the deck's cards, a phase's checks document (the knobs: phase, frozen paths, full-suite
+        excludes, own-git, per card a smoke cap, an extra step or a judge's test files with their
+        bounds, literals and kept names), the language profile (its parse, lint and test lines) and
+        the texts the caller has read (the guard, the first-difference locator, one probe per code
+        card). Output: the same cards with each named card's acceptance set: snapshot of the targets
+        outside the tree, a set -e subshell with NO_COLOR=1 CI=1 and the log printed whole, a probe
+        directory with a per-card tsconfig that leaves out the same generation's other targets, then
+        the stages in a fixed order, each announced by an "== <stage>" line: tsc, eslint (verdict held
+        until after the probe and the own test), guard, probe or the judge's files, own test, full
+        suite, own git, frozen, untracked; every failed vitest step prints its whole failure section
+        and the first difference. The scripts equal build.py's P10a form byte for byte. Only the
+        typescript profile has a builder. No file read, no clock, no environment; node:path is the
+        only Node module. Not wired into the cli in this phase (P10b2).
+      language: typescript
+      requirements: [Deterministic Core]
+      functions:
+        - name: Wrap Script
+          description: The frame of every acceptance — the attempt snapshot, the subshell, the log.
+          behavior: >
+            heredoc(path, body, tag) = "cat > <path> <<'<tag>'\n" + body with its trailing whitespace
+            removed (trimEnd) + "\n" + tag + "\n". snapshotLines(id, phase, targets) = "D=/tmp/morph/<id>-<phase>;
+            mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\n", then for the i-th target (from 0) "cp
+            <target> $D/<i>-$S<ext> 2>/dev/null\n", ext = path.posix.extname of the target, ".txt" when
+            that is "". wrapScript(id, phase, targets, body) = snapshotLines + "(\n set -e\n export
+            NO_COLOR=1 CI=1\n" + body + ") > $L 2>&1; rc=$?; cat $L; exit $rc" (no final newline).
+          steps:
+            - produces: string
+          examples:
+            - given: 'heredoc("$P/x.json", "[1]\n\n", "MORPH_X_EOF")'
+              when: "written"
+              then: '"cat > $P/x.json <<''MORPH_X_EOF''\n[1]\nMORPH_X_EOF\n" — the trailing blank lines dropped, one newline before the tag'
+            - given: 'wrapScript("c", "p1", ["src/a.ts", "Makefile"], "echo hi\n")'
+              ref: "tests/fixtures/builder/wrap.txt (the whole script, no final newline)"
+              when: "written"
+              then: 'exactly the fixture text: 7 lines, "cp Makefile $D/1-$S.txt 2>/dev/null" for the target without an extension, the last line ") > $L 2>&1; rc=$?; cat $L; exit $rc"'
+        - name: Check Steps
+          description: The tsc, eslint and vitest lines of a stage, from the language profile.
+          behavior: >
+            tscStep(profile) = "echo '== tsc'; " + profile.parseLine + " -p $P/tsconfig.card.json\n".
+            eslintStep(profile, files) = "echo '== eslint'; E=0; " + Fill Template of profile.lintLine
+            with {files: files joined by " "} + " || E=1\n"; ESLINT_VERDICT = '[ "$E" = 0 ] || { echo
+            "== eslint failed (see above); every step between it and here passed"; exit 1; }' + "\n" — a
+            red eslint is reported after the probe and the own test, never before them.
+            vitestStep(profile, args) = Fill Template of profile.ownTestLine with {test: args} + " >
+            $P/vt.log 2>&1 || { " + the failure report + "; node $P/firstdiff.mjs $P/vt.log; exit 1;
+            }\n", the failure report printing from the first "^ FAIL " line to the end without the
+            "Start at" and "Duration" lines, at most 200 lines, else the last 60 lines of the log.
+            fullArgs(exclude) = "--passWithNoTests" followed by " --exclude <path>" per path, in order.
+          steps:
+            - reads: Language Profile
+            - produces: string
+          examples:
+            - given: 'the typescript profile; tscStep; eslintStep with ["src/a.ts", "tests/a.test.ts"]'
+              when: "written"
+              then: '"echo ''== tsc''; node_modules/.bin/tsc --noEmit -p $P/tsconfig.card.json\n"; "echo ''== eslint''; E=0; node_modules/.bin/eslint src/a.ts tests/a.test.ts || E=1\n"'
+            - given: 'fullArgs([]); fullArgs(["tests/x.test.ts", "tests/y.test.ts"])'
+              when: "written"
+              then: '"--passWithNoTests"; "--passWithNoTests --exclude tests/x.test.ts --exclude tests/y.test.ts"'
+            - given: 'the typescript profile; vitestStep with "tests/a.test.ts"'
+              ref: "tests/fixtures/builder/vitestStep.txt (one line with its newline)"
+              when: "written"
+              then: 'exactly the fixture text, beginning "node_modules/.bin/vitest run tests/a.test.ts --reporter=dot > $P/vt.log 2>&1 || { if grep -q ''^ FAIL '' $P/vt.log;" and ending "node $P/firstdiff.mjs $P/vt.log; exit 1; }\n"'
+        - name: Tree Steps
+          description: The checks on the repository around the stages — own git, frozen paths, untracked files, kept test names.
+          behavior: >
+            frozenStep(paths) = "echo '== frozen'; git diff --quiet HEAD -- <P> || { echo \"changed
+            outside the targets: $(git diff --name-only HEAD -- <P> | tr \"\\n\" \" \")\"; exit 1; }\n",
+            P = paths joined by " ". untrackedStep(targets) = "X=$(git ls-files --others
+            --exclude-standard | grep -vxF " + "-e <target>" per target joined by " " + " || true); [ -z
+            \"$X\" ] || { echo \"files left in the tree: $X\"; exit 1; }\n". OWN_GIT_BEFORE stores HEAD's
+            symbolic ref, HEAD and every ref in G0; OWN_GIT_AFTER ("== own git") reads them again into
+            G1 and fails with both when they differ. namesKept(file, drop): "echo '== names <file>'",
+            the test names of the file at HEAD (git show, every test("…" or it("…")) minus each dropped
+            name (" | grep -vxF " + JSON.stringify of the name in double quotes), then every name must
+            still be in the file, else "test removed: <name>".
+          steps:
+            - produces: string
+          examples:
+            - given: 'frozenStep(["docs", "decks"]); untrackedStep(["src/a.ts", "src/b.ts"])'
+              ref: "tests/fixtures/builder/frozen.txt, tests/fixtures/builder/untracked.txt"
+              when: "written"
+              then: 'exactly the two fixture texts, one line each with its newline'
+            - given: 'namesKept("tests/a.examples.test.ts", ["A example 4: old"]) + namesKept("tests/b.examples.test.ts", [])'
+              ref: "tests/fixtures/builder/names.txt (the two lines)"
+              when: "written"
+              then: 'exactly the fixture text; the first line holds | grep -vxF "\"A example 4: old\"", the second none'
+            - given: 'OWN_GIT_BEFORE + OWN_GIT_AFTER'
+              ref: "tests/fixtures/builder/ownGit.txt (the two lines)"
+              when: "joined"
+              then: 'exactly the fixture text, the first line beginning "G0=$( (git symbolic-ref -q HEAD || true;", the second "echo ''== own git''; G1=$("'
+        - name: Probe Dir
+          description: The card's own directory probe/<id>/ with the guard, a vitest config, the per-card tsconfig, the locator and the probe.
+          behavior: >
+            cardTsconfig(exclude) = JSON.stringify of {extends: "../../tsconfig.json", include:
+            ["../../src", "../../tests", "./*.probe.ts"]} plus, when exclude is not empty, exclude: each
+            path prefixed "../../", with indent 2, + "\n" — a sibling's broken file cannot redden this
+            card. vitestConfig(id) = the seven-line vitest config rooted two levels up, include
+            ["probe/<id>/**/*.probe.ts"], setupFiles ["tests/setup.ts"], truncateThreshold 200.
+            probeDir(id, guard, firstdiff, probe, exclude) = "P=$PWD/probe/<id>; rm -rf $P; mkdir -p $P;
+            trap 'rm -rf $P' EXIT\n", then Wrap Script's heredocs in this order: $P/guard.mjs
+            (MORPH_GUARD_EOF), $P/probe.config.mts (MORPH_CONF_EOF), $P/tsconfig.card.json
+            (MORPH_TSCONF_EOF), $P/firstdiff.mjs (MORPH_FIRSTDIFF_EOF) and, when probe is not null,
+            $P/<id>.probe.ts (MORPH_PROBE_EOF).
+          steps:
+            - calls: Wrap Script
+            - produces: string
+          examples:
+            - given: 'cardTsconfig([]); cardTsconfig(["src/b.ts"])'
+              when: "written"
+              then: 'JSON.stringify({extends: "../../tsconfig.json", include: ["../../src", "../../tests", "./*.probe.ts"]}, null, 2) + "\n"; the same with a last key exclude: ["../../src/b.ts"]'
+            - given: 'probeDir("c", "// guard\n", "// firstdiff\n", "// probe\n", ["src/b.ts", "tests/b.examples.test.ts"])'
+              ref: "tests/fixtures/builder/probeDir.txt (the whole text with its final newline)"
+              when: "written"
+              then: 'exactly the fixture text: 33 lines, the vitest config with include ["probe/c/**/*.probe.ts"]'
+            - given: 'the same with probe null'
+              ref: "tests/fixtures/builder/probeDir.txt"
+              when: "written"
+              then: 'the fixture text without its last 3 lines (no probe heredoc)'
+        - name: Code Acceptance
+          description: The acceptance of a code card — a probe tests it, an optional smoke test of its own.
+          behavior: >
+            codeAcceptance(ctx, probe, smoke, extra), ctx a Card Context. code = codeTargets of the
+            profile, test = testTarget when smoke is not null, else none. The body, in order: Probe Dir
+            with the probe and ctx.siblings; OWN_GIT_BEFORE when ctx.ownGit; tscStep; eslintStep over
+            ctx.targets; "echo '== guard'; node $P/guard.mjs src <code joined by ','>" plus "; node
+            $P/guard.mjs tests <test> 1 <smoke>" with a test, then "\n"; "echo '== probe'; " + vitestStep
+            with "--config $P/probe.config.mts"; with a test "echo '== own'; " + vitestStep with the test;
+            ESLINT_VERDICT; extra when not null; "echo '== full'; " + vitestStep with fullArgs of
+            ctx.fullExclude; OWN_GIT_AFTER when ctx.ownGit; frozenStep of ctx.frozen; untrackedStep of
+            ctx.targets. The result is wrapScript(ctx.id, ctx.phase, ctx.targets, body).
+          steps:
+            - calls: Wrap Script
+            - calls: Check Steps
+            - calls: Tree Steps
+            - calls: Probe Dir
+            - reads: Card Context
+            - produces: string
+          examples:
+            - given: 'ctx {id "a", phase "p1", targets ["src/x/a.ts"], siblings ["src/x/b.ts"], frozen DEFAULT_FROZEN, fullExclude [], ownGit false, the typescript profile, guard "// guard\n", firstdiff "// firstdiff\n"}; probe "// probe\n", smoke null, extra null'
+              ref: "tests/fixtures/builder/code1.txt (the whole script)"
+              when: "codeAcceptance"
+              then: 'exactly the fixture text: stages tsc, eslint, guard, probe, the verdict, full, frozen, untracked'
+            - given: 'ctx {id "a", phase "p2", targets ["src/x/a.ts", "tests/x/a.test.ts"], siblings [], frozen DEFAULT_FROZEN, fullExclude ["tests/x/old.test.ts"], ownGit true, the same profile and texts}; probe "// probe\n", smoke 5, extra "echo ''== bin''; true\n"'
+              ref: "tests/fixtures/builder/code2.txt (the whole script)"
+              when: "codeAcceptance"
+              then: 'exactly the fixture text: own git around the stages, "node $P/guard.mjs tests tests/x/a.test.ts 1 5", an own step, the extra line after the verdict, the full step with --exclude tests/x/old.test.ts'
+        - name: Judge Acceptance
+          description: The acceptance of a judge card — per test file its bounds, literals and kept names, then the files run together.
+          behavior: >
+            judgeAcceptance(ctx, files), files the card's Judge Files in target order. litsJson(lits) =
+            "[" + each literal as JSON.stringify joined by ", " + "]". The body, in order: Probe Dir
+            without a probe; OWN_GIT_BEFORE when ctx.ownGit; tscStep; eslintStep over ctx.targets; for
+            the n-th file (from 0) the heredoc $P/lits<n>.json (MORPH_LITS_EOF) of litsJson and "echo '==
+            guard <file>'; node $P/guard.mjs tests <file> <min> <max> $P/lits<n>.json\n"; namesKept for
+            every file that is not new, with its drop list; "echo '== own'; " + vitestStep with the
+            targets joined by " "; ESLINT_VERDICT; the full step, OWN_GIT_AFTER, frozen and untracked as a
+            code card. The result is wrapScript(ctx.id, ctx.phase, ctx.targets, body).
+          steps:
+            - calls: Wrap Script
+            - calls: Check Steps
+            - calls: Tree Steps
+            - calls: Probe Dir
+            - reads: Judge File
+            - produces: string
+          examples:
+            - given: 'ctx {id "a-judge", phase "p1", targets ["tests/x/a.examples.test.ts"], siblings ["src/x/b.ts"], frozen DEFAULT_FROZEN, fullExclude [], ownGit false, typescript, "// guard\n", "// firstdiff\n"}; files [{file "tests/x/a.examples.test.ts", min 2, max 10, lits ["x \"y\"", "z"], drop [], new true}]'
+              ref: "tests/fixtures/builder/judge1.txt (the whole script)"
+              when: "judgeAcceptance"
+              then: 'exactly the fixture text: the lits file ["x \"y\"", "z"], the guard line with 2 10, no names step'
+            - given: 'ctx {id "ab-judge", phase "p3", targets ["tests/x/a.examples.test.ts", "tests/x/b.examples.test.ts"], siblings [], frozen DEFAULT_FROZEN, fullExclude ["tests/x/b.examples.test.ts"], ownGit true, the same profile and texts}; files [{a, min 3, max 11, lits ["a"], drop [], new true}, {b, min 4, max 4, lits [], drop ["B example 2: old"], new false}]'
+              ref: "tests/fixtures/builder/judge2.txt (the whole script)"
+              when: "judgeAcceptance"
+              then: 'exactly the fixture text: lits0 and lits1 ("[]"), a names step for the b file only, the own step running both files'
+            - given: 'litsJson(["a", "é"]); litsJson([])'
+              when: "written"
+              then: '"[\"a\", \"é\"]" (not escaped to \u00e9); "[]"'
+        - name: Read Checks
+          description: Turns a parsed checks document into typed Checks, or every problem it has.
+          behavior: >
+            validateChecks(doc: unknown). Not a plain object → {ok: false, problems: ["(root): checks
+            must be an object"]}. Every object is checked against its key table — root: version, phase,
+            parts, frozen, fullExclude, ownGit, cards; card: id, smoke, extra, files; file: file, min,
+            max, lits, drop, new — first its unknown keys in the object's order ("<path>: unknown key
+            '<k>' (known: <table joined by ', '>)"), then its keys in table order. Required: phase,
+            cards, a card's id, a file's file, min, max ("<path>.<key>: required"). version must be 1
+            ("version: must be 1"); phase and id must match ^[A-Za-z0-9._-]+$; a repeated id →
+            "cards[<i>].id: duplicate id '<id>'"; parts, extra, file non-empty strings; frozen,
+            fullExclude, lits, drop lists ("must be a list") of non-empty strings ("<path>[<j>]: must be a
+            non-empty string"); ownGit and new true or false ("must be true or false"); smoke a positive
+            integer; min and max non-negative integers; cards and files non-empty lists ("must be a
+            non-empty list"), each item an object ("cards[<i>]: must be an object"). After a card's
+            keys: files with smoke or extra → "cards[<i>]: a judge card (files) takes no smoke or
+            extra"; after a file's keys: min > max → "<path>: min <min> exceeds max <max>". Defaults:
+            version 1, parts "decks/<phase>/parts", frozen DEFAULT_FROZEN = ["contour.yaml",
+            "morph-map.json", "docs", "decks", "tests/fixtures"], fullExclude [], ownGit false, smoke,
+            extra and files null, lits and drop [], new false. Any problem → {ok: false, problems}
+            (document order); none → {ok: true, checks}.
+          steps:
+            - reads: Checks
+            - produces: Checks Result
+          examples:
+            - given: 'the document {phase: "p9", cards: [{id: "a"}, {id: "a-judge", files: [{file: "tests/a.examples.test.ts", min: 1, max: 9}]}]}'
+              when: "validated"
+              then: '{ok: true, checks: {version: 1, phase: "p9", parts: "decks/p9/parts", frozen: ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures"], fullExclude: [], ownGit: false, cards: [{id: "a", smoke: null, extra: null, files: null}, {id: "a-judge", smoke: null, extra: null, files: [{file: "tests/a.examples.test.ts", min: 1, max: 9, lits: [], drop: [], new: false}]}]}}'
+            - given: 'the P10a checks document: phase p10, two full-suite excludes, 12 cards in the map''s order, six of them judges by files'
+              ref: "tests/fixtures/builder/p10.checks.json (the document), tests/fixtures/builder/p10.checks.typed.json (the whole typed Checks)"
+              when: "validated"
+              then: '{ok: true, checks} with checks equal to p10.checks.typed.json'
+            - given: 'the bad checks document: an unknown root key, version 2, a bad phase, frozen as a string, an empty exclude, a non-boolean ownGit, five bad cards'
+              ref: "tests/fixtures/builder/badChecks.json (the document), tests/fixtures/builder/badChecks.problems.json (the 21 problems in order)"
+              when: "validated"
+              then: "{ok: false, problems} equal to the 21 lines of badChecks.problems.json, first \"(root): unknown key 'extra' (known: version, phase, parts, frozen, fullExclude, ownGit, cards)\", last \"cards[4].files[1]: must be an object\""
+            - given: 'the documents [], null and "x"; then {}'
+              when: "validated"
+              then: '{ok: false, problems: ["(root): checks must be an object"]} for each; then {ok: false, problems: ["phase: required", "cards: required"]}'
+        - name: Build Acceptances
+          description: Sets the acceptance of every card the checks name, from its generation's siblings and the texts read.
+          behavior: >
+            buildAcceptances({cards, checks, profile, texts}). A profile other than typescript →
+            {ok: false, errors: ["no acceptance builder for language '<id>' (only typescript)"]}.
+            Else the errors, in this order: the guard, then the locator, holding any of the six heredoc
+            tags (HEREDOC_TAGS: MORPH_GUARD_EOF, MORPH_CONF_EOF, MORPH_TSCONF_EOF, MORPH_FIRSTDIFF_EOF,
+            MORPH_PROBE_EOF, MORPH_LITS_EOF) → "the guard holds the heredoc tag <tag>" / "the
+            first-difference locator holds …", one per tag; then per checks card in order: no card of
+            that id → "checks card '<id>' is not in the deck"; a judge (files not null) whose file paths
+            are not exactly its targets → "judge '<id>': files <JSON of the paths> are not its targets
+            <JSON of the targets>"; a code card without texts.probes[id] → "code card '<id>' has no
+            probe", a probe holding a tag → "the probe of <id> holds the heredoc tag <tag>"; smoke null
+            with a test target → "code card '<id>' targets the test <test> but has no smoke cap"; smoke
+            with no test target → "code card '<id>' has a smoke cap but no test target". Any error →
+            {ok: false, errors}. The members are the named cards in the checks' order; their generations
+            are Layer Generations of the members alone (a dependency outside them is ignored); a
+            member's siblings are the targets of the other members of its generation, in the checks'
+            order. Each member gets Code Acceptance or Judge Acceptance with ctx {id, phase, targets,
+            siblings, frozen, fullExclude, ownGit, profile, guard, firstdiff}. → {ok: true, cards}: the
+            input cards in their order, each member a copy with its acceptance, every other card as
+            given.
+          steps:
+            - calls: Code Acceptance
+            - calls: Judge Acceptance
+            - reads: Checks
+            - uses: cards
+            - produces: Build Result
+          examples:
+            - given: 'the P10a deck file decks/p10/v2deck.json (12 cards) with every acceptance set to null; checks p10.checks.typed.json; the typescript profile; texts guard.p10.txt, firstdiff.p10.txt and probes {<id>: decks/p10/parts/<id>.probe.ts} for the six code cards'
+              ref: "tests/fixtures/builder/guard.p10.txt, tests/fixtures/builder/firstdiff.p10.txt, tests/fixtures/builder/p10.checks.typed.json"
+              when: "buildAcceptances"
+              then: '{ok: true, cards} equal to the cards of decks/p10/v2deck.json — the 12 acceptances byte for byte as build.py p10 wrote them (the golden check)'
+            - given: 'cards a (targets ["src/x/a.ts"]), b (["src/x/b.ts"]), c (["src/x/c.ts"]), d (["src/x/d.ts"], dependsOn ["a"]), every acceptance null; checks phase "p1" with cards b, a, d; probes for a, b, d "// probe\n"; guard "// guard\n", firstdiff "// firstdiff\n"'
+              when: "buildAcceptances"
+              then: 'ok; a''s acceptance = codeAcceptance with siblings ["src/x/b.ts"], b''s with ["src/x/a.ts"], d''s with [] (generation 1 alone); c''s acceptance stays null'
+            - given: 'cards a (["src/x/a.ts", "tests/x/a.test.ts"]), j (["tests/x/j.examples.test.ts"]); checks cards a, j (files [tests/x/k.examples.test.ts]), z; probes {}; guard "x MORPH_PROBE_EOF"'
+              when: "buildAcceptances"
+              then: "{ok: false, errors: [\"the guard holds the heredoc tag MORPH_PROBE_EOF\", \"code card 'a' has no probe\", \"code card 'a' targets the test tests/x/a.test.ts but has no smoke cap\", \"judge 'j': files [\\\"tests/x/k.examples.test.ts\\\"] are not its targets [\\\"tests/x/j.examples.test.ts\\\"]\", \"checks card 'z' is not in the deck\"]}"
+            - given: 'any input with the python profile'
+              when: "buildAcceptances"
+              then: "{ok: false, errors: [\"no acceptance builder for language 'python' (only typescript)\"]}"
+      dataObjects:
+        - name: Checks
+          description: A phase's acceptance knobs, read from its checks document (decks/<phase>/checks.json).
+          schema: "{ version: 1, phase: string, parts: string, frozen: string[], fullExclude: string[], ownGit: boolean, cards: { id: string, smoke: number | null, extra: string | null, files: JudgeFile[] | null }[] }"
+        - name: Judge File
+          description: One test file a judge writes or patches, with the guard's bounds and literals and the HEAD names it may drop.
+          schema: "{ file: string, min: number, max: number, lits: string[], drop: string[], new: boolean }"
+        - name: Checks Result
+          description: Typed checks, or every problem.
+          schema: "{ ok: true, checks: Checks } | { ok: false, problems: string[] }"
+        - name: Card Context
+          description: What one card's acceptance is built from.
+          schema: "{ id: string, phase: string, targets: string[], siblings: string[], frozen: string[], fullExclude: string[], ownGit: boolean, profile: LanguageProfile, guard: string, firstdiff: string }"
+        - name: Build Result
+          description: The cards with their acceptances, or every error.
+          schema: "{ ok: true, cards: Card[] } | { ok: false, errors: string[] }"
+
     # ---------------------------------------------------------------- later epics (skeleton)
     - name: primer
       description: Digest of the tree, git history (Morph-Card trailers) and the run archive for a fresh session; every owned path, most recent first; markdown under a cap with explicit "… N more" lines.
@@ -2101,6 +2380,9 @@ Requirement:
       the package yaml is imported in Parse Document alone (P9).
       planner reads no file, no clock and no environment: the cli reads the record and the
       map and passes which files exist as a function; node:path is its only Node module (P10a).
+      builder reads no file, no clock and no environment: the caller passes the checks, the cards,
+      the profile and the texts of the guard, the locator and the probes; node:path is its only Node
+      module (P10b).
   - name: Node Only
     description: >
       Runtime dependencies: Node 20 built-ins and the package `yaml` (the record reader), nothing

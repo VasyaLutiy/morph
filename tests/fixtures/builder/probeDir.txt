@@ -1,0 +1,33 @@
+P=$PWD/probe/c; rm -rf $P; mkdir -p $P; trap 'rm -rf $P' EXIT
+cat > $P/guard.mjs <<'MORPH_GUARD_EOF'
+// guard
+MORPH_GUARD_EOF
+cat > $P/probe.config.mts <<'MORPH_CONF_EOF'
+import { defineConfig } from "vitest/config";
+import { fileURLToPath } from "node:url";
+export default defineConfig({
+  root: fileURLToPath(new URL("../..", import.meta.url)),
+  test: { environment: "node", include: ["probe/c/**/*.probe.ts"],
+    setupFiles: ["tests/setup.ts"], chaiConfig: { truncateThreshold: 200 } },
+});
+MORPH_CONF_EOF
+cat > $P/tsconfig.card.json <<'MORPH_TSCONF_EOF'
+{
+  "extends": "../../tsconfig.json",
+  "include": [
+    "../../src",
+    "../../tests",
+    "./*.probe.ts"
+  ],
+  "exclude": [
+    "../../src/b.ts",
+    "../../tests/b.examples.test.ts"
+  ]
+}
+MORPH_TSCONF_EOF
+cat > $P/firstdiff.mjs <<'MORPH_FIRSTDIFF_EOF'
+// firstdiff
+MORPH_FIRSTDIFF_EOF
+cat > $P/c.probe.ts <<'MORPH_PROBE_EOF'
+// probe
+MORPH_PROBE_EOF
