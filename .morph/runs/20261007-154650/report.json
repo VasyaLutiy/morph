@@ -1,0 +1,54 @@
+{
+  "runId": "20261007-154650",
+  "completedAt": 1791388078644,
+  "branch": "morph/20261007-154650",
+  "processor": "glm53",
+  "generations": 1,
+  "outcomes": [
+    {
+      "customId": "send-batch",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "send-batch.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "970d232c49c3f6cfed0b2b985353c33d07ce4b45",
+      "diffstat": {
+        "files": 1,
+        "insertions": 57,
+        "deletions": 48
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 36998,
+    "outputTokens": 3727,
+    "cost": 0.014045616,
+    "requests": 2
+  },
+  "requests": [
+    {
+      "customId": "send-batch.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791388010-WJe2u3onZMR9KvXt8ZUx",
+      "inputTokens": 18499,
+      "outputTokens": 1888,
+      "cost": 0.003957996,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "send-batch.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791388010-qPJoxNXytKKZJ2Yo3YVL",
+      "inputTokens": 18499,
+      "outputTokens": 1839,
+      "cost": 0.01008762,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}
