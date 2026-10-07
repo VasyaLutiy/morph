@@ -168,8 +168,9 @@ export async function processGeneration(
       });
 
       // the retry context: the LAST variant whose acceptance ran (its diff
-      // is not null) gives both the output and the diff of the same attempt;
-      // when none ran, the last result's log and no diff
+      // is not null) gives both the output and the diff of the same attempt,
+      // the empty diff kept as "" (the acceptance ran); when none ran, the
+      // last result's log and no diff
       const ran = [...outcome.results].reverse().find((r) => r.diff !== null);
       if (ran === undefined) {
         retryContexts[card.customId] = {
@@ -179,7 +180,7 @@ export async function processGeneration(
       } else {
         retryContexts[card.customId] = {
           acceptanceOutput: ran.log,
-          previousDiff: ran.diff === "" ? null : ran.diff
+          previousDiff: ran.diff
         };
       }
     }
