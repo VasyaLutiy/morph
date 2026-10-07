@@ -22,7 +22,7 @@ export interface Usage {
 export interface Reply { answer: Answer; usage: Usage }
 export interface HttpReply { status: number; text(): Promise<string> }
 export interface Transport {
-  fetch(url: string, init: { method: string; headers: Record<string, string>; body: string }): Promise<HttpReply>;
+  fetch(url: string, init: { method: string; headers: Record<string, string>; body?: string }): Promise<HttpReply>;
   sleep(ms: number): Promise<void>;
 }
 export interface GenerationResult { answers: Answer[]; usage: Usage[] }
