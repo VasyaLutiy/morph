@@ -394,3 +394,18 @@ with the map's acceptances stripped = the P10b1 deck 9 / 10 (compose-judge: TASK
 
 Max slice + targets (reference in place): plan-command-judge 49 426 bytes (gate 200 KB). Forecast ≈ $0.06
 (P10b1: 10 cards $0.0998), ≤ $1. Gate holds.
+
+### Run (07.10, VPS, autonomous) — cut by V2, run by the V2 binary
+
+Deck `decks/p10b2/deck.json` (V2 cut of Component cli, filtered to 6 cards by `decks/p10b2/filter.py`), run by
+the V2 binary copy in `/tmp/v2bin-p10b2` with `--max-retry-batches 8 --deadline 2400`: run 20261007-125418,
+**6 / 6 written in one run, no fix**, $0.0780, 7.0 min (418 s), 12 requests, 180 905 in / 18 339 out tokens.
+Code cards won on their first variant; retries won `read-plan-checks-judge` (r1) and `plan-command-judge` (r2).
+On the run branch: `git status` clean; tsc, eslint, `npm run build` clean; vitest **571 / 571** in 61 files.
+Read once against §2.2: `--checks` is an optional key present only with the flag; guard and locator read from
+`decks/tools/` under the root; probes read for code cards only; the map's acceptance (cards and extra cards)
+wins over the built one; errors 4 UsageError for missing files, 2 DeckError for an invalid document or a
+builder error. 0 defects. Live check of the binary: `morph plan --component builder --judge --checks
+decks/p10b/checks.json` exit 0, 10 / 10 acceptances equal to `decks/p10b/deck.json` (here the map override
+wins for every card, so the check is of the wiring, not the builder); a missing checks file → exit 4
+"checks file not found: decks/nope.json".
