@@ -363,4 +363,43 @@ Attempts and first red per variant, minutes per generation, $ (provider), trunca
 
 ## 11. Actual
 
-(filled at the gate and after the run)
+### Gate (preparation)
+
+07.10, on the VPS, by the preparing orchestrator (Opus 5.5); no paid run. Data commits 8c42ac7, a3448b1, 2e709f4,
+597f958. The deck **cut by V2**: `node dist/cli.js plan --component compiler --component acceptance --component runloop
+--judge --checks decks/p10c/checks.json --out decks/p10c/deck.json` exit 0, 24 cards, filtered by `decks/p10c/filter.py`
+to 8; generations `[compile-card, process-generation, verify-card] [compile-card-judge, process-generation-judge,
+run-deck, verify-card-judge] [run-deck-judge]`; `node dist/cli.js deck check` 0 errors / 0 warnings / 0 hazards.
+Cross-check: the old `mrph plan --spec … --component compiler --component acceptance --component runloop --judge`
+(dry) gives the same 24 ids and 3 generations and, for the 8 cards, the same dependsOn, targets, slices, max_tokens,
+intent, variants and reasoning (2 500); instructions differ on all 24 (the P10a design). Acceptances: the 16 cards
+outside the phase carry map overrides, equal 16 / 16; the 8 phase cards have none in the map, so mrph prints its old
+default (`npx tsc --noEmit`) and V2 the builder's acceptance from `checks.json` (V2's own default without `--checks`
+differs from mrph's by the P8 profile: tsc + eslint + vitest) — they are checked by the scratch chains below, as the
+P10b2 smoke did. Outside the phase only, 5 judges differ in max_tokens (V2's P10a judge formula).
+
+Scratch worktree from 597f958 (references of the 4 code targets and the 6 patched test files, deleted afterwards), cards
+run in deck order with the deck's own acceptances, each accepted card committed before the next: **8 of 8 chains green,
+30.2–35.2 s each (262 s in all; limit 250 s per chain)**; the final tree `tsc`, `eslint src tests`, `npm run build`
+clean, `vitest run` **578 / 578** in 61 files (571 + 7). Ripple as measured (§1): 9 tests in the 5 fullExclude files,
+no other old test red in any full step. Typed one-line throwing stubs (`Error: stub <fn> <args>`; types.ts as specified):
+every code card red at the probe — compile-card 7 of 7, verify-card 3 of 3, process-generation 8 of 9 (the type row
+passes on typed stubs), run-deck 5 of 5; **all 9 new record examples red** with a readable line; chains 7.2–8.4 s.
+Judges with their files absent: red at the guard ("… missing", 5.0–5.9 s); judges with their files unpatched (HEAD):
+red at the guard (the example literals, 6.2–7.4 s). Mutation check: 25 single-rule mutations of the references
+(compile-card 8, verify-card 4, process-generation 9, run-deck 4) — **25 of 25 killed** by the card's probe. Two
+probe/record defects found by the first chain and fixed as data before the cut (commit 2e709f4): Run Deck 6's commit
+hook receives the retry card's id (`a.r1`, `b.r1`, P5 behaviour), and a card whose retries the per-generation cap
+stopped is retried in the next generation's batch (the unchanged loop over `done`; the probe row now pins it).
+
+Max slice + targets: process-generation-judge 62 844 bytes (gate 200 KB). Forecast ≈ $0.15 (P10b2: 6 cards, 12
+requests, $0.0780; here 12 first requests of 10–20k tokens, ≈ 4 retries carrying ≈ 7k-token acceptances), ≤ $1. Gate
+holds.
+
+**Run command** (the deck is run by a copy of TODAY's binary, whose retry cap is still run-wide, so
+`--max-retry-batches 8` is needed once more):
+
+```
+npm run build && rm -rf /tmp/v2bin-p10c && mkdir -p /tmp/v2bin-p10c && cp -r dist /tmp/v2bin-p10c/ && ln -s $PWD/node_modules /tmp/v2bin-p10c/node_modules
+node /tmp/v2bin-p10c/dist/cli.js run --root . --deck decks/p10c/deck.json --processor glm53 --max-retry-batches 8 --deadline 2400 > /tmp/p10c-run.json
+```
