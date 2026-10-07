@@ -1,0 +1,10 @@
+--- /home/morph/MorphV2/decks/tools/guard.mjs	2026-10-07 12:21:14.193340093 +0000
++++ /tmp/smoke11/repo/decks/tools/guard.mjs	2026-10-07 15:50:30.555530638 +0000
+@@ -22,6 +22,7 @@
+   runloop: ["cards", "wait", "store", "compiler", "response", "acceptance", "language",
+     "git", "processor"],
+   cli: "*",
++  calc: [], // smoke11: the one layer of this throwaway project
+ };
+ const ROOT_FILES = new Set(["src/index.ts"]);
+ const SHELL = new Set(["acceptance", "git"]);          // node:child_process

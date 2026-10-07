@@ -1,0 +1,8 @@
+{
+  "package": "src",
+  "language": "typescript",
+  "cards": {
+    "clamp-value": { "intent": "generate", "targets": ["src/calc/clampValue.ts"], "context_slice": [], "max_tokens": 2000 },
+    "sign-of": { "intent": "generate", "targets": ["src/calc/signOf.ts"], "context_slice": [], "max_tokens": 2000 }
+  }
+}
