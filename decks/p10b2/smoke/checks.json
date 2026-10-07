@@ -1,0 +1,7 @@
+{
+  "phase": "s10",
+  "cards": [
+    { "id": "clamp-value" },
+    { "id": "clamp-percent" }
+  ]
+}

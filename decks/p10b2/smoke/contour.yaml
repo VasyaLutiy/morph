@@ -1,0 +1,45 @@
+version: 1
+System:
+  name: clamp
+  description: >
+    Keeps numbers inside a range; a percent is a number kept inside 0..100.
+  groups:
+    - name: calc
+      description: Pure arithmetic helpers, no I/O.
+      language: typescript
+      functions:
+        - name: Clamp Value
+          description: A number kept inside the closed range [lo, hi].
+          behavior: >
+            Exported as `clampValue(x: number, lo: number, hi: number): number`. Returns lo when x < lo,
+            hi when x > hi, else x. Assumes lo <= hi.
+          steps:
+            - produces: number
+          examples:
+            - given: x 5, lo 0, hi 10
+              when: clamped
+              then: "5"
+            - given: x -3, lo 0, hi 10
+              when: clamped
+              then: "0"
+            - given: x 42, lo 0, hi 10
+              when: clamped
+              then: "10"
+        - name: Clamp Percent
+          description: A number kept inside 0..100 and rounded to a whole percent.
+          behavior: >
+            Exported as `clampPercent(x: number): number`. Imports clampValue from "./clampValue.js"
+            and returns Math.round(clampValue(x, 0, 100)).
+          steps:
+            - calls: Clamp Value
+            - produces: number
+          examples:
+            - given: x 42.4
+              when: clamped to a percent
+              then: "42"
+            - given: x 150
+              when: clamped to a percent
+              then: "100"
+            - given: x -7.6
+              when: clamped to a percent
+              then: "0"
