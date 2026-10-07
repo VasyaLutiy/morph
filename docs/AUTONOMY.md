@@ -34,7 +34,7 @@ stays only as a dry cross-check of the cut and as the fallback named in "Fallbac
 
 1. **Prepare** (an orchestrator agent, fresh context, the brief in the form of P10a/P10b1):
    spec by `docs/TASK_TEMPLATE.md`, fixtures, map entries, probes, the phase's acceptances
-   (`build.py p<N>` with `"locate": True, "full_report": True` until P10b2 lands; after it, the
+   (`build.py p<N>` with `"locate": True, "full_report": True` until P10b2 landed; since 07.10 it is in `decks/tools/archive/`: the
    phase's `checks.json` and `morph plan --checks`, as P10b2 defines). **The cut is V2's**:
    `node dist/cli.js plan --root . --spec contour.yaml --map morph-map.json --component <C>…
    --judge --out decks/<phase>/deck.json`. `morph plan` has no card filter yet: when the cut holds

@@ -15,7 +15,7 @@ Headless-оркестратор пакетной генерации кода н�
   в `docs/DECISIONS.md`.
 - Спека фазы — по `docs/TASK_TEMPLATE.md` (свой шаблон V2; шаблон mrph заморожен).
 - Руками (агент) пишутся только данные: запись, map, `docs/TASK_P<N>_*.md`, фикстуры,
-  сборщик приёмок `decks/tools/build.py` (до P10b2, потом в архив), `decks/<phase>/checks.json`, пробы `decks/p<N>/parts/*.probe.ts`,
+  сборщик приёмок `decks/tools/build.py` (до P10b2; с P10b2 в `decks/tools/archive/`, приёмки режет `morph plan --checks`), `decks/<phase>/checks.json`, пробы `decks/p<N>/parts/*.probe.ts`,
   `package-lock.json` после scaffold. Правка кода руками — нарушение эксперимента.
 - Платные прогоны — только по слову оператора; потолок **$5 на фазу** (решение 06.10).
 - Перед каждым прогоном: `morph plan` exit 0, `morph deck check` с нулём ошибок, сухая сверка
