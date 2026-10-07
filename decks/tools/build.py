@@ -24,6 +24,11 @@ shared steps here. Hand-written data, never product code.
                                            files each, names kept per file; every failed vitest step also
                                            prints where two long strings first differ)
 
+From P10 a phase sets "locate": True and "full_report": True: a failed vitest step prints its whole
+failure section with the Expected/Received diff, and a red eslint is reported after the probe / own
+test instead of stopping before them (issue #3, B). Frozen after the switch to V2: the V2 planner
+builds the acceptances from the language profile (issue #3, A); this file gets no new features.
+
 Paths are relative to the repository root (the parent of decks/); nothing here points
 outside the tree.
 """
@@ -37,6 +42,10 @@ GUARD = os.path.join(HERE, "guard.mjs")
 FIRSTDIFF = os.path.join(HERE, "firstdiff.mjs")
 # P9c on: a failed vitest step also prints where the two sides of a long comparison first differ
 LOCATE = {"on": False}
+# P10 on (Fable review 07.10, issue #3 B): a failed vitest step prints its whole failure section, the
+# `- Expected / + Received` diff included (the old grep dropped it, so the expected literal lived only
+# in the probe inside the command); and eslint no longer stops the chain before the probe / own test
+FULL = {"on": False}
 CONVENTIONS = "docs/CONVENTIONS.md"
 FROZEN = "contour.yaml morph-map.json docs decks tests/fixtures"
 
@@ -104,9 +113,26 @@ def probe_dir(card, parts, probe_file=None, exclude=()):
 
 def vt(args):
     locate = "; node $P/firstdiff.mjs $P/vt.log" if LOCATE["on"] else ""
+    if FULL["on"]:
+        show = ("{ if grep -q '^ FAIL ' $P/vt.log; then awk '/^ FAIL /{p=1} p' $P/vt.log | "
+                "grep -vE '^ +(Start at|Duration) ' | head -200; else tail -60 $P/vt.log; fi")
+    else:
+        show = "{ grep -E '^ FAIL |Error|AssertionError|^ +Tests |^ +Test Files |expected|received' $P/vt.log | head -80"
     return (f"node_modules/.bin/vitest run {args} --reporter=dot > $P/vt.log 2>&1 || "
-            "{ grep -E '^ FAIL |Error|AssertionError|^ +Tests |^ +Test Files |expected|received' $P/vt.log | head -80"
-            + locate + "; exit 1; }\n")
+            + show + locate + "; exit 1; }\n")
+
+
+def eslint(files):
+    """FULL: eslint's verdict is held until after the probe / own test, so a lint-only red still shows
+    whether the behaviour is right (old-C v1 of P9: probe 13/13 green, killed by an unused import)."""
+    if FULL["on"]:
+        return "echo '== eslint'; E=0; node_modules/.bin/eslint " + files + " || E=1\n"
+    return "echo '== eslint'; node_modules/.bin/eslint " + files + "\n"
+
+
+def eslint_verdict():
+    return ('[ "$E" = 0 ] || { echo "== eslint failed (see above); every step between it and here passed"; exit 1; }\n'
+            if FULL["on"] else "")
 
 
 def tsc_probe():
@@ -506,11 +532,12 @@ def code_acceptance(card, targets, siblings, parts, phase="p1", test_dir=P1_TEST
     body = (probe_dir(card, parts, f"{card}.probe.ts", exclude=siblings)
             + (own_git_before() if own_git else "")
             + tsc_probe()
-            + "echo '== eslint'; node_modules/.bin/eslint " + " ".join(targets) + "\n"
+            + eslint(" ".join(targets))
             + "echo '== guard'; node $P/guard.mjs src " + ",".join(code)
             + guard_tests + "\n"
             + "echo '== probe'; " + vt("--config $P/probe.config.mts")
             + own
+            + eslint_verdict()
             + extra
             + "echo '== full'; " + vt(full_args(exclude))
             + (own_git_after() if own_git else "")
@@ -528,11 +555,12 @@ def judge_acceptance(card, targets, siblings, parts, phase="p1", examples=P1_JUD
     body = (probe_dir(card, parts, None, exclude=siblings)
             + (own_git_before() if own_git else "")
             + tsc_probe()
-            + "echo '== eslint'; node_modules/.bin/eslint " + test + "\n"
+            + eslint(test)
             + heredoc("$P/lits.json", lits, "MORPH_LITS_EOF")
             + f"echo '== guard'; node $P/guard.mjs tests {test} {n} {n + own_cap} $P/lits.json\n"
             + (names_kept(test) if keep_names else "")
             + "echo '== own'; " + vt(test)
+            + eslint_verdict()
             + "echo '== full'; " + vt(full_args(exclude))
             + (own_git_after() if own_git else "")
             + "echo '== frozen'; " + frozen()
@@ -545,13 +573,14 @@ def judge_files_acceptance(card, files, siblings, phase, exclude=()):
     names; then its own files together, the full suite, frozen, untracked."""
     targets = [f["file"] for f in files]
     body = probe_dir(card, None, None, exclude=siblings) + tsc_probe()
-    body += "echo '== eslint'; node_modules/.bin/eslint " + " ".join(targets) + "\n"
+    body += eslint(" ".join(targets))
     for n, f in enumerate(files):
         body += heredoc(f"$P/lits{n}.json", json.dumps(f["lits"]), "MORPH_LITS_EOF")
         body += f"echo '== guard {f['file']}'; node $P/guard.mjs tests {f['file']} {f['min']} {f['max']} $P/lits{n}.json\n"
     for f in files:
         body += names_kept(f["file"], f["drop"])
     body += ("echo '== own'; " + vt(" ".join(targets))
+             + eslint_verdict()
              + "echo '== full'; " + vt(full_args(exclude))
              + "echo '== frozen'; " + frozen()
              + untracked(targets))
@@ -563,6 +592,7 @@ def build_phase(phase):
     into morph-map.json; the other phases' cards are left byte for byte."""
     spec = PHASES[phase]
     LOCATE["on"] = spec.get("locate", False)
+    FULL["on"] = spec.get("full_report", False)
     parts = os.path.join(ROOT, "decks", spec["parts"], "parts")
     with open(MAP, encoding="utf-8") as fh:
         doc = json.load(fh)
