@@ -1,0 +1,214 @@
+import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { basename, join } from "node:path";
+import { gitOk } from "../git/run.js";
+import { hasExtension, normalizePath, profileForPath } from "../language/paths.js";
+import { PROFILES } from "../language/profiles.js";
+import type { LanguageProfile } from "../language/types.js";
+import { readRuns } from "./readRuns.js";
+import type { RunArchive, RunsTotals } from "./readRuns.js";
+import { readStory } from "./readStory.js";
+import type { StoryTexts } from "./readStory.js";
+import { renderPrimer } from "./renderPrimer.js";
+
+export interface PrimerDeps {
+  env: Record<string, string>;
+  now: () => number;
+}
+
+export interface TestCount {
+  language: string;
+  files: number;
+  tests: number;
+}
+
+export interface PrimerDocument {
+  root: string;
+  generatedAt: string;
+  files: number;
+  tests: TestCount;
+  runs: RunsTotals;
+  skipped: number;
+  chronology: number;
+  next: string | null;
+  missing: string[];
+  issues: "read" | "absent" | "unreadable";
+  chars: number;
+  written: string | null;
+  markdown: string;
+}
+
+export interface PrimerResult {
+  code: 0 | 1 | 2 | 3 | 4;
+  document: PrimerDocument;
+}
+
+export const PRIMER_CAP = 16000;
+export const PRIMER_FILE = ".morph/primer.md";
+
+export function isTestFile(profile: LanguageProfile, file: string): boolean {
+  if (!hasExtension(profile, file)) return false;
+  const parts = normalizePath(file).split("/");
+  const base = parts[parts.length - 1];
+  return new RegExp(profile.testFilePattern).test(base);
+}
+
+export function countTests(profile: LanguageProfile, files: { path: string; text: string }[]): TestCount {
+  const rule = testCallPattern(profile.id);
+  let testFiles = 0;
+  let tests = 0;
+  for (const file of files) {
+    if (!isTestFile(profile, file.path)) continue;
+    testFiles += 1;
+    if (rule === null) continue;
+    const matches = file.text.match(rule);
+    tests += matches === null ? 0 : matches.length;
+  }
+  return { language: profile.id, files: testFiles, tests };
+}
+
+export function pickProfile(files: string[]): LanguageProfile {
+  let chosen: LanguageProfile = PROFILES[0];
+  let best = -1;
+  for (const profile of PROFILES) {
+    let count = 0;
+    for (const file of files) {
+      const found = profileForPath(file);
+      if (found !== null && found.id === profile.id) count += 1;
+    }
+    if (count > best) {
+      best = count;
+      chosen = profile;
+    }
+  }
+  return chosen;
+}
+
+export function primerCommand(root: string, write: boolean, deps: PrimerDeps): PrimerResult {
+  const listed = gitOk(root, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"], deps.env);
+  const files = uniqueFiles(listed);
+  const profile = pickProfile(files);
+
+  const testTexts: { path: string; text: string }[] = [];
+  for (const file of files) {
+    if (!isTestFile(profile, file)) continue;
+    const text = readTextFile(join(root, file));
+    if (text !== null) testTexts.push({ path: file, text });
+  }
+  const tests = countTests(profile, testTexts);
+
+  const archives = readArchives(root);
+  const runs = readRuns(archives);
+  const story = readStory(readStoryTexts(root), runs.runs);
+
+  const generatedAt = new Date(deps.now()).toISOString();
+  const markdown = renderPrimer(
+    { name: basename(root), generatedAt, files: files.length, tests, runs, story },
+    PRIMER_CAP,
+  );
+
+  let written: string | null = null;
+  if (write) {
+    mkdirSync(join(root, ".morph"), { recursive: true });
+    writeFileSync(join(root, PRIMER_FILE), markdown);
+    written = PRIMER_FILE;
+  }
+
+  return {
+    code: 0,
+    document: {
+      root,
+      generatedAt,
+      files: files.length,
+      tests,
+      runs: runs.totals,
+      skipped: runs.skipped.length,
+      chronology: story.chronology.length,
+      next: story.next.phase,
+      missing: story.missing,
+      issues: story.issues.state,
+      chars: markdown.length,
+      written,
+      markdown,
+    },
+  };
+}
+
+function testCallPattern(id: string): RegExp | null {
+  if (id === "typescript") return /(?<![\w.$])(?:test|it)\s*\(/g;
+  if (id === "python") return /^[ \t]*(?:async[ \t]+)?def[ \t]+test_\w+/gm;
+  return null;
+}
+
+function uniqueFiles(listed: string): string[] {
+  const seen = new Set<string>();
+  const files: string[] = [];
+  for (const piece of listed.split("\0")) {
+    if (piece === "" || seen.has(piece)) continue;
+    seen.add(piece);
+    files.push(piece);
+  }
+  return files;
+}
+
+function readTextFile(file: string): string | null {
+  try {
+    if (!statSync(file).isFile()) return null;
+    return readFileSync(file, "utf8");
+  } catch {
+    return null;
+  }
+}
+
+function isDirectory(dir: string): boolean {
+  try {
+    return statSync(dir).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+function countAnswers(dir: string): number {
+  let names: string[];
+  try {
+    names = readdirSync(dir);
+  } catch {
+    return 0;
+  }
+  let count = 0;
+  for (const name of names) {
+    if (name.endsWith(".answer.txt")) count += 1;
+  }
+  return count;
+}
+
+function readArchives(root: string): RunArchive[] {
+  const runsRoot = join(root, ".morph", "runs");
+  let names: string[];
+  try {
+    names = readdirSync(runsRoot);
+  } catch {
+    return [];
+  }
+  names.sort();
+  const archives: RunArchive[] = [];
+  for (const name of names) {
+    const dir = join(runsRoot, name);
+    if (!isDirectory(dir)) continue;
+    archives.push({
+      dir: name,
+      report: readTextFile(join(dir, "report.json")),
+      answers: countAnswers(join(dir, "answers")),
+    });
+  }
+  return archives;
+}
+
+function readStoryTexts(root: string): StoryTexts {
+  return {
+    measure: readTextFile(join(root, "docs/MEASURE.md")),
+    plan: readTextFile(join(root, "docs/PLAN.md")),
+    autonomy: readTextFile(join(root, "docs/AUTONOMY.md")),
+    decisions: readTextFile(join(root, "docs/DECISIONS.md")),
+    issues: readTextFile(join(root, ".morph/issues.json")),
+  };
+}
