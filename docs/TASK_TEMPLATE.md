@@ -38,6 +38,31 @@ This class of defect is not about the language: it is the gap between the record
 example literals and the fixture files, which only the spec bridges. It did not show on
 Python decks because their examples went into `then` whole and the judges read no fixtures.
 
+**A judge's setup across Components** (P5 debt, 06.10: `process-generation-judge` red on
+glm53 in three runs with correct code under judgement, 0 defects; Fable 5.1 passed at once
+because it read the neighbouring modules, which glm never sees outside its slice; VasyaLutiy/morph#2):
+
+- **Preconditions of the callees.** When the judged Function calls Functions of other
+  Components, §2.1 lists every fact a test's setup depends on, as "<Component> · <fact> ·
+  what happens without it" (P5: the compiler rejects a missing slice file before the stale
+  check fires, so the stale example must create the shared file before the generation).
+  Each example whose setup needs such a fact cites it by its line.
+- **Distinct markers.** Strings a test or an acceptance looks for (best-of-two variants,
+  sentinel file contents, log lines) are distinct and none is a substring of another
+  (P5: `MARK`/`NOMARK`; the rollback keeps the file the acceptance greps).
+- **A harness skeleton, not a prohibition list.** A judge whose setup builds more than a
+  config literal (transport, commit hook, clock, answer writer, tree) gets a skeleton of
+  ≤ 10 lines in §2.1, built only from `tests/helpers.ts` and checked by the probe; the
+  judge's map instruction points to it. Prohibitions in the instruction did not prevent a
+  single P5 red.
+- **Output budget from the answer.** The judge's `max_tokens` in `morph-map.json` is sized
+  from the expected file (code 12 000, judges 24 000, the heaviest judges 28 000; the judge
+  with the most examples ≥ 20 000; P5 truncated three times at 13 500).
+
+The real fix is the V2 planner (contracts and preconditions of callees in a judge's slice,
+the skeleton generated from the helpers): issue #3, label `P10-planner`. Until P10 the
+spec carries it.
+
 ### 2.2. OUTPUT data shapes
 
 The exact shape of every result: every union as literals, every message text pinned or
@@ -111,6 +136,9 @@ Filled after the run; a re-cut gets its own sub-section with every spec change b
 - Every fixture named by the type the Function takes and by its counted result (§2.1).
 - Every illustration checked against the table it illustrates (§2.2).
 - Every message pinned exactly or by prefix; nothing environment-dependent verbatim.
+- Every judge that calls other Components: their preconditions listed and cited, markers
+  distinct, a harness skeleton when the setup is more than a literal, `max_tokens` sized
+  from the expected answer (§2.1, P5 debt).
 - Every slice path exists on disk at plan time; `contour.yaml` is in no slice.
 - Dry `plan --spec` exit 0; `deck check` errors 0; every acceptance red per example on
   stubs in a scratch worktree; chain under 250 s.

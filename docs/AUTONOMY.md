@@ -62,12 +62,6 @@ cycle below with a fresh run agent (`morph-orch-opus55`). Every later phase star
   operator dropped it after P5 (06.10: P3 cost $16.98 against $6.26 for Opus 5.5). The
   agent's tokens, tool calls and minutes go into the "$ оркестр." column of
   `docs/MEASURE.md` as "<model> <tokens>/<calls>/<min>".
-- **Operator order 06.10 (P5 debt)**: at the first phase boundary after this line lands
-  (P6 merged and pushed), before preparing the next phase, raise `max_tokens` of the
-  `process-generation-judge` card in `morph-map.json` to 25500 and run that one card on glm53
-  (cut, dry `plan`, `deck check`, run, ff-merge as usual). This card-level change is the
-  operator's decision, not a data-only re-cut. If it passes, the P5 debt is closed. Write
-  that into TASK_P5 §11, MEASURE and DECISIONS, and P5 no longer counts as a stopped phase.
 - **Operator order 06.10 (first live smoke)**: right after P7 is merged and pushed, before
   P8, run one smoke of the V2 binary on the real glm53. Build with `npm run build`; in a
   temporary git repo outside `~/MorphV2`, a hand-written deck in the V2 schema of 2–3 tiny
@@ -112,11 +106,17 @@ phase gets `max_tokens` ≥ 20000.
   3. stops and waits for the operator.
   The card is then paid by a processor swap, outside the autonomous loop: the SAME card
   (instruction, context_slice, acceptance unchanged) executed by Claude Fable 5.1 at
-  effort xhigh (skill `morph-agent-run`, section "Paying a debt"), committed with the
-  Morph trailers and `Morph-Model: claude-fable-5-1`. Fable writes only the card's target;
-  a defect it finds in other code is reported, not fixed. Its commit closes the issue; its
+  effort xhigh, committed with the Morph trailers and `Morph-Model: claude-fable-5-1`.
+  **Only through the skill `/morph-agent-run`, section "Paying a debt"** (operator, 07.10):
+  its pre-check of the acceptance on the empty tree, its brief, its own verification
+  (re-run, `git diff` outside the target, mutations) and its records. A commit with
+  `Morph-Model: claude-fable-5-1` made any other way (a bare `claude -p`, the agent
+  `morph-fable-debt` spawned directly, by hand) does not pay the debt and is reverted.
+  Fable writes only the card's target; a defect it finds in other code is reported, not
+  fixed. Its commit closes the issue; its
   cost is a "debt (fable)" row in `docs/MEASURE.md`; its paragraph on why glm failed goes
-  into DECISIONS as the data lesson. Only then does the operator restart the session.
+  into DECISIONS as the data lesson; after the skill's verification `tools/tg.sh debt` 💸
+  posts the card, $ and minutes. Only then does the operator restart the session.
 - A red that comes from the environment (npm, network, provider error, `exit null`
   timeouts on a green log): one plain re-run later; still red → emergency stop with class
   `environment` (the processor swap does not apply; the operator fixes the environment).
