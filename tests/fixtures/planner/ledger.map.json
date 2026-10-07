@@ -1,0 +1,21 @@
+{
+  "package": "src",
+  "language": "typescript",
+  "docs": ["docs/TASK.md", "ledger.yaml"],
+  "groups": { "checks": ["Sum Entries", "Check Ledger"] },
+  "cards": {
+    "parse-entry": { "custom_id": "parse", "targets": ["src/ledger/parse.ts"], "max_tokens": 9000 },
+    "format-report": { "instruction": "Write the report formatter.", "depends_on": ["checks", "outside"] },
+    "save-ledger": { "depends_on": ["format-report"], "variants": 3 },
+    "parse-judge": { "depends_on": ["checks"], "context_slice": ["docs/TASK.md"], "max_tokens": 30000 },
+    "ledger-cli-judge": { "instruction": "Write the CLI tests." },
+    "count-words": { "targets": ["src/other.ts"] }
+  },
+  "extra_cards": [
+    { "component": "store", "custom_id": "store-schema", "intent": "generate", "targets": ["store/schema.py"],
+      "instruction": "Write the schema." },
+    { "custom_id": "notes", "targets": ["docs/NOTES.md"], "instruction": "Write the notes.", "depends_on": ["parse"] },
+    { "component": "Ledger", "custom_id": "ledger-types", "targets": ["src/ledger/types.ts"],
+      "instruction": "Write the types.", "acceptance": "exit 0\n", "reasoning_max_tokens": 1000 }
+  ]
+}

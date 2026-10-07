@@ -1,0 +1,136 @@
+{
+  "source": "old mrph plan --spec tests/fixtures/planner/ledger.yaml --map tests/fixtures/planner/ledger.map.json --component ledger --component store --judge (07.10)",
+  "cards": [
+    {
+      "customId": "ledger-types",
+      "dependsOn": []
+    },
+    {
+      "customId": "load-ledger",
+      "dependsOn": []
+    },
+    {
+      "customId": "parse",
+      "dependsOn": []
+    },
+    {
+      "customId": "store-schema",
+      "dependsOn": []
+    },
+    {
+      "customId": "checks",
+      "dependsOn": [
+        "parse"
+      ]
+    },
+    {
+      "customId": "ledger-types-judge",
+      "dependsOn": [
+        "ledger-types"
+      ]
+    },
+    {
+      "customId": "load-ledger-judge",
+      "dependsOn": [
+        "load-ledger"
+      ]
+    },
+    {
+      "customId": "notes",
+      "dependsOn": [
+        "parse"
+      ]
+    },
+    {
+      "customId": "store-schema-judge",
+      "dependsOn": [
+        "store-schema"
+      ]
+    },
+    {
+      "customId": "checks-judge",
+      "dependsOn": [
+        "checks"
+      ]
+    },
+    {
+      "customId": "format-report",
+      "dependsOn": [
+        "checks",
+        "outside"
+      ]
+    },
+    {
+      "customId": "parse-judge",
+      "dependsOn": [
+        "parse",
+        "checks"
+      ]
+    },
+    {
+      "customId": "format-report-judge",
+      "dependsOn": [
+        "format-report"
+      ]
+    },
+    {
+      "customId": "ledger-cli",
+      "dependsOn": [
+        "format-report",
+        "checks"
+      ]
+    },
+    {
+      "customId": "save-ledger",
+      "dependsOn": [
+        "format-report"
+      ]
+    },
+    {
+      "customId": "ledger-cli-judge",
+      "dependsOn": [
+        "ledger-cli"
+      ]
+    },
+    {
+      "customId": "save-ledger-judge",
+      "dependsOn": [
+        "save-ledger"
+      ]
+    }
+  ],
+  "generations": [
+    [
+      "ledger-types",
+      "load-ledger",
+      "parse",
+      "store-schema"
+    ],
+    [
+      "checks",
+      "ledger-types-judge",
+      "load-ledger-judge",
+      "notes",
+      "store-schema-judge"
+    ],
+    [
+      "checks-judge",
+      "format-report",
+      "parse-judge"
+    ],
+    [
+      "format-report-judge",
+      "ledger-cli",
+      "save-ledger"
+    ],
+    [
+      "ledger-cli-judge",
+      "save-ledger-judge"
+    ]
+  ],
+  "externalDependsOn": {
+    "format-report": [
+      "outside"
+    ]
+  }
+}

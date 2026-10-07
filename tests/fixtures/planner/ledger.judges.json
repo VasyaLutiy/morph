@@ -1,0 +1,137 @@
+[
+  {
+    "customId": "parse-judge",
+    "intent": "patch",
+    "targets": [
+      "tests/ledger/parse.examples.test.ts"
+    ],
+    "contextSlice": [
+      "docs/TASK.md"
+    ],
+    "instruction": "Write ONLY the test file `tests/ledger/parse.examples.test.ts`: one test per example of `src/ledger/parse.ts` taken from docs/TASK.md, this instruction, in example order, each named \"<Function> example <n>: <what>\". Do not write or modify `src/ledger/parse.ts`: the author of the criterion is not the author of the code. vitest, stubs imported from `tests/helpers.ts`; TypeScript with `strict` on, ESM, no `any`.\n\nThe examples below are the criterion, and you are its independent author: write one test per example (no fewer, no merging), each named after the Function and the example number, e.g. \"Parse Entry example 1\".\n\nExamples of Function Parse Entry:\n1. given the line \"rent 1200\"; when parsed; then {name: \"rent\", cents: 1200}\n2. given the line \"x\"; when parsed; then the error \"no amount in line 1\"\n\nData Entry: One ledger entry.\nSchema:\n{ name: string, cents: number }",
+    "acceptance": "D=/tmp/morph/parse-judge; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp tests/ledger/parse.examples.test.ts $D/0-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint tests/ledger/parse.examples.test.ts\n node_modules/.bin/vitest run tests/ledger/parse.examples.test.ts --reporter=dot\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+    "model": null,
+    "maxTokens": 30000,
+    "reasoning": {
+      "maxTokens": 2500
+    },
+    "variants": 1,
+    "dependsOn": [
+      "parse",
+      "checks"
+    ]
+  },
+  {
+    "customId": "checks-judge",
+    "intent": "patch",
+    "targets": [
+      "tests/ledger/checks.examples.test.ts"
+    ],
+    "contextSlice": [
+      "docs/TASK.md",
+      "src/ledger/checks.ts",
+      "tests/helpers.ts"
+    ],
+    "instruction": "Write ONLY the test file `tests/ledger/checks.examples.test.ts`: one test per example of `src/ledger/checks.ts` taken from docs/TASK.md, this instruction, in example order, each named \"<Function> example <n>: <what>\". Do not write or modify `src/ledger/checks.ts`: the author of the criterion is not the author of the code. vitest, stubs imported from `tests/helpers.ts`; TypeScript with `strict` on, ESM, no `any`.\n\nThe examples below are the criterion, and you are its independent author: write one test per example (no fewer, no merging), each named after the Function and the example number, e.g. \"Sum Entries example 1\".\n\nExamples of Function Sum Entries:\n1. given entries rent 1200 and food 300; when summed; then 1500 (ref: Exact Sums)\n\nExamples of Function Check Ledger:\n1. given lines \"a 1\", \"b 2\" and the total 3; when checked; then ok\n2. given lines \"a 1\" and the total 2; when checked; then the error \"total 2 does not match the sum 1\"\n\nData Entry: One ledger entry.\nSchema:\n{ name: string, cents: number }\n\nCallee Parse Entry: One line of text into an Entry.\nBehaviour: Splits \"<name> <cents>\" at the last space; the cents are digits.\n\nPreconditions a test's setup depends on:\n- ledger · Sum Entries · every line is parsed first, else Parse Entry faults before the sum\n- store · Save Ledger · the directory exists, else the write faults",
+    "acceptance": "D=/tmp/morph/checks-judge; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp tests/ledger/checks.examples.test.ts $D/0-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint tests/ledger/checks.examples.test.ts\n node_modules/.bin/vitest run tests/ledger/checks.examples.test.ts --reporter=dot\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+    "model": null,
+    "maxTokens": 19000,
+    "reasoning": {
+      "maxTokens": 2500
+    },
+    "variants": 1,
+    "dependsOn": [
+      "checks"
+    ]
+  },
+  {
+    "customId": "format-report-judge",
+    "intent": "patch",
+    "targets": [
+      "tests/ledger/formatReport.examples.test.ts"
+    ],
+    "contextSlice": [
+      "docs/TASK.md",
+      "src/ledger/formatReport.ts",
+      "tests/helpers.ts"
+    ],
+    "instruction": "Write ONLY the test file `tests/ledger/formatReport.examples.test.ts`: one test per example of `src/ledger/formatReport.ts` taken from docs/TASK.md, this instruction, in example order, each named \"<Function> example <n>: <what>\". Do not write or modify `src/ledger/formatReport.ts`: the author of the criterion is not the author of the code. vitest, stubs imported from `tests/helpers.ts`; TypeScript with `strict` on, ESM, no `any`.\n\nThe examples below are the criterion, and you are its independent author: write one test per example (no fewer, no merging), each named after the Function and the example number, e.g. \"Format Report example 1\".\n\nExamples of Function Format Report:\n1. given the entry rent 1200; when formatted; then \"rent 1200\\ntotal 1200\\n\"\n\nCallee Sum Entries: The total of a list of entries.\nBehaviour: Adds the cents of every entry; the empty list sums to 0.\n\nPreconditions a test's setup depends on:\n- ledger · Sum Entries · every line is parsed first, else Parse Entry faults before the sum",
+    "acceptance": "D=/tmp/morph/format-report-judge; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp tests/ledger/formatReport.examples.test.ts $D/0-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint tests/ledger/formatReport.examples.test.ts\n node_modules/.bin/vitest run tests/ledger/formatReport.examples.test.ts --reporter=dot\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+    "model": null,
+    "maxTokens": 17000,
+    "reasoning": {
+      "maxTokens": 2500
+    },
+    "variants": 1,
+    "dependsOn": [
+      "format-report"
+    ]
+  },
+  {
+    "customId": "ledger-cli-judge",
+    "intent": "patch",
+    "targets": [
+      "tests/ledger/ledgerCli.examples.test.ts"
+    ],
+    "contextSlice": [
+      "docs/TASK.md",
+      "src/ledger/ledgerCli.ts",
+      "tests/helpers.ts"
+    ],
+    "instruction": "Write the CLI tests.",
+    "acceptance": "D=/tmp/morph/ledger-cli-judge; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp tests/ledger/ledgerCli.examples.test.ts $D/0-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint tests/ledger/ledgerCli.examples.test.ts\n node_modules/.bin/vitest run tests/ledger/ledgerCli.examples.test.ts --reporter=dot\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+    "model": null,
+    "maxTokens": 16000,
+    "reasoning": {
+      "maxTokens": 2500
+    },
+    "variants": 1,
+    "dependsOn": [
+      "ledger-cli"
+    ]
+  },
+  {
+    "customId": "save-ledger-judge",
+    "intent": "patch",
+    "targets": [
+      "tests/test_save_ledger_examples.py"
+    ],
+    "contextSlice": [
+      "docs/TASK.md",
+      "store/save_ledger.py"
+    ],
+    "instruction": "Write ONLY the test file `tests/test_save_ledger_examples.py`: one test per example of `store/save_ledger.py` taken from docs/TASK.md, this instruction, in example order, each test function named `test_<function>_example_<n>`. Do not write or modify `store/save_ledger.py`: the author of the criterion is not the author of the code. pytest, fixtures from `tests/conftest.py`; Python 3.10 or later, standard library only.\n\nThe examples below are the criterion, and you are its independent author: write one test per example (no fewer, no merging), each named after the Function and the example number, e.g. \"Save Ledger example 1\".\n\nExamples of Function Save Ledger:\n1. given the entry rent 1200; when saved; then the file holds \"rent 1200\\n\"\n\nData Ledger File: A text file of entries.\nSchema:\n{\n  \"path\": \"string\",\n  \"text\": \"string\"\n}\n\nPreconditions a test's setup depends on:\n- store · Save Ledger · the directory exists, else the write faults\n- ledger · Sum Entries · every line is parsed first, else Parse Entry faults before the sum",
+    "acceptance": "D=/tmp/morph/save-ledger-judge; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp tests/test_save_ledger_examples.py $D/0-$S.py 2>/dev/null\n(\n set -e\n python3 -m py_compile tests/test_save_ledger_examples.py\n ruff check tests/test_save_ledger_examples.py\n python3 -m pytest tests/test_save_ledger_examples.py -q --tb=short\n python3 -m pytest -q --tb=short\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+    "model": null,
+    "maxTokens": 17000,
+    "reasoning": {
+      "maxTokens": 2500
+    },
+    "variants": 1,
+    "dependsOn": [
+      "save-ledger"
+    ]
+  },
+  {
+    "customId": "load-ledger-judge",
+    "intent": "patch",
+    "targets": [
+      "tests/test_load_ledger_examples.py"
+    ],
+    "contextSlice": [
+      "docs/TASK.md",
+      "store/load_ledger.py"
+    ],
+    "instruction": "Write ONLY the test file `tests/test_load_ledger_examples.py`: one test per example of `store/load_ledger.py` taken from docs/TASK.md, this instruction, in example order, each test function named `test_<function>_example_<n>`. Do not write or modify `store/load_ledger.py`: the author of the criterion is not the author of the code. pytest, fixtures from `tests/conftest.py`; Python 3.10 or later, standard library only.\n\nThe examples below are the criterion, and you are its independent author: write one test per example (no fewer, no merging), each named after the Function and the example number, e.g. \"Load Ledger example 1\".\n\nExamples of Function Load Ledger:\n1. given a missing file; when loaded; then []\n\nData Ledger File: A text file of entries.\nSchema:\n{\n  \"path\": \"string\",\n  \"text\": \"string\"\n}\n\nData Entry: One ledger entry.\nSchema:\n{ name: string, cents: number }",
+    "acceptance": "D=/tmp/morph/load-ledger-judge; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp tests/test_load_ledger_examples.py $D/0-$S.py 2>/dev/null\n(\n set -e\n python3 -m py_compile tests/test_load_ledger_examples.py\n ruff check tests/test_load_ledger_examples.py\n python3 -m pytest tests/test_load_ledger_examples.py -q --tb=short\n python3 -m pytest -q --tb=short\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+    "model": null,
+    "maxTokens": 17000,
+    "reasoning": {
+      "maxTokens": 2500
+    },
+    "variants": 1,
+    "dependsOn": [
+      "load-ledger"
+    ]
+  }
+]

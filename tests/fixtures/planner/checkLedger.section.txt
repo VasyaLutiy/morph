@@ -1,0 +1,18 @@
+## Function Check Ledger
+
+Checks that a ledger's stated total matches its entries.
+
+Behaviour: Parses every line, sums the entries and compares the sum with the stated total.
+
+Steps:
+- calls: Parse Entry
+- calls: Sum Entries
+- uses: store
+
+Examples (the tests must prove each one):
+1. given lines "a 1", "b 2" and the total 3; when checked; then ok
+2. given lines "a 1" and the total 2; when checked; then the error "total 2 does not match the sum 1"
+
+Requirements:
+- Exact Sums: Sums are integers of cents, never floats.
+- Unknown Rule (definition not found in the record)

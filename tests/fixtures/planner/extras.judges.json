@@ -1,0 +1,46 @@
+[
+  {
+    "customId": "store-schema-judge",
+    "intent": "patch",
+    "targets": [
+      "tests/test_schema_examples.py"
+    ],
+    "contextSlice": [
+      "docs/TASK.md",
+      "store/schema.py"
+    ],
+    "instruction": "Write ONLY the test file `tests/test_schema_examples.py`: one test per example of `store/schema.py` taken from docs/TASK.md, this instruction, in example order, each test function named `test_<function>_example_<n>`. Do not write or modify `store/schema.py`: the author of the criterion is not the author of the code. pytest, fixtures from `tests/conftest.py`; Python 3.10 or later, standard library only.",
+    "acceptance": "D=/tmp/morph/store-schema-judge; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp tests/test_schema_examples.py $D/0-$S.py 2>/dev/null\n(\n set -e\n python3 -m py_compile tests/test_schema_examples.py\n ruff check tests/test_schema_examples.py\n python3 -m pytest tests/test_schema_examples.py -q --tb=short\n python3 -m pytest -q --tb=short\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+    "model": null,
+    "maxTokens": 16000,
+    "reasoning": {
+      "maxTokens": 2500
+    },
+    "variants": 1,
+    "dependsOn": [
+      "store-schema"
+    ]
+  },
+  {
+    "customId": "ledger-types-judge",
+    "intent": "patch",
+    "targets": [
+      "tests/ledger/types.examples.test.ts"
+    ],
+    "contextSlice": [
+      "docs/TASK.md",
+      "src/ledger/types.ts"
+    ],
+    "instruction": "Write ONLY the test file `tests/ledger/types.examples.test.ts`: one test per example of `src/ledger/types.ts` taken from docs/TASK.md, this instruction, in example order, each named \"<Function> example <n>: <what>\". Do not write or modify `src/ledger/types.ts`: the author of the criterion is not the author of the code. vitest, stubs imported from `tests/helpers.ts`; TypeScript with `strict` on, ESM, no `any`.",
+    "acceptance": "D=/tmp/morph/ledger-types-judge; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp tests/ledger/types.examples.test.ts $D/0-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint tests/ledger/types.examples.test.ts\n node_modules/.bin/vitest run tests/ledger/types.examples.test.ts --reporter=dot\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+    "model": null,
+    "maxTokens": 16000,
+    "reasoning": {
+      "maxTokens": 2500
+    },
+    "variants": 1,
+    "dependsOn": [
+      "ledger-types"
+    ]
+  }
+]

@@ -966,10 +966,11 @@ System:
         touches the process: it hands main() the environment, the working directory, the
         clock and the two output streams as parameters, so every command is testable in
         process and the processor registry (Read Registry) is the only reader of the
-        environment it was given. Two commands exist now, those whose modules exist:
-        `deck check` (cards) and `run` (runloop + processor + git: open the run branch, run
-        the deck with git's commit hook, archive the run). The commands of later phases
-        (plan, scout, primer, review, report, deck add|status|reset|clear) answer a fixed
+        environment it was given. Three commands exist now, those whose modules exist:
+        `deck check` (cards), `run` (runloop + processor + git: open the run branch, run
+        the deck with git's commit hook, archive the run) and `plan` (contour + planner: the
+        record and the map cut into a deck file, P10a). The commands of later phases
+        (scout, primer, review, report, deck add|status|reset|clear) answer a fixed
         NotYetError. The milestone is an end-to-end run of the built binary on the stub
         processor inside vitest, in a tmp repo, with no network.
       language: typescript
@@ -979,22 +980,28 @@ System:
           description: argv into one Command or a usage error; global --root and --pretty anywhere.
           behavior: >
             parseCommand(argv) scans argv left to right. A token starting with "--" is a
-            flag: --pretty takes no value; --root, --deck, --processor, --run-id, --deadline,
-            --max-cards, --max-retry-batches, --slice-cap-bytes take the next token whatever
-            it is; any other flag (also --x=y) → "unknown flag: <t>"; a value flag as the
-            last token → "flag <t> needs a value"; a flag seen twice → "flag <t> given
-            twice" (the first such error in argv order wins). Every other token is a word.
-            Then the command from the words: none → "no command (commands: deck check,
-            run)"; "run" → run; "deck" "check" → deck check; a first word plan, scout,
-            primer, review or report → NotYetError "command <word> is not available yet";
+            flag: --pretty and --judge take no value; --root, --deck, --processor, --run-id,
+            --deadline, --max-cards, --max-retry-batches, --slice-cap-bytes, --spec,
+            --component, --map, --out take the next token whatever it is; any other flag
+            (also --x=y) → "unknown flag: <t>"; a value flag as the last token → "flag <t>
+            needs a value"; a flag seen twice → "flag <t> given twice", except --component,
+            which repeats and keeps every value in argv order (the first such error in argv
+            order wins). Every other token is a word. Then the command from the words: none
+            → "no command (commands: deck check, plan, run)"; "run" → run; "plan" → plan;
+            "deck" "check" → deck check; a first word scout, primer, review or report →
+            NotYetError "command <word> is not available yet";
             "deck" followed by add, status, reset or clear → NotYetError "command deck <w>
             is not available yet"; anything else → "unknown command: <words joined by a
             space>". More words than the command takes → "unexpected argument: <first
             extra>". Then, in this order: a flag the command does not take → "flag <f> does
             not apply to <command>" (deck check takes --root, --pretty, --deck,
             --slice-cap-bytes; run takes --root, --pretty, --deck, --processor, --run-id,
-            --deadline, --max-cards, --max-retry-batches), in argv order; no --deck →
-            "missing --deck"; run without --processor → "missing --processor"; for run a
+            --deadline, --max-cards, --max-retry-batches; plan takes --root, --pretty,
+            --spec, --component, --map, --judge, --out), in argv order; plan without --spec →
+            "missing --spec", else plan is done: {name: "plan", root, pretty, spec,
+            components: the --component values ([] when none), map: the value or null, judge:
+            --judge given, out: the value or null}; no --deck → "missing --deck"; run without
+            --processor → "missing --processor"; for run a
             --run-id not matching ^[A-Za-z0-9._-]+$ → "--run-id must match
             ^[A-Za-z0-9._-]+$ (got '<v>')"; numbers in the order --slice-cap-bytes (deck
             check), --deadline, --max-cards, --max-retry-batches (run): digits only, ≥ 1
@@ -1015,9 +1022,9 @@ System:
             - given: 'argv ["frobnicate"]'
               when: "parsed"
               then: '{ok: false, error: {error: {code: 4, kind: "UsageError", message: "unknown command: frobnicate"}}}'
-            - given: 'argv ["plan"], then ["deck", "status"]'
+            - given: 'argv ["scout"], then ["deck", "status"]'
               when: "parsed"
-              then: 'NotYetError (code 4) "command plan is not available yet", then NotYetError "command deck status is not available yet"'
+              then: 'NotYetError (code 4) "command scout is not available yet", then NotYetError "command deck status is not available yet"'
             - given: 'argv ["run", "--deck", "d.json"]'
               when: "parsed"
               then: 'UsageError "missing --processor"'
@@ -1029,7 +1036,16 @@ System:
               then: 'UsageError "--deadline must be a positive integer (got ''0'')"'
             - given: 'argv ["--root"], then []'
               when: "parsed"
-              then: 'UsageError "flag --root needs a value", then UsageError "no command (commands: deck check, run)"'
+              then: 'UsageError "flag --root needs a value", then UsageError "no command (commands: deck check, plan, run)"'
+            - given: 'argv ["plan", "--spec", "c.yaml", "--component", "a", "--map", "m.json", "--component", "b", "--judge", "--out", "d.json", "--pretty"]'
+              when: "parsed"
+              then: '{ok: true, command: {name: "plan", root: ".", pretty: true, spec: "c.yaml", components: ["a", "b"], map: "m.json", judge: true, out: "d.json"}}'
+            - given: 'argv ["plan", "--root", "/r", "--spec", "c.yaml"]'
+              when: "parsed"
+              then: '{ok: true, command: {name: "plan", root: "/r", pretty: false, spec: "c.yaml", components: [], map: null, judge: false, out: null}}'
+            - given: 'argv ["plan", "--component", "a"]; then ["plan", "--spec", "c", "--judge", "--judge"]; then ["run", "--deck", "d", "--processor", "s", "--judge"]'
+              when: "parsed"
+              then: 'UsageError "missing --spec"; then "flag --judge given twice"; then "flag --judge does not apply to run"'
         - name: Emit Document
           description: One JSON document + newline on stdout; --pretty indents by 2.
           behavior: >
@@ -1168,14 +1184,52 @@ System:
             - given: 'one card a; runId null; deps.now always 1791310149000'
               when: "run"
               then: 'mintRunId(1791310149000) is "20261006-180909"; code 0; runId, report.runId "20261006-180909", branch "morph/20261006-180909"; .morph/runs/20261006-180909/report.json exists'
+        - name: Plan Command
+          description: "`morph plan --spec`: the record and the map read under the root, cut by Plan Spec, the deck written to --out; one Plan Document."
+          behavior: >
+            planCommand(root, args), in this order. The spec file path.resolve(root, args.spec)
+            not a regular file → code 4 UsageError "spec file not found: <spec as given>"; a map
+            given and not a regular file → code 4 UsageError "map file not found: <map as
+            given>". Load Spec: loadContour(the spec's UTF-8 text, args.spec), then loadMap(the
+            map's text, args.map) when a map is given (none → the empty map {version: 1, package:
+            null, language: null, docs: [], groups: [], cards: [], extraCards: []}); an error →
+            code 2 DeckError with that error as the message. Plan Spec({record, map, spec:
+            args.spec, components: args.components, judge: args.judge, hasFile: a path is a
+            regular file under root}); an error → code 2 DeckError with it. When args.out is not
+            null the cards are written to path.resolve(root, args.out) as JSON.stringify(cards,
+            null, 2) + "\n", parent directories created; that file is a deck `morph run --deck`
+            and `morph deck check` read. → {code: 0, document: {spec, components, cards,
+            generations, externalDependsOn, out: args.out}}. Nothing else is written; nothing is
+            written on an error.
+          steps:
+            - uses: contour
+            - uses: planner
+            - produces: Plan Document
+          examples:
+            - given: 'a tmp root holding ledger.yaml and ledger.map.json (the planner fixtures'' texts) and a tests/helpers.ts; args spec "ledger.yaml", components ["ledger", "store"], map "ledger.map.json", judge true, out "decks/p.json"'
+              ref: "tests/fixtures/planner/ledger.yaml, tests/fixtures/planner/ledger.map.json, tests/fixtures/planner/ledger.plan.json"
+              when: "planCommand"
+              then: 'code 0; document equal to ledger.plan.json plus out "decks/p.json"; the file decks/p.json is exactly JSON.stringify(document.cards, null, 2) + "\n"; Read Deck File of it is ok with 17 cards and externalDependsOn ["outside"]'
+            - given: 'the same root; spec "nope.yaml"; then spec "ledger.yaml" with map "m.json"'
+              when: "planCommand"
+              then: '{code: 4, document: {error: {code: 4, kind: "UsageError", message: "spec file not found: nope.yaml"}}}; then the same with "map file not found: m.json"'
+            - given: 'bad.yaml = "System: {}\n" as the spec; then spec ledger.yaml with m.json = "{\"docs\": \"x\"}" as the map'
+              when: "planCommand"
+              then: 'code 2 DeckError "bad.yaml is not a valid record (3 problems):\nSystem.name: required\nSystem.description: required\nSystem.groups: required"; then code 2 DeckError "m.json is not a valid map (1 problem):\ndocs: must be a list"'
+            - given: 'the same root, components ["nope"], out "decks/q.json"'
+              when: "planCommand"
+              then: "code 2 DeckError \"no Component 'nope' in the record (have: ledger, store)\"; decks/q.json not written"
+            - given: 'main(["plan", "--root", <the root>, "--spec", "ledger.yaml", "--component", "store", "--map", "ledger.map.json"]) in process, deps {env: {}, now: () => 0, cwd: "/", transport: null}'
+              when: "main"
+              then: '0; one stdout chunk, a document with components ["store"], 4 cards, out null; stderr ["morph plan: exit 0\n"]; nothing written under the root'
         - name: Main
           description: Dispatch, one document out, one log line, the exit code; the entry src/cli.ts wires the process.
           behavior: >
             main(argv, deps, io) → Promise<ExitCode>. Parse Command; a failure → io.stdout(
             renderDocument(the error document, pretty = argv holds "--pretty")),
             io.stderr("morph: <message>\n"), return 4. Else root = path.resolve(deps.cwd,
-            command.root); result = Deck Check (deck check) or await Run Command (run) inside
-            try/catch, a thrown value → classifyThrown. Then exactly one io.stdout(
+            command.root); result = Deck Check (deck check), Plan Command (plan) or await Run
+            Command (run) inside try/catch, a thrown value → classifyThrown. Then exactly one io.stdout(
             renderDocument(result.document, command.pretty)), one io.stderr("morph <command
             name>: exit <code>\n"), return result.code. The entry src/cli.ts (shebang `#!/usr/bin/env
             node`) builds env from process.env without undefined values and calls main(
@@ -1185,6 +1239,7 @@ System:
           steps:
             - calls: Parse Command
             - calls: Deck Check
+            - calls: Plan Command
             - calls: Run Command
             - calls: Emit Document
             - calls: Classify Error
@@ -1199,7 +1254,7 @@ System:
             - given: 'a run with a valid stub env and deck, --run-id r1, --root and cwd both a tmp root that is not a git repository'
               when: "main"
               then: '3; one document {error: {code: 3, kind: "RuntimeError", message beginning "git status failed (exit 128): "}}; stderr ["morph run: exit 3\n"]'
-            - given: 'the binary built by tsc -p tsconfig.build.json into a tmp out dir (with {"type":"module"}); a tmpRepo, a side root with answers a.md, b.md and the deck a, then b dependsOn a; `node <out>/cli.js run --root <repo> --deck <deck> --processor s --run-id e2e` with the stub env'
+            - given: 'the binary built by tsc -p tsconfig.build.json into a tmp out dir (with {"type":"module"} and a node_modules link to the repository''s own: the binary imports the package yaml since P10a); a tmpRepo, a side root with answers a.md, b.md and the deck a, then b dependsOn a; `node <out>/cli.js run --root <repo> --deck <deck> --processor s --run-id e2e` with the stub env'
               when: "spawned"
               then: 'exit 0; stdout one line of JSON: runId "e2e", branch "morph/e2e", outcomes written, written, archive ok; the last three subjects "morph run e2e: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; stderr "morph run: exit 0\n"'
             - given: 'the built binary, argv ["frobnicate"]'
@@ -1208,7 +1263,7 @@ System:
       dataObjects:
         - name: Command
           description: One parsed invocation.
-          schema: "{ name: 'deck check', root, pretty, deck, sliceCapBytes } | { name: 'run', root, pretty, deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches }"
+          schema: "{ name: 'deck check', root, pretty, deck, sliceCapBytes } | { name: 'run', root, pretty, deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches } | { name: 'plan', root, pretty, spec, components: string[], map: string | null, judge: boolean, out: string | null }"
         - name: Error Document
           description: The document of every non-result exit.
           schema: "{ error: { code: 0|1|2|3|4, kind: 'UsageError'|'NotYetError'|'DeckError'|'RefusalError'|'RuntimeError', message: string } }"
@@ -1218,6 +1273,9 @@ System:
         - name: Deck Check Document
           description: stdout of deck check.
           schema: "{ deck: string, cards: number, generations: string[][], errors: number, warnings: number, hazards: Hazard[], weights: SliceWeight[] }"
+        - name: Plan Document
+          description: stdout of plan; the Plan of the planner plus the deck file written.
+          schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]>, out: string | null }"
         - name: Run Document
           description: stdout of run.
           schema: "{ runId: string, branch: string, base: string, report: RunReport, archive: ArchiveResult }"
@@ -1666,15 +1724,347 @@ System:
           description: What one Function calls and touches, for the planner's depends_on and slices.
           schema: "{ function: string, calls: string[], dataObjects: string[], uses: string[] }"
 
+    # ---------------------------------------------------------------- P10a
+    - name: planner
+      description: >
+        `morph plan --spec`: a typed Contour record and map (P9) cut into a deck of cards in the
+        V2 schema (src/cards/types.ts Card), pure functions in src/planner/*.ts. A Function is a
+        card, a map group is one card, calls are depends_on, an Interface exposing one Function
+        folds into its card and one exposing several is a card of its own; ids, targets, the
+        judge instruction and the default acceptance come from the Component's language profile
+        (P8); the map overrides any key (its instruction becomes the card's opening, the
+        record's text follows), adds extra cards, and may name cards of other cuts (external
+        depends_on). A judge card per code card carries the examples and the contracts a test's
+        setup needs: the Data Objects, the callees and the preconditions of the Functions it
+        calls and the Components it uses (issue #3). Budgets come from a formula: code by steps,
+        members and examples, judges by examples. The record itself never goes into a slice.
+        Cards come back in generation order, by id inside a generation. No file is read here:
+        the cli reads the record and the map and tells the planner which files exist.
+      language: typescript
+      requirements: [Deterministic Core]
+      functions:
+        - name: Render Examples
+          description: A Function's examples as one numbered line each.
+          behavior: >
+            renderExamples(examples) → the lines "<n>. given <given>; when <when>; then <then>",
+            n from 1, plus " (ref: <ref>)" when ref is not null, joined by "\n"; every clause
+            has each run of whitespace collapsed to one space and is trimmed; [] → "".
+          steps:
+            - produces: string
+          examples:
+            - given: 'the examples {given: "the line \"rent 1200\"", when: "parsed", then: "{name: \"rent\", cents: 1200}", ref: null} and {given: "a  b\n c", when: " w ", then: "t", ref: "R  1"}'
+              when: "rendered"
+              then: '"1. given the line \"rent 1200\"; when parsed; then {name: \"rent\", cents: 1200}\n2. given a b c; when w; then t (ref: R 1)"'
+            - given: 'no examples'
+              when: "rendered"
+              then: '""'
+        - name: Render Function
+          description: The instruction section of one Function, and the Data blocks of the Data Objects Functions touch.
+          behavior: >
+            dataBlocks(record, functions): for each reads, modifies or produces step of the
+            functions (function order, step order) whose target names a Data Object of any
+            Component and was not taken yet, the block "Data <name>: <description>" followed by
+            "\nSchema:\n<schema>" when the schema is not null; other targets ("number",
+            "string") are skipped. functionSection(record, fn): the blocks "## Function <name>",
+            the description, "Behaviour: <behavior>", when there are preconditions
+            "Preconditions:" and one "- <p>" line each, when there are steps "Steps:" and one
+            "- <verb>: <target>" line each, the examples heading "Examples (the tests must prove
+            each one):" with Render Examples on the next line, the Data blocks of [fn], when
+            there are requirements "Requirements:" and one line per name, when there are
+            guardrails "Guardrails:" and one line per name; blocks joined by "\n\n", lines of a
+            block by "\n". A requirement or guardrail line is "- <name>: <description>" from the
+            record's Requirement / Guardrail list, or "- <name> (definition not found in the
+            record)".
+          steps:
+            - calls: Render Examples
+            - reads: Contour Record
+            - produces: string
+          examples:
+            - given: 'the ledger record, Function Sum Entries (a precondition, three steps, one example with a ref, Data Object Entry)'
+              ref: "tests/fixtures/planner/ledger.yaml (the record), tests/fixtures/planner/sumEntries.section.txt (the whole section)"
+              when: "functionSection"
+              then: 'exactly the text of sumEntries.section.txt'
+            - given: 'the ledger record, Function Check Ledger (no Data step, requirements Exact Sums and Unknown Rule)'
+              ref: "tests/fixtures/planner/checkLedger.section.txt (the whole section)"
+              when: "functionSection"
+              then: 'exactly the text of checkLedger.section.txt; its last line "- Unknown Rule (definition not found in the record)"'
+            - given: 'the ledger record, Functions Save Ledger and Load Ledger of Component store'
+              when: "dataBlocks"
+              then: '["Data Ledger File: A text file of entries.\nSchema:\n{\n  \"path\": \"string\",\n  \"text\": \"string\"\n}", "Data Entry: One ledger entry.\nSchema:\n{ name: string, cents: number }"] — Ledger File once, Entry of Component ledger counts'
+        - name: Render Context
+          description: The preamble, the inherited requirements and guardrails, and an Interface section.
+          behavior: >
+            preamble(docs, spec): docs not empty → "Read <docs joined by ', '> FIRST (in your
+            context). Every name you need is in them or below; do not invent names, keys or
+            files."; else "Every name you need is below -- the record `<spec>` is cut into this
+            instruction; do not invent names, keys or files." inheritedSection(record,
+            component): requirements = the System's then the Component's names, distinct, first
+            place kept; guardrails the same; both empty → ""; else the blocks "## Component
+            requirements / guardrails", then "Requirements:" with its lines when any, then
+            "Guardrails:" with its lines when any (lines as in Render Function), joined by
+            "\n\n". interfaceSection(iface, modules): the blocks "## Interface <name>", the
+            description, "Exposes:" with one line "- <name> (`<modules[i]>`)" per exposed
+            Function, joined by "\n\n".
+          steps:
+            - reads: Contour Record
+            - produces: string
+          examples:
+            - given: 'docs ["docs/A.md", "docs/B.md"], spec "c.yaml"; then docs [], spec "c.yaml"'
+              when: "preamble"
+              then: '"Read docs/A.md, docs/B.md FIRST (in your context). Every name you need is in them or below; do not invent names, keys or files."; then "Every name you need is below -- the record `c.yaml` is cut into this instruction; do not invent names, keys or files."'
+            - given: 'the ledger record, Component ledger (System: Exact Sums, No Network; Component: Exact Sums, Pure Core)'
+              when: "inheritedSection"
+              then: '"## Component requirements / guardrails\n\nRequirements:\n- Exact Sums: Sums are integers of cents, never floats.\n\nGuardrails:\n- No Network: Nothing opens a socket.\n- Pure Core: No clock and no file system in the core."'
+            - given: 'the ledger record with the System''s requirements and guardrails emptied, Component store (none of its own)'
+              when: "inheritedSection"
+              then: '""'
+            - given: 'the Interface ledger CLI (exposes Format Report, Check Ledger), modules ["src/a.ts", "src/b.ts"]'
+              when: "interfaceSection"
+              then: '"## Interface ledger CLI\n\nThe command line.\n\nExposes:\n- Format Report (`src/a.ts`)\n- Check Ledger (`src/b.ts`)"'
+        - name: Card Budget
+          description: The output budget of a code card and of a judge card.
+          behavior: >
+            codeBudget(steps, members, isGroup, examples) → {maxTokens: min(32000, 12000 + 2000
+            × steps + 4000 × (members − 1) + 500 × examples), reasoningMaxTokens: 2500,
+            variants: 2 when steps ≥ 3 or isGroup, else 1}. judgeBudget(examples) →
+            {maxTokens: min(32000, 16000 + 1000 × examples), reasoningMaxTokens: 2500, variants:
+            1} — the judge's answer grows with its examples (four examples 20 000, twelve
+            28 000). Exported constants MAX_TOKENS_CAP = 32000, REASONING_MAX_TOKENS = 2500.
+          steps:
+            - produces: Budget
+          examples:
+            - given: 'codeBudget(6, 2, true, 3); codeBudget(1, 1, false, 2); codeBudget(3, 1, false, 0)'
+              when: "budgeted"
+              then: '{maxTokens: 29500, reasoningMaxTokens: 2500, variants: 2}; {maxTokens: 15000, reasoningMaxTokens: 2500, variants: 1}; {maxTokens: 18000, reasoningMaxTokens: 2500, variants: 2}'
+            - given: 'codeBudget(20, 3, true, 10); judgeBudget(4); judgeBudget(12); judgeBudget(20)'
+              when: "budgeted"
+              then: 'maxTokens 32000 (capped); {maxTokens: 20000, reasoningMaxTokens: 2500, variants: 1}; maxTokens 28000; maxTokens 32000 (capped)'
+        - name: Cut Units
+          description: The Functions and map groups of one Component as card units, in record order.
+          behavior: >
+            cutUnits(component, groups). A group none of whose Functions belongs to the
+            Component is skipped (it is another Component's); a group naming some of its
+            Functions and some it does not have → {ok: false, error: "group '<g>' names unknown
+            Function '<first unknown>' next to '<first known>' of Component '<c>': a group names
+            the Functions of one Component"}. Then, per Function in record order: not in a group
+            → {id: slugName(its name), name: its name, functions: [it], isGroup: false}; in a
+            group not placed yet → {id: slugName(the group's name), name: the group's name,
+            functions: the group's Functions in record order, isGroup: true}, placed where its
+            first Function stands. → {ok: true, units}.
+          steps:
+            - reads: Contour Map
+            - produces: Unit
+          examples:
+            - given: 'Component ledger of the ledger record, groups [{name: "checks", functions: ["Sum Entries", "Check Ledger"]}]'
+              when: "cutUnits"
+              then: '{ok: true, units: [{id: "parse-entry", name: "Parse Entry", functions: [Parse Entry], isGroup: false}, {id: "checks", name: "checks", functions: [Sum Entries, Check Ledger], isGroup: true}, {id: "format-report", name: "Format Report", functions: [Format Report], isGroup: false}]} — the record''s own Function objects'
+            - given: 'Component ledger, groups [{name: "Other", functions: ["Count Words"]}, {name: "Mixed Up", functions: ["Check Ledger", "Sum Entries"]}]'
+              when: "cutUnits"
+              then: 'ids ["parse-entry", "mixed-up", "format-report"]; the group''s functions [Sum Entries, Check Ledger] in record order; the group of another Component skipped'
+            - given: 'Component ledger, groups [{name: "bad", functions: ["Parse Entry", "Nope"]}]'
+              when: "cutUnits"
+              then: "{ok: false, error: \"group 'bad' names unknown Function 'Nope' next to 'Parse Entry' of Component 'ledger': a group names the Functions of one Component\"}"
+        - name: Cut Component
+          description: The code cards of one Component, overrides applied, with what its judges need.
+          behavior: >
+            cutComponent({record, component, map, docs, spec}). Faults, each the result as soon
+            as found, in this order: the profile = Resolve Profile(component.language,
+            map.language), unknown → "Component '<name>': <its error>"; Function Links errors →
+            the first one; Cut Units(component, map.groups) error; a unit name without words →
+            Name Targets' error; an Interface exposing a name no Function of the Component has →
+            "Interface '<i>' exposes unknown Function '<f>'"; two base cards with one id →
+            "duplicate customId '<id>'". Base cards: one per unit, targets [code, test] of Name
+            Targets(profile, component.name, unit.name), deps = for each Function of the unit and
+            each of its calls steps in order, the unit owning the callee when it is another unit,
+            distinct; budget Card Budget codeBudget(the units' steps counted, its Functions
+            counted, isGroup, its examples counted). Then per Interface in record order: exposing
+            one Function → folded into that Function's card (its section follows the Function
+            sections); exposing several → a base card of its own after the units, id
+            slugName(its name), targets of Name Targets(profile, component.name, its name), deps
+            the owners of the exposed Functions in exposes order, distinct, budget codeBudget(0, 1,
+            false, 0), no Functions. Overrides: the map card whose id is the base id. Final id =
+            its customId or the base id; targets = its targets or the base targets. dependsOn =
+            its dependsOn, else the deps, each base id replaced by its final id (a name of no card
+            of this cut kept as given). contextSlice = its contextSlice, else docs followed by the
+            first target of every dependsOn entry that is a card of this cut (not yet present),
+            and when that is empty the card's first target. instruction = the blocks preamble(docs,
+            spec), Function sections, Interface sections (modules = the first final target of the
+            card owning each exposed Function), the inherited section unless "", "Write the files:
+            `<t1>`, `<t2>`." (each target in backticks, joined by ", "), the profile's finale,
+            joined by "\n\n"; an override's instruction replaces the first block. Card = {customId,
+            intent: override or "patch", targets, contextSlice, instruction, acceptance: override
+            or Acceptance Script(profile, customId, targets), model: override or null, maxTokens:
+            override or the budget's, reasoning: {maxTokens: override reasoningMaxTokens or 2500},
+            variants: override or the budget's, dependsOn}. → {ok: true, cuts}, one Cut Card per
+            card in base order: {card, component, profile, functions: the unit's Functions ([] for
+            an Interface card), slicedByMap: the override set contextSlice}.
+          steps:
+            - calls: Cut Units
+            - calls: Render Function
+            - calls: Render Context
+            - calls: Card Budget
+            - uses: language
+            - uses: contour
+            - reads: Contour Map
+            - produces: Cut Card
+          examples:
+            - given: 'the ledger record and map, Component ledger, docs ["docs/TASK.md"], spec "ledger.yaml"'
+              ref: "tests/fixtures/planner/ledger.yaml, tests/fixtures/planner/ledger.map.json, tests/fixtures/planner/ledger.cut.json (the four cards)"
+              when: "cutComponent"
+              then: 'ok; the cards equal ledger.cut.json: parse (renamed, targets and max_tokens overridden), checks (the group, Interface check API folded, deps ["parse"], variants 2), format-report (opening "Write the report formatter.", dependsOn ["checks", "outside"]), ledger-cli (the Interface card, dependsOn ["format-report", "checks"], slice ["docs/TASK.md", "src/ledger/formatReport.ts", "src/ledger/checks.ts"]); functions per card [Parse Entry], [Sum Entries, Check Ledger], [Format Report], []; slicedByMap false for all; profile the typescript profile'
+            - given: 'the same, Component store (python)'
+              ref: "tests/fixtures/planner/store.cut.json (the two cards)"
+              when: "cutComponent"
+              then: 'ok; the cards equal store.cut.json: save-ledger (targets ["store/save_ledger.py", "tests/test_save_ledger.py"], dependsOn ["format-report"] kept as given, slice ["docs/TASK.md"], variants 3, a python acceptance), load-ledger; profile the python profile'
+            - given: 'the ledger record, Component ledger, the empty map, docs [], spec "ledger.yaml"'
+              when: "cutComponent"
+              then: 'ids ["parse-entry", "sum-entries", "check-ledger", "format-report", "ledger-cli"]; dependsOn [], ["parse-entry"], ["parse-entry", "sum-entries"], ["sum-entries"], ["format-report", "check-ledger"]; parse-entry''s slice ["src/ledger/parseEntry.ts"] (its own first target), sum-entries'' ["src/ledger/parseEntry.ts"]; every instruction begins "Every name you need is below -- the record `ledger.yaml` is cut"; check-ledger''s holds "## Interface check API"; maxTokens 15000, 18500, 19000, 16500, 12000'
+            - given: 'Component ledger with language "go"; Component loop of badCalls.json; Component ledger with interfaces [{name: "x", description: "d", exposes: ["Nope"]}]; Component ledger with the empty map whose groups are [{name: "parse-entry", functions: ["Sum Entries"]}]'
+              ref: "tests/fixtures/contour/badCalls.json"
+              when: "cutComponent"
+              then: "errors \"Component 'ledger': unknown language 'go' (known: typescript, python)\"; \"Function 'A' calls unknown Function 'B' of Component 'loop'\"; \"Interface 'x' exposes unknown Function 'Nope'\"; \"duplicate customId 'parse-entry'\""
+        - name: Cut Judges
+          description: One judge card per card with a code target; examples, Data blocks, callee contracts and preconditions in its instruction.
+          behavior: >
+            cutJudges({record, cuts, map, docs, defaultProfile, hasFile}) → Card[], in cut order.
+            Per Cut Card: profile = its profile, else Detect Profile of its first target, else
+            defaultProfile; code = codeTargets(profile, targets); none → no judge. Built id =
+            "<customId>-judge"; the map card with that id overrides as for a code card. Default
+            target: the profile's judgeTarget filled with {component: the base name of code[0]'s
+            directory, name: code[0]'s base name without its extension}. dependsOn = [the card's
+            id] then the override's dependsOn not yet present. test = testTarget(profile,
+            targets) or targets[0]. Blocks: Judge Instruction(profile, {test, module: code[0],
+            docs}); when the card has Functions: "The examples below are the criterion, and you
+            are its independent author: write one test per example (no fewer, no merging), each
+            named after the Function and the example number, e.g. \"<first Function> example
+            1\".", one block "Examples of Function <name>:\n" + Render Examples per Function,
+            dataBlocks(record, functions), one block "Callee <name>: <description>\nBehaviour:
+            <behavior>" per callee (a calls target of the Functions that is none of them, a
+            Function of the Component, distinct, step order), and when any line exists the
+            block "Preconditions a test's setup depends on:" with lines "- <Component> ·
+            <Function> · <precondition>", distinct, from the card's Functions, then the callees,
+            then every Function (record order) of each Component other than its own that a uses
+            step names (by name or slug, distinct, step order); blocks joined by "\n\n", the
+            override's instruction replacing the first. contextSlice = the override's, else
+            docs, code[0] when absent, the profile's helpersModule when hasFile(it) and absent.
+            budget judgeBudget(the examples of its Functions counted). Card = {customId, intent:
+            override or "patch", targets, contextSlice, instruction, acceptance: override or
+            Acceptance Script(profile, customId, targets), model: override or null, maxTokens:
+            override or the budget's, reasoning {maxTokens: override or 2500}, variants: override
+            or 1, dependsOn}.
+          preconditions:
+            - Cut Component made the cuts; an extra card is a Cut Card with component and profile null, functions [] and slicedByMap true
+          steps:
+            - calls: Render Examples
+            - calls: Render Function
+            - calls: Card Budget
+            - uses: language
+            - reads: Cut Card
+          examples:
+            - given: 'the Cut Cards of Components ledger then store (the map, docs ["docs/TASK.md"]); defaultProfile typescript; hasFile true only for "tests/helpers.ts"'
+              ref: "tests/fixtures/planner/ledger.judges.json (the six judges)"
+              when: "cutJudges"
+              then: 'the cards equal ledger.judges.json: parse-judge, checks-judge, format-report-judge, ledger-cli-judge, save-ledger-judge, load-ledger-judge'
+            - given: 'the same; the judge checks-judge'
+              when: "cutJudges"
+              then: 'contextSlice ["docs/TASK.md", "src/ledger/checks.ts", "tests/helpers.ts"]; maxTokens 19000 (3 examples); its instruction holds "Callee Parse Entry: One line of text into an Entry.\nBehaviour: Splits \"<name> <cents>\" at the last space; the cents are digits." and ends "Preconditions a test''s setup depends on:\n- ledger · Sum Entries · every line is parsed first, else Parse Entry faults before the sum\n- store · Save Ledger · the directory exists, else the write faults"'
+            - given: 'the same; the judges parse-judge and ledger-cli-judge (both overridden) and save-ledger-judge (python)'
+              when: "cutJudges"
+              then: 'parse-judge dependsOn ["parse", "checks"], contextSlice ["docs/TASK.md"], maxTokens 30000, target "tests/ledger/parse.examples.test.ts"; ledger-cli-judge instruction exactly "Write the CLI tests." (an Interface card has no examples); save-ledger-judge target "tests/test_save_ledger_examples.py", contextSlice ["docs/TASK.md", "store/save_ledger.py"] (no tests/conftest.py)'
+            - given: 'the three extra cards of the map as Cut Cards (store-schema → store/schema.py, notes → docs/NOTES.md, ledger-types → src/ledger/types.ts); hasFile always false'
+              ref: "tests/fixtures/planner/extras.cards.json (the cards), tests/fixtures/planner/extras.judges.json (the two judges)"
+              when: "cutJudges"
+              then: 'the cards equal extras.judges.json: store-schema-judge (python by extension, target "tests/test_schema_examples.py", maxTokens 16000) and ledger-types-judge; notes has no code target and no judge'
+        - name: Order Deck
+          description: Kahn layers over dependsOn, the deck sorted by them, and the external dependencies.
+          behavior: >
+            orderDeck(cards). An id of dependsOn that no card carries is external and counts as
+            done. Layer after layer: the cards not placed whose in-deck dependencies are all
+            placed, ids sorted (JavaScript's default string order); a layer that would be empty
+            while cards remain → {ok: false, error: "dependency cycle among <the ids not placed,
+            sorted, joined by ', '>"}. → {ok: true, cards: sorted by (layer, id), generations: the
+            layers, externalDependsOn: per card in that order with at least one external id, its
+            external ids in dependsOn order}.
+          steps:
+            - reads: Card
+            - produces: Card
+          examples:
+            - given: 'the cards of the layered deck fixture in reverse order (d, c, b, a)'
+              ref: "tests/fixtures/decks/layered.json"
+              when: "orderDeck"
+              then: '{ok: true} with card ids ["a", "b", "c", "d"], generations [["a"], ["b", "c"], ["d"]], externalDependsOn {}'
+            - given: 'cards z (dependsOn ["y", "ext"]), y (none), x (dependsOn ["ext2", "y"])'
+              when: "orderDeck"
+              then: 'ids ["y", "x", "z"]; generations [["y"], ["x", "z"]]; externalDependsOn {x: ["ext2"], z: ["ext"]}, x first'
+            - given: 'cards a (dependsOn ["b"]), b (dependsOn ["a"]), c (none)'
+              when: "orderDeck"
+              then: '{ok: false, error: "dependency cycle among a, b"}'
+        - name: Plan Spec
+          description: The whole plan of `morph plan --spec`, the old Morph's cut kept card for card.
+          behavior: >
+            planSpec({record, map, spec, components, judge, hasFile}). Faults in this order: the
+            map's language → Resolve Profile(null, map.language), unknown → "the map: <its
+            error>"; Select Components(record, components) error. docs = map.docs without the
+            spec path. Cut Component per selected Component in order (its error is the result).
+            Across cuts: a card whose slice the map did not set gets the first target of every
+            dependsOn entry naming a cut card of another Component appended (when absent). Extra
+            cards in map order: component null → kept; a component no Component of the record has
+            by name or slug → "extra card '<customId>' names Component '<component>' the record
+            does not have (have: <the record's Component names joined by ', '>)"; kept when it
+            names a selected Component, else skipped; as Card {customId, intent or "patch",
+            targets, contextSlice or [], instruction, acceptance, model, maxTokens (null when
+            unset), reasoning: {maxTokens: reasoningMaxTokens} or null, variants or 1, dependsOn
+            or []}, Cut Card {component null, profile null, functions [], slicedByMap true}. When
+            judge: Cut Judges over every Cut Card (defaultProfile = the map's profile, typescript
+            when unset), appended. Every card's contextSlice loses every entry equal to spec (the
+            record never rides in a slice). The first customId repeated in card order →
+            "duplicate customId '<id>'". Order Deck (its error is the result). → {ok: true, plan:
+            {spec, components: the selected names, cards, generations, externalDependsOn}}. On the
+            same record and map the old `mrph plan --spec --judge` gives the same ids, dependsOn
+            and generations (golden cross-check; texts and targets differ by design).
+          steps:
+            - calls: Cut Component
+            - calls: Cut Judges
+            - calls: Order Deck
+            - uses: contour
+            - produces: Plan
+          examples:
+            - given: 'the ledger record and map, spec "ledger.yaml", components ["ledger", "store"], judge true, hasFile true only for "tests/helpers.ts"'
+              ref: "tests/fixtures/planner/ledger.golden.json (the old mrph's ids, dependsOn, generations, external), tests/fixtures/planner/ledger.plan.json (the whole plan)"
+              when: "planSpec"
+              then: 'ok; card ids with their dependsOn, generations and externalDependsOn equal ledger.golden.json''s (17 cards, 5 generations, {"format-report": ["outside"]}); the whole plan equals ledger.plan.json; no slice holds "ledger.yaml"'
+            - given: 'the same, components ["store"], judge false'
+              when: "planSpec"
+              then: 'card ids ["load-ledger", "notes", "save-ledger", "store-schema"], generations [["load-ledger", "notes", "save-ledger", "store-schema"]], externalDependsOn {notes: ["parse"], "save-ledger": ["format-report"]}; save-ledger''s slice ["docs/TASK.md"]; ledger-types (Component Ledger) skipped'
+            - given: 'the ledger map with the parse-entry override''s contextSlice ["ledger.yaml", "docs/A.md"]; components ["ledger"], judge false'
+              when: "planSpec"
+              then: 'the card parse has contextSlice ["docs/A.md"]'
+            - given: 'the map with language "cobol"; components ["nope"]; an extra card store-schema with component "Nowhere"; an extra card ledger-types renamed "parse"; the parse-entry override with dependsOn ["checks"] (components ["ledger"], judge false)'
+              when: "planSpec"
+              then: "errors \"the map: unknown language 'cobol' (known: typescript, python)\"; \"no Component 'nope' in the record (have: ledger, store)\"; \"extra card 'store-schema' names Component 'Nowhere' the record does not have (have: ledger, store)\"; \"duplicate customId 'parse'\"; \"dependency cycle among checks, format-report, ledger-cli, notes, parse\""
+            - given: "this repository's own contour.yaml and morph-map.json, spec \"contour.yaml\", components [\"contour\"], judge true"
+              when: "planSpec"
+              then: 'generations [["validate-record"], ["select-components", "validate-map", "validate-record-judge"], ["load-spec", "select-components-judge", "validate-map-judge"], ["load-spec-judge"]] — the P9 deck old mrph cut; each card''s acceptance is the map''s for its id'
+      dataObjects:
+        - name: Budget
+          description: The output budget of one card.
+          schema: "{ maxTokens: number, reasoningMaxTokens: number, variants: number }"
+        - name: Unit
+          description: One code card's worth of Functions, before overrides.
+          schema: "{ id: string, name: string, functions: ContourFunction[], isGroup: boolean }"
+        - name: Cut Card
+          description: A card and what its judge needs.
+          schema: "{ card: Card, component: Component | null, profile: LanguageProfile | null, functions: ContourFunction[], slicedByMap: boolean }"
+        - name: Plan
+          description: The result of planSpec and the body of the plan document.
+          schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]> }"
+
     # ---------------------------------------------------------------- later epics (skeleton)
     - name: primer
       description: Digest of the tree, git history (Morph-Card trailers) and the run archive for a fresh session; every owned path, most recent first; markdown under a cap with explicit "… N more" lines.
       language: typescript
     - name: scout
       description: Recon session with a cheap model and read-only tools under call/read/char/round budgets; seed from the primer's ownership head; one final answer-only turn after the budget closes; scout.json with provenance and spend.
-      language: typescript
-    - name: planner
-      description: Contour record + map → deck (`plan --spec`), and scout report → one patch card (`plan --from-scout`); judge cards; budget formula; dry run without --add.
       language: typescript
     - name: reviewer
       description: >
@@ -1709,6 +2099,8 @@ Requirement:
       no child process; node:path is its only Node module; its shell lines are text (P8).
       contour reads no file, no clock and no environment: it parses the text it is given;
       the package yaml is imported in Parse Document alone (P9).
+      planner reads no file, no clock and no environment: the cli reads the record and the
+      map and passes which files exist as a function; node:path is its only Node module (P10a).
   - name: Node Only
     description: >
       Runtime dependencies: Node 20 built-ins and the package `yaml` (the record reader), nothing

@@ -1,0 +1,51 @@
+[
+  {
+    "customId": "store-schema",
+    "intent": "generate",
+    "targets": [
+      "store/schema.py"
+    ],
+    "contextSlice": [],
+    "instruction": "Write the schema.",
+    "acceptance": null,
+    "model": null,
+    "maxTokens": null,
+    "reasoning": null,
+    "variants": 1,
+    "dependsOn": []
+  },
+  {
+    "customId": "notes",
+    "intent": "patch",
+    "targets": [
+      "docs/NOTES.md"
+    ],
+    "contextSlice": [],
+    "instruction": "Write the notes.",
+    "acceptance": null,
+    "model": null,
+    "maxTokens": null,
+    "reasoning": null,
+    "variants": 1,
+    "dependsOn": [
+      "parse"
+    ]
+  },
+  {
+    "customId": "ledger-types",
+    "intent": "patch",
+    "targets": [
+      "src/ledger/types.ts"
+    ],
+    "contextSlice": [],
+    "instruction": "Write the types.",
+    "acceptance": "exit 0\n",
+    "model": null,
+    "maxTokens": null,
+    "reasoning": {
+      "maxTokens": 1000
+    },
+    "variants": 1,
+    "dependsOn": []
+  }
+]

@@ -23,6 +23,8 @@ shared steps here. Hand-written data, never product code.
     python3 decks/tools/build.py p9c    -> the P9c patch cards (runloop + acceptance; judges patch one or two
                                            files each, names kept per file; every failed vitest step also
                                            prints where two long strings first differ)
+    python3 decks/tools/build.py p10    -> the P10a cards (planner + cli; judges by files, two patched cli test files
+                                           deselected from the full step; locate and full_report on)
 
 From P10 a phase sets "locate": True and "full_report": True: a failed vitest step prints its whole
 failure section with the Expected/Received diff, and a red eslint is reported after the probe / own
@@ -424,6 +426,43 @@ P9C_JUDGE_EXAMPLES = {k: sum(f["min"] for f in v) for k, v in P9C_JUDGE_FILES.it
 # (gen 2); deselected from every full step, each judge runs its own file(s)
 P9C_KNOWN_RED = [f["file"] for v in P9C_JUDGE_FILES.values() for f in v]
 
+P10_PLANNER = "tests/planner/"
+# docs/TASK_P10a_planner.md §3: every judge by its files (the four planner judges write new files, plan-command-judge
+# writes one and patches main.examples, parse-command-judge patches parse.examples); per file min = its examples
+# (+ the own tests kept at HEAD for a patched file), max = min + 8 (parse: + 4), the literals, the HEAD names it may drop
+P10_JUDGE_FILES = {
+    "render-judge": [
+        {"file": P10_PLANNER + "render.examples.test.ts", "min": 11, "max": 19,
+         "lits": ["sumEntries.section.txt", "checkLedger.section.txt", "Exact Sums", "(definition not found in the record)",
+                  "29500"], "drop": []}],
+    "cut-component-judge": [
+        {"file": P10_PLANNER + "cut.examples.test.ts", "min": 7, "max": 15,
+         "lits": ["ledger.cut.json", "store.cut.json", "badCalls.json", "duplicate customId 'parse-entry'",
+                  "Interface 'x' exposes unknown Function 'Nope'"], "drop": []}],
+    "cut-judges-judge": [
+        {"file": P10_PLANNER + "judges.examples.test.ts", "min": 4, "max": 12,
+         "lits": ["ledger.judges.json", "extras.judges.json", "Preconditions a test's setup depends on:",
+                  "Write the CLI tests."], "drop": []}],
+    "plan-spec-judge": [
+        {"file": P10_PLANNER + "plan.examples.test.ts", "min": 8, "max": 16,
+         "lits": ["ledger.golden.json", "ledger.plan.json", "layered.json", "dependency cycle among a, b",
+                  "../../contour.yaml", "validate-record"], "drop": []}],
+    "plan-command-judge": [
+        {"file": "tests/cli/planCommand.examples.test.ts", "min": 5, "max": 13,
+         "lits": ["ledger.plan.json", "spec file not found: nope.yaml", "morph plan: exit 0\\n", "decks/p.json"], "drop": []},
+        {"file": "tests/cli/main.examples.test.ts", "min": 5, "max": 5, "lits": ["symlinkSync"], "drop": []}],
+    "parse-command-judge": [
+        {"file": "tests/cli/parse.examples.test.ts", "min": 19, "max": 23,
+         "lits": ["missing --spec", "no command (commands: deck check, plan, run)", "command scout is not available yet",
+                  "flag --judge does not apply to run", "Parse Command example 11"],
+         "drop": ["Parse Command example 4: plan and deck status answer NotYetError"]}],
+}
+P10_JUDGE_EXAMPLES = {k: sum(f["min"] for f in v) for k, v in P10_JUDGE_FILES.items()}
+# the two files that pin the old cli: parse.examples red from parse-command (gen 4) and main.examples (the built
+# binary imports yaml) red from plan-command (gen 3) until their judges patch them (gen 5); deselected from every
+# full step, each judge runs its own files
+P10_KNOWN_RED = ["tests/cli/parse.examples.test.ts", "tests/cli/main.examples.test.ts"]
+
 # one phase = the cards of one Component in morph-map.json (judges are <code>-judge); the
 # generation layering and the sibling exclusion are computed within the phase only.
 # smoke: whether a code card writes its own smoke test (P1-P2 yes; from P3 a code card covered
@@ -463,6 +502,14 @@ PHASES = {
             "members": ["build-attempt-diff", "build-retry", "process-generation", "build-attempt-diff-judge",
                         "build-retry-judge", "process-generation-judge", "run-deck-judge"],
             "full_exclude": P9C_KNOWN_RED},
+    # P10a (first phase run by the V2 binary): planner + cli; every judge by its files; locate and the full failure
+    # report on (issue #3 B)
+    "p10": {"parts": "p10", "test_dir": P10_PLANNER, "examples": P10_JUDGE_EXAMPLES, "literals": {},
+            "smoke": False, "judge_files": P10_JUDGE_FILES, "locate": True, "full_report": True,
+            "members": ["render", "cut-component", "cut-judges", "plan-spec", "plan-command", "parse-command",
+                        "render-judge", "cut-component-judge", "cut-judges-judge", "plan-spec-judge", "plan-command-judge",
+                        "parse-command-judge"],
+            "full_exclude": P10_KNOWN_RED},
 }
 
 
@@ -635,7 +682,7 @@ BUILDERS = {"p0": build_p0, "p1": lambda: build_phase("p1"), "p2": lambda: build
             "p3": lambda: build_phase("p3"), "p4": lambda: build_phase("p4"), "p5": lambda: build_phase("p5"),
             "p6": lambda: build_phase("p6"), "p7": lambda: build_phase("p7"),
             "p8": lambda: build_phase("p8"), "p9": lambda: build_phase("p9"), "p9b": lambda: build_phase("p9b"),
-            "p9c": lambda: build_phase("p9c")}
+            "p9c": lambda: build_phase("p9c"), "p10": lambda: build_phase("p10")}
 
 
 def main(argv):

@@ -43,7 +43,8 @@ const CLI_ENTRY = "src/cli.ts";
 // (docs/TASK_P8_language.md §4)
 // P9: contour reads text it is given: no Node module at all, and the package yaml only in Parse Document
 // (src/contour/load.ts) (docs/TASK_P9_contour.md §4)
-const NODE_ONLY = { language: new Set(["node:path"]), contour: new Set() };
+// P10a: planner is pure like language: of the Node modules only node:path (docs/TASK_P10a_planner.md §4)
+const NODE_ONLY = { language: new Set(["node:path"]), contour: new Set(), planner: new Set(["node:path"]) };
 const YAML_FILE = "src/contour/load.ts";
 
 function parse(file) {
