@@ -15,6 +15,9 @@ import { buildAttemptDiff } from "./diff.js";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
+export const TRUNCATED_RESPONSE_MESSAGE =
+  "The previous answer was cut off mid-file: it opened a ``` code fence and never closed it, so the file body could not be extracted. Answer again with the COMPLETE file, and close the fence.";
+
 /**
  * Writes every file of a parsed answer's `files` under `root`, creating the
  * parent directories as needed. Corrupt and truncated answers write nothing.
@@ -60,7 +63,7 @@ export async function verifyCard(input: VerifyInput): Promise<VerifyOutcome> {
       results.push({
         variant,
         exit: null,
-        log: "answer truncated",
+        log: TRUNCATED_RESPONSE_MESSAGE,
         diff: null,
       });
       continue;
