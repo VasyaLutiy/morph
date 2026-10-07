@@ -359,3 +359,20 @@ python3 decks/tools/scale_tokens.py decks/p11c/deck.json 3      # the session, c
 npm run build && rm -rf /tmp/v2bin-p11c && mkdir -p /tmp/v2bin-p11c && cp -r dist /tmp/v2bin-p11c/ && ln -s $PWD/node_modules /tmp/v2bin-p11c/node_modules
 node /tmp/v2bin-p11c/dist/cli.js run --root . --deck decks/p11c/deck.json --processor ds --deadline 2400 > /tmp/p11c-run.json
 ```
+
+### Run (07.10, VPS, autonomous) — cut by V2, run by the V2 binary on processor ds
+
+Deck `decks/p11c/deck.json` (V2 cut of runloop, acceptance, cli, git, cards, filtered to 12 cards by
+`decks/p11c/filter.py`, maxTokens ×3 by `decks/tools/scale_tokens.py`), run by the V2 binary copy in `/tmp/v2bin-p11c`
+with `--processor ds --deadline 2400`, default retry cap: run 20261007-185132, **12 / 12 written in one run, no fix**,
+11 at the first attempt (`run-command-judge` won at r2.v1: v1 red at tsc, r1 red at its own test), $0.0941, 15.3 min
+(915 s), 20 requests, 332 643 in / 106 240 out tokens. The first run whose archive has the P11b layout (`requests/`
+ignored, 0 request files committed; run dir 980 KB on disk). On the run branch: `git status` clean; tsc, eslint,
+`npm run build` clean; vitest **620 / 620** in 77 files. Read once against §2.2: Run Acceptance's child env drops every key
+whose upper-case form starts with `MORPH_PROCESSOR_` or ends with `_KEY`/`_TOKEN` (#5 5); Run Deck's generation loop in
+try/catch, undecided cards "skipped" reason "fault", `report.fault` last key, Run Command code 3 with the archive (#5 1);
+Commit Card stages with `git add -A -f`, Commit Paths unchanged by default (#5 1); the retry loop runs first at a
+generation whose pending card waits on a failed dependency with retries left (#5 2); Validate Card refuses `.r<n>` ids
+and `..` (#5 3, 9); Run Command refuses an empty deck with code 2 before any git call (#5 9); Build Attempt Diff skips the
+LCS above 16 000 000 line pairs (#5 8). 0 defects. Risks kept (TASK §7): a fault loses the usage of the call in flight; a
+carried-over retry spends that generation's cap. Findings 4 and 6 are P11c2; its merge closes #5.
