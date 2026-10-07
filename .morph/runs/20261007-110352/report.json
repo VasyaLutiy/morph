@@ -1,0 +1,221 @@
+{
+  "runId": "20261007-110352",
+  "completedAt": 1791371197396,
+  "branch": "morph/20261007-110352",
+  "processor": "glm53",
+  "generations": 6,
+  "outcomes": [
+    {
+      "customId": "render",
+      "status": "failed",
+      "reason": "acceptance failed",
+      "attempts": 3,
+      "winningVariant": null,
+      "acceptanceLog": "== tsc\nsrc/planner/render.ts(113,45): error TS2339: Property 'name' does not exist on type 'string'.\nsrc/planner/render.ts(117,43): error TS2339: Property 'name' does not exist on type 'string'.\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/render/render.probe.ts > Render Examples example 1: one line per example, whitespace collapsed, ref last\nAssertionError: expected '1. given the line \"rent 1200\"; when parsed; then {name: \"rent\", cents: 1200}\\n2. given a b c; when w; then t (ref: R  1)' to be '1. given the line \"rent 1200\"; when parsed; then {name: \"rent\", cents: 1200}\\n2. given a b c; when w; then t (ref: R 1)' // Object.is equality\n\n- Expected\n+ Received\n\n  1. given the line \"rent 1200\"; when parsed; then {name: \"rent\", cents: 1200}\n- 2. given a b c; when w; then t (ref: R 1)\n+ 2. given a b c; when w; then t (ref: R  1)\n\n ❯ probe/render/render.probe.ts:41:7\n     39|     { given: 'the line \"rent 1200\"', when: \"parsed\", then: '{name: \"re…\n     40|     { given: \"a  b\\n c\", when: \" w \", then: \"t\", ref: \"R  1\" },\n     41|   ])).toBe('1. given the line \"rent 1200\"; when parsed; then {name: \"r…\n       |       ^\n     42| });\n     43| \n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 12 passed (13)\n\nfirst difference at char 116 (line 2) of 118/119: expected \"...\\n2. given a b c; when w; then t (ref: R 1)\" received \"...\\n2. given a b c; when w; then t (ref: R  1)\"\n",
+        "== tsc\nsrc/planner/render.ts(113,45): error TS2339: Property 'name' does not exist on type 'string'.\nsrc/planner/render.ts(117,43): error TS2339: Property 'name' does not exist on type 'string'.\n",
+        "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/render/render.probe.ts > Render Examples example 1: one line per example, whitespace collapsed, ref last\nAssertionError: expected '1. given the line \"rent 1200\"; when parsed; then {name: \"rent\", cents: 1200}\\n2. given a b c; when w; then t (ref: R  1)' to be '1. given the line \"rent 1200\"; when parsed; then {name: \"rent\", cents: 1200}\\n2. given a b c; when w; then t (ref: R 1)' // Object.is equality\n\n- Expected\n+ Received\n\n  1. given the line \"rent 1200\"; when parsed; then {name: \"rent\", cents: 1200}\n- 2. given a b c; when w; then t (ref: R 1)\n+ 2. given a b c; when w; then t (ref: R  1)\n\n ❯ probe/render/render.probe.ts:41:7\n     39|     { given: 'the line \"rent 1200\"', when: \"parsed\", then: '{name: \"re…\n     40|     { given: \"a  b\\n c\", when: \" w \", then: \"t\", ref: \"R  1\" },\n     41|   ])).toBe('1. given the line \"rent 1200\"; when parsed; then {name: \"r…\n       |       ^\n     42| });\n     43| \n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 12 passed (13)\n\nfirst difference at char 116 (line 2) of 118/119: expected \"...\\n2. given a b c; when w; then t (ref: R 1)\" received \"...\\n2. given a b c; when w; then t (ref: R  1)\"\n",
+        "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/render/render.probe.ts > Render Examples example 1: one line per example, whitespace collapsed, ref last\nAssertionError: expected '1. given the line \"rent 1200\"; when parsed; then {name: \"rent\", cents: 1200}\\n2. given a b c; when w; then t (ref: R  1)' to be '1. given the line \"rent 1200\"; when parsed; then {name: \"rent\", cents: 1200}\\n2. given a b c; when w; then t (ref: R 1)' // Object.is equality\n\n- Expected\n+ Received\n\n  1. given the line \"rent 1200\"; when parsed; then {name: \"rent\", cents: 1200}\n- 2. given a b c; when w; then t (ref: R 1)\n+ 2. given a b c; when w; then t (ref: R  1)\n\n ❯ probe/render/render.probe.ts:41:7\n     39|     { given: 'the line \"rent 1200\"', when: \"parsed\", then: '{name: \"re…\n     40|     { given: \"a  b\\n c\", when: \" w \", then: \"t\", ref: \"R  1\" },\n     41|   ])).toBe('1. given the line \"rent 1200\"; when parsed; then {name: \"r…\n       |       ^\n     42| });\n     43| \n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 12 passed (13)\n\nfirst difference at char 116 (line 2) of 118/119: expected \"...\\n2. given a b c; when w; then t (ref: R 1)\" received \"...\\n2. given a b c; when w; then t (ref: R  1)\"\n",
+        "== tsc\nsrc/planner/render.ts(113,45): error TS2339: Property 'name' does not exist on type 'string'.\nsrc/planner/render.ts(117,43): error TS2339: Property 'name' does not exist on type 'string'.\n"
+      ],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "cut-component",
+      "status": "skipped",
+      "reason": "dependency render failed",
+      "attempts": 0,
+      "winningVariant": null,
+      "acceptanceLog": "",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "cut-judges",
+      "status": "skipped",
+      "reason": "dependency render failed",
+      "attempts": 0,
+      "winningVariant": null,
+      "acceptanceLog": "",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "render-judge",
+      "status": "skipped",
+      "reason": "dependency render failed",
+      "attempts": 0,
+      "winningVariant": null,
+      "acceptanceLog": "",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "cut-component-judge",
+      "status": "skipped",
+      "reason": "dependency cut-component skipped",
+      "attempts": 0,
+      "winningVariant": null,
+      "acceptanceLog": "",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "cut-judges-judge",
+      "status": "skipped",
+      "reason": "dependency cut-judges skipped",
+      "attempts": 0,
+      "winningVariant": null,
+      "acceptanceLog": "",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "plan-spec",
+      "status": "skipped",
+      "reason": "dependency cut-component skipped",
+      "attempts": 0,
+      "winningVariant": null,
+      "acceptanceLog": "",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "plan-command",
+      "status": "skipped",
+      "reason": "dependency plan-spec skipped",
+      "attempts": 0,
+      "winningVariant": null,
+      "acceptanceLog": "",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "plan-spec-judge",
+      "status": "skipped",
+      "reason": "dependency plan-spec skipped",
+      "attempts": 0,
+      "winningVariant": null,
+      "acceptanceLog": "",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "parse-command",
+      "status": "skipped",
+      "reason": "dependency plan-command skipped",
+      "attempts": 0,
+      "winningVariant": null,
+      "acceptanceLog": "",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "parse-command-judge",
+      "status": "skipped",
+      "reason": "dependency parse-command skipped",
+      "attempts": 0,
+      "winningVariant": null,
+      "acceptanceLog": "",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "plan-command-judge",
+      "status": "skipped",
+      "reason": "dependency plan-command skipped",
+      "attempts": 0,
+      "winningVariant": null,
+      "acceptanceLog": "",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 129610,
+    "outputTokens": 20740,
+    "cost": 0.05416845600000001,
+    "requests": 6
+  },
+  "requests": [
+    {
+      "customId": "render.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371033-oryvX9obda7QPrMovRhl",
+      "inputTokens": 15403,
+      "outputTokens": 2678,
+      "cost": 0.004772988,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "render.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371033-4FXOn1hwFsxfYFbXLj1h",
+      "inputTokens": 15403,
+      "outputTokens": 3410,
+      "cost": 0.010773468,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "render.r1.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371074-z5hRQm4FRUploqyz7qYh",
+      "inputTokens": 24439,
+      "outputTokens": 2978,
+      "cost": 0.009007884,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "render.r1.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371074-n0OjHT1GjSTPl7BGDcBK",
+      "inputTokens": 24439,
+      "outputTokens": 7735,
+      "cost": 0.01215714,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "render.r2.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371175-J8BuUqxmsWv7X2Ym1deA",
+      "inputTokens": 24963,
+      "outputTokens": 2009,
+      "cost": 0.012939348,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "render.r2.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371175-46mECkmxSc1yOCvUqqwD",
+      "inputTokens": 24963,
+      "outputTokens": 1930,
+      "cost": 0.004517628,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}
