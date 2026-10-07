@@ -564,3 +564,14 @@ ordered):
 npm run build && rm -rf /tmp/v2bin-p12 && mkdir -p /tmp/v2bin-p12 && cp -r dist /tmp/v2bin-p12/ && ln -s $PWD/node_modules /tmp/v2bin-p12/node_modules
 node /tmp/v2bin-p12/dist/cli.js run --root . --deck decks/p12/deck.json --processor ds --deadline 2400 > /tmp/p12-run.json
 ```
+
+### Run (07.10, VPS, autonomous) — cut by V2, run by the V2 binary on processor ds
+
+Deck `decks/p12/deck.json` (V2 cut filtered to 11 cards by `decks/p12/filter.py`, maxTokens ×3 by
+`decks/tools/scale_tokens.py`), run by the V2 binary copy in `/tmp/v2bin-p12` with `--processor ds --deadline 2400`, default
+retry cap: run 20261007-231118, **11 / 11 written in one run, no fix**, 7 at the first attempt; retries won `read-story`
+(r1.v2), `read-runs-judge`, `read-story-judge`, `primer-command-judge` (r1.v1; their v1 red at the guard or tsc). $0.1998,
+16.9 min (1011 s), 21 requests, 492 584 in / 249 289 out tokens. `read-story` hit `max_tokens` 30 000 (10 000 ×3) on three
+of its four answers (v1 corrupt, v2 and r1.v1 truncated, finish `length`) and won with r1.v2 — not a failure, no fix; its
+next cut needs ≥ 16 000 before the ×3. On the run branch: `git status` clean; tsc, eslint, `npm run build` clean; vitest
+**660 / 660** in 89 files. The read of the written code is skipped (operator 07.10: no code reviews until further notice).
