@@ -1,0 +1,15 @@
+morph run: process-generation.v1 accepted stage 7 frozen finish stop chars 11297
+morph run: process-generation.v2 untried stage 0 finish stop chars 11205
+morph run: run-acceptance.v1 rejected stage 1 tsc finish stop chars 5615
+morph run: run-acceptance.v2 accepted stage 7 frozen finish stop chars 5835
+morph run: run-deck.v1 accepted stage 7 frozen finish stop chars 15174
+morph run: run-deck.v2 untried stage 0 finish stop chars 15023
+morph run: process-generation-judge.v1 accepted stage 8 frozen finish stop chars 21102
+morph run: run-acceptance-judge.v1 accepted stage 7 frozen finish stop chars 2054
+morph run: run-command.v1 accepted stage 7 frozen finish stop chars 7795
+morph run: run-command.v2 untried stage 0 finish stop chars 7726
+morph run: run-deck-judge.v1 accepted stage 7 frozen finish stop chars 4197
+morph run: main.v1 accepted stage 7 frozen finish stop chars 775
+morph run: main.v2 untried stage 0 finish stop chars 777
+morph run: run-command-judge.v1 accepted stage 8 frozen finish stop chars 9695
+morph run: main-judge.v1 accepted stage 7 frozen finish stop chars 3918

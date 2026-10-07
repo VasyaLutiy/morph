@@ -1,0 +1,147 @@
+```ts
+import { expect, test } from "vitest";
+import { runDeck } from "../../src/runloop/deck.js";
+import { fakeFetch, tmpRoot } from "../helpers.js";
+import type { TmpRoot } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+import type {
+  CardOutcome,
+  CommitInfo,
+  RunDeps,
+  RunInput,
+  RunResult,
+} from "../../src/runloop/types.js";
+import type { ProcessorConfig, Transport } from "../../src/processor/types.js";
+
+function card(
+  id: string,
+  targets: string[],
+  acceptance: string | null,
+  dependsOn: string[] = [],
+): Card {
+  return {
+    customId: id,
+    intent: "generate",
+    targets,
+    contextSlice: [],
+    instruction: "write " + targets.join(","),
+    acceptance,
+    model: null,
+    maxTokens: null,
+    reasoning: null,
+    variants: 1,
+    dependsOn,
+  };
+}
+
+function makeDeps(
+  root: TmpRoot,
+  commits: string[],
+  interrupted?: () => string | null,
+): RunDeps {
+  const config = {
+    id: "s",
+    type: "stub",
+    model: "stub-model",
+    answersDir: root.path("answers"),
+    timeoutMs: 300_000,
+  } as unknown as ProcessorConfig;
+  const transport = fakeFetch() as unknown as Transport;
+  const commit = (customId: string): CommitInfo | null => {
+    commits.push(customId);
+    return {
+      commit: "c-" + customId,
+      diffstat: { files: 1, insertions: 1, deletions: 0 },
+    };
+  };
+  const deps: RunDeps = {
+    config,
+    transport,
+    commit,
+    now: () => 0,
+    env: { PATH: process.env.PATH ?? "/usr/bin:/bin" },
+  };
+  if (interrupted !== undefined) {
+    deps.interrupted = interrupted;
+  }
+  return deps;
+}
+
+function outcome(result: RunResult, id: string): CardOutcome {
+  const found = result.outcomes.find((o) => o.customId === id);
+  if (found === undefined) throw new Error("no outcome for " + id);
+  return found;
+}
+
+test("Run Deck example 11: a signal at the second boundary stops the run after a", async () => {
+  const root = tmpRoot();
+  try {
+    root.write("answers/a.md", "```ts\nMARK_A\n```\n");
+    let calls = 0;
+    const interrupted = (): string | null => {
+      calls += 1;
+      return calls === 1 ? null : "SIGTERM";
+    };
+    const commits: string[] = [];
+    const input: RunInput = {
+      root: root.root,
+      runId: "r11",
+      branch: "morph/r11",
+      deck: {
+        cards: [
+          card("a", ["a.ts"], "grep -q MARK_A a.ts"),
+          card("b", ["b.ts"], "grep -q MARK_B b.ts", ["a"]),
+        ],
+        externalDependsOn: [],
+      },
+      budget: { maxCards: 100, maxRetryBatches: 2, deadline: 1_000_000_000 },
+    };
+    const result = await runDeck(input, makeDeps(root, commits, interrupted));
+    const a = outcome(result, "a");
+    const b = outcome(result, "b");
+    expect(a.status).toBe("written");
+    expect(b.status).toBe("skipped");
+    expect(b.reason).toBe("fault");
+    expect(result.report.fault).toBe("interrupted by SIGTERM");
+    const reportKeys = Object.keys(result.report);
+    expect(reportKeys[reportKeys.length - 1]).toBe("fault");
+    expect(result.report.usageTotals.requests).toBe(1);
+    expect(calls).toBe(2);
+  } finally {
+    root.rm();
+  }
+});
+
+test("Run Deck example 12: a signal before the retry batch keeps the failure at one attempt", async () => {
+  const root = tmpRoot();
+  try {
+    root.write("answers/c.md", "```ts\nx\n```\n");
+    root.write("answers/c.r1.md", "```ts\nx\n```\n");
+    let calls = 0;
+    const interrupted = (): string | null => {
+      calls += 1;
+      return calls === 1 ? null : "SIGINT";
+    };
+    const commits: string[] = [];
+    const input: RunInput = {
+      root: root.root,
+      runId: "r12",
+      branch: "morph/r12",
+      deck: {
+        cards: [card("c", ["c.ts"], "exit 1")],
+        externalDependsOn: [],
+      },
+      budget: { maxCards: 100, maxRetryBatches: 2, deadline: 1_000_000_000 },
+    };
+    const result = await runDeck(input, makeDeps(root, commits, interrupted));
+    const c = outcome(result, "c");
+    expect(c.status).toBe("failed");
+    expect(c.reason).toBe("acceptance failed");
+    expect(c.attempts).toBe(1);
+    expect(result.report.fault).toBe("interrupted by SIGINT");
+    expect(result.report.usageTotals.requests).toBe(1);
+  } finally {
+    root.rm();
+  }
+});
+```

@@ -1,0 +1,233 @@
+FILE: src/cli/runCommand.ts
+```
+import { readRegistry, PREFIX } from "../processor/registry.js";
+import { realTransport } from "../processor/send.js";
+import { findHazards } from "../cards/hazards.js";
+import { runDeck } from "../runloop/deck.js";
+import { openRunBranch } from "../git/branch.js";
+import { makeCommitHook } from "../git/commit.js";
+import { archiveRun, saveBatchRecord } from "../git/archive.js";
+import { errorDocument, readDeckFile, runExitCode } from "./document.js";
+import type { CliDeps, CommandResult, RunArgs, RunDocument } from "./types.js";
+import type { ArchivedAnswer } from "../git/types.js";
+import type { VariantRecord } from "../runloop/types.js";
+
+export function mintRunId(ms: number): string {
+  // the UTC time of ms as YYYYMMDD-HHMMSS: new Date(ms).toISOString() is
+  // "YYYY-MM-DDTHH:MM:SS.sssZ", so the digits are picked in place
+  const iso = new Date(ms).toISOString();
+  return (
+    iso.slice(0, 4) +
+    iso.slice(5, 7) +
+    iso.slice(8, 10) +
+    "-" +
+    iso.slice(11, 13) +
+    iso.slice(14, 16) +
+    iso.slice(17, 19)
+  );
+}
+
+export function variantLine(record: VariantRecord): string {
+  return (
+    "morph run: " +
+    record.request.customId +
+    " " +
+    record.verdict +
+    " stage " +
+    record.stages +
+    (record.lastStage === null ? "" : " " + record.lastStage) +
+    " finish " +
+    (record.finishReason ?? "none") +
+    " chars " +
+    (record.text === null ? "none" : String(record.text.length)) +
+    "\n"
+  );
+}
+
+export async function runCommand(
+  root: string,
+  args: RunArgs,
+  deps: CliDeps,
+  log?: (text: string) => void
+): Promise<CommandResult> {
+  // 1. the registry reads deps.env only, never the process environment
+  const registry = readRegistry(deps.env);
+  const config = registry.configs.find((c) => c.id === args.processor);
+  if (config === undefined) {
+    const relevant = registry.faults
+      .filter((f) => f.key.startsWith(PREFIX + args.processor + "_"))
+      .map((f) => f.message);
+    const suffix = relevant.length > 0 ? ": " + relevant.join("; ") : "";
+    return {
+      code: 4,
+      document: errorDocument(
+        4,
+        "UsageError",
+        "processor " + args.processor + " is not configured" + suffix
+      ),
+    };
+  }
+
+  // 2. the deck file; its failure is the result
+  const deckFile = readDeckFile(root, args.deck);
+  if (!deckFile.ok) {
+    return deckFile.result;
+  }
+  const deck = deckFile.deck;
+
+  // 2b. an empty deck refuses before any git call or spend
+  if (deck.cards.length === 0) {
+    return {
+      code: 2,
+      document: errorDocument(2, "RefusalError", "deck has no cards"),
+    };
+  }
+
+  // 3. hazard errors refuse the run before any git call or spend
+  const hazardErrors = findHazards(deck).filter((h) => h.severity === "error");
+  if (hazardErrors.length > 0) {
+    const items = hazardErrors.map(
+      (h) =>
+        h.kind +
+        " " +
+        h.cards.join(",") +
+        (h.path === null ? "" : " " + h.path)
+    );
+    return {
+      code: 2,
+      document: errorDocument(
+        2,
+        "RefusalError",
+        "deck has " + hazardErrors.length + " hazard error(s): " + items.join("; ")
+      ),
+    };
+  }
+
+  // 3b. a card whose acceptance is null or blank refuses the run before any
+  // git call or spend (hazard errors come first)
+  const noAcceptance = deck.cards.filter(
+    (c) => c.acceptance === null || c.acceptance.trim() === ""
+  );
+  if (noAcceptance.length > 0) {
+    return {
+      code: 2,
+      document: errorDocument(
+        2,
+        "RefusalError",
+        "deck has " +
+          noAcceptance.length +
+          " card(s) with no acceptance: " +
+          noAcceptance.map((c) => c.customId).join(",")
+      ),
+    };
+  }
+
+  // 4. the one call of deps.now by runCommand itself (runDeck calls it at
+  // every generation boundary and at the end)
+  const start = deps.now();
+  const runId = args.runId ?? mintRunId(start);
+
+  // 5. open the run branch; a refusal here is still before any spend
+  const branch = openRunBranch(root, runId, deps.env);
+  if (!branch.ok) {
+    return {
+      code: 2,
+      document: errorDocument(2, "RefusalError", branch.error),
+    };
+  }
+
+  // 6. run the deck with git's commit hook, the injected clock and the
+  // variant recorder
+  const records: ArchivedAnswer[] = [];
+  const result = await runDeck(
+    {
+      root,
+      runId,
+      branch: branch.branch,
+      deck,
+      budget: {
+        maxCards: args.maxCards ?? deck.cards.length,
+        maxRetryBatches: args.maxRetryBatches,
+        deadline: start + args.deadlineSeconds * 1000
+      }
+    },
+    {
+      config,
+      transport: {
+        ...(deps.transport ?? realTransport(config.timeoutMs)),
+        saveBatch: (record) => {
+          saveBatchRecord(root, record);
+        }
+      },
+      commit: makeCommitHook(root, config.model, deps.env),
+      now: deps.now,
+      env: deps.env,
+      interrupted: deps.interrupted,
+      onVariant: (record) => {
+        const line = variantLine(record);
+        records.push({ ...record, line });
+        if (log !== undefined) {
+          log(line);
+        }
+      }
+    }
+  );
+
+  // 7. archive deck, report and every variant's answer and stderr line; the
+  // checkout stays on morph/<runId>
+  const archive = archiveRun(
+    root,
+    { runId, deck, report: result.report, answers: records },
+    deps.env
+  );
+
+  // 8. the Run Document, its keys in the type's order; a caught fault is
+  // code 3, the partial report archived as always
+  const document: RunDocument = {
+    runId,
+    branch: branch.branch,
+    base: branch.base,
+    report: result.report,
+    archive
+  };
+  const code = result.report.fault !== undefined ? 3 : runExitCode(result.report, archive);
+  return { code, document };
+}
+```
+
+FILE: src/cli/types.ts
+```
+import type { Deck, Hazard, SliceWeight } from "../cards/types.js";
+import type { Transport } from "../processor/types.js";
+import type { RunReport } from "../runloop/types.js";
+import type { ArchiveResult } from "../git/types.js";
+import type { Plan } from "../planner/types.js";
+
+export type ExitCode = 0 | 1 | 2 | 3 | 4;
+export type ErrorKind = "UsageError" | "NotYetError" | "DeckError" | "RefusalError" | "RuntimeError";
+export interface ErrorDocument { error: { code: ExitCode; kind: ErrorKind; message: string } }
+export interface CommandResult { code: ExitCode; document: unknown }
+export interface DeckCheckArgs { name: "deck check"; root: string; pretty: boolean; deck: string; sliceCapBytes: number }
+export interface RunArgs {
+  name: "run"; root: string; pretty: boolean; deck: string; processor: string; runId: string | null;
+  deadlineSeconds: number; maxCards: number | null; maxRetryBatches: number;
+}
+export interface PlanArgs {
+  name: "plan"; root: string; pretty: boolean; spec: string; components: string[]; map: string | null;
+  judge: boolean; out: string | null; checks?: string;
+}
+export type Command = DeckCheckArgs | RunArgs | PlanArgs;
+export type ParseResult = { ok: true; command: Command } | { ok: false; error: ErrorDocument };
+export type DeckFileResult = { ok: true; deck: Deck } | { ok: false; result: CommandResult };
+export interface DeckCheckDocument {
+  deck: string; cards: number; generations: string[][]; errors: number; warnings: number;
+  hazards: Hazard[]; weights: SliceWeight[];
+}
+export interface RunDocument { runId: string; branch: string; base: string; report: RunReport; archive: ArchiveResult }
+export interface PlanDocument extends Plan { out: string | null }
+export interface CliDeps {
+  env: Record<string, string>; now: () => number; cwd: string; transport: Transport | null;
+  interrupted?: () => string | null;
+}
+export interface CliIo { stdout(text: string): void; stderr(text: string): void }
+```
