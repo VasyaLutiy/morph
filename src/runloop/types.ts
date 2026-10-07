@@ -17,9 +17,15 @@ export interface CardOutcome {
   diffstat: Diffstat | null;
 }
 export interface UsageTotals { inputTokens: number; outputTokens: number; cost: number | null; requests: number }
+export interface RequestUsage {
+  customId: string; model: string; provider: string | null; generationId: string | null;
+  inputTokens: number; outputTokens: number; cost: number | null;
+  finishReason: string | null; error: string | null;
+}
 export interface RunReport {
   runId: string; completedAt: number; branch: string; processor: string;
   generations: number; outcomes: CardOutcome[]; usageTotals: UsageTotals;
+  requests?: RequestUsage[];
 }
 export interface RunBudget { maxCards: number; maxRetryBatches: number; deadline: number }
 export interface RunDeps {
@@ -27,5 +33,9 @@ export interface RunDeps {
   now: () => number; env: Record<string, string>;
 }
 export interface RunInput { root: string; runId: string; branch: string; deck: Deck; budget: RunBudget }
-export interface GenerationOutcome { outcomes: CardOutcome[]; usage: Usage[] }
+export interface RetryContext { acceptanceOutput: string; previousDiff: string | null }
+export interface GenerationOutcome {
+  outcomes: CardOutcome[]; usage: Usage[]; requests: RequestUsage[];
+  retryContexts: Record<string, RetryContext>;
+}
 export interface RunResult { report: RunReport; outcomes: CardOutcome[] }
