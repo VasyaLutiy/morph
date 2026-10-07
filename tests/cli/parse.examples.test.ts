@@ -125,7 +125,11 @@ test("Parse Command example 8: --root as the last token, then no command", () =>
   expect(empty).toStrictEqual({
     ok: false,
     error: {
-      error: { code: 4, kind: "UsageError", message: "no command (commands: deck check, plan, run)" },
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "no command (commands: deck check, plan, run, submit, collect)",
+      },
     },
   });
 });
@@ -291,5 +295,87 @@ test("a zero --slice-cap-bytes is refused", () => {
         message: "--slice-cap-bytes must be a positive integer (got '0')",
       },
     },
+  });
+});
+
+test("Parse Command example 14: submit and collect", () => {
+  const got = parseCommand(["submit", "--deck", "d.json", "--processor", "b"]);
+  const command: Command = {
+    name: "submit",
+    root: ".",
+    pretty: false,
+    deck: "d.json",
+    processor: "b",
+  };
+  expect(got).toStrictEqual({ ok: true, command });
+
+  const collect = parseCommand([
+    "--pretty",
+    "collect",
+    "--batch",
+    "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W",
+    "--root",
+    "/r",
+  ]);
+  const collectCommand: Command = {
+    name: "collect",
+    root: "/r",
+    pretty: true,
+    batch: "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W",
+  };
+  expect(collect).toStrictEqual({ ok: true, command: collectCommand });
+});
+
+test("Parse Command example 15: the usage errors of submit and collect", () => {
+  const missingProcessor = parseCommand(["submit", "--deck", "d.json"]);
+  expect(missingProcessor).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "missing --processor" } },
+  });
+
+  const missingDeck = parseCommand(["submit", "--processor", "b"]);
+  expect(missingDeck).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "missing --deck" } },
+  });
+
+  const missingBatch = parseCommand(["collect"]);
+  expect(missingBatch).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "missing --batch" } },
+  });
+
+  const badBatch = parseCommand(["collect", "--batch", "a/b"]);
+  expect(badBatch).toStrictEqual({
+    ok: false,
+    error: {
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "--batch must match ^[A-Za-z0-9._-]+$ (got 'a/b')",
+      },
+    },
+  });
+
+  const deckOnCollect = parseCommand(["collect", "--batch", "x", "--deck", "d"]);
+  expect(deckOnCollect).toStrictEqual({
+    ok: false,
+    error: {
+      error: { code: 4, kind: "UsageError", message: "flag --deck does not apply to collect" },
+    },
+  });
+
+  const runIdOnSubmit = parseCommand(["submit", "--deck", "d", "--processor", "b", "--run-id", "r"]);
+  expect(runIdOnSubmit).toStrictEqual({
+    ok: false,
+    error: {
+      error: { code: 4, kind: "UsageError", message: "flag --run-id does not apply to submit" },
+    },
+  });
+
+  const extra = parseCommand(["collect", "--batch", "x", "extra"]);
+  expect(extra).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "unexpected argument: extra" } },
   });
 });
