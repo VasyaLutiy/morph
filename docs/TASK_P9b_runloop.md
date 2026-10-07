@@ -402,3 +402,47 @@ killed by the card's probe (the acceptanceLog one survived the first probe; a §
 
 Max slice + targets + instruction on the finished tree: process-generation 51 114 bytes,
 process-generation-judge 51 106 (gate 200 KB). Forecast ≈ $0.15–0.18 nominal (≤ $1 gate, cap $5).
+
+### Run
+
+07.10, on the laptop, processor glm53, on the operator's word (forecast $0.15–0.18, cap $5). "Burned"
+= every request that was not a winning write (requests − written).
+
+**Run 1** `20261007-091848-91dcbf60`, branch `morph/20261007-091848-91dcbf60`, 09:18:48 → 09:24:25
+(5.6 min), 16 requests, 213 926 in / 26 656 out, **$0.0860**. 8 written, 1 failed
+(output-directive-judge), 0 skipped; 8 variants burned. Every finish reason `stop`; the largest
+answer run-deck-judge 4 274 of 24 000 out tokens.
+
+| card | gen | attempts | winning variant | commit | first red of each burned variant |
+|---|---|---|---|---|---|
+| build-retry | 1 | 1 | v1 | 017071b | v2: losing variant (not surfaced) |
+| output-directive (+ smoke) | 1 | 1 | v1 | 0dd8619 | v2: losing variant (not surfaced) |
+| process-generation (types+generation) | 1 | 1 | v1 | acb14ac | v2: losing variant (not surfaced) |
+| build-retry-judge | 2 | 1 | — | 18d890f | — |
+| process-generation-judge | 2 | 1 | — | 15f0e5b | — |
+| run-deck | 2 | 1 | v1 | c193b3b | v2: losing variant (not surfaced) |
+| compile-card-judge | 2 | 1 | — | 15ffd51 | — |
+| output-directive-judge | 2 | 3 | — (failed) | — | 0, r1, r2: own step, `Output Directive example 2: one target is the whole single-target text` — the expected literal says "so no line of a file may begin" (the several-targets sentence) where the single text says "the file"; the code's text is the record's, byte for byte. The vitest diff is cut at `truncateThreshold: 200`, so both sides read identical in the retry context |
+| run-deck-judge | 3 | 2 | r1 | 2be81b5 | 0: own step, `Run Deck §2.2: the retry after a truncated answer has no diff block` — `expected true to be false` (own expectation; r1 green) |
+
+Minutes per generation: 1.1 / 2.4 / 2.1. Archive commit 939aeb2.
+
+**Fix (data, one re-cut by the P1b pattern)**: commit 61d443b — TASK §2.2 spells the one-word
+difference of the two backtick sentences; card instruction, slice, acceptance and `max_tokens`
+unchanged (the archived card re-added with `deck add`). **Run 2** `20261007-092723-3c3f1c83`
+(branched off run 1), 1.0 min, 1 request, 9 773 in / 3 274 out, **$0.0084**: output-directive-judge
+written on the first attempt, commit dad6fa3, archive 968a1e0.
+
+Phase total: **$0.0944** executor (prediction ≈ $0.18 nominal, ≤ $0.40 with a re-cut — under the
+nominal), 6.6 min, 17 requests, 8 burned variants, 1 re-cut. On `morph/20261007-092723-3c3f1c83`:
+`npm run build`, `tsc --noEmit`, `eslint src tests` green; `vitest run` 479/479 in 48 files
+(464 before; the 5 P9b example files 33 tests); `git status --short` empty. Local `main`
+fast-forwarded to 968a1e0 (not pushed).
+
+§9 check: cards 9 / generations 3 — as predicted; cards with regeneration 2 of 9 (predicted 3:
+output-directive-judge and run-deck-judge, not process-generation nor its judge nor compile-card-judge);
+tests 479 (464 − 10 + 25 — over the ≥ 11 floor). First reds: none of the predicted; the judge
+of output-directive did mix one word of the two texts (the "one word of the texts" prediction, on the
+judge, not the code). Claims: (1) holds — no judge red traces to C1–C8; (2) holds — no card red on a
+sibling's file; (3) holds — every finish `stop`, judges ≤ 4 274 out; (4) holds — no answer discarded
+by the file-set rule.
