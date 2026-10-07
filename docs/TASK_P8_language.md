@@ -348,3 +348,63 @@ lint over tests, ext case, "this instruction", parseTakesFiles) — 22 of 22 kil
 (the check-order survivor of the first pass killed after the naming probe's row was strengthened to
 two different wordless names). Reference judge files 3.5–5.2 KB ≈ 1 000–1 500 output tokens against
 `max_tokens` 20 000 / 24 000 (≥ 13× headroom). Forecast ≈ $0.11 (≤ $1). Gate holds.
+
+### Run
+
+One run on the VPS, processor glm53, autonomous mode, on the deck that passed the autonomous gate
+(8 cards, `deck check` 0 errors, 0 hazards). No re-cut was needed. "Burned" = every request that was
+not a winning write (requests − written).
+
+**Run 1** `20261007-051340-8b90d4cd`, branch `morph/20261007-051340-8b90d4cd`, 05:13:40 → 05:19:00
+(5.3 min), 14 requests, 169 216 in / 13 051 out, **$0.0456**. 8 written, 0 failed, 0 skipped; 6
+variants burned. Every finish reason `stop`: no truncation (largest answer paths-judge 2 042 out of
+its 20 000; template-judge 1 434 of 24 000).
+
+| card | gen | attempts | winning variant | commit | first red of each burned variant |
+|---|---|---|---|---|---|
+| profiles (types+profiles) | 1 | 1 | v1 | d261345 | v2: losing variant (not surfaced) |
+| naming | 2 | 1 | v1 | 06489d8 | v2: losing variant (not surfaced) |
+| paths | 2 | 1 | v2 | 4d9a90a | v1: tsc, file body emitted twice (`Duplicate identifier 'path'`, TS2300/TS2393) |
+| profiles-judge | 2 | 2 | r1 | b0071fa | 0: own §2.2 test, `fillTemplate("{a1}-{ a}-{}-{toString}", {a1: "x", toString: "y"})` expected `{toString}` kept although `toString` was an OWN key (got `…-y`, correct by §2.2) — the judge's reading, not the code |
+| naming-judge | 3 | 1 | — | 020d01f | — |
+| template | 3 | 1 | v1 | 7f6f7a0 | v2: losing variant (not surfaced) |
+| paths-judge | 3 | 2 | r1 | 9e23a5e | 0: tsc, file body emitted twice (`Duplicate identifier 'isTest'`, TS2300/TS2451) |
+| template-judge | 4 | 1 | — | 1298d95 | — |
+
+Minutes per generation: 0.8 / 2.0 / 1.9 / 0.7. Archive commit e70b828 (old Morph's own).
+
+Phase total: **$0.0456** executor (prediction ≈ $0.11 nominal — under it), 5.3 min, 14 requests, 6
+burned variants. tsc-first-red: 2 of 6 (both the doubled file body, glm's P5 failure mode).
+neighbour-red: 0.
+
+§9 check: cards 8 / generations 4 — as predicted; `deck check` 0 / 0 hazards — as predicted. Cards
+with a retry batch 2 of 8 (profiles-judge, paths-judge) — as predicted; paths won on v2 at the first
+attempt. Tests after: 416 in 41 files (349 + 67 judge tests in 4 files: profiles 14, paths 12, naming
+11, template 16); judge example tests 25 of 25 (7 + 6 + 4 + 8), ≥ 25 holds; own tests 7 / 6 / 7 / 8,
+each within its cap of 8. First red: no code card went red on logic (every predicted code first red
+missed); the code red was a doubled body (tsc), the judge reds a doubled body and one own-test
+misreading of the own-property rule — never the code. Falsifiable claims: (1) no card red on a
+sibling's file — holds; (2) no judge red traced to §2.1 — holds (no `fixtureJson` field read, no
+backslash fault); (3) no judge cut off at `max_tokens` — holds; (4) no test spawns a process or
+needs python — holds (no `spawn`/`exec`/`process.`/`vi.` in `tests/language/`).
+
+Max slice + targets, measured on the finished tree: template-judge 46 386 bytes (gate 200 KB).
+
+Verification on `morph/20261007-051340-8b90d4cd` by the run session: `git status --short` empty;
+`tsc --noEmit`, `eslint src tests` clean; `vitest run` 416/416 in 41 files; `npm run build` ok;
+`git for-each-ref` and symbolic HEAD identical before and after `vitest run`. `src/language/*` read
+once against §2.2: types verbatim; both profiles field for field (Resolve Profile example 1 pins the
+typescript profile to the fixture with `toStrictEqual`); resolveProfile fall-through on null/"",
+trim + lower-case, registry object returned, error with the untrimmed choice and the ids from
+`PROFILES`; fillTemplate with a function replacer, letters-only keys, `Object.hasOwn`; normalizePath
+loop over every leading `./`; isTest directory parts but the last, pattern on the base name;
+codeTargets/testTarget as given; cutTargets component checked first, both names cased; acceptance
+lines own = code and tests, full run always last; the script's lines newline-terminated, ext of the
+target as given, `$` literal. **No code defect found** (one cosmetic: `paths.ts` and `template.ts`
+import `{ posix } from "node:path"` instead of the default `path` of §2.2 — same module, guard
+green). Judge defects (code defects a judge caught that the probes did not): 0.
+
+Lessons: (1) the P6 sizing rule held a third time: no judge used more than 11 % of its ceiling.
+(2) glm's "file body emitted twice" (P5's first red) reappeared on 2 of 6 burned variants, both
+caught by `tsc` at once and both recovered by the second variant or the retry: the two-variant code
+cards and the retry batch absorb it at ≈ $0.005 each.
