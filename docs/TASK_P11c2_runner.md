@@ -356,3 +356,19 @@ the session applies maxTokens × 3 first, as the operator ordered):
 npm run build && rm -rf /tmp/v2bin-p11c2 && mkdir -p /tmp/v2bin-p11c2 && cp -r dist /tmp/v2bin-p11c2/ && ln -s $PWD/node_modules /tmp/v2bin-p11c2/node_modules
 node /tmp/v2bin-p11c2/dist/cli.js run --root . --deck decks/p11c2/deck.json --processor ds --deadline 2400 > /tmp/p11c2-run.json
 ```
+
+### Run (07.10, VPS, autonomous) — cut by V2, run by the V2 binary on processor ds
+
+Deck `decks/p11c2/deck.json` (V2 cut of runloop, acceptance, cli, filtered to 10 cards by `decks/p11c2/filter.py`,
+maxTokens ×3 by `decks/tools/scale_tokens.py`), run by the V2 binary copy in `/tmp/v2bin-p11c2` with `--processor ds
+--deadline 2400`, default retry cap: run 20261007-195351, **10 / 10 written in one run, no fix, no retry** (run-acceptance
+won on v2, v1 red at tsc), $0.0880, 12.5 min (752 s), 15 requests, 250 123 in / 99 741 out tokens. process-generation-judge
+returned its 20 KB file whole (21 102 chars) at the first attempt. On the run branch: `git status` clean; tsc, eslint,
+`npm run build` clean; vitest **625 / 625** in 80 files; no acceptance process left alive. Read once against §2.2: a null or
+blank acceptance fails "no acceptance" before compile, nothing sent (#5 4); Run Command refuses "deck has <n> card(s) with
+no acceptance: <ids>" with code 2 after the hazard check, before any git call (#5 4); Run Acceptance adds its SIGINT/SIGTERM
+listeners before the spawn, kills the group with SIGKILL on the first signal, logs "acceptance interrupted by <s>", exit
+null, and removes the listeners on close or a failed start (#5 6); `src/cli.ts` records the first signal and passes
+`interrupted`; Run Deck throws "interrupted by <s>" at each boundary and before each retry batch, so the catch of P11c1
+archives the partial report with `fault` and exit 3 (#5 6). 0 defects. Kept risk (§7): a signal waits for the calls in
+flight; the process now outlives a SIGINT until the next check. The merge closes issue #5.
