@@ -27,8 +27,10 @@ System:
         - name: Validate Card
           description: Turns an untrusted object into a Card or a list of faults.
           behavior: >
-            Required: customId matching ^[A-Za-z0-9._-]+$, intent generate|patch,
-            targets a non-empty list of distinct repo-relative paths, instruction a
+            Required: customId matching ^[A-Za-z0-9._-]+$ and not ending in .r<digits>
+            (/\.r[0-9]+$/: the suffix of its own retry id; fault "customId '<id>' ends in .r<n>,
+            the suffix of a retry"), intent generate|patch, targets a non-empty list of distinct
+            repo-relative paths (normalised: not "", ".", "..", absolute or under "../"), instruction a
             non-empty string. Optional with defaults: contextSlice [] (empty means
             "no context, instruction only" — never the whole project), acceptance
             null, model null, maxTokens null, reasoning null, variants 1, dependsOn [].
@@ -49,6 +51,12 @@ System:
             - given: '{"customId":"a","intent":"generate","targets":["src/a.ts","./src/a.ts"],"instruction":"x"}'
               when: "validated"
               then: "one fault: targets repeat src/a.ts after normalisation"
+            - given: '{"customId":"lint.r2","intent":"generate","targets":["src/a.ts"],"instruction":"x"}'
+              when: "validated"
+              then: "one fault: customId 'lint.r2' ends in .r<n>, the suffix of a retry"
+            - given: '{"customId":"a","intent":"patch","targets":[".."],"contextSlice":["..","docs/x.md"],"instruction":"x"}'
+              when: "validated"
+              then: "two faults, in key order: targets '..' is not repo-relative; contextSlice '..' is not repo-relative"
         - name: Load Deck
           description: Reads a deck file (a JSON array of cards) into a Deck.
           behavior: >
@@ -325,8 +333,10 @@ System:
           description: Executes the card's acceptance command from the repo root.
           behavior: >
             runAcceptance(command, root, {env, timeoutMs}) spawns /bin/sh -c with cwd =
-            root, env = the given env with NO_COLOR=1 and CI=1 laid over it (nothing
-            else; the caller passes what it wants inherited), detached in its own
+            root, env = the given env minus every key whose upper-cased name starts with
+            MORPH_PROCESSOR_ or ends in _KEY or _TOKEN (no key reaches a model-written test),
+            with NO_COLOR=1 and CI=1 laid over it (nothing else; the caller's object is not
+            changed), detached in its own
             process group; stdout and stderr merged in write order. timeoutMs
             defaults to 300000: on expiry the whole process group is killed, so no
             child outlives the call, and the result is exit null, timedOut true, the
@@ -351,6 +361,9 @@ System:
               when: "run"
               then: 'exit 0, timedOut false, log exactly the 3154 chars of the clipped fixture: first 1500 chars, "\n[... 3403 chars clipped; diagnosis lines kept:]\n", the three lines " FAIL  tests/a.test.ts > adds..", "AssertionError: expected 3 to be 4", "Error: boom at src/a.ts:7......", "[...]\n", last 1500 chars'
               ref: "tests/fixtures/acceptance/longLog.txt (input) and tests/fixtures/acceptance/longLogClipped.txt (the log)"
+            - given: 'env {PATH: "/usr/bin:/bin", MORPH_PROCESSOR_x_API_KEY: "k1", MORPH_PROCESSOR_x_MODEL: "m/x", OPENROUTER_API_KEY: "k2", GH_TOKEN: "t3", KEYBOARD: "us", TOKENS_LEFT: "7"}; command `env`'
+              when: "run"
+              then: 'exit 0; the log has the lines KEYBOARD=us, TOKENS_LEFT=7, PATH=/usr/bin:/bin, NO_COLOR=1, CI=1 and holds none of "MORPH_PROCESSOR_", "k1", "m/x", "k2", "t3"'
         - name: Verify Card
           description: Best-of-N over the parsed variants.
           behavior: >
@@ -395,7 +408,9 @@ System:
             whose lines differ from before (a missing or null before is an absent
             file), "--- a/<p>" (or "--- /dev/null" when absent) and "+++ b/<p>", then
             hunks of a minimal line diff with 3 lines of context, "@@ -l,n +l,n @@"
-            with both counts always printed; changes 6 or fewer unchanged lines apart
+            with both counts always printed (when before's and after's line counts multiply
+            to more than 16000000, the one line "... [diff skipped: <before lines> -> <after
+            lines> lines] ...\n" instead of hunks: no LCS table is built); changes 6 or fewer unchanged lines apart
             share one hunk. Lines are split on \n, a final \n ends the last line. No
             change at all gives "". Each file's section (its two header lines and its
             hunks) is clipped on its own, and the sections are concatenated in key
@@ -423,6 +438,12 @@ System:
               when: "diffed"
               then: 'exactly 11900 chars: two sections of 5950 chars, each clipped on its own; each holds its 3 header lines, "+export const v000 = 0;\n" … "+export const v115 = 115;\n", "... [4420 characters elided] ...\n" and "+export const v286 = 286;\n" … "+export const v399 = 399;\n"; the second starts at char 5950 with "--- /dev/null\n+++ b/src/b.ts\n" (the tail of src/a.ts is kept)'
               ref: "tests/fixtures/acceptance/bigAfter.txt (the after content of both)"
+            - given: 'before {big.txt: the 4001 lines "old 0" … "old 4000"}; after {big.txt: the 4000 lines "new 0" … "new 3999"}'
+              when: "diffed"
+              then: '"--- a/big.txt\n+++ b/big.txt\n... [diff skipped: 4001 -> 4000 lines] ...\n" (4001 × 4000 > 16000000)'
+            - given: 'before {src/c.ts: the 4000 lines "c 0" … "c 3999"}; after the same with the last line "C 3999"'
+              when: "diffed"
+              then: '"--- a/src/c.ts\n+++ b/src/c.ts\n@@ -3997,4 +3997,4 @@\n c 3996\n c 3997\n c 3998\n-c 3999\n+C 3999\n" (4000 × 4000 is not over the cap)'
       dataObjects:
         - name: Target Snapshot
           description: The bytes of a card's targets before any variant is written.
@@ -766,8 +787,8 @@ System:
         The run: src/runloop/*.ts. Resolves runnable cards per generation, compiles,
         sends, verifies, retries with the diagnosis, records outcomes and returns the Run
         Report; it fires an injected commit hook per accepted card and writes and commits
-        nothing itself. The clock and the processor transport are injected, so a test
-        waits on no timer and opens no socket.
+        nothing itself. Clock and transport are injected: a test waits on no timer and
+        opens no socket.
       language: typescript
       guardrails: [Frozen Tree During Run]
       functions:
@@ -802,52 +823,45 @@ System:
           description: compile → send → parse → verify per card; a compile fault or stale inputs discard the answer; accepted cards fire the commit hook.
           behavior: >
             processGeneration(cards, deps, root) compiles every card with compileCard,
-            keeping each card's input digest; sends all variants of all cards in ONE
-            sendGeneration(deps.config, requests, deps.transport) call and slices answers and
-            usage back by request index; then verifies each card in input order.
-            Per card: a compile fault → {status: "failed", reason "compile: <first fault
-            message>", acceptanceLog = the fault messages joined by "\n"}; else recompute
-            the digest (captureInputs) and compareCaptures against the compile digest — a
-            non-empty change → {status: "failed", reason "stale inputs", acceptanceLog
-            "stale inputs: <changed paths, comma+space joined>"} and no acceptance is run;
-            else build one VariantAnswer per variant (variant id "<customId>.v<n>"; a
-            null-text answer becomes {corrupt: the answer's error ?? "no text returned"},
-            else parseAnswer(text, targets)) and call verifyCard with timeoutMs =
-            deps.acceptanceTimeoutMs ?? DEFAULT_TIMEOUT_MS (300000), never deps.config.timeoutMs.
-            Accepted → {status:
-            "written", winningVariant = the accepted variant id, acceptanceLog = the
-            winner's log, earlierFailures = the logs of the rejected variants tried before
-            it, commit = the sha from deps.commit(customId, targets), diffstat from the
-            hook}; no variant accepted → {status: "failed", reason "acceptance failed",
-            acceptanceLog = the last variant's log, earlierFailures = the earlier variants'
-            logs, commit null, diffstat null}. attempts is 1 for every outcome of one
-            round. Returns {outcomes, usage, requests, retryContexts}: usage is the Usage
-            of every request sent; requests is one Request Usage per request sent, in send
-            order ({customId: the request id, model: the request's model ?? deps.config.model,
-            provider, generationId, inputTokens, outputTokens, cost from its Usage,
-            finishReason and error from its Answer, then batchId = the send result's
+            keeping each input digest; sends all variants of all cards in ONE
+            sendGeneration(deps.config, requests, deps.transport) call, answers and usage
+            sliced back by request index; then verifies each card in input order. A compile
+            fault → {status "failed", reason "compile: <first fault message>", acceptanceLog
+            the fault messages joined by "\n"}; else captureInputs again and compareCaptures
+            with the compile digest — a change → {status "failed", reason "stale inputs",
+            acceptanceLog "stale inputs: <changed paths, ", "-joined>"}, no acceptance run;
+            else one VariantAnswer per variant (id "<customId>.v<n>"; a null text →
+            {corrupt: the answer's error ?? "no text returned"}, else parseAnswer(text,
+            targets)) and verifyCard with timeoutMs = deps.acceptanceTimeoutMs ??
+            DEFAULT_TIMEOUT_MS (300000), never deps.config.timeoutMs. Accepted → {status
+            "written", winningVariant the accepted id, acceptanceLog its log, earlierFailures
+            the logs of the variants tried before it, commit and diffstat from
+            deps.commit(customId, targets)}; none → {status "failed", reason "acceptance
+            failed", acceptanceLog the last variant's log, earlierFailures the earlier ones,
+            commit null, diffstat null}. attempts is 1 in one round. Returns {outcomes, usage,
+            requests, retryContexts}: usage of every request sent; requests one Request Usage
+            per request sent, in send order ({customId: the request id, model: the request's
+            ?? deps.config.model, provider, generationId, inputTokens, outputTokens, cost from
+            its Usage, finishReason and error from its Answer, then batchId = the send result's
             batch.batchId on a row whose customId is in batch.customIds, no key otherwise});
-            retryContexts holds one Retry Context
-            per FAILED outcome, keyed by its customId, in outcome order, and nothing for a
-            written card. A compile fault or stale inputs → {acceptanceOutput: the outcome's
-            acceptanceLog, previousDiff: null}. A rejected card → of the variants whose
-            acceptance ran (the verify result's diff is not null), the one that got FURTHEST
-            gives {acceptanceOutput: its log, previousDiff: its diff, "" when the attempt
-            changed nothing}: furthest = the greatest stageCount(log), a tie → the later
-            variant; stageCount(log) (exported) is the number of lines of the log, split on
-            "\n", that begin with "== " (the stage headers the acceptance prints: == tsc, ==
-            probe, …). When no variant ran (every answer corrupt or truncated) →
-            {acceptanceOutput: the last result's log, previousDiff: null}; the outcome's
-            acceptanceLog and earlierFailures stay as above. Every variant sent gets one
-            Variant Record, given to deps.onVariant when it is set (optional; without it nothing
-            changes), after its card is decided (an accepted card's commit hook first), in card
-            order then variant order: {request: the Request as sent, text, finishReason, error
-            (its Answer's), verdict, stages, lastStage}; verdict "stale" for every variant of a
-            stale card, else "corrupt" or "truncated" by its parsed answer, else "untried" when
-            Verify Card stopped before it, "accepted" for the winner, "rejected" otherwise. For
-            accepted and rejected, stages = stageCount(its log) and lastStage(its log) (exported:
-            the text after "== " of the log's last stage header, null when none); else 0 and
-            null. A card with a compile fault sends nothing and gets no record.
+            retryContexts one Retry Context per FAILED outcome, keyed by customId, in outcome
+            order, none for a written card. Compile fault or stale → {acceptanceOutput: its
+            acceptanceLog, previousDiff: null}. Rejected → of the variants whose acceptance
+            ran (diff not null), the FURTHEST gives {acceptanceOutput: its log, previousDiff:
+            its diff, "" when it changed nothing}: the greatest stageCount(log), a tie → the
+            later; stageCount(log) (exported) counts the log's lines (split on "\n") that
+            begin with "== " (the stage headers: == tsc, == probe, …). No variant ran (all
+            corrupt or truncated) → {acceptanceOutput: the last result's log, previousDiff:
+            null}; the outcome's acceptanceLog and earlierFailures as above. Each variant sent
+            gets one Variant Record for deps.onVariant when set (without it nothing changes),
+            after its card is decided (an accepted card's commit hook first), card order then
+            variant order: {request: as sent, text, finishReason, error (its Answer's),
+            verdict, stages, lastStage}; verdict "stale" for every variant of a stale card,
+            else "corrupt" or "truncated" by its parsed answer, else "untried" when Verify Card
+            stopped before it, "accepted" for the winner, "rejected" otherwise. Accepted and
+            rejected: stages = stageCount(its log), lastStage(its log) (exported: the text
+            after "== " of the last stage header, null when none); else 0 and null. A compile
+            fault sends nothing and gets no record.
           steps:
             - uses: compiler
             - uses: processor
@@ -876,7 +890,8 @@ System:
               then: 'a "written"; b and c "failed"; retryContexts exactly {b: {acceptanceOutput: TRUNCATED_RESPONSE_MESSAGE, previousDiff: null}, c: {acceptanceOutput: "contextSlice ''docs/missing.md'' does not exist", previousDiff: null}} (no entry for a)'
             - given: 'a stub config (model "stub"); cards [a → out/a.ts with model null, b → out/b.ts with model "glm-x"], variants 1, both accepted'
               when: "processed"
-              then: 'requests [{customId: "a.v1", model: "stub", provider: "stub", generationId: "stub-a.v1", inputTokens: 0, outputTokens: 0, cost: 0, finishReason: "stop", error: null}, {customId: "b.v1", model: "glm-x", provider: "stub", generationId: "stub-b.v1", inputTokens: 0, outputTokens: 0, cost: 0, finishReason: "stop", error: null}]; retryContexts {}'
+              ref: "tests/fixtures/runloop/stubRows.json"
+              then: 'requests = the fixture''s two rows (a.v1, b.v1) with b.v1''s model "glm-x"; retryContexts {}'
             - given: 'a stub config; out/a.ts holds ''export const x = "ONE";\n''; card a → out/a.ts, variants 1, acceptance ''grep -q PASS out/a.ts || { echo "red: $(cat out/a.ts)"; exit 1; }''; a.v1.md a fenced ts block holding ''export const x = "ONE";\n'' (the file unchanged)'
               when: "processed"
               then: 'outcome a status "failed", acceptanceLog ''red: export const x = "ONE";\n''; retryContexts {a: {acceptanceOutput: ''red: export const x = "ONE";\n'', previousDiff: ""}} (the acceptance ran on an attempt that changed nothing: the empty diff, not null)'
@@ -885,10 +900,10 @@ System:
               then: 'outcome a status "failed", acceptanceLog "== tsc\nred: two\n", earlierFailures ["== tsc\n== probe\nred: one\n"]; retryContexts {a: {acceptanceOutput: "== tsc\n== probe\nred: one\n", previousDiff: ''--- a/out/a.ts\n+++ b/out/a.ts\n@@ -1,1 +1,1 @@\n-export const x = "OLD";\n+export const x = "ONE";\n''}} (v1 reached 2 stages, v2 1: the furthest, not the last); stageCount of the two logs 2 and 1, of "" 0, of "a == b\n" 0'
             - given: 'a stub config whose timeoutMs (the processor''s HTTP timeout) is 100; deps without acceptanceTimeoutMs; card a → out/a.ts, acceptance "sleep 1; grep -q PASS out/a.ts"; a.v1.md a fenced ts block holding ''export const x = "PASS";\n'''
               when: "processed"
-              then: 'outcome a status "written", winningVariant "a.v1" — the acceptance ran under its own default of 300000 ms, not the config''s 100 ms'
+              then: 'a "written", winningVariant "a.v1" — the acceptance ran under its own default of 300000 ms, not the config''s 100 ms'
             - given: 'a stub config with timeoutMs 600000 and deps.acceptanceTimeoutMs 200; card a → out/a.ts, acceptance "sleep 30"; a.v1.md a fenced ts block'
               when: "processed"
-              then: 'outcome a status "failed", reason "acceptance failed", its acceptanceLog holding "acceptance timed out after 200 ms"; the commit hook did not fire'
+              then: 'a "failed", reason "acceptance failed", its acceptanceLog holding "acceptance timed out after 200 ms"; the commit hook did not fire'
             - given: 'a stub config; out/a.ts holds ''export const x = "OLD";\n''; card a → out/a.ts, variants 2, acceptance "echo ''== tsc''; echo ''== probe''; grep -q TWO out/a.ts"; a.v1.md a fenced ts block holding ''export const x = "ONE";\n'', a.v2.md one holding ''export const x = "TWO";\n''; deps.onVariant pushes each record to a list'
               when: "processed"
               then: 'a "written", winningVariant "a.v2"; the list [{request: compileCard(card a, root).requests[0] (customId "a.v1"), text: a.v1.md''s text, finishReason "stop", error: null, verdict: "rejected", stages: 2, lastStage: "probe"}, the same for a.v2 (requests[1], a.v2.md''s text) with verdict "accepted"]; lastStage of "== tsc\n== probe\nred\n" "probe", of "" null, of "a == b\n== eslint failed (see above)\n" "eslint failed (see above)"'
@@ -900,7 +915,7 @@ System:
               when: "processed"
               then: 'clamp-value and sign-of "written", pin "failed"; requests exactly the fixture''s three rows: clamp-value.v1 and sign-of.v1 with cost 0.0003029253 / 0.0002774747, provider "DeepInfra", batchId "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W" last; pin.v1 model "other/m", error "batch runs one model: pin.v1 pins other/m, the batch is z-ai/glm-5.3:batch", no batchId key'
         - name: Build Retry
-          description: The retry card <base>.r<n> carrying the acceptance command, its output and the previous attempt diff, or the word that the answer was discarded unread; at most 2 retries per card; Run Deck caps the retry batches of each generation.
+          description: The retry card <base>.r<n> carrying the acceptance command, its output and the previous diff, or word that the answer was discarded unread.
           behavior: >
             buildRetry(card, attempt, acceptanceOutput, previousDiff) returns a NEW Card.
             attempt must be 1 or 2, else it throws Error "buildRetry: attempt must be 1 or
@@ -943,37 +958,41 @@ System:
               when: "built"
               then: 'instruction is exactly "Write c.\n\n<acceptance_output>\nA previous attempt failed its acceptance check (`grep -q MARK src/c.ts`):\nred\n\n</acceptance_output>\nPlease fix the issues and produce the complete corrected file." (no diff block)'
         - name: Run Deck
-          description: Generations in order (layerGenerations), budget checked at each generation boundary (maxCards, deadline), retries budgeted per card (2) and capped per generation (maxRetryBatches), the Run Report produced at the end.
+          description: Generations in order, the budget at each boundary, retries per card (2) capped per generation, a carried-over retry before its dependants, a fault caught, the Run Report.
           behavior: >
             runDeck(input, deps) runs input.deck generation by generation in the order of
-            layerGenerations(input.deck). At each generation boundary it checks the budget:
-            deps.now() >= input.budget.deadline → every not-yet-done card of this and the
-            later generations becomes {status: "budget-exceeded", reason "deadline"};
-            cardsProcessed >= input.budget.maxCards → reason "maxCards <maxCards>". Otherwise
-            it resolves the runnable cards (resolveRunnable with the statuses so far),
-            records the skipped outcomes, runs processGeneration on the runnable cards,
-            accumulates their usage and request rows, keeps the Retry Context of every failed
-            card (by its original id; a later round's context replaces an earlier one), and
-            adds the runnable count to cardsProcessed. A card that failed is retried: the
-            budget is per card — every card may be retried 2 times, in whichever generation it
-            runs — and input.budget.maxRetryBatches caps the retry batches of ONE generation:
-            retryBatches starts at 0 at every generation, and while some failed card has been
-            retried fewer than 2 times and retryBatches < maxRetryBatches, a retry batch runs
-            (retryBatches += 1) for all such cards (a card of an earlier generation whose
-            retries the cap stopped is included), unless deps.now() >= the deadline, checked before
-            each retry batch: then each such card becomes its outcome with status
-            "budget-exceeded", reason "deadline", and no retry batch runs. A batch: buildRetry(original card, retryNumber, the card's latest
-            Retry Context acceptanceOutput, its previousDiff) for each, processGeneration
-            on the retries, and a retry that is written updates the card's outcome (status
-            "written", its commit, attempts = the retry number + 1) while every attempt's
-            log is appended to earlierFailures. At the end it builds the Run Report: runId,
+            layerGenerations(input.deck). At each generation boundary: deps.now() >=
+            input.budget.deadline → every not-yet-done card of this and later generations
+            becomes {status "budget-exceeded", reason "deadline"}; cardsProcessed >=
+            input.budget.maxCards → reason "maxCards <maxCards>". Otherwise, when a
+            not-yet-done card of the generation has a dependsOn id whose outcome is "failed"
+            with retries left, the retry loop below runs FIRST (same cap, same deadline check),
+            so a dependency written by a carried-over retry unblocks it; then it resolves the
+            runnable cards (resolveRunnable, the statuses so far), records the skipped,
+            runs processGeneration on the runnable, accumulates usage and request rows, keeps
+            each failed card's Retry Context (by original id; a later round's replaces an
+            earlier one), adds the runnable count to cardsProcessed. Retries: 2 per card, in
+            whichever generation it runs; input.budget.maxRetryBatches caps the retry batches
+            of ONE generation (retryBatches starts at 0 at each): while some failed card has
+            been retried fewer than 2 times and retryBatches < maxRetryBatches, a retry batch
+            runs (retryBatches += 1) for all such cards (an earlier generation's included),
+            unless deps.now() >= the deadline, checked before each batch: then each such card
+            becomes its outcome with status "budget-exceeded", reason "deadline", and no batch
+            runs. A batch: buildRetry(original card, retryNumber, the latest Retry Context's
+            acceptanceOutput, its previousDiff) each, processGeneration on them; a written
+            retry updates the card's outcome (status "written", its commit, attempts = retry
+            number + 1), every attempt's log appended to earlierFailures. The Run Report: runId,
             completedAt = deps.now(), branch = input.branch, processor = deps.config.id,
-            generations = the generation count, outcomes in deck order, usageTotals
-            {inputTokens, outputTokens summed; cost the sum of the reported costs or null
-            when none was reported; requests = the number of usage rows}, requests = every
-            Request Usage row of every processGeneration call of the run, in send order.
-            Returns {report, outcomes}. deps reach every processGeneration call as given (so
-            deps.onVariant also sees the retries' variants). It writes and commits nothing.
+            generations = the count, outcomes in deck order, usageTotals {inputTokens,
+            outputTokens summed; cost the sum of reported costs, null when none; requests = the
+            usage row count}, requests = every Request Usage row of the run in send order.
+            Returns {report, outcomes}. deps reach every processGeneration call as given
+            (onVariant sees the retries). It writes and commits nothing. It never rejects: a
+            value thrown inside the run (the commit hook, an answer write) stops it; every card
+            with no outcome yet becomes {status "skipped", reason "fault", attempts 0,
+            winningVariant null, acceptanceLog "", earlierFailures [], commit null, diffstat
+            null} (the usage of the call in flight is lost) and the report's last key is fault
+            = the Error's message (String(value) otherwise); no fault, no key.
           steps:
             - calls: Resolve Runnable
             - calls: Process Generation
@@ -991,11 +1010,13 @@ System:
               when: "run"
               then: 'a "written"; b "budget-exceeded", reason "deadline"; report.generations 2'
             - given: 'an openrouter config {id "glm", model "z-ai/glm-5.3", apiKey "k", baseUrl "https://openrouter.ai/api/v1", concurrency 1, maxRetries 0} over a fakeFetch whose route "https://openrouter.ai/api/v1/chat/completions" always answers {id: "gen-1", provider: "Novita", choices: [{message: {role: "assistant", content: a fenced ts block holding ''export const x = "MARK";\n''}, finish_reason: "stop"}], usage: {prompt_tokens: 100, completion_tokens: 20, cost: 0.001}}; a one-card deck a → out/a.ts (absent), variants 1, acceptance ''if [ -f seen ]; then grep -q MARK out/a.ts; else touch seen; echo first-red; exit 1; fi''; budget maxRetryBatches 1'
+              ref: "tests/fixtures/runloop/glmRows.json"
               when: "run"
-              then: 'a "written", attempts 2, earlierFailures ["first-red\n"]; two fetch calls; the last message of the second call''s body contains "A previous attempt failed its acceptance check (`if [ -f seen ]; then grep -q MARK out/a.ts; else touch seen; echo first-red; exit 1; fi`):\nfirst-red\n\n</acceptance_output>" and "<previous_attempt_diff>\nYour previous attempt changed the file like this (unified diff):\n--- /dev/null\n+++ b/out/a.ts\n@@ -0,0 +1,1 @@\n+export const x = \"MARK\";\n\n</previous_attempt_diff>", the first call''s holds no "<acceptance_output>"; report.requests [{customId: "a.v1", model: "z-ai/glm-5.3", provider: "Novita", generationId: "gen-1", inputTokens: 100, outputTokens: 20, cost: 0.001, finishReason: "stop", error: null}, the same row with customId "a.r1.v1"]; usageTotals {inputTokens: 200, outputTokens: 40, cost: 0.002, requests: 2}'
+              then: 'a "written", attempts 2, earlierFailures ["first-red\n"]; two fetch calls; the last message of the second call''s body contains "A previous attempt failed its acceptance check (`if [ -f seen ]; then grep -q MARK out/a.ts; else touch seen; echo first-red; exit 1; fi`):\nfirst-red\n\n</acceptance_output>" and "<previous_attempt_diff>\nYour previous attempt changed the file like this (unified diff):\n--- /dev/null\n+++ b/out/a.ts\n@@ -0,0 +1,1 @@\n+export const x = \"MARK\";\n\n</previous_attempt_diff>", the first call''s holds no "<acceptance_output>"; report.requests exactly glmRows.json (a.v1, a.r1.v1); usageTotals {inputTokens: 200, outputTokens: 40, cost: 0.002, requests: 2}'
             - given: 'a two-generation deck [a, then b dependsOn a] on the stub, both accepted at once'
               when: "run"
-              then: 'report.requests [{customId: "a.v1", model: "stub", provider: "stub", generationId: "stub-a.v1", inputTokens: 0, outputTokens: 0, cost: 0, finishReason: "stop", error: null}, the same with customId "b.v1" and generationId "stub-b.v1"] (rows of both generations, in send order)'
+              ref: "tests/fixtures/runloop/stubRows.json"
+              then: 'report.requests exactly the fixture (a.v1 then b.v1: both generations, in send order)'
             - given: 'a two-generation deck on the stub [a → a.ts, then b → b.ts dependsOn a]; each acceptance fails its first attempt and passes the next through its own marker file (a: "if [ ! -f mark-a ]; then touch mark-a; exit 1; fi\ngrep -q MARK_A a.ts", b the same with mark-b and MARK_B); answers a.md, a.r1.md, b.md, b.r1.md; budget maxRetryBatches 1'
               when: "run"
               then: 'a and b both "written", attempts 2 each, winningVariant "a.r1.v1" / "b.r1.v1", earlierFailures length 1 each; usageTotals.requests 4; the commit hook fired with "a.r1" then "b.r1" (it gets the retry card''s id); the batch cap is per generation: b''s generation gets its own retry'
@@ -1005,13 +1026,19 @@ System:
             - given: 'a two-generation deck on the stub [c → c.ts acceptance "exit 1", then d → d.ts dependsOn c]; answers c.md, c.r1.md, d.md; budget maxRetryBatches 2, deadline 1000; deps.now returns 0 on its first call, 5000 after'
               when: "run"
               then: 'c "budget-exceeded", reason "deadline", attempts 1 (the deadline falls inside generation 0: no retry batch); d "budget-exceeded", reason "deadline"; usageTotals.requests 1; the commit hook never fired'
+            - given: 'a deck on the stub [a, then b dependsOn a, then c dependsOn b], every answer accepted; the commit hook throws new Error("index.lock: File exists") for b'
+              when: "run"
+              then: 'resolves; a "written" (its commit); b and c "skipped", reason "fault", attempts 0; report.fault "index.lock: File exists", the last key; generations 3; usageTotals.requests 1'
+            - given: 'a deck on the stub [a → a.ts "grep -q MARK_A a.ts", then b → b.ts dependsOn a "grep -q MARK_B b.ts"]; answers a.md, a.r1.md without the mark, a.r2.md and b.md with it; maxRetryBatches 1'
+              when: "run"
+              then: 'a "written", attempts 3, winningVariant "a.r2.v1"; b "written", attempts 1; requests in send order a.v1, a.r1.v1, a.r2.v1, b.v1 (a.r2 ran before b resolved); the hook fired a.r2 then b; no fault key'
       dataObjects:
         - name: Card Outcome
           description: How one card ended in a run.
           schema: "{ customId: string, status: 'written'|'failed'|'skipped'|'budget-exceeded', reason: string | null, attempts: number, winningVariant: string | null, acceptanceLog: string, earlierFailures: string[], commit: string | null, diffstat: { files: number, insertions: number, deletions: number } | null }"
         - name: Run Report
           description: The summary of one run (its schema and archive layout are runloop's; the file write and commit are P6 git's).
-          schema: "{ runId: string, completedAt: number, branch: string, processor: string, generations: number, outcomes: CardOutcome[], usageTotals: { inputTokens: number, outputTokens: number, cost: number | null, requests: number }, requests?: RequestUsage[] } — requests is always set by Run Deck; it is optional in the type so a report literal built elsewhere stays valid"
+          schema: "{ runId: string, completedAt: number, branch: string, processor: string, generations: number, outcomes: CardOutcome[], usageTotals: { inputTokens: number, outputTokens: number, cost: number | null, requests: number }, requests?: RequestUsage[], fault?: string } — fault only when a thrown value stopped the run; requests is always set by Run Deck; it is optional in the type so a report literal built elsewhere stays valid"
         - name: Request Usage
           description: One request a run sent, as the processor answered it (one row per variant, retries included).
           schema: "{ customId: string, model: string, provider: string | null, generationId: string | null, inputTokens: number, outputTokens: number, cost: number | null, finishReason: string | null, error: string | null, batchId?: string }"
@@ -1093,7 +1120,8 @@ System:
         - name: Commit Paths
           description: Stages exactly the given paths and commits them with a subject and trailers; null when nothing changed.
           behavior: >
-            commitPaths(root, paths, subject, trailers, env): `git add -A -- <paths>`; `git diff
+            commitPaths(root, paths, subject, trailers, env, force = false): `git add -A --
+            <paths>` (`git add -A -f -- <paths>` when force); `git diff
             --cached --name-only -- <paths>` empty → null, no commit. Else `git commit -q -m
             <subject> -m <trailer block> -- <paths>`, the trailer block being one "<key>: <value>"
             line per trailer in the given order joined by "\n" (hooks run; nothing is bypassed),
@@ -1117,7 +1145,8 @@ System:
             Stages exactly the card's targets; subject 'morph <id>: <targets>'; trailers Morph-Card, Morph-Model, Morph-Variant (if given), Morph-Acceptance-Exit; returns sha and diffstat, or null when nothing changed. makeCommitHook binds it into runloop's commit hook.
           behavior: >
             commitCard(root, {customId, targets, model, variant, acceptanceExit}, env) is
-            Commit Paths over targets with subject "morph <customId>: <targets joined by ",
+            Commit Paths over targets with force true (a target under a .gitignore'd path is
+            committed: the card named it, so its hook never throws on it) and subject "morph <customId>: <targets joined by ",
             ">" and trailers Morph-Card <customId>, Morph-Model <model>, Morph-Variant
             <variant> only when variant is not null, Morph-Acceptance-Exit <acceptanceExit>, in
             that order. makeCommitHook(root, model, env) returns (customId, targets) =>
@@ -1137,6 +1166,9 @@ System:
             - given: 'a fresh repo; hook = makeCommitHook(root, "stub", env); out/h.ts written "x\n"; then the hook called again with nothing changed'
               when: 'hook("h", ["out/h.ts"]), then hook("h", ["out/h.ts"])'
               then: 'first {commit: HEAD, diffstat {files: 1, insertions: 1, deletions: 0}} with the HEAD message "morph h: out/h.ts\n\nMorph-Card: h\nMorph-Model: stub\nMorph-Acceptance-Exit: 0"; second null and HEAD unchanged'
+            - given: 'a repo whose committed .gitignore holds "out/\n"; hook = makeCommitHook(root, "m2", env); out/g.ts written "y\n"'
+              when: 'hook("g", ["out/g.ts"])'
+              then: '{commit: HEAD, diffstat {files: 1, insertions: 1, deletions: 0}}, no throw; `git show --name-only --format= HEAD` reads "out/g.ts"; the message "morph g: out/g.ts\n\nMorph-Card: g\nMorph-Model: m2\nMorph-Acceptance-Exit: 0"'
         - name: Archive Run
           description: Writes .morph/runs/<runId>/ (deck.json, report.json, answers/ committed with Morph-Run trailers; requests/ ignored); append-only.
           behavior: >
@@ -1229,8 +1261,8 @@ System:
             --max-cards, --max-retry-batches, --slice-cap-bytes, --spec, --component, --map, --out,
             --checks take the next token whatever it is; any other flag (--x=y too) → "unknown
             flag: <t>"; a value flag last → "flag <t> needs a value"; a flag twice → "flag <t>
-            given twice", but --component repeats, its values in argv order (the first error in
-            argv order wins). Other tokens are words, giving the command: none → "no command
+            given twice", but --component repeats, its values in argv order (the first error by
+            argv wins). Other tokens are words, giving the command: none → "no command
             (commands: deck check, plan, run)"; "run"; "plan"; "deck" "check"; a first word
             scout, primer, review or report → NotYetError "command <word> is not available yet";
             "deck" add|status|reset|clear → NotYetError "command deck <w> is not available yet";
@@ -1249,12 +1281,12 @@ System:
             '<v>')"), --max-retry-batches ≥ 0 ("must be a non-negative integer"). A failure is
             {ok: false, error: {error: {code: 4, kind: "UsageError" | "NotYetError", message}}}.
             Defaults: root ".", pretty false, sliceCapBytes 500000, runId null, deadlineSeconds
-            2400, maxCards null (= the deck's card count), maxRetryBatches 2.
+            2400, maxCards null (the card count), maxRetryBatches 2.
           steps:
             - produces: Command
           examples:
             - given: 'argv ["deck", "check", "--deck", "d.json"]'
-              ref: "tests/fixtures/cli/parse.json (example number → the whole result)"
+              ref: "tests/fixtures/cli/parse.json (example number → the whole result; a list of them for several argv, in order)"
               when: "parsed"
               then: 'parse.json["1"]'
             - given: 'argv ["--pretty", "run", "--deck", "d.json", "--processor", "s", "--root", "/r", "--run-id", "r1", "--deadline", "60", "--max-cards", "3", "--max-retry-batches", "0"]'
@@ -1262,22 +1294,22 @@ System:
               then: 'parse.json["2"]'
             - given: 'argv ["frobnicate"]'
               when: "parsed"
-              then: '{ok: false, error: {error: {code: 4, kind: "UsageError", message: "unknown command: frobnicate"}}}'
+              then: 'parse.json["3"]'
             - given: 'argv ["scout"], then ["deck", "status"]'
               when: "parsed"
-              then: 'NotYetError (code 4) "command scout is not available yet", then NotYetError "command deck status is not available yet"'
+              then: 'parse.json["4"]'
             - given: 'argv ["run", "--deck", "d.json"]'
               when: "parsed"
-              then: 'UsageError "missing --processor"'
+              then: 'parse.json["5"]'
             - given: 'argv ["deck", "check", "--deck", "d.json", "--processor", "s"]'
               when: "parsed"
-              then: 'UsageError "flag --processor does not apply to deck check"'
+              then: 'parse.json["6"]'
             - given: 'argv ["run", "--deck", "d", "--processor", "s", "--deadline", "0"]'
               when: "parsed"
-              then: 'UsageError "--deadline must be a positive integer (got ''0'')"'
+              then: 'parse.json["7"]'
             - given: 'argv ["--root"], then []'
               when: "parsed"
-              then: 'UsageError "flag --root needs a value", then UsageError "no command (commands: deck check, plan, run)"'
+              then: 'parse.json["8"]'
             - given: 'argv ["plan", "--spec", "c.yaml", "--component", "a", "--map", "m.json", "--component", "b", "--judge", "--out", "d.json", "--pretty"]'
               when: "parsed"
               then: 'parse.json["9"]'
@@ -1286,20 +1318,19 @@ System:
               then: 'parse.json["10"]'
             - given: 'argv ["plan", "--component", "a"]; then ["plan", "--spec", "c", "--judge", "--judge"]; then ["run", "--deck", "d", "--processor", "s", "--judge"]'
               when: "parsed"
-              then: 'UsageError "missing --spec"; then "flag --judge given twice"; then "flag --judge does not apply to run"'
+              then: 'parse.json["11"]'
             - given: 'argv ["plan", "--spec", "c.yaml", "--checks", "decks/p1/checks.json"]'
               when: "parsed"
               then: 'parse.json["12"]'
             - given: 'argv ["run", "--deck", "d", "--processor", "s", "--checks", "x"]; ["plan", "--checks"]; ["plan", "--checks", "a", "--checks", "b"]'
               when: "parsed"
-              then: 'UsageError "flag --checks does not apply to run"; "flag --checks needs a value"; "flag --checks given twice"'
+              then: 'parse.json["13"]'
         - name: Emit Document
           description: One JSON document + newline on stdout; --pretty indents by 2.
           behavior: >
             renderDocument(doc, pretty) = JSON.stringify(doc, null, 2 when pretty) + "\n".
             errorDocument(code, kind, message) = {error: {code, kind, message}}, keys in that
-            order. main writes exactly one document to stdout per invocation; the log goes to
-            stderr.
+            order (main writes one per invocation to stdout; the log goes to stderr).
           steps:
             - produces: Error Document
           examples:
@@ -1335,10 +1366,10 @@ System:
           description: The deck file a command names, under the root, by Load Deck.
           behavior: >
             readDeckFile(root, deckPath): abs = path.resolve(root, deckPath). Not a regular file
-            → {ok: false, result: {code: 4, document: errorDocument(4, "UsageError", "deck file
-            not found: <deckPath as given>")}}. Else Load Deck on its UTF-8 text; faults → {ok:
-            false, result: {code: 2, document: errorDocument(2, "DeckError", "invalid deck: " +
-            each fault "<key>: <message>", "; "-joined)}}. Else {ok: true, deck}.
+            → {ok: false, result: {code 4, document errorDocument(4, "UsageError", "deck file not
+            found: <deckPath as given>")}}. Else Load Deck on its UTF-8 text; faults → {ok:
+            false, result: {code 2, document errorDocument(2, "DeckError", "invalid deck: " +
+            each "<key>: <message>", "; "-joined)}}. Else {ok: true, deck}.
           steps:
             - reads: Deck
             - produces: Command Result
@@ -1355,14 +1386,14 @@ System:
               when: "read"
               then: 'code 2, kind "DeckError", message "invalid deck: dependsOn: dependsOn cycle a -> b -> a"; then "invalid deck: cards[2].customId: duplicate customId b"'
         - name: Deck Check
-          description: "`morph deck check`: generations, hazards, slice weights; exit 2 on an error hazard."
+          description: "`morph deck check`: generations, hazards, slice weights."
           behavior: >
             deckCheckCommand(root, deckPath, sliceCapBytes): Read Deck File (its failure is the
             result); weighing = Weigh Slices(deck, root, sliceCapBytes); hazards = Find
             Hazards(deck), then the weighing's; document {deck: deckPath as given, cards: the
             count, generations: Layer Generations(deck), errors and warnings: the hazards of
-            severity error / warning counted, hazards, weights: the weighing's}, keys in that
-            order; code 2 when errors > 0, else 0.
+            each severity counted, hazards, weights: the weighing's}, keys in that order;
+            code 2 when errors > 0, else 0.
           steps:
             - calls: Read Deck File
             - uses: cards
@@ -1386,21 +1417,23 @@ System:
             order. 1. readRegistry(deps.env); no config with id args.processor → 4 UsageError
             "processor <id> is not configured" + (": " + the messages of the faults keyed
             "MORPH_PROCESSOR_<id>_…", "; "-joined, when any). 2. Read Deck File (its failure is
-            the result). 3. Find Hazards errors → 2 RefusalError "deck has <n> hazard error(s): "
-            + each "<kind> <cards ","-joined>[ <path>]", "; "-joined. 4. start = deps.now() (its
-            only call here); runId = args.runId or mintRunId(start), start's UTC time as
-            "YYYYMMDD-HHMMSS". 5. Open Run Branch(root, runId, deps.env); a refusal → 2
-            RefusalError, its error. 6. Run Deck, input {root, runId, branch, deck, budget
-            {maxCards: args.maxCards or the card count, maxRetryBatches, deadline: start +
-            deadlineSeconds × 1000}}, deps {config, transport: {...(deps.transport or
-            realTransport(config.timeoutMs)), saveBatch: (record) => git's saveBatchRecord(root,
-            record)}, commit: makeCommitHook(root, config.model, deps.env), now: deps.now, env:
-            deps.env, onVariant: line = variantLine(record), keep {...record, line}, log given →
-            log(line)}. 7. Archive Run(root, {runId, deck, report, answers: the kept records},
-            deps.env). → {code: runExitCode(report, archive), document: {runId, branch, base,
-            report, archive}}. variantLine(r) (exported) = "morph run: <r.request.customId>
-            <verdict> stage <stages>[ <lastStage>] finish <finishReason, or none> chars <text
-            length, or none>\n". A thrown Error propagates. The checkout stays on the run branch.
+            the result); no cards → 2 RefusalError "deck has no cards". 3. Find Hazards errors
+            → 2 RefusalError "deck has <n> hazard error(s): " + each "<kind> <cards
+            ","-joined>[ <path>]", "; "-joined. 4. start = deps.now() (its only call here);
+            runId = args.runId or mintRunId(start) (UTC "YYYYMMDD-HHMMSS"). 5. Open Run
+            Branch(root, runId, deps.env); a refusal → 2 RefusalError, its error. 6. Run Deck,
+            input {root, runId, branch, deck, budget {maxCards: args.maxCards or the card
+            count, maxRetryBatches, deadline: start + deadlineSeconds × 1000}}, deps {config,
+            transport: {...(deps.transport or realTransport(config.timeoutMs)), saveBatch:
+            (record) => git's saveBatchRecord(root, record)}, commit: makeCommitHook(root,
+            config.model, deps.env), now: deps.now, env: deps.env, onVariant: line =
+            variantLine(record), keep {...record, line}, log given → log(line)}. 7. Archive
+            Run(root, {runId, deck, report, answers: the kept records}, deps.env). → {code: 3
+            when report.fault is set (the partial report archived), else runExitCode(report,
+            archive), document: {runId, branch, base, report, archive}}. variantLine(r)
+            (exported) = "morph run: <r.request.customId> <verdict> stage <stages>[
+            <lastStage>] finish <finishReason, or none> chars <text length, or none>\n". The
+            checkout stays on the run branch.
           steps:
             - uses: processor
             - calls: Read Deck File
@@ -1414,7 +1447,7 @@ System:
             - given: 'the same setup, one card a with acceptance "exit 1", maxRetryBatches 0'
               when: "run"
               then: 'code 1; outcome a "failed", reason "acceptance failed"; archive ok with the trailer Morph-Failed: 1; out/a.ts absent'
-            - given: 'the same setup, processor "nope"; then processor "bad" with MORPH_PROCESSOR_bad_TYPE "x" added to env'
+            - given: 'processor "nope"; then "bad" with MORPH_PROCESSOR_bad_TYPE "x" in env'
               when: "run"
               then: 'code 4 UsageError "processor nope is not configured"; then "processor bad is not configured: MORPH_PROCESSOR_bad_TYPE must be one of openrouter, stub (got ''x'')"; no morph/* branch'
             - given: 'the same setup with an untracked notes.txt in the repo'
@@ -1435,13 +1468,19 @@ System:
             - given: 'example 1 with MORPH_PROCESSOR_b_TYPE openrouter, _MODEL "acme/m:batch", _API_KEY "k", _ROUTE "batch", _TIMEOUT_MS "30000"; deps.transport answering 202 batchSubmittedLive.json, then 200 batchCompletedLive.json; cards clamp-value → out/clamp.ts, sign-of → out/sign.ts, "test -f <target>"; runId "r9"'
               ref: "tests/fixtures/processor/batchSubmittedLive.json, batchCompletedLive.json, tests/fixtures/cli/batch.r9.json (the record file's text)"
               when: "run"
-              then: 'code 0, both written; every report.requests row batchId "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W"; usageTotals.cost 0.0005804; .morph/batches/<that id>.json exactly batch.r9.json (processor "b", model "acme/m:batch", status "completed"); git status --porcelain exactly "?? .morph/batches/"'
+              then: 'code 0, both written; every report.requests row batchId "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W"; usageTotals.cost 0.0005804; .morph/batches/<that id>.json exactly batch.r9.json; git status --porcelain exactly "?? .morph/batches/"'
+            - given: 'example 1, runId "r10"; a .git/hooks/commit-msg (755) that prints "card commits refused" to stderr, exit 1, on a message starting "morph a:"'
+              when: "run"
+              then: 'code 3, the Run Document; report.fault "git commit failed (exit 1): card commits refused"; a, b "skipped", reason "fault"; archive {ok: true, dir: ".morph/runs/r10", commit: HEAD} (report.json with the fault, Morph-Skipped: 2), the only commit since base; HEAD on morph/r10'
+            - given: 'a deck file "[]"'
+              when: "run"
+              then: 'code 2 RefusalError "deck has no cards"; no morph/* branch; no .morph'
         - name: Plan Command
           description: "`morph plan --spec`: record and map cut by Plan Spec, the deck to --out; one Plan Document."
           behavior: >
             planCommand(root, args), in order. The spec (path.resolve(root, args.spec)) not a
-            regular file → 4 UsageError "spec file not found: <spec as given>"; a map given and
-            not a regular file → 4 UsageError "map file not found: <map as given>".
+            regular file → 4 UsageError "spec file not found: <spec as given>"; a given map not
+            a regular file → 4 UsageError "map file not found: <map as given>".
             loadContour(the spec's UTF-8 text, args.spec), then loadMap(the map's text, args.map)
             when given (else the empty map {version: 1, package: null, language: null, docs: [],
             groups: [], cards: [], extraCards: []}); an error → 2 DeckError, it. Plan Spec({record,
@@ -1453,8 +1492,8 @@ System:
             the map gives an acceptance (map card by customId ?? id, extra card by customId).
             args.out not null → the cards written to path.resolve(root, args.out) as
             JSON.stringify(cards, null, 2) + "\n", parents created. → {code: 0, document: {spec,
-            components, cards, generations, externalDependsOn, out: args.out}}. Nothing else is
-            written, nothing on an error.
+            components, cards, generations, externalDependsOn, out: args.out}}. Nothing else
+            written; nothing on an error.
           steps:
             - uses: contour
             - uses: planner
@@ -1520,8 +1559,8 @@ System:
           description: Routing, one document out, the log lines, the exit code; src/cli.ts wires the process.
           behavior: >
             main(argv, deps, io) → Promise<ExitCode>. Parse Command; a failure →
-            io.stdout(renderDocument(the error document, pretty = argv holds "--pretty")),
-            io.stderr("morph: <message>\n"), return 4. Else root = path.resolve(deps.cwd,
+            io.stdout(renderDocument(its error document, pretty = argv holds "--pretty")),
+            io.stderr("morph: <message>\n"), 4. Else root = path.resolve(deps.cwd,
             command.root); result = Deck Check, Plan Command or await Run Command (io.stderr
             its log) by command, in try/catch, a thrown value → classifyThrown. Then one
             io.stdout(renderDocument(result.document, command.pretty)), one io.stderr("morph
@@ -1568,7 +1607,7 @@ System:
           description: stdout of deck check.
           schema: "{ deck: string, cards: number, generations: string[][], errors: number, warnings: number, hazards: Hazard[], weights: SliceWeight[] }"
         - name: Plan Document
-          description: stdout of plan; the Plan plus the deck file written.
+          description: stdout of plan.
           schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]>, out: string | null }"
         - name: Plan Checks
           description: What Read Plan Checks returns.

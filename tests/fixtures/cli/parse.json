@@ -23,6 +23,90 @@
       "maxRetryBatches": 0
     }
   },
+  "3": {
+    "ok": false,
+    "error": {
+      "error": {
+        "code": 4,
+        "kind": "UsageError",
+        "message": "unknown command: frobnicate"
+      }
+    }
+  },
+  "4": [
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "NotYetError",
+          "message": "command scout is not available yet"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "NotYetError",
+          "message": "command deck status is not available yet"
+        }
+      }
+    }
+  ],
+  "5": {
+    "ok": false,
+    "error": {
+      "error": {
+        "code": 4,
+        "kind": "UsageError",
+        "message": "missing --processor"
+      }
+    }
+  },
+  "6": {
+    "ok": false,
+    "error": {
+      "error": {
+        "code": 4,
+        "kind": "UsageError",
+        "message": "flag --processor does not apply to deck check"
+      }
+    }
+  },
+  "7": {
+    "ok": false,
+    "error": {
+      "error": {
+        "code": 4,
+        "kind": "UsageError",
+        "message": "--deadline must be a positive integer (got '0')"
+      }
+    }
+  },
+  "8": [
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --root needs a value"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "no command (commands: deck check, plan, run)"
+        }
+      }
+    }
+  ],
   "9": {
     "ok": true,
     "command": {
@@ -52,6 +136,38 @@
       "out": null
     }
   },
+  "11": [
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --spec"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --judge given twice"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --judge does not apply to run"
+        }
+      }
+    }
+  ],
   "12": {
     "ok": true,
     "command": {
@@ -65,5 +181,37 @@
       "out": null,
       "checks": "decks/p1/checks.json"
     }
-  }
+  },
+  "13": [
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --checks does not apply to run"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --checks needs a value"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --checks given twice"
+        }
+      }
+    }
+  ]
 }

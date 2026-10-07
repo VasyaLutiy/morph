@@ -1,0 +1,131 @@
+{
+ "phase": "p11c",
+ "ownGit": true,
+ "cards": [
+  {
+   "id": "run-deck"
+  },
+  {
+   "id": "run-command"
+  },
+  {
+   "id": "commit-card"
+  },
+  {
+   "id": "run-acceptance"
+  },
+  {
+   "id": "card-model"
+  },
+  {
+   "id": "build-attempt-diff"
+  },
+  {
+   "id": "run-deck-judge",
+   "files": [
+    {
+     "file": "tests/runloop/deck.p11c.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Run Deck example 9",
+      "Run Deck example 10",
+      "index.lock: File exists",
+      "fault",
+      "a.r2.v1"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "run-command-judge",
+   "files": [
+    {
+     "file": "tests/cli/runCommand.p11c.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Run Command example 10",
+      "Run Command example 11",
+      "commit-msg",
+      "card commits refused",
+      "deck has no cards",
+      "Morph-Skipped"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "commit-card-judge",
+   "files": [
+    {
+     "file": "tests/git/commit.p11c.examples.test.ts",
+     "min": 1,
+     "max": 7,
+     "new": true,
+     "lits": [
+      "Commit Card example 4",
+      "makeCommitHook",
+      "out/g.ts",
+      "m2"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "run-acceptance-judge",
+   "files": [
+    {
+     "file": "tests/acceptance/run.p11c.examples.test.ts",
+     "min": 1,
+     "max": 7,
+     "new": true,
+     "lits": [
+      "Run Acceptance example 5",
+      "MORPH_PROCESSOR_x_API_KEY",
+      "OPENROUTER_API_KEY",
+      "GH_TOKEN",
+      "TOKENS_LEFT"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "card-model-judge",
+   "files": [
+    {
+     "file": "tests/cards/model.p11c.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Validate Card example 5",
+      "Validate Card example 6",
+      "lint.r2",
+      "ends in .r<n>, the suffix of a retry",
+      "is not repo-relative"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "build-attempt-diff-judge",
+   "files": [
+    {
+     "file": "tests/acceptance/diff.p11c.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Build Attempt Diff example 6",
+      "Build Attempt Diff example 7",
+      "diff skipped: 4001 -> 4000 lines",
+      "@@ -3997,4 +3997,4 @@"
+     ]
+    }
+   ]
+  }
+ ]
+}
