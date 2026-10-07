@@ -17,7 +17,9 @@ export interface PlanArgs {
   name: "plan"; root: string; pretty: boolean; spec: string; components: string[]; map: string | null;
   judge: boolean; out: string | null; checks?: string;
 }
-export type Command = DeckCheckArgs | RunArgs | PlanArgs;
+export interface SubmitArgs { name: "submit"; root: string; pretty: boolean; deck: string; processor: string }
+export interface CollectArgs { name: "collect"; root: string; pretty: boolean; batch: string }
+export type Command = DeckCheckArgs | RunArgs | PlanArgs | SubmitArgs | CollectArgs;
 export type ParseResult = { ok: true; command: Command } | { ok: false; error: ErrorDocument };
 export type DeckFileResult = { ok: true; deck: Deck } | { ok: false; result: CommandResult };
 export interface DeckCheckDocument {
