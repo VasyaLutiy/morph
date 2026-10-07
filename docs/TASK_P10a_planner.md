@@ -532,3 +532,22 @@ single-rule mutations of the reference (render 13, cut 10, judges 8, plan 7, pla
 Max slice + targets (reference in place): plan-spec-judge 73 936 bytes (gate 200 KB). Reference answers:
 code 4.3–7.6 KB (≈ 1 230–2 170 tokens) against 12 000–16 000; judge files 5–12 KB against 20 000–28 000.
 Forecast ≈ $0.33 (≤ $1). Gate holds; the run waits for the operator.
+
+### Run (07.10, laptop, the V2 binary)
+
+The first phase run by MorphV2 itself: `node /tmp/v2bin/dist/cli.js run --root <repo> --deck decks/p10/v2deck.json
+--processor glm53 --max-retry-batches 8 --deadline 2400` (the binary copied out of `dist/` so the cards' own
+`npm run build` cannot replace it mid-run). 12 / 12 written over 4 runs, $0.3718, 17 min, 39 requests, every
+finish reason `stop`.
+
+| run | cards | written | $ | min | red |
+|---|---|---|---|---|---|
+| 20261007-110352 | 12 | 0 | 0.0542 | 2.8 | render 6/6: `ref` whitespace not collapsed (4), tsc (2); 11 skipped |
+| 20261007-110744 | 12 | 10 | 0.2407 | 9.9 | cut-judges-judge, plan-spec-judge: own tests guessing unprinted values |
+| 20261007-111944 | 2 | 1 | 0.0505 | 2.4 | plan-spec-judge: unused skeleton constants (eslint), green otherwise |
+| 20261007-112825 | 1 | 1 | 0.0264 | 2.2 | — (r1) |
+
+Fixes, all data (DECISIONS "P10a ·"): §2.2 names `ref` as a collapsed clause; §2.3 "A judge's own tests";
+§2.1 delete the unused skeleton constants (operator exception after the emergency stop). Retries won 6 cards
+(r1/r2). The `full_report` log (Expected/Received + first difference, eslint after the probe) showed every
+red's cause in the log itself. On `main`: tsc, eslint, build clean; vitest 534/534.
