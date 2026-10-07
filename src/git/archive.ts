@@ -21,6 +21,13 @@ export function archiveRun(
   if (!/^[A-Za-z0-9._-]+$/.test(input.runId)) {
     return { ok: false, error: "invalid runId: " + input.runId };
   }
+  if (input.answers !== undefined) {
+    for (const answer of input.answers) {
+      if (!/^[A-Za-z0-9._-]+$/.test(answer.request.customId)) {
+        return { ok: false, error: "invalid answer id: " + answer.request.customId };
+      }
+    }
+  }
   const dir = ".morph/runs/" + input.runId;
   if (fs.existsSync(path.join(root, dir))) {
     return { ok: false, error: "archive " + dir + " already exists" };
@@ -36,6 +43,24 @@ export function archiveRun(
     JSON.stringify(input.report, null, 2) + "\n",
     "utf8"
   );
+  const paths: string[] = [dir + "/deck.json", dir + "/report.json"];
+  if (input.answers !== undefined && input.answers.length > 0) {
+    fs.mkdirSync(path.join(root, dir, "answers"), { recursive: true });
+    for (const answer of input.answers) {
+      const requestFile = dir + "/answers/" + answer.request.customId + ".request.json";
+      fs.writeFileSync(
+        path.join(root, requestFile),
+        JSON.stringify(answer.request, null, 2) + "\n",
+        "utf8"
+      );
+      paths.push(requestFile);
+      if (answer.text !== null) {
+        const answerFile = dir + "/answers/" + answer.request.customId + ".answer.txt";
+        fs.writeFileSync(path.join(root, answerFile), answer.text, "utf8");
+        paths.push(answerFile);
+      }
+    }
+  }
   const trailers: Trailer[] = [
     ["Morph-Run", input.runId],
     ["Morph-Cards", String(input.deck.cards.length)],
@@ -47,7 +72,7 @@ export function archiveRun(
   try {
     const info = commitPaths(
       root,
-      [dir + "/deck.json", dir + "/report.json"],
+      paths,
       "morph run " + input.runId + ": deck and report",
       trailers,
       env
