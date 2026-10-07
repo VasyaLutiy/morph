@@ -1,4 +1,5 @@
 import type { Deck } from "../cards/types.js";
+import type { Request } from "../compiler/types.js";
 import type { ProcessorConfig, Transport, Usage } from "../processor/types.js";
 
 export type CardStatus = "written" | "failed" | "skipped" | "budget-exceeded";
@@ -31,6 +32,7 @@ export interface RunBudget { maxCards: number; maxRetryBatches: number; deadline
 export interface RunDeps {
   config: ProcessorConfig; transport: Transport; commit: CommitHook;
   now: () => number; env: Record<string, string>; acceptanceTimeoutMs?: number;
+  onVariant?: (record: VariantRecord) => void;
 }
 export interface RunInput { root: string; runId: string; branch: string; deck: Deck; budget: RunBudget }
 export interface RetryContext { acceptanceOutput: string; previousDiff: string | null }
@@ -39,3 +41,8 @@ export interface GenerationOutcome {
   retryContexts: Record<string, RetryContext>;
 }
 export interface RunResult { report: RunReport; outcomes: CardOutcome[] }
+export type VariantVerdict = "accepted" | "rejected" | "corrupt" | "truncated" | "untried" | "stale";
+export interface VariantRecord {
+  request: Request; text: string | null; finishReason: string | null; error: string | null;
+  verdict: VariantVerdict; stages: number; lastStage: string | null;
+}

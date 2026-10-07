@@ -1,4 +1,4 @@
-// src/runloop/generation.ts — Process Generation (TASK_P5 §2.2, patched by TASK_P9b §2.2 and TASK_P10c §2.2).
+// src/runloop/generation.ts — Process Generation (TASK_P5 §2.2, patched by TASK_P9b §2.2, TASK_P10c §2.2 and TASK_P10c2 §2.2).
 //
 // compile → send → parse → verify per card. A compile fault or a stale input
 // digest discards the answer before any acceptance runs; an accepted card
@@ -6,7 +6,10 @@
 // sendGeneration call so the config's concurrency pools across the whole
 // generation. The acceptance runs under its own timeout (deps.acceptanceTimeoutMs
 // or Run Acceptance's default), never the processor's HTTP timeout; a rejected
-// card's retry context comes from the variant that got furthest.
+// card's retry context comes from the variant that got furthest. When
+// deps.onVariant is set, every request SENT gets one VariantRecord, right
+// after its card is decided (an accepted card's commit hook first), in card
+// order then variant order; a compile fault sends nothing, so no record.
 
 import { compileCard } from "../compiler/compile.js";
 import { parseAnswer } from "../compiler/parse.js";
@@ -18,7 +21,8 @@ import type { Card } from "../cards/types.js";
 import type { InputDigest, Request } from "../compiler/types.js";
 import type { VariantAnswer } from "../acceptance/types.js";
 import type {
-  CardOutcome, GenerationOutcome, RequestUsage, RetryContext, RunDeps
+  CardOutcome, GenerationOutcome, RequestUsage, RetryContext, RunDeps,
+  VariantVerdict
 } from "./types.js";
 
 interface CompiledCard {
@@ -51,6 +55,15 @@ export function stageCount(log: string): number {
     if (line.startsWith("== ")) count += 1;
   }
   return count;
+}
+
+export function lastStage(log: string): string | null {
+  // the text after "== " of the LAST line that starts with "== "
+  let last: string | null = null;
+  for (const line of log.split("\n")) {
+    if (line.startsWith("== ")) last = line.slice(3);
+  }
+  return last;
 }
 
 export async function processGeneration(
@@ -121,6 +134,19 @@ export async function processGeneration(
       const staleLog = "stale inputs: " + changed.join(", ");
       processed.push(failedOutcome(card.customId, "stale inputs", staleLog));
       retryContexts[card.customId] = { acceptanceOutput: staleLog, previousDiff: null };
+      if (deps.onVariant !== undefined) {
+        for (let v = 0; v < cardRequests.length; v++) {
+          deps.onVariant({
+            request: cardRequests[v],
+            text: answers[v].text,
+            finishReason: answers[v].finishReason,
+            error: answers[v].error,
+            verdict: "stale",
+            stages: 0,
+            lastStage: null
+          });
+        }
+      }
       continue;
     }
 
@@ -206,10 +232,52 @@ export async function processGeneration(
         };
       }
     }
+
+    // P10c2: the card is decided (and, when accepted, committed) — one
+    // record per request sent, in variant order. The verdict order: a
+    // corrupt parsed answer (a null text included) beats everything; then
+    // truncated; then a variant Verify Card never reached; then the
+    // accepted winner; else rejected. stages and lastStage come from the
+    // variant's OWN log for accepted and rejected only
+    if (deps.onVariant !== undefined) {
+      for (let v = 0; v < cardRequests.length; v++) {
+        const parsed = variants[v].answer;
+        const result =
+          outcome.results.find((r) => r.variant === cardRequests[v].customId) ?? null;
+        let verdict: VariantVerdict;
+        let stages = 0;
+        let stage: string | null = null;
+        if ("corrupt" in parsed) {
+          verdict = "corrupt";
+        } else if ("truncated" in parsed) {
+          verdict = "truncated";
+        } else if (result === null) {
+          verdict = "untried";
+        } else if (outcome.accepted !== null && outcome.accepted.variant === result.variant) {
+          verdict = "accepted";
+          stages = stageCount(result.log);
+          stage = lastStage(result.log);
+        } else {
+          verdict = "rejected";
+          stages = stageCount(result.log);
+          stage = lastStage(result.log);
+        }
+        deps.onVariant({
+          request: cardRequests[v],
+          text: answers[v].text,
+          finishReason: answers[v].finishReason,
+          error: answers[v].error,
+          verdict,
+          stages,
+          lastStage: stage
+        });
+      }
+    }
   }
 
   // 4. merge the two paths back into the input card order; a compile fault
-  // carries its own retry context (the fault messages, no diff)
+  // carries its own retry context (the fault messages, no diff) and, having
+  // sent nothing, no variant record
   const merged: CardOutcome[] = [];
   let pi = 0;
   for (const card of cards) {
