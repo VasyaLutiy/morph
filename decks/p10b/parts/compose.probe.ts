@@ -69,6 +69,11 @@ test("§2.2 a judge: the guard lines per file, names only for a patched file, no
   expect(s).toContain("echo '== own'; node_modules/.bin/vitest run tests/p.examples.test.ts tests/q.examples.test.ts --reporter=dot");
 });
 
+test("§2.2 the guard line joins several code targets with commas", () => {
+  const s = codeAcceptance(ctx({ targets: ["src/x/a.ts", "src/x/b.ts"] }), "// probe\n", null, null);
+  expect(s).toContain("echo '== guard'; node $P/guard.mjs src src/x/a.ts,src/x/b.ts\n");
+});
+
 test("§2.2 types", () => {
   expectTypeOf(litsJson).toEqualTypeOf<(lits: readonly string[]) => string>();
   expectTypeOf(codeAcceptance).toEqualTypeOf<(ctx: CardContext, probe: string, smoke: number | null, extra: string | null) => string>();

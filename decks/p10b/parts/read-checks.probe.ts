@@ -72,6 +72,11 @@ test("§2.2 single problems: smoke, an empty card list, min over max, a missing 
   expect(DEFAULT_FROZEN).toStrictEqual(["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures"]);
 });
 
+test("§2.2 a judge card with an extra step", () => {
+  expect(validateChecks({ phase: "p", cards: [{ id: "j", extra: "x", files: [{ file: "f", min: 0, max: 0 }] }] }))
+    .toStrictEqual({ ok: false, problems: ["cards[0]: a judge card (files) takes no smoke or extra"] });
+});
+
 test("§2.2 types", () => {
   expectTypeOf(validateChecks).toEqualTypeOf<(doc: unknown) => ChecksResult>();
   expectTypeOf<JudgeFile>().toEqualTypeOf<{ file: string; min: number; max: number; lits: string[]; drop: string[]; new: boolean }>();

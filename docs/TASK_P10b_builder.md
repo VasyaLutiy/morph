@@ -25,7 +25,7 @@
   `- Expected`); the P9 control run lost a probe-green answer to an unused import. In V2 the full failure
   report, the first difference and eslint's held verdict are the only form, not a phase switch.
 
-PLAN: P10b1 = 10 cards (5 code, 5 judges), 5 generations, 23 record examples.
+PLAN: P10b1 = 10 cards (5 code, 5 judges), 5 generations, 24 record examples.
 
 ## 2. Contract
 
@@ -225,7 +225,7 @@ project minus the other targets of the same generation) → `tsc` → `eslint <t
 `guard.mjs src <targets>` (layer `builder`: imports `cards`, `language` and its own files; only
 `node:path`; no `process`, `console`, `Date`, `Math.random`, `fetch`, no `any`) → `decks/p10b/parts/<card>.probe.ts`
 (every record example of the card's Functions, values and types, then the §2.2 rows: steps 8 + 4 = 12,
-read-checks 4 + 3 = 7, probe-dir 3 + 3 = 6, compose 5 + 3 = 8, build-acceptances 4 + 3 = 7; 40 tests) →
+read-checks 4 + 4 = 8, probe-dir 3 + 3 = 6, compose 5 + 4 = 9, build-acceptances 4 + 4 = 8; 43 tests) →
 eslint's verdict → full `vitest run` → frozen → untracked.
 
 Judge cards: `probe/<card>/` (no probe file) → `tsc` → `eslint <file>` → `guard.mjs tests <file> <min> <max>

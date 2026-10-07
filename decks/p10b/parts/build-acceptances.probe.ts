@@ -114,6 +114,13 @@ test("§2.2 the input cards are not changed", () => {
   expect(r.ok && r.cards[0] !== cards[0]).toBe(true);
 });
 
+test("§2.2 a dependency outside the members does not move a member to a later generation", () => {
+  const cards = [card("a", ["src/x/a.ts"]), card("c", ["src/x/c.ts"]), card("e", ["src/x/e.ts"], ["c"])];
+  const r = buildAcceptances({ cards, checks: checks([code("a"), code("e")]), profile: TYPESCRIPT,
+    texts: { guard: "// guard\n", firstdiff: "// firstdiff\n", probes: { a: "// probe\n", e: "// probe\n" } } });
+  expect(r.ok ? r.cards[0].acceptance : null).toBe(codeAcceptance(ctx("a", ["src/x/a.ts"], ["src/x/e.ts"]), "// probe\n", null, null));
+});
+
 test("§2.2 types", () => {
   expectTypeOf(buildAcceptances).toEqualTypeOf<(input: BuildInput) => BuildResult>();
   expectTypeOf(HEREDOC_TAGS).toEqualTypeOf<readonly string[]>();
