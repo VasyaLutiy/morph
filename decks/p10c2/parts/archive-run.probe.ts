@@ -7,7 +7,7 @@ import fs from "node:fs";
 import { archiveRun } from "../../src/git/archive.js";
 import type { ArchiveInput, ArchivedAnswer } from "../../src/git/types.js";
 import type { Card, Deck } from "../../src/cards/types.js";
-import type { CardOutcome, RunReport, VariantRecord } from "../../src/runloop/types.js";
+import type { CardOutcome, RunReport } from "../../src/runloop/types.js";
 import { tmpRepo } from "../../tests/helpers.js";
 
 function gitEnv(home: string): Record<string, string> {
@@ -115,8 +115,7 @@ test("§2.2: an answer text is written exactly (no newline added, empty text kep
   }
 });
 
-test("§2.2: the types — ArchivedAnswer, ArchiveInput.answers optional, runloop's records assignable", () => {
+test("§2.2: the types — ArchivedAnswer, ArchiveInput.answers optional (runloop's records are checked by run-command's tsc)", () => {
   expectTypeOf<ArchivedAnswer>().toEqualTypeOf<{ request: { customId: string }; text: string | null }>();
   expectTypeOf<ArchiveInput["answers"]>().toEqualTypeOf<ArchivedAnswer[] | undefined>();
-  expectTypeOf<VariantRecord[]>().toMatchTypeOf<ArchivedAnswer[]>();
 });
