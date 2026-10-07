@@ -163,14 +163,19 @@ System:
         - name: Compile Card
           description: Builds the conversation for one card.
           behavior: >
-            generate: one user message per slice file, in sorted path order, each
-            "Contents of file <path>:" followed by the file in a fenced block; then a
-            user message with the instruction and the output directive. patch: the
-            same, but each existing target is first given as "Original file <path>:"
-            with its content; a target that does not exist yet is announced as "new
-            file". Variants: N requests with customId <id>.v1..vN and identical
-            messages. A slice file that does not exist is a compile fault, not a
-            silent skip.
+            generate: one user message per slice file, in sorted path order: the line "Contents
+            of file <path>:", a line break, the opening tag <file_contents path="<path>">, a line
+            break, the file's text byte for byte (a fence inside it stays as it is) with a line
+            break appended when the text is not empty and does not end in one, then the closing
+            tag </file_contents> and nothing after it; then a user message with the instruction,
+            two line breaks and the output directive. patch: the same, but each target comes
+            first, in targets order: an existing one as the line "Original file <path>:", a line
+            break, <original_file path="<path>">, a line break, its text (the same rule) and
+            </original_file>; one that does not exist yet as "Target <path> is a new file: it
+            does not exist yet.". No slice or target text is ever put in a fenced block: a fence
+            in a file (a markdown spec, a test of the parser) would pair with the exhibit's own.
+            Variants: N requests with customId <id>.v1..vN and identical messages. A slice file
+            that does not exist is a compile fault, not a silent skip.
           steps:
             - reads: Card
             - calls: Capture Inputs
@@ -178,13 +183,23 @@ System:
           examples:
             - given: "card a, intent generate, slice [docs/B.md, docs/A.md], variants 2"
               when: "compiled"
-              then: "two Requests a.v1 and a.v2; messages[0] is docs/A.md, messages[1] docs/B.md, messages[2] the instruction + directive"
-            - given: "card p, intent patch, targets [src/x.ts] which exists with 3 lines"
+              then: 'two Requests a.v1 and a.v2; messages[0] is exactly "Contents of file docs/A.md:\n<file_contents path="docs/A.md">\n# A\n\nAlpha doc.\n</file_contents>", messages[1] the same for docs/B.md ("# B\n\nBeta doc.\n"), messages[2] "Write src/a.ts.\n\n" + the directive'
+              ref: "tests/fixtures/compiler/cards/generateA.json (the card), tests/fixtures/compiler/project (the root)"
+            - given: "card p, intent patch, targets [src/x.ts] which exists with 3 lines, slice [docs/A.md]"
+              ref: "tests/fixtures/compiler/cards/patchP.json (the card), tests/fixtures/compiler/project (the root)"
               when: "compiled"
-              then: "the first message is 'Original file src/x.ts:' with those 3 lines fenced"
+              then: 'the first message is exactly "Original file src/x.ts:\n<original_file path="src/x.ts">\nexport const x = 1;\nexport const y = 2;\nexport const z = 3;\n</original_file>" (132 chars), the second the tagged docs/A.md'
             - given: "a slice naming docs/missing.md"
               when: "compiled"
               then: "a compile fault naming docs/missing.md; no Request"
+            - given: 'card f, intent generate, targets [src/f.ts], slice [docs/F.md]; docs/F.md is "# F\n\n```ts\nconst f = 1;\n```" (no final newline)'
+              ref: "tests/fixtures/compiler/cards/fencedF.json (the card), tests/fixtures/compiler/project/docs/F.md"
+              when: "compiled"
+              then: 'messages[0] is exactly "Contents of file docs/F.md:\n<file_contents path="docs/F.md">\n# F\n\n```ts\nconst f = 1;\n```\n</file_contents>" (the fence kept, one newline added); no message holds a line that is only "```md"'
+            - given: "card n, intent patch, targets [src/x.ts, src/z.ts], src/z.ts absent, no slice"
+              ref: "tests/fixtures/compiler/cards/patchNew.json"
+              when: "compiled"
+              then: 'three messages: the tagged original of src/x.ts (as example 2), "Target src/z.ts is a new file: it does not exist yet.", then the instruction + directive'
         - name: Output Directive
           description: The fixed tail of every instruction that tells the model how to answer, with the format rules Parse Answer applies.
           behavior: |
@@ -342,8 +357,12 @@ System:
             verifyCard({root, targets, command, variants, env, timeoutMs}) snapshots the
             targets once, then for each variant in order: a corrupt answer gives the
             stand-in result {exit null, log "answer corrupt: <reason>", diff null} and a
-            truncated one {exit null, log "answer truncated", diff null}, nothing
-            written; otherwise every file of the answer is written under root and the
+            truncated one {exit null, log TRUNCATED_RESPONSE_MESSAGE, diff null}, nothing
+            written; TRUNCATED_RESPONSE_MESSAGE (exported) is the old runner's three sentences,
+            exactly "The previous answer was cut off mid-file: it opened a ``` code fence and
+            never closed it, so the file body could not be extracted. Answer again with the
+            COMPLETE file, and close the fence." (one line, single spaces; it is what the retry
+            of a cut-off card is told); otherwise every file of the answer is written under root and the
             acceptance is run; exit 0 → that variant is accepted, its files stay, its
             result has diff null and no later variant is tried; any other exit → the
             result carries the Build Attempt Diff of the written files against the
@@ -362,10 +381,13 @@ System:
               then: 'accepted {variant: "c.v3"}; results [{c.v1, exit null, log "answer corrupt: missing section for src/a.ts", diff null}, {c.v2, exit 1, log "FAIL: no good in src/a.ts\n", diff "--- a/src/a.ts\n+++ b/src/a.ts\n@@ -1,1 +1,1 @@\n-old\n+bad\n"}, {c.v3, exit 0, log "good\n", diff null}]; src/a.ts reads "good\n"'
             - given: 'the same root and command; targets [src/a.ts, src/b.ts], src/b.ts absent; variants c.v1 {truncated: true}, c.v2 {files: {src/a.ts: "bad\n", src/b.ts: "x\n"}}'
               when: "verified"
-              then: 'accepted null; results [{c.v1, exit null, log "answer truncated", diff null}, {c.v2, exit 1, log "FAIL: no good in src/a.ts\n", diff "--- a/src/a.ts\n+++ b/src/a.ts\n@@ -1,1 +1,1 @@\n-old\n+bad\n--- /dev/null\n+++ b/src/b.ts\n@@ -0,0 +1,1 @@\n+x\n"}]; src/a.ts reads "old\n" and src/b.ts does not exist'
+              then: 'accepted null; results [{c.v1, exit null, log TRUNCATED_RESPONSE_MESSAGE, diff null}, {c.v2, exit 1, log "FAIL: no good in src/a.ts\n", diff "--- a/src/a.ts\n+++ b/src/a.ts\n@@ -1,1 +1,1 @@\n-old\n+bad\n--- /dev/null\n+++ b/src/b.ts\n@@ -0,0 +1,1 @@\n+x\n"}]; src/a.ts reads "old\n" and src/b.ts does not exist'
             - given: 'the same root, command and targets [src/a.ts]; variants c.v1 {files: {src/a.ts: "good\n"}}, c.v2 {files: {src/a.ts: "good\n"}}'
               when: "verified"
               then: 'accepted {variant: "c.v1"}; results has exactly one entry, c.v1 with exit 0: c.v2 is never run'
+            - given: 'the exported TRUNCATED_RESPONSE_MESSAGE'
+              when: "read"
+              then: '"The previous answer was cut off mid-file: it opened a ``` code fence and never closed it, so the file body could not be extracted. Answer again with the COMPLETE file, and close the fence." (188 chars); it holds no "answer truncated"'
         - name: Build Attempt Diff
           description: A unified diff of the failed variant against the snapshot, each file's section capped at 6000 chars, its head and tail kept.
           behavior: >
@@ -637,7 +659,10 @@ System:
             "stale inputs: <changed paths, comma+space joined>"} and no acceptance is run;
             else build one VariantAnswer per variant (variant id "<customId>.v<n>"; a
             null-text answer becomes {corrupt: the answer's error ?? "no text returned"},
-            else parseAnswer(text, targets)) and call verifyCard. Accepted → {status:
+            else parseAnswer(text, targets)) and call verifyCard with timeoutMs =
+            deps.acceptanceTimeoutMs ?? DEFAULT_TIMEOUT_MS (300000, Run Acceptance's default) —
+            the acceptance has its own timeout, never the processor's HTTP deps.config.timeoutMs.
+            Accepted → {status:
             "written", winningVariant = the accepted variant id, acceptanceLog = the
             winner's log, earlierFailures = the logs of the rejected variants tried before
             it, commit = the sha from deps.commit(customId, targets), diffstat from the
@@ -651,13 +676,17 @@ System:
             finishReason and error from its Answer}); retryContexts holds one Retry Context
             per FAILED outcome, keyed by its customId, in outcome order, and nothing for a
             written card. A compile fault or stale inputs → {acceptanceOutput: the outcome's
-            acceptanceLog, previousDiff: null}. A rejected card → the LAST variant whose
-            acceptance ran (its verify result has a diff that is not null) gives
-            {acceptanceOutput: that variant's log, previousDiff: its diff, "" when the
-            attempt changed nothing}; when no variant ran (every answer corrupt or
-            truncated) → {acceptanceOutput: the last result's log, previousDiff: null}. The
-            log and the diff of the retry always come from the same attempt, and
-            previousDiff is null exactly when no acceptance ran.
+            acceptanceLog, previousDiff: null}. A rejected card → of the variants whose
+            acceptance ran (the verify result's diff is not null), the one that got FURTHEST
+            gives {acceptanceOutput: its log, previousDiff: its diff, "" when the attempt
+            changed nothing}: furthest = the greatest stageCount(log), a tie → the later
+            variant; stageCount(log) (exported) is the number of lines of the log, split on
+            "\n", that begin with "== " (the stage headers the acceptance prints: == tsc, ==
+            probe, …). When no variant ran (every answer corrupt or truncated) →
+            {acceptanceOutput: the last result's log, previousDiff: null}. The log and the diff
+            of the retry always come from the same attempt, and previousDiff is null exactly
+            when no acceptance ran. The outcome's acceptanceLog and earlierFailures do not
+            change (the last variant's log, the earlier ones').
           steps:
             - uses: compiler
             - uses: processor
@@ -677,21 +706,30 @@ System:
               then: 'a status "written"; b status "failed", reason "stale inputs", acceptanceLog beginning "stale inputs: shared.ts"; b''s acceptance was never run'
             - given: 'a stub config; out/a.ts holds ''export const x = "OLD";\n''; card a → out/a.ts, variants 2, acceptance ''grep -q PASS out/a.ts || { echo "red: $(cat out/a.ts)"; exit 1; }''; a.v1.md a fenced ts block holding ''export const x = "ONE";\n''; a.v2.md the text ''```ts\nexport const x = 2;\n'' (one fence line: truncated)'
               when: "processed"
-              then: 'outcome a status "failed", reason "acceptance failed", acceptanceLog "answer truncated", earlierFailures [''red: export const x = "ONE";\n'']; retryContexts {a: {acceptanceOutput: ''red: export const x = "ONE";\n'', previousDiff: ''--- a/out/a.ts\n+++ b/out/a.ts\n@@ -1,1 +1,1 @@\n-export const x = "OLD";\n+export const x = "ONE";\n''}} (the variant that ran, not the last one); out/a.ts holds ''export const x = "OLD";\n'' again'
+              then: 'outcome a status "failed", reason "acceptance failed", acceptanceLog TRUNCATED_RESPONSE_MESSAGE (Verify Card), earlierFailures [''red: export const x = "ONE";\n'']; retryContexts {a: {acceptanceOutput: ''red: export const x = "ONE";\n'', previousDiff: ''--- a/out/a.ts\n+++ b/out/a.ts\n@@ -1,1 +1,1 @@\n-export const x = "OLD";\n+export const x = "ONE";\n''}} (the variant that ran, not the last one); out/a.ts holds ''export const x = "OLD";\n'' again'
             - given: 'as example 4, but a.v2.md a fenced ts block holding ''export const x = "TWO";\n'''
               when: "processed"
-              then: 'outcome a status "failed", acceptanceLog ''red: export const x = "TWO";\n'', earlierFailures [''red: export const x = "ONE";\n'']; retryContexts {a: {acceptanceOutput: ''red: export const x = "TWO";\n'', previousDiff: ''--- a/out/a.ts\n+++ b/out/a.ts\n@@ -1,1 +1,1 @@\n-export const x = "OLD";\n+export const x = "TWO";\n''}} (both ran: the last one)'
+              then: 'outcome a status "failed", acceptanceLog ''red: export const x = "TWO";\n'', earlierFailures [''red: export const x = "ONE";\n'']; retryContexts {a: {acceptanceOutput: ''red: export const x = "TWO";\n'', previousDiff: ''--- a/out/a.ts\n+++ b/out/a.ts\n@@ -1,1 +1,1 @@\n-export const x = "OLD";\n+export const x = "TWO";\n''}} (both ran, no stage header in either: the tie goes to the later one)'
             - given: 'a stub config; cards [a → out/a.ts (a.v1.md fenced, its acceptance passes), b → out/b.ts (b.v1.md the text ''```ts\nexport const x = 2;\n''), c → out/c.ts with contextSlice [docs/missing.md], which does not exist], variants 1 each'
               when: "processed"
-              then: 'a "written"; b and c "failed"; retryContexts exactly {b: {acceptanceOutput: "answer truncated", previousDiff: null}, c: {acceptanceOutput: "contextSlice ''docs/missing.md'' does not exist", previousDiff: null}} (no entry for a)'
+              then: 'a "written"; b and c "failed"; retryContexts exactly {b: {acceptanceOutput: TRUNCATED_RESPONSE_MESSAGE, previousDiff: null}, c: {acceptanceOutput: "contextSlice ''docs/missing.md'' does not exist", previousDiff: null}} (no entry for a)'
             - given: 'a stub config (model "stub"); cards [a → out/a.ts with model null, b → out/b.ts with model "glm-x"], variants 1, both accepted'
               when: "processed"
               then: 'requests [{customId: "a.v1", model: "stub", provider: "stub", generationId: "stub-a.v1", inputTokens: 0, outputTokens: 0, cost: 0, finishReason: "stop", error: null}, {customId: "b.v1", model: "glm-x", provider: "stub", generationId: "stub-b.v1", inputTokens: 0, outputTokens: 0, cost: 0, finishReason: "stop", error: null}]; retryContexts {}'
             - given: 'a stub config; out/a.ts holds ''export const x = "ONE";\n''; card a → out/a.ts, variants 1, acceptance ''grep -q PASS out/a.ts || { echo "red: $(cat out/a.ts)"; exit 1; }''; a.v1.md a fenced ts block holding ''export const x = "ONE";\n'' (the file unchanged)'
               when: "processed"
               then: 'outcome a status "failed", acceptanceLog ''red: export const x = "ONE";\n''; retryContexts {a: {acceptanceOutput: ''red: export const x = "ONE";\n'', previousDiff: ""}} (the acceptance ran on an attempt that changed nothing: the empty diff, not null)'
+            - given: 'a stub config; out/a.ts holds ''export const x = "OLD";\n''; card a → out/a.ts, variants 2, acceptance "grep -q ONE out/a.ts && { echo ''== tsc''; echo ''== probe''; echo ''red: one''; exit 1; }; echo ''== tsc''; echo ''red: two''; exit 1"; a.v1.md a fenced ts block holding ''export const x = "ONE";\n'', a.v2.md one holding ''export const x = "TWO";\n'''
+              when: "processed"
+              then: 'outcome a status "failed", acceptanceLog "== tsc\nred: two\n", earlierFailures ["== tsc\n== probe\nred: one\n"]; retryContexts {a: {acceptanceOutput: "== tsc\n== probe\nred: one\n", previousDiff: ''--- a/out/a.ts\n+++ b/out/a.ts\n@@ -1,1 +1,1 @@\n-export const x = "OLD";\n+export const x = "ONE";\n''}} (v1 reached 2 stages, v2 1: the furthest, not the last); stageCount of the two logs 2 and 1, of "" 0, of "a == b\n" 0'
+            - given: 'a stub config whose timeoutMs (the processor''s HTTP timeout) is 100; deps without acceptanceTimeoutMs; card a → out/a.ts, acceptance "sleep 1; grep -q PASS out/a.ts"; a.v1.md a fenced ts block holding ''export const x = "PASS";\n'''
+              when: "processed"
+              then: 'outcome a status "written", winningVariant "a.v1" — the acceptance ran under its own default of 300000 ms, not the config''s 100 ms'
+            - given: 'a stub config with timeoutMs 600000 and deps.acceptanceTimeoutMs 200; card a → out/a.ts, acceptance "sleep 30"; a.v1.md a fenced ts block'
+              when: "processed"
+              then: 'outcome a status "failed", reason "acceptance failed", its acceptanceLog holding "acceptance timed out after 200 ms"; the commit hook did not fire'
         - name: Build Retry
-          description: The retry card <base>.r<n> carrying the acceptance command, its output and the previous attempt diff, or the word that the answer was discarded unread; at most 2 retries per card; a run-wide cap on retry batches is enforced by Run Deck.
+          description: The retry card <base>.r<n> carrying the acceptance command, its output and the previous attempt diff, or the word that the answer was discarded unread; at most 2 retries per card; Run Deck caps the retry batches of each generation.
           behavior: >
             buildRetry(card, attempt, acceptanceOutput, previousDiff) returns a NEW Card.
             attempt must be 1 or 2, else it throws Error "buildRetry: attempt must be 1 or
@@ -734,7 +772,7 @@ System:
               when: "built"
               then: 'instruction is exactly "Write c.\n\n<acceptance_output>\nA previous attempt failed its acceptance check (`grep -q MARK src/c.ts`):\nred\n\n</acceptance_output>\nPlease fix the issues and produce the complete corrected file." (no diff block)'
         - name: Run Deck
-          description: Generations in order (layerGenerations), budget checked at each generation boundary (maxCards, maxRetryBatches, deadline), the Run Report produced at the end.
+          description: Generations in order (layerGenerations), budget checked at each generation boundary (maxCards, deadline), retries budgeted per card (2) and capped per generation (maxRetryBatches), the Run Report produced at the end.
           behavior: >
             runDeck(input, deps) runs input.deck generation by generation in the order of
             layerGenerations(input.deck). At each generation boundary it checks the budget:
@@ -745,10 +783,12 @@ System:
             records the skipped outcomes, runs processGeneration on the runnable cards,
             accumulates their usage and request rows, keeps the Retry Context of every failed
             card (by its original id; a later round's context replaces an earlier one), and
-            adds the runnable count to cardsProcessed. A card that failed is retried: for
-            the failed cards of a round, while retryBatches < input.budget.maxRetryBatches
-            and the card has been retried fewer than 2 times, a retry batch runs
-            (retryBatches += 1): buildRetry(original card, retryNumber, the card's latest
+            adds the runnable count to cardsProcessed. A card that failed is retried: the
+            budget is per card — every card may be retried 2 times, in whichever generation it
+            runs — and input.budget.maxRetryBatches caps the retry batches of ONE generation:
+            retryBatches starts at 0 at every generation, and while some failed card of this
+            generation has been retried fewer than 2 times and retryBatches <
+            maxRetryBatches, a retry batch runs (retryBatches += 1) for all such cards: buildRetry(original card, retryNumber, the card's latest
             Retry Context acceptanceOutput, its previousDiff) for each — so the retry
             carries the output and the diff of the same failed attempt — processGeneration
             on the retries, and a retry that is written updates the card's outcome (status
@@ -783,6 +823,12 @@ System:
             - given: 'a two-generation deck [a, then b dependsOn a] on the stub, both accepted at once'
               when: "run"
               then: 'report.requests [{customId: "a.v1", model: "stub", provider: "stub", generationId: "stub-a.v1", inputTokens: 0, outputTokens: 0, cost: 0, finishReason: "stop", error: null}, the same with customId "b.v1" and generationId "stub-b.v1"] (rows of both generations, in send order)'
+            - given: 'a two-generation deck on the stub [a → a.ts, then b → b.ts dependsOn a]; each acceptance fails its first attempt and passes the next through its own marker file (a: "if [ ! -f mark-a ]; then touch mark-a; exit 1; fi\ngrep -q MARK_A a.ts", b the same with mark-b and MARK_B); answers a.md, a.r1.md, b.md, b.r1.md; budget maxRetryBatches 1'
+              when: "run"
+              then: 'a and b both "written", attempts 2 each, winningVariant "a.r1.v1" / "b.r1.v1", earlierFailures length 1 each; usageTotals.requests 4; the commit hook fired for a then b (the batch cap is per generation: b''s generation gets its own retry)'
+            - given: 'a one-card deck on the stub, card c → c.ts with acceptance "exit 1"; answers c.md, c.r1.md, c.r2.md; budget maxRetryBatches 8'
+              when: "run"
+              then: 'c "failed", reason "acceptance failed", attempts 3, earlierFailures length 2; usageTotals.requests 3 (the per-card budget: 2 retries, whatever the batch cap)'
       dataObjects:
         - name: Card Outcome
           description: How one card ended in a run.
