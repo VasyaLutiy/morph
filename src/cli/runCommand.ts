@@ -73,6 +73,14 @@ export async function runCommand(
   }
   const deck = deckFile.deck;
 
+  // 2b. an empty deck refuses before any git call or spend
+  if (deck.cards.length === 0) {
+    return {
+      code: 2,
+      document: errorDocument(2, "RefusalError", "deck has no cards"),
+    };
+  }
+
   // 3. hazard errors refuse the run before any git call or spend
   const hazardErrors = findHazards(deck).filter((h) => h.severity === "error");
   if (hazardErrors.length > 0) {
@@ -151,7 +159,8 @@ export async function runCommand(
     deps.env
   );
 
-  // 8. the Run Document, its keys in the type's order
+  // 8. the Run Document, its keys in the type's order; a caught fault is
+  // code 3, the partial report archived as always
   const document: RunDocument = {
     runId,
     branch: branch.branch,
@@ -159,5 +168,6 @@ export async function runCommand(
     report: result.report,
     archive
   };
-  return { code: runExitCode(result.report, archive), document };
+  const code = result.report.fault !== undefined ? 3 : runExitCode(result.report, archive);
+  return { code, document };
 }
