@@ -185,7 +185,9 @@ or `record.guardrails`, or `- <name> (definition not found in the record)`.
 one):"`, `MAX_TOKENS_CAP = 32000`, `REASONING_MAX_TOKENS = 2500` and:
 
 - `renderExamples(examples: readonly Example[]): string` — record, Render Examples. A clause's
-  whitespace: `text.split(/\s+/).filter((w) => w !== "").join(" ")`.
+  whitespace: `text.split(/\s+/).filter((w) => w !== "").join(" ")`. The clauses are FOUR: `given`,
+  `when`, `then` **and `ref`** — the ref is collapsed too (Render Examples example 1: ref `"R  1"` →
+  `" (ref: R 1)"`, one space).
 - `dataBlocks(record: ContourRecord, functions: readonly ContourFunction[]): string[]` and
   `functionSection(record: ContourRecord, fn: ContourFunction): string` — record, Render Function. A
   Data Object is looked up in **every** Component (`record.system.groups[*].dataObjects`), first match
