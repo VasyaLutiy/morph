@@ -8,6 +8,6 @@ export type Trailer = [string, string];
 export interface CardCommit { customId: string; targets: string[]; model: string; variant: string | null; acceptanceExit: number }
 export type CardCommitter = (customId: string, targets: string[]) => CommitInfo | null;
 export interface ArchivedReport { outcomes: { status: string }[] }
-export interface ArchivedAnswer { request: { customId: string }; text: string | null }
+export interface ArchivedAnswer { request: { customId: string }; text: string | null; line?: string }
 export interface ArchiveInput { runId: string; deck: Deck; report: ArchivedReport; answers?: ArchivedAnswer[] }
 export type ArchiveResult = { ok: true; dir: string; commit: string | null } | { ok: false; error: string };

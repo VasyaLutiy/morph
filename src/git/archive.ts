@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { gzipSync } from "node:zlib";
 import { commitPaths } from "./commit.js";
 import type { ArchiveInput, ArchiveResult, Trailer } from "./types.js";
 
@@ -44,21 +45,39 @@ export function archiveRun(
     "utf8"
   );
   const paths: string[] = [dir + "/deck.json", dir + "/report.json"];
-  if (input.answers !== undefined && input.answers.length > 0) {
-    fs.mkdirSync(path.join(root, dir, "answers"), { recursive: true });
-    for (const answer of input.answers) {
-      const requestFile = dir + "/answers/" + answer.request.customId + ".request.json";
+  const answers = input.answers === undefined ? [] : input.answers;
+  if (answers.length > 0) {
+    const requestsDir = dir + "/requests";
+    fs.mkdirSync(path.join(root, requestsDir), { recursive: true });
+    fs.writeFileSync(path.join(root, requestsDir, ".gitignore"), "*\n", "utf8");
+    for (const answer of answers) {
+      const requestFile = requestsDir + "/" + answer.request.customId + ".request.json.gz";
       fs.writeFileSync(
         path.join(root, requestFile),
-        JSON.stringify(answer.request, null, 2) + "\n",
-        "utf8"
+        gzipSync(JSON.stringify(answer.request, null, 2) + "\n")
       );
-      paths.push(requestFile);
+    }
+    for (const answer of answers) {
       if (answer.text !== null) {
         const answerFile = dir + "/answers/" + answer.request.customId + ".answer.txt";
+        fs.mkdirSync(path.join(root, dir, "answers"), { recursive: true });
         fs.writeFileSync(path.join(root, answerFile), answer.text, "utf8");
         paths.push(answerFile);
       }
+    }
+    let anyLine = false;
+    const lines: string[] = [];
+    for (const answer of answers) {
+      if (answer.line !== undefined) {
+        anyLine = true;
+        lines.push(answer.line);
+      }
+    }
+    if (anyLine) {
+      const linesFile = dir + "/answers/lines.txt";
+      fs.mkdirSync(path.join(root, dir, "answers"), { recursive: true });
+      fs.writeFileSync(path.join(root, linesFile), lines.join(""), "utf8");
+      paths.push(linesFile);
     }
   }
   const trailers: Trailer[] = [
@@ -82,4 +101,21 @@ export function archiveRun(
     const message = error instanceof Error ? error.message : String(error);
     return { ok: false, error: "archive " + dir + " written but not committed: " + message };
   }
+}
+
+export function saveBatchRecord(
+  root: string,
+  record: { batchId: string }
+): string | null {
+  if (!/^[A-Za-z0-9._-]+$/.test(record.batchId)) {
+    return null;
+  }
+  const rel = ".morph/batches/" + record.batchId + ".json";
+  fs.mkdirSync(path.join(root, ".morph/batches"), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, rel),
+    JSON.stringify(record, null, 2) + "\n",
+    "utf8"
+  );
+  return rel;
 }
