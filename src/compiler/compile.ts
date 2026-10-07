@@ -5,16 +5,9 @@ import { captureInputs } from "./capture.js";
 import { outputDirective } from "./directive.js";
 import type { CompileResult, Message, Request } from "./types.js";
 
-function fenceTag(p: string): string {
-  const ext = path.posix.extname(p);
-  return ext.startsWith(".") ? ext.slice(1) : "";
-}
-
-function fencedBlock(p: string, content: string): string {
-  const tag = fenceTag(p);
-  const open = "```" + tag;
+function tagged(tag: "file_contents" | "original_file", p: string, content: string): string {
   const body = content === "" || content.endsWith("\n") ? content : content + "\n";
-  return open + "\n" + body + "```";
+  return "<" + tag + ' path="' + p + '">\n' + body + "</" + tag + ">";
 }
 
 function isRegularFile(abs: string): boolean {
@@ -70,13 +63,13 @@ export function compileCard(card: Card, root: string): CompileResult {
       for (const p of card.targets) {
         const abs = path.join(root, p);
         const content = isRegularFile(abs)
-          ? `Original file ${p}:\n` + fencedBlock(p, readText(abs))
+          ? `Original file ${p}:\n` + tagged("original_file", p, readText(abs))
           : `Target ${p} is a new file: it does not exist yet.`;
         messages.push({ role: "user", content });
       }
     }
     for (const p of sliceSorted) {
-      const content = `Contents of file ${p}:\n` + fencedBlock(p, readText(path.join(root, p)));
+      const content = `Contents of file ${p}:\n` + tagged("file_contents", p, readText(path.join(root, p)));
       messages.push({ role: "user", content });
     }
     messages.push({
