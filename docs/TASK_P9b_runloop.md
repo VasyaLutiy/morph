@@ -220,6 +220,12 @@ Several targets (`n` = `targets.length`, written in decimal) — exactly:
 "This card writes " + n + " files. Return each one as a line `FILE: <path>` followed by ONE fenced block holding its complete content:\n\nFILE: <path>\n```\n<the complete content of that file>\n```\n\nOne such pair per file, every file exactly once, in this order:\n" + targets.join("\n") + "\n\nUse exactly these paths, each file whole: no diff, no elision. An answer that misses a file, gives one twice or names a file not in this list is discarded whole. Only the first fenced block after a FILE: line is that file's content: a second block (a diff, an edit summary, an example) is dropped. Lines outside the fenced blocks are ignored, but no other line may begin with FILE:. An answer whose fences do not pair up is discarded unread as cut off, so no line of a file may begin with three backticks."
 ```
 
+The two backtick sentences differ by one word: the single text says "so no line of **the** file may
+begin with three backticks", the several text "so no line of **a** file may begin with three
+backticks". A test that pins a whole text copies it from its own block above, character for
+character, never from the other one (P9b re-cut: the judge wrote "a file" into the single text three
+times).
+
 In the code, build the three-backtick line from a constant (`const FENCE = "```";`) so no source
 line of `directive.ts` itself begins with three backticks. Every rule the texts state is what Parse
 Answer (P2, unchanged) does; the old runner's "a second block is concatenated" is NOT V2's
