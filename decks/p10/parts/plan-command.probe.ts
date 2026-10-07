@@ -82,6 +82,9 @@ test("§2.2: no map is the empty map; hasFile looks under the root; the document
     expect(doc.cards.map((c) => c.customId)).toStrictEqual(["parse-entry", "parse-entry-judge", "sum-entries", "check-ledger",
       "format-report", "sum-entries-judge", "check-ledger-judge", "format-report-judge", "ledger-cli", "ledger-cli-judge"]);
     expect(doc.cards.find((c) => c.customId === "parse-entry-judge")?.contextSlice).toStrictEqual(["src/ledger/parseEntry.ts", "tests/helpers.ts"]);
+    const nj = planCommand(r.root, args({ judge: false, out: "d.json" }));
+    expect(nj.code).toBe(0);
+    expect(r.exists("d.json")).toBe(true);
     const empty: ContourMap = { version: 1, package: null, language: null, docs: [], groups: [], cards: [], extraCards: [] };
     expect(EMPTY_MAP).toStrictEqual(empty);
   } finally {

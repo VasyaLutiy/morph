@@ -1943,8 +1943,8 @@ System:
             Function of the Component, distinct, step order), and when any line exists the
             block "Preconditions a test's setup depends on:" with lines "- <Component> ·
             <Function> · <precondition>", distinct, from the card's Functions, then the callees,
-            then every Function (record order) of each Component other than its own that a uses
-            step names (by name or slug, distinct, step order); blocks joined by "\n\n", the
+            then every Function (record order) of each Component other than its own (by name) that a
+            uses step names (by name or slug, distinct, step order); blocks joined by "\n\n", the
             override's instruction replacing the first. contextSlice = the override's, else
             docs, code[0] when absent, the profile's helpersModule when hasFile(it) and absent.
             budget judgeBudget(the examples of its Functions counted). Card = {customId, intent:

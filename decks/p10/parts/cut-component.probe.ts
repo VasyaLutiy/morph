@@ -99,6 +99,9 @@ test("§2.2: an override's instruction is the opening, the record follows; the a
   expect(checks?.acceptance?.startsWith("D=/tmp/morph/checks; mkdir -p $D;")).toBe(true);
   expect(checks?.instruction.endsWith(TYPESCRIPT.finale)).toBe(true);
   expect(checks?.reasoning).toStrictEqual({ maxTokens: 2500 });
+  const renamed: ContourMap = { ...MAP, cards: MAP.cards.map((c) => (c.id === "format-report" ? { ...c, dependsOn: ["parse-entry", "x"] } : c)) };
+  const rc = cards(cutComponent({ record: REC, component: LEDGER, map: renamed, docs: [], spec: "s" }));
+  expect(rc.find((c) => c.customId === "format-report")?.dependsOn).toStrictEqual(["parse", "x"]);
   const named = cutComponent({ record: REC, component: { ...LEDGER, name: "--" }, map: EMPTY_MAP, docs: [], spec: "s" });
   expect(err(named)).toBe("no letters or digits in name '--'");
 });

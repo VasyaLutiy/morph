@@ -104,6 +104,9 @@ test("§2.2: the cross-cut slice, a default-language map, extras as cards", () =
   const r = planSpec(input({}));
   const save = r.ok ? r.plan.cards.find((c) => c.customId === "save-ledger") : undefined;
   expect(save?.contextSlice).toStrictEqual(["docs/TASK.md", "src/ledger/formatReport.ts"]);
+  const fixed: ContourMap = { ...MAP, cards: MAP.cards.map((c) => (c.id === "save-ledger" ? { ...c, contextSlice: ["docs/A.md"] } : c)) };
+  const rf = planSpec(input({ map: fixed, judge: false }));
+  expect(rf.ok ? rf.plan.cards.find((c) => c.customId === "save-ledger")?.contextSlice : rf.error).toStrictEqual(["docs/A.md"]);
   const types = r.ok ? r.plan.cards.find((c) => c.customId === "ledger-types") : undefined;
   expect(types).toStrictEqual({ customId: "ledger-types", intent: "patch", targets: ["src/ledger/types.ts"], contextSlice: [],
     instruction: "Write the types.", acceptance: "exit 0\n", model: null, maxTokens: null, reasoning: { maxTokens: 1000 }, variants: 1, dependsOn: [] });

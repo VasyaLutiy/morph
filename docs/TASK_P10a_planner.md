@@ -237,7 +237,7 @@ posix.basename(code, posix.extname(code)) })` (`import { posix } from "node:path
   `Preconditions a test's setup depends on:` + lines `- <Component name> · <Function name> ·
   <precondition>` (the separator is " · ", U+00B7 between spaces). A used Component is found by
   `c.name === target || componentSlug(c.name) === componentSlug(target)`; the judged card's own
-  Component is never a used one; a uses target that names no Component (`node:fs`) is skipped.
+  Component (compared by name) is never a used one; a uses target that names no Component (`node:fs`) is skipped.
 - A card without Functions (an Interface card, an extra card) gets the opening block only.
 - The Card's keys and defaults as a code card; `variants` default 1.
 

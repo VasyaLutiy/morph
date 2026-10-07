@@ -96,6 +96,11 @@ test("§2.2: judgeTarget, the opening, the default profile, the examples block",
     model: null, maxTokens: null, reasoning: null, variants: 1, dependsOn: [] };
   const viaDefault = cutJudges(input({ cuts: [{ card: { ...notes, targets: ["lib/n.mjs"] }, component: null, profile: null, functions: [], slicedByMap: true }], defaultProfile: PYTHON }));
   expect(viaDefault).toStrictEqual([]);
+  const selfUse: Component = { ...LEDGER, functions: LEDGER.functions.map((x) =>
+    (x.name === "Parse Entry" ? { ...x, steps: [...x.steps, { verb: "uses" as const, target: "Ledger" }] } : x)) };
+  const own = cutJudges(input({ record: { ...REC, system: { ...REC.system, groups: [selfUse, STORE] } },
+    cuts: [cut(P, selfUse, TYPESCRIPT, ["Parse Entry"])] }));
+  expect(own[0]?.instruction.includes("Preconditions")).toBe(false);
   const viaExt = cutJudges(input({ cuts: [{ card: notes, component: null, profile: null, functions: [], slicedByMap: true }] }));
   expect(viaExt[0]?.targets).toStrictEqual(["tests/test_n_examples.py"]);
 });
