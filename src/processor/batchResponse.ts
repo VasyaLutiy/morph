@@ -9,6 +9,7 @@ export interface BatchRead {
   status: string | null;
   error: string | null;
   replies: Reply[];
+  cost?: number;
 }
 
 const FAILED_STATUSES = ["failed", "expired", "cancelled", "canceled", "cancelling"];
@@ -68,6 +69,13 @@ export function readBatch(status: number, text: string): BatchRead {
     ? (obj.error as Record<string, unknown>).message as string
     : null;
 
+  const usageRec = obj.usage;
+  let cost: number | undefined = undefined;
+  if (usageRec !== undefined && usageRec !== null && typeof usageRec === "object" && !Array.isArray(usageRec)) {
+    const c = (usageRec as Record<string, unknown>).cost;
+    if (typeof c === "number") cost = c;
+  }
+
   const replies: Reply[] = [];
   if (Array.isArray(obj.results)) {
     for (const raw of obj.results) {
@@ -96,5 +104,7 @@ export function readBatch(status: number, text: string): BatchRead {
     }
   }
 
-  return { batchId, state, status: statusWord, error: batchError, replies };
+  const out: BatchRead = { batchId, state, status: statusWord, error: batchError, replies };
+  if (cost !== undefined) out.cost = cost;
+  return out;
 }
