@@ -129,12 +129,16 @@ test("Run Deck example 4: the retry carries the diff of the failed attempt, and 
 
     expect(f.calls.length).toBe(2);
     const first = lastMessage(f, 0);
-    expect(first.includes("Your previous attempt (rejected)")).toBe(false);
+    expect(first.includes("<acceptance_output>")).toBe(false);
     const second = lastMessage(f, 1);
-    expect(second.includes("Acceptance output:\nfirst-red\n")).toBe(true);
     expect(
       second.includes(
-        'Your previous attempt (rejected):\n--- /dev/null\n+++ b/out/a.ts\n@@ -0,0 +1,1 @@\n+export const x = "MARK";\n'
+        "A previous attempt failed its acceptance check (`if [ -f seen ]; then grep -q MARK out/a.ts; else touch seen; echo first-red; exit 1; fi`):\nfirst-red\n\n</acceptance_output>"
+      )
+    ).toBe(true);
+    expect(
+      second.includes(
+        "<previous_attempt_diff>\nYour previous attempt changed the file like this (unified diff):\n--- /dev/null\n+++ b/out/a.ts\n@@ -0,0 +1,1 @@\n+export const x = \"MARK\";\n\n</previous_attempt_diff>"
       )
     ).toBe(true);
 
@@ -219,14 +223,14 @@ test("Run Deck §2.2: the retry after a truncated answer has no diff block", asy
 
     expect(f.calls.length).toBe(2);
     const second = lastMessage(f, 1);
-    expect(second.includes("Acceptance output:\nanswer truncated")).toBe(true);
-    // the P5 header "Your previous attempt failed its acceptance." is there,
-    // but the diff block and its closing sentence are not (previousDiff null)
-    expect(second.includes("Your previous attempt (rejected)")).toBe(false);
-    expect(second.includes("--- /dev/null")).toBe(false);
     expect(
-      second.includes("The diff above is your own previous edit")
-    ).toBe(false);
+      second.includes(
+        "<acceptance_output>\nA previous attempt was discarded before acceptance could run:\nanswer truncated\n</acceptance_output>\nProduce the complete file again, from the context given above."
+      )
+    ).toBe(true);
+    expect(second.includes("<previous_attempt_diff>")).toBe(false);
+    expect(second.includes("--- /dev/null")).toBe(false);
+    expect(second.includes("failed its acceptance check")).toBe(false);
 
     expect(result.report.requests?.length).toBe(2);
     expect(result.report.requests?.[1]?.customId).toBe("a.r1.v1");
