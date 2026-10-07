@@ -1,0 +1,15 @@
+{
+  "id": "batch-1789576284-Ejahe4wq9AgVdp5xGdNm",
+  "object": "batch",
+  "endpoint": "/v1/chat/completions",
+  "model": "z-ai/glm-5.3-20260826",
+  "completion_window": "24h",
+  "status": "validating",
+  "request_counts": {
+    "total": 4,
+    "completed": 0,
+    "failed": 0
+  },
+  "results": null,
+  "error": null
+}

@@ -442,8 +442,9 @@ System:
         generation on the sync route (one request at a time per worker, at most
         `concurrency` workers), reads answers and usage back; a stub processor answers
         from files for runs without a provider. The transport (fetch and sleep) is a
-        parameter: the processor's own transport is the only thing a test mocks. The
-        batch route (/api/beta/batches, submit/collect) is P11.
+        parameter: the processor's own transport is the only thing a test mocks. On the
+        batch route (P11) one generation is one OpenRouter batch (/api/beta/batches):
+        submitted inline, polled, its inline results mapped back to the requests.
       language: typescript
       requirements: [Deterministic Core]
       functions:
@@ -560,9 +561,9 @@ System:
           description: Sends every Request of a generation, returns Answers and Usage per customId; retries transport errors with backoff; a provider refusal is recorded, not retried.
           behavior: >
             sendGeneration(config, requests, transport) never rejects; answers and usage
-            come back in the order of requests, one each. Route batch → every answer
-            "route batch is not available on the sync sender", no call. Type stub →
-            Stub Answer per request, no call. Type openrouter: at most concurrency
+            come back in the order of requests, one each. Type stub → Stub Answer per
+            request, no call, on either route. Type openrouter on route batch → Send
+            Batch, its result as it is. Type openrouter on route sync: at most concurrency
             requests in flight; each is Assemble Request, then transport.fetch(url,
             {method POST, headers, body JSON}) and Read Response. A thrown fetch
             ("transport: <message>") or status 408, 429 or 5xx is retried up to
@@ -573,6 +574,7 @@ System:
             - calls: Assemble Request
             - calls: Read Response
             - calls: Stub Answer
+            - calls: Send Batch
             - produces: Answer
             - produces: Usage
           examples:
@@ -591,6 +593,136 @@ System:
             - given: 'the glm config with concurrency 2; requests r1.v1, r2.v1, r3.v1; a transport that counts calls in flight and yields before answering status 200 with okResponse.json'
               when: "sent"
               then: 'at most 2 in flight, 3 calls; answers in the order r1.v1, r2.v1, r3.v1'
+            - given: 'the config of the fixture (route batch); request a.v1; a transport whose first call answers status 202 with tests/fixtures/processor/batchSubmitted.json and every later call status 200 with batchCompleted.json'
+              when: "sent"
+              then: 'two calls: POST https://openrouter.ai/api/beta/batches, then GET https://openrouter.ai/api/beta/batches/batch-1789576284-Ejahe4wq9AgVdp5xGdNm; sleeps [15000]; answers exactly [{customId: "a.v1", text: "```ts\nexport const a = 1;\n```", finishReason: "stop", error: null}]; usage 11030 in, 571 out, cost 0.00269316'
+              ref: "tests/fixtures/processor/batchConfig.json"
+            - given: 'the stub config of Read Registry example 2 with route "batch" and answersDir <d> holding a.v1.md = "A\n"; request a.v1; a fakeFetch'
+              when: "sent"
+              then: 'no call, no sleep; answer text "A\n", finishReason "stop", error null'
+        - name: Assemble Batch
+          description: The requests of one generation → one OpenRouter batch submission, the whole batch inline as one JSON text.
+          behavior: >
+            assembleBatch(requests, config) is pure and returns a Batch Call. url =
+            batchUrl(config.baseUrl), also exported: the baseUrl without trailing slashes,
+            a final "/v1" replaced by "/beta", then "/batches"; a baseUrl not ending in /v1
+            keeps its path. headers as Assemble Request: Authorization "Bearer <apiKey>"
+            (absent when apiKey is null), then Content-Type application/json. body is a JSON
+            text, not an object (the provider stream-parses it and refuses requests before
+            model), with exactly the keys endpoint "/v1/chat/completions", model = the
+            config's model, requests, in this order. Each request becomes {custom_id, body}
+            in request order; its body holds, in this order, max_tokens = the request's
+            maxTokens (absent when null), reasoning = the request's or else the config's
+            ({max_tokens: n} or {effort}; absent when both are null), messages as {role,
+            content}. One model per batch: no item names a model (a request's own model is
+            Send Batch's business); no provider, usage, tools, tool_choice or stream key.
+          steps:
+            - reads: Request
+            - reads: Processor Config
+            - produces: Batch Call
+          examples:
+            - given: 'the config of the fixture; requests a.v1 {model: null, maxTokens: 12000, reasoning: null, messages: [{role: "user", content: "hi"}]} and a.v2 {model: null, maxTokens: null, reasoning: {effort: "low"}, messages: [{role: "system", content: "s"}, {role: "user", content: "u"}]}'
+              when: "assembled"
+              then: 'url "https://openrouter.ai/api/beta/batches"; headers exactly {Authorization: "Bearer sk-or-test", Content-Type: "application/json"}; body is exactly {"endpoint":"/v1/chat/completions","model":"z-ai/glm-5.3:batch","requests":[{"custom_id":"a.v1","body":{"max_tokens":12000,"reasoning":{"max_tokens":2500},"messages":[{"role":"user","content":"hi"}]}},{"custom_id":"a.v2","body":{"reasoning":{"effort":"low"},"messages":[{"role":"system","content":"s"},{"role":"user","content":"u"}]}}]}'
+              ref: "tests/fixtures/processor/batchConfig.json"
+            - given: 'the batch config with apiKey null, reasoning null and baseUrl "http://127.0.0.1:9/v1/"; request b.v1 {model: "x/y", maxTokens: null, reasoning: null, messages: [{role: "user", content: "hi"}]}'
+              when: "assembled"
+              then: 'url "http://127.0.0.1:9/beta/batches"; headers exactly {Content-Type: "application/json"}; body is exactly {"endpoint":"/v1/chat/completions","model":"z-ai/glm-5.3:batch","requests":[{"custom_id":"b.v1","body":{"messages":[{"role":"user","content":"hi"}]}}]}; batchUrl("http://h/x/") is "http://h/x/batches"'
+        - name: Read Batch
+          description: One reply about a batch (HTTP status + body text) into a Batch Read with the results mapped to Replies.
+          behavior: >
+            readBatch(status, text) is pure and never throws. Status outside 200..299 →
+            state "error", error "http <status>: <error.message of the JSON body, else the
+            first 200 chars of the text>"; a 2xx body that is not a JSON object →
+            "unreadable response: <first 200 chars>"; one without a string status →
+            "provider error: <error.message, else 'no batch status'>"; an error read has
+            batchId null, status null, replies []. Otherwise batchId = id (null when not a
+            string), status = the provider's word, state "done" for completed, "failed"
+            for failed, expired, cancelled, canceled and cancelling, else "pending"; error
+            = the batch's error.message (null when absent). replies: one per entry of
+            results (none when results is not an array), in the provider's order, an entry
+            without a string custom_id skipped. An entry with a non-null error → answer
+            error "batch item error: <error.message, else the first 200 chars of its
+            JSON>", text and finishReason null, usage 0 and 0 tokens, cost, provider and
+            generationId null; an entry without a response object → "batch item error: no
+            response", alike; otherwise Read Response of (custom_id, response.status_code,
+            200 when absent, the JSON text of response.body).
+          steps:
+            - calls: Read Response
+            - produces: Batch Read
+          examples:
+            - given: 'status 202, the text of the fixture (a submit''s answer)'
+              when: "read"
+              then: 'exactly {batchId: "batch-1789576284-Ejahe4wq9AgVdp5xGdNm", state: "pending", status: "validating", error: null, replies: []}'
+              ref: "tests/fixtures/processor/batchSubmitted.json"
+            - given: 'status 200, the text of the fixture (completed; results c.v1, a.v1, b.v1 in this order)'
+              when: "read"
+              then: 'batchId "batch-1789576284-Ejahe4wq9AgVdp5xGdNm", state "done", status "completed", error null; replies in the order c.v1, a.v1, b.v1: c.v1 answer {text: null, finishReason: null, error: "batch item error: context length exceeded"}, usage {inputTokens: 0, outputTokens: 0, cost: null, provider: null, generationId: null}; a.v1 answer {text: "```ts\nexport const a = 1;\n```", finishReason: "stop", error: null}, usage {inputTokens: 11030, outputTokens: 571, cost: 0.00269316, provider: "Novita", generationId: "gen-0000000003-TESTtestTESTtestTEST"}; b.v1 answer {text: null, finishReason: "length", error: null}, usage 15550 in, 12000 out, cost 0.0086'
+              ref: "tests/fixtures/processor/batchCompleted.json"
+            - given: 'status 200, the text of the fixture (a batch the provider rejected after accepting it)'
+              when: "read"
+              then: 'state "failed", status "failed", error "HTTP 400: invalid batch inference job: job-submission-count for account acct-0000, in use: 16, quota: 16", replies []'
+              ref: "tests/fixtures/processor/batchFailed.json"
+            - given: 'status 404, the text of the fixture'
+              when: "read"
+              then: 'exactly {batchId: null, state: "error", status: null, error: "http 404: Batch job batch-1789576284-Ejahe4wq9AgVdp5xGdNm not found.", replies: []}'
+              ref: "tests/fixtures/processor/batchNotFound.json"
+            - given: 'status 200, text "<html>bad gateway</html>"'
+              when: "read"
+              then: 'state "error", error "unreadable response: <html>bad gateway</html>", batchId null, replies []'
+        - name: Send Batch
+          description: One generation as one OpenRouter batch - submit once, poll until done or the wait runs out, map the results back to the requests.
+          behavior: >
+            sendBatch(config, requests, transport) never rejects; answers and usage come
+            back in the order of requests, one each; exports BATCH_POLL_MS 15000 and
+            BATCH_GRACE_MS 60000. A request whose model is set and differs from the
+            config's is answered "batch runs one model: <customId> pins <model>, the batch
+            is <config model>" and left out; no request left → no call. Submit: Assemble
+            Batch of the rest, ONE transport.fetch(url, {method POST, headers, body}), never
+            retried (a POST that reached the provider may already be a paid batch), then
+            Read Batch: a thrown fetch → every request "batch submit: transport:
+            <message>"; an error read → "batch submit: <its error>"; no batchId → "batch
+            submit: no batch id". Poll: polls = max(1, floor(timeoutMs / BATCH_POLL_MS)),
+            on this route TIMEOUT_MS is the whole wait; each poll sleeps
+            transport.sleep(BATCH_POLL_MS) first, then transport.fetch(url + "/" + batchId,
+            {method GET, headers}) with no body, then Read Batch. A thrown poll, status
+            408, 429 or 5xx, and a 404 while poll number × BATCH_POLL_MS ≤ BATCH_GRACE_MS
+            (the provider's read-after-write lag) go on to the next poll; any other error
+            read is final: every request "batch <batchId>: <its error>". pending → the next
+            poll. done or failed → each request takes the first reply with its customId; a
+            request without one → "batch <batchId> <status>: <the batch's error, else 'no
+            result'>". Polls run out → every request "batch <batchId> still <the last
+            status read, the submit's at first> after <polls> polls"; the batch is not
+            cancelled. Every error answer has text and finishReason null, usage 0 and 0
+            tokens, cost, provider and generationId null.
+          steps:
+            - calls: Assemble Batch
+            - calls: Read Batch
+            - produces: Answer
+            - produces: Usage
+          examples:
+            - given: 'the batch config (timeoutMs 60000); requests a.v1, b.v1, c.v1, d.v1 (model null); calls answer in turn 202 batchSubmitted.json, 200 batchInProgress.json, 200 batchCompleted.json'
+              when: "sent"
+              then: 'three calls: POST https://openrouter.ai/api/beta/batches, then twice GET https://openrouter.ai/api/beta/batches/batch-1789576284-Ejahe4wq9AgVdp5xGdNm with no body; sleeps [15000, 15000]; answers in request order: a.v1 text "```ts\nexport const a = 1;\n```" finishReason "stop"; b.v1 text null finishReason "length" error null; c.v1 error "batch item error: context length exceeded"; d.v1 error "batch batch-1789576284-Ejahe4wq9AgVdp5xGdNm completed: no result"; usage a.v1 11030 in, 571 out, cost 0.00269316; d.v1 0, 0, cost null'
+              ref: "tests/fixtures/processor/batchConfig.json"
+            - given: 'the batch config; request a.v1; calls answer 202 batchSubmitted.json, 404 batchNotFound.json, 200 batchCompleted.json'
+              when: "sent"
+              then: 'three calls; sleeps [15000, 15000]; answer a.v1 finishReason "stop", error null (a 404 at 15000 ms is inside the grace)'
+            - given: 'the batch config with timeoutMs 120000; request a.v1; calls answer 202 batchSubmitted.json, four times 200 batchInProgress.json, then 404 batchNotFound.json'
+              when: "sent"
+              then: 'six calls; sleeps five times 15000; answer error "batch batch-1789576284-Ejahe4wq9AgVdp5xGdNm: http 404: Batch job batch-1789576284-Ejahe4wq9AgVdp5xGdNm not found." (poll 5, 75000 ms, is past the grace)'
+            - given: 'the batch config; requests a.v1, b.v1; calls answer 202 batchSubmitted.json, then 200 batchFailed.json'
+              when: "sent"
+              then: 'two calls; both answers error "batch batch-1789576284-Ejahe4wq9AgVdp5xGdNm failed: HTTP 400: invalid batch inference job: job-submission-count for account acct-0000, in use: 16, quota: 16"'
+            - given: 'the batch config; requests a.v1, b.v1; the submit answers 400 with tests/fixtures/processor/noBatchEndpoint.json'
+              when: "sent"
+              then: 'one call, no sleep; both answers error "batch submit: http 400: HTTP 400: invalid batch inference job: Model ''z-ai/glm-5.3:batch'' does not have a :batch endpoint."'
+            - given: 'the batch config (timeoutMs 60000); request a.v1; calls answer 202 batchSubmitted.json, then 200 batchInProgress.json every time'
+              when: "sent"
+              then: 'five calls; sleeps [15000, 15000, 15000, 15000]; answer error "batch batch-1789576284-Ejahe4wq9AgVdp5xGdNm still in_progress after 4 polls", usage 0, 0, cost null'
+            - given: 'the batch config; requests x.v1 (model "other/m") and a.v1 (model null); calls answer 202 batchSubmitted.json, then a thrown Error("socket hang up"), then 200 batchCompleted.json'
+              when: "sent"
+              then: 'three calls; the POST body''s requests hold only a.v1; answers x.v1 error "batch runs one model: x.v1 pins other/m, the batch is z-ai/glm-5.3:batch", a.v1 finishReason "stop" error null'
       dataObjects:
         - name: Processor Config
           description: One processor as read from the environment.
@@ -601,6 +733,12 @@ System:
         - name: Usage
           description: Tokens and cost of one Request as the provider reported them (0 tokens and null cost when it reported none).
           schema: "{ customId, inputTokens, outputTokens, cost: number | null, provider: string | null, generationId: string | null }"
+        - name: Batch Call
+          description: One batch submission, ready to POST.
+          schema: "{ url, headers: Record<string, string>, body: string }"
+        - name: Batch Read
+          description: What one reply says about a batch.
+          schema: "{ batchId: string | null, state: 'pending'|'done'|'failed'|'error', status: string | null, error: string | null, replies: { answer: Answer, usage: Usage }[] }"
 
     # ---------------------------------------------------------------- P5 (skeleton)
     - name: runloop
@@ -2488,9 +2626,9 @@ Requirement:
       randomness, no environment reads. acceptance is bound only in its pure parts (Snapshot
       Targets, Build Attempt Diff): Run Acceptance spawns a shell and its only timer is the
       child's timeout; env and the timeout are parameters, never process.env (06.10, P3).
-      processor reads the environment only in Read Registry; Assemble Request, Read Response
-      and Stub Answer are pure of clock and network; the transport and its sleep are
-      parameters of Send Generation (P4).
+      processor reads the environment only in Read Registry; Assemble Request, Read Response,
+      Stub Answer, Assemble Batch and Read Batch are pure of clock and network; the transport
+      and its sleep are parameters of Send Generation and Send Batch (P4, P11).
       git spawns only in Run Git, synchronously, with the child's environment given whole as
       a parameter; it reads no process.env and no clock of its own (P6).
       cli touches the process only in its entry src/cli.ts: the environment, the working

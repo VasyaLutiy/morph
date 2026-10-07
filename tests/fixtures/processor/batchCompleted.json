@@ -1,0 +1,110 @@
+{
+  "id": "batch-1789576284-Ejahe4wq9AgVdp5xGdNm",
+  "object": "batch",
+  "endpoint": "/v1/chat/completions",
+  "model": "z-ai/glm-5.3-20260826",
+  "completion_window": "24h",
+  "status": "completed",
+  "request_counts": {
+    "total": 4,
+    "completed": 2,
+    "failed": 1
+  },
+  "results": [
+    {
+      "id": "gen-0000000005-TESTtestTESTtestTEST",
+      "custom_id": "c.v1",
+      "response": null,
+      "error": {
+        "message": "context length exceeded"
+      }
+    },
+    {
+      "id": "gen-0000000003-TESTtestTESTtestTEST",
+      "custom_id": "a.v1",
+      "response": {
+        "status_code": 200,
+        "request_id": "req-1",
+        "body": {
+          "id": "gen-0000000003-TESTtestTESTtestTEST",
+          "provider": "Novita",
+          "model": "z-ai/glm-5.3",
+          "object": "chat.completion",
+          "created": 1791290000,
+          "choices": [
+            {
+              "logprobs": null,
+              "finish_reason": "stop",
+              "native_finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "role": "assistant",
+                "content": "```ts\nexport const a = 1;\n```",
+                "refusal": null,
+                "reasoning": "The target is one constant."
+              }
+            }
+          ],
+          "usage": {
+            "prompt_tokens": 11030,
+            "completion_tokens": 571,
+            "total_tokens": 11601,
+            "cost": 0.00269316,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 312
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "gen-0000000004-TESTtestTESTtestTEST",
+      "custom_id": "b.v1",
+      "response": {
+        "status_code": 200,
+        "request_id": "req-2",
+        "body": {
+          "id": "gen-0000000004-TESTtestTESTtestTEST",
+          "provider": "Novita",
+          "model": "z-ai/glm-5.3",
+          "object": "chat.completion",
+          "created": 1791290000,
+          "choices": [
+            {
+              "logprobs": null,
+              "finish_reason": "length",
+              "native_finish_reason": "length",
+              "index": 0,
+              "message": {
+                "role": "assistant",
+                "content": null,
+                "refusal": null,
+                "reasoning": "Let me think about the hunk headers first."
+              }
+            }
+          ],
+          "usage": {
+            "prompt_tokens": 15550,
+            "completion_tokens": 12000,
+            "total_tokens": 27550,
+            "cost": 0.0086,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 312
+            }
+          }
+        }
+      },
+      "error": null
+    }
+  ],
+  "error": null
+}

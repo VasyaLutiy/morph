@@ -1,0 +1,17 @@
+{
+  "id": "batch-1789576284-Ejahe4wq9AgVdp5xGdNm",
+  "object": "batch",
+  "endpoint": "/v1/chat/completions",
+  "model": "z-ai/glm-5.3-20260826",
+  "completion_window": "24h",
+  "status": "failed",
+  "request_counts": {
+    "total": 4,
+    "completed": 0,
+    "failed": 0
+  },
+  "results": null,
+  "error": {
+    "message": "HTTP 400: invalid batch inference job: job-submission-count for account acct-0000, in use: 16, quota: 16"
+  }
+}

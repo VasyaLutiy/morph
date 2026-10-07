@@ -1,0 +1,56 @@
+{
+  "phase": "p11",
+  "ownGit": true,
+  "fullExclude": [
+    "tests/processor/send.examples.test.ts"
+  ],
+  "cards": [
+    { "id": "assemble-batch" },
+    { "id": "read-batch" },
+    { "id": "send-batch" },
+    { "id": "send-generation" },
+    {
+      "id": "assemble-batch-judge",
+      "files": [
+        {
+          "file": "tests/processor/batchRequest.examples.test.ts", "min": 2, "max": 8, "new": true,
+          "lits": ["Assemble Batch example 1", "Assemble Batch example 2", "https://openrouter.ai/api/beta/batches",
+            "http://127.0.0.1:9/beta/batches", "http://h/x/batches"]
+        }
+      ]
+    },
+    {
+      "id": "read-batch-judge",
+      "files": [
+        {
+          "file": "tests/processor/batchResponse.examples.test.ts", "min": 5, "max": 11, "new": true,
+          "lits": ["Read Batch example 1", "Read Batch example 2", "Read Batch example 3", "Read Batch example 4",
+            "Read Batch example 5", "batch item error: context length exceeded", "gen-0000000003-TESTtestTESTtestTEST",
+            "unreadable response: <html>bad gateway</html>"]
+        }
+      ]
+    },
+    {
+      "id": "send-batch-judge",
+      "files": [
+        {
+          "file": "tests/processor/batch.examples.test.ts", "min": 7, "max": 13, "new": true,
+          "lits": ["Send Batch example 1", "Send Batch example 2", "Send Batch example 3", "Send Batch example 4",
+            "Send Batch example 5", "Send Batch example 6", "Send Batch example 7", "completed: no result",
+            "still in_progress after 4 polls", "batch runs one model: x.v1 pins other/m, the batch is z-ai/glm-5.3:batch"]
+        }
+      ]
+    },
+    {
+      "id": "send-generation-judge",
+      "files": [
+        {
+          "file": "tests/processor/send.examples.test.ts", "min": 7, "max": 16,
+          "lits": ["Send Generation example 6", "Send Generation example 7",
+            "https://openrouter.ai/api/beta/batches/batch-1789576284-Ejahe4wq9AgVdp5xGdNm"],
+          "drop": ["Send Generation: the batch route answers every request with the route error"]
+        }
+      ]
+    }
+  ]
+}
