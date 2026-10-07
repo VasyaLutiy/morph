@@ -65,10 +65,12 @@ test("§2.2 rows: mrph without usage_totals, a non-finite cost, models counted p
 test("§2.2 rows: the cost sums in run order, per form and over both", () => {
   const r = (id: string, cost: number | null): string => JSON.stringify({ runId: id, outcomes: [], usageTotals: { requests: 1, cost } });
   const m = (id: string, cost: number): string => JSON.stringify({ deck_id: id, outcomes: {}, usage_totals: { requests: 2, cost } });
-  const got = readRuns([{ dir: "3", report: r("c", 0.2), answers: 0 }, { dir: "1", report: m("a", 0.1), answers: 0 },
-    { dir: "2", report: r("b", null), answers: 0 }, { dir: "4", report: m("d", 0.7), answers: 0 }]);
-  expect(got.totals.cost, "0.1 + 0.2 + 0.7 in run order").toBe(0.1 + 0.2 + 0.7);
-  expect(got.totals.v2, "v2").toStrictEqual({ runs: 2, cards: 0, written: 0, cost: 0 + 0 + 0.2 });
-  expect(got.totals.mrph, "mrph").toStrictEqual({ runs: 2, cards: 0, written: 0, cost: 0.1 + 0.7 });
-  expect(`${got.totals.requests}|${got.totals.unpriced}|${got.totals.from}|${got.totals.to}`, "requests").toBe("6|1||");
+  const got = readRuns([{ dir: "3", report: r("c", 0.1), answers: 0 }, { dir: "1", report: m("a", 0.1), answers: 0 },
+    { dir: "2", report: r("b", null), answers: 0 }, { dir: "4", report: m("d", 0.6), answers: 0 }, { dir: "5", report: r("e", 0), answers: 0 },
+    { dir: "6", report: '{"runId": "f", "outcomes": {"a": {"status": "written"}}}', answers: 0 }]);
+  expect(got.totals.cost, "0.1 + 0.1 + 0.6 in run order, not v2 + mrph").toBe(0.1 + 0.1 + 0.6);
+  expect(got.totals.v2, "v2").toStrictEqual({ runs: 3, cards: 0, written: 0, cost: 0 + 0 + 0.1 + 0 });
+  expect(got.totals.mrph, "mrph").toStrictEqual({ runs: 2, cards: 0, written: 0, cost: 0.1 + 0.6 });
+  expect(`${got.totals.requests}|${got.totals.unpriced}|${got.totals.from}|${got.totals.to}`, "requests; a cost 0 is priced").toBe("7|1||");
+  expect(got.skipped, "runId with object outcomes").toStrictEqual([{ dir: "6", reason: "unknown report format" }]);
 });

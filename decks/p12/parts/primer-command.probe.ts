@@ -134,10 +134,14 @@ test("§2.2 rows: test files by pattern only, the tie and the empty listing, the
     t.write(".morph/runs/r1/answers/x.answer.txt", "x");
     t.write(".morph/runs/r1/report.json", '{"runId": "r1", "outcomes": []}');
     t.write(".morph/runs/file.json", "{}");
+    t.write("gone.test.ts", "test(3);\n");
+    t.git(["add", "gone.test.ts"]);
+    fs.rmSync(t.path("gone.test.ts"));
     const r = primerCommand(t.root, true, deps(5));
     expect(Object.keys(r.document).join(","), "keys").toBe("root,generatedAt,files,tests,runs,skipped,chronology,next,missing,issues,chars,written,markdown");
     expect(`${r.document.files}|${r.document.tests.tests}|${r.document.runs.runs}|${r.document.runs.answers}|${r.document.skipped}|${r.document.written}`, "listing").toBe(
-      "5|1|1|1|0|.morph/primer.md");
+      "6|1|1|1|0|.morph/primer.md");
+    expect(r.document.tests.files, "an unreadable test file is left out").toBe(1);
     expect(r.document.markdown.length <= PRIMER_CAP, "under the cap").toBe(true);
   } finally {
     t.rm();

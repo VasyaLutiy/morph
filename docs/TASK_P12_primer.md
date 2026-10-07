@@ -399,8 +399,8 @@ Built by `morph plan --checks decks/p12/checks.json`, narrow to broad, every sta
 parse-command to its judge).
 
 Code cards (no test file, code-only targets, no smoke cap): `probe/<card>/` → `tsc` → `eslint <targets>` → `guard.mjs src
-<targets>` → `decks/p12/parts/<card>.probe.ts` (read-runs RR 1–3 + 2 rows = 5; read-story RS 1–5 + 2 = 7; render-primer RP
-1–4 + 1 = 5; primer-command PC 1–5 + 1 = 6; parse-command PC 8, 16, Main 9 + 1 = 4; **27 tests**) → eslint's verdict →
+<targets>` → `decks/p12/parts/<card>.probe.ts` (read-runs RR 1–3 + 2 rows = 5; read-story RS 1–5 + 3 = 8; render-primer RP
+1–4 + 1 = 5; primer-command PC 1–5 + 1 = 6; parse-command PC 8, 16, Main 9 + 1 = 4; **28 tests**) → eslint's verdict →
 full `vitest run` minus fullExclude → own git → frozen → untracked.
 
 Judge cards: `probe/<card>/` → `tsc` → `eslint <targets>` → `guard.mjs tests <file> <min> <max> lits<n>.json` → (patched)
@@ -511,4 +511,56 @@ its `прогоны` cell; DECISIONS lines "P12 primer"; then the smoke row and 
 
 ### Gate (preparation)
 
-_Filled at the gate._
+07.10, on the VPS, by the preparing orchestrator (Opus 5.5); no paid run, no call to the live service. Data commits 2c991dc
+(spec, record, compaction, map, fixtures, MEASURE column `прогоны`, PLAN rows P12a/P12b, guard layer, checks, probes, deck,
+DECISIONS), f0daafd (parse-command-judge writes example 16 as literals) and the gate commit (three probe rows closing the
+eight mutation survivors of the first pass, deck re-cut, this section). Component sizes: primer **25 170** (skeleton 251),
+cli **29 996** (29 850 → 29 266 re-wrapped, parsed record identical → + routing); every other Component untouched.
+
+The deck **cut by V2**: `node dist/cli.js plan --component primer --component cli --judge --checks decks/p12/checks.json
+--out decks/p12/deck.json` exit 0, 22 cards, filtered by `decks/p12/filter.py` to 11; generations `[read-runs, read-story,
+render-primer] [primer-command, read-runs-judge, read-story-judge, render-primer-judge] [parse-command,
+primer-command-judge] [main-judge, parse-command-judge]`; `node dist/cli.js deck check` **0 errors, 0 warnings**.
+Cross-check: the old `mrph plan --spec … --component primer cli --judge` (dry) gives the same 22 ids in the same order and the
+same 5 generations; targets, slices, dependsOn, intent, variants, max_tokens and reasoning (2 500) equal on all 22;
+instructions differ on all 22 (the P10a design); acceptances differ on the 11 phase cards (V2's builder chain from
+checks.json) and on 3 cards outside the phase with no map acceptance (main, run-command, run-command-judge), the other 8 equal.
+
+Scratch worktree from f0daafd (references of the 7 code files and the 6 test files, deleted afterwards), cards run in deck
+order with the deck's own acceptances, each accepted card committed before the next: **11 of 11 chains green, 46.7–50.8 s
+each (530 s in all; limit 250 s per chain)**; after the probe rows, read-runs, read-story and primer-command again green
+(48.8–49.6 s). Ripple measured with the code references alone: 1 of 641 red (parse.examples example 8). The final tree:
+`tsc`, `eslint src tests`, guard, build clean, `vitest run` **660 / 660** in 89 files (641 + 19). Typed one-line throwing
+stubs (`Error: stub <fn> <args>`; the types of the four primer files and cli/types.ts as specified; parse.ts and main.ts
+throwing): every code card red at the probe — read-runs 5/5, read-story 8/8, render-primer 5/5, primer-command 6/6,
+parse-command 4/4 (**28/28**); **all 20 new and changed record examples red** (RR 1–3, RS 1–5, RP 1–4, PC 1–5, Parse Command
+8, 16, Main 9), each with a readable line; chains 9.0–9.9 s. Judges with the reference code: the five new files absent →
+red at the guard ("… missing", 6.0–7.2 s); parse.examples at HEAD → red at the guard ("has 21 test/it calls, expected
+22..24", 8.0 s). Mutation check: **83 single-rule mutations** of the references (readRuns 17, readStory 27, renderPrimer 15,
+primerCommand 18, parse/main 6), each under a 120 s subprocess timeout: **83 killed by the card's probe, 0 by timeout** (max
+2.0 s); the first pass left 8 survivors (V2 form without the outcomes-array check; totals.cost as v2 + mrph; a cost 0
+counted unpriced; the `\|` unescape; the last `)` of the notes; P10 doing P1; a non-integer issue number; an unreadable
+test file counted), closed by the gate commit's rows.
+
+Max slice + targets: parse-command-judge 66 680 bytes; primer-command 52 151 + the three readers (≈ 17 KB) + its answer
+≈ 74 KB (gate 200 KB). **Forecast** on `ds` with every maxTokens × 3: P11b2 ran 9 cards, 15 requests, $0.1183; here 11 cards
+of 45–67 KB in, 16 first requests (5 code × 2 variants + 6 judges), ≈ 16–20 requests ≈ **$0.10–0.15**, ≤ $0.30 with a
+re-cut; ≤ $1. **Gate holds.**
+
+**What `morph primer` prints on this repository** (the reference binary on f0daafd, `--root .`, exit 0, 7 411 chars, no
+issues file): `- 641 tests in 84 test files by the typescript profile`; `- archived runs: 32 (V2 14, mrph 18), 2026-10-06 →
+2026-10-07`; `- cards: 189 written of 218 (13 failed, 16 skipped); requests 395, answers kept 87`; `- cost: $2.9560 over 32
+priced runs`; `- by format: V2 14 runs, 98/113 written, $1.3884; mrph 18 runs, 91/105 written, $1.5675`; `- models:
+z-ai/glm-5.3 (28 runs), deepseek/deepseek-v4.1-flash (4 runs)`; the chronology from `- P0 · 2026-10-06 · mrph ·
+z-ai/glm-5.3 · 1/1 written` to P11b2 smoke (30 lines), switch marks on P10a (builder mrph → V2 binary), P10b1 (builder V2
+binary → V2 cut + V2 run) and P11b1 (builder V2 cut + V2 run → V2/ds; model z-ai/glm-5.3 → deepseek/deepseek-v4.1-flash);
+`- next phase (docs/PLAN.md): P12a · primer + cli · issue #1: …`; the handoff from "Resumed by the operator 07.10 … Next, in
+order: **P12** primer"; the last 5 DECISIONS lines; "not read: no .morph/issues.json …".
+
+**Run command** (from the repo root, the binary copied first; the session applies maxTokens × 3 first, as the operator
+ordered):
+
+```
+npm run build && rm -rf /tmp/v2bin-p12 && mkdir -p /tmp/v2bin-p12 && cp -r dist /tmp/v2bin-p12/ && ln -s $PWD/node_modules /tmp/v2bin-p12/node_modules
+node /tmp/v2bin-p12/dist/cli.js run --root . --deck decks/p12/deck.json --processor ds --deadline 2400 > /tmp/p12-run.json
+```

@@ -80,3 +80,12 @@ test("§2.2 rows: a model switch only against the last non-empty models, the fir
   expect(`${got.next.row?.length}|${got.next.row?.endsWith("…")}|${got.next.handoff[1].length}`, "cuts").toBe("300|true|200");
   expect(got.chronology[2].date, "the first id's date").toBe("2026-01-02");
 });
+
+test("§2.2 rows: an escaped pipe in a cell, nested parentheses, P10 does not do P1, a non-integer issue number", () => {
+  const measure = "| фаза | строитель | карт |\n|---|---|---|\n| P10 | x\\|y | 1 / 1 (a (b) c) |\n| P2 | x\\|y | 1 / 1 |\n";
+  const got = readStory({ ...NONE, measure, plan: "| фаза |\n|---|\n| P1 |\n| P2 |\n",
+    issues: '[{"number": 2.5, "title": "x"}, {"number": 9, "title": "y", "labels": [{"name": "l"}]}]' }, []);
+  expect(`${got.chronology[0].builder}|${got.chronology[0].notes}`, "cells").toBe("x|y|a (b) c");
+  expect(got.next.phase, "P1 open").toBe("P1");
+  expect(got.issues.items, "integers only").toStrictEqual([{ number: 9, title: "y", labels: ["l"] }]);
+});
