@@ -320,4 +320,48 @@ built), so the merge closes issue #3.
 
 ### Gate (preparation)
 
-(filled below by the preparing orchestrator)
+07.10, on the VPS, by the preparing orchestrator (Opus 5.5); no paid run. Data commits a17098f (cli compaction 29 999 →
+28 450 bytes), e08e9b6 (spec, record, map, checks, probes, deck), b58259c (archive-run probe row moved out, deck re-cut).
+Component sizes after the patch: runloop 29 179, git 15 186, cli 29 836 (≤ 30 000 each).
+
+The deck **cut by V2**: `node dist/cli.js plan --component runloop --component git --component cli --judge --checks
+decks/p10c2/checks.json --out decks/p10c2/deck.json` exit 0, 30 cards, filtered by `decks/p10c2/filter.py` to 8;
+generations `[archive-run, process-generation] [archive-run-judge, process-generation-judge, run-command] [main,
+run-command-judge] [main-judge]`; `node dist/cli.js deck check` 0 errors / 0 warnings / 0 hazards. Cross-check: the old
+`mrph plan --spec … --component runloop --component git --component cli --judge` (dry) gives the same 30 ids and the same
+4 generations; dependsOn, targets, slices, intent, variants equal on all 30; max_tokens equal on the 8 phase cards (1
+card outside the phase differs, resolve-judge: V2's P10a judge formula); reasoning 2 500 everywhere; instructions differ
+on all 30 (the P10a design). Acceptances: the 8 phase cards have no map override, so mrph prints its old default
+(`npx tsc --noEmit`) and V2 the builder's acceptance from checks.json — checked by the chains below, as in P10c1; outside
+the phase run-deck and run-deck-judge differ the same way (their overrides were removed in P10c1), the other 20 equal.
+
+Scratch worktree from b58259c (references of the 6 code targets and the 4 test files, deleted afterwards), cards run in
+deck order with the deck's own acceptances, each accepted card committed before the next: **8 of 8 chains green, 32.2–39.6 s
+each (274.1 s in all; limit 250 s per chain)**; the final tree `tsc`, `eslint src tests`, `npm run build` clean, `vitest
+run` **585 / 585** in 64 files (578 + 7). Ripple as measured (§1): 1 test (Main example 4, the one fullExclude file), no
+other old test red in any full step. Typed one-line throwing stubs (`Error: stub <fn> <args>`; both types.ts as
+specified): every code card red at the probe — process-generation 5 of 6, archive-run 5 of 6, run-command 4 of 5 (the type
+row passes on typed stubs each), main 3 of 3; **all 6 new record examples red** (PG 12 in two tests, PG 13, AR 4, AR 5, RC
+7, RC 8) and the Main row, each with a readable line; chains 8.1–8.6 s. Judges: the three new files absent → red at the
+guard ("… missing", 5.4–6.0 s); main-judge with main.examples unpatched (HEAD) → red at the guard (both example
+literals, 7.1 s). Mutation check: 22 single-rule mutations of the references (process-generation 10, archive-run 6,
+run-command 5, main 1) — **21 killed** by the card's probe; the survivor (`ran = verdict !== "untried"`) is equivalent on
+every reachable input (a corrupt or truncated variant's log is one line without a `== ` header, a stale one has no
+result). One probe defect found by the first chain and fixed as data (b58259c): archive-run's probe imported
+`VariantRecord`, a generation-0 sibling's target; the assignability is checked by run-command's tsc instead.
+
+Max slice + targets: process-generation-judge 43 157 bytes (gate 200 KB). Forecast ≈ $0.12 (P10c1: 8 cards, 12 requests,
+$0.1289; here 12 first requests, slices 33–43 KB, ≈ 2–3 retries), ≤ $1. Gate holds.
+
+**Retry cap.** Today's binary (main 36dd9aa = P10c1 merged; b58259c adds data only) caps the retry batches per
+generation, 2 retries per card: the default `--max-retry-batches 2` gives every generation the old runner's 2 rounds, so
+the flag is **not** passed (recommended: the default; the run is also the first live check of C2 on a red card).
+
+**Run command** (from the repo root, the binary copied first):
+
+```
+npm run build && rm -rf /tmp/v2bin-p10c2 && mkdir -p /tmp/v2bin-p10c2 && cp -r dist /tmp/v2bin-p10c2/ && ln -s $PWD/node_modules /tmp/v2bin-p10c2/node_modules
+node /tmp/v2bin-p10c2/dist/cli.js run --root . --deck decks/p10c2/deck.json --processor glm53 --deadline 2400 > /tmp/p10c2-run.json
+```
+
+The merge of this phase's run closes issue #3: list C (C1–C7) is then built in full.
