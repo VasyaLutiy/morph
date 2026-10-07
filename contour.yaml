@@ -1226,7 +1226,12 @@ System:
             record {batchId, …}, a Batch Record) writes <root>/.morph/batches/<batchId>.json =
             JSON.stringify(record, null, 2) + "\n" (mkdir -p; local state, not committed) and
             returns ".morph/batches/<batchId>.json"; a batchId outside ^[A-Za-z0-9._-]+$ → null,
-            nothing written.
+            nothing written. saveBatchAnswers(root, batchId, answers) (exported; answers
+            {customId, text}[], from Collect Batch): batchId or any customId outside
+            ^[A-Za-z0-9._-]+$ → [], nothing written; else per answer in order
+            <root>/.morph/batches/<batchId>/<customId>.md = text exactly (mkdir -p only when
+            there is one; overwriting) → the relative paths in order ([] for no answers). The
+            directory is a stub processor's ANSWERS_DIR: `morph run` on it replays the answers.
           steps:
             - reads: Deck
             - reads: Run Report
@@ -1254,6 +1259,9 @@ System:
             - given: 'a tmp root t; record {batchId: "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W", processor: "night", model: "acme/m:batch", customIds: ["clamp-value.v1"], status: "in_progress", cost: null}; then the same with batchId "../x"'
               when: "saveBatchRecord(t, record)"
               then: '".morph/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W.json", the file JSON.stringify(record, null, 2) + "\n"; then null, .morph/batches holding that one file, no t/.morph/x.json'
+            - given: 'a tmp root t; answers [{customId: "clamp-value.v1", text: "A"}, {customId: "sign-of.v1", text: "B\n"}]; then the same with batchId "a b"; then customIds "x.v1", "../y"; then [] with batchId "batch-0"'
+              when: 'saveBatchAnswers(t, "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W", answers)'
+              then: '[".morph/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W/clamp-value.v1.md", the same with sign-of.v1.md], the files "A" and "B\n"; then [] three times: .morph/batches holds only that one directory, no x.v1.md, no batch-0 directory'
       dataObjects:
         - name: Git Result
           description: What one git call returned.
@@ -1277,7 +1285,7 @@ System:
         The `morph` binary: src/cli/*.ts and the entry src/cli.ts (bin dist/cli.js). Parses
         argv, routes to a command, prints one JSON document on stdout and log lines on stderr,
         maps every outcome to an exit code. Only the entry touches the process. Commands:
-        `deck check`, `run`, `plan`; the rest answer NotYetError.
+        `deck check`, `run`, `plan`, `submit` and `collect` (routed to batches); the rest NotYetError.
       language: typescript
       requirements: [One Document Out]
       functions:
@@ -1287,11 +1295,12 @@ System:
             parseCommand(argv) scans argv left to right. A token starting with "--" is a flag:
             --pretty and --judge take no value; --root, --deck, --processor, --run-id, --deadline,
             --max-cards, --max-retry-batches, --slice-cap-bytes, --spec, --component, --map, --out,
-            --checks take the next token whatever it is; any other flag (--x=y too) → "unknown
+            --checks, --batch take the next token whatever it is; any other flag (--x=y too) → "unknown
             flag: <t>"; a value flag last → "flag <t> needs a value"; a flag twice → "flag <t>
             given twice", but --component repeats, its values in argv order (the first error by
             argv wins). Other tokens are words, giving the command: none → "no command
-            (commands: deck check, plan, run)"; "run"; "plan"; "deck" "check"; a first word
+            (commands: deck check, plan, run, submit, collect)"; "run"; "plan"; "submit";
+            "collect"; "deck" "check"; a first word
             scout, primer, review or report → NotYetError "command <word> is not available yet";
             "deck" add|status|reset|clear → NotYetError "command deck <w> is not available yet";
             else "unknown command: <words, space-joined>". An extra word → "unexpected argument:
@@ -1299,10 +1308,13 @@ System:
             apply to <command>", in argv order (deck check: --root, --pretty, --deck,
             --slice-cap-bytes; run: --root, --pretty, --deck, --processor, --run-id, --deadline,
             --max-cards, --max-retry-batches; plan: --root, --pretty, --spec, --component, --map,
-            --judge, --out, --checks); plan without --spec → "missing --spec", else plan is done:
+            --judge, --out, --checks; submit: --root, --pretty, --deck, --processor; collect:
+            --root, --pretty, --batch); plan without --spec → "missing --spec", else plan is done:
             the plan Command (components [] and map, out null when not given; checks a key only
-            when given); no --deck → "missing --deck"; run
-            without --processor → "missing --processor"; a run --run-id not matching
+            when given); collect without --batch → "missing --batch", a --batch not matching
+            ^[A-Za-z0-9._-]+$ → "--batch must match ^[A-Za-z0-9._-]+$ (got '<v>')", else collect
+            is done; no --deck → "missing --deck"; run or submit without --processor → "missing
+            --processor"; submit is then done; a run --run-id not matching
             ^[A-Za-z0-9._-]+$ → "--run-id must match ^[A-Za-z0-9._-]+$ (got '<v>')"; numbers in
             the order --slice-cap-bytes (deck check), --deadline, --max-cards,
             --max-retry-batches (run): digits only, ≥ 1 ("<f> must be a positive integer (got
@@ -1310,67 +1322,34 @@ System:
             {ok: false, error: {error: {code: 4, kind: "UsageError" | "NotYetError", message}}}.
             Defaults: root ".", pretty false, sliceCapBytes 500000, runId null, deadlineSeconds
             2400, maxCards null (the card count), maxRetryBatches 2.
-          steps:
-            - produces: Command
+          steps: [{produces: Command}]
           examples:
-            - given: 'parseArgv.json["1"]'
-              ref: "tests/fixtures/cli/parseArgv.json (example number → its argv lists), parse.json (→ the result; a list for several)"
-              when: "parsed"
-              then: 'parse.json["1"]'
-            - given: 'parseArgv.json["2"]'
-              when: "parsed"
-              then: 'parse.json["2"]'
-            - given: 'parseArgv.json["3"]'
-              when: "parsed"
-              then: 'parse.json["3"]'
-            - given: 'parseArgv.json["4"]'
-              when: "parsed"
-              then: 'parse.json["4"]'
-            - given: 'parseArgv.json["5"]'
-              when: "parsed"
-              then: 'parse.json["5"]'
-            - given: 'parseArgv.json["6"]'
-              when: "parsed"
-              then: 'parse.json["6"]'
-            - given: 'parseArgv.json["7"]'
-              when: "parsed"
-              then: 'parse.json["7"]'
-            - given: 'parseArgv.json["8"]'
-              when: "parsed"
-              then: 'parse.json["8"]'
-            - given: 'parseArgv.json["9"]'
-              when: "parsed"
-              then: 'parse.json["9"]'
-            - given: 'parseArgv.json["10"]'
-              when: "parsed"
-              then: 'parse.json["10"]'
-            - given: 'parseArgv.json["11"]'
-              when: "parsed"
-              then: 'parse.json["11"]'
-            - given: 'parseArgv.json["12"]'
-              when: "parsed"
-              then: 'parse.json["12"]'
-            - given: 'parseArgv.json["13"]'
-              when: "parsed"
-              then: 'parse.json["13"]'
+            - {given: 'parseArgv.json["1"]', ref: "tests/fixtures/cli/parseArgv.json (example number → its argv lists), parse.json (→ the result; a list for several)", when: parsed, then: 'parse.json["1"]'}
+            - {given: 'parseArgv.json["2"]', when: parsed, then: 'parse.json["2"]'}
+            - {given: 'parseArgv.json["3"]', when: parsed, then: 'parse.json["3"]'}
+            - {given: 'parseArgv.json["4"]', when: parsed, then: 'parse.json["4"]'}
+            - {given: 'parseArgv.json["5"]', when: parsed, then: 'parse.json["5"]'}
+            - {given: 'parseArgv.json["6"]', when: parsed, then: 'parse.json["6"]'}
+            - {given: 'parseArgv.json["7"]', when: parsed, then: 'parse.json["7"]'}
+            - {given: 'parseArgv.json["8"]', when: parsed, then: 'parse.json["8"]'}
+            - {given: 'parseArgv.json["9"]', when: parsed, then: 'parse.json["9"]'}
+            - {given: 'parseArgv.json["10"]', when: parsed, then: 'parse.json["10"]'}
+            - {given: 'parseArgv.json["11"]', when: parsed, then: 'parse.json["11"]'}
+            - {given: 'parseArgv.json["12"]', when: parsed, then: 'parse.json["12"]'}
+            - {given: 'parseArgv.json["13"]', when: parsed, then: 'parse.json["13"]'}
+            - {given: 'parseArgv.json["14"]', when: parsed, then: 'parse.json["14"]'}
+            - {given: 'parseArgv.json["15"]', when: parsed, then: 'parse.json["15"]'}
         - name: Emit Document
           description: One JSON document + newline on stdout; --pretty indents by 2.
           behavior: >
             renderDocument(doc, pretty) = JSON.stringify(doc, null, 2 when pretty) + "\n".
             errorDocument(code, kind, message) = {error: {code, kind, message}}, keys in that
             order (main writes one per invocation to stdout; the log goes to stderr).
-          steps:
-            - produces: Error Document
+          steps: [{produces: Error Document}]
           examples:
-            - given: 'doc {a: 1, b: [true, null]}, pretty false'
-              when: "rendered"
-              then: '"{\"a\":1,\"b\":[true,null]}\n"'
-            - given: 'the same doc, pretty true'
-              when: "rendered"
-              then: '"{\n  \"a\": 1,\n  \"b\": [\n    true,\n    null\n  ]\n}\n"'
-            - given: 'errorDocument(4, "UsageError", "unknown command: x")'
-              when: "rendered compact"
-              then: '"{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"unknown command: x\"}}\n"'
+            - {given: 'doc {a: 1, b: [true, null]}, pretty false', when: rendered, then: '"{\"a\":1,\"b\":[true,null]}\n"'}
+            - {given: 'the same doc, pretty true', when: rendered, then: '"{\n  \"a\": 1,\n  \"b\": [\n    true,\n    null\n  ]\n}\n"'}
+            - {given: 'errorDocument(4, "UsageError", "unknown command: x")', when: rendered compact, then: '"{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"unknown command: x\"}}\n"'}
         - name: Classify Error
           description: "Exit codes: 0 ok; 1 a card not written; 2 a refusal before spend; 3 a fault under way; 4 a usage error."
           behavior: >
@@ -1378,18 +1357,11 @@ System:
             for an Error, else String(e))}. runExitCode(report, archive) → 3 when the archive is
             not ok; else 1 when any outcome is not "written"; else 0. Kinds: UsageError and
             NotYetError (4), DeckError and RefusalError (2), RuntimeError (3).
-          steps:
-            - produces: Command Result
+          steps: [{produces: Command Result}]
           examples:
-            - given: 'new Error("git add failed (exit 1): fatal: x")'
-              when: "classifyThrown"
-              then: '{code: 3, document: {error: {code: 3, kind: "RuntimeError", message: "git add failed (exit 1): fatal: x"}}}'
-            - given: 'the string "boom"'
-              when: "classifyThrown"
-              then: 'as example 1, message "boom"'
-            - given: 'reports with outcomes [written, written] and [written, skipped], archive ok; then [written] with archive {ok: false}'
-              when: "runExitCode"
-              then: '0, 1, 3'
+            - {given: 'new Error("git add failed (exit 1): fatal: x")', when: classifyThrown, then: '{code: 3, document: {error: {code: 3, kind: "RuntimeError", message: "git add failed (exit 1): fatal: x"}}}'}
+            - {given: 'the string "boom"', when: classifyThrown, then: 'as example 1, message "boom"'}
+            - {given: 'reports with outcomes [written, written] and [written, skipped], archive ok; then [written] with archive {ok: false}', when: runExitCode, then: '0, 1, 3'}
         - name: Read Deck File
           description: The deck file a command names, under the root, by Load Deck.
           behavior: >
@@ -1398,21 +1370,11 @@ System:
             found: <deckPath as given>")}}. Else Load Deck on its UTF-8 text; faults → {ok:
             false, result: {code 2, document errorDocument(2, "DeckError", "invalid deck: " +
             each "<key>: <message>", "; "-joined)}}. Else {ok: true, deck}.
-          steps:
-            - reads: Deck
-            - produces: Command Result
+          steps: [{reads: Deck}, {produces: Command Result}]
           examples:
-            - given: 'a tmp root with d.json = the deck of the tiny fixture'
-              ref: "tests/fixtures/decks/tiny.json (one card a → src/a.ts)"
-              when: 'readDeckFile(root, "d.json")'
-              then: '{ok: true, deck: {cards: [card a with every default filled], externalDependsOn: []}}'
-            - given: 'a tmp root without nope.json'
-              when: 'readDeckFile(root, "nope.json")'
-              then: '{ok: false, result: {code: 4, document: {error: {code: 4, kind: "UsageError", message: "deck file not found: nope.json"}}}}'
-            - given: 'c.json = the cycle fixture; dup.json = the duplicate fixture'
-              ref: "tests/fixtures/decks/cycle.json, tests/fixtures/decks/duplicate.json"
-              when: "read"
-              then: 'code 2, kind "DeckError", message "invalid deck: dependsOn: dependsOn cycle a -> b -> a"; then "invalid deck: cards[2].customId: duplicate customId b"'
+            - {given: 'a tmp root with d.json = the deck of the tiny fixture', ref: "tests/fixtures/decks/tiny.json (one card a → src/a.ts)", when: 'readDeckFile(root, "d.json")', then: '{ok: true, deck: {cards: [card a with every default filled], externalDependsOn: []}}'}
+            - {given: 'a tmp root without nope.json', when: 'readDeckFile(root, "nope.json")', then: '{ok: false, result: {code: 4, document: {error: {code: 4, kind: "UsageError", message: "deck file not found: nope.json"}}}}'}
+            - {given: 'c.json = the cycle fixture; dup.json = the duplicate fixture', ref: "tests/fixtures/decks/cycle.json, tests/fixtures/decks/duplicate.json", when: read, then: 'code 2, kind "DeckError", message "invalid deck: dependsOn: dependsOn cycle a -> b -> a"; then "invalid deck: cards[2].customId: duplicate customId b"'}
         - name: Deck Check
           description: "`morph deck check`: generations, hazards, slice weights."
           behavior: >
@@ -1422,22 +1384,11 @@ System:
             count, generations: Layer Generations(deck), errors and warnings: the hazards of
             each severity counted, hazards, weights: the weighing's}, keys in that order;
             code 2 when errors > 0, else 0.
-          steps:
-            - calls: Read Deck File
-            - uses: cards
-            - produces: Deck Check Document
+          steps: [{calls: Read Deck File}, {uses: cards}, {produces: Deck Check Document}]
           examples:
-            - given: 'a tmp root holding only d.json = the write-write fixture (a and b both write src/x.ts)'
-              ref: "tests/fixtures/decks/hazardsWriteWrite.json, tests/fixtures/cli/deckCheck.writeWrite.json"
-              when: 'deckCheckCommand(root, "d.json", 500000)'
-              then: 'code 2; document equal to tests/fixtures/cli/deckCheck.writeWrite.json'
-            - given: 'd.json = the tiny fixture and src/a.ts = "export const a = 1;\n" (20 bytes)'
-              ref: "tests/fixtures/decks/tiny.json"
-              when: 'deckCheckCommand(root, "d.json", 500000)'
-              then: 'code 0; errors 0, warnings 1, hazards [{kind: "implicit-read", severity: "warning", cards: ["a"], path: null, repair: null}], weights [{card: "a", bytes: 20, missing: []}]'
-            - given: 'the same tree, sliceCapBytes 10'
-              when: "checked"
-              then: 'code 0; warnings 2; hazards [the implicit-read, then {kind: "oversized-slice", severity: "warning", cards: ["a"], path: null, repair: null, bytes: 20, cap: 10}]'
+            - {given: 'a tmp root holding only d.json = the write-write fixture (a and b both write src/x.ts)', ref: "tests/fixtures/decks/hazardsWriteWrite.json, tests/fixtures/cli/deckCheck.writeWrite.json", when: 'deckCheckCommand(root, "d.json", 500000)', then: 'code 2; document equal to tests/fixtures/cli/deckCheck.writeWrite.json'}
+            - {given: 'd.json = the tiny fixture and src/a.ts = "export const a = 1;\n" (20 bytes)', ref: "tests/fixtures/decks/tiny.json", when: 'deckCheckCommand(root, "d.json", 500000)', then: 'code 0; errors 0, warnings 1, hazards [{kind: "implicit-read", severity: "warning", cards: ["a"], path: null, repair: null}], weights [{card: "a", bytes: 20, missing: []}]'}
+            - {given: 'the same tree, sliceCapBytes 10', when: checked, then: 'code 0; warnings 2; hazards [the implicit-read, then {kind: "oversized-slice", severity: "warning", cards: ["a"], path: null, repair: null, bytes: 20, cap: 10}]'}
         - name: Run Command
           description: "`morph run`: processor, deck, hazards, run branch, Run Deck, archive; one Run Document."
           behavior: >
@@ -1465,51 +1416,20 @@ System:
             (exported) = "morph run: <r.request.customId> <verdict> stage <stages>[
             <lastStage>] finish <finishReason, or none> chars <text length, or none>\n". The
             checkout stays on the run branch.
-          steps:
-            - uses: processor
-            - calls: Read Deck File
-            - uses: git
-            - uses: runloop
-            - produces: Run Document
+          steps: [{uses: processor}, {calls: Read Deck File}, {uses: git}, {uses: runloop}, {produces: Run Document}]
           examples:
-            - given: 'a tmpRepo; env with a git identity, MORPH_PROCESSOR_s_TYPE stub, MORPH_PROCESSOR_s_ANSWERS_DIR a side tmp root with a.md, b.md (fenced ts blocks); a deck file there: a → out/a.ts ("test -f out/a.ts"), b → out/b.ts dependsOn [a]; runId "r1"'
-              when: "run"
-              then: 'code 0; runId "r1", branch "morph/r1", base = HEAD before; a, b "written", generations 2, processor "s", usageTotals.requests 2; archive {ok: true, dir: ".morph/runs/r1", commit: HEAD}; subjects since base, newest first: "morph run r1: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; HEAD on morph/r1; status clean'
-            - given: 'the same setup, one card a with acceptance "exit 1", maxRetryBatches 0'
-              when: "run"
-              then: 'code 1; outcome a "failed", reason "acceptance failed"; archive ok with the trailer Morph-Failed: 1; out/a.ts absent'
-            - given: 'processor "nope"; then "bad" with MORPH_PROCESSOR_bad_TYPE "x" in env'
-              when: "run"
-              then: 'code 4 UsageError "processor nope is not configured"; then "processor bad is not configured: MORPH_PROCESSOR_bad_TYPE must be one of openrouter, stub (got ''x'')"; no morph/* branch'
-            - given: 'the same setup with an untracked notes.txt in the repo'
-              when: "run"
-              then: 'code 2 RefusalError "dirty tree outside .morph/: notes.txt"; the checkout still main; no archive'
-            - given: 'a deck of a and b both targeting out/x.ts'
-              when: "run"
-              then: 'code 2 RefusalError "deck has 1 hazard error(s): write-write a,b out/x.ts"; no morph/* branch'
-            - given: 'one card a; runId null; deps.now always 1791310149000'
-              when: "run"
-              then: 'mintRunId(1791310149000) is "20261006-180909"; code 0; runId, report.runId "20261006-180909", branch "morph/20261006-180909"; .morph/runs/20261006-180909/report.json exists'
-            - given: 'records {request.customId "a.v1", verdict "rejected", stages 4, lastStage "probe", finishReason "stop", text 30 chars}, {request.customId "b.r1.v2", verdict "corrupt", stages 0, lastStage null, finishReason null, text null}'
-              when: "variantLine"
-              then: '"morph run: a.v1 rejected stage 4 probe finish stop chars 30\n"; "morph run: b.r1.v2 corrupt stage 0 finish none chars none\n"'
-            - given: 'example 2 with maxRetryBatches 1, answers a.md and a.r1.md (each a 30-char fenced ts block); a log pushing its texts'
-              when: "run"
-              ref: "tests/fixtures/cli/literals.json (\"<Function> <n>\" → the literal)"
-              then: 'code 1; the log literals.json["Run Command 8"]; the archive commit adds exactly deck.json, report.json, answers/a.v1.answer.txt, a.r1.v1.answer.txt and answers/lines.txt (the two log lines) under .morph/runs/r1; the a.r1.v1 request (gunzipSync of requests/a.r1.v1.request.json.gz) has a last message holding "<acceptance_output>"; status clean'
-            - given: 'example 1 with the env of literals.json["Run Command 9"]; deps.transport answering 202 batchSubmittedLive.json, then 200 batchCompletedLive.json; cards clamp-value → out/clamp.ts, sign-of → out/sign.ts, "test -f <target>"; runId "r9"'
-              ref: "tests/fixtures/processor/batchSubmittedLive.json, batchCompletedLive.json, tests/fixtures/cli/batch.r9.json (the record file's text), tests/fixtures/cli/literals.json"
-              when: "run"
-              then: 'code 0, both written; every report.requests row batchId "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W"; usageTotals.cost 0.0005804; .morph/batches/<that id>.json exactly batch.r9.json; git status --porcelain exactly "?? .morph/batches/"'
-            - given: 'example 1, runId "r10"; a .git/hooks/commit-msg (755) that prints "card commits refused" to stderr, exit 1, on a message starting "morph a:"'
-              when: "run"
-              then: 'code 3, the Run Document; report.fault "git commit failed (exit 1): card commits refused"; a, b "skipped", reason "fault"; archive {ok: true, dir: ".morph/runs/r10", commit: HEAD} (report.json with the fault, Morph-Skipped: 2), the only commit since base; HEAD on morph/r10'
-            - given: 'a deck file "[]"'
-              when: "run"
-              then: 'code 2 RefusalError "deck has no cards"; no morph/* branch; no .morph'
-            - given: 'example 1, deck [x → out/x.ts "true", q → out/q.ts no acceptance, d → out/d.ts " \n"]'
-              when: "run"
-              then: 'code 2 RefusalError "deck has 2 card(s) with no acceptance: q,d"; no morph/* branch'
+            - {given: 'a tmpRepo; env with a git identity, MORPH_PROCESSOR_s_TYPE stub, MORPH_PROCESSOR_s_ANSWERS_DIR a side tmp root with a.md, b.md (fenced ts blocks); a deck file there: a → out/a.ts ("test -f out/a.ts"), b → out/b.ts dependsOn [a]; runId "r1"', when: run, then: 'code 0; runId "r1", branch "morph/r1", base = HEAD before; a, b "written", generations 2, processor "s", usageTotals.requests 2; archive {ok: true, dir: ".morph/runs/r1", commit: HEAD}; subjects since base, newest first: "morph run r1: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; HEAD on morph/r1; status clean'}
+            - {given: 'the same setup, one card a with acceptance "exit 1", maxRetryBatches 0', when: run, then: 'code 1; outcome a "failed", reason "acceptance failed"; archive ok with the trailer Morph-Failed: 1; out/a.ts absent'}
+            - {given: 'processor "nope"; then "bad" with MORPH_PROCESSOR_bad_TYPE "x" in env', when: run, then: 'code 4 UsageError "processor nope is not configured"; then "processor bad is not configured: MORPH_PROCESSOR_bad_TYPE must be one of openrouter, stub (got ''x'')"; no morph/* branch'}
+            - {given: 'the same setup with an untracked notes.txt in the repo', when: run, then: 'code 2 RefusalError "dirty tree outside .morph/: notes.txt"; the checkout still main; no archive'}
+            - {given: 'a deck of a and b both targeting out/x.ts', when: run, then: 'code 2 RefusalError "deck has 1 hazard error(s): write-write a,b out/x.ts"; no morph/* branch'}
+            - {given: 'one card a; runId null; deps.now always 1791310149000', when: run, then: 'mintRunId(1791310149000) is "20261006-180909"; code 0; runId, report.runId "20261006-180909", branch "morph/20261006-180909"; .morph/runs/20261006-180909/report.json exists'}
+            - {given: 'records {request.customId "a.v1", verdict "rejected", stages 4, lastStage "probe", finishReason "stop", text 30 chars}, {request.customId "b.r1.v2", verdict "corrupt", stages 0, lastStage null, finishReason null, text null}', when: variantLine, then: '"morph run: a.v1 rejected stage 4 probe finish stop chars 30\n"; "morph run: b.r1.v2 corrupt stage 0 finish none chars none\n"'}
+            - {given: 'example 2 with maxRetryBatches 1, answers a.md and a.r1.md (each a 30-char fenced ts block); a log pushing its texts', when: run, ref: "tests/fixtures/cli/literals.json (\"<Function> <n>\" → the literal)", then: 'code 1; the log literals.json["Run Command 8"]; the archive commit adds exactly deck.json, report.json, answers/a.v1.answer.txt, a.r1.v1.answer.txt and answers/lines.txt (the two log lines) under .morph/runs/r1; the a.r1.v1 request (gunzipSync of requests/a.r1.v1.request.json.gz) has a last message holding "<acceptance_output>"; status clean'}
+            - {given: 'example 1 with the env of literals.json["Run Command 9"]; deps.transport answering 202 batchSubmittedLive.json, then 200 batchCompletedLive.json; cards clamp-value → out/clamp.ts, sign-of → out/sign.ts, "test -f <target>"; runId "r9"', ref: "tests/fixtures/processor/batchSubmittedLive.json, batchCompletedLive.json, tests/fixtures/cli/batch.r9.json (the record file's text), tests/fixtures/cli/literals.json", when: run, then: 'code 0, both written; every report.requests row batchId "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W"; usageTotals.cost 0.0005804; .morph/batches/<that id>.json exactly batch.r9.json; git status --porcelain exactly "?? .morph/batches/"'}
+            - {given: 'example 1, runId "r10"; a .git/hooks/commit-msg (755) that prints "card commits refused" to stderr, exit 1, on a message starting "morph a:"', when: run, then: 'code 3, the Run Document; report.fault "git commit failed (exit 1): card commits refused"; a, b "skipped", reason "fault"; archive {ok: true, dir: ".morph/runs/r10", commit: HEAD} (report.json with the fault, Morph-Skipped: 2), the only commit since base; HEAD on morph/r10'}
+            - {given: 'a deck file "[]"', when: run, then: 'code 2 RefusalError "deck has no cards"; no morph/* branch; no .morph'}
+            - {given: 'example 1, deck [x → out/x.ts "true", q → out/q.ts no acceptance, d → out/d.ts " \n"]', when: run, then: 'code 2 RefusalError "deck has 2 card(s) with no acceptance: q,d"; no morph/* branch'}
         - name: Plan Command
           description: "`morph plan --spec`: record and map cut by Plan Spec, the deck to --out; one Plan Document."
           behavior: >
@@ -1529,41 +1449,16 @@ System:
             JSON.stringify(cards, null, 2) + "\n", parents created. → {code: 0, document: {spec,
             components, cards, generations, externalDependsOn, out: args.out}}. Nothing else
             written; nothing on an error.
-          steps:
-            - uses: contour
-            - uses: planner
-            - calls: Read Plan Checks
-            - uses: builder
-            - produces: Plan Document
+          steps: [{uses: contour}, {uses: planner}, {calls: Read Plan Checks}, {uses: builder}, {produces: Plan Document}]
           examples:
-            - given: 'a tmp root holding ledger.yaml and ledger.map.json (the planner fixtures'' texts) and a tests/helpers.ts; args spec "ledger.yaml", components ["ledger", "store"], map "ledger.map.json", judge true, out "decks/p.json"'
-              ref: "tests/fixtures/planner/ledger.yaml, tests/fixtures/planner/ledger.map.json, tests/fixtures/planner/ledger.plan.json"
-              when: "planCommand"
-              then: 'code 0; document equal to ledger.plan.json plus out "decks/p.json"; the file decks/p.json is exactly JSON.stringify(document.cards, null, 2) + "\n"; Read Deck File of it is ok with 17 cards and externalDependsOn ["outside"]'
-            - given: 'the same root; spec "nope.yaml"; then spec "ledger.yaml" with map "m.json"'
-              when: "planCommand"
-              then: '{code: 4, document: {error: {code: 4, kind: "UsageError", message: "spec file not found: nope.yaml"}}}; then the same with "map file not found: m.json"'
-            - given: 'bad.yaml = "System: {}\n" as the spec; then spec ledger.yaml with m.json = "{\"docs\": \"x\"}" as the map'
-              when: "planCommand"
-              ref: "tests/fixtures/cli/literals.json"
-              then: 'code 2 DeckError, then code 2 DeckError: the messages literals.json["Plan Command 3"]'
-            - given: 'the same root, components ["nope"], out "decks/q.json"'
-              when: "planCommand"
-              then: "code 2 DeckError \"no Component 'nope' in the record (have: ledger, store)\"; decks/q.json not written"
-            - given: 'main(["plan", "--root", <the root>, "--spec", "ledger.yaml", "--component", "store", "--map", "ledger.map.json"]) in process, deps {env: {}, now: () => 0, cwd: "/", transport: null}'
-              when: "main"
-              then: '0; one stdout chunk, a document with components ["store"], 4 cards, out null; stderr ["morph plan: exit 0\n"]; nothing written under the root'
-            - given: 'example 1 plus checks decks/l1/checks.json, decks/tools/guard.mjs "// guard\n", firstdiff.mjs "// firstdiff\n", decks/l1/parts/parse.probe.ts, ledger-types.probe.ts "// probe\n"'
-              ref: "tests/fixtures/cli/l1.checks.json"
-              when: "planCommand"
-              then: 'code 0; example 1 but parse''s acceptance codeAcceptance(ctx {phase "l1", siblings ["src/ledger/types.ts"]}, "// probe\n", null, null), parse-judge''s judgeAcceptance(ctx, files); ledger-types keeps the map''s "exit 0\n"'
-            - given: 'example 6, checks decks/l2/checks.json = {"phase": "l2", "cards": [{"id": "zz"}]}'
-              when: "planCommand"
-              then: '2 DeckError "acceptances not built (1 error):\nchecks card ''zz'' is not in the deck"'
-            - given: 'the repository; contour.yaml, planner, cli, judge, map tests/fixtures/cli/p10.map.json, checks decks/p10/checks.json'
-              ref: "decks/p10/v2deck.json, tests/fixtures/builder/guard.p10.txt"
-              when: "planCommand"
-              then: 'code 0; v2deck.json''s 12 acceptances byte for byte, guard.p10.txt (trimEnd) replaced by decks/tools/guard.mjs'
+            - {given: 'a tmp root holding ledger.yaml and ledger.map.json (the planner fixtures'' texts) and a tests/helpers.ts; args spec "ledger.yaml", components ["ledger", "store"], map "ledger.map.json", judge true, out "decks/p.json"', ref: "tests/fixtures/planner/ledger.yaml, tests/fixtures/planner/ledger.map.json, tests/fixtures/planner/ledger.plan.json", when: planCommand, then: 'code 0; document equal to ledger.plan.json plus out "decks/p.json"; the file decks/p.json is exactly JSON.stringify(document.cards, null, 2) + "\n"; Read Deck File of it is ok with 17 cards and externalDependsOn ["outside"]'}
+            - {given: 'the same root; spec "nope.yaml"; then spec "ledger.yaml" with map "m.json"', when: planCommand, then: '{code: 4, document: {error: {code: 4, kind: "UsageError", message: "spec file not found: nope.yaml"}}}; then the same with "map file not found: m.json"'}
+            - {given: 'bad.yaml = "System: {}\n" as the spec; then spec ledger.yaml with m.json = "{\"docs\": \"x\"}" as the map', when: planCommand, ref: "tests/fixtures/cli/literals.json", then: 'code 2 DeckError, then code 2 DeckError: the messages literals.json["Plan Command 3"]'}
+            - {given: 'the same root, components ["nope"], out "decks/q.json"', when: planCommand, then: "code 2 DeckError \"no Component 'nope' in the record (have: ledger, store)\"; decks/q.json not written"}
+            - {given: 'main(["plan", "--root", <the root>, "--spec", "ledger.yaml", "--component", "store", "--map", "ledger.map.json"]) in process, deps {env: {}, now: () => 0, cwd: "/", transport: null}', when: main, then: '0; one stdout chunk, a document with components ["store"], 4 cards, out null; stderr ["morph plan: exit 0\n"]; nothing written under the root'}
+            - {given: 'example 1 plus checks decks/l1/checks.json, decks/tools/guard.mjs "// guard\n", firstdiff.mjs "// firstdiff\n", decks/l1/parts/parse.probe.ts, ledger-types.probe.ts "// probe\n"', ref: "tests/fixtures/cli/l1.checks.json", when: planCommand, then: 'code 0; example 1 but parse''s acceptance codeAcceptance(ctx {phase "l1", siblings ["src/ledger/types.ts"]}, "// probe\n", null, null), parse-judge''s judgeAcceptance(ctx, files); ledger-types keeps the map''s "exit 0\n"'}
+            - {given: 'example 6, checks decks/l2/checks.json = {"phase": "l2", "cards": [{"id": "zz"}]}', when: planCommand, then: '2 DeckError "acceptances not built (1 error):\nchecks card ''zz'' is not in the deck"'}
+            - {given: 'the repository; contour.yaml, planner, cli, judge, map tests/fixtures/cli/p10.map.json, checks decks/p10/checks.json', ref: "decks/p10/v2deck.json, tests/fixtures/builder/guard.p10.txt", when: planCommand, then: 'code 0; v2deck.json''s 12 acceptances byte for byte, guard.p10.txt (trimEnd) replaced by decks/tools/guard.mjs'}
         - name: Read Plan Checks
           description: Files of `plan --checks`.
           behavior: >
@@ -1575,30 +1470,22 @@ System:
             "decks/tools/firstdiff.mjs" not regular → 4 UsageError "guard|locator file not found:
             <path>". Probes: per card with files null, <parts>/<id>.probe.ts if regular. → {ok:
             true, checks, texts: {guard, firstdiff, probes}}.
-          steps:
-            - reads: Checks
-            - uses: contour
-            - uses: builder
-            - produces: Plan Checks
+          steps: [{reads: Checks}, {uses: contour}, {uses: builder}, {produces: Plan Checks}]
           examples:
-            - given: 'decks/p1/checks.json, decks/tools/guard.mjs "// guard\n", firstdiff.mjs "// firstdiff\n", decks/p1/parts/a.probe.ts "// probe a\n", a-judge.probe.ts "// no\n"'
-              ref: "tests/fixtures/cli/p1.checks.json (cards a, b, a-judge), tests/fixtures/cli/p1.planChecks.json"
-              when: 'readPlanChecks(root, "decks/p1/checks.json")'
-              then: 'equal to p1.planChecks.json'
-            - given: 'that root; then no guard.mjs; then no firstdiff.mjs'
-              when: 'readPlanChecks(root, "nope.json"); then "decks/p1/checks.json" twice'
-              then: '4 UsageError "checks file not found: nope.json"; "guard file not found: decks/tools/guard.mjs"; "locator file not found: decks/tools/firstdiff.mjs"'
-            - given: 'c.json = "{"; then {"cards": []}'
-              when: 'readPlanChecks(root, "c.json")'
-              then: '2 DeckError beginning "cannot parse c.json: "; then "c.json is not a valid checks document (2 problems):\nphase: required\ncards: must be a non-empty list"'
+            - {given: 'decks/p1/checks.json, decks/tools/guard.mjs "// guard\n", firstdiff.mjs "// firstdiff\n", decks/p1/parts/a.probe.ts "// probe a\n", a-judge.probe.ts "// no\n"', ref: "tests/fixtures/cli/p1.checks.json (cards a, b, a-judge), tests/fixtures/cli/p1.planChecks.json", when: 'readPlanChecks(root, "decks/p1/checks.json")', then: 'equal to p1.planChecks.json'}
+            - {given: 'that root; then no guard.mjs; then no firstdiff.mjs', when: 'readPlanChecks(root, "nope.json"); then "decks/p1/checks.json" twice', then: '4 UsageError "checks file not found: nope.json"; "guard file not found: decks/tools/guard.mjs"; "locator file not found: decks/tools/firstdiff.mjs"'}
+            - {given: 'c.json = "{"; then {"cards": []}', when: 'readPlanChecks(root, "c.json")', then: '2 DeckError beginning "cannot parse c.json: "; then "c.json is not a valid checks document (2 problems):\nphase: required\ncards: must be a non-empty list"'}
         - name: Main
           description: Routing, one document out, the log lines, the exit code; src/cli.ts wires the process.
           behavior: >
             main(argv, deps, io) → Promise<ExitCode>. Parse Command; a failure →
             io.stdout(renderDocument(its error document, pretty = argv holds "--pretty")),
             io.stderr("morph: <message>\n"), 4. Else root = path.resolve(deps.cwd,
-            command.root); result = Deck Check, Plan Command or await Run Command (io.stderr
-            its log) by command, in try/catch, a thrown value → classifyThrown. Then one
+            command.root); result = Deck Check, Plan Command, await Submit Deck(root, deck,
+            processor, D), await Collect Batch(root, batch, D) (D = {env, now, transport of deps,
+            saveState: git's saveBatchRecord(root, ·), saveAnswers: git's saveBatchAnswers(root,
+            ·, ·)}) or await Run Command (io.stderr its log) by command, in try/catch, a thrown
+            value → classifyThrown. Then one
             io.stdout(renderDocument(result.document, command.pretty)), one io.stderr("morph
             <command name>: exit <code>\n"), return result.code. The entry src/cli.ts (shebang
             `#!/usr/bin/env node`) calls main(process.argv.slice(2), {env: process.env without
@@ -1606,38 +1493,20 @@ System:
             () => the first SIGINT or SIGTERM its own listeners caught, or null},
             {stdout, stderr: the process streams' write}), sets process.exitCode to the result,
             never calls process.exit.
-          steps:
-            - calls: Parse Command
-            - calls: Deck Check
-            - calls: Plan Command
-            - calls: Run Command
-            - calls: Emit Document
-            - calls: Classify Error
+          steps: [{calls: Parse Command}, {calls: Deck Check}, {calls: Plan Command}, {calls: Run Command}, {uses: batches}, {calls: Emit Document}, {calls: Classify Error}]
           examples:
-            - given: 'argv ["frobnicate"], in process'
-              when: "main"
-              then: '4; stdout exactly ["{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"unknown command: frobnicate\"}}\n"]; stderr ["morph: unknown command: frobnicate\n"]'
-            - given: 'a tmp root with d.json = the write-write fixture; argv ["deck", "check", "--deck", "d.json", "--root", <root>, "--pretty"]'
-              ref: "tests/fixtures/decks/hazardsWriteWrite.json"
-              when: "main"
-              then: '2; one stdout chunk beginning "{\n  \"deck\": \"d.json\",\n  \"cards\": 2,"; stderr ["morph deck check: exit 2\n"]'
-            - given: 'a run with a valid stub env and deck, --run-id r1, --root and cwd both a tmp root that is not a git repository'
-              when: "main"
-              then: '3; one document {error: {code: 3, kind: "RuntimeError", message beginning "git status failed (exit 128): "}}; stderr ["morph run: exit 3\n"]'
-            - given: 'the binary built by tsc -p tsconfig.build.json into a tmp out dir ({"type":"module"}, node_modules linked); a tmpRepo, a side root with a.md, b.md and the deck a, then b dependsOn a; `node <out>/cli.js run --root <repo> --deck <deck> --processor s --run-id e2e`, the stub env'
-              ref: "tests/fixtures/cli/literals.json"
-              when: "spawned"
-              then: 'exit 0; stdout one line of JSON: runId "e2e", branch "morph/e2e", outcomes written, written, archive ok; the last three subjects "morph run e2e: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; stderr literals.json["Main 4"] (a.md, b.md 30 chars each)'
-            - given: 'the built binary, argv ["frobnicate"]'
-              when: "spawned"
-              then: 'exit 4; stdout exactly example 1''s one stdout chunk'
-            - given: 'a tmpRepo; side root: a.md, deck a → out/a.ts (`sleep 30 & echo $! > <side>/sleep.pid; kill -INT $PPID; wait`), then b ("true"); `node --import tsx src/cli.ts run --root <repo> --deck <deck> --processor s --run-id sig`, cwd the repository, the stub env'
-              when: "spawned (spawnSync, timeout 30000 ms)"
-              then: 'status 3; one Run Document: fault "interrupted by SIGINT", a "failed" (log ending "acceptance interrupted by SIGINT\n"), b "skipped" "fault", archive ok; the sleep gone; HEAD on morph/sig; status clean'
+            - {given: 'argv ["frobnicate"], in process', when: main, then: '4; stdout exactly ["{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"unknown command: frobnicate\"}}\n"]; stderr ["morph: unknown command: frobnicate\n"]'}
+            - {given: 'a tmp root with d.json = the write-write fixture; argv ["deck", "check", "--deck", "d.json", "--root", <root>, "--pretty"]', ref: "tests/fixtures/decks/hazardsWriteWrite.json", when: main, then: '2; one stdout chunk beginning "{\n  \"deck\": \"d.json\",\n  \"cards\": 2,"; stderr ["morph deck check: exit 2\n"]'}
+            - {given: 'a run with a valid stub env and deck, --run-id r1, --root and cwd both a tmp root that is not a git repository', when: main, then: '3; one document {error: {code: 3, kind: "RuntimeError", message beginning "git status failed (exit 128): "}}; stderr ["morph run: exit 3\n"]'}
+            - {given: 'the binary built by tsc -p tsconfig.build.json into a tmp out dir ({"type":"module"}, node_modules linked); a tmpRepo, a side root with a.md, b.md and the deck a, then b dependsOn a; `node <out>/cli.js run --root <repo> --deck <deck> --processor s --run-id e2e`, the stub env', ref: "tests/fixtures/cli/literals.json", when: spawned, then: 'exit 0; stdout one line of JSON: runId "e2e", branch "morph/e2e", outcomes written, written, archive ok; the last three subjects "morph run e2e: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; stderr literals.json["Main 4"] (a.md, b.md 30 chars each)'}
+            - {given: 'the built binary, argv ["frobnicate"]', when: spawned, then: 'exit 4; stdout exactly example 1''s one stdout chunk'}
+            - {given: 'a tmpRepo; side root: a.md, deck a → out/a.ts (`sleep 30 & echo $! > <side>/sleep.pid; kill -INT $PPID; wait`), then b ("true"); `node --import tsx src/cli.ts run --root <repo> --deck <deck> --processor s --run-id sig`, cwd the repository, the stub env', when: "spawned (spawnSync, timeout 30000 ms)", then: 'status 3; one Run Document: fault "interrupted by SIGINT", a "failed" (log ending "acceptance interrupted by SIGINT\n"), b "skipped" "fault", archive ok; the sleep gone; HEAD on morph/sig; status clean'}
+            - {given: 'in process, deps {env: {}, now: () => 0, cwd: "/", transport: null}; argv ["collect", "--batch", "batch-none", "--root", <a tmp root>]', when: main, then: '4; one stdout document {error: {code: 4, kind: "UsageError", message: "batch state not found: .morph/batches/batch-none.json"}}; stderr ["morph collect: exit 4\n"]'}
+            - {given: 'the setup of Submit Deck 1, argv ["submit", "--deck", "d.json", "--processor", "b", "--root", t]; then the transport and now of Collect Batch 1 in new deps, argv ["collect", "--batch", <its id>, "--root", t]', when: "main, twice", then: '0 and 0; the two documents of those examples on stdout; stderr "morph submit: exit 0\n", "morph collect: exit 0\n"; the state file and answer files as Collect Batch 1'}
       dataObjects:
         - name: Command
           description: One parsed invocation.
-          schema: "{ name: 'deck check', root, pretty, deck, sliceCapBytes } | { name: 'run', root, pretty, deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches } | { name: 'plan', root, pretty, spec, components: string[], map: string | null, judge: boolean, out: string | null, checks?: string }"
+          schema: "{ name: 'deck check', root, pretty, deck, sliceCapBytes } | { name: 'run', root, pretty, deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches } | { name: 'plan', root, pretty, spec, components: string[], map: string | null, judge: boolean, out: string | null, checks?: string } | { name: 'submit', root, pretty, deck, processor } | { name: 'collect', root, pretty, batch }"
         - name: Error Document
           description: The document of every non-result exit.
           schema: "{ error: { code: 0|1|2|3|4, kind: 'UsageError'|'NotYetError'|'DeckError'|'RefusalError'|'RuntimeError', message: string } }"
@@ -1660,6 +1529,109 @@ System:
         - name: morph CLI
           description: The only entry point.
           exposes: [Parse Command]
+
+    # ---------------------------------------------------------------- P11b2
+    - name: batches
+      description: >
+        Detached batches, `morph submit` and `morph collect`: src/batches/*.ts, the second
+        Component of the processor side (processor's record holds 30 KB). Submit sends the
+        first generation of a deck as ONE OpenRouter batch and exits once its state is saved;
+        collect, in any later process, reads that state, GETs the batch once and saves the
+        answers as a stub processor's answer files, so `morph run --processor <a stub on that
+        directory>` replays them through verify, commit and archive. No wait, no poll loop, no
+        git call; the state and answer files are written through the deps (git's writers),
+        the env, clock and transport come as parameters.
+      language: typescript
+      requirements: [Deterministic Core]
+      functions:
+        - name: Submit Deck
+          description: The first generation of a deck as one batch; its Submitted Batch saved; one Submit Document.
+          behavior: >
+            submitDeck(root, deckPath, processor, deps) → Promise<Detached Result>, every
+            refusal before any call. 1. batchConfig(deps.env, processor) (exported): readRegistry;
+            no config with that id → 4 UsageError "processor <id> is not configured" (+ ": " +
+            the messages of the faults keyed "MORPH_PROCESSOR_<id>_…", "; "-joined, when any);
+            type not openrouter or route not batch → 2 RefusalError "processor <id> is not an
+            openrouter processor on route batch". 2. path.resolve(root, deckPath) not a regular
+            file → 4 UsageError "deck file not found: <deckPath>"; Load Deck faults → 2
+            DeckError "invalid deck: " + each "<key>: <message>", "; "-joined; no cards → 2
+            RefusalError "deck has no cards". 3. The cards of Layer Generations' first
+            generation, in deck order, each refused with a reason, first match: acceptance null or
+            blank → "no acceptance"; model set and not config.model → "batch runs one model:
+            <customId> pins <model>, the batch is <config.model>"; Compile Card faults →
+            "compile: <the first fault's message>"; else its requests and input digest are kept.
+            No request → 2 RefusalError "nothing to submit: " + each "<customId> <reason>",
+            "; "-joined. 4. Assemble Batch of the requests; transport = deps.transport or
+            realTransport(config.timeoutMs); ONE fetch(url, {method POST, headers, body}), never
+            retried; Read Batch: thrown → 3 RuntimeError "batch submit: transport: <message>";
+            an error read → "batch submit: <its error>"; no batchId → "batch submit: no batch
+            id". 5. state = {batchId, processor: config.id, model: config.model, customIds: the
+            requests' ids in order, status: the read's (else "unknown"), cost: null, deck:
+            deckPath as given, submittedAt: deps.now() (its only call), cards: the kept cards,
+            inputs: {cardId: its digest}}; deps.saveState(state) → the state path; null → 3
+            RuntimeError "batch <batchId>: state not saved", a throw → the same + ": <message>".
+            → {code 0, document {batchId, processor, model, customIds, status, deferred: the
+            ids of the later generations in Layer Generations' order, refused: [{customId,
+            reason}] in deck order, state: the path}}. The batch id leaves in the document and
+            the state file only; nothing is committed.
+          steps: [{uses: processor}, {uses: cards}, {uses: compiler}, {produces: Submitted Batch}, {produces: Submit Document}]
+          examples:
+            - {given: 'a tmp root t: docs/clamp.md "Clamp a value.\n", d.json = the deck fixture (clamp-value, sign-of, later dependsOn both); env MORPH_PROCESSOR_b_TYPE openrouter, _MODEL "acme/m:batch", _API_KEY "sk-or-test", _ROUTE batch; transport 202 batchSubmittedLive.json; now 1791400000000; saveState = git''s saveBatchRecord(t, ·)', ref: "tests/fixtures/batches/deck.json, submitted.json, documents.json", when: 'submitDeck(t, "d.json", "b", deps)', then: 'code 0, document exactly documents.json["Submit Deck 1"] (deferred ["later"], refused []); one call POST https://openrouter.ai/api/beta/batches, its body''s model "acme/m:batch", requests clamp-value.v1, sign-of.v1; .morph/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W.json exactly submitted.json'}
+            - {given: 'example 1''s root and env; processor "nope"; then "s" (MORPH_PROCESSOR_s_TYPE stub, _ANSWERS_DIR "/x"); then "b" with deck "nope.json"; then "b" with e.json = "[]"', when: submitted, then: '4 UsageError "processor nope is not configured"; 2 RefusalError "processor s is not an openrouter processor on route batch"; 4 UsageError "deck file not found: nope.json"; 2 RefusalError "deck has no cards"; no call, no .morph'}
+            - {given: 'example 1 with f.json = [x (model "other/m", acceptance "true"), q (no acceptance), k (contextSlice ["docs/missing.md"], "true"), a ("true")], each → out/<id>.ts; then g.json = [x, q]', when: submitted, then: 'code 0, the body''s requests only a.v1, refused exactly [{customId: "x", reason: "batch runs one model: x pins other/m, the batch is acme/m:batch"}, {customId: "q", reason: "no acceptance"}, {customId: "k", reason: "compile: contextSlice ''docs/missing.md'' does not exist"}]; then 2 RefusalError "nothing to submit: x batch runs one model: x pins other/m, the batch is acme/m:batch; q no acceptance" and one call in all'}
+            - {given: 'example 1 with the submit answering 400 noBatchEndpoint.json; then a fetch throwing Error("socket hang up")', when: submitted, then: '3 RuntimeError "batch submit: http 400: HTTP 400: invalid batch inference job: Model ''z-ai/glm-5.3:batch'' does not have a :batch endpoint."; then 3 RuntimeError "batch submit: transport: socket hang up"; no .morph'}
+            - {given: 'example 1 with saveState returning null; then a saveState throwing Error("disk full")', when: submitted, then: '3 RuntimeError "batch batch-1791388269-cp5qOr5IQ0xoz1ntuc8W: state not saved"; then the same + ": disk full"'}
+        - name: Collect Batch
+          description: One GET of a submitted batch by its saved state; answers saved for a replay; one Collect Document.
+          behavior: >
+            collectBatch(root, batchId, deps) → Promise<Detached Result>; batchId is path-safe
+            (Parse Command). rel = ".morph/batches/<batchId>.json". Not a regular file under
+            root → 4 UsageError "batch state not found: <rel>". Its text is the state unless the
+            first of these fails, named in 2 RefusalError "batch state <rel> is not a submit's
+            state: <name>": "unreadable" (not a JSON object), "batchId" (not equal to the one
+            asked), "processor" (a string), "customIds" (strings), "cards" (an array), "inputs"
+            (an object) — a run's Batch Record has no cards. batchConfig(deps.env,
+            state.processor) as Submit Deck 1. transport as Submit Deck; ONE
+            fetch(<Assemble Batch([], config)'s url>/<batchId>, {method GET, headers}), no body,
+            no sleep; Read Batch: thrown → 3 RuntimeError "batch <batchId>: transport:
+            <message>"; an error read (a 404 too) → 3 "batch <batchId>: <its error>", the state
+            untouched. The read's status and cost (when it has one) update the state. pending →
+            deps.saveState(state); {code 1, document {batchId, outcome "pending", status, cost,
+            answers [], stale [], files [], state: rel}}. done or failed: stale = the ids of
+            state.cards whose Compare Captures(state.inputs[id], Capture Inputs(card, root)) is
+            not empty, in order; per customId of state.customIds: the first reply with it →
+            {customId, finishReason, error, chars: its text's length, or null}, its text kept
+            unless null or its card (the customId without ".v<n>") is stale; none → {customId,
+            finishReason null, error "batch <batchId> <status>: <the batch's error, else 'no
+            result'>", chars null}. files = deps.saveAnswers(batchId, the kept {customId, text}
+            in order); state.collectedAt = deps.now(), state.files = files; deps.saveState(state).
+            → code 0 when done, no stale and every answer has chars and no error, else 1;
+            document {batchId, outcome "done"|"failed", status, cost, answers, stale, files,
+            state: rel}. Collecting again repeats the GET (free) and rewrites both.
+          steps: [{uses: processor}, {uses: compiler}, {reads: Submitted Batch}, {produces: Collect Document}]
+          examples:
+            - {given: 'a tmp root t: docs/clamp.md "Clamp a value.\n", .morph/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W.json = submitted.json; the env of Submit Deck 1; transport 200 batchCompletedLive.json; now 1791400600000; saveState, saveAnswers = git''s saveBatchRecord(t, ·), saveBatchAnswers(t, ·, ·)', ref: "tests/fixtures/batches/submitted.json, collected.json, documents.json, tests/fixtures/processor/replies.json", when: 'collectBatch(t, "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W", deps)', then: 'code 0, document exactly documents.json["Collect Batch 1"]; one call GET https://openrouter.ai/api/beta/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W, no body, Authorization "Bearer sk-or-test"; the state file exactly collected.json; .morph/batches/<id>/clamp-value.v1.md and sign-of.v1.md hold the texts of replies.json["live"]'}
+            - {given: 'example 1 with transport 200 batchInProgress.json', ref: "tests/fixtures/processor/batchInProgress.json", when: collected, then: 'code 1, document {batchId: "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W", outcome: "pending", status: "in_progress", cost: null, answers: [], stale: [], files: [], state: ".morph/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W.json"}; the state file submitted.json with status "in_progress", no collectedAt; no answers directory'}
+            - {given: 'example 1 with docs/clamp.md rewritten "Clamp it.\n" before collect', when: collected, then: 'code 1; outcome "done", stale ["clamp-value"], both answers as example 1, files only [".morph/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W/sign-of.v1.md"], no clamp-value.v1.md'}
+            - {given: 'example 1''s root; batchId "batch-none"; then the state file = the run record batch.r9.json; then the state file "{"; then submitted.json with env {}', ref: "tests/fixtures/cli/batch.r9.json", when: collected, then: '4 UsageError "batch state not found: .morph/batches/batch-none.json"; 2 RefusalError "batch state .morph/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W.json is not a submit''s state: cards"; the same ending "unreadable"; 4 UsageError "processor b is not configured"; no call'}
+            - {given: 'example 1 with transport 404 batchNotFound.json', when: collected, then: '3 RuntimeError "batch batch-1791388269-cp5qOr5IQ0xoz1ntuc8W: http 404: Batch job batch-1789576284-Ejahe4wq9AgVdp5xGdNm not found."; the state file still submitted.json'}
+            - {given: 'example 1 with transport 200 batchFailed.json', when: collected, then: 'code 1; outcome "failed", status "failed", cost null; both answers {finishReason: null, error: "batch batch-1791388269-cp5qOr5IQ0xoz1ntuc8W failed: HTTP 400: invalid batch inference job: job-submission-count for account acct-0000, in use: 16, quota: 16", chars: null}; files []; the state''s collectedAt 1791400600000'}
+      dataObjects:
+        - name: Submitted Batch
+          description: .morph/batches/<batchId>.json after submit; a Batch Record plus what collect needs; local, uncommitted.
+          schema: "{ batchId, processor, model, customIds: string[], status, cost: number | null, deck: string, submittedAt: number, cards: Card[], inputs: Record<string, InputDigest>, collectedAt?: number, files?: string[] }"
+        - name: Detached Deps
+          description: What cli's Main gives both commands.
+          schema: "{ env: Record<string, string>, now: () => number, transport: Transport | null, saveState(state: Submitted Batch): string | null, saveAnswers(batchId: string, answers: { customId: string, text: string }[]): string[] }"
+        - name: Detached Result
+          description: A command's result, structurally cli's Command Result.
+          schema: "{ code: 0|1|2|3|4, document: unknown }"
+        - name: Submit Document
+          description: stdout of submit.
+          schema: "{ batchId, processor, model, customIds: string[], status, deferred: string[], refused: { customId, reason }[], state: string }"
+        - name: Collect Document
+          description: stdout of collect.
+          schema: "{ batchId, outcome: 'pending'|'done'|'failed', status, cost: number | null, answers: { customId, finishReason: string | null, error: string | null, chars: number | null }[], stale: string[], files: string[], state: string }"
 
     # ---------------------------------------------------------------- P8
     - name: language

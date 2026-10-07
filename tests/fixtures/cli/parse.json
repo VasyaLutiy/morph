@@ -102,7 +102,7 @@
         "error": {
           "code": 4,
           "kind": "UsageError",
-          "message": "no command (commands: deck check, plan, run)"
+          "message": "no command (commands: deck check, plan, run, submit, collect)"
         }
       }
     }
@@ -210,6 +210,99 @@
           "code": 4,
           "kind": "UsageError",
           "message": "flag --checks given twice"
+        }
+      }
+    }
+  ],
+  "14": [
+    {
+      "ok": true,
+      "command": {
+        "name": "submit",
+        "root": ".",
+        "pretty": false,
+        "deck": "d.json",
+        "processor": "b"
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "collect",
+        "root": "/r",
+        "pretty": true,
+        "batch": "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W"
+      }
+    }
+  ],
+  "15": [
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --processor"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --deck"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --batch"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--batch must match ^[A-Za-z0-9._-]+$ (got 'a/b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --deck does not apply to collect"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --run-id does not apply to submit"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "unexpected argument: extra"
         }
       }
     }

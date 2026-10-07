@@ -1,0 +1,43 @@
+{
+  "Submit Deck 1": {
+    "batchId": "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W",
+    "processor": "b",
+    "model": "acme/m:batch",
+    "customIds": [
+      "clamp-value.v1",
+      "sign-of.v1"
+    ],
+    "status": "validating",
+    "deferred": [
+      "later"
+    ],
+    "refused": [],
+    "state": ".morph/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W.json"
+  },
+  "Collect Batch 1": {
+    "batchId": "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W",
+    "outcome": "done",
+    "status": "completed",
+    "cost": 0.0005804,
+    "answers": [
+      {
+        "customId": "clamp-value.v1",
+        "finishReason": "stop",
+        "error": null,
+        "chars": 165
+      },
+      {
+        "customId": "sign-of.v1",
+        "finishReason": "stop",
+        "error": null,
+        "chars": 114
+      }
+    ],
+    "stale": [],
+    "files": [
+      ".morph/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W/clamp-value.v1.md",
+      ".morph/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W/sign-of.v1.md"
+    ],
+    "state": ".morph/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W.json"
+  }
+}

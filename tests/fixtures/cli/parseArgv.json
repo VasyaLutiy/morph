@@ -153,5 +153,64 @@
       "--checks",
       "b"
     ]
+  ],
+  "14": [
+    [
+      "submit",
+      "--deck",
+      "d.json",
+      "--processor",
+      "b"
+    ],
+    [
+      "--pretty",
+      "collect",
+      "--batch",
+      "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W",
+      "--root",
+      "/r"
+    ]
+  ],
+  "15": [
+    [
+      "submit",
+      "--deck",
+      "d.json"
+    ],
+    [
+      "submit",
+      "--processor",
+      "b"
+    ],
+    [
+      "collect"
+    ],
+    [
+      "collect",
+      "--batch",
+      "a/b"
+    ],
+    [
+      "collect",
+      "--batch",
+      "x",
+      "--deck",
+      "d"
+    ],
+    [
+      "submit",
+      "--deck",
+      "d",
+      "--processor",
+      "b",
+      "--run-id",
+      "r"
+    ],
+    [
+      "collect",
+      "--batch",
+      "x",
+      "extra"
+    ]
   ]
 }

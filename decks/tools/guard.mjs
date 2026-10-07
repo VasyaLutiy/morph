@@ -21,6 +21,8 @@ const LAYERS = {
   reviewer: ["cards", "contour", "primer", "scout", "git"],
   runloop: ["cards", "wait", "store", "compiler", "response", "acceptance", "language",
     "git", "processor"],
+  // P11b2: the detached batch commands (morph submit / morph collect), the processor layer's second Component
+  batches: ["cards", "wait", "compiler", "processor"],
   cli: "*",
 };
 const ROOT_FILES = new Set(["src/index.ts"]);
@@ -28,10 +30,10 @@ const SHELL = new Set(["acceptance", "git"]);          // node:child_process
 const NET = new Set(["processor"]);                    // fetch, WebSocket, XMLHttpRequest
 const CONSOLE = new Set(["cli"]);                      // console, process.exit
 const PROCESS = new Set(["cli", "processor", "acceptance"]);
-const NO_CLOCK = new Set(["cards", "compiler", "response", "language", "contour", "planner", "builder"]);
+const NO_CLOCK = new Set(["cards", "compiler", "response", "language", "contour", "planner", "builder", "batches"]);
 const YAML = new Set(["contour"]);
 // P3: the acceptance gets the child's environment as a parameter (docs/TASK_P3_acceptance.md §4)
-const NO_ENV = new Set(["acceptance", "processor", "git"]);
+const NO_ENV = new Set(["acceptance", "processor", "git", "batches"]);
 // P4: the one file of a NO_ENV layer that may read process.env (Read Registry, docs/TASK_P4_processor.md §4)
 const ENV_READERS = new Set(["src/processor/registry.ts"]);
 // P6: the one file of src/git that spawns (Run Git, docs/TASK_P6_git.md §4); git takes the env whole

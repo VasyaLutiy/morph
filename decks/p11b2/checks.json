@@ -1,0 +1,114 @@
+{
+ "phase": "p11b2",
+ "ownGit": true,
+ "fullExclude": [
+  "tests/cli/parse.examples.test.ts"
+ ],
+ "cards": [
+  {
+   "id": "submit-deck"
+  },
+  {
+   "id": "collect-batch"
+  },
+  {
+   "id": "archive-run"
+  },
+  {
+   "id": "parse-command"
+  },
+  {
+   "id": "submit-deck-judge",
+   "files": [
+    {
+     "file": "tests/batches/submit.examples.test.ts",
+     "min": 5,
+     "max": 11,
+     "new": true,
+     "lits": [
+      "Submit Deck example 1",
+      "Submit Deck example 2",
+      "Submit Deck example 3",
+      "Submit Deck example 4",
+      "Submit Deck example 5",
+      "submitted.json",
+      "nothing to submit: ",
+      "state not saved: disk full"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "collect-batch-judge",
+   "files": [
+    {
+     "file": "tests/batches/collect.examples.test.ts",
+     "min": 6,
+     "max": 12,
+     "new": true,
+     "lits": [
+      "Collect Batch example 1",
+      "Collect Batch example 2",
+      "Collect Batch example 3",
+      "Collect Batch example 4",
+      "Collect Batch example 5",
+      "Collect Batch example 6",
+      "collected.json",
+      "batchInProgress.json",
+      "is not a submit's state: cards",
+      "Clamp it."
+     ]
+    }
+   ]
+  },
+  {
+   "id": "archive-run-judge",
+   "files": [
+    {
+     "file": "tests/git/archive.p11b2.examples.test.ts",
+     "min": 1,
+     "max": 7,
+     "new": true,
+     "lits": [
+      "Archive Run example 8",
+      "saveBatchAnswers",
+      "../y"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "parse-command-judge",
+   "files": [
+    {
+     "file": "tests/cli/parse.examples.test.ts",
+     "min": 15,
+     "max": 17,
+     "lits": [
+      "Parse Command example 14",
+      "Parse Command example 15",
+      "submit, collect)",
+      "missing --batch"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "main-judge",
+   "files": [
+    {
+     "file": "tests/cli/main.p11b2.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Main example 7",
+      "Main example 8",
+      "morph collect: exit 4",
+      "documents.json"
+     ]
+    }
+   ]
+  }
+ ]
+}
