@@ -6,17 +6,22 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (07.10, after the P10b2 smoke)
+## State at handoff (07.10, after the P11 smoke)
 
-P0–P10b2 merged; `main` = origin = VPS. **The switch is complete**: P10b2 was cut by `morph plan` and run
-by `morph run` (6/6, one run, no fix); `morph plan --checks decks/<phase>/checks.json` builds the
-acceptances, `build.py` is in `decks/tools/archive/`; the P10b2 smoke (V2 plan --checks → deck check → V2
-run on glm53) is green. On restart, the first autonomous act is the PREPARATION of **P10c runner**
-(docs/PLAN.md, "Фазы по записи": issue #3 list C2–C7, label `P10c-runner`) with checks.json + `morph plan
---checks` (step 1, V2 flow); then P11 (processor batch; smoke stop after it), P12, P13a, P13b, P14.
-Smoke lessons for the next preparations: default code targets add a test file (give a smoke cap or
-code-only targets); new files need `"intent": "generate"` in the map; a new `src/` folder needs its layer
-in `decks/tools/guard.mjs`.
+P0–P11 merged (P10c1, P10c2, P11 + its fix 1); `main` = origin = VPS (dee594f). Issue #3 closed (C1–C7 built:
+retry cap per generation, retry context from the furthest variant, `<file_contents>` tags, acceptance timeout 300 s,
+old truncation text, `answers/` per variant + one stderr line per variant). `--max-retry-batches 8` is no longer passed:
+the runs use the binary's default cap (2 retry batches per generation). The P11 smoke (V2 run on the batch route,
+`z-ai/glm-5.3:batch`, one batch of 2 cards) is green, $0.0006, batch wait 569 s. Running total $2.6271 of $30.
+On restart, the first autonomous act is the PREPARATION of **P11b** (processor `submit/collect` with the persisted batch
+state `.morph/batches/<id>.json`, split from P11 — see TASK_P11 §7): read issue #4 (label `P11b-processor`: batch cost
+null, batch id not in the report, provider order, batch wait, size of the committed `answers/`) first; cli is at
+29 835 of 30 000 bytes and runloop at 29 178, so compact before patching. Then P12 (issue #1, label `P12-primer`),
+P13a, P13b, P14.
+Lessons for the next preparations: default code targets add a test file (give a smoke cap or code-only targets); new
+files need `"intent": "generate"` in the map; a new `src/` folder needs its layer in `decks/tools/guard.mjs`; size a judge
+from its expected answer (a 20 KB answer was cut at 20 000 in P10c2: give ≥ 28 000); vary every constant the code must
+not hard-code across the examples (P11's batch model literal passed because every example used one model).
 
 ## Machine
 
