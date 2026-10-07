@@ -119,3 +119,30 @@ export function saveBatchRecord(
   );
   return rel;
 }
+
+export function saveBatchAnswers(
+  root: string,
+  batchId: string,
+  answers: { customId: string; text: string }[]
+): string[] {
+  if (!/^[A-Za-z0-9._-]+$/.test(batchId)) {
+    return [];
+  }
+  for (const answer of answers) {
+    if (!/^[A-Za-z0-9._-]+$/.test(answer.customId)) {
+      return [];
+    }
+  }
+  const paths: string[] = [];
+  if (answers.length === 0) {
+    return paths;
+  }
+  const dir = ".morph/batches/" + batchId;
+  fs.mkdirSync(path.join(root, dir), { recursive: true });
+  for (const answer of answers) {
+    const rel = dir + "/" + answer.customId + ".md";
+    fs.writeFileSync(path.join(root, rel), answer.text, "utf8");
+    paths.push(rel);
+  }
+  return paths;
+}
