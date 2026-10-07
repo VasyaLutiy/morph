@@ -138,6 +138,24 @@ export async function runDeck(
       if (batch.length === 0 || retryBatches >= input.budget.maxRetryBatches) {
         break;
       }
+
+      // finding 7: once a retry batch would run, the deadline is checked
+      // before it; when it has passed, the cards of the stopped batch
+      // become budget-exceeded "deadline" (attempts, logs and
+      // earlierFailures kept) and no retry batch runs
+      if (deps.now() >= input.budget.deadline) {
+        for (const id of batch) {
+          const previous = done.get(id);
+          if (previous === undefined) continue;
+          done.set(id, {
+            ...previous,
+            status: "budget-exceeded",
+            reason: "deadline"
+          });
+        }
+        break;
+      }
+
       retryBatches += 1;
 
       const retryCards: Card[] = [];
