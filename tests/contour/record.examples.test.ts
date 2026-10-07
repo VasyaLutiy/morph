@@ -1,0 +1,237 @@
+import { test, expect } from "vitest";
+import { fixtureJson } from "../helpers.js";
+import { validateRecord } from "../../src/contour/record.js";
+
+test("Validate Record example 1: the mini record gives the whole typed record", () => {
+  expect(validateRecord(fixtureJson("contour/mini.json"))).toStrictEqual({
+    ok: true,
+    record: fixtureJson("contour/mini.typed.json"),
+  });
+});
+
+test("Validate Record example 2: the bad record gives the 19 problems in order", () => {
+  expect(validateRecord(fixtureJson("contour/badRecord.json"))).toStrictEqual({
+    ok: false,
+    problems: fixtureJson("contour/badRecord.problems.json"),
+  });
+});
+
+test("Validate Record example 3: a non-object root gives the one root problem", () => {
+  for (const doc of [[], null, "x"]) {
+    expect(validateRecord(doc)).toStrictEqual({
+      ok: false,
+      problems: ["(root): a record must be an object"],
+    });
+  }
+});
+
+test("Validate Record example 4: an empty document misses only System", () => {
+  expect(validateRecord({})).toStrictEqual({
+    ok: false,
+    problems: ["System: required"],
+  });
+});
+
+test("Validate Record example 5: no version means 1 and texts are trimmed", () => {
+  expect(validateRecord({ System: { name: " s ", description: "d", groups: [] } })).toStrictEqual({
+    ok: true,
+    record: {
+      version: 1,
+      system: { name: "s", description: "d", requirements: [], guardrails: [], groups: [] },
+      actors: [],
+      requirements: [],
+      guardrails: [],
+    },
+  });
+});
+
+test("Validate Record example 6: version must be the number 1 and examples are required", () => {
+  expect(
+    validateRecord({
+      version: "1",
+      System: {
+        name: "s",
+        description: "d",
+        groups: [
+          {
+            name: "c",
+            description: "C.",
+            functions: [{ name: "f", description: "F.", behavior: "B." }],
+          },
+        ],
+      },
+    }),
+  ).toStrictEqual({
+    ok: false,
+    problems: ["version: must be 1", "System.groups[0].functions[0].examples: required"],
+  });
+});
+
+test("Validate Record own: a mapping schema is stored as JSON text with trimmed values", () => {
+  const r = validateRecord({
+    System: {
+      name: "s",
+      description: "d",
+      groups: [
+        {
+          name: "c",
+          description: "C.",
+          dataObjects: [{ name: "d", description: "D.", schema: { a: " x ", b: "y" } }],
+        },
+      ],
+    },
+  });
+  expect(r.ok).toBe(true);
+  if (r.ok) {
+    expect(r.record.system.groups[0].dataObjects[0].schema).toBe('{\n  "a": "x",\n  "b": "y"\n}');
+  }
+});
+
+test("Validate Record own: a step with two keys is one problem, not walked", () => {
+  const r = validateRecord({
+    System: {
+      name: "s",
+      description: "d",
+      groups: [
+        {
+          name: "c",
+          description: "C.",
+          functions: [
+            {
+              name: "f",
+              description: "F.",
+              behavior: "B.",
+              examples: [{ given: "g", when: "w", then: "t" }],
+              steps: [{ calls: "g", reads: "h" }],
+            },
+          ],
+        },
+      ],
+    },
+  });
+  expect(r).toStrictEqual({
+    ok: false,
+    problems: ["System.groups[0].functions[0].steps[0]: a step is an object with exactly one key"],
+  });
+});
+
+test("Validate Record own: an unknown step verb names the known verbs", () => {
+  const r = validateRecord({
+    System: {
+      name: "s",
+      description: "d",
+      groups: [
+        {
+          name: "c",
+          description: "C.",
+          functions: [
+            {
+              name: "f",
+              description: "F.",
+              behavior: "B.",
+              examples: [{ given: "g", when: "w", then: "t" }],
+              steps: [{ destroys: "h" }],
+            },
+          ],
+        },
+      ],
+    },
+  });
+  expect(r).toStrictEqual({
+    ok: false,
+    problems: [
+      "System.groups[0].functions[0].steps[0]: unknown step verb 'destroys' (known: calls, reads, modifies, produces, uses)",
+    ],
+  });
+});
+
+test("Validate Record own: a duplicate Data Object name is flagged across Components", () => {
+  const group = (n: string) => ({
+    name: n,
+    description: "C.",
+    dataObjects: [{ name: "count", description: "D." }],
+  });
+  const r = validateRecord({
+    System: { name: "s", description: "d", groups: [group("a"), group("b")] },
+  });
+  expect(r).toStrictEqual({
+    ok: false,
+    problems: ["System.groups[1].dataObjects[0].name: duplicate Data Object name 'count'"],
+  });
+});
+
+test("Validate Record own: exposes without a name is rejected, a non-list exposes is a list problem", () => {
+  const base = (exposes: unknown) => ({
+    System: {
+      name: "s",
+      description: "d",
+      groups: [
+        {
+          name: "c",
+          description: "C.",
+          interfaces: [{ name: "i", description: "I.", exposes }],
+        },
+      ],
+    },
+  });
+  expect(validateRecord(base([]))).toStrictEqual({
+    ok: false,
+    problems: ["System.groups[0].interfaces[0].exposes: must hold at least one name"],
+  });
+  expect(validateRecord(base("f"))).toStrictEqual({
+    ok: false,
+    problems: ["System.groups[0].interfaces[0].exposes: must be a list"],
+  });
+});
+
+test("Validate Record own: a mapping schema with an empty value gives a problem on that key", () => {
+  const r = validateRecord({
+    System: {
+      name: "s",
+      description: "d",
+      groups: [
+        {
+          name: "c",
+          description: "C.",
+          dataObjects: [{ name: "d", description: "D.", schema: { a: "  " } }],
+        },
+      ],
+    },
+  });
+  expect(r).toStrictEqual({
+    ok: false,
+    problems: ["System.groups[0].dataObjects[0].schema.a: must be a non-empty string"],
+  });
+});
+
+test("Validate Record own: unknown keys come after required and before values, in the object's key order", () => {
+  expect(validateRecord({ extra: 1 })).toStrictEqual({
+    ok: false,
+    problems: [
+      "System: required",
+      "(root): unknown key 'extra' (known: version, System, Actor, Requirement, Guardrail)",
+    ],
+  });
+});
+
+test("Validate Record own: a Function name duplicated within its Component is flagged at the repeat", () => {
+  const fn = (n: string) => ({
+    name: n,
+    description: "F.",
+    behavior: "B.",
+    examples: [{ given: "g", when: "w", then: "t" }],
+  });
+  const r = validateRecord({
+    System: {
+      name: "s",
+      description: "d",
+      groups: [
+        { name: "c", description: "C.", functions: [fn("f"), fn("f")] },
+      ],
+    },
+  });
+  expect(r).toStrictEqual({
+    ok: false,
+    problems: ["System.groups[0].functions[1].name: duplicate Function name 'f'"],
+  });
+});
