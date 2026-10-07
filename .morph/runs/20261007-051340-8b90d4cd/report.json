@@ -1,0 +1,447 @@
+{
+  "deck_id": "20261007-051340-8b90d4cd",
+  "completed_at": "2026-10-07T05:19:00.725",
+  "branch": "morph/20261007-051340-8b90d4cd",
+  "backend_label": "glm53",
+  "generations": [
+    [
+      "profiles"
+    ],
+    [
+      "naming",
+      "paths",
+      "profiles-judge"
+    ],
+    [
+      "naming-judge",
+      "paths-judge",
+      "template"
+    ],
+    [
+      "template-judge"
+    ]
+  ],
+  "batch_ids": [
+    "local-ed6b52b092a14d039b7d30786844536d",
+    "local-3f0af632a3d54d82ad6438e37f9d8227",
+    "local-28c3cfa994ab41a0aa0ef895c20198ce",
+    "local-f0f19416d5c5413f9a631bc893974be9",
+    "local-062e0099df9043a49a26ed2c0686a4c5",
+    "local-adfddad6ef854e3594cdbbbc9ae2ff3a"
+  ],
+  "outcomes": {
+    "profiles": {
+      "custom_id": "profiles",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/language/types.ts",
+        "/home/morph/MorphV2/src/language/profiles.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "profiles.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "d2613451300124214b99826043663737303701cf",
+      "diffstat": [
+        {
+          "path": "src/language/profiles.ts",
+          "insertions": 67,
+          "deletions": 0
+        },
+        {
+          "path": "src/language/types.ts",
+          "insertions": 12,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/language/types.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "src/language/profiles.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "naming": {
+      "custom_id": "naming",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/language/naming.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "naming.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "06489d8ea0ddb68d392897d7a5989cc0077a013d",
+      "diffstat": [
+        {
+          "path": "src/language/naming.ts",
+          "insertions": 45,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/language/naming.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "paths": {
+      "custom_id": "paths",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/language/paths.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "paths.v2",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "4d9a90a967c0a488e55ffdbc838c7381927c4ae2",
+      "diffstat": [
+        {
+          "path": "src/language/paths.ts",
+          "insertions": 53,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/language/paths.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "profiles-judge": {
+      "custom_id": "profiles-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/language/profiles.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 2,
+      "winning_variant": "profiles-judge.r1",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\n== eslint\n== guard\n== own\n FAIL  tests/language/profiles.examples.test.ts > fillTemplate: keys are letters only, so {a1}, { a} and {} stay\nAssertionError: expected '{a1}-{ a}-{}-y' to be '{a1}-{ a}-{}-{toString}' // Object.is equality\n Test Files  1 failed (1)\n      Tests  1 failed | 13 passed (14)\n",
+      "commit": "b0071fa48c65d97035d7c6ddaeab3731fa877b5e",
+      "diffstat": [
+        {
+          "path": "tests/language/profiles.examples.test.ts",
+          "insertions": 85,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/language/profiles.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "naming-judge": {
+      "custom_id": "naming-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/language/naming.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "naming-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "020d01fbd24006e722b6bf9dad5af568fe262df7",
+      "diffstat": [
+        {
+          "path": "tests/language/naming.examples.test.ts",
+          "insertions": 88,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/language/naming.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "template": {
+      "custom_id": "template",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/language/template.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "template.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "7f6f7a0df0a9fdcbbaea33146070b67665ac650c",
+      "diffstat": [
+        {
+          "path": "src/language/template.ts",
+          "insertions": 46,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/language/template.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "paths-judge": {
+      "custom_id": "paths-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/language/paths.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 2,
+      "winning_variant": "paths-judge.r1",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\ntests/language/paths.examples.test.ts(1,10): error TS2300: Duplicate identifier 'isTest'.\ntests/language/paths.examples.test.ts(1,18): error TS2300: Duplicate identifier 'codeTargets'.\ntests/language/paths.examples.test.ts(1,31): error TS2300: Duplicate identifier 'testTarget'.\ntests/language/paths.examples.test.ts(1,43): error TS2300: Duplicate identifier 'profileForPath'.\ntests/language/paths.examples.test.ts(2,10): error TS2300: Duplicate identifier 'PROFILES'.\ntests/language/paths.examples.test.ts(3,15): error TS2300: Duplicate identifier 'LanguageProfile'.\ntests/language/paths.examples.test.ts(4,10): error TS2300: Duplicate identifier 'expect'.\ntests/language/paths.examples.test.ts(4,18): error TS2300: Duplicate identifier 'test'.\ntests/language/paths.examples.test.ts(6,7): error TS2451: Cannot redeclare block-scoped variable 'TS'.\ntests/language/paths.examples.test.ts(7,7): error TS2451: Cannot redeclare block-scoped variable 'PY'.\ntests/language/paths.examples.test.ts(82,39): error TS2300: Duplicate identifier 'isTest'.\ntests/language/paths.examples.test.ts(82,47): error TS2300: Duplicate identifier 'codeTargets'.\ntests/language/paths.examples.test.ts(82,60): error TS2300: Duplicate identifier 'testTarget'.\ntests/language/paths.examples.test.ts(82,72): error TS2300: Duplicate identifier 'profileForPath'.\ntests/language/paths.examples.test.ts(83,10): error TS2300: Duplicate identifier 'PROFILES'.\ntests/language/paths.examples.test.ts(84,15): error TS2300: Duplicate identifier 'LanguageProfile'.\ntests/language/paths.examples.test.ts(85,10): error TS2300: Duplicate identifier 'expect'.\ntests/language/paths.examples.test.ts(85,18): error TS2300: Duplicate identifier 'test'.\ntests/language/paths.examples.test.ts(87,7): error TS2451: Cannot redeclare block-scoped variable 'TS'.\ntests/language/paths.examples.test.ts(88,7): error TS2451: Cannot redeclare block-scoped variable 'PY'.\n",
+      "commit": "9e23a5ebac4dfe0dd8cfb7bb33cdc6df12f1e660",
+      "diffstat": [
+        {
+          "path": "tests/language/paths.examples.test.ts",
+          "insertions": 81,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/language/paths.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "template-judge": {
+      "custom_id": "template-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/language/template.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "template-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "1298d95c5fbdd84cf6f1e6b3f2abbfdac5c2cbbe",
+      "diffstat": [
+        {
+          "path": "tests/language/template.examples.test.ts",
+          "insertions": 125,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/language/template.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    }
+  },
+  "usage": {
+    "profiles.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791350020-WKDRUZTaeyUq9lCHziyT",
+      "input_tokens": 10177,
+      "output_tokens": 1211,
+      "cost": 0.00587286,
+      "finish_reason": "stop"
+    },
+    "profiles.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791350020-J3whDVlimE6Y3LwrYsv8",
+      "input_tokens": 10177,
+      "output_tokens": 1285,
+      "cost": 0.002512236,
+      "finish_reason": "stop"
+    },
+    "naming.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791350066-RSKv8qINiXJflNUMe5DA",
+      "input_tokens": 10375,
+      "output_tokens": 359,
+      "cost": 0.002226708,
+      "finish_reason": "stop"
+    },
+    "naming.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791350066-0E6aLcl1MwyPpOJRT1gF",
+      "input_tokens": 10375,
+      "output_tokens": 387,
+      "cost": 0.001322484,
+      "finish_reason": "stop"
+    },
+    "paths.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791350066-97ROZLzNUebFV6rLf3dD",
+      "input_tokens": 10669,
+      "output_tokens": 793,
+      "cost": 0.002507196,
+      "finish_reason": "stop"
+    },
+    "paths.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791350071-e2cSchmEPBtqvsERkAla",
+      "input_tokens": 10669,
+      "output_tokens": 525,
+      "cost": 0.001540572,
+      "finish_reason": "stop"
+    },
+    "profiles-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791350075-F5vm0mgD3x5ldBePImJT",
+      "input_tokens": 12153,
+      "output_tokens": 823,
+      "cost": 0.003170076,
+      "finish_reason": "stop"
+    },
+    "profiles-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791350154-QC6VM3fkefZOQm8TUYS7",
+      "input_tokens": 17236,
+      "output_tokens": 916,
+      "cost": 0.004355184,
+      "finish_reason": "stop"
+    },
+    "template.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791350188-4JUKGRRgZ5cXw4sGIWpz",
+      "input_tokens": 11510,
+      "output_tokens": 469,
+      "cost": 0.002301408,
+      "finish_reason": "stop"
+    },
+    "naming-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791350188-JKXs0r4WkmybVwjTVVCa",
+      "input_tokens": 11677,
+      "output_tokens": 887,
+      "cost": 0.003470508,
+      "finish_reason": "stop"
+    },
+    "template.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791350193-42XnZxjokJZyS0h8iccO",
+      "input_tokens": 11510,
+      "output_tokens": 931,
+      "cost": 0.002145168,
+      "finish_reason": "stop"
+    },
+    "paths-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791350188-UzBQc6TgFzIVhgh7crx5",
+      "input_tokens": 11744,
+      "output_tokens": 2042,
+      "cost": 0.005023248,
+      "finish_reason": "stop"
+    },
+    "paths-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791350262-zEgb4sQ54lJHhwJhAHVV",
+      "input_tokens": 18063,
+      "output_tokens": 989,
+      "cost": 0.004930212,
+      "finish_reason": "stop"
+    },
+    "template-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791350300-dADfell6XYueFQoIYZuF",
+      "input_tokens": 12881,
+      "output_tokens": 1434,
+      "cost": 0.00423858,
+      "finish_reason": "stop"
+    }
+  },
+  "usage_totals": {
+    "input_tokens": 169216,
+    "output_tokens": 13051,
+    "cost": 0.04561644,
+    "requests": 14,
+    "requests_with_usage": 14
+  },
+  "orchestrator_usage": {}
+}
