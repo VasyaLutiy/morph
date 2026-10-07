@@ -4,5 +4,6 @@ probe/
 coverage/
 .morph/*
 !.morph/runs/
+.morph/runs/*/requests/
 .env
 *.log

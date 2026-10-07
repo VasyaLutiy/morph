@@ -1,0 +1,83 @@
+{
+  "phase": "p11b",
+  "ownGit": true,
+  "fullExclude": [
+    "tests/processor/batch.examples.test.ts",
+    "tests/git/archive.p10c2.examples.test.ts",
+    "tests/cli/runCommand.p10c2.examples.test.ts"
+  ],
+  "cards": [
+    { "id": "read-registry" },
+    { "id": "read-batch" },
+    { "id": "send-batch" },
+    { "id": "process-generation" },
+    { "id": "run-deck" },
+    { "id": "archive-run" },
+    { "id": "run-command" },
+    {
+      "id": "read-registry-judge",
+      "files": [
+        {
+          "file": "tests/processor/registry.p11b.examples.test.ts", "min": 1, "max": 7, "new": true,
+          "lits": ["Read Registry example 5", "MORPH_PROCESSOR_nb_ROUTE", "3600000", "90000"]
+        }
+      ]
+    },
+    {
+      "id": "read-batch-judge",
+      "files": [
+        {
+          "file": "tests/processor/batchResponse.p11b.examples.test.ts", "min": 1, "max": 7, "new": true,
+          "lits": ["Read Batch example 6", "batchCompletedLive.json", "replies.json", "0.0005804"]
+        }
+      ]
+    },
+    {
+      "id": "send-batch-judge",
+      "files": [
+        {
+          "file": "tests/processor/batch.examples.test.ts", "min": 11, "max": 15,
+          "lits": ["Send Batch example 8", "Send Batch example 9", "Send Batch example 10", "Send Batch example 11", "DELETE",
+            "sendBatch.json", "batchDeleted.json", "still in_progress after 2 polls", "disk full"]
+        }
+      ]
+    },
+    {
+      "id": "process-generation-judge",
+      "files": [
+        {
+          "file": "tests/runloop/generation.p11b.examples.test.ts", "min": 1, "max": 7, "new": true,
+          "lits": ["Process Generation example 14", "batchRows.json", "batchCompletedLive.json", "other/m"]
+        }
+      ]
+    },
+    {
+      "id": "run-deck-judge",
+      "files": [
+        {
+          "file": "tests/runloop/deck.p11b.examples.test.ts", "min": 1, "max": 7, "new": true,
+          "lits": ["Run Deck example 8", "budget-exceeded", "deadline"]
+        }
+      ]
+    },
+    {
+      "id": "archive-run-judge",
+      "files": [
+        {
+          "file": "tests/git/archive.p10c2.examples.test.ts", "min": 4, "max": 8,
+          "lits": ["Archive Run example 6", "Archive Run example 7", "lines.txt", "request.json.gz", "gunzipSync", "saveBatchRecord",
+            ".morph/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W.json"]
+        }
+      ]
+    },
+    {
+      "id": "run-command-judge",
+      "files": [
+        {
+          "file": "tests/cli/runCommand.p10c2.examples.test.ts", "min": 3, "max": 7,
+          "lits": ["Run Command example 9", "answers/lines.txt", "batch.r9.json", "?? .morph/batches/", "0.0005804"]
+        }
+      ]
+    }
+  ]
+}

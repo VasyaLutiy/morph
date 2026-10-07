@@ -1,0 +1,121 @@
+{
+  "id": "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W",
+  "object": "batch",
+  "endpoint": "/v1/chat/completions",
+  "model": "z-ai/glm-5.3-20260816",
+  "completion_window": "24h",
+  "status": "completed",
+  "created_at": 1791388269,
+  "finalized_at": 1791388838,
+  "request_counts": {
+    "total": 2,
+    "completed": 2,
+    "failed": 0
+  },
+  "usage": {
+    "prompt_tokens": 832,
+    "completion_tokens": 103,
+    "total_tokens": 935,
+    "cost": 0.0005804,
+    "is_byok": false
+  },
+  "error": null,
+  "results": [
+    {
+      "id": "batch_req_batch_a6EcPTwCZ4KqdbQvpqWL75pZ_000001",
+      "custom_id": "sign-of.v1",
+      "response": {
+        "status_code": 200,
+        "request_id": "req_batch_a6EcPTwCZ4KqdbQvpqWL75pZ_000001",
+        "body": {
+          "model": "z-ai/glm-5.3:batch",
+          "id": "gen-batch-1791388269-f422e6d682c8c1ca3ddb",
+          "created": 1791388367,
+          "system_fingerprint": null,
+          "object": "chat.completion",
+          "choices": [
+            {
+              "index": 0,
+              "message": {
+                "role": "assistant",
+                "content": "```ts\nexport function signOf(x: number): number {\n  if (x < 0) return -1;\n  if (x > 0) return 1;\n  return 0;\n}\n```",
+                "refusal": null,
+                "reasoning": null
+              },
+              "finish_reason": "stop",
+              "native_finish_reason": "stop",
+              "logprobs": null
+            }
+          ],
+          "service_tier": "default",
+          "usage": {
+            "prompt_tokens": 401,
+            "completion_tokens": 46,
+            "total_tokens": 447,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "provider": "DeepInfra"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "batch_req_batch_a6EcPTwCZ4KqdbQvpqWL75pZ_000000",
+      "custom_id": "clamp-value.v1",
+      "response": {
+        "status_code": 200,
+        "request_id": "req_batch_a6EcPTwCZ4KqdbQvpqWL75pZ_000000",
+        "body": {
+          "model": "z-ai/glm-5.3:batch",
+          "id": "gen-batch-1791388269-d8fd2d40d4a58d1324e8",
+          "created": 1791388367,
+          "system_fingerprint": null,
+          "object": "chat.completion",
+          "choices": [
+            {
+              "index": 0,
+              "message": {
+                "role": "assistant",
+                "content": "```ts\nexport function clampValue(x: number, lo: number, hi: number): number {\n  if (x < lo) {\n    return lo;\n  }\n  if (x > hi) {\n    return hi;\n  }\n  return x;\n}\n```",
+                "refusal": null,
+                "reasoning": null
+              },
+              "finish_reason": "stop",
+              "native_finish_reason": "stop",
+              "logprobs": null
+            }
+          ],
+          "service_tier": "default",
+          "usage": {
+            "prompt_tokens": 431,
+            "completion_tokens": 57,
+            "total_tokens": 488,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "provider": "DeepInfra"
+        }
+      },
+      "error": null
+    }
+  ]
+}

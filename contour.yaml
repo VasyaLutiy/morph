@@ -437,39 +437,34 @@ System:
     # ---------------------------------------------------------------- P4 (sync route; batch is P11)
     - name: processor
       description: >
-        Talks to a model provider: src/processor/*.ts. Reads the registry from the
-        environment, assembles the OpenRouter chat-completions request, sends one
-        generation on the sync route (one request at a time per worker, at most
-        `concurrency` workers), reads answers and usage back; a stub processor answers
-        from files for runs without a provider. The transport (fetch and sleep) is a
-        parameter: the processor's own transport is the only thing a test mocks. On the
-        batch route (P11) one generation is one OpenRouter batch (/api/beta/batches):
-        submitted inline, polled, its inline results mapped back to the requests.
+        src/processor/*.ts: the registry from the environment; one generation sent on the
+        sync route (chat completions, `concurrency` workers) or as one OpenRouter batch
+        (/api/beta/batches); a stub answers from files. The transport (fetch, sleep,
+        optional saveBatch) is a parameter, the only thing a test mocks.
       language: typescript
       requirements: [Deterministic Core]
       functions:
         - name: Read Registry
-          description: MORPH_PROCESSOR_<id>_* env vars into Processor Configs; invalid ones are listed, not dropped silently.
+          description: MORPH_PROCESSOR_<id>_* env vars into Processor Configs; faults listed, never dropped silently.
           behavior: >
-            readRegistry(env) takes the environment as a parameter (default: the process
-            environment; the only environment read of the Component). A variable
-            MORPH_PROCESSOR_<id>_<KEY> names processor <id> ([A-Za-z0-9-]+, no underscore)
-            and one of the keys TYPE, MODEL, API_KEY, BASE_URL, ROUTE, CONCURRENCY,
-            PROVIDER_ORDER, REASONING_MAX_TOKENS, REASONING_EFFORT, TIMEOUT_MS,
-            MAX_RETRIES, ANSWERS_DIR; values are trimmed and an empty value is absent.
-            TYPE openrouter|stub is required; openrouter requires MODEL and API_KEY,
-            stub requires ANSWERS_DIR (model defaults to "stub"). Defaults: BASE_URL
-            https://openrouter.ai/api/v1, ROUTE sync (sync|batch), CONCURRENCY 1,
-            TIMEOUT_MS 600000, MAX_RETRIES 2, PROVIDER_ORDER null (else the comma list,
-            trimmed), reasoning null (else {maxTokens} or {effort}, never both). Every
-            fault is {key: the variable, message starting with it}; a processor with any
-            fault yields no config. Configs sorted by id, faults by key.
+            readRegistry(env) reads the environment given (default process.env; the
+            Component's only environment read). MORPH_PROCESSOR_<id>_<KEY> names processor
+            <id> ([A-Za-z0-9-]+) and one of the keys TYPE, MODEL, API_KEY, BASE_URL, ROUTE,
+            CONCURRENCY, PROVIDER_ORDER, REASONING_MAX_TOKENS, REASONING_EFFORT, TIMEOUT_MS,
+            MAX_RETRIES, ANSWERS_DIR; values trimmed, an empty value absent. TYPE
+            openrouter|stub required; openrouter requires MODEL and API_KEY, stub
+            ANSWERS_DIR (model "stub"). Defaults: BASE_URL https://openrouter.ai/api/v1,
+            ROUTE sync (sync|batch), CONCURRENCY 1, TIMEOUT_MS 600000 on route sync, 3600000
+            on route batch (the whole batch wait), MAX_RETRIES 2, PROVIDER_ORDER null (else
+            the comma list, trimmed), reasoning null (else {maxTokens} or {effort}, never
+            both). A fault is {key: the variable, message starting with it}; a processor with
+            a fault yields no config. Configs sorted by id, faults by key.
           steps:
             - produces: Processor Config
           examples:
             - given: 'env {PATH: "/usr/bin:/bin", MORPH_PROCESSOR_glm53_TYPE: "openrouter", MORPH_PROCESSOR_glm53_MODEL: "z-ai/glm-5.3", MORPH_PROCESSOR_glm53_API_KEY: "sk-or-test", MORPH_PROCESSOR_glm53_CONCURRENCY: "4", MORPH_PROCESSOR_glm53_PROVIDER_ORDER: "Novita, Together", MORPH_PROCESSOR_glm53_REASONING_MAX_TOKENS: "2500"}'
               when: "read"
-              then: 'faults []; configs exactly [the config of the fixture]: id glm53, route sync, concurrency 4, providerOrder ["Novita", "Together"], reasoning {maxTokens: 2500}, timeoutMs 600000, maxRetries 2, answersDir null'
+              then: 'faults []; configs exactly [the fixture''s config] (id glm53, route sync, concurrency 4, timeoutMs 600000)'
               ref: "tests/fixtures/processor/glmConfig.json (the one config)"
             - given: 'env {MORPH_PROCESSOR_stub_TYPE: "stub", MORPH_PROCESSOR_stub_ANSWERS_DIR: " /tmp/answers "}'
               when: "read"
@@ -480,41 +475,42 @@ System:
             - given: 'env {MORPH_PROCESSOR_e_TYPE: "stub", MORPH_PROCESSOR_e_ANSWERS_DIR: "/x", MORPH_PROCESSOR_e_REASONING_EFFORT: "low", MORPH_PROCESSOR_e_REASONING_MAX_TOKENS: "100", MORPH_PROCESSOR_e_FOO: "1", MORPH_PROCESSOR_x_y_TYPE: "stub"}'
               when: "read"
               then: 'configs []; faults exactly four, in this order: "MORPH_PROCESSOR_e_FOO is not a known key", "MORPH_PROCESSOR_e_REASONING_EFFORT conflicts with MORPH_PROCESSOR_e_REASONING_MAX_TOKENS: set one", "MORPH_PROCESSOR_x_TYPE is required", "MORPH_PROCESSOR_x_y_TYPE is not a known key" (the id is x, its key y_TYPE)'
+            - given: 'env {MORPH_PROCESSOR_nb_TYPE: "openrouter", MORPH_PROCESSOR_nb_MODEL: "z-ai/glm-5.3:batch", MORPH_PROCESSOR_nb_API_KEY: "sk-or-test", MORPH_PROCESSOR_nb_ROUTE: "batch", MORPH_PROCESSOR_ns_TYPE: "stub", MORPH_PROCESSOR_ns_ANSWERS_DIR: "/x", MORPH_PROCESSOR_ns_ROUTE: "batch", MORPH_PROCESSOR_ns_TIMEOUT_MS: "90000", MORPH_PROCESSOR_sy_TYPE: "stub", MORPH_PROCESSOR_sy_ANSWERS_DIR: "/x"}'
+              when: "read"
+              then: 'faults []; configs nb, ns, sy with timeoutMs 3600000 (route batch), 90000 (given), 600000 (route sync)'
         - name: Assemble Request
-          description: Request → provider JSON (OpenRouter chat completions) with provider.order + allow_fallbacks false when pinned, reasoning, usage.include; never tool_choice.
+          description: Request → OpenRouter chat-completions JSON; provider pinned when an order is set.
           behavior: >
-            assembleRequest(request, config) is pure. url = baseUrl without trailing
-            slashes + "/chat/completions"; headers Authorization "Bearer <apiKey>" (absent
-            when apiKey is null) and Content-Type application/json. body: model = the
-            request's model or the config's; messages copied as {role, content};
-            max_tokens = the request's maxTokens, absent when null; reasoning = the
-            request's or else the config's, {maxTokens: n} as {max_tokens: n}, {effort}
-            as is, absent when both are null; provider {order, allow_fallbacks: false}
-            only when providerOrder is not null; usage {include: true} always. No other
-            key: never tool_choice, tools or stream.
+            assembleRequest(request, config) is pure. url = baseUrl without trailing slashes
+            + "/chat/completions"; headers Authorization "Bearer <apiKey>" (absent when
+            apiKey is null), Content-Type application/json. body: model = the request's or
+            the config's; messages as {role, content}; max_tokens = the request's maxTokens,
+            absent when null; reasoning = the request's or the config's, {maxTokens: n} as
+            {max_tokens: n}, {effort} as is, absent when both null; provider {order,
+            allow_fallbacks: false} only when providerOrder is set; usage {include: true}
+            always. No other key (never tool_choice, tools, stream).
           steps:
             - reads: Request
             - reads: Processor Config
           examples:
             - given: 'request {customId: "a.v1", model: null, maxTokens: 12000, reasoning: null, messages: [{role: "user", content: "hi"}]}; the config of tests/fixtures/processor/glmConfig.json'
               when: "assembled"
-              then: 'url "https://openrouter.ai/api/v1/chat/completions"; headers Authorization "Bearer sk-or-test", Content-Type "application/json"; JSON.stringify(body) is exactly {"model":"z-ai/glm-5.3","messages":[{"role":"user","content":"hi"}],"max_tokens":12000,"reasoning":{"max_tokens":2500},"provider":{"order":["Novita","Together"],"allow_fallbacks":false},"usage":{"include":true}}'
+              then: 'url "https://openrouter.ai/api/v1/chat/completions"; headers Authorization "Bearer sk-or-test", Content-Type "application/json"; JSON.stringify(body) is exactly bodies.json["AR1"]'
+              ref: "tests/fixtures/processor/bodies.json (exact body texts by example)"
             - given: 'request {customId: "b.v2", model: "x/y", maxTokens: null, reasoning: {effort: "low"}, messages: [{role: "system", content: "s"}, {role: "user", content: "u"}]}; the glm config with baseUrl "http://127.0.0.1:9/v1/" and providerOrder null'
               when: "assembled"
-              then: 'url "http://127.0.0.1:9/v1/chat/completions"; JSON.stringify(body) is exactly {"model":"x/y","messages":[{"role":"system","content":"s"},{"role":"user","content":"u"}],"reasoning":{"effort":"low"},"usage":{"include":true}} — no max_tokens, no provider, no tool_choice'
+              then: 'url "http://127.0.0.1:9/v1/chat/completions"; JSON.stringify(body) is exactly bodies.json["AR2"]: no max_tokens, no provider, no tool_choice'
         - name: Read Response
           description: One provider reply (HTTP status + body text) into an Answer and its Usage.
           behavior: >
-            readResponse(customId, status, text) is pure and never throws. Usage is read
-            from any JSON body: id → generationId, provider, usage.prompt_tokens →
-            inputTokens and usage.completion_tokens → outputTokens (0 when absent),
-            usage.cost (null when absent). Status outside 200..299 → error
-            "http <status>: <error.message of the JSON body, else the first 200 chars of
-            the text>". Status 2xx: a body that is not JSON → "unreadable response:
-            <first 200 chars>"; a body with an error object → "provider error:
-            <error.message>"; no choices → "provider error: no choices"; otherwise text =
-            choices[0].message.content (null when not a string: a reasoning model that
-            spent its budget answers finish_reason "length" with no content, which is a
+            readResponse(customId, status, text) is pure, never throws. Usage from any JSON
+            body: id → generationId, provider, usage.prompt_tokens → inputTokens,
+            usage.completion_tokens → outputTokens (0 when absent), usage.cost (null when
+            absent). Status outside 200..299 → error "http <status>: <the JSON body's
+            error.message, else the text's first 200 chars>". 2xx: not JSON → "unreadable
+            response: <first 200 chars>"; an error object → "provider error:
+            <error.message>"; no choices → "provider error: no choices"; else text =
+            choices[0].message.content (null when not a string: a spent reasoning budget is a
             truncation, not an error) and finishReason = choices[0].finish_reason.
           steps:
             - produces: Answer
@@ -536,13 +532,13 @@ System:
               when: "read"
               then: 'answer error "unreadable response: <html>bad gateway</html>", text null, finishReason null; usage tokens 0 and 0'
         - name: Stub Answer
-          description: The stub processor's answer to one Request, read from a directory of answer files; no network.
+          description: The stub's answer to one Request, from a directory of answer files.
           behavior: >
             stubAnswer(request, config) reads <answersDir>/<customId>.md, else
-            <answersDir>/<customId without its final .v<n>>.md; found → text = the file
-            (UTF-8, as is), finishReason "stop", error null; usage 0 and 0 tokens, cost 0,
-            provider "stub", generationId "stub-<customId>". Neither file → text null,
-            finishReason null, error "stub has no answer: <answersDir>/<customId>.md".
+            <answersDir>/<customId without its final .v<n>>.md: text = the file (UTF-8, as
+            is), finishReason "stop", error null; usage 0, 0, cost 0, provider "stub",
+            generationId "stub-<customId>". Neither → text null, finishReason null, error
+            "stub has no answer: <answersDir>/<customId>.md".
           steps:
             - reads: Request
             - produces: Answer
@@ -558,18 +554,17 @@ System:
               when: "answered"
               then: 'text null, finishReason null, error "stub has no answer: <d>/b.v1.md"'
         - name: Send Generation
-          description: Sends every Request of a generation, returns Answers and Usage per customId; retries transport errors with backoff; a provider refusal is recorded, not retried.
+          description: Sends a generation's Requests, Answers and Usage back per customId; transport errors retried with backoff, refusals not.
           behavior: >
-            sendGeneration(config, requests, transport) never rejects; answers and usage
-            come back in the order of requests, one each. Type stub → Stub Answer per
-            request, no call, on either route. Type openrouter on route batch → Send
-            Batch, its result as it is. Type openrouter on route sync: at most concurrency
-            requests in flight; each is Assemble Request, then transport.fetch(url,
-            {method POST, headers, body JSON}) and Read Response. A thrown fetch
-            ("transport: <message>") or status 408, 429 or 5xx is retried up to
-            maxRetries times, sleeping transport.sleep(1000 * 2^k) before retry k+1; any
-            other status, refusals included, is final at once. A request still failing
-            after retries gets " (after <attempts> attempts)" appended to its error.
+            sendGeneration(config, requests, transport) never rejects; answers and usage in
+            the order of requests, one each. Type stub → Stub Answer per request, no call, on
+            either route. openrouter on route batch → Send Batch, its result as it is. On
+            route sync: at most concurrency requests in flight; each is Assemble Request,
+            transport.fetch(url, {method POST, headers, body JSON}), Read Response. A thrown
+            fetch ("transport: <message>") or status 408, 429, 5xx is retried up to
+            maxRetries times, transport.sleep(1000 * 2^k) before retry k+1; any other status
+            is final at once. Still failing after retries → " (after <attempts> attempts)"
+            appended to its error.
           steps:
             - calls: Assemble Request
             - calls: Read Response
@@ -580,42 +575,41 @@ System:
           examples:
             - given: 'the glm config; requests a.v1 and a.v2 (messages [{role: "user", content: "hi"}]); a fakeFetch whose route https://openrouter.ai/api/v1/chat/completions answers status 200 with the text of tests/fixtures/processor/okResponse.json'
               when: "sent"
-              then: 'two calls, both POST with header Authorization "Bearer sk-or-test" and a body whose usage is {include: true}; answers [a.v1, a.v2] both with finishReason "stop" and error null; usage both 11030 in, 571 out; no sleep'
+              then: 'two POST calls, header Authorization "Bearer sk-or-test", body usage {include: true}; answers [a.v1, a.v2] both "stop", error null; usage 11030 in, 571 out each; no sleep'
             - given: 'the glm config (maxRetries 2); request a.v1; a fakeFetch with failAll(new Error("socket hang up"))'
               when: "sent"
               then: 'three calls; sleeps [1000, 2000]; answer error "transport: socket hang up (after 3 attempts)", text null; usage 0 in, 0 out, cost null'
             - given: 'the glm config; request a.v1; the route answers status 402 with the text of tests/fixtures/processor/errorResponse.json'
               when: "sent"
               then: 'one call, no sleep; answer error "http 402: Insufficient credits. Add more using https://openrouter.ai/settings/credits"'
-            - given: 'the glm config; request a.v1; a transport whose first call answers status 503 with text "upstream down" and every later call status 200 with okResponse.json'
+            - given: 'the glm config; request a.v1; calls answer 503 "upstream down", then 200 okResponse.json'
               when: "sent"
               then: 'two calls; sleeps [1000]; answer finishReason "stop", error null; usage 11030 in'
-            - given: 'the glm config with concurrency 2; requests r1.v1, r2.v1, r3.v1; a transport that counts calls in flight and yields before answering status 200 with okResponse.json'
+            - given: 'the glm config with concurrency 2; requests r1.v1, r2.v1, r3.v1; a transport counting calls in flight, yielding before 200 okResponse.json'
               when: "sent"
               then: 'at most 2 in flight, 3 calls; answers in the order r1.v1, r2.v1, r3.v1'
-            - given: 'the config of the fixture (route batch); request a.v1; a transport whose first call answers status 202 with tests/fixtures/processor/batchSubmitted.json and every later call status 200 with batchCompleted.json'
+            - given: 'the config of the fixture (route batch); request a.v1; calls answer 202 batchSubmitted.json, then 200 batchCompleted.json'
               when: "sent"
-              then: 'two calls: POST https://openrouter.ai/api/beta/batches, then GET https://openrouter.ai/api/beta/batches/batch-1789576284-Ejahe4wq9AgVdp5xGdNm; sleeps [15000]; answers exactly [{customId: "a.v1", text: "```ts\nexport const a = 1;\n```", finishReason: "stop", error: null}]; usage 11030 in, 571 out, cost 0.00269316'
+              then: 'two calls: POST https://openrouter.ai/api/beta/batches, then GET https://openrouter.ai/api/beta/batches/batch-1789576284-Ejahe4wq9AgVdp5xGdNm; sleeps [15000]; answers exactly [the a.v1 answer of replies.json["completed"]]; usage 11030 in, 571 out, cost 0.00269316'
               ref: "tests/fixtures/processor/batchConfig.json"
             - given: 'the stub config of Read Registry example 2 with route "batch" and answersDir <d> holding a.v1.md = "A\n"; request a.v1; a fakeFetch'
               when: "sent"
               then: 'no call, no sleep; answer text "A\n", finishReason "stop", error null'
         - name: Assemble Batch
-          description: The requests of one generation → one OpenRouter batch submission, the whole batch inline as one JSON text.
+          description: A generation's requests → one inline OpenRouter batch submission.
           behavior: >
-            assembleBatch(requests, config) is pure and returns a Batch Call. url =
-            batchUrl(config.baseUrl), also exported: the baseUrl without trailing slashes,
-            a final "/v1" replaced by "/beta", then "/batches"; a baseUrl not ending in /v1
-            keeps its path. headers as Assemble Request: Authorization "Bearer <apiKey>"
-            (absent when apiKey is null), then Content-Type application/json. body is a JSON
-            text, not an object (the provider stream-parses it and refuses requests before
-            model), with exactly the keys endpoint "/v1/chat/completions", model = the
-            config's model, requests, in this order. Each request becomes {custom_id, body}
-            in request order; its body holds, in this order, max_tokens = the request's
-            maxTokens (absent when null), reasoning = the request's or else the config's
-            ({max_tokens: n} or {effort}; absent when both are null), messages as {role,
-            content}. One model per batch: no item names a model (a request's own model is
-            Send Batch's business); no provider, usage, tools, tool_choice or stream key.
+            assembleBatch(requests, config) is pure → Batch Call. url = batchUrl(baseUrl)
+            (exported): trailing slashes stripped, a final "/v1" replaced by "/beta", then
+            "/batches"; other paths kept. headers as Assemble Request (Authorization "Bearer
+            <apiKey>" unless apiKey is null, then Content-Type application/json). body is a
+            JSON text with exactly the keys endpoint "/v1/chat/completions", model = the
+            config's, requests, in this order; each request
+            → {custom_id, body} in order, body = max_tokens (the request's maxTokens, absent
+            when null), reasoning (the request's or the config's, {max_tokens: n} or
+            {effort}, absent when both null), messages as {role, content}, in this order. One model per batch: no item names a model (a request's own model is
+            Send Batch's business); no provider (the config's providerOrder is a sync-route
+            field: the batch route lets OpenRouter choose), usage, tools, tool_choice or
+            stream key.
           steps:
             - reads: Request
             - reads: Processor Config
@@ -623,30 +617,29 @@ System:
           examples:
             - given: 'the config of the fixture; requests a.v1 {model: null, maxTokens: 12000, reasoning: null, messages: [{role: "user", content: "hi"}]} and a.v2 {model: null, maxTokens: null, reasoning: {effort: "low"}, messages: [{role: "system", content: "s"}, {role: "user", content: "u"}]}'
               when: "assembled"
-              then: 'url "https://openrouter.ai/api/beta/batches"; headers exactly {Authorization: "Bearer sk-or-test", Content-Type: "application/json"}; body is exactly {"endpoint":"/v1/chat/completions","model":"z-ai/glm-5.3:batch","requests":[{"custom_id":"a.v1","body":{"max_tokens":12000,"reasoning":{"max_tokens":2500},"messages":[{"role":"user","content":"hi"}]}},{"custom_id":"a.v2","body":{"reasoning":{"effort":"low"},"messages":[{"role":"system","content":"s"},{"role":"user","content":"u"}]}}]}'
-              ref: "tests/fixtures/processor/batchConfig.json"
+              then: 'url "https://openrouter.ai/api/beta/batches"; headers exactly {Authorization: "Bearer sk-or-test", Content-Type: "application/json"}; body is exactly bodies.json["AB1"] (no provider, though the config pins ["Novita"])'
+              ref: "tests/fixtures/processor/batchConfig.json, tests/fixtures/processor/bodies.json"
             - given: 'the batch config with apiKey null, reasoning null and baseUrl "http://127.0.0.1:9/v1/"; request b.v1 {model: "x/y", maxTokens: null, reasoning: null, messages: [{role: "user", content: "hi"}]}'
               when: "assembled"
-              then: 'url "http://127.0.0.1:9/beta/batches"; headers exactly {Content-Type: "application/json"}; body is exactly {"endpoint":"/v1/chat/completions","model":"z-ai/glm-5.3:batch","requests":[{"custom_id":"b.v1","body":{"messages":[{"role":"user","content":"hi"}]}}]}; batchUrl("http://h/x/") is "http://h/x/batches"'
+              then: 'url "http://127.0.0.1:9/beta/batches"; headers exactly {Content-Type: "application/json"}; body is exactly bodies.json["AB2"]; batchUrl("http://h/x/") is "http://h/x/batches"'
         - name: Read Batch
-          description: One reply about a batch (HTTP status + body text) into a Batch Read with the results mapped to Replies.
+          description: One reply about a batch (status + body text) into a Batch Read.
           behavior: >
-            readBatch(status, text) is pure and never throws. Status outside 200..299 →
-            state "error", error "http <status>: <error.message of the JSON body, else the
-            first 200 chars of the text>"; a 2xx body that is not a JSON object →
-            "unreadable response: <first 200 chars>"; one without a string status →
-            "provider error: <error.message, else 'no batch status'>"; an error read has
-            batchId null, status null, replies []. Otherwise batchId = id (null when not a
-            string), status = the provider's word, state "done" for completed, "failed"
-            for failed, expired, cancelled, canceled and cancelling, else "pending"; error
-            = the batch's error.message (null when absent). replies: one per entry of
-            results (none when results is not an array), in the provider's order, an entry
-            without a string custom_id skipped. An entry with a non-null error → answer
-            error "batch item error: <error.message, else the first 200 chars of its
-            JSON>", text and finishReason null, usage 0 and 0 tokens, cost, provider and
-            generationId null; an entry without a response object → "batch item error: no
-            response", alike; otherwise Read Response of (custom_id, response.status_code,
-            200 when absent, the JSON text of response.body).
+            readBatch(status, text) is pure, never throws. Status outside 200..299 → state
+            "error", error "http <status>: <the JSON body's error.message, else the text's
+            first 200 chars>"; a 2xx body not a JSON object → "unreadable response: <first
+            200 chars>"; no string status → "provider error: <error.message, else 'no batch
+            status'>"; an error read has batchId null, status null, replies []. Else batchId
+            = id (null unless a string), status = the provider's word, state "done" for
+            completed, "failed" for failed, expired, cancelled, canceled, cancelling, else
+            "pending"; error = the batch's error.message or null; cost = the batch's
+            usage.cost when a number (0 included), else no cost key. replies: one per entry of
+            results (an array, else none), in order, an entry without a string custom_id
+            skipped: a non-null error → answer error "batch item error: <error.message, else
+            the first 200 chars of its JSON>", text and finishReason null, usage 0, 0 and
+            nulls; no response object → "batch item error: no response", alike; else Read
+            Response of (custom_id, response.status_code or 200, the JSON text of
+            response.body).
           steps:
             - calls: Read Response
             - produces: Batch Read
@@ -657,9 +650,9 @@ System:
               ref: "tests/fixtures/processor/batchSubmitted.json"
             - given: 'status 200, the text of the fixture (completed; results c.v1, a.v1, b.v1 in this order)'
               when: "read"
-              then: 'batchId "batch-1789576284-Ejahe4wq9AgVdp5xGdNm", state "done", status "completed", error null; replies in the order c.v1, a.v1, b.v1: c.v1 answer {text: null, finishReason: null, error: "batch item error: context length exceeded"}, usage {inputTokens: 0, outputTokens: 0, cost: null, provider: null, generationId: null}; a.v1 answer {text: "```ts\nexport const a = 1;\n```", finishReason: "stop", error: null}, usage {inputTokens: 11030, outputTokens: 571, cost: 0.00269316, provider: "Novita", generationId: "gen-0000000003-TESTtestTESTtestTEST"}; b.v1 answer {text: null, finishReason: "length", error: null}, usage 15550 in, 12000 out, cost 0.0086'
-              ref: "tests/fixtures/processor/batchCompleted.json"
-            - given: 'status 200, the text of the fixture (a batch the provider rejected after accepting it)'
+              then: 'batchId "batch-1789576284-Ejahe4wq9AgVdp5xGdNm", state "done", status "completed", error null; replies exactly replies.json["completed"]: c.v1 "batch item error: context length exceeded", a.v1 "stop" (cost 0.00269316, "gen-0000000003-TESTtestTESTtestTEST"), b.v1 text null "length"'
+              ref: "tests/fixtures/processor/batchCompleted.json, tests/fixtures/processor/replies.json (the expected replies)"
+            - given: 'status 200, the text of the fixture (a failed batch)'
               when: "read"
               then: 'state "failed", status "failed", error "HTTP 400: invalid batch inference job: job-submission-count for account acct-0000, in use: 16, quota: 16", replies []'
               ref: "tests/fixtures/processor/batchFailed.json"
@@ -670,41 +663,52 @@ System:
             - given: 'status 200, text "<html>bad gateway</html>"'
               when: "read"
               then: 'state "error", error "unreadable response: <html>bad gateway</html>", batchId null, replies []'
+            - given: 'status 200, the text of the fixture (a live completed batch: usage.cost 0.0005804, results without a cost)'
+              when: "read"
+              then: 'batchId "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W", state "done", status "completed", error null, cost 0.0005804; replies exactly replies.json["live"] (sign-of.v1, then clamp-value.v1, cost null)'
+              ref: "tests/fixtures/processor/batchCompletedLive.json, tests/fixtures/processor/replies.json"
         - name: Send Batch
-          description: One generation as one OpenRouter batch - submit once, poll until done or the wait runs out, map the results back to the requests.
+          description: One generation as one OpenRouter batch - submit once, poll, map the results back.
           behavior: >
-            sendBatch(config, requests, transport) never rejects; answers and usage come
-            back in the order of requests, one each; exports BATCH_POLL_MS 15000 and
-            BATCH_GRACE_MS 60000. A request whose model is set and differs from the
-            config's is answered "batch runs one model: <customId> pins <model>, the batch
-            is <config model>" and left out; no request left → no call. Submit: Assemble
-            Batch of the rest, ONE transport.fetch(url, {method POST, headers, body}), never
-            retried (a POST that reached the provider may already be a paid batch), then
-            Read Batch: a thrown fetch → every request "batch submit: transport:
-            <message>"; an error read → "batch submit: <its error>"; no batchId → "batch
-            submit: no batch id". Poll: polls = max(1, floor(timeoutMs / BATCH_POLL_MS)),
-            on this route TIMEOUT_MS is the whole wait; each poll sleeps
-            transport.sleep(BATCH_POLL_MS) first, then transport.fetch(url + "/" + batchId,
-            {method GET, headers}) with no body, then Read Batch. A thrown poll, status
-            408, 429 or 5xx, and a 404 while poll number × BATCH_POLL_MS ≤ BATCH_GRACE_MS
-            (the provider's read-after-write lag) go on to the next poll; any other error
-            read is final: every request "batch <batchId>: <its error>". pending → the next
-            poll. done or failed → each request takes the first reply with its customId; a
-            request without one → "batch <batchId> <status>: <the batch's error, else 'no
-            result'>". Polls run out → every request "batch <batchId> still <the last
-            status read, the submit's at first> after <polls> polls"; the batch is not
-            cancelled. Every error answer has text and finishReason null, usage 0 and 0
-            tokens, cost, provider and generationId null.
+            sendBatch(config, requests, transport) never rejects; answers and usage in the
+            order of requests, one each; exports BATCH_POLL_MS 15000, BATCH_GRACE_MS 60000.
+            A request whose model is set and is not config.model is answered "batch runs one
+            model: <customId> pins <model>, the batch is <config.model>" on every path and
+            left out; none left → no call. Submit: Assemble Batch of the rest, ONE
+            transport.fetch(url, {method POST, headers, body}), never retried (maybe a paid
+            batch already), then Read Batch: thrown → every request "batch submit:
+            transport: <message>"; an error read → "batch submit: <its error>"; no batchId →
+            "batch submit: no batch id" (no batch key in any of these results). Then the Batch
+            Record {batchId, processor: config.id, model: config.model, customIds: the
+            submitted ids, status: the submit's, cost: null} goes to transport.saveBatch when
+            set (a throw ignored). Poll k = 1..polls,
+            polls = max(1, floor(timeoutMs / BATCH_POLL_MS)): transport.sleep(BATCH_POLL_MS),
+            then transport.fetch(url + "/" + batchId, {method GET, headers}), no body, then
+            Read Batch. A thrown poll, status 408, 429, 5xx, and a 404 while k × BATCH_POLL_MS
+            ≤ BATCH_GRACE_MS go on; any other error read is final: every request "batch
+            <batchId>: <its error>". A read's status and cost update the record; pending →
+            next poll; done or failed → saveBatch again, each request takes the first reply
+            with its customId, else "batch <batchId> <status>: <the batch's error, else 'no
+            result'>"; when the read has a cost and no reply has one, each reply's cost =
+            Math.round(cost * (inputTokens + outputTokens) / total * 1e10) / 1e10, total the
+            replies' tokens summed (0 → null). Polls run out → the batch is cancelled: ONE
+            transport.fetch(url + "/" + batchId, {method DELETE, headers}), no body (a 2xx sets
+            the record's status "deleted"; a throw or any other reply is ignored), saveBatch
+            again, then every request "batch <batchId> still <the last status a poll read>
+            after <polls> polls". An error answer has
+            text and finishReason null, usage 0, 0 and nulls. Once a batch id exists every
+            result carries batch, a copy of the record.
           steps:
             - calls: Assemble Batch
             - calls: Read Batch
             - produces: Answer
             - produces: Usage
+            - produces: Batch Record
           examples:
             - given: 'the batch config (timeoutMs 60000); requests a.v1, b.v1, c.v1, d.v1 (model null); calls answer in turn 202 batchSubmitted.json, 200 batchInProgress.json, 200 batchCompleted.json'
               when: "sent"
-              then: 'three calls: POST https://openrouter.ai/api/beta/batches, then twice GET https://openrouter.ai/api/beta/batches/batch-1789576284-Ejahe4wq9AgVdp5xGdNm with no body; sleeps [15000, 15000]; answers in request order: a.v1 text "```ts\nexport const a = 1;\n```" finishReason "stop"; b.v1 text null finishReason "length" error null; c.v1 error "batch item error: context length exceeded"; d.v1 error "batch batch-1789576284-Ejahe4wq9AgVdp5xGdNm completed: no result"; usage a.v1 11030 in, 571 out, cost 0.00269316; d.v1 0, 0, cost null'
-              ref: "tests/fixtures/processor/batchConfig.json"
+              then: 'three calls: POST https://openrouter.ai/api/beta/batches, then twice GET https://openrouter.ai/api/beta/batches/batch-1789576284-Ejahe4wq9AgVdp5xGdNm with no body; sleeps [15000, 15000]; answers and usage exactly sendBatch.json["1"]: d.v1 "batch batch-1789576284-Ejahe4wq9AgVdp5xGdNm completed: no result"'
+              ref: "tests/fixtures/processor/batchConfig.json, tests/fixtures/processor/sendBatch.json (whole results by example)"
             - given: 'the batch config; request a.v1; calls answer 202 batchSubmitted.json, 404 batchNotFound.json, 200 batchCompleted.json'
               when: "sent"
               then: 'three calls; sleeps [15000, 15000]; answer a.v1 finishReason "stop", error null (a 404 at 15000 ms is inside the grace)'
@@ -719,13 +723,23 @@ System:
               then: 'one call, no sleep; both answers error "batch submit: http 400: HTTP 400: invalid batch inference job: Model ''z-ai/glm-5.3:batch'' does not have a :batch endpoint."'
             - given: 'the batch config (timeoutMs 60000); request a.v1; calls answer 202 batchSubmitted.json, then 200 batchInProgress.json every time'
               when: "sent"
-              then: 'five calls; sleeps [15000, 15000, 15000, 15000]; answer error "batch batch-1789576284-Ejahe4wq9AgVdp5xGdNm still in_progress after 4 polls", usage 0, 0, cost null'
-            - given: 'the batch config; requests x.v1 (model "other/m") and a.v1 (model null); calls answer 202 batchSubmitted.json, then a thrown Error("socket hang up"), then 200 batchCompleted.json'
+              then: 'six calls, the last DELETE https://openrouter.ai/api/beta/batches/batch-1789576284-Ejahe4wq9AgVdp5xGdNm; sleeps [15000, 15000, 15000, 15000]; answer error "batch batch-1789576284-Ejahe4wq9AgVdp5xGdNm still in_progress after 4 polls", usage 0, 0, cost null'
+            - given: 'the batch config; requests x.v1 (model "other/m"), a.v1; calls answer 202 batchSubmitted.json, a thrown Error("socket hang up"), 200 batchCompleted.json'
               when: "sent"
               then: 'three calls; the POST body''s requests hold only a.v1; answers x.v1 error "batch runs one model: x.v1 pins other/m, the batch is z-ai/glm-5.3:batch", a.v1 finishReason "stop" error null'
-            - given: 'the batch config with model "acme/m:batch"; requests x.v1 (model "z-ai/glm-5.3:batch") and a.v1 (model null); calls answer 202 batchSubmitted.json, then 200 batchCompleted.json'
+            - given: 'the batch config with model "acme/m:batch"; requests x.v1 (model "z-ai/glm-5.3:batch"), a.v1; calls answer 202 batchSubmitted.json, 200 batchCompleted.json'
               when: "sent"
-              then: 'two calls; the POST body''s model is "acme/m:batch", its requests hold only a.v1; answers x.v1 error "batch runs one model: x.v1 pins z-ai/glm-5.3:batch, the batch is acme/m:batch" (the batch model is config.model on every path, never a literal), a.v1 finishReason "stop" error null'
+              then: 'two calls; the POST body''s model is "acme/m:batch", its requests hold only a.v1; answers x.v1 error "batch runs one model: x.v1 pins z-ai/glm-5.3:batch, the batch is acme/m:batch" (config.model on every path), a.v1 "stop"'
+            - given: 'the batch config; requests clamp-value.v1, sign-of.v1 (model null); calls answer 202 batchSubmittedLive.json, then 200 batchCompletedLive.json; saveBatch pushes each record'
+              when: "sent"
+              then: 'two calls, sleeps [15000]; answers, usage, batch and the pushed records exactly sendBatch.json["9"]: costs 0.0003029253 / 0.0002774747 (shares of 0.0005804), batch status "completed", cost 0.0005804, pushed first as "validating", cost null'
+            - given: 'the batch config with id "night", model "acme/m:batch", timeoutMs 30000; requests x.v1 (model "other/m"), clamp-value.v1; calls answer 202 batchSubmittedLive.json, 200 batchInProgress.json twice, 200 batchDeleted.json (a live DELETE answer); saveBatch pushes'
+              ref: "tests/fixtures/processor/batchDeleted.json"
+              when: "sent"
+              then: 'four calls, the last DELETE https://openrouter.ai/api/beta/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W; x.v1 "batch runs one model: x.v1 pins other/m, the batch is acme/m:batch"; clamp-value.v1 "batch batch-1791388269-cp5qOr5IQ0xoz1ntuc8W still in_progress after 2 polls"; batch exactly {batchId "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W", processor "night", model "acme/m:batch", customIds ["clamp-value.v1"], status "deleted", cost null}; pushed: status "validating", then "deleted"'
+            - given: 'the batch config; request a.v1; calls answer 202 batchSubmitted.json, then 200 batchCompleted.json with "usage": {"cost": 0.5} added; a saveBatch that throws Error("disk full")'
+              when: "sent"
+              then: 'a.v1 "stop", usage cost 0.00269316 (its own cost kept), batch.status "completed", batch.cost 0.5'
       dataObjects:
         - name: Processor Config
           description: One processor as read from the environment.
@@ -734,38 +748,37 @@ System:
           description: One model answer to one Request, or its failure.
           schema: "{ customId, text: string | null, finishReason: string | null, error: string | null }"
         - name: Usage
-          description: Tokens and cost of one Request as the provider reported them (0 tokens and null cost when it reported none).
+          description: Tokens and cost of one Request as reported (0 tokens, null cost when none).
           schema: "{ customId, inputTokens, outputTokens, cost: number | null, provider: string | null, generationId: string | null }"
         - name: Batch Call
           description: One batch submission, ready to POST.
           schema: "{ url, headers: Record<string, string>, body: string }"
         - name: Batch Read
           description: What one reply says about a batch.
-          schema: "{ batchId: string | null, state: 'pending'|'done'|'failed'|'error', status: string | null, error: string | null, replies: { answer: Answer, usage: Usage }[] }"
+          schema: "{ batchId: string | null, state: 'pending'|'done'|'failed'|'error', status: string | null, error: string | null, replies: { answer: Answer, usage: Usage }[], cost?: number }"
+        - name: Batch Record
+          description: One submitted batch; .morph/batches/<batchId>.json keeps it, uncommitted.
+          schema: "{ batchId: string, processor: string, model: string, customIds: string[], status: string, cost: number | null }"
 
     # ---------------------------------------------------------------- P5 (skeleton)
     - name: runloop
       description: >
         The run: src/runloop/*.ts. Resolves runnable cards per generation, compiles,
-        sends, verifies, retries with the diagnosis, records outcomes and produces the
-        run report. The git step (branch, commit, archive write) is P6: runloop fires an
-        injected commit hook for each accepted card and returns the Run Report; it owns
-        the Run Report schema and the archive layout but writes and commits nothing
-        itself. The clock (now) and the processor transport (fetch, sleep) are injected
-        parameters, so a test waits on no timer and opens no socket. The milestone is an
-        end-to-end run of a deck on the stub processor inside vitest: no network, no git.
+        sends, verifies, retries with the diagnosis, records outcomes and returns the Run
+        Report; it fires an injected commit hook per accepted card and writes and commits
+        nothing itself. The clock and the processor transport are injected, so a test
+        waits on no timer and opens no socket.
       language: typescript
       guardrails: [Frozen Tree During Run]
       functions:
         - name: Resolve Runnable
-          description: A card whose dependency failed, was skipped or ran out of budget is skipped with the reason naming that dependency.
+          description: A card whose dependency is not written is skipped, the reason naming it.
           behavior: >
-            resolveRunnable(cards, done) takes the cards of one generation and `done`, a
-            Record of the final status of every card processed so far (written | failed |
-            skipped | budget-exceeded). A card is skipped when any id in its dependsOn has
-            a status in `done` other than "written"; its reason is "dependency <id>
-            <status>" for the FIRST such dependency in dependsOn order. A dependency absent
-            from `done` (external, or satisfied outside the run) is ignored. Returns
+            resolveRunnable(cards, done): the cards of one generation; done, a Record of the
+            final status of every card processed so far. A card is skipped when an id in its
+            dependsOn has a status in done other than "written", reason "dependency <id>
+            <status>" for the FIRST such in dependsOn order; an id absent from done
+            (external, or satisfied outside the run) is ignored. Returns
             {runnable: Card[], skipped: CardOutcome[]} keeping the input order; a skipped
             card's outcome is {status: "skipped", reason, attempts 0, winningVariant null,
             acceptanceLog "", earlierFailures [], commit null, diffstat null}.
@@ -790,9 +803,8 @@ System:
           behavior: >
             processGeneration(cards, deps, root) compiles every card with compileCard,
             keeping each card's input digest; sends all variants of all cards in ONE
-            sendGeneration(deps.config, requests, deps.transport) call (so deps.config's
-            concurrency pools across the whole generation) and slices answers and usage
-            back to each card by request index; then verifies each card in input order.
+            sendGeneration(deps.config, requests, deps.transport) call and slices answers and
+            usage back by request index; then verifies each card in input order.
             Per card: a compile fault → {status: "failed", reason "compile: <first fault
             message>", acceptanceLog = the fault messages joined by "\n"}; else recompute
             the digest (captureInputs) and compareCaptures against the compile digest — a
@@ -801,8 +813,7 @@ System:
             else build one VariantAnswer per variant (variant id "<customId>.v<n>"; a
             null-text answer becomes {corrupt: the answer's error ?? "no text returned"},
             else parseAnswer(text, targets)) and call verifyCard with timeoutMs =
-            deps.acceptanceTimeoutMs ?? DEFAULT_TIMEOUT_MS (300000, Run Acceptance's default) —
-            the acceptance has its own timeout, never the processor's HTTP deps.config.timeoutMs.
+            deps.acceptanceTimeoutMs ?? DEFAULT_TIMEOUT_MS (300000), never deps.config.timeoutMs.
             Accepted → {status:
             "written", winningVariant = the accepted variant id, acceptanceLog = the
             winner's log, earlierFailures = the logs of the rejected variants tried before
@@ -814,7 +825,9 @@ System:
             of every request sent; requests is one Request Usage per request sent, in send
             order ({customId: the request id, model: the request's model ?? deps.config.model,
             provider, generationId, inputTokens, outputTokens, cost from its Usage,
-            finishReason and error from its Answer}); retryContexts holds one Retry Context
+            finishReason and error from its Answer, then batchId = the send result's
+            batch.batchId on a row whose customId is in batch.customIds, no key otherwise});
+            retryContexts holds one Retry Context
             per FAILED outcome, keyed by its customId, in outcome order, and nothing for a
             written card. A compile fault or stale inputs → {acceptanceOutput: the outcome's
             acceptanceLog, previousDiff: null}. A rejected card → of the variants whose
@@ -824,10 +837,8 @@ System:
             variant; stageCount(log) (exported) is the number of lines of the log, split on
             "\n", that begin with "== " (the stage headers the acceptance prints: == tsc, ==
             probe, …). When no variant ran (every answer corrupt or truncated) →
-            {acceptanceOutput: the last result's log, previousDiff: null}. The log and the diff
-            of the retry always come from the same attempt, and previousDiff is null exactly
-            when no acceptance ran. The outcome's acceptanceLog and earlierFailures do not
-            change (the last variant's log, the earlier ones'). Every variant sent gets one
+            {acceptanceOutput: the last result's log, previousDiff: null}; the outcome's
+            acceptanceLog and earlierFailures stay as above. Every variant sent gets one
             Variant Record, given to deps.onVariant when it is set (optional; without it nothing
             changes), after its card is decided (an accepted card's commit hook first), in card
             order then variant order: {request: the Request as sent, text, finishReason, error
@@ -884,6 +895,10 @@ System:
             - given: 'a stub config; shared.ts exists; cards [a → shared.ts, variants 2, acceptance "grep -q ONE shared.ts" (a.v1.md fenced ''export const x = "ONE";\n'', a.v2.md fenced ''export const x = "TWO";\n''), b → out/b.ts with contextSlice [shared.ts] (b.v1.md fenced), c → out/c.ts (c.v1.md the text ''```ts\nexport const x = 2;\n''), d → out/d.ts with no answer file, e → out/e.ts with contextSlice [docs/missing.md]], variants 1 but a; deps.onVariant pushes each record'
               when: "processed"
               then: 'the verdicts in order a.v1 "accepted", a.v2 "untried" (its text a.v2.md''s), b.v1 "stale", c.v1 "truncated", d.v1 "corrupt" (text null, finishReason null, error "stub has no answer: <answersDir>/d.v1.md"); every one stages 0, lastStage null; no record of e'
+            - given: 'the config of tests/fixtures/processor/batchConfig.json; a transport answering 202 batchSubmittedLive.json, then 200 batchCompletedLive.json (sleep a no-op); cards clamp-value → out/clamp.ts, sign-of → out/sign.ts, pin → out/pin.ts with model "other/m", acceptance "true" each'
+              ref: "tests/fixtures/runloop/batchRows.json"
+              when: "processed"
+              then: 'clamp-value and sign-of "written", pin "failed"; requests exactly the fixture''s three rows: clamp-value.v1 and sign-of.v1 with cost 0.0003029253 / 0.0002774747, provider "DeepInfra", batchId "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W" last; pin.v1 model "other/m", error "batch runs one model: pin.v1 pins other/m, the batch is z-ai/glm-5.3:batch", no batchId key'
         - name: Build Retry
           description: The retry card <base>.r<n> carrying the acceptance command, its output and the previous attempt diff, or the word that the answer was discarded unread; at most 2 retries per card; Run Deck caps the retry batches of each generation.
           behavior: >
@@ -945,9 +960,10 @@ System:
             retryBatches starts at 0 at every generation, and while some failed card has been
             retried fewer than 2 times and retryBatches < maxRetryBatches, a retry batch runs
             (retryBatches += 1) for all such cards (a card of an earlier generation whose
-            retries the cap stopped is included): buildRetry(original card, retryNumber, the card's latest
-            Retry Context acceptanceOutput, its previousDiff) for each — so the retry
-            carries the output and the diff of the same failed attempt — processGeneration
+            retries the cap stopped is included), unless deps.now() >= the deadline, checked before
+            each retry batch: then each such card becomes its outcome with status
+            "budget-exceeded", reason "deadline", and no retry batch runs. A batch: buildRetry(original card, retryNumber, the card's latest
+            Retry Context acceptanceOutput, its previousDiff) for each, processGeneration
             on the retries, and a retry that is written updates the card's outcome (status
             "written", its commit, attempts = the retry number + 1) while every attempt's
             log is appended to earlierFailures. At the end it builds the Run Report: runId,
@@ -986,6 +1002,9 @@ System:
             - given: 'a one-card deck on the stub, card c → c.ts with acceptance "exit 1"; answers c.md, c.r1.md, c.r2.md; budget maxRetryBatches 8'
               when: "run"
               then: 'c "failed", reason "acceptance failed", attempts 3, earlierFailures length 2; usageTotals.requests 3 (the per-card budget: 2 retries, whatever the batch cap)'
+            - given: 'a two-generation deck on the stub [c → c.ts acceptance "exit 1", then d → d.ts dependsOn c]; answers c.md, c.r1.md, d.md; budget maxRetryBatches 2, deadline 1000; deps.now returns 0 on its first call, 5000 after'
+              when: "run"
+              then: 'c "budget-exceeded", reason "deadline", attempts 1 (the deadline falls inside generation 0: no retry batch); d "budget-exceeded", reason "deadline"; usageTotals.requests 1; the commit hook never fired'
       dataObjects:
         - name: Card Outcome
           description: How one card ended in a run.
@@ -995,7 +1014,7 @@ System:
           schema: "{ runId: string, completedAt: number, branch: string, processor: string, generations: number, outcomes: CardOutcome[], usageTotals: { inputTokens: number, outputTokens: number, cost: number | null, requests: number }, requests?: RequestUsage[] } — requests is always set by Run Deck; it is optional in the type so a report literal built elsewhere stays valid"
         - name: Request Usage
           description: One request a run sent, as the processor answered it (one row per variant, retries included).
-          schema: "{ customId: string, model: string, provider: string | null, generationId: string | null, inputTokens: number, outputTokens: number, cost: number | null, finishReason: string | null, error: string | null }"
+          schema: "{ customId: string, model: string, provider: string | null, generationId: string | null, inputTokens: number, outputTokens: number, cost: number | null, finishReason: string | null, error: string | null, batchId?: string }"
         - name: Retry Context
           description: What the retry of a failed card is told — the acceptance output and the diff of the same failed attempt.
           schema: "{ acceptanceOutput: string, previousDiff: string | null } — previousDiff is the diff of an attempt whose acceptance ran (\"\" when it changed nothing), null when no acceptance ran"
@@ -1008,8 +1027,8 @@ System:
       description: >
         The run's git side: src/git/*.ts over the git CLI. Opens the run branch, commits one
         accepted card's targets with Morph trailers and returns its sha and diffstat (the
-        commit hook runloop fires), and writes and commits the run archive
-        .morph/runs/<runId>/{deck.json, report.json, answers/}. Every git call is a synchronous child
+        commit hook runloop fires), and writes the run archive .morph/runs/<runId>/ (deck.json,
+        report.json and answers/ committed; requests/ kept on disk, ignored). Every git call is a synchronous child
         process with cwd = the repo root and an environment given whole as a parameter
         (never process.env), so a test pins the author, the committer, HOME and the locale
         and never depends on the host's git config. Expected refusals (a dirty tree, an
@@ -1119,7 +1138,7 @@ System:
               when: 'hook("h", ["out/h.ts"]), then hook("h", ["out/h.ts"])'
               then: 'first {commit: HEAD, diffstat {files: 1, insertions: 1, deletions: 0}} with the HEAD message "morph h: out/h.ts\n\nMorph-Card: h\nMorph-Model: stub\nMorph-Acceptance-Exit: 0"; second null and HEAD unchanged'
         - name: Archive Run
-          description: Writes .morph/runs/<runId>/{deck.json, report.json, answers/} and commits them with Morph-Run trailers; append-only.
+          description: Writes .morph/runs/<runId>/ (deck.json, report.json, answers/ committed with Morph-Run trailers; requests/ ignored); append-only.
           behavior: >
             archiveRun(root, {runId, deck, report, answers?}, env): runId must match
             ^[A-Za-z0-9._-]+$, else {ok: false, error: "invalid runId: <runId>"}; an answer whose
@@ -1128,17 +1147,25 @@ System:
             false, error: "archive <dir> already exists"} (a run id names one run forever). A
             refusal writes nothing. Else mkdir -p, write <dir>/deck.json =
             JSON.stringify(deck.cards, null, 2) + "\n" (the Deck File form, a JSON array of
-            cards) and <dir>/report.json = JSON.stringify(report, null, 2) + "\n", then per answer
-            in order <dir>/answers/<customId>.request.json = JSON.stringify(request, null, 2) +
-            "\n" and, when text is not null, <dir>/answers/<customId>.answer.txt = text exactly;
-            answers absent or [] → no answers/ directory. Then Commit Paths over [<dir>/deck.json,
-            <dir>/report.json, the answer files in the order written] with subject "morph run <runId>:
+            cards) and <dir>/report.json = JSON.stringify(report, null, 2) + "\n". Then, answers
+            not empty: <dir>/requests/.gitignore = "*\n" and per answer in order
+            <dir>/requests/<customId>.request.json.gz = gzipSync (node:zlib) of
+            JSON.stringify(request, null, 2) + "\n" — the request copies repeat the slices: kept
+            on disk, ignored in any repo, never committed — and, when text is not null,
+            <dir>/answers/<customId>.answer.txt = text exactly; then <dir>/answers/lines.txt = the
+            answers' lines concatenated in order, when any answer has a line. answers absent or
+            [] → no answers/ and no requests/. Then Commit Paths over [<dir>/deck.json,
+            <dir>/report.json, the answer.txt files in order, answers/lines.txt] with subject "morph run <runId>:
             deck and report" and trailers Morph-Run <runId>, Morph-Cards <deck.cards.length>,
             Morph-Written, Morph-Failed, Morph-Skipped, Morph-Budget-Exceeded (the number of
             report.outcomes with that status). → {ok: true, dir, commit: the sha, or null when
             Commit Paths returned null}. A git failure of the commit (an ignored .morph/ makes
             git add refuse) → {ok: false, error: "archive <dir> written but not committed: <the
-            Error's message>"}; the files stay on disk.
+            Error's message>"}; the files stay on disk. saveBatchRecord(root, record) (exported;
+            record {batchId, …}, a Batch Record) writes <root>/.morph/batches/<batchId>.json =
+            JSON.stringify(record, null, 2) + "\n" (mkdir -p; local state, not committed) and
+            returns ".morph/batches/<batchId>.json"; a batchId outside ^[A-Za-z0-9._-]+$ → null,
+            nothing written.
           steps:
             - reads: Deck
             - reads: Run Report
@@ -1156,10 +1183,16 @@ System:
               then: '{ok: false, error beginning "archive .morph/runs/r2 written but not committed: git add failed (exit 1): "}; .morph/runs/r2/deck.json and report.json exist on disk; HEAD unchanged'
             - given: 'example 1 with answers [{request: {customId: "a.v1", model: null, maxTokens: null, reasoning: null, messages: [{role: "user", content: "Write a."}]}, text: "```ts\nexport const a = 1;\n```\n"}, {request: the same with customId "b.v1" and "Write b.", text: null}]'
               when: "archived"
-              then: '{ok: true, dir: ".morph/runs/r1", commit: HEAD}; answers/a.v1.request.json reads JSON.stringify(the a.v1 request, null, 2) + "\n", answers/a.v1.answer.txt the text byte for byte, answers/b.v1.request.json the b.v1 request, no b.v1.answer.txt; the commit lists exactly deck.json, report.json and these three files under .morph/runs/r1; the HEAD message as in example 1'
+              then: '{ok: true, dir: ".morph/runs/r1", commit: HEAD}; answers/a.v1.answer.txt the text byte for byte, no b.v1.answer.txt, no answers/lines.txt; gunzipSync of requests/a.v1.request.json.gz and b.v1.request.json.gz reads JSON.stringify(that request, null, 2) + "\n"; requests/.gitignore "*\n"; the commit lists exactly .morph/runs/r1/deck.json, report.json, answers/a.v1.answer.txt; git status --porcelain empty; the HEAD message as in example 1'
             - given: 'answers [{request: {customId: "../x"}, text: "t"}], runId "r3"; then answers [], runId "r4"'
               when: "archived"
               then: '{ok: false, error: "invalid answer id: ../x"}, no .morph/runs/r3, HEAD unchanged; then {ok: true, dir: ".morph/runs/r4", commit: HEAD} and no .morph/runs/r4/answers'
+            - given: 'example 1 with runId "r6" and answers [{request: the a.v1 request, text: "A", line: "morph run: a.v1 accepted stage 2 probe finish stop chars 1\n"}, {request: the b.v1 request, text: null, line: "morph run: b.v1 corrupt stage 0 finish none chars none\n"}]'
+              when: "archived"
+              then: 'ok; answers/lines.txt exactly "morph run: a.v1 accepted stage 2 probe finish stop chars 1\nmorph run: b.v1 corrupt stage 0 finish none chars none\n"; the commit lists exactly .morph/runs/r6/deck.json, report.json, answers/a.v1.answer.txt, answers/lines.txt; requests/a.v1.request.json.gz on disk, git check-ignore names it; git status --porcelain empty'
+            - given: 'a tmp root t; record {batchId: "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W", processor: "night", model: "acme/m:batch", customIds: ["clamp-value.v1"], status: "in_progress", cost: null}; then the same with batchId "../x"'
+              when: "saveBatchRecord(t, record)"
+              then: '".morph/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W.json", the file JSON.stringify(record, null, 2) + "\n"; then null, .morph/batches holding that one file, no t/.morph/x.json'
       dataObjects:
         - name: Git Result
           description: What one git call returned.
@@ -1171,8 +1204,8 @@ System:
           description: One commit and what it changed; structurally runloop's CommitInfo, so makeCommitHook is a CommitHook.
           schema: "{ commit: string, diffstat: { files: number, insertions: number, deletions: number } }"
         - name: Archived Answer
-          description: One variant's request and raw answer for answers/; structurally runloop's Variant Record, so the records pass as they are.
-          schema: "{ request: { customId: string }, text: string | null }"
+          description: One variant's request, raw answer and stderr line (Run Command's variantLine); a Variant Record plus line passes as it is.
+          schema: "{ request: { customId: string }, text: string | null, line?: string }"
         - name: Archive Result
           description: The archive written and committed, or the refusal.
           schema: "{ ok: true, dir: string, commit: string | null } | { ok: false, error: string }"
@@ -1180,45 +1213,43 @@ System:
     # ---------------------------------------------------------------- P7
     - name: cli
       description: >
-        The `morph` binary: src/cli/*.ts plus the entry src/cli.ts (bin dist/cli.js). Parses
-        argv, dispatches, prints one JSON document on stdout and log lines on stderr, maps
-        every outcome to an exit code. Only the entry touches the process: main() gets the
-        environment, the working directory, the clock and the output streams as parameters.
-        Commands: `deck check` (cards), `run` (runloop + processor + git), `plan` (contour +
-        planner; --checks: builder's acceptances). scout, primer, review, report, deck
-        add|status|reset|clear answer a fixed NotYetError.
+        The `morph` binary: src/cli/*.ts and the entry src/cli.ts (bin dist/cli.js). Parses
+        argv, routes to a command, prints one JSON document on stdout and log lines on stderr,
+        maps every outcome to an exit code. Only the entry touches the process. Commands:
+        `deck check`, `run`, `plan`; scout, primer, review, report, deck add|status|reset|clear
+        answer NotYetError.
       language: typescript
       requirements: [One Document Out]
       functions:
         - name: Parse Command
-          description: argv into one Command or a usage error; global --root and --pretty anywhere.
+          description: argv into one Command or a usage error.
           behavior: >
             parseCommand(argv) scans argv left to right. A token starting with "--" is a flag:
             --pretty and --judge take no value; --root, --deck, --processor, --run-id, --deadline,
             --max-cards, --max-retry-batches, --slice-cap-bytes, --spec, --component, --map, --out,
-            --checks take the next token whatever it is; any other flag (also --x=y) → "unknown
-            flag: <t>"; a value flag last → "flag <t> needs a value"; a flag seen twice → "flag <t>
-            given twice", except --component, which repeats and keeps its values in argv order
-            (the first such error in argv order wins). Other tokens are words. The command from
-            the words: none → "no command (commands: deck check, plan, run)"; "run"; "plan";
-            "deck" "check"; a first word scout, primer, review or report → NotYetError "command
-            <word> is not available yet"; "deck" add|status|reset|clear → NotYetError "command deck
-            <w> is not available yet"; else "unknown command: <words joined by a space>". More
-            words than the command takes → "unexpected argument: <first extra>". Then in order: a
-            flag the command does not take → "flag <f> does not apply to <command>", in argv order
-            (deck check takes --root, --pretty, --deck, --slice-cap-bytes; run --root, --pretty,
-            --deck, --processor, --run-id, --deadline, --max-cards, --max-retry-batches; plan
-            --root, --pretty, --spec, --component, --map, --judge, --out, --checks); plan without
-            --spec → "missing --spec", else plan is done: {name: "plan", root, pretty, spec,
-            components ([] when none), map (or null), judge (--judge given), out (or null), checks
-            (a key only when given)}; no --deck → "missing --deck"; run without --processor →
-            "missing --processor"; a run --run-id not matching ^[A-Za-z0-9._-]+$ → "--run-id must
-            match ^[A-Za-z0-9._-]+$ (got '<v>')"; numbers in the order --slice-cap-bytes (deck
-            check), --deadline, --max-cards, --max-retry-batches (run): digits only, ≥ 1 ("<f> must
-            be a positive integer (got '<v>')"), --max-retry-batches ≥ 0 ("must be a non-negative
-            integer"). A failure is {ok: false, error: {error: {code: 4, kind: "UsageError" |
-            "NotYetError", message}}}. Defaults: root ".", pretty false, sliceCapBytes 500000, runId
-            null, deadlineSeconds 2400, maxCards null (= the deck's card count), maxRetryBatches 2.
+            --checks take the next token whatever it is; any other flag (--x=y too) → "unknown
+            flag: <t>"; a value flag last → "flag <t> needs a value"; a flag twice → "flag <t>
+            given twice", but --component repeats, its values in argv order (the first error in
+            argv order wins). Other tokens are words, giving the command: none → "no command
+            (commands: deck check, plan, run)"; "run"; "plan"; "deck" "check"; a first word
+            scout, primer, review or report → NotYetError "command <word> is not available yet";
+            "deck" add|status|reset|clear → NotYetError "command deck <w> is not available yet";
+            else "unknown command: <words, space-joined>". An extra word → "unexpected argument:
+            <first extra>". Then in order: a flag the command does not take → "flag <f> does not
+            apply to <command>", in argv order (deck check: --root, --pretty, --deck,
+            --slice-cap-bytes; run: --root, --pretty, --deck, --processor, --run-id, --deadline,
+            --max-cards, --max-retry-batches; plan: --root, --pretty, --spec, --component, --map,
+            --judge, --out, --checks); plan without --spec → "missing --spec", else plan is done:
+            {name: "plan", root, pretty, spec, components ([] when none), map (or null), judge,
+            out (or null), checks (a key only when given)}; no --deck → "missing --deck"; run
+            without --processor → "missing --processor"; a run --run-id not matching
+            ^[A-Za-z0-9._-]+$ → "--run-id must match ^[A-Za-z0-9._-]+$ (got '<v>')"; numbers in
+            the order --slice-cap-bytes (deck check), --deadline, --max-cards,
+            --max-retry-batches (run): digits only, ≥ 1 ("<f> must be a positive integer (got
+            '<v>')"), --max-retry-batches ≥ 0 ("must be a non-negative integer"). A failure is
+            {ok: false, error: {error: {code: 4, kind: "UsageError" | "NotYetError", message}}}.
+            Defaults: root ".", pretty false, sliceCapBytes 500000, runId null, deadlineSeconds
+            2400, maxCards null (= the deck's card count), maxRetryBatches 2.
           steps:
             - produces: Command
           examples:
@@ -1267,8 +1298,8 @@ System:
           behavior: >
             renderDocument(doc, pretty) = JSON.stringify(doc, null, 2 when pretty) + "\n".
             errorDocument(code, kind, message) = {error: {code, kind, message}}, keys in that
-            order. main writes exactly one rendered document to stdout per invocation and
-            nothing else; the human log goes to stderr.
+            order. main writes exactly one document to stdout per invocation; the log goes to
+            stderr.
           steps:
             - produces: Error Document
           examples:
@@ -1284,11 +1315,10 @@ System:
         - name: Classify Error
           description: "Exit codes: 0 ok; 1 a card not written; 2 a refusal before spend; 3 a fault under way; 4 a usage error."
           behavior: >
-            classifyThrown(e) → {code: 3, document: errorDocument(3, "RuntimeError", e's
-            message when e is an Error, else String(e))}. runExitCode(report, archive) → 3
-            when the archive is not ok; else 1 when any outcome's status is not "written";
-            else 0. Kinds: UsageError and NotYetError (4), DeckError and RefusalError (2),
-            RuntimeError (3).
+            classifyThrown(e) → {code: 3, document: errorDocument(3, "RuntimeError", e.message
+            for an Error, else String(e))}. runExitCode(report, archive) → 3 when the archive is
+            not ok; else 1 when any outcome is not "written"; else 0. Kinds: UsageError and
+            NotYetError (4), DeckError and RefusalError (2), RuntimeError (3).
           steps:
             - produces: Command Result
           examples:
@@ -1302,14 +1332,13 @@ System:
               when: "runExitCode"
               then: '0, 1, 3'
         - name: Read Deck File
-          description: The deck file a command names, resolved against the root, loaded by Load Deck.
+          description: The deck file a command names, under the root, by Load Deck.
           behavior: >
-            readDeckFile(root, deckPath): abs = path.resolve(root, deckPath) (an absolute
-            deckPath ignores root). Not a regular file → {ok: false, result: {code: 4,
-            document: errorDocument(4, "UsageError", "deck file not found: <deckPath as
-            given>")}}. Else Load Deck on its UTF-8 text; faults → {ok: false, result:
-            {code: 2, document: errorDocument(2, "DeckError", "invalid deck: " + each fault
-            as "<key>: <message>" joined by "; ")}}. Else {ok: true, deck}.
+            readDeckFile(root, deckPath): abs = path.resolve(root, deckPath). Not a regular file
+            → {ok: false, result: {code: 4, document: errorDocument(4, "UsageError", "deck file
+            not found: <deckPath as given>")}}. Else Load Deck on its UTF-8 text; faults → {ok:
+            false, result: {code: 2, document: errorDocument(2, "DeckError", "invalid deck: " +
+            each fault "<key>: <message>", "; "-joined)}}. Else {ok: true, deck}.
           steps:
             - reads: Deck
             - produces: Command Result
@@ -1326,14 +1355,14 @@ System:
               when: "read"
               then: 'code 2, kind "DeckError", message "invalid deck: dependsOn: dependsOn cycle a -> b -> a"; then "invalid deck: cards[2].customId: duplicate customId b"'
         - name: Deck Check
-          description: "`morph deck check`: generations, hazards and slice weights of a deck file; exit 2 on any error hazard."
+          description: "`morph deck check`: generations, hazards, slice weights; exit 2 on an error hazard."
           behavior: >
-            deckCheckCommand(root, deckPath, sliceCapBytes): Read Deck File (its failure is
-            the result); weighing = Weigh Slices(deck, root, sliceCapBytes); hazards = Find
-            Hazards(deck) followed by the weighing's hazards; document {deck: deckPath as
-            given, cards: the card count, generations: Layer Generations(deck), errors and
-            warnings: the hazards of severity error / warning counted, hazards, weights:
-            the weighing's weights}, keys in that order; code 2 when errors > 0, else 0.
+            deckCheckCommand(root, deckPath, sliceCapBytes): Read Deck File (its failure is the
+            result); weighing = Weigh Slices(deck, root, sliceCapBytes); hazards = Find
+            Hazards(deck), then the weighing's; document {deck: deckPath as given, cards: the
+            count, generations: Layer Generations(deck), errors and warnings: the hazards of
+            severity error / warning counted, hazards, weights: the weighing's}, keys in that
+            order; code 2 when errors > 0, else 0.
           steps:
             - calls: Read Deck File
             - uses: cards
@@ -1351,27 +1380,27 @@ System:
               when: "checked"
               then: 'code 0; warnings 2; hazards [the implicit-read, then {kind: "oversized-slice", severity: "warning", cards: ["a"], path: null, repair: null, bytes: 20, cap: 10}]'
         - name: Run Command
-          description: "`morph run`: processor, deck, hazards, run branch, Run Deck with git's commit hook, archive; one Run Document."
+          description: "`morph run`: processor, deck, hazards, run branch, Run Deck, archive; one Run Document."
           behavior: >
             runCommand(root, args, deps, log?), every check before any git call or spend, in
             order. 1. readRegistry(deps.env); no config with id args.processor → 4 UsageError
-            "processor <id> is not configured", plus ": " and the messages of the registry faults
-            whose key starts with "MORPH_PROCESSOR_<id>_" joined by "; " when there are any. 2.
-            Read Deck File (its failure is the result). 3. Find Hazards errors → 2 RefusalError
-            "deck has <n> hazard error(s): " + each as "<kind> <cards joined by ",">[ <path>]"
-            joined by "; ". 4. start = deps.now() (its only call here); runId = args.runId, or
-            mintRunId(start) = the UTC time of start as "YYYYMMDD-HHMMSS". 5. Open Run Branch(root,
-            runId, deps.env); a refusal → 2 RefusalError, its error. 6. Run Deck, input {root,
-            runId, branch, deck, budget {maxCards: args.maxCards or the card count,
-            maxRetryBatches, deadline: start + deadlineSeconds × 1000}}, deps {config, transport:
-            deps.transport or realTransport(config.timeoutMs), commit: makeCommitHook(root,
-            config.model, deps.env), now: deps.now, env: deps.env, onVariant: keeps each Variant
-            Record and, log given, calls log(variantLine(record))}. 7. Archive Run(root, {runId,
-            deck, report, answers: the records in order}, deps.env). → {code: runExitCode(report,
-            archive), document: {runId, branch, base, report, archive}}. variantLine(r) (exported)
-            = "morph run: <r.request.customId> <verdict> stage <stages>[ <lastStage>] finish
-            <finishReason, or none> chars <text length, or none>\n". A thrown Error propagates to
-            main. The checkout stays on the run branch.
+            "processor <id> is not configured" + (": " + the messages of the faults keyed
+            "MORPH_PROCESSOR_<id>_…", "; "-joined, when any). 2. Read Deck File (its failure is
+            the result). 3. Find Hazards errors → 2 RefusalError "deck has <n> hazard error(s): "
+            + each "<kind> <cards ","-joined>[ <path>]", "; "-joined. 4. start = deps.now() (its
+            only call here); runId = args.runId or mintRunId(start), start's UTC time as
+            "YYYYMMDD-HHMMSS". 5. Open Run Branch(root, runId, deps.env); a refusal → 2
+            RefusalError, its error. 6. Run Deck, input {root, runId, branch, deck, budget
+            {maxCards: args.maxCards or the card count, maxRetryBatches, deadline: start +
+            deadlineSeconds × 1000}}, deps {config, transport: {...(deps.transport or
+            realTransport(config.timeoutMs)), saveBatch: (record) => git's saveBatchRecord(root,
+            record)}, commit: makeCommitHook(root, config.model, deps.env), now: deps.now, env:
+            deps.env, onVariant: line = variantLine(record), keep {...record, line}, log given →
+            log(line)}. 7. Archive Run(root, {runId, deck, report, answers: the kept records},
+            deps.env). → {code: runExitCode(report, archive), document: {runId, branch, base,
+            report, archive}}. variantLine(r) (exported) = "morph run: <r.request.customId>
+            <verdict> stage <stages>[ <lastStage>] finish <finishReason, or none> chars <text
+            length, or none>\n". A thrown Error propagates. The checkout stays on the run branch.
           steps:
             - uses: processor
             - calls: Read Deck File
@@ -1379,7 +1408,7 @@ System:
             - uses: runloop
             - produces: Run Document
           examples:
-            - given: 'a tmpRepo; env with an explicit git identity and MORPH_PROCESSOR_s_TYPE stub, MORPH_PROCESSOR_s_ANSWERS_DIR a side tmp root holding a.md and b.md (fenced ts blocks); a deck file in the side root: a → out/a.ts (acceptance "test -f out/a.ts"), b → out/b.ts dependsOn [a]; runId "r1"'
+            - given: 'a tmpRepo; env with a git identity, MORPH_PROCESSOR_s_TYPE stub, MORPH_PROCESSOR_s_ANSWERS_DIR a side tmp root with a.md, b.md (fenced ts blocks); a deck file there: a → out/a.ts ("test -f out/a.ts"), b → out/b.ts dependsOn [a]; runId "r1"'
               when: "run"
               then: 'code 0; runId "r1", branch "morph/r1", base = HEAD before; a, b "written", generations 2, processor "s", usageTotals.requests 2; archive {ok: true, dir: ".morph/runs/r1", commit: HEAD}; subjects since base, newest first: "morph run r1: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; HEAD on morph/r1; status clean'
             - given: 'the same setup, one card a with acceptance "exit 1", maxRetryBatches 0'
@@ -1402,26 +1431,30 @@ System:
               then: '"morph run: a.v1 rejected stage 4 probe finish stop chars 30\n"; "morph run: b.r1.v2 corrupt stage 0 finish none chars none\n"'
             - given: 'example 2 with maxRetryBatches 1, answers a.md and a.r1.md (each a 30-char fenced ts block); a log pushing its texts'
               when: "run"
-              then: 'code 1; the log ["morph run: a.v1 rejected stage 0 finish stop chars 30\n", "morph run: a.r1.v1 rejected stage 0 finish stop chars 30\n"]; the archive commit adds exactly deck.json, report.json, answers/a.v1.request.json, a.v1.answer.txt, a.r1.v1.request.json, a.r1.v1.answer.txt under .morph/runs/r1; the a.r1.v1 request''s last message holds "<acceptance_output>"; status clean'
+              then: 'code 1; the log ["morph run: a.v1 rejected stage 0 finish stop chars 30\n", "morph run: a.r1.v1 rejected stage 0 finish stop chars 30\n"]; the archive commit adds exactly deck.json, report.json, answers/a.v1.answer.txt, a.r1.v1.answer.txt and answers/lines.txt (the two log lines) under .morph/runs/r1; the a.r1.v1 request (gunzipSync of requests/a.r1.v1.request.json.gz) has a last message holding "<acceptance_output>"; status clean'
+            - given: 'example 1 with MORPH_PROCESSOR_b_TYPE openrouter, _MODEL "acme/m:batch", _API_KEY "k", _ROUTE "batch", _TIMEOUT_MS "30000"; deps.transport answering 202 batchSubmittedLive.json, then 200 batchCompletedLive.json; cards clamp-value → out/clamp.ts, sign-of → out/sign.ts, "test -f <target>"; runId "r9"'
+              ref: "tests/fixtures/processor/batchSubmittedLive.json, batchCompletedLive.json, tests/fixtures/cli/batch.r9.json (the record file's text)"
+              when: "run"
+              then: 'code 0, both written; every report.requests row batchId "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W"; usageTotals.cost 0.0005804; .morph/batches/<that id>.json exactly batch.r9.json (processor "b", model "acme/m:batch", status "completed"); git status --porcelain exactly "?? .morph/batches/"'
         - name: Plan Command
-          description: "`morph plan --spec`: the record and the map read under the root, cut by Plan Spec, the deck written to --out; one Plan Document."
+          description: "`morph plan --spec`: record and map cut by Plan Spec, the deck to --out; one Plan Document."
           behavior: >
-            planCommand(root, args), in order. The spec path.resolve(root, args.spec) not a
-            regular file → 4 UsageError "spec file not found: <spec as given>"; a map given and not
-            a regular file → 4 UsageError "map file not found: <map as given>". loadContour(the
-            spec's UTF-8 text, args.spec), then loadMap(the map's text, args.map) when a map is
-            given (none → the empty map {version: 1, package: null, language: null, docs: [],
+            planCommand(root, args), in order. The spec (path.resolve(root, args.spec)) not a
+            regular file → 4 UsageError "spec file not found: <spec as given>"; a map given and
+            not a regular file → 4 UsageError "map file not found: <map as given>".
+            loadContour(the spec's UTF-8 text, args.spec), then loadMap(the map's text, args.map)
+            when given (else the empty map {version: 1, package: null, language: null, docs: [],
             groups: [], cards: [], extraCards: []}); an error → 2 DeckError, it. Plan Spec({record,
             map, spec: args.spec, components: args.components, judge: args.judge, hasFile: a path
             is a regular file under root}); an error → 2 DeckError, it. With args.checks: Read Plan
             Checks (a failure is the result); Build Acceptances({cards, checks, profile:
             resolveProfile(null, map.language), texts}), errors → 2 DeckError "acceptances not built
-            (<n> error|errors):\n" + them joined by "\n"; its cards replace the plan's, but a card
-            the map gives an acceptance (map card by customId ?? id, extra card by customId) stays.
-            Then, args.out not null: the cards written to path.resolve(root, args.out) as
-            JSON.stringify(cards, null, 2) + "\n", parent directories created. → {code: 0,
-            document: {spec, components, cards, generations, externalDependsOn, out: args.out}}.
-            Nothing else is written; nothing on an error.
+            (<n> error|errors):\n" + them "\n"-joined; its cards replace the plan's, except a card
+            the map gives an acceptance (map card by customId ?? id, extra card by customId).
+            args.out not null → the cards written to path.resolve(root, args.out) as
+            JSON.stringify(cards, null, 2) + "\n", parents created. → {code: 0, document: {spec,
+            components, cards, generations, externalDependsOn, out: args.out}}. Nothing else is
+            written, nothing on an error.
           steps:
             - uses: contour
             - uses: planner
@@ -1462,10 +1495,11 @@ System:
             readPlanChecks(root, checksPath), in order, a failure {ok: false, result}: the file not
             regular under root → 4 UsageError "checks file not found: <checksPath>"; Parse
             Document(text, checksPath) error → 2 DeckError, it; Read Checks' problems → 2 DeckError
-            "<checksPath> is not a valid checks document (<n> problem|problems):\n" + them joined by
-            "\n"; GUARD_PATH "decks/tools/guard.mjs", LOCATOR_PATH "decks/tools/firstdiff.mjs" not
-            regular → 4 UsageError "guard|locator file not found: <path>". Probes: per card, files
-            null, <parts>/<id>.probe.ts if regular. → {ok: true, checks, texts: {guard, firstdiff, probes}}.
+            "<checksPath> is not a valid checks document (<n> problem|problems):\n" + them
+            "\n"-joined; GUARD_PATH "decks/tools/guard.mjs", LOCATOR_PATH
+            "decks/tools/firstdiff.mjs" not regular → 4 UsageError "guard|locator file not found:
+            <path>". Probes: per card with files null, <parts>/<id>.probe.ts if regular. → {ok:
+            true, checks, texts: {guard, firstdiff, probes}}.
           steps:
             - reads: Checks
             - uses: contour
@@ -1483,19 +1517,19 @@ System:
               when: 'readPlanChecks(root, "c.json")'
               then: '2 DeckError beginning "cannot parse c.json: "; then "c.json is not a valid checks document (2 problems):\nphase: required\ncards: must be a non-empty list"'
         - name: Main
-          description: Dispatch, one document out, the log lines, the exit code; the entry src/cli.ts wires the process.
+          description: Routing, one document out, the log lines, the exit code; src/cli.ts wires the process.
           behavior: >
-            main(argv, deps, io) → Promise<ExitCode>. Parse Command; a failure → io.stdout(
-            renderDocument(the error document, pretty = argv holds "--pretty")),
+            main(argv, deps, io) → Promise<ExitCode>. Parse Command; a failure →
+            io.stdout(renderDocument(the error document, pretty = argv holds "--pretty")),
             io.stderr("morph: <message>\n"), return 4. Else root = path.resolve(deps.cwd,
-            command.root); result = Deck Check (deck check), Plan Command (plan) or await Run
-            Command (run, io.stderr its log) inside try/catch, a thrown value → classifyThrown. Then exactly one io.stdout(
-            renderDocument(result.document, command.pretty)), one io.stderr("morph <command
-            name>: exit <code>\n"), return result.code. The entry src/cli.ts (shebang `#!/usr/bin/env
-            node`) builds env from process.env without undefined values and calls main(
-            process.argv.slice(2), {env, now: Date.now, cwd: process.cwd(), transport: null},
-            {stdout, stderr: process streams' write}), then sets process.exitCode to the
-            result; it never calls process.exit.
+            command.root); result = Deck Check, Plan Command or await Run Command (io.stderr
+            its log) by command, in try/catch, a thrown value → classifyThrown. Then one
+            io.stdout(renderDocument(result.document, command.pretty)), one io.stderr("morph
+            <command name>: exit <code>\n"), return result.code. The entry src/cli.ts (shebang
+            `#!/usr/bin/env node`) calls main(process.argv.slice(2), {env: process.env without
+            undefined values, now: Date.now, cwd: process.cwd(), transport: null}, {stdout,
+            stderr: the process streams' write}), sets process.exitCode to the result, never
+            calls process.exit.
           steps:
             - calls: Parse Command
             - calls: Deck Check
@@ -1514,7 +1548,7 @@ System:
             - given: 'a run with a valid stub env and deck, --run-id r1, --root and cwd both a tmp root that is not a git repository'
               when: "main"
               then: '3; one document {error: {code: 3, kind: "RuntimeError", message beginning "git status failed (exit 128): "}}; stderr ["morph run: exit 3\n"]'
-            - given: 'the binary built by tsc -p tsconfig.build.json into a tmp out dir with {"type":"module"} and node_modules linked; a tmpRepo, a side root with answers a.md, b.md and the deck a, then b dependsOn a; `node <out>/cli.js run --root <repo> --deck <deck> --processor s --run-id e2e` with the stub env'
+            - given: 'the binary built by tsc -p tsconfig.build.json into a tmp out dir ({"type":"module"}, node_modules linked); a tmpRepo, a side root with a.md, b.md and the deck a, then b dependsOn a; `node <out>/cli.js run --root <repo> --deck <deck> --processor s --run-id e2e`, the stub env'
               when: "spawned"
               then: 'exit 0; stdout one line of JSON: runId "e2e", branch "morph/e2e", outcomes written, written, archive ok; the last three subjects "morph run e2e: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; stderr "morph run: a.v1 accepted stage 0 finish stop chars 30\nmorph run: b.v1 accepted stage 0 finish stop chars 30\nmorph run: exit 0\n" (a.md, b.md 30 chars each)'
             - given: 'the built binary, argv ["frobnicate"]'
@@ -1534,7 +1568,7 @@ System:
           description: stdout of deck check.
           schema: "{ deck: string, cards: number, generations: string[][], errors: number, warnings: number, hazards: Hazard[], weights: SliceWeight[] }"
         - name: Plan Document
-          description: stdout of plan; the Plan of the planner plus the deck file written.
+          description: stdout of plan; the Plan plus the deck file written.
           schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]>, out: string | null }"
         - name: Plan Checks
           description: What Read Plan Checks returns.

@@ -1,0 +1,86 @@
+{
+  "completed": [
+    {
+      "answer": {
+        "customId": "c.v1",
+        "text": null,
+        "finishReason": null,
+        "error": "batch item error: context length exceeded"
+      },
+      "usage": {
+        "customId": "c.v1",
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cost": null,
+        "provider": null,
+        "generationId": null
+      }
+    },
+    {
+      "answer": {
+        "customId": "a.v1",
+        "text": "```ts\nexport const a = 1;\n```",
+        "finishReason": "stop",
+        "error": null
+      },
+      "usage": {
+        "customId": "a.v1",
+        "inputTokens": 11030,
+        "outputTokens": 571,
+        "cost": 0.00269316,
+        "provider": "Novita",
+        "generationId": "gen-0000000003-TESTtestTESTtestTEST"
+      }
+    },
+    {
+      "answer": {
+        "customId": "b.v1",
+        "text": null,
+        "finishReason": "length",
+        "error": null
+      },
+      "usage": {
+        "customId": "b.v1",
+        "inputTokens": 15550,
+        "outputTokens": 12000,
+        "cost": 0.0086,
+        "provider": "Novita",
+        "generationId": "gen-0000000004-TESTtestTESTtestTEST"
+      }
+    }
+  ],
+  "live": [
+    {
+      "answer": {
+        "customId": "sign-of.v1",
+        "text": "```ts\nexport function signOf(x: number): number {\n  if (x < 0) return -1;\n  if (x > 0) return 1;\n  return 0;\n}\n```",
+        "finishReason": "stop",
+        "error": null
+      },
+      "usage": {
+        "customId": "sign-of.v1",
+        "inputTokens": 401,
+        "outputTokens": 46,
+        "cost": null,
+        "provider": "DeepInfra",
+        "generationId": "gen-batch-1791388269-f422e6d682c8c1ca3ddb"
+      }
+    },
+    {
+      "answer": {
+        "customId": "clamp-value.v1",
+        "text": "```ts\nexport function clampValue(x: number, lo: number, hi: number): number {\n  if (x < lo) {\n    return lo;\n  }\n  if (x > hi) {\n    return hi;\n  }\n  return x;\n}\n```",
+        "finishReason": "stop",
+        "error": null
+      },
+      "usage": {
+        "customId": "clamp-value.v1",
+        "inputTokens": 431,
+        "outputTokens": 57,
+        "cost": null,
+        "provider": "DeepInfra",
+        "generationId": "gen-batch-1791388269-d8fd2d40d4a58d1324e8"
+      }
+    }
+  ]
+}
