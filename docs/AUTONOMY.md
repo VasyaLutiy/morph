@@ -6,15 +6,17 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (07.10, after P10b2)
+## State at handoff (07.10, after the P10b2 smoke)
 
 P0–P10b2 merged; `main` = origin = VPS. **The switch is complete**: P10b2 was cut by `morph plan` and run
 by `morph run` (6/6, one run, no fix); `morph plan --checks decks/<phase>/checks.json` builds the
 acceptances, `build.py` is in `decks/tools/archive/`; the P10b2 smoke (V2 plan --checks → deck check → V2
-run on glm53) is green. The session stopped at the P10b2 smoke stop. On restart, the first autonomous act
-is the PREPARATION of P11 (processor batch) with checks.json + `morph plan --checks` (step 1, V2 flow).
-Smoke lessons for P11 prep: default code targets add a test file (give a smoke cap or code-only targets);
-new files need `"intent": "generate"` in the map; a new `src/` folder needs its layer in `decks/tools/guard.mjs`.
+run on glm53) is green. On restart, the first autonomous act is the PREPARATION of **P10c runner**
+(docs/PLAN.md, "Фазы по записи": issue #3 list C2–C7, label `P10c-runner`) with checks.json + `morph plan
+--checks` (step 1, V2 flow); then P11 (processor batch; smoke stop after it), P12, P13a, P13b, P14.
+Smoke lessons for the next preparations: default code targets add a test file (give a smoke cap or
+code-only targets); new files need `"intent": "generate"` in the map; a new `src/` folder needs its layer
+in `decks/tools/guard.mjs`.
 
 ## Machine
 
