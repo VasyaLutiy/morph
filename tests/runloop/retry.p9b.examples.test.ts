@@ -20,25 +20,21 @@ describe("buildRetry", () => {
   test("Build Retry example 4: the full instruction with the diff and the closing sentence", () => {
     const retry = buildRetry(card("c", "Write c."), 1, "red\n", "@@ -1,1 +1,1 @@\n-a\n+b\n");
     expect(retry.instruction).toBe(
-      "Write c.\n\nYour previous attempt failed its acceptance. Fix exactly what the acceptance reports and return the whole file again.\nAcceptance output:\nred\n\n\nYour previous attempt (rejected):\n@@ -1,1 +1,1 @@\n-a\n+b\n\n\nThe diff above is your own previous edit: correct it where it went wrong instead of rewriting the files from scratch."
+      "Write c.\n\n<acceptance_output>\nA previous attempt failed its acceptance check (`grep -q MARK src/c.ts`):\nred\n\n</acceptance_output>\nPlease fix the issues and produce the complete corrected file.\n\n<previous_attempt_diff>\nYour previous attempt changed the file like this (unified diff):\n@@ -1,1 +1,1 @@\n-a\n+b\n\n</previous_attempt_diff>\nThe diff above is YOUR OWN previous edit, not a proposed change: correct it where it went wrong rather than rewriting the file from scratch."
     );
   });
 
-  test("Build Retry: previousDiff null has no diff block and no closing sentence", () => {
-    const retry = buildRetry(card("c", "Write c."), 1, "red\n", null);
+  test("Build Retry example 5: a discarded attempt is framed without the command and without a diff block", () => {
+    const retry = buildRetry(card("c", "Write c."), 1, "answer truncated", null);
     expect(retry.instruction).toBe(
-      "Write c.\n\nYour previous attempt failed its acceptance. Fix exactly what the acceptance reports and return the whole file again.\nAcceptance output:\nred\n"
+      "Write c.\n\n<acceptance_output>\nA previous attempt was discarded before acceptance could run:\nanswer truncated\n</acceptance_output>\nProduce the complete file again, from the context given above."
     );
-    expect(retry.instruction.includes("Your previous attempt (rejected)")).toBe(false);
-    expect(retry.instruction.includes("The diff above is your own previous edit")).toBe(false);
   });
 
-  test("Build Retry: an empty string diff is not null and gets the block", () => {
+  test("Build Retry example 6: an empty string diff keeps the ran framing without a diff block", () => {
     const retry = buildRetry(card("c", "Write c."), 1, "red\n", "");
     expect(retry.instruction).toBe(
-      "Write c.\n\nYour previous attempt failed its acceptance. Fix exactly what the acceptance reports and return the whole file again.\nAcceptance output:\nred\n\n\nYour previous attempt (rejected):\n" +
-        "" +
-        "\n\nThe diff above is your own previous edit: correct it where it went wrong instead of rewriting the files from scratch."
+      "Write c.\n\n<acceptance_output>\nA previous attempt failed its acceptance check (`grep -q MARK src/c.ts`):\nred\n\n</acceptance_output>\nPlease fix the issues and produce the complete corrected file."
     );
   });
 

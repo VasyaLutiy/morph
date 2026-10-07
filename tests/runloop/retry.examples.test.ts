@@ -25,8 +25,8 @@ describe("buildRetry", () => {
     const retry = buildRetry(card, 1, "exit 1\n", "@@ -1,1 +1,1 @@\n-old\n+new");
     expect(retry.customId).toBe("c.r1");
     expect(retry.dependsOn).toStrictEqual([]);
-    expect(retry.instruction).toContain("Acceptance output:\nexit 1");
-    expect(retry.instruction).toContain("Your previous attempt (rejected):\n@@ -1,1 +1,1 @@");
+    expect(retry.instruction).toContain("A previous attempt failed its acceptance check (`grep -q MARK src/c.ts`):\nexit 1\n");
+    expect(retry.instruction).toContain("Your previous attempt changed the file like this (unified diff):\n@@ -1,1 +1,1 @@");
     expect(retry.targets).toStrictEqual(card.targets);
     expect(retry.contextSlice).toStrictEqual(card.contextSlice);
     expect(retry.acceptance).toBe(card.acceptance);
@@ -38,8 +38,8 @@ describe("buildRetry", () => {
     const card = fullCard({ customId: "c.r1" });
     const retry = buildRetry(card, 2, "still red", null);
     expect(retry.customId).toBe("c.r2");
-    expect(retry.instruction.endsWith("Acceptance output:\nstill red")).toBe(true);
-    expect(retry.instruction.includes("Your previous attempt (rejected):")).toBe(false);
+    expect(retry.instruction.endsWith("A previous attempt was discarded before acceptance could run:\nstill red\n</acceptance_output>\nProduce the complete file again, from the context given above.")).toBe(true);
+    expect(retry.instruction.includes("<previous_attempt_diff>")).toBe(false);
     expect(retry.dependsOn).toStrictEqual([]);
   });
 
@@ -60,10 +60,7 @@ describe("buildRetry", () => {
   test("Build Retry: instruction addendum exact prefix", () => {
     const card = fullCard({ customId: "c" });
     const retry = buildRetry(card, 1, "boom", null);
-    expect(retry.instruction).toContain(
-      "Your previous attempt failed its acceptance. Fix exactly what the acceptance reports and return the whole file again."
-    );
-    expect(retry.instruction).toContain("Acceptance output:\nboom");
+    expect(retry.instruction).toContain("<acceptance_output>\nA previous attempt was discarded before acceptance could run:\nboom\n</acceptance_output>");
   });
 
   test("Build Retry: other card fields are copied", () => {
