@@ -1,16 +1,19 @@
-// src/runloop/generation.ts — Process Generation (TASK_P5 §2.2, patched by TASK_P9b §2.2).
+// src/runloop/generation.ts — Process Generation (TASK_P5 §2.2, patched by TASK_P9b §2.2 and TASK_P10c §2.2).
 //
 // compile → send → parse → verify per card. A compile fault or a stale input
 // digest discards the answer before any acceptance runs; an accepted card
 // fires the injected commit hook. All compiled-ok requests go out in ONE
 // sendGeneration call so the config's concurrency pools across the whole
-// generation.
+// generation. The acceptance runs under its own timeout (deps.acceptanceTimeoutMs
+// or Run Acceptance's default), never the processor's HTTP timeout; a rejected
+// card's retry context comes from the variant that got furthest.
 
 import { compileCard } from "../compiler/compile.js";
 import { parseAnswer } from "../compiler/parse.js";
 import { captureInputs, compareCaptures } from "../compiler/capture.js";
 import { sendGeneration } from "../processor/send.js";
 import { verifyCard } from "../acceptance/verify.js";
+import { DEFAULT_TIMEOUT_MS } from "../acceptance/run.js";
 import type { Card } from "../cards/types.js";
 import type { InputDigest, Request } from "../compiler/types.js";
 import type { VariantAnswer } from "../acceptance/types.js";
@@ -40,6 +43,14 @@ function failedOutcome(
     commit: null,
     diffstat: null
   };
+}
+
+export function stageCount(log: string): number {
+  let count = 0;
+  for (const line of log.split("\n")) {
+    if (line.startsWith("== ")) count += 1;
+  }
+  return count;
 }
 
 export async function processGeneration(
@@ -131,7 +142,7 @@ export async function processGeneration(
       command: card.acceptance ?? "",
       variants,
       env: deps.env,
-      timeoutMs: deps.config.timeoutMs
+      timeoutMs: deps.acceptanceTimeoutMs ?? DEFAULT_TIMEOUT_MS
     });
 
     if (outcome.accepted !== null) {
@@ -167,20 +178,31 @@ export async function processGeneration(
         diffstat: null
       });
 
-      // the retry context: the LAST variant whose acceptance ran (its diff
-      // is not null) gives both the output and the diff of the same attempt,
-      // the empty diff kept as "" (the acceptance ran); when none ran, the
+      // the retry context: of the variants whose acceptance ran (diff is
+      // not null), the one that got FURTHEST — the greatest stageCount of
+      // its log, a tie going to the LATER variant. The log and the diff of
+      // the retry always come from the same attempt; when none ran, the
       // last result's log and no diff
-      const ran = [...outcome.results].reverse().find((r) => r.diff !== null);
-      if (ran === undefined) {
+      let furthest: number = -1;
+      let furthestStages = -1;
+      for (let r = 0; r < outcome.results.length; r++) {
+        const result = outcome.results[r];
+        if (result.diff === null) continue;
+        const stages = stageCount(result.log);
+        if (stages >= furthestStages) {
+          furthestStages = stages;
+          furthest = r;
+        }
+      }
+      if (furthest === -1) {
         retryContexts[card.customId] = {
           acceptanceOutput: last === undefined ? "" : last.log,
           previousDiff: null
         };
       } else {
         retryContexts[card.customId] = {
-          acceptanceOutput: ran.log,
-          previousDiff: ran.diff
+          acceptanceOutput: outcome.results[furthest].log,
+          previousDiff: outcome.results[furthest].diff
         };
       }
     }

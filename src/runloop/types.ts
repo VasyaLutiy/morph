@@ -30,7 +30,7 @@ export interface RunReport {
 export interface RunBudget { maxCards: number; maxRetryBatches: number; deadline: number }
 export interface RunDeps {
   config: ProcessorConfig; transport: Transport; commit: CommitHook;
-  now: () => number; env: Record<string, string>;
+  now: () => number; env: Record<string, string>; acceptanceTimeoutMs?: number;
 }
 export interface RunInput { root: string; runId: string; branch: string; deck: Deck; budget: RunBudget }
 export interface RetryContext { acceptanceOutput: string; previousDiff: string | null }
