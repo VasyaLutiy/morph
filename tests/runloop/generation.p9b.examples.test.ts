@@ -4,6 +4,7 @@ import { fakeFetch, tmpRoot, type TmpRoot } from "../helpers.js";
 import type { Card } from "../../src/cards/types.js";
 import type { RunDeps } from "../../src/runloop/types.js";
 import { processGeneration } from "../../src/runloop/generation.js";
+import { TRUNCATED_RESPONSE_MESSAGE } from "../../src/acceptance/verify.js";
 
 function harness(): { t: TmpRoot; deps: RunDeps } {
   const t = tmpRoot("morph-p9b-");
@@ -33,7 +34,7 @@ test("Process Generation example 4: the context of the variant that ran, not the
     const g = await processGeneration([card("a", "out/a.ts", GREP, 2)], deps, t.root);
     expect(g.outcomes).toStrictEqual([{
       customId: "a", status: "failed", reason: "acceptance failed", attempts: 1,
-      winningVariant: null, acceptanceLog: "answer truncated",
+      winningVariant: null, acceptanceLog: TRUNCATED_RESPONSE_MESSAGE,
       earlierFailures: ['red: export const x = "ONE";\n'],
       commit: null, diffstat: null
     }]);
@@ -87,7 +88,7 @@ test("Process Generation example 6: contexts for a truncated answer and a compil
     const g = await processGeneration(cards, deps, t.root);
     expect(g.outcomes.map((o) => o.status)).toStrictEqual(["written", "failed", "failed"]);
     expect(g.retryContexts).toStrictEqual({
-      b: { acceptanceOutput: "answer truncated", previousDiff: null },
+      b: { acceptanceOutput: TRUNCATED_RESPONSE_MESSAGE, previousDiff: null },
       c: { acceptanceOutput: "contextSlice 'docs/missing.md' does not exist", previousDiff: null }
     });
   } finally {

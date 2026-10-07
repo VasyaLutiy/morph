@@ -6,6 +6,7 @@
 import { expect, test } from "vitest";
 import { fakeFetch, tmpRoot } from "../helpers.js";
 import { runDeck } from "../../src/runloop/deck.js";
+import { TRUNCATED_RESPONSE_MESSAGE } from "../../src/acceptance/verify.js";
 import type { Card } from "../../src/cards/types.js";
 import type { ProcessorConfig, Transport } from "../../src/processor/types.js";
 import type { RunDeps, RunInput } from "../../src/runloop/types.js";
@@ -218,14 +219,16 @@ test("Run Deck §2.2: the retry after a truncated answer has no diff block", asy
     expect(result.outcomes.length).toBe(1);
     expect(result.outcomes[0]?.status).toBe("failed");
     expect(result.outcomes[0]?.attempts).toBe(2);
-    expect(result.outcomes[0]?.acceptanceLog).toBe("answer truncated");
-    expect(result.outcomes[0]?.earlierFailures).toStrictEqual(["answer truncated"]);
+    expect(result.outcomes[0]?.acceptanceLog).toBe(TRUNCATED_RESPONSE_MESSAGE);
+    expect(result.outcomes[0]?.earlierFailures).toStrictEqual([TRUNCATED_RESPONSE_MESSAGE]);
 
     expect(f.calls.length).toBe(2);
     const second = lastMessage(f, 1);
     expect(
       second.includes(
-        "<acceptance_output>\nA previous attempt was discarded before acceptance could run:\nanswer truncated\n</acceptance_output>\nProduce the complete file again, from the context given above."
+        "<acceptance_output>\nA previous attempt was discarded before acceptance could run:\n" +
+          TRUNCATED_RESPONSE_MESSAGE +
+          "\n</acceptance_output>\nProduce the complete file again, from the context given above."
       )
     ).toBe(true);
     expect(second.includes("<previous_attempt_diff>")).toBe(false);

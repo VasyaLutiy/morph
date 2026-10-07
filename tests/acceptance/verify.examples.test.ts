@@ -10,7 +10,7 @@
 // the timed-out variant.
 
 import { expect, test } from "vitest";
-import { verifyCard } from "../../src/acceptance/verify.js";
+import { TRUNCATED_RESPONSE_MESSAGE, verifyCard } from "../../src/acceptance/verify.js";
 import type { VerifyInput, VerifyOutcome } from "../../src/acceptance/types.js";
 import type { ParsedAnswer } from "../../src/compiler/types.js";
 import { tmpRoot, type TmpRoot } from "../helpers.js";
@@ -82,7 +82,7 @@ test("Verify Card example 2: truncated, then a rejected two-file variant, leaves
     expect(out.results.length).toBe(2);
     expect(out.results[0].variant).toBe("c.v1");
     expect(out.results[0].exit).toBeNull();
-    expect(out.results[0].log).toBe("answer truncated");
+    expect(out.results[0].log).toBe(TRUNCATED_RESPONSE_MESSAGE);
     expect(out.results[0].diff).toBeNull();
     expect(out.results[1].variant).toBe("c.v2");
     expect(out.results[1].exit).toBe(1);
@@ -124,6 +124,14 @@ test("Verify Card example 3: a green first variant returns before the second run
   }
 });
 
+test("Verify Card example 4: the truncated stand-in message in full, 188 chars, no 'answer truncated'", () => {
+  expect(TRUNCATED_RESPONSE_MESSAGE).toBe(
+    "The previous answer was cut off mid-file: it opened a ``` code fence and never closed it, so the file body could not be extracted. Answer again with the COMPLETE file, and close the fence.",
+  );
+  expect(TRUNCATED_RESPONSE_MESSAGE.length).toBe(188);
+  expect(TRUNCATED_RESPONSE_MESSAGE.includes("answer truncated")).toBe(false);
+});
+
 test("corrupt and truncated stand-ins write nothing and are never run", async () => {
   const r = freshRoot();
   try {
@@ -142,7 +150,7 @@ test("corrupt and truncated stand-ins write nothing and are never run", async ()
     expect(JSON.stringify(out.accepted)).toBe(JSON.stringify(null));
     expect(out.results.length).toBe(2);
     expect(out.results[0].log).toBe("answer corrupt: missing section for src/a.ts");
-    expect(out.results[1].log).toBe("answer truncated");
+    expect(out.results[1].log).toBe(TRUNCATED_RESPONSE_MESSAGE);
     expect(r.read("src/a.ts")).toBe("old\n");
   } finally {
     r.rm();
