@@ -433,3 +433,22 @@ the session swaps `--processor` to `ds` and applies maxTokens × 3 to the deck a
 npm run build && rm -rf /tmp/v2bin-p11b && mkdir -p /tmp/v2bin-p11b && cp -r dist /tmp/v2bin-p11b/ && ln -s $PWD/node_modules /tmp/v2bin-p11b/node_modules
 node /tmp/v2bin-p11b/dist/cli.js run --root . --deck decks/p11b/deck.json --processor glm53 --deadline 2400 > /tmp/p11b-run.json
 ```
+
+### Run (07.10, VPS, autonomous) — cut by V2, run by the V2 binary on processor ds
+
+Deck `decks/p11b/deck.json` (V2 cut of processor, runloop, git, cli, filtered to 14 cards by `decks/p11b/filter.py`,
+then **every maxTokens ×3** by `decks/tools/scale_tokens.py` — the operator's processor switch of 07.10), run by the V2
+binary copy in `/tmp/v2bin-p11b` with **`--processor ds`** (`deepseek/deepseek-v4.1-flash`, provider alibaba), default
+retry cap, `--deadline 2400`: run 20261007-174926, **14 / 14 written in one run, no fix**, 13 at the first attempt
+(retry won `run-deck-judge`, r1.v1; v1 red at the own-test stage), $0.1379, 21.8 min (1308 s), 22 requests, 410 508 in /
+156 909 out tokens, every finish `stop`. On the run branch: `git status` clean; tsc, eslint, `npm run build` clean;
+vitest **610 / 610** in 71 files. Read once against §2.2: request copies gzipped to `requests/` with its own `.gitignore`
+`*` (never committed), answers + `answers/lines.txt` committed (#4 operator decision); batch cost read from the batch
+object's `usage.cost` and shared over the replies by tokens when no item carries a cost (#4.1); `batchId` the last key of
+a request row the batch names, the batch record saved through `transport.saveBatch` to `.morph/batches/<id>.json`
+(ignored by `.morph/*`, local) (#4.2); no provider order on the batch route (#4.3); batch-route `TIMEOUT_MS` default
+3 600 000 (#4.4); a give-up sends one DELETE and saves the record with status `deleted` on a 2xx (finding 7a); the deadline
+checked before each retry batch, the stopped cards `budget-exceeded` "deadline" (finding 7b). 0 defects. Risk kept: the
+real transport's per-call abort is `timeoutMs`, so on the batch route one HTTP call may hang up to 1 h. This run's own
+archive is in the P10c2 layout (2.1 MB, request copies included): the running binary predates the phase. The merge
+closes issue #4; `submit` / `collect` are P11b2.
