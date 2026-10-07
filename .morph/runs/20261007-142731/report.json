@@ -1,0 +1,307 @@
+{
+  "runId": "20261007-142731",
+  "completedAt": 1791385013756,
+  "branch": "morph/20261007-142731",
+  "processor": "glm53",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "archive-run",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "archive-run.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "9b17f4d3ffaa8b96a82d26445801c650723c04a5",
+      "diffstat": {
+        "files": 2,
+        "insertions": 28,
+        "deletions": 2
+      }
+    },
+    {
+      "customId": "process-generation",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "process-generation.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n\n/home/morph/MorphV2/src/runloop/generation.ts\n  27:3  error  'VariantRecord' is defined but never used  @typescript-eslint/no-unused-vars\n\n✖ 1 problem (1 error, 0 warnings)\n\n== guard\n== probe\n== eslint failed (see above); every step between it and here passed\n",
+        "== tsc\n== eslint\n\n/home/morph/MorphV2/src/runloop/generation.ts\n  25:3  error  'VariantRecord' is defined but never used  @typescript-eslint/no-unused-vars\n\n✖ 1 problem (1 error, 0 warnings)\n\n== guard\n== probe\n== eslint failed (see above); every step between it and here passed\n"
+      ],
+      "commit": "fb52fe2d028056ef1f3f86b978c8e8cadca4f2de",
+      "diffstat": {
+        "files": 2,
+        "insertions": 79,
+        "deletions": 4
+      }
+    },
+    {
+      "customId": "archive-run-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "archive-run-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/git/archive.p10c2.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "4170ec5b205c2b73359b213b0212d9491f41878e",
+      "diffstat": {
+        "files": 1,
+        "insertions": 156,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "process-generation-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "process-generation-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/runloop/generation.p10c2.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "The previous answer was cut off mid-file: it opened a ``` code fence and never closed it, so the file body could not be extracted. Answer again with the COMPLETE file, and close the fence."
+      ],
+      "commit": "775cff867feb8b4a910a7a4131174f9f6e68bb61",
+      "diffstat": {
+        "files": 1,
+        "insertions": 208,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "run-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "80de9f8cb9cca192fc0cf2cc78ed0df224474c4e",
+      "diffstat": {
+        "files": 1,
+        "insertions": 37,
+        "deletions": 5
+      }
+    },
+    {
+      "customId": "main",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "main.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "d48640eb6733a54f69d96f4cdc6884d1b7d509e0",
+      "diffstat": {
+        "files": 1,
+        "insertions": 1,
+        "deletions": 1
+      }
+    },
+    {
+      "customId": "run-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/runCommand.p10c2.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "f95a345e630f6c5e0653c2d8674e86eeabeadacb",
+      "diffstat": {
+        "files": 1,
+        "insertions": 132,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "main-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "main-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/main.examples.test.ts\n== names tests/cli/main.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "832b4a2119e564187bca9f9592effe157116c576",
+      "diffstat": {
+        "files": 1,
+        "insertions": 5,
+        "deletions": 1
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 243269,
+    "outputTokens": 80870,
+    "cost": 0.18396905999999996,
+    "requests": 15
+  },
+  "requests": [
+    {
+      "customId": "archive-run.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791383251-iZaULxTwke4TvWSqNNNe",
+      "inputTokens": 13121,
+      "outputTokens": 1155,
+      "cost": 0.00254838,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "archive-run.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791383251-y4rse0ILFX8iBL2D5BGV",
+      "inputTokens": 13121,
+      "outputTokens": 1071,
+      "cost": 0.00692454,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "process-generation.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791383251-q0IERc9Kyxgwmdo4h7TY",
+      "inputTokens": 17014,
+      "outputTokens": 6297,
+      "cost": 0.01545792,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "process-generation.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791383331-XLkWeGo6iJoitlgVYqm5",
+      "inputTokens": 17014,
+      "outputTokens": 5874,
+      "cost": 0.00909924,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "process-generation.r1.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791383559-qNQh4sTpuJL1kSpqFIln",
+      "inputTokens": 25992,
+      "outputTokens": 3617,
+      "cost": 0.01569108,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "process-generation.r1.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791383559-jg5tEspQvD2IRS1x87it",
+      "inputTokens": 25992,
+      "outputTokens": 3765,
+      "cost": 0.010151784,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "archive-run-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791383732-CISqdoM4ksEhpWY2xJED",
+      "inputTokens": 14177,
+      "outputTokens": 7830,
+      "cost": 0.01628994,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "process-generation-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791383732-PgJ9Rv2tk86AcOZIjXFH",
+      "inputTokens": 16761,
+      "outputTokens": 20000,
+      "cost": 0.03343962,
+      "finishReason": "length",
+      "error": null
+    },
+    {
+      "customId": "run-command.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791383732-NXJrbCQvJJLDibV6eqnk",
+      "inputTokens": 13617,
+      "outputTokens": 1374,
+      "cost": 0.00753282,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-command.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791383830-Djuu1wp84rbF47GpdAE7",
+      "inputTokens": 13617,
+      "outputTokens": 1408,
+      "cost": 0.002937444,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "process-generation-judge.r1.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791384271-yXBUA409sLGJMmfvFSvn",
+      "inputTokens": 16835,
+      "outputTokens": 18056,
+      "cost": 0.03090462,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "main.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791384715-sNLuJa5OezpSSRlUNtIN",
+      "inputTokens": 12636,
+      "outputTokens": 319,
+      "cost": 0.0057282,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "main.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791384715-3Tiy1EM0vGftDp2rdjKF",
+      "inputTokens": 12636,
+      "outputTokens": 319,
+      "cost": 0.001438152,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-command-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791384715-7RGn2MVBagQ8VcFhNsA6",
+      "inputTokens": 14666,
+      "outputTokens": 7843,
+      "cost": 0.01651248,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "main-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791384916-p1aRcnvnKvb4700kVhSe",
+      "inputTokens": 16070,
+      "outputTokens": 1942,
+      "cost": 0.00931284,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}
