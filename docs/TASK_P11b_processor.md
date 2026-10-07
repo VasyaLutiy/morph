@@ -387,4 +387,49 @@ phase closes #4** (items 1–5 and finding 7); P11b2's submit/collect gets its o
 
 ### Gate (preparation)
 
-(filled below by the preparing orchestrator)
+07.10, on the VPS, by the preparing orchestrator (Opus 5.5); no paid run, no generation on the live service (free GETs
+of two batch objects and the cancel-route probes of §1, one of which DELETEd the completed slug-probe batch's record).
+Data commits ba2452b (spec, record, map, fixtures, checks, probes, deck, `.gitignore`) and c6b7df8 (an archive-run probe
+row closing the one mutation survivor, deck re-cut). Component sizes after the patch: processor **29 969**, runloop
+**29 899**, git **17 202**, cli **29 998** (≤ 30 000 each).
+
+The deck **cut by V2**: `node dist/cli.js plan --component processor --component runloop --component git --component
+cli --judge --checks decks/p11b/checks.json --out decks/p11b/deck.json` exit 0, 44 cards, filtered by
+`decks/p11b/filter.py` to 14; generations `[archive-run, read-batch, read-registry, run-deck] [archive-run-judge,
+read-batch-judge, read-registry-judge, run-deck-judge, send-batch] [process-generation, run-command, send-batch-judge]
+[process-generation-judge, run-command-judge]`; `node dist/cli.js deck check` **0 errors**, 6 warnings, all
+`unordered-read` of the two types.ts files a later generation extends additively (intended: the readers use none of the
+new members). Cross-check: the old `mrph plan --spec … --component processor runloop git cli --judge` (dry) gives the
+same 44 ids and the same 5 generations; targets, slices, dependsOn, intent, variants and reasoning (2 500) equal on all
+44; max_tokens equal on the 14 phase cards (3 judges outside the phase differ: V2's P10a judge formula); instructions
+differ on all 44 (the P10a design); acceptances differ on the 14 phase cards (V2's builder chain from checks.json — run
+below) and on 6 cards outside the phase with no map acceptance (as in P11), the other 24 equal.
+
+Scratch worktree from ba2452b (references of the 10 code files and the 7 test files, deleted afterwards), cards run in
+deck order with the deck's own acceptances, each accepted card committed before the next: **14 of 14 chains green,
+36.8–42.8 s each (557.1 s in all; limit 250 s per chain)**; archive-run re-run on c6b7df8 green (57.1 s under load). The
+final tree `tsc`, `eslint src tests`, build clean, `vitest run` **610 / 610** in 71 files (599 − 0 + 11; ripple as
+measured: the 3 fullExclude tests, red only between their code card and judge). Typed one-line throwing stubs (`Error:
+stub <fn> <args>`; the three types.ts as specified): every code card red at the probe — read-registry 2/2, read-batch
+2/2, send-batch 16/17 (the type row passes on typed stubs), process-generation 2/2, run-deck 2/2, archive-run 4/4,
+run-command 3/3; **all new and changed record examples red** (RR 5, RB 6, SB 1–11, PG 14, RD 8, AR 4, 6, 7, RC 8, 9),
+each with a readable line; chains 8.0–10.1 s. Judges with the reference code: the four new files absent → red at the
+guard ("… missing", 5.8–7.3 s); the three patched files at HEAD → red at the guard (test counts 2/7/2 below min, every
+new literal named, 7.9–8.4 s). Mutation check: **35 single-rule mutations** of the references (read-registry 2,
+read-batch 2, send-batch 16, process-generation 2, run-deck 3, archive-run 7, run-command 3), every run under a 120 s
+timeout: **35 killed** — 34 by the card's probe, **1 killed by timeout** (run-deck: the empty-batch `break` removed, the
+retry loop never ends; in a real chain the 300 s acceptance timeout kills it). The first pass (without timeouts) left
+one survivor (saveBatchRecord's id check as `includes("/")`), closed by the c6b7df8 row (`"a b"` → null).
+
+Max slice + targets: send-batch-judge 59 415 bytes (gate 200 KB). **Forecast** on glm53 ≈ $0.30 (P10c2: 15 requests,
+243 k in / 81 k out, $0.1840; here 21 first requests of 41–59 KB, ≈ 340 k in / 85 k out, 2–4 retries), ≤ $1. On `ds`
+(deepseek/deepseek-v4.1-flash, catalogue 07.10: $0.30 / M in, $1.20 / M out) with every maxTokens × 3: ≈ $0.10 in +
+$0.10–0.30 out (the × 3 raises the cap, not the use, unless an answer ran to it) ≈ **$0.20–0.40**, ≤ $1. **Gate holds.**
+
+**Run command** (from the repo root, the binary copied first; today's binary = e10465c's code + data; default retry cap;
+the session swaps `--processor` to `ds` and applies maxTokens × 3 to the deck as the operator ordered):
+
+```
+npm run build && rm -rf /tmp/v2bin-p11b && mkdir -p /tmp/v2bin-p11b && cp -r dist /tmp/v2bin-p11b/ && ln -s $PWD/node_modules /tmp/v2bin-p11b/node_modules
+node /tmp/v2bin-p11b/dist/cli.js run --root . --deck decks/p11b/deck.json --processor glm53 --deadline 2400 > /tmp/p11b-run.json
+```
