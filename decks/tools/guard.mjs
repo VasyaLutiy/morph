@@ -41,7 +41,10 @@ const GIT_SPAWNER = "src/git/run.ts";
 const CLI_ENTRY = "src/cli.ts";
 // P8: language is pure data and pure functions; of the Node modules only node:path (posix) is allowed
 // (docs/TASK_P8_language.md §4)
-const NODE_ONLY = { language: new Set(["node:path"]) };
+// P9: contour reads text it is given: no Node module at all, and the package yaml only in Parse Document
+// (src/contour/load.ts) (docs/TASK_P9_contour.md §4)
+const NODE_ONLY = { language: new Set(["node:path"]), contour: new Set() };
+const YAML_FILE = "src/contour/load.ts";
 
 function parse(file) {
   return ts.createSourceFile(file, fs.readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true,
@@ -109,14 +112,18 @@ function checkSrc(files) {
     for (const [node, spec] of moduleSpecifiers(sf)) {
       if (spec.startsWith("node:")) {
         if (layer in NODE_ONLY && !NODE_ONLY[layer].has(spec))
-          report(sf, node, `${spec} in the pure layer ${layer} (only ${[...NODE_ONLY[layer]].join(", ")})`);
+          report(sf, node, `${spec} in the pure layer ${layer} (only ${[...NODE_ONLY[layer]].join(", ") || "none"})`);
         if (spec === "node:child_process" && !SHELL.has(layer))
           report(sf, node, `node:child_process outside src/acceptance and src/git`);
         if (spec === "node:child_process" && layer === "git" && rel !== GIT_SPAWNER)
           report(sf, node, `node:child_process in ${rel} (only ${GIT_SPAWNER} spawns git)`);
         continue;
       }
-      if (spec === "yaml") { if (!YAML.has(layer)) report(sf, node, `"yaml" outside src/contour`); continue; }
+      if (spec === "yaml") {
+        if (!YAML.has(layer)) report(sf, node, `"yaml" outside src/contour`);
+        else if (rel !== YAML_FILE) report(sf, node, `"yaml" in ${rel} (only ${YAML_FILE} parses text)`);
+        continue;
+      }
       if (!spec.startsWith("./") && !spec.startsWith("../")) { report(sf, node, `package import "${spec}" (node:* only)`); continue; }
       const target = path.posix.normalize(path.posix.join(path.posix.dirname(rel), spec));
       const tl = layerOf(target);

@@ -1,0 +1,21 @@
+[
+  "(root): unknown key 'Extra' (known: version, System, Actor, Requirement, Guardrail)",
+  "version: must be 1",
+  "System.description: required",
+  "System.groups[0]: unknown key 'owner' (known: name, description, language, requirements, guardrails, functions, dataObjects, interfaces)",
+  "System.groups[0].functions[0].behavior: required",
+  "System.groups[0].functions[0].examples: must hold at least one example",
+  "System.groups[0].functions[1].name: duplicate Function name 'F'",
+  "System.groups[0].functions[1].requirements[1]: must be a non-empty string",
+  "System.groups[0].functions[1].steps[0]: a step is an object with exactly one key",
+  "System.groups[0].functions[1].steps[1]: unknown step verb 'invokes' (known: calls, reads, modifies, produces, uses)",
+  "System.groups[0].functions[1].steps[2].uses: must be a non-empty string",
+  "System.groups[0].functions[1].examples[0].then: required",
+  "System.groups[0].functions[1].examples[1]: must be an object",
+  "System.groups[0].dataObjects[0].schema: must be a non-empty string",
+  "System.groups[0].interfaces[0].exposes: must hold at least one name",
+  "System.groups[1].name: duplicate Component name 'a'",
+  "System.groups[2]: must be an object",
+  "Actor: must be a list",
+  "Requirement[0].description: required"
+]

@@ -1331,6 +1331,238 @@ System:
           description: A Function's card id and default targets, or the name without words.
           schema: "{ ok: true, slug: string, targets: { code: string, test: string, judge: string } } | { ok: false, error: string }"
 
+    # ---------------------------------------------------------------- P9
+    - name: contour
+      description: >
+        Reading and validating the Contour record and the map: src/contour/*.ts, pure
+        functions over text and plain objects. A record (contour.yaml) and a map
+        (morph-map.json) are parsed from text the caller has read, checked against the schema
+        this repository's own record and map use (the old Morph's `plan --spec` accepts the same
+        documents), and returned as typed values the planner (P10) cuts into cards: Functions
+        with behaviour, steps, preconditions and counted examples, Data Objects with their
+        schema text, Components selected by `--component`, the calls graph and the Data
+        Objects each Function touches. Every problem of a document is named at once, one
+        "<path>: <message>" line each, in a pinned order. Unknown keys are rejected at every
+        level. No file is read here (the caller passes the text), no clock, no environment;
+        the package yaml is imported in Parse Document alone. Not wired into the cli: the
+        planner is the first consumer.
+      language: typescript
+      requirements: [Deterministic Core]
+      functions:
+        - name: Validate Record
+          description: Turns a parsed record document into a typed Contour Record, or every problem it has.
+          behavior: >
+            validateRecord(doc: unknown). A doc that is not a plain object (null, an array, a
+            scalar) → {ok: false, problems: ["(root): a record must be an object"]}. Otherwise
+            every object is checked against its key table (root: version, System, Actor,
+            Requirement, Guardrail; System: name, description, requirements, guardrails,
+            groups; Component: name, description, language, requirements, guardrails,
+            functions, dataObjects, interfaces; Function: name, description, behavior,
+            requirements, guardrails, preconditions, steps, examples; example: given, when,
+            then, ref; Data Object: name, description, schema; Interface: name, description,
+            exposes; Actor: name, description, uses; Requirement and Guardrail: name,
+            description). Per object, in this order: each required key that is missing
+            ("<path>.<key>: required"), each key not in the table in the object's own order
+            ("<path>: unknown key '<k>' (known: <the table joined by ', '>)"), then the
+            present keys' values in the table's order, depth first. Required: the root's
+            System; every name and description; System.groups; a Function's behavior and
+            examples; an example's given, when, then; an Interface's exposes. version, when
+            present, must be 1 ("version: must be 1"); absent means 1. Texts must be non-empty
+            strings and are stored trimmed; lists must be lists; list items that are elements
+            must be objects; examples and exposes must not be empty; a step is an object with
+            exactly one key, a verb of calls, reads, modifies, produces, uses, whose value is a
+            non-empty string. A schema is a string, or a mapping of non-empty strings stored as
+            JSON.stringify(mapping, null, 2). A Component name repeated in the record, a
+            Function name repeated in its Component and a Data Object name repeated anywhere in
+            the record is a problem at the repeat's name. Absent lists become [], absent
+            language, ref and schema become null. Any problem → {ok: false, problems} (all of
+            them, document order); none → {ok: true, record}. The paths read
+            System.groups[0].functions[3].examples[0].then; the root is "(root)".
+          steps:
+            - reads: Contour Record
+            - produces: Record Result
+          examples:
+            - given: 'the parsed mini record: 2 Components (tally, store), 4 Functions, 2 Data Objects, 1 Interface, 1 Actor, 1 Requirement, 1 Guardrail'
+              ref: "tests/fixtures/contour/mini.json (the document), tests/fixtures/contour/mini.typed.json (the whole typed record)"
+              when: "validated"
+              then: '{ok: true, record} with record equal to mini.typed.json: texts trimmed, absent lists [], absent ref/language/schema null, steps as {verb, target}, the mapping schema of Count Record as JSON text'
+            - given: 'the bad record: an unknown root key, version 2, a missing System description, a duplicate Function and Component, bad steps, an empty examples list, an example without then, a non-object group, a non-list Actor'
+              ref: "tests/fixtures/contour/badRecord.json (the document), tests/fixtures/contour/badRecord.problems.json (the 19 problems in order)"
+              when: "validated"
+              then: "{ok: false, problems} equal to the 19 lines of badRecord.problems.json, first \"(root): unknown key 'Extra' (known: version, System, Actor, Requirement, Guardrail)\", last \"Requirement[0].description: required\""
+            - given: 'the documents [], null and "x"'
+              when: "validated"
+              then: '{ok: false, problems: ["(root): a record must be an object"]} for each'
+            - given: 'the document {}'
+              when: "validated"
+              then: '{ok: false, problems: ["System: required"]}'
+            - given: 'the document {System: {name: " s ", description: "d", groups: []}}'
+              when: "validated"
+              then: '{ok: true, record: {version: 1, system: {name: "s", description: "d", requirements: [], guardrails: [], groups: []}, actors: [], requirements: [], guardrails: []}} — no version means 1, texts trimmed, no Component is allowed'
+            - given: 'the document {version: "1", System: {name: "s", description: "d", groups: [{name: "c", description: "C.", functions: [{name: "f", description: "F.", behavior: "B."}]}]}}'
+              when: "validated"
+              then: '{ok: false, problems: ["version: must be 1", "System.groups[0].functions[0].examples: required"]}'
+        - name: Validate Map
+          description: Turns a parsed map document into a typed Contour Map, or every problem it has.
+          behavior: >
+            validateMap(doc: unknown). Not a plain object → {ok: false, problems: ["(root): a
+            map must be an object"]}. Root keys: version, package, language, docs, groups,
+            cards, extra_cards, none required; first each unknown root key in the document's
+            order ("(root): unknown key '<k>' (known: …)"), then the keys in that order. version
+            must be 1 when present. package and language: non-empty strings. docs: a list of
+            non-empty strings. groups: an object, each value a non-empty list of Function names
+            ("groups.<g>: must be a non-empty list of Function names"); a name already in an
+            earlier group → "groups.<g>[<i>]: Function '<name>' is already in group '<first>'".
+            cards: an object of card overrides keyed by card id, each an object with the keys
+            custom_id, intent, targets, context_slice, depends_on, instruction, acceptance,
+            model, max_tokens, reasoning_max_tokens, variants (unknown keys first, then the
+            keys in that order): custom_id must match ^[A-Za-z0-9._-]+$, intent must be
+            generate or patch, targets/context_slice/depends_on are lists of non-empty strings
+            (targets not empty: "must hold at least one path"), instruction, acceptance and
+            model non-empty strings, max_tokens, reasoning_max_tokens and variants positive
+            integers. extra_cards: a list of objects with the same keys plus component; each
+            first reports a missing custom_id, targets, instruction ("required"), then unknown
+            keys, then component, then the card keys. Values are kept verbatim (an acceptance
+            is a shell script: never trimmed). The typed map has camelCase fields, a key the map
+            does not set is null, groups and cards become lists in the document's order.
+          steps:
+            - reads: Contour Map
+            - produces: Map Result
+          examples:
+            - given: 'the mini map: package, language, docs, two groups, two card overrides, one extra card'
+              ref: "tests/fixtures/contour/mini.map.json (the document), tests/fixtures/contour/mini.map.typed.json (the whole typed map)"
+              when: "validated"
+              then: '{ok: true, map} with map equal to mini.map.typed.json; the acceptance "  exit 0\n" kept verbatim'
+            - given: 'the bad map: an unknown root key, version 2, an empty package, docs as a string, a Function in two groups, an empty group, a card with five bad values and an unknown key, a card that is a string, an extra card without custom_id and instruction'
+              ref: "tests/fixtures/contour/badMap.json (the document), tests/fixtures/contour/badMap.problems.json (the 15 problems in order)"
+              when: "validated"
+              then: "{ok: false, problems} equal to the 15 lines of badMap.problems.json, among them \"groups.b[0]: Function 'G' is already in group 'a'\" and \"cards.x.custom_id: must match ^[A-Za-z0-9._-]+$\""
+            - given: 'the documents {} and []'
+              when: "validated"
+              then: '{ok: true, map: {version: 1, package: null, language: null, docs: [], groups: [], cards: [], extraCards: []}}; then {ok: false, problems: ["(root): a map must be an object"]}'
+            - given: 'the document {groups: {g: ["A"]}, cards: {g: {depends_on: [], context_slice: [""]}}}'
+              when: "validated"
+              then: '{ok: false, problems: ["cards.g.context_slice[0]: must be a non-empty string"]} — an empty depends_on is allowed'
+        - name: Parse Document
+          description: Parses the text of a record or a map, YAML or JSON by the name's extension, into a plain object.
+          behavior: >
+            parseDocument(text, name). A name ending in .yaml or .yml (case-insensitive) is
+            parsed with parse of the package yaml, any other name with JSON.parse. A parser
+            error → {ok: false, error: "cannot parse <name>: <the first line of the parser's
+            message>"}. A result that is not a plain object (null for empty text, an array, a
+            scalar) → {ok: false, error: "<name> is not a mapping at the top level"}. Else {ok:
+            true, doc}. Nothing is validated here.
+          steps:
+            - produces: Parsed Document
+          examples:
+            - given: 'text "a: 1\nb: [x, y]\n" named "r.yaml"; text "{\"a\": [1, \"2\"]}" named "m.JSON"'
+              when: "parsed"
+              then: '{ok: true, doc: {a: 1, b: ["x", "y"]}}; {ok: true, doc: {a: [1, "2"]}}'
+            - given: 'text "a: 1\n" named "m.json"; text "a: 1\na: 2\n" named "d.yml"'
+              when: "parsed"
+              then: '{ok: false} with error beginning "cannot parse m.json: "; {ok: false} with error beginning "cannot parse d.yml: " — one line each, the parser''s own words after the prefix'
+            - given: 'text "- a\n- b\n" named "r.yaml"; text "" named "e.yaml"; text "null" named "n.json"'
+              when: "parsed"
+              then: '{ok: false, error: "r.yaml is not a mapping at the top level"}; the same for "e.yaml" and "n.json"'
+        - name: Load Spec
+          description: The text of a record or a map in, its typed value or one error message out.
+          behavior: >
+            loadContour(text, name) = Parse Document, then Validate Record; loadMap(text,
+            name) = Parse Document, then Validate Map. A parse error is returned as it is.
+            Problems → {ok: false, error: "<name> is not a valid record (<n> problem[s]):\n"
+            followed by the first 20 problems joined by "\n" and, when there are more, a last
+            line "… and <n - 20> more"} ("map" for loadMap; "problem" when n is 1). Else {ok:
+            true, record} or {ok: true, map}. This repository's own contour.yaml and
+            morph-map.json load without a problem.
+          steps:
+            - calls: Parse Document
+            - calls: Validate Record
+            - calls: Validate Map
+          examples:
+            - given: 'the text of the mini record in YAML, named "mini.yaml"'
+              ref: "tests/fixtures/contour/mini.yaml (the text), tests/fixtures/contour/mini.typed.json (the typed record)"
+              when: "loadContour"
+              then: '{ok: true, record} with record equal to mini.typed.json — the YAML and its JSON twin give one record'
+            - given: 'the text of badRecord.json named "badRecord.json"; the text of badMap.json named "badMap.json"'
+              ref: "tests/fixtures/contour/badRecord.problems.json, tests/fixtures/contour/badMap.problems.json"
+              when: "loadContour; loadMap"
+              then: '{ok: false, error: "badRecord.json is not a valid record (19 problems):\n" + the 19 problems joined by "\n"}; {ok: false, error: "badMap.json is not a valid map (15 problems):\n" + the 15 problems joined by "\n"}'
+            - given: 'the JSON text of {System: {name: "s", description: "d", groups: [eleven empty objects]}} named "many.json"; the text "{\"System\": {\"name\": \"s\", \"description\": \"d\"}}" named "one.json"; the text "a: [" named "m.yaml"'
+              when: "loadContour; loadContour; loadMap"
+              then: 'error "many.json is not a valid record (22 problems):\n" + 20 lines + "\n… and 2 more" (22 lines in all); error "one.json is not a valid record (1 problem):\nSystem.groups: required"; an error beginning "cannot parse m.yaml: "'
+            - given: "this repository's own contour.yaml and morph-map.json, read as text"
+              when: "loadContour; loadMap"
+              then: '{ok: true} for both: system.name "MorphV2", a Component named "contour", every Function with at least one example; map package "src" and a card with id "validate-record"'
+        - name: Select Components
+          description: The Components a plan cuts, by the names given with --component.
+          behavior: >
+            selectComponents(record, names). No names: the record's only Component → {ok:
+            true, components: [it]}; more than one → {ok: false, error: "the record has <n>
+            Components (<names joined by ', '>): pass --component"}. Else, for each name in the
+            given order, the first Component whose name equals it or whose slug equals its
+            slug (the slug: lower-cased, split on every run of characters other than a-z and
+            0-9, empty pieces dropped, joined by "-"); a name with no match → {ok: false,
+            error: "no Component '<name as given>' in the record (have: <names joined by ',
+            '>)"}. A Component selected twice is listed once, at its first place. The
+            components are the record's own objects, not copies.
+          steps:
+            - reads: Contour Record
+          examples:
+            - given: 'the mini typed record, no names; then the same record with only its Component tally, no names'
+              when: "selectComponents"
+              then: '{ok: false, error: "the record has 2 Components (tally, store): pass --component"}; then {ok: true, components: [the tally Component]}'
+            - given: 'the mini typed record, names ["Store", "tally", "store"]'
+              when: "selectComponents"
+              then: '{ok: true, components: [store, tally]} — matched by slug, given order, a repeat listed once'
+            - given: 'the mini typed record, names ["tally", "nope"]'
+              when: "selectComponents"
+              then: "{ok: false, error: \"no Component 'nope' in the record (have: tally, store)\"}"
+        - name: Function Links
+          description: The calls graph and the Data Objects of each Function of one Component.
+          behavior: >
+            functionLinks(record, component) → for each Function of the component, in record
+            order, {function: its name, calls, dataObjects, uses}, each list distinct in step
+            order: calls = the targets of calls steps, each a Function of the same Component;
+            dataObjects = the targets of reads, modifies and produces steps that name a Data
+            Object of any Component of the record (other targets, like "string", are left out);
+            uses = the targets of uses steps as given. A calls target that is the Function
+            itself → "Function '<f>' calls itself"; one that is no Function of the component →
+            "Function '<f>' calls unknown Function '<t>' of Component '<c>'". Any such error →
+            {ok: false, errors} (Function order, step order); else {ok: true, links}.
+          steps:
+            - reads: Contour Record
+            - produces: Function Link
+          examples:
+            - given: 'the mini typed record, Component tally'
+              when: "functionLinks"
+              then: '{ok: true, links: [{function: "Count Words", calls: [], dataObjects: [], uses: []}, {function: "Report Count", calls: ["Count Words"], dataObjects: ["Text File"], uses: ["node:fs"]}]} — two calls steps of one Function listed once, "number" is no Data Object'
+            - given: 'the mini typed record, Component store'
+              when: "functionLinks"
+              then: '{ok: true, links: [{function: "Save Count", calls: [], dataObjects: ["Count Record"], uses: ["tally"]}, {function: "Load Counts", calls: [], dataObjects: ["Count Record", "Text File"], uses: []}]} — a Data Object of another Component counts'
+            - given: 'the record of badCalls.json (valid in shape), Component loop'
+              ref: "tests/fixtures/contour/badCalls.json"
+              when: "functionLinks"
+              then: "{ok: false, errors: [\"Function 'A' calls unknown Function 'B' of Component 'loop'\", \"Function 'C' calls itself\"]}"
+      dataObjects:
+        - name: Contour Record
+          description: The typed record (src/contour/types.ts); every list present, every optional text null when absent, texts trimmed.
+          schema: "{ version: 1, system: { name, description, requirements: string[], guardrails: string[], groups: Component[] }, actors: { name, description, uses: string[] }[], requirements: { name, description }[], guardrails: { name, description }[] }; Component = { name, description, language: string | null, requirements, guardrails, functions: { name, description, behavior, requirements, guardrails, preconditions: string[], steps: { verb: 'calls'|'reads'|'modifies'|'produces'|'uses', target }[], examples: { given, when, then, ref: string | null }[] }[], dataObjects: { name, description, schema: string | null }[], interfaces: { name, description, exposes: string[] }[] }"
+        - name: Contour Map
+          description: The typed map; snake_case keys of the document become camelCase fields, a key the map does not set is null.
+          schema: "{ version: 1, package: string | null, language: string | null, docs: string[], groups: { name, functions: string[] }[], cards: ({ id } & CardFields)[], extraCards: ({ component: string | null } & CardFields)[] }; CardFields = { customId, intent: 'generate'|'patch', targets, contextSlice, dependsOn, instruction, acceptance, model, maxTokens, reasoningMaxTokens, variants }, each | null"
+        - name: Record Result
+          description: A typed record, or every problem.
+          schema: "{ ok: true, record: ContourRecord } | { ok: false, problems: string[] }"
+        - name: Map Result
+          description: A typed map, or every problem.
+          schema: "{ ok: true, map: ContourMap } | { ok: false, problems: string[] }"
+        - name: Parsed Document
+          description: A parsed plain object, or one error line.
+          schema: "{ ok: true, doc: Record<string, unknown> } | { ok: false, error: string }"
+        - name: Function Link
+          description: What one Function calls and touches, for the planner's depends_on and slices.
+          schema: "{ function: string, calls: string[], dataObjects: string[], uses: string[] }"
+
     # ---------------------------------------------------------------- later epics (skeleton)
     - name: primer
       description: Digest of the tree, git history (Morph-Card trailers) and the run archive for a fresh session; every owned path, most recent first; markdown under a cap with explicit "… N more" lines.
@@ -1372,6 +1604,8 @@ Requirement:
       environment reaches the processor only through Read Registry (P7).
       language is pure data and pure functions: no clock, no environment, no file system,
       no child process; node:path is its only Node module; its shell lines are text (P8).
+      contour reads no file, no clock and no environment: it parses the text it is given;
+      the package yaml is imported in Parse Document alone (P9).
   - name: Node Only
     description: >
       Runtime dependencies: Node 20 built-ins and the package `yaml` (the record reader), nothing

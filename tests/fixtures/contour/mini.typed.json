@@ -1,0 +1,196 @@
+{
+  "version": 1,
+  "system": {
+    "name": "tally",
+    "description": "Counts the words of a text file and keeps the counts between runs.",
+    "requirements": [
+      "Tolerant Reader"
+    ],
+    "guardrails": [
+      "No Network"
+    ],
+    "groups": [
+      {
+        "name": "tally",
+        "description": "A library and a command line over one text file.",
+        "language": "typescript",
+        "requirements": [],
+        "guardrails": [],
+        "functions": [
+          {
+            "name": "Count Words",
+            "description": "The number of whitespace-separated words in a string.",
+            "behavior": "Splits the text on runs of whitespace and counts the non-empty pieces.",
+            "requirements": [],
+            "guardrails": [],
+            "preconditions": [],
+            "steps": [
+              {
+                "verb": "produces",
+                "target": "number"
+              }
+            ],
+            "examples": [
+              {
+                "given": "the string \"a b  c\"",
+                "when": "counted",
+                "then": "3",
+                "ref": null
+              }
+            ]
+          },
+          {
+            "name": "Report Count",
+            "description": "Reads a text file and gives its word count as one line.",
+            "behavior": "The count of the file's text, as decimal digits and a newline.",
+            "requirements": [
+              "Tolerant Reader"
+            ],
+            "guardrails": [],
+            "preconditions": [
+              "the file exists, else the reader faults before counting"
+            ],
+            "steps": [
+              {
+                "verb": "reads",
+                "target": "Text File"
+              },
+              {
+                "verb": "calls",
+                "target": "Count Words"
+              },
+              {
+                "verb": "calls",
+                "target": "Count Words"
+              },
+              {
+                "verb": "uses",
+                "target": "node:fs"
+              }
+            ],
+            "examples": [
+              {
+                "given": "an empty file",
+                "when": "reported",
+                "then": "\"0\\n\"",
+                "ref": "Tolerant Reader"
+              }
+            ]
+          }
+        ],
+        "dataObjects": [
+          {
+            "name": "Text File",
+            "description": "A UTF-8 text file given by path.",
+            "schema": "{ path: string, text: string }"
+          }
+        ],
+        "interfaces": [
+          {
+            "name": "tally CLI",
+            "description": "The command line.",
+            "exposes": [
+              "Report Count"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "store",
+        "description": "Keeps the counts between runs.",
+        "language": null,
+        "requirements": [
+          "Tolerant Reader"
+        ],
+        "guardrails": [],
+        "functions": [
+          {
+            "name": "Save Count",
+            "description": "Appends one count record.",
+            "behavior": "Writes the record as one JSON line at the end of the store file.",
+            "requirements": [],
+            "guardrails": [],
+            "preconditions": [],
+            "steps": [
+              {
+                "verb": "modifies",
+                "target": "Count Record"
+              },
+              {
+                "verb": "uses",
+                "target": "tally"
+              }
+            ],
+            "examples": [
+              {
+                "given": "count 3 for \"a.txt\"",
+                "when": "saved",
+                "then": "the store file ends with the line {\"path\":\"a.txt\",\"count\":3}",
+                "ref": null
+              }
+            ]
+          },
+          {
+            "name": "Load Counts",
+            "description": "Reads every count record.",
+            "behavior": "One record per line, in file order; a missing store file is no records.",
+            "requirements": [],
+            "guardrails": [],
+            "preconditions": [],
+            "steps": [
+              {
+                "verb": "reads",
+                "target": "Count Record"
+              },
+              {
+                "verb": "produces",
+                "target": "Count Record"
+              },
+              {
+                "verb": "reads",
+                "target": "Text File"
+              }
+            ],
+            "examples": [
+              {
+                "given": "a missing store file",
+                "when": "loaded",
+                "then": "[]",
+                "ref": "Tolerant Reader"
+              }
+            ]
+          }
+        ],
+        "dataObjects": [
+          {
+            "name": "Count Record",
+            "description": "One stored count.",
+            "schema": "{\n  \"path\": \"string\",\n  \"count\": \"number, >= 0\"\n}"
+          }
+        ],
+        "interfaces": []
+      }
+    ]
+  },
+  "actors": [
+    {
+      "name": "User",
+      "description": "A person at a shell.",
+      "uses": [
+        "tally CLI"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "name": "Tolerant Reader",
+      "description": "An empty or missing input is a zero, not an exception."
+    }
+  ],
+  "guardrails": [
+    {
+      "name": "No Network",
+      "description": "Nothing here opens a socket."
+    }
+  ]
+}

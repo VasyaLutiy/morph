@@ -17,6 +17,8 @@ shared steps here. Hand-written data, never product code.
                                            have their own-test caps)
     python3 decks/tools/build.py p8     -> the same for the P8 cards (Component language; pure, no
                                            git and no spawn in the tests; judges capped at examples + 8)
+    python3 decks/tools/build.py p9     -> the same for the P9 cards (Component contour; pure, no node:* in src,
+                                           yaml only in src/contour/load.ts; judges capped at examples + 8)
 
 Paths are relative to the repository root (the parent of decks/); nothing here points
 outside the tree.
@@ -305,6 +307,25 @@ P8_JUDGE_LITERALS = {
 P8_JUDGE_EXAMPLES = {"profiles-judge": 7, "paths-judge": 6, "naming-judge": 4, "template-judge": 8}
 P8_JUDGE_OWN = {"profiles-judge": 8, "paths-judge": 8, "naming-judge": 8, "template-judge": 8}
 
+P9_TEST_DIR = "tests/contour"
+# docs/TASK_P9_contour.md §3: the example literals of Component contour
+P9_JUDGE_LITERALS = {
+    "validate-record-judge": ["mini.typed.json", "badRecord.problems.json", "(root): a record must be an object",
+                              "System: required", "System.groups[0].functions[0].examples: required"],
+    "validate-map-judge": ["mini.map.typed.json", "badMap.problems.json", "(root): a map must be an object",
+                           "cards.g.context_slice[0]: must be a non-empty string"],
+    "select-components-judge": ["the record has 2 Components (tally, store): pass --component",
+                                "no Component 'nope' in the record (have: tally, store)", "badCalls.json",
+                                "Function 'C' calls itself", "node:fs"],
+    "load-spec-judge": ["mini.yaml", "is not a valid record (19 problems):", "is not a valid map (15 problems):",
+                        "\u2026 and 2 more", "is not a mapping at the top level", "../../contour.yaml",
+                        "../../morph-map.json", "validate-record"],
+}
+# Validate Record 6, Validate Map 4, Select Components 3 + Function Links 3, Parse Document 3 + Load Spec 4
+P9_JUDGE_EXAMPLES = {"validate-record-judge": 6, "validate-map-judge": 4, "select-components-judge": 6,
+                     "load-spec-judge": 7}
+P9_JUDGE_OWN = {"validate-record-judge": 8, "validate-map-judge": 8, "select-components-judge": 8, "load-spec-judge": 8}
+
 # one phase = the cards of one Component in morph-map.json (judges are <code>-judge); the
 # generation layering and the sibling exclusion are computed within the phase only.
 # smoke: whether a code card writes its own smoke test (P1-P2 yes; from P3 a code card covered
@@ -326,6 +347,8 @@ PHASES = {
            "smoke": False, "own_git": True, "own": P7_JUDGE_OWN, "extra": {"main": P7_BIN_STEP}},
     "p8": {"parts": "p8", "test_dir": P8_TEST_DIR, "examples": P8_JUDGE_EXAMPLES, "literals": P8_JUDGE_LITERALS,
            "smoke": False, "own": P8_JUDGE_OWN},
+    "p9": {"parts": "p9", "test_dir": P9_TEST_DIR, "examples": P9_JUDGE_EXAMPLES, "literals": P9_JUDGE_LITERALS,
+           "smoke": False, "own": P9_JUDGE_OWN},
 }
 
 
@@ -453,7 +476,7 @@ def build_phase(phase):
 BUILDERS = {"p0": build_p0, "p1": lambda: build_phase("p1"), "p2": lambda: build_phase("p2"),
             "p3": lambda: build_phase("p3"), "p4": lambda: build_phase("p4"), "p5": lambda: build_phase("p5"),
             "p6": lambda: build_phase("p6"), "p7": lambda: build_phase("p7"),
-            "p8": lambda: build_phase("p8")}
+            "p8": lambda: build_phase("p8"), "p9": lambda: build_phase("p9")}
 
 
 def main(argv):

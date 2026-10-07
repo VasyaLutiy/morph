@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "System": {
+    "name": "s",
+    "groups": [
+      {
+        "name": "a", "description": "A.", "owner": "me",
+        "functions": [
+          { "name": "F", "description": "F.", "examples": [] },
+          {
+            "name": "F", "description": "F again.", "behavior": "B.", "requirements": ["R", ""],
+            "steps": [{ "calls": "G", "reads": "D" }, { "invokes": "G" }, { "uses": "" }],
+            "examples": [{ "given": "x", "when": "y" }, "z"]
+          }
+        ],
+        "dataObjects": [{ "name": "D", "description": "D.", "schema": 3 }],
+        "interfaces": [{ "name": "I", "description": "I.", "exposes": [] }]
+      },
+      { "name": "a", "description": "Again." },
+      "c"
+    ]
+  },
+  "Actor": { "name": "U", "description": "U." },
+  "Requirement": [{ "name": "R" }],
+  "Extra": true
+}
