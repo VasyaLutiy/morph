@@ -1,0 +1,147 @@
+```typescript
+import fs from "node:fs";
+import path from "node:path";
+import { gzipSync } from "node:zlib";
+import { commitPaths } from "./commit.js";
+import type { ArchiveInput, ArchiveResult, Trailer } from "./types.js";
+
+function countByStatus(outcomes: { status: string }[], status: string): string {
+  let n = 0;
+  for (const o of outcomes) {
+    if (o.status === status) {
+      n += 1;
+    }
+  }
+  return String(n);
+}
+
+export function archiveRun(
+  root: string,
+  input: ArchiveInput,
+  env: Record<string, string>
+): ArchiveResult {
+  if (!/^[A-Za-z0-9._-]+$/.test(input.runId)) {
+    return { ok: false, error: "invalid runId: " + input.runId };
+  }
+  if (input.answers !== undefined) {
+    for (const answer of input.answers) {
+      if (!/^[A-Za-z0-9._-]+$/.test(answer.request.customId)) {
+        return { ok: false, error: "invalid answer id: " + answer.request.customId };
+      }
+    }
+  }
+  const dir = ".morph/runs/" + input.runId;
+  if (fs.existsSync(path.join(root, dir))) {
+    return { ok: false, error: "archive " + dir + " already exists" };
+  }
+  fs.mkdirSync(path.join(root, dir), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, dir, "deck.json"),
+    JSON.stringify(input.deck.cards, null, 2) + "\n",
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(root, dir, "report.json"),
+    JSON.stringify(input.report, null, 2) + "\n",
+    "utf8"
+  );
+  const paths: string[] = [dir + "/deck.json", dir + "/report.json"];
+  const answers = input.answers === undefined ? [] : input.answers;
+  if (answers.length > 0) {
+    const requestsDir = dir + "/requests";
+    fs.mkdirSync(path.join(root, requestsDir), { recursive: true });
+    fs.writeFileSync(path.join(root, requestsDir, ".gitignore"), "*\n", "utf8");
+    for (const answer of answers) {
+      const requestFile = requestsDir + "/" + answer.request.customId + ".request.json.gz";
+      fs.writeFileSync(
+        path.join(root, requestFile),
+        gzipSync(JSON.stringify(answer.request, null, 2) + "\n")
+      );
+    }
+    for (const answer of answers) {
+      if (answer.text !== null) {
+        const answerFile = dir + "/answers/" + answer.request.customId + ".answer.txt";
+        fs.mkdirSync(path.join(root, dir, "answers"), { recursive: true });
+        fs.writeFileSync(path.join(root, answerFile), answer.text, "utf8");
+        paths.push(answerFile);
+      }
+    }
+    let anyLine = false;
+    const lines: string[] = [];
+    for (const answer of answers) {
+      if (answer.line !== undefined) {
+        anyLine = true;
+        lines.push(answer.line);
+      }
+    }
+    if (anyLine) {
+      const linesFile = dir + "/answers/lines.txt";
+      fs.mkdirSync(path.join(root, dir, "answers"), { recursive: true });
+      fs.writeFileSync(path.join(root, linesFile), lines.join(""), "utf8");
+      paths.push(linesFile);
+    }
+  }
+  const trailers: Trailer[] = [
+    ["Morph-Run", input.runId],
+    ["Morph-Cards", String(input.deck.cards.length)],
+    ["Morph-Written", countByStatus(input.report.outcomes, "written")],
+    ["Morph-Failed", countByStatus(input.report.outcomes, "failed")],
+    ["Morph-Skipped", countByStatus(input.report.outcomes, "skipped")],
+    ["Morph-Budget-Exceeded", countByStatus(input.report.outcomes, "budget-exceeded")]
+  ];
+  try {
+    const info = commitPaths(
+      root,
+      paths,
+      "morph run " + input.runId + ": deck and report",
+      trailers,
+      env
+    );
+    return { ok: true, dir, commit: info === null ? null : info.commit };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { ok: false, error: "archive " + dir + " written but not committed: " + message };
+  }
+}
+
+export function saveBatchRecord(
+  root: string,
+  record: { batchId: string }
+): string | null {
+  if (!/^[A-Za-z0-9._-]+$/.test(record.batchId)) {
+    return null;
+  }
+  const rel = ".morph/batches/" + record.batchId + ".json";
+  fs.mkdirSync(path.join(root, ".morph/batches"), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, rel),
+    JSON.stringify(record, null, 2) + "\n",
+    "utf8"
+  );
+  return rel;
+}
+
+export function saveBatchAnswers(
+  root: string,
+  batchId: string,
+  answers: { customId: string; text: string }[]
+): string[] {
+  if (!/^[A-Za-z0-9._-]+$/.test(batchId)) {
+    return [];
+  }
+  for (const answer of answers) {
+    if (!/^[A-Za-z0-9._-]+$/.test(answer.customId)) {
+      return [];
+    }
+  }
+  const dir = ".morph/batches/" + batchId;
+  const paths: string[] = [];
+  for (const answer of answers) {
+    fs.mkdirSync(path.join(root, dir), { recursive: true });
+    const rel = dir + "/" + answer.customId + ".md";
+    fs.writeFileSync(path.join(root, rel), answer.text, "utf8");
+    paths.push(rel);
+  }
+  return paths;
+}
+```

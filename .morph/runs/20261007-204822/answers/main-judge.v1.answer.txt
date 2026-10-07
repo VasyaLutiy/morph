@@ -1,0 +1,129 @@
+```ts
+import { expect, test } from "vitest";
+import { main } from "../../src/cli/main.js";
+import type { CliDeps, CliIo } from "../../src/cli/types.js";
+import type { Transport } from "../../src/processor/types.js";
+import { fixture, fixtureJson, tmpRoot } from "../helpers.js";
+
+type Step = { status: number; text: string };
+const ok = (status: number, name: string): Step => ({ status, text: fixture("processor/" + name) });
+
+function script(steps: (Step | Error)[]): Transport {
+  let i = 0;
+  return {
+    fetch: async () => {
+      const s = steps[Math.min(i, steps.length - 1)];
+      i += 1;
+      if (s instanceof Error) throw s;
+      return { status: s.status, text: async () => s.text };
+    },
+    sleep: async () => undefined,
+  };
+}
+
+const ENV: Record<string, string> = {
+  MORPH_PROCESSOR_b_TYPE: "openrouter",
+  MORPH_PROCESSOR_b_MODEL: "acme/m:batch",
+  MORPH_PROCESSOR_b_API_KEY: "sk-or-test",
+  MORPH_PROCESSOR_b_ROUTE: "batch",
+};
+
+interface Capture { io: CliIo; stdout: string[]; stderr: string[] }
+function capture(): Capture {
+  const stdout: string[] = [];
+  const stderr: string[] = [];
+  return {
+    io: {
+      stdout: (t: string): void => {
+        stdout.push(t);
+      },
+      stderr: (t: string): void => {
+        stderr.push(t);
+      },
+    },
+    stdout,
+    stderr,
+  };
+}
+
+test("Main example 7: collect without a state file refuses with a usage error", async () => {
+  const t = tmpRoot();
+  try {
+    const c = capture();
+    const deps: CliDeps = { env: {}, now: () => 0, cwd: "/", transport: null };
+    const code = await main(["collect", "--batch", "batch-none", "--root", t.root], deps, c.io);
+    expect(code).toBe(4);
+    expect(c.stdout.length).toBe(1);
+    expect(JSON.parse(c.stdout[0])).toStrictEqual({
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "batch state not found: .morph/batches/batch-none.json",
+      },
+    });
+    expect(c.stderr).toStrictEqual(["morph collect: exit 4\n"]);
+  } finally {
+    t.rm();
+  }
+});
+
+test("Main example 8: submit, then collect, each in its own process", async () => {
+  const t = tmpRoot();
+  try {
+    t.write("docs/clamp.md", "Clamp a value.\n");
+    t.write("d.json", fixture("batches/deck.json"));
+
+    const subTransport = script([ok(202, "batchSubmittedLive.json")]);
+    const subDeps: CliDeps = {
+      env: ENV,
+      now: () => 1791400000000,
+      cwd: "/",
+      transport: subTransport,
+    };
+    const sub = capture();
+    const subCode = await main(
+      ["submit", "--deck", "d.json", "--processor", "b", "--root", t.root],
+      subDeps,
+      sub.io,
+    );
+    expect(subCode).toBe(0);
+    expect(sub.stdout.length).toBe(1);
+    expect(sub.stderr).toStrictEqual(["morph submit: exit 0\n"]);
+
+    const documents = fixtureJson("batches/documents.json") as {
+      "Submit Deck 1": unknown;
+      "Collect Batch 1": unknown;
+    };
+    const submitDoc: unknown = JSON.parse(sub.stdout[0]);
+    expect(submitDoc).toStrictEqual(documents["Submit Deck 1"]);
+
+    const id = "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W";
+
+    const colTransport = script([ok(200, "batchCompletedLive.json")]);
+    const colDeps: CliDeps = {
+      env: ENV,
+      now: () => 1791400600000,
+      cwd: "/",
+      transport: colTransport,
+    };
+    const col = capture();
+    const colCode = await main(
+      ["collect", "--batch", id, "--root", t.root],
+      colDeps,
+      col.io,
+    );
+    expect(colCode).toBe(0);
+    expect(col.stdout.length).toBe(1);
+    expect(col.stderr).toStrictEqual(["morph collect: exit 0\n"]);
+
+    const collectDoc: unknown = JSON.parse(col.stdout[0]);
+    expect(collectDoc).toStrictEqual(documents["Collect Batch 1"]);
+
+    expect(t.read(`.morph/batches/${id}.json`)).toBe(fixture("batches/collected.json"));
+    expect(t.exists(`.morph/batches/${id}/clamp-value.v1.md`)).toBe(true);
+    expect(t.exists(`.morph/batches/${id}/sign-of.v1.md`)).toBe(true);
+  } finally {
+    t.rm();
+  }
+});
+```
