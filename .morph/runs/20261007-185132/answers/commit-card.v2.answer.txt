@@ -1,0 +1,63 @@
+```typescript
+import { gitOk } from "./run.js";
+import type { CardCommit, CardCommitter, CommitInfo, Trailer } from "./types.js";
+
+export function commitPaths(
+  root: string,
+  paths: string[],
+  subject: string,
+  trailers: Trailer[],
+  env: Record<string, string>,
+  force = false
+): CommitInfo | null {
+  const addArgs = force ? ["add", "-A", "-f", "--", ...paths] : ["add", "-A", "--", ...paths];
+  gitOk(root, addArgs, env);
+  const staged = gitOk(root, ["diff", "--cached", "--name-only", "--", ...paths], env);
+  if (staged.trim() === "") {
+    return null;
+  }
+  const block = trailers.map(([k, v]) => k + ": " + v).join("\n");
+  gitOk(root, ["commit", "-q", "-m", subject, "-m", block, "--", ...paths], env);
+  const commit = gitOk(root, ["rev-parse", "HEAD"], env).trim();
+  const numstat = gitOk(root, ["show", "--numstat", "--format=", commit], env);
+  let files = 0;
+  let insertions = 0;
+  let deletions = 0;
+  for (const line of numstat.split("\n")) {
+    if (line === "") {
+      continue;
+    }
+    files += 1;
+    const cols = line.split("\t");
+    insertions += cols[0] === "-" ? 0 : Number(cols[0]);
+    deletions += cols[1] === "-" ? 0 : Number(cols[1]);
+  }
+  return { commit, diffstat: { files, insertions, deletions } };
+}
+
+export function commitCard(
+  root: string,
+  input: CardCommit,
+  env: Record<string, string>
+): CommitInfo | null {
+  const subject = "morph " + input.customId + ": " + input.targets.join(", ");
+  const trailers: Trailer[] = [
+    ["Morph-Card", input.customId],
+    ["Morph-Model", input.model],
+  ];
+  if (input.variant !== null) {
+    trailers.push(["Morph-Variant", input.variant]);
+  }
+  trailers.push(["Morph-Acceptance-Exit", String(input.acceptanceExit)]);
+  return commitPaths(root, input.targets, subject, trailers, env, true);
+}
+
+export function makeCommitHook(
+  root: string,
+  model: string,
+  env: Record<string, string>
+): CardCommitter {
+  return (customId: string, targets: string[]): CommitInfo | null =>
+    commitCard(root, { customId, targets, model, variant: null, acceptanceExit: 0 }, env);
+}
+```

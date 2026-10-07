@@ -1,0 +1,35 @@
+```ts
+import { expect, test } from "vitest";
+import { runAcceptance } from "../../src/acceptance/run.js";
+import { tmpRoot } from "../helpers.js";
+
+test("Run Acceptance example 5: the child env drops processor and secret keys", async () => {
+  const root = tmpRoot();
+  try {
+    const env: Record<string, string> = {
+      PATH: "/usr/bin:/bin",
+      MORPH_PROCESSOR_x_API_KEY: "k1",
+      MORPH_PROCESSOR_x_MODEL: "m/x",
+      OPENROUTER_API_KEY: "k2",
+      GH_TOKEN: "t3",
+      KEYBOARD: "us",
+      TOKENS_LEFT: "7",
+    };
+    const result = await runAcceptance("env", root.root, { env });
+    expect(result.exit).toBe(0);
+    expect(result.timedOut).toBe(false);
+    const lines = result.log.split("\n");
+    expect(lines).toContain("KEYBOARD=us");
+    expect(lines).toContain("TOKENS_LEFT=7");
+    expect(lines).toContain("PATH=/usr/bin:/bin");
+    expect(lines).toContain("NO_COLOR=1");
+    expect(lines).toContain("CI=1");
+    for (const leaked of ["MORPH_PROCESSOR_", "k1", "m/x", "k2", "t3"]) {
+      expect(result.log).not.toContain(leaked);
+    }
+    expect(env.MORPH_PROCESSOR_x_API_KEY).toBe("k1");
+  } finally {
+    root.rm();
+  }
+});
+```

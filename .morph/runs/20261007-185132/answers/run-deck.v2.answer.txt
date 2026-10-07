@@ -1,0 +1,386 @@
+FILE: src/runloop/deck.ts
+```ts
+// src/runloop/deck.ts — Run Deck (TASK_P5 §2.2, steps 1–5; P9b §2.2 runDeck;
+// P10c §2.2 issue #3 C2: the retry batch cap is per generation;
+// P11c §2.2 findings 1 and 2: a carried-over retry runs before its dependants
+// and a thrown value ends the run without rejecting).
+//
+// Drives a deck generation by generation in the order of layerGenerations,
+// with the budget (maxCards, deadline) checked at every generation
+// boundary. Failed cards are retried through buildRetry (at most two
+// retries per card, in whichever generation they run), and each retry
+// carries the Retry Context of the failed attempt: its acceptance output and
+// its own diff, keyed by the ORIGINAL card id (a later round replaces the
+// earlier one). The retry batches are capped by maxRetryBatches PER
+// GENERATION: the counter starts at 0 at every generation, so a card of an
+// earlier generation whose retries the cap stopped is picked up by the next
+// generation's batch. At a generation, when a not-yet-done card of it waits
+// on a dependency whose outcome is "failed" with retries left, the retry
+// loop runs FIRST (the same per-generation counter, the same deadline check),
+// so a dependency written by a carried-over retry unblocks its dependants;
+// then the statuses are read, the generation resolves and runs, and the retry
+// loop runs after it as before (what remains of the cap). A value thrown
+// inside the loop (the commit hook, an answer write, git) ends the run: every
+// card with no outcome yet becomes "skipped" "fault", and the report carries
+// the fault text as its last key; runDeck never rejects. The Run Report is
+// built and RETURNED: nothing is written or committed here (the archive and
+// the git commit are P6). The clock, the transport and the commit hook are
+// injected through deps, so the loop is deterministic and testable.
+
+import { layerGenerations } from "../cards/layer.js";
+import { resolveRunnable } from "./resolve.js";
+import { processGeneration } from "./generation.js";
+import { buildRetry } from "./retry.js";
+import type { Card } from "../cards/types.js";
+import type { Usage } from "../processor/types.js";
+import type {
+  CardOutcome,
+  CardStatus,
+  RequestUsage,
+  RetryContext,
+  RunDeps,
+  RunInput,
+  RunReport,
+  RunResult,
+  UsageTotals
+} from "./types.js";
+
+function budgetOutcome(customId: string, reason: string): CardOutcome {
+  return {
+    customId,
+    status: "budget-exceeded",
+    reason,
+    attempts: 0,
+    winningVariant: null,
+    acceptanceLog: "",
+    earlierFailures: [],
+    commit: null,
+    diffstat: null
+  };
+}
+
+function faultOutcome(customId: string): CardOutcome {
+  return {
+    customId,
+    status: "skipped",
+    reason: "fault",
+    attempts: 0,
+    winningVariant: null,
+    acceptanceLog: "",
+    earlierFailures: [],
+    commit: null,
+    diffstat: null
+  };
+}
+
+function originalId(customId: string): string {
+  return customId.replace(/\.r[0-9]+$/, "");
+}
+
+export async function runDeck(
+  input: RunInput,
+  deps: RunDeps
+): Promise<RunResult> {
+  const gens = layerGenerations(input.deck);
+
+  const byId = new Map<string, Card>();
+  for (const card of input.deck.cards) byId.set(card.customId, card);
+
+  const done = new Map<string, CardOutcome>();
+  const retried = new Map<string, number>();
+  const contexts = new Map<string, RetryContext>();
+  const requests: RequestUsage[] = [];
+  const usage: Usage[] = [];
+  let cardsProcessed = 0;
+  let fault: string | null = null;
+
+  try {
+    // generations in order; a budget breach at a boundary marks every
+    // not-yet-done card of this and the later generations and stops the run
+    for (let g = 0; g < gens.length; g++) {
+      const now = deps.now();
+
+      if (now >= input.budget.deadline) {
+        for (let h = g; h < gens.length; h++) {
+          for (const id of gens[h]) {
+            if (!done.has(id)) done.set(id, budgetOutcome(id, "deadline"));
+          }
+        }
+        break;
+      }
+      if (cardsProcessed >= input.budget.maxCards) {
+        const reason = "maxCards " + input.budget.maxCards;
+        for (let h = g; h < gens.length; h++) {
+          for (const id of gens[h]) {
+            if (!done.has(id)) done.set(id, budgetOutcome(id, reason));
+          }
+        }
+        break;
+      }
+
+      // the retry batch cap is per generation: the counter starts at 0
+      // at every generation (issue #3 C2), so every generation gets its
+      // own maxRetryBatches retry batches
+      let retryBatches = 0;
+
+      // retries: while some card is failed and retried fewer than 2 times,
+      // and this generation's batch cap allows it, run one retry batch for
+      // all of them (a card of an earlier generation whose retries the
+      // cap stopped is included)
+      const runRetries = async (): Promise<void> => {
+        for (;;) {
+          const batch: string[] = [];
+          for (const [id, outcome] of done) {
+            if (
+              outcome.status === "failed" &&
+              (retried.get(id) ?? 0) < 2
+            ) {
+              batch.push(id);
+            }
+          }
+          if (batch.length === 0 || retryBatches >= input.budget.maxRetryBatches) {
+            break;
+          }
+
+          // finding 7: once a retry batch would run, the deadline is checked
+          // before it; when it has passed, the cards of the stopped batch
+          // become budget-exceeded "deadline" (attempts, logs and
+          // earlierFailures kept) and no retry batch runs
+          if (deps.now() >= input.budget.deadline) {
+            for (const id of batch) {
+              const previous = done.get(id);
+              if (previous === undefined) continue;
+              done.set(id, {
+                ...previous,
+                status: "budget-exceeded",
+                reason: "deadline"
+              });
+            }
+            break;
+          }
+
+          retryBatches += 1;
+
+          const retryCards: Card[] = [];
+          const numbers: number[] = [];
+          for (const id of batch) {
+            const retryNumber = (retried.get(id) ?? 0) + 1;
+            retried.set(id, retryNumber);
+            const previous = done.get(id);
+            const original = byId.get(id);
+            if (previous === undefined || original === undefined) continue;
+            const ctx = contexts.get(id);
+            if (ctx !== undefined) {
+              retryCards.push(
+                buildRetry(
+                  original,
+                  retryNumber,
+                  ctx.acceptanceOutput,
+                  ctx.previousDiff
+                )
+              );
+            } else {
+              retryCards.push(
+                buildRetry(original, retryNumber, previous.acceptanceLog, null)
+              );
+            }
+            numbers.push(retryNumber);
+          }
+
+          const retryGeneration = await processGeneration(
+            retryCards,
+            deps,
+            input.root
+          );
+          usage.push(...retryGeneration.usage);
+          requests.push(...retryGeneration.requests);
+          for (const [id, ctx] of Object.entries(retryGeneration.retryContexts)) {
+            contexts.set(originalId(id), ctx);
+          }
+
+          for (let i = 0; i < retryCards.length; i++) {
+            const id = originalId(retryCards[i].customId);
+            const retryOutcome = retryGeneration.outcomes[i];
+            const previous = done.get(id);
+            if (retryOutcome === undefined || previous === undefined) continue;
+            const merged: CardOutcome = {
+              ...retryOutcome,
+              customId: id,
+              attempts: numbers[i] + 1,
+              earlierFailures: [
+                ...previous.earlierFailures,
+                previous.acceptanceLog,
+                ...retryOutcome.earlierFailures
+              ]
+            };
+            done.set(id, merged);
+          }
+        }
+      };
+
+      // finding 2: when a not-yet-done card of this generation waits on a
+      // dependency whose outcome is "failed" with retries left, the
+      // carried-over retry batch runs FIRST, so the dependency may be
+      // written before the card resolves; with no such card nothing changes
+      let carryOver = false;
+      for (const id of gens[g]) {
+        if (done.has(id)) continue;
+        const card = byId.get(id);
+        if (card === undefined) continue;
+        for (const dep of card.dependsOn) {
+          const depOutcome = done.get(dep);
+          if (
+            depOutcome !== undefined &&
+            depOutcome.status === "failed" &&
+            (retried.get(dep) ?? 0) < 2
+          ) {
+            carryOver = true;
+            break;
+          }
+        }
+        if (carryOver) break;
+      }
+      if (carryOver) {
+        await runRetries();
+      }
+
+      // the statuses are read AFTER the carried-over retry batch, so a
+      // dependency just written unblocks its dependants here
+      const statusMap: Record<string, CardStatus> = {};
+      for (const [id, outcome] of done) statusMap[id] = outcome.status;
+
+      const pending: Card[] = [];
+      for (const id of gens[g]) {
+        if (done.has(id)) continue;
+        const card = byId.get(id);
+        if (card !== undefined) pending.push(card);
+      }
+
+      const { runnable, skipped } = resolveRunnable(pending, statusMap);
+      for (const outcome of skipped) done.set(outcome.customId, outcome);
+
+      if (runnable.length > 0) {
+        const generation = await processGeneration(runnable, deps, input.root);
+        usage.push(...generation.usage);
+        requests.push(...generation.requests);
+        for (const outcome of generation.outcomes) {
+          done.set(outcome.customId, outcome);
+        }
+        for (const [id, ctx] of Object.entries(generation.retryContexts)) {
+          contexts.set(originalId(id), ctx);
+        }
+        cardsProcessed += runnable.length;
+      }
+
+      await runRetries();
+    }
+  } catch (value) {
+    // finding 1: a thrown value (the commit hook, an answer write, git)
+    // stops the run; the cards of the call in flight included lose their
+    // usage and rows, and every card with no outcome yet is "skipped"
+    // "fault". The fault text goes on the report once, as its last key.
+    fault = value instanceof Error ? value.message : String(value);
+    for (const card of input.deck.cards) {
+      if (!done.has(card.customId)) {
+        done.set(card.customId, faultOutcome(card.customId));
+      }
+    }
+  }
+
+  // Run Report: outcomes in the deck's card order; usage totals over every
+  // usage row the run produced (cost null when no row reported a cost);
+  // requests = every row of every processGeneration call, in send order
+  const outcomes: CardOutcome[] = [];
+  for (const card of input.deck.cards) {
+    const outcome = done.get(card.customId);
+    if (outcome !== undefined) outcomes.push(outcome);
+  }
+
+  let inputTokens = 0;
+  let outputTokens = 0;
+  let cost: number | null = null;
+  for (const u of usage) {
+    inputTokens += u.inputTokens;
+    outputTokens += u.outputTokens;
+    if (u.cost !== null) {
+      cost = (cost ?? 0) + u.cost;
+    }
+  }
+  const usageTotals: UsageTotals = {
+    inputTokens,
+    outputTokens,
+    cost,
+    requests: usage.length
+  };
+
+  const report: RunReport = {
+    runId: input.runId,
+    completedAt: deps.now(),
+    branch: input.branch,
+    processor: deps.config.id,
+    generations: gens.length,
+    outcomes,
+    usageTotals,
+    requests
+  };
+  if (fault !== null) {
+    report.fault = fault;
+  }
+
+  return { report, outcomes };
+}
+```
+
+FILE: src/runloop/types.ts
+```ts
+import type { Deck } from "../cards/types.js";
+import type { Request } from "../compiler/types.js";
+import type { ProcessorConfig, Transport, Usage } from "../processor/types.js";
+
+export type CardStatus = "written" | "failed" | "skipped" | "budget-exceeded";
+export interface Diffstat { files: number; insertions: number; deletions: number }
+export interface CommitInfo { commit: string; diffstat: Diffstat }
+export type CommitHook = (customId: string, targets: string[]) => CommitInfo | null;
+export interface CardOutcome {
+  customId: string;
+  status: CardStatus;
+  reason: string | null;
+  attempts: number;
+  winningVariant: string | null;
+  acceptanceLog: string;
+  earlierFailures: string[];
+  commit: string | null;
+  diffstat: Diffstat | null;
+}
+export interface UsageTotals { inputTokens: number; outputTokens: number; cost: number | null; requests: number }
+export interface RequestUsage {
+  customId: string; model: string; provider: string | null; generationId: string | null;
+  inputTokens: number; outputTokens: number; cost: number | null;
+  finishReason: string | null; error: string | null;
+  batchId?: string;
+}
+export interface RunReport {
+  runId: string; completedAt: number; branch: string; processor: string;
+  generations: number; outcomes: CardOutcome[]; usageTotals: UsageTotals;
+  requests?: RequestUsage[];
+  fault?: string;
+}
+export interface RunBudget { maxCards: number; maxRetryBatches: number; deadline: number }
+export interface RunDeps {
+  config: ProcessorConfig; transport: Transport; commit: CommitHook;
+  now: () => number; env: Record<string, string>; acceptanceTimeoutMs?: number;
+  onVariant?: (record: VariantRecord) => void;
+}
+export interface RunInput { root: string; runId: string; branch: string; deck: Deck; budget: RunBudget }
+export interface RetryContext { acceptanceOutput: string; previousDiff: string | null }
+export interface GenerationOutcome {
+  outcomes: CardOutcome[]; usage: Usage[]; requests: RequestUsage[];
+  retryContexts: Record<string, RetryContext>;
+}
+export interface RunResult { report: RunReport; outcomes: CardOutcome[] }
+export type VariantVerdict = "accepted" | "rejected" | "corrupt" | "truncated" | "untried" | "stale";
+export interface VariantRecord {
+  request: Request; text: string | null; finishReason: string | null; error: string | null;
+  verdict: VariantVerdict; stages: number; lastStage: string | null;
+}
+```

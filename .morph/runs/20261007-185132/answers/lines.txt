@@ -1,0 +1,20 @@
+morph run: build-attempt-diff.v1 accepted stage 7 frozen finish stop chars 9675
+morph run: build-attempt-diff.v2 untried stage 0 finish stop chars 9559
+morph run: card-model.v1 accepted stage 7 frozen finish stop chars 9577
+morph run: card-model.v2 untried stage 0 finish stop chars 9585
+morph run: commit-card.v1 accepted stage 7 frozen finish stop chars 2071
+morph run: commit-card.v2 untried stage 0 finish stop chars 2071
+morph run: run-acceptance.v1 accepted stage 7 frozen finish stop chars 4270
+morph run: run-acceptance.v2 untried stage 0 finish stop chars 4621
+morph run: run-deck.v1 accepted stage 7 frozen finish stop chars 13959
+morph run: run-deck.v2 untried stage 0 finish stop chars 13971
+morph run: build-attempt-diff-judge.v1 accepted stage 7 frozen finish stop chars 1090
+morph run: card-model-judge.v1 accepted stage 7 frozen finish stop chars 1083
+morph run: commit-card-judge.v1 accepted stage 7 frozen finish stop chars 1245
+morph run: run-acceptance-judge.v1 accepted stage 7 frozen finish stop chars 1157
+morph run: run-command.v1 accepted stage 7 frozen finish stop chars 5135
+morph run: run-command.v2 untried stage 0 finish stop chars 5196
+morph run: run-deck-judge.v1 accepted stage 7 frozen finish stop chars 4980
+morph run: run-command-judge.v1 rejected stage 1 tsc finish stop chars 4920
+morph run: run-command-judge.r1.v1 rejected stage 4 own finish stop chars 5013
+morph run: run-command-judge.r2.v1 accepted stage 7 frozen finish stop chars 5026
