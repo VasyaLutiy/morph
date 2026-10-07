@@ -359,4 +359,40 @@ reasons), minutes per generation, $, judge tests written, the row of `docs/MEASU
 
 ### Gate (preparation)
 
-Filled at the gate.
+07.10, on the laptop, by the preparing orchestrator (Opus 5.5); no paid run. Record validated by a dry
+`mrph plan --spec --component runloop --component compiler --judge` (exit 0; 16 cards: the 9 of
+P9b + resolve, capture-inputs, parse-answer, compile-card and their judges, not added) and by the
+repository's own Load Spec example 4 (48/48 contour tests). `deck clear`, `deck reset`, `deck add`
+of the 9 cards, `deck check`: 9 cards, 0 errors, 0 warnings, 0 hazards; generations
+`[build-retry, output-directive, process-generation] [build-retry-judge, output-directive-judge,
+process-generation-judge, run-deck, compile-card-judge] [run-deck-judge]`; every card's
+acceptance in `.morph/deck.json` equals the map's. compile-card-judge keeps the planner's
+`depends_on` compile-card, absent from the deck (external).
+
+Ripple spike (scratch worktree, crude reference): the new runloop alone 464/464; the new directive
+alone reddens exactly 12 tests in 3 files (compile.examples 3, directive.examples 7, directive.test
+2), all owned by cards of this deck.
+
+Stubs (scratch worktree, the data commit; the patch targets at HEAD with the new types and
+`requests: []`, `retryContexts: {}` as typed stubs): process-generation red at the probe on 6 of 7
+tests (PG 4–7 each with a readable `AssertionError: retryContexts|requests: expected …` line;
+the types test passes on typed stubs); build-retry red on BR 4 (+1 §2.2 row); output-directive red
+on OD 1–3 (OD 4, the throw, holds on the old code: unchanged behaviour) + the multi-text row;
+run-deck red on RD 4, RD 5 and both §2.2 rows; judges with their file absent red at eslint (`No
+files matching the pattern`); output-directive-judge on the old file red at the guard (3 example
+literals missing); compile-card-judge on the old file red at the guard (`outputDirective` missing),
+and with the import added but the literals unchanged red at its own step (3 tests), with a test
+removed red at the names step (`test removed: "patchNew inputs digest"`). Stub chains 1.0–2.6 s.
+
+Reference (scratch, per card in generation order, each card's targets committed after its
+acceptance as Morph would): 9 of 9 chains green, 4.5–7.0 s each (limit 250 s); the tree after:
+475 tests in 48 files green. Mutations: 20 single-rule mutations of the reference (process-generation
+9: first ran variant, last result regardless of ran, "" diff kept, no context for a compile fault /
+for stale, a context for a written card, the last log with the ran diff, model always the
+config's, finishReason dropped; build-retry 2; run-deck 4: previousDiff null as in P5, a later
+round not replacing, retry rows dropped, the output taken from acceptanceLog; output-directive 5:
+a language tag, comma-joined targets, no count, a trailing newline, the old placeholder) — 20 of 20
+killed by the card's probe (the acceptanceLog one survived the first probe; a §2.2 row was added).
+
+Max slice + targets + instruction on the finished tree: process-generation 51 114 bytes,
+process-generation-judge 51 106 (gate 200 KB). Forecast ≈ $0.15–0.18 nominal (≤ $1 gate, cap $5).
