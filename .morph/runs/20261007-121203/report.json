@@ -1,0 +1,372 @@
+{
+  "runId": "20261007-121203",
+  "completedAt": 1791375585532,
+  "branch": "morph/20261007-121203",
+  "processor": "glm53",
+  "generations": 5,
+  "outcomes": [
+    {
+      "customId": "read-checks",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "read-checks.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "a2969bb9c159f42dc38d5a580946a35acc1d68af",
+      "diffstat": {
+        "files": 2,
+        "insertions": 283,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "steps",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "steps.v2",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/steps/steps.probe.ts > Wrap Script example 2: the whole frame, .txt for a target without an extension\nAssertionError: expected 'D=/tmp/morph/c-p1; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\\ncp src/a.ts $D/0-$S.ts 2>/dev/null\\ncp Makefile $D/1-$S.txt 2>/dev/null\\n(\\nset -e; export NO_COLOR=1 CI=1\\necho hi\\n) > $L 2>&1; …' to be 'D=/tmp/morph/c-p1; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\\ncp src/a.ts $D/0-$S.ts 2>/dev/null\\ncp Makefile $D/1-$S.txt 2>/dev/null\\n(\\n set -e\\n export NO_COLOR=1 CI=1\\necho hi\\n) > $L 2>&1…' // Object.is equality\n\n- Expected\n+ Received\n\n  D=/tmp/morph/c-p1; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\n  cp src/a.ts $D/0-$S.ts 2>/dev/null\n  cp Makefile $D/1-$S.txt 2>/dev/null\n  (\n-  set -e\n-  export NO_COLOR=1 CI=1\n+ set -e; export NO_COLOR=1 CI=1\n  echo hi\n  ) > $L 2>&1; rc=$?; cat $L; exit $rc\n\n ❯ probe/steps/steps.probe.ts:19:72\n     17| \n     18| test(\"Wrap Script example 2: the whole frame, .txt for a target withou…\n     19|   expect(wrapScript(\"c\", \"p1\", [\"src/a.ts\", \"Makefile\"], \"echo hi\\n\"))…\n       |                                                                        ^\n     20| });\n     21| \n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯\n\n FAIL  probe/steps/steps.probe.ts > Tree Steps example 3: own git before and after\nAssertionError: expected 'G0=$( (git symbolic-ref -q HEAD || true; git rev-parse HEAD; git for-each-ref --format=\\'%(refname) %(objectname)\\') 2>&1)\\necho \\'== own git\\'; G1=$( (git symbolic-ref -q HEAD || true; git rev-par…' to be 'G0=$( (git symbolic-ref -q HEAD || true; git rev-parse HEAD; git for-each-ref --format=\\'%(refname) %(objectname)\\') 2>&1)\\necho \\'== own git\\'; G1=$( (git symbolic-ref -q HEAD || true; git rev-par…' // Object.is equality\n\n- Expected\n+ Received\n\n  G0=$( (git symbolic-ref -q HEAD || true; git rev-parse HEAD; git for-each-ref --format='%(refname) %(objectname)') 2>&1)\n- echo '== own git'; G1=$( (git symbolic-ref -q HEAD || true; git rev-parse HEAD; git for-each-ref --format='%(refname) %(objectname)') 2>&1); [ \"$G0\" = \"$G1\" ] || { echo \"tests changed this repository's HEAD or refs:\"; echo \"before: $G0\" | head -5; echo \"after: $G1\" | head -5; exit 1; }\n+ echo '== own git'; G1=$( (git symbolic-ref -q HEAD || true; git rev-parse HEAD; git for-each-ref --format='%(refname) %(objectname)') 2>&1; [ \"$G0\" = \"$G1\" ] || { echo \"tests changed this repository's HEAD or refs:\"; echo \"before: $G0\" | head -5; echo \"after: $G1\" | head -5; exit 1; }\n\n\n ❯ probe/steps/steps.probe.ts:49:42\n     47| \n     48| test(\"Tree Steps example 3: own git before and after\", () => {\n     49|   expect(OWN_GIT_BEFORE + OWN_GIT_AFTER).toBe(fixture(\"builder/ownGit.…\n       |                                          ^\n     50| });\n     51| \n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\n\n\n Test Files  1 failed (1)\n      Tests  2 failed | 10 passed (12)\n\nfirst difference at char 139 (line 5) of 215/214: expected \"...l\\ncp Makefile $D/1-$S.txt 2>/dev/null\\n(\\n set -e\\n export NO_COLOR=1 CI=1\\necho hi\\n\" received \"...l\\ncp Makefile $D/1-$S.txt 2>/dev/null\\n(\\nset -e; export NO_COLOR=1 CI=1\\necho hi\\n)\"\nfirst difference at char 259 (line 2) of 407/406: expected \"...-format='%(refname) %(objectname)') 2>&1); [ \\\"$G0\\\" = \\\"$G1\\\" ] || { echo \\\"tests ch\" received \"...-format='%(refname) %(objectname)') 2>&1; [ \\\"$G0\\\" = \\\"$G1\\\" ] || { echo \\\"tests cha\"\n"
+      ],
+      "commit": "206532596e5aef111888776189d4a0c4a4aab75a",
+      "diffstat": {
+        "files": 1,
+        "insertions": 111,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "probe-dir",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "probe-dir.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "71adf382cba63f7328ce2c62bb45625b4b51d0f6",
+      "diffstat": {
+        "files": 1,
+        "insertions": 47,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "read-checks-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "read-checks-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/readChecks.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "fbd40513d0bca5a513e93d546abd70388e6b614a",
+      "diffstat": {
+        "files": 1,
+        "insertions": 82,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "steps-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "steps-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/steps.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "53d363eb2156602946d765a08d1e41e986ba7c20",
+      "diffstat": {
+        "files": 1,
+        "insertions": 64,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "compose",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "compose.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "a27118323dcd265f940ca585897420ba451a75fe",
+      "diffstat": {
+        "files": 1,
+        "insertions": 73,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "probe-dir-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "probe-dir-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/probeDir.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n\n/home/john/Documents/Work2026/MorphV2/tests/builder/probeDir.examples.test.ts\n  2:24  error  'vitestConfig' is defined but never used  @typescript-eslint/no-unused-vars\n\n✖ 1 problem (1 error, 0 warnings)\n\n== guard tests/builder/probeDir.examples.test.ts\n== own\n== eslint failed (see above); every step between it and here passed\n"
+      ],
+      "commit": "196ff0c21a34c9ae0a2934cad1b105aece1f43d4",
+      "diffstat": {
+        "files": 1,
+        "insertions": 43,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "build-acceptances",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "build-acceptances.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\nsrc/builder/buildAcceptances.ts(5,40): error TS2459: Module '\"./types.js\"' declares 'Card' locally, but it is not exported.\n",
+        "== tsc\nsrc/builder/buildAcceptances.ts(4,40): error TS2459: Module '\"./types.js\"' declares 'Card' locally, but it is not exported.\nsrc/builder/buildAcceptances.ts(4,67): error TS2305: Module '\"./types.js\"' has no exported member 'Deck'.\n"
+      ],
+      "commit": "b3ad6dbbd026ae3ca4adcca534f97dc1161eb7be",
+      "diffstat": {
+        "files": 1,
+        "insertions": 148,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "compose-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "compose-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/compose.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "9b1489130108caa7bfbe79f4aca27831ece604d4",
+      "diffstat": {
+        "files": 1,
+        "insertions": 49,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "build-acceptances-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "build-acceptances-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/buildAcceptances.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "0fcbb7b368cb1ccf76827dd4c981e213f0099655",
+      "diffstat": {
+        "files": 1,
+        "insertions": 116,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 244704,
+    "outputTokens": 44994,
+    "cost": 0.099830736,
+    "requests": 18
+  },
+  "requests": [
+    {
+      "customId": "read-checks.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791375123-zOEdn47DV3HpglBJ8ufo",
+      "inputTokens": 11033,
+      "outputTokens": 8786,
+      "cost": 0.013429716,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-checks.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791375123-o6wRSaIvm1Yz7UyOhe7c",
+      "inputTokens": 11033,
+      "outputTokens": 6548,
+      "cost": 0.009534372,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "steps.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791375123-tmzG4HPihvQdGtrzt8E3",
+      "inputTokens": 12075,
+      "outputTokens": 5599,
+      "cost": 0.012287076,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "steps.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791375215-kIY6c0kxGw1Se6wS1xMI",
+      "inputTokens": 12075,
+      "outputTokens": 7252,
+      "cost": 0.010529196,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "probe-dir.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791375353-7uO1Yuf0zWlUe8sYv5Xt",
+      "inputTokens": 10919,
+      "outputTokens": 548,
+      "cost": 0.001610268,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "probe-dir.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791375353-7FkKMBcuG76NrEU6zH9b",
+      "inputTokens": 10919,
+      "outputTokens": 624,
+      "cost": 0.002586108,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-checks-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791375353-sJ2cxyODvLbh3mgJTC9x",
+      "inputTokens": 13439,
+      "outputTokens": 807,
+      "cost": 0.003886068,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "steps-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791375361-f0eTMCUqXSHw7Wmz8L3z",
+      "inputTokens": 13282,
+      "outputTokens": 697,
+      "cost": 0.003259056,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "compose.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791375396-69GXcCQZiuArdGFiNm2v",
+      "inputTokens": 13150,
+      "outputTokens": 1077,
+      "cost": 0.004121088,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "compose.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791375396-LkKph828lfZpFrHvrGua",
+      "inputTokens": 13150,
+      "outputTokens": 1993,
+      "cost": 0.00366672,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "probe-dir-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791375396-L6Zi77KIOjr1LN07M0KB",
+      "inputTokens": 11276,
+      "outputTokens": 448,
+      "cost": 0.002328624,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "probe-dir-judge.r1.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791375438-ZPGu661crgP5NuxQuyco",
+      "inputTokens": 16882,
+      "outputTokens": 391,
+      "cost": 0.003819936,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791375452-Ri1VbUJxp6RawAEdE7to",
+      "inputTokens": 12830,
+      "outputTokens": 1562,
+      "cost": 0.004626888,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791375452-UMkVjcivAtDj7B5fTGeL",
+      "inputTokens": 12830,
+      "outputTokens": 2725,
+      "cost": 0.004608,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "compose-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791375452-EUnvM24uTebuHfj84ghf",
+      "inputTokens": 13318,
+      "outputTokens": 741,
+      "cost": 0.003376032,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances.r1.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791375506-myowNbs9EhQWXlCMis40",
+      "inputTokens": 21307,
+      "outputTokens": 1232,
+      "cost": 0.003308364,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances.r1.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791375505-QZMMfHyYXuV37xE0EFt4",
+      "inputTokens": 21307,
+      "outputTokens": 1217,
+      "cost": 0.006221556,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791375530-BVMvIm6q69Y9H0QCxt2h",
+      "inputTokens": 13879,
+      "outputTokens": 2747,
+      "cost": 0.006631668,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}
