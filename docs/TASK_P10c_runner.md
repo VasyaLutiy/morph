@@ -172,9 +172,11 @@ export interface RunDeps {
 retried **2 times** (unchanged, `buildRetry` takes attempt 1 or 2), and `input.budget.maxRetryBatches` caps the retry
 batches of **one generation**: `retryBatches` is `0` at the start of every generation (`let retryBatches = 0` inside
 the generation loop), and a retry batch runs while some failed card has been retried fewer than 2 times and
-`retryBatches < maxRetryBatches`. With the CLI's default 2, every generation gets the old runner's 2 rounds;
+`retryBatches < maxRetryBatches`; the batch takes every such card, a card of an earlier generation whose retries
+the cap stopped included (the loop over `done` is unchanged). With the CLI's default 2, every generation gets the old runner's 2 rounds;
 `maxRetryBatches 0` retries nothing. Record Run Deck 6: `[a, then b dependsOn a]`, each failing once (F4), cap 1 →
-both `written`, attempts 2, winningVariant `a.r1.v1` / `b.r1.v1`, 4 requests, commits `[a, b]` (the old run-wide cap
+both `written`, attempts 2, winningVariant `a.r1.v1` / `b.r1.v1`, 4 requests, commit hook fired with `["a.r1",
+"b.r1"]` (it gets the retry card's id, unchanged since P5) (the old run-wide cap
 left b failed after 1 attempt and 3 requests). Run Deck 7: one card, `exit 1`, cap 8, answers `c.md`, `c.r1.md`,
 `c.r2.md` (+ `c.r3.md` in the probe) → `failed`, attempts 3, earlierFailures length 2, 3 requests.
 
@@ -238,7 +240,7 @@ acceptance checks the names).
 - `deck.examples.test.ts` (7 → 9): at the end, **"Run Deck example 6: …"** and **"Run Deck example 7: …"** with the
   values of §2.2 and the record (`once` of §2.1; answers `a.md`, `a.r1.md`, `b.md`, `b.r1.md` / `c.md`, `c.r1.md`,
   `c.r2.md` written with `answerBody`; budget `{maxCards: 100, maxRetryBatches: 1 | 8, deadline: 1_000_000}`; RD 6
-  also checks `h.commits` `["a", "b"]` and `report.usageTotals.requests` 4).
+  also checks `h.commits` `["a.r1", "b.r1"]` and `report.usageTotals.requests` 4).
 
 Strings with `toBe`; a whole outcome or context with `toStrictEqual`; a literal holding a single quote goes in a
 double-quoted string. No `vi.*`, no timers, no variable named `fetch` or `Fake*`; import only what you use (eslint).

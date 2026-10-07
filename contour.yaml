@@ -786,9 +786,10 @@ System:
             adds the runnable count to cardsProcessed. A card that failed is retried: the
             budget is per card — every card may be retried 2 times, in whichever generation it
             runs — and input.budget.maxRetryBatches caps the retry batches of ONE generation:
-            retryBatches starts at 0 at every generation, and while some failed card of this
-            generation has been retried fewer than 2 times and retryBatches <
-            maxRetryBatches, a retry batch runs (retryBatches += 1) for all such cards: buildRetry(original card, retryNumber, the card's latest
+            retryBatches starts at 0 at every generation, and while some failed card has been
+            retried fewer than 2 times and retryBatches < maxRetryBatches, a retry batch runs
+            (retryBatches += 1) for all such cards (a card of an earlier generation whose
+            retries the cap stopped is included): buildRetry(original card, retryNumber, the card's latest
             Retry Context acceptanceOutput, its previousDiff) for each — so the retry
             carries the output and the diff of the same failed attempt — processGeneration
             on the retries, and a retry that is written updates the card's outcome (status
@@ -825,7 +826,7 @@ System:
               then: 'report.requests [{customId: "a.v1", model: "stub", provider: "stub", generationId: "stub-a.v1", inputTokens: 0, outputTokens: 0, cost: 0, finishReason: "stop", error: null}, the same with customId "b.v1" and generationId "stub-b.v1"] (rows of both generations, in send order)'
             - given: 'a two-generation deck on the stub [a → a.ts, then b → b.ts dependsOn a]; each acceptance fails its first attempt and passes the next through its own marker file (a: "if [ ! -f mark-a ]; then touch mark-a; exit 1; fi\ngrep -q MARK_A a.ts", b the same with mark-b and MARK_B); answers a.md, a.r1.md, b.md, b.r1.md; budget maxRetryBatches 1'
               when: "run"
-              then: 'a and b both "written", attempts 2 each, winningVariant "a.r1.v1" / "b.r1.v1", earlierFailures length 1 each; usageTotals.requests 4; the commit hook fired for a then b (the batch cap is per generation: b''s generation gets its own retry)'
+              then: 'a and b both "written", attempts 2 each, winningVariant "a.r1.v1" / "b.r1.v1", earlierFailures length 1 each; usageTotals.requests 4; the commit hook fired with "a.r1" then "b.r1" (it gets the retry card''s id); the batch cap is per generation: b''s generation gets its own retry'
             - given: 'a one-card deck on the stub, card c → c.ts with acceptance "exit 1"; answers c.md, c.r1.md, c.r2.md; budget maxRetryBatches 8'
               when: "run"
               then: 'c "failed", reason "acceptance failed", attempts 3, earlierFailures length 2; usageTotals.requests 3 (the per-card budget: 2 retries, whatever the batch cap)'

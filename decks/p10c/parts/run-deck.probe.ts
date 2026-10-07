@@ -42,7 +42,7 @@ test("Run Deck example 6: each generation gets its own retry batch under maxRetr
     expect(r.outcomes.map(row), "outcomes").toStrictEqual(["a written 2 a.r1.v1", "b written 2 b.r1.v1"]);
     expect(r.outcomes.map((o) => o.earlierFailures.length), "earlierFailures").toStrictEqual([1, 1]);
     expect(r.report.usageTotals.requests, "requests").toBe(4);
-    expect(commits, "commits").toStrictEqual(["a", "b"]);
+    expect(commits, "commits (the retry card's id)").toStrictEqual(["a.r1", "b.r1"]);
   } finally {
     t.rm();
   }
@@ -73,14 +73,14 @@ test("§2.2: maxRetryBatches 0 retries nothing in any generation", async () => {
   }
 });
 
-test("§2.2: the cap counts the batches of one generation (cap 1: one retry each, in two generations)", async () => {
+test("§2.2: the cap counts the batches of one generation; a card the cap stopped is retried in the next one", async () => {
   const t = tmpRoot("morph-p10c-");
   try {
     for (const id of ["a", "a.r1", "a.r2", "b", "b.r1", "b.r2", "c"]) t.write(id + ".md", answer("MARK"));
     const r = await runDeck(input(t, [card("a", "a.ts", "exit 1"), card("c", "c.ts", "exit 0"),
       card("b", "b.ts", "exit 1", ["c"])], 1), deps(t, []));
-    expect(r.outcomes.map(row), "outcomes").toStrictEqual(["a failed 2 null", "c written 1 c.v1", "b failed 2 null"]);
-    expect(r.report.requests?.map((q) => q.customId), "request ids").toStrictEqual(["a.v1", "c.v1", "a.r1.v1", "b.v1", "b.r1.v1"]);
+    expect(r.outcomes.map(row), "outcomes").toStrictEqual(["a failed 3 null", "c written 1 c.v1", "b failed 2 null"]);
+    expect(r.report.requests?.map((q) => q.customId), "request ids").toStrictEqual(["a.v1", "c.v1", "a.r1.v1", "b.v1", "a.r2.v1", "b.r1.v1"]);
   } finally {
     t.rm();
   }
