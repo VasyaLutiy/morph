@@ -1,0 +1,502 @@
+{
+  "deck_id": "20261007-091848-91dcbf60",
+  "completed_at": "2026-10-07T09:24:25.793",
+  "branch": "morph/20261007-091848-91dcbf60",
+  "backend_label": "glm53",
+  "generations": [
+    [
+      "build-retry",
+      "output-directive",
+      "process-generation"
+    ],
+    [
+      "build-retry-judge",
+      "output-directive-judge",
+      "process-generation-judge",
+      "run-deck",
+      "compile-card-judge"
+    ],
+    [
+      "run-deck-judge"
+    ]
+  ],
+  "batch_ids": [
+    "local-a7550454a78648e5a17654d369b1b07b",
+    "local-53e55a41c5e34677a857ca48352c3444",
+    "local-ca964936e3324a8ab0233194eb1c93ca",
+    "local-f0f5707900824457b6db619ada48ac78",
+    "local-82a2c3368efe4dd2a7120434e1ad71eb",
+    "local-71b18e7005ea4ee8b8d8d70c03d2c494"
+  ],
+  "outcomes": {
+    "build-retry": {
+      "custom_id": "build-retry",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/src/runloop/retry.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "build-retry.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "017071bdfa6c26b2b299d2646194c1e1a5c7a3d9",
+      "diffstat": [
+        {
+          "path": "src/runloop/retry.ts",
+          "insertions": 4,
+          "deletions": 1
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/runloop/retry.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "output-directive": {
+      "custom_id": "output-directive",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/src/compiler/directive.ts",
+        "/home/john/Documents/Work2026/MorphV2/tests/compiler/directive.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "output-directive.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "0dd8619c7c3474c29726e68e50077425b8f08bc7",
+      "diffstat": [
+        {
+          "path": "src/compiler/directive.ts",
+          "insertions": 23,
+          "deletions": 9
+        },
+        {
+          "path": "tests/compiler/directive.test.ts",
+          "insertions": 18,
+          "deletions": 8
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/compiler/directive.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "tests/compiler/directive.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "process-generation": {
+      "custom_id": "process-generation",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/src/runloop/types.ts",
+        "/home/john/Documents/Work2026/MorphV2/src/runloop/generation.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "process-generation.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "acb14ac55b0666134fc4e72d960567fb9ad49d8c",
+      "diffstat": [
+        {
+          "path": "src/runloop/generation.ts",
+          "insertions": 53,
+          "deletions": 15
+        },
+        {
+          "path": "src/runloop/types.ts",
+          "insertions": 11,
+          "deletions": 1
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/runloop/types.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "src/runloop/generation.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "build-retry-judge": {
+      "custom_id": "build-retry-judge",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/tests/runloop/retry.p9b.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "build-retry-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "18d890f07886c977023e2ff6c2b57e5f5797e178",
+      "diffstat": [
+        {
+          "path": "tests/runloop/retry.p9b.examples.test.ts",
+          "insertions": 49,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/runloop/retry.p9b.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "process-generation-judge": {
+      "custom_id": "process-generation-judge",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/tests/runloop/generation.p9b.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "process-generation-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "15f0e5b738ebe7784ba79a9453d9d26129a4b5a1",
+      "diffstat": [
+        {
+          "path": "tests/runloop/generation.p9b.examples.test.ts",
+          "insertions": 167,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/runloop/generation.p9b.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "run-deck": {
+      "custom_id": "run-deck",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/src/runloop/deck.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "run-deck.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "c193b3b7cfa7026cb67102b91b7a3b522fc53f44",
+      "diffstat": [
+        {
+          "path": "src/runloop/deck.ts",
+          "insertions": 44,
+          "deletions": 12
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/runloop/deck.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "compile-card-judge": {
+      "custom_id": "compile-card-judge",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/tests/compiler/compile.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "compile-card-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "15ffd5179f2401af6fd8295409947b97892b061c",
+      "diffstat": [
+        {
+          "path": "tests/compiler/compile.examples.test.ts",
+          "insertions": 4,
+          "deletions": 5
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/compiler/compile.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "output-directive-judge": {
+      "custom_id": "output-directive-judge",
+      "status": "failed",
+      "paths": [],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 3,
+      "winning_variant": null,
+      "acceptance_output": "== tsc\n== eslint\n== guard\n== own\n FAIL  tests/compiler/directive.examples.test.ts > Output Directive example 2: one target is the whole single-target text\nAssertionError: expected 'Return the complete content of src/a.ts as ONE fenced block, and nothing else:\\n\\n```\\n<the complete content of src/a.ts>\\n```\\n\\nThe opening fence may name the file\\'s language. Only the FIRST fen…' to be 'Return the complete content of src/a.ts as ONE fenced block, and nothing else:\\n\\n```\\n<the complete content of src/a.ts>\\n```\\n\\nThe opening fence may name the file\\'s language. Only the FIRST fen…' // Object.is equality\n Test Files  1 failed (1)\n      Tests  1 failed | 8 passed (9)\n",
+      "earlier_failures": null,
+      "commit": null,
+      "diffstat": null,
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/compiler/directive.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "run-deck-judge": {
+      "custom_id": "run-deck-judge",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/tests/runloop/deck.p9b.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 2,
+      "winning_variant": "run-deck-judge.r1",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\n== eslint\n== guard\n== own\n FAIL  tests/runloop/deck.p9b.examples.test.ts > Run Deck §2.2: the retry after a truncated answer has no diff block\nAssertionError: expected true to be false // Object.is equality\n Test Files  1 failed (1)\n      Tests  1 failed | 3 passed (4)\n",
+      "commit": "2be81b537e89a76292d0234fb979bc5a560a9c56",
+      "diffstat": [
+        {
+          "path": "tests/runloop/deck.p9b.examples.test.ts",
+          "insertions": 258,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/runloop/deck.p9b.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    }
+  },
+  "usage": {
+    "build-retry.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791361129-vJL3b74HjhJ4iIGnFR0V",
+      "input_tokens": 10633,
+      "output_tokens": 298,
+      "cost": 0.00485922,
+      "finish_reason": "stop"
+    },
+    "build-retry.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791361130-GVJz4n5bOqUmO5O6afAL",
+      "input_tokens": 10633,
+      "output_tokens": 345,
+      "cost": 0.00130974,
+      "finish_reason": "stop"
+    },
+    "output-directive.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791361129-38UJrqQuvZoHqR5Pc4NQ",
+      "input_tokens": 12297,
+      "output_tokens": 1007,
+      "cost": 0.00649398,
+      "finish_reason": "stop"
+    },
+    "output-directive.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791361136-2mEBLNExjENCgmX9nJYK",
+      "input_tokens": 12297,
+      "output_tokens": 834,
+      "cost": 0.002063124,
+      "finish_reason": "stop"
+    },
+    "process-generation.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791361137-Qh52MGmdeNQElwJpBGKa",
+      "input_tokens": 14296,
+      "output_tokens": 2216,
+      "cost": 0.00892944,
+      "finish_reason": "stop"
+    },
+    "process-generation.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791361146-hbjFiPLBzhlQ4L4q02rC",
+      "input_tokens": 14296,
+      "output_tokens": 2268,
+      "cost": 0.004117056,
+      "finish_reason": "stop"
+    },
+    "build-retry-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791361194-9nZJzfsFozMPWXZMFsrw",
+      "input_tokens": 10002,
+      "output_tokens": 723,
+      "cost": 0.0051552,
+      "finish_reason": "stop"
+    },
+    "output-directive-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791361194-MdIYXSkb8Zm6nwMDEmCa",
+      "input_tokens": 9675,
+      "output_tokens": 1001,
+      "cost": 0.002495604,
+      "finish_reason": "stop"
+    },
+    "run-deck.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791361210-urpQHnxP0W67ul4WmyhM",
+      "input_tokens": 13618,
+      "output_tokens": 1762,
+      "cost": 0.0080454,
+      "finish_reason": "stop"
+    },
+    "run-deck.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791361212-B3RA2UzbWayKeBRs9kdP",
+      "input_tokens": 13618,
+      "output_tokens": 1769,
+      "cost": 0.003414384,
+      "finish_reason": "stop"
+    },
+    "process-generation-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791361194-DAEmqx7kts64ZMVMJ3Np",
+      "input_tokens": 14930,
+      "output_tokens": 3242,
+      "cost": 0.007682712,
+      "finish_reason": "stop"
+    },
+    "compile-card-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791361236-r3vvUubnuiwN5MITbeOK",
+      "input_tokens": 11144,
+      "output_tokens": 1591,
+      "cost": 0.0067806,
+      "finish_reason": "stop"
+    },
+    "output-directive-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791361279-wMzlMSbxSU75YP3VBjyh",
+      "input_tokens": 15678,
+      "output_tokens": 1746,
+      "cost": 0.005650056,
+      "finish_reason": "stop"
+    },
+    "output-directive-judge.r2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791361317-Uvc8MSSC1dKI90nFAlWp",
+      "input_tokens": 15694,
+      "output_tokens": 1189,
+      "cost": 0.003389376,
+      "finish_reason": "stop"
+    },
+    "run-deck-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791361340-14Mzl4Of56PxMPrKa8ij",
+      "input_tokens": 14513,
+      "output_tokens": 4274,
+      "cost": 0.008694708,
+      "finish_reason": "stop"
+    },
+    "run-deck-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791361428-Us8WiWPYRf2su4L1hBcH",
+      "input_tokens": 20602,
+      "output_tokens": 2391,
+      "cost": 0.006906048,
+      "finish_reason": "stop"
+    }
+  },
+  "usage_totals": {
+    "input_tokens": 213926,
+    "output_tokens": 26656,
+    "cost": 0.08598664799999998,
+    "requests": 16,
+    "requests_with_usage": 16
+  },
+  "orchestrator_usage": {}
+}
