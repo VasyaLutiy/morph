@@ -10,7 +10,7 @@ TG="$HOME/MorphV2/tools/tg.sh"; [ -x "$TG" ] || TG="$HERE/tg.sh"
 STATE="$HOME/.morph-watchdog"; mkdir -p "$STATE"
 if ! tmux has-session -t morph 2>/dev/null; then
   if [ ! -f "$STATE/dead" ] || [ $(( $(date +%s) - $(stat -c %Y "$STATE/dead") )) -gt 3600 ]; then
-    "$TG" "watchdog: tmux session 'morph' is not running"; touch "$STATE/dead"; fi
+    "$TG" watchdog "tmux session 'morph' is not running" "start it: tools/vps-start.sh"; touch "$STATE/dead"; fi
   exit 0
 fi
 rm -f "$STATE/dead"
@@ -24,7 +24,7 @@ if printf '%s' "$PANE" | grep -qiE "limit reached|usage limit|rate limit|out of 
       tmux send-keys -t morph C-u
       tmux send-keys -t morph -l "Continue by docs/AUTONOMY.md from where you stopped; the usage window has reset. Post the current state to tools/tg.sh first."
       sleep 2; tmux send-keys -t morph C-m
-      "$TG" "watchdog: limit message on screen, nudged the session (nudge $N)"
+      "$TG" watchdog "Limit on screen, nudged the session" "nudge $N of 12"
     fi
   fi
 else
@@ -46,7 +46,7 @@ else
     tmux send-keys -t morph -l "Nothing has happened on this screen for 30 minutes and no run is in flight. Check the state of your agents and the run branch, then continue by docs/AUTONOMY.md from where you are; post the current state to tools/tg.sh first."
     sleep 2; tmux send-keys -t morph C-m
     touch "$STATE/stalled"
-    "$TG" "watchdog: screen unchanged for 30 min with no run in flight, nudged the session"
+    "$TG" watchdog "Stall, nudged the session" "screen unchanged 30 min · no run in flight"
   fi
 fi
 exit 0

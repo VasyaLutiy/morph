@@ -145,10 +145,16 @@ phase gets `max_tokens` ≥ 20000.
   `tools/vps-start.sh log`.
 - `tools/tg.sh "<text>"` posts to the operator's Telegram channel (token and chat id only in
   `~/.config/morph/tg.env`, written by the operator, mode 600; a missing file is a silent
-  no-op). The session posts at these milestones, one short message each, numbers included:
-  phase start (what is being cut); gate result (go, or stopped with the reason); run result
-  (written/failed, $, minutes, burned variants); merge and push done; any stop of the
-  regulation; the end of the stretch with the totals.
+  no-op). The session posts at these milestones, one message each, as
+  `tools/tg.sh <kind> "<headline>" "<numbers>"`: the kind gives the icon, the headline is the
+  gist in one line (phase and what happened), the numbers go on the second line joined by ` · `.
+  `start` 🚀 phase start (what is being cut); `gate` 🚦 gate passed (`stop` if not, with the
+  reason); `run` 🏁 run green (written, $, minutes, burned variants), `fail` ❌ run with red
+  cards; `merge` 🔀 merge and push done; `smoke` 🧪 a smoke stop; `stop` 🛑 any stop of the
+  regulation, the emergency stop included; `debt` 💸 a debt paid; `end` 🎉 the end of the
+  stretch with the totals; `info` 💬 anything else. Example:
+  `tools/tg.sh run "P8 language: run green" "8/8 written · \$0.12 · 14 min · 0 burned"`.
+  The watchdog posts as `watchdog` 🐕, the hooks below as `idle` 💤 and `ask` 🔔.
 - Claude Code hooks in `.claude/settings.json` post on `Stop` (the session stopped: finished
   or waiting for input, with its last message) and `Notification`; so an idle session is
   never silent.

@@ -37,5 +37,6 @@ if [ "$EVENT" = "stop" ] && printf '%s' "$LAST" | grep -qiE "background agent|wa
 if [ "$EVENT" = "stop" ] && tmux capture-pane -pt morph 2>/dev/null | grep -qE "tokens\s*$|Waiting for [0-9]+ background agent"; then exit 0; fi
 # "Claude is waiting for your input" is the idle notice of an empty queue, not an event.
 if [ "$EVENT" = "notification" ] && printf '%s' "$LAST" | grep -qi "waiting for your input"; then exit 0; fi
-"$HERE/tg.sh" "claude ${EVENT}: ${LAST:-(no text)}"
+if [ "$EVENT" = "stop" ]; then "$HERE/tg.sh" idle "Session stopped" "${LAST:-(no text)}"
+else "$HERE/tg.sh" ask "Session needs attention" "${LAST:-(no text)}"; fi
 exit 0

@@ -17,7 +17,7 @@ case "${1:-start}" in
     if tmux has-session -t morph 2>/dev/null; then echo "session 'morph' already runs: tools/vps-start.sh attach"; exit 0; fi
     tmux new-session -d -s morph -c "$REPO" "$REPO/tools/vps-session.sh"
     tmux pipe-pane -t morph -o "cat >> '$LOG'"
-    "$REPO/tools/tg.sh" "MorphV2 autonomous session started on $(hostname); log $LOG"
+    "$REPO/tools/tg.sh" start "MorphV2 session started on $(hostname)" "log $LOG"
     echo "started tmux session 'morph'; attach: tools/vps-start.sh attach; log: $LOG"
     ;;
   *) echo "usage: $0 [start|attach|log]"; exit 2 ;;
