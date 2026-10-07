@@ -365,3 +365,20 @@ node /tmp/v2bin-p10c2/dist/cli.js run --root . --deck decks/p10c2/deck.json --pr
 ```
 
 The merge of this phase's run closes issue #3: list C (C1–C7) is then built in full.
+
+### Run (07.10, VPS, autonomous) — cut by V2, run by the V2 binary
+
+Deck `decks/p10c2/deck.json` (V2 cut of runloop, git, cli, filtered to 8 cards by `decks/p10c2/filter.py`), run by the
+V2 binary copy in `/tmp/v2bin-p10c2` built from 36dd9aa + data (per-generation retry cap, **no `--max-retry-batches`**,
+`--deadline 2400`): run 20261007-142731, **8 / 8 written in one run, no fix**, $0.1840, 29.4 min (1762 s), 15 requests,
+243 269 in / 80 870 out tokens. Retries won `process-generation` (r1.v1; both v1 and v2 rejected) and
+`process-generation-judge` (r1.v1; v1 cut at `max_tokens` 20 000, finish `length`, the retry finished at 18 056 — not a
+failure, no fix; the next judge of this file should get ≥ 28 000). On the run branch: `git status` clean; tsc, eslint,
+`npm run build` clean; vitest **584 / 584** (the reference had 585: the judges' own test counts differ). Read once against
+§2.2: one VariantRecord per request sent, after the card is decided, verdict order corrupt → truncated → untried →
+accepted → rejected, stale for every variant of a stale card, none for a compile fault; `RunDeps.onVariant` optional,
+Run Report unchanged; Archive Run writes `answers/<variant>.request.json` (the Request: customId, model, maxTokens,
+reasoning, messages — no key, no header) and `answers/<variant>.answer.txt` when the text exists, refuses `invalid
+answer id`, "already exists" rule unchanged; the stderr line `morph run: <variant> <verdict> stage <n>[ <last>] finish
+<reason|none> chars <n|none>`, Main passes `io.stderr`. 0 defects. This run's own archive is in the old layout (the
+running binary predates the phase). The merge closes issue #3 (C1–C7 done).
