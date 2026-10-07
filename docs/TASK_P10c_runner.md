@@ -252,7 +252,7 @@ double-quoted string. No `vi.*`, no timers, no variable named `fetch` or `Fake*`
   `tests/helpers.ts`, `tests/compiler/compile.test.ts` (it checks first lines only: green on the new texts, measured).
 - `contour.yaml`, `morph-map.json`, `docs/`, `decks/`, `tests/fixtures/` — untouched by every card.
 - The 571 tests stay green except the 9 the ripple spike reddens (§1), all in the five files of §2.3 their judges
-  patch; after the run **571 − 1 + 2 + 1 + 2 + 2 = 577**.
+  patch; after the run **571 + 2 + 1 + 2 + 2 = 578** (compile +2, verify +1, generation −1 +3, deck +2).
 
 ## 3. Acceptance
 
@@ -349,7 +349,7 @@ Cross-check (dry): from `morph-lab`, `venv/bin/mrph plan --spec <repo>/contour.y
 | cards / generations | 8 (4 code, 4 judges) / 3: [compile-card, process-generation, verify-card] [compile-card-judge, process-generation-judge, run-deck, verify-card-judge] [run-deck-judge] |
 | executor bill | ≈ $0.10 nominal (≈ 14 first requests of 15–35k in / 2–8k out; ≈ 4 retries), ≤ $0.40 with a re-cut; cap $5 |
 | cards with regeneration | 2–3 of 8 (verify-card-judge: three files whole; process-generation-judge: example 9's quoting; compile-card: a fence kept somewhere) |
-| tests after the run | 577 in 61 files |
+| tests after the run | 578 in 61 files |
 | first red | compile-card: `\n` after the closing tag; process-generation: `>` instead of `>=` (tie → earlier); run-deck: the reset outside the generation loop |
 
 **Falsifiable claims:** (1) no card red on a sibling's file; (2) no judge cut off at its `max_tokens`; (3) the V2 cut
