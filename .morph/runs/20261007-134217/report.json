@@ -1,0 +1,269 @@
+{
+  "runId": "20261007-134217",
+  "completedAt": 1791381562639,
+  "branch": "morph/20261007-134217",
+  "processor": "glm53",
+  "generations": 3,
+  "outcomes": [
+    {
+      "customId": "compile-card",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "compile-card.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "eac0f84ec1c9da27e2f9d1dfd20be75d00ce2b0b",
+      "diffstat": {
+        "files": 1,
+        "insertions": 4,
+        "deletions": 11
+      }
+    },
+    {
+      "customId": "process-generation",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "process-generation.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "29552dd70786e5dfff9b737971c925a2c7d7a062",
+      "diffstat": {
+        "files": 2,
+        "insertions": 33,
+        "deletions": 11
+      }
+    },
+    {
+      "customId": "verify-card",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "verify-card.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "d44d9c1475f43347e5b3f6243497d0b914383404",
+      "diffstat": {
+        "files": 1,
+        "insertions": 4,
+        "deletions": 1
+      }
+    },
+    {
+      "customId": "compile-card-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "compile-card-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/compiler/compile.examples.test.ts\n== names tests/compiler/compile.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "bd6375ace0b81817653eb37110a07fcb4120a08d",
+      "diffstat": {
+        "files": 1,
+        "insertions": 42,
+        "deletions": 7
+      }
+    },
+    {
+      "customId": "process-generation-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "process-generation-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/runloop/generation.examples.test.ts\n== names tests/runloop/generation.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "33f5d7881a6531728602d9f9d3cb60901d38e54c",
+      "diffstat": {
+        "files": 1,
+        "insertions": 59,
+        "deletions": 4
+      }
+    },
+    {
+      "customId": "run-deck",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-deck.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "0ac9b851f867d7e23c424b6213914ee830638521",
+      "diffstat": {
+        "files": 1,
+        "insertions": 20,
+        "deletions": 10
+      }
+    },
+    {
+      "customId": "verify-card-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "verify-card-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/acceptance/verify.examples.test.ts\n== guard tests/runloop/generation.p9b.examples.test.ts\n== guard tests/runloop/deck.p9b.examples.test.ts\n== names tests/acceptance/verify.examples.test.ts\n== names tests/runloop/generation.p9b.examples.test.ts\n== names tests/runloop/deck.p9b.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "2cf20d69a039a4a83a2a1d197a7a7bfaefa1e6ae",
+      "diffstat": {
+        "files": 3,
+        "insertions": 20,
+        "deletions": 8
+      }
+    },
+    {
+      "customId": "run-deck-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-deck-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/runloop/deck.examples.test.ts\n== names tests/runloop/deck.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "869a659973c596fa40e9457792d751a0247ea37e",
+      "diffstat": {
+        "files": 1,
+        "insertions": 78,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 193740,
+    "outputTokens": 43540,
+    "cost": 0.128862672,
+    "requests": 12
+  },
+  "requests": [
+    {
+      "customId": "compile-card.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791380537-nXNAdafR94W7Fnk4nsRX",
+      "inputTokens": 13486,
+      "outputTokens": 834,
+      "cost": 0.006765,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "compile-card.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791380537-Khx7t7hGJaONLO54dMVv",
+      "inputTokens": 13486,
+      "outputTokens": 909,
+      "cost": 0.00226752,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "process-generation.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791380537-6IGaiR3nwP5sTBYe1SIF",
+      "inputTokens": 17055,
+      "outputTokens": 2419,
+      "cost": 0.01035618,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "process-generation.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791380577-FIZrqb5GWNgQKU1107ss",
+      "inputTokens": 17055,
+      "outputTokens": 2931,
+      "cost": 0.01103202,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "verify-card.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791380606-hnjTAgrsdLr6s3NuFk9Z",
+      "inputTokens": 12987,
+      "outputTokens": 802,
+      "cost": 0.00651318,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "verify-card.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791380613-Invies6Vh7mfGXG3MgjL",
+      "inputTokens": 12987,
+      "outputTokens": 1582,
+      "cost": 0.00754278,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "compile-card-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791380797-vjH3zjIocwqjRrAjE11j",
+      "inputTokens": 13769,
+      "outputTokens": 4662,
+      "cost": 0.01193682,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "process-generation-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791380797-cDRlkQEcvvlqZE5ii77n",
+      "inputTokens": 21293,
+      "outputTokens": 8853,
+      "cost": 0.02062902,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-deck.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791380797-EbeJ7rN3W5MRSMN6Xw1A",
+      "inputTokens": 15778,
+      "outputTokens": 1905,
+      "cost": 0.00914136,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-deck.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791380887-Jc9SsWCTJ2C8WYY8eJ4O",
+      "inputTokens": 15778,
+      "outputTokens": 1970,
+      "cost": 0.003842712,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "verify-card-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791380955-Bgbv0AKCRsJMePqNzECB",
+      "inputTokens": 19994,
+      "outputTokens": 10064,
+      "cost": 0.02168196,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-deck-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791381349-l6Dey6yhAPT0vlQsjzv2",
+      "inputTokens": 20072,
+      "outputTokens": 6609,
+      "cost": 0.01715412,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}
