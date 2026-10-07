@@ -868,7 +868,8 @@ compiler), а `store` и `wait` выделял в свои, хотя в запи
 | P7 | cli | argv, dispatch, один JSON, коды выхода | **e2e из бинаря `morph` на stub**; затем первый свой прогон на glm |
 | P8 | language | профили typescript/python, цели, приёмка по профилю | |
 | P9 | contour | чтение и валидация записи и map | |
-| P10 | planner | `plan --spec`, судьи, override, бюджет; **до записи Component прочитать issues с меткой `P10-planner`** (#3: контракты вызываемых Component и предусловия в срезе судьи, каркас теста из хелперов) | **переключатель dogfooding** |
+| P10a | planner + cli | `plan --spec` (record + map → deck file), судьи с контрактами вызываемых и предусловиями (#3), override, бюджет, `morph plan --out`; золотая сверка с старым mrph | **переключатель dogfooding: V2 режет** (приёмки ещё из build.py через map); колоду P10a гоняет бинарь V2 |
+| P10b | planner (acceptance) | сборщик приёмок на TS вместо `decks/tools/build.py` (#3 A1–A11, B1–B2): снимок, tsconfig карты, порядок стадий, guard, пробы, имена, исключения, frozen, own-git | build.py в архив |
 | P11 | processor (batch) | `/api/beta/batches`, submit/collect | **первая фаза, собранная V2** |
 | P12 | primer | дерево, владение по трейлерам, архив, markdown | |
 | P13 | scout | протокол, бюджеты, цикл, seed из primer, plan --from-scout | |

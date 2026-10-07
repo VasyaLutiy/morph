@@ -458,7 +458,7 @@ printed). `--max-retry-batches 8` is the workaround of issue #3 C2 (the budget i
 | quantity | prediction |
 |---|---|
 | cards / generations | 12 (6 code, 6 judges) / 6: [render] [cut-component, cut-judges, render-judge] [plan-spec, cut-component-judge, cut-judges-judge] [plan-command, plan-spec-judge] [parse-command] [parse-command-judge, plan-command-judge] |
-| executor bill | ≈ $0.25 nominal (18 first requests — 6 code × 2 variants + 6 judges — of ≈ 15–25k in / ≈ 2–4k out at $0.31/M in, $1.13/M out, + ≈ 50 % retries carrying their acceptance), ≤ $0.60 with a re-cut; cap $5 |
+| executor bill | ≈ $0.33 nominal (18 first requests — 6 code × 2 variants + 6 judges — of ≈ 20–30k in (slice + targets 48–74 KB, instruction 3–11k chars) / ≈ 2–5k out, ≈ 400k in / 72k out; + ≈ 9 retries carrying their 18–29k-char acceptance, ≈ 270k in / 36k out; at $0.31/M in, $1.13/M out), ≤ $0.70 with a re-cut; cap $5 |
 | cards with regeneration | 4 of 12 (cut-component: override `null` vs absent, the slice of an empty cut; render: a block order or a stray newline; plan-command-judge: two files; parse-command: the repeat exception) |
 | tests after the run | 480 + 4 new judge files (≥ 30 example tests) + planCommand file; parse 19 (+3), main 5 |
 | first red | render: whitespace of an example, the Data block of another Component; cut: `??` on `null` fields, dependsOn renaming inside an override list; judges: the `·` separator, a callee listed twice; plan: the cycle message lists all pending ids, the spec filter on extras; plan-command: the order of the four failures; parse: `--component` given twice refused |
@@ -477,4 +477,35 @@ behaviour on the first V2-run phase (retries, stage reached), the row of `docs/M
 
 ### Gate (preparation)
 
-(filled at the gate)
+07.10, on the laptop, by the preparing orchestrator (Opus 5.5); the operator's word for P10. Dry `mrph plan
+--spec --component planner --component cli --judge` exit 0 (20 cards; the 12 of P10a added with `deck add`);
+`mrph deck check` 0 errors / 0 warnings / 0 hazards; `decks/tools/v2deck.py` → `decks/p10/v2deck.json`,
+`node dist/cli.js deck check` 0 errors / 0 warnings, generations `[render] [cut-component, cut-judges,
+render-judge] [cut-component-judge, cut-judges-judge, plan-spec] [plan-command, plan-spec-judge]
+[parse-command] [parse-command-judge, plan-command-judge]`.
+
+Scratch worktree (a reference of the six code targets and the six judge files shaped as the probes, deleted
+afterwards), cards run in deck order, each accepted card committed before the next: **12 of 12 chains green,
+6.4–9.2 s each** (85 s in all; limit 250 s). The final reference tree: `tsc`, `eslint src tests` clean,
+`vitest run` **528 / 528** in 53 files (480 + 48). Ripple spike: exactly Parse Command 4, 8 and Main 4, 5 of
+the 480 go red without the judges' patches.
+
+Golden cross-check: the old mrph on `ledger.yaml` gives 17 cards / 5 generations (`ledger.golden.json`) and
+the reference V2 the same ids, dependsOn, generations and externalDependsOn; the reference binary's `morph
+plan --spec contour.yaml --map morph-map.json --component planner --component cli --judge` equals the old
+mrph's dry cut of the same on all 20 cards in ids, dependsOn, generations, targets, slices, acceptances and
+max_tokens.
+
+Typed one-line throwing stubs (`Error: stub <fn> <args>`; types.ts as specified; parse.ts = the P7 file;
+main.ts with the dispatch): every code card red at the probe — render 12 of 13, cut-component 8 of 9,
+cut-judges 5 of 6, plan-spec 9 of 10, plan-command 5 of 6 (the types test passes on typed stubs);
+parse-command 7 of 19 (Parse Command 8–11, Plan Command 5 and two plan rows; the 12 P7 tests pass on the old
+parser, example 4 is reworded and true on it); every new record example red with a readable line; chains
+4.0–4.8 s. Judges with their new file absent: red at eslint and the guard (2.3–3.0 s); the parse judge on
+the HEAD file: red at the guard (16 tests, expected 19..23, five literals missing). Mutation check: 45
+single-rule mutations of the reference (render 13, cut 10, judges 8, plan 7, planCommand 4, parse 3) — 45 of
+45 killed by the card's probe (4 survivors of the first pass closed by new probe rows).
+
+Max slice + targets (reference in place): plan-spec-judge 73 936 bytes (gate 200 KB). Reference answers:
+code 4.3–7.6 KB (≈ 1 230–2 170 tokens) against 12 000–16 000; judge files 5–12 KB against 20 000–28 000.
+Forecast ≈ $0.33 (≤ $1). Gate holds; the run waits for the operator.
