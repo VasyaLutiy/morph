@@ -367,7 +367,7 @@ System:
               when: "verified"
               then: 'accepted {variant: "c.v1"}; results has exactly one entry, c.v1 with exit 0: c.v2 is never run'
         - name: Build Attempt Diff
-          description: A unified diff of the failed variant against the snapshot, capped at 6000 chars.
+          description: A unified diff of the failed variant against the snapshot, each file's section capped at 6000 chars, its head and tail kept.
           behavior: >
             buildAttemptDiff(before, after): for each path of after in its key order
             whose lines differ from before (a missing or null before is an absent
@@ -375,8 +375,14 @@ System:
             hunks of a minimal line diff with 3 lines of context, "@@ -l,n +l,n @@"
             with both counts always printed; changes 6 or fewer unchanged lines apart
             share one hunk. Lines are split on \n, a final \n ends the last line. No
-            change at all gives "". Over 6000 chars: the first 6000 - m - 1 chars, a
-            \n, then m = "[diff clipped: <total> chars]\n", exactly 6000 chars.
+            change at all gives "". Each file's section (its two header lines and its
+            hunks) is clipped on its own, and the sections are concatenated in key
+            order: a section over 6000 chars keeps whole lines from its start while
+            they fit in 3000 - u chars and whole lines from its end (never one of the
+            head's) while they fit in 3000 - u chars, u being the length of "... [<the
+            section's length> characters elided] ..."; between them the line "... [<n>
+            characters elided] ...\n", n = the section's length minus the kept head
+            and tail.
           examples:
             - given: 'before {src/a.ts: "line 1\n" … "line 10\n" (10 lines)}; after the same with line 5 = "LINE 5"'
               when: "diffed"
@@ -387,10 +393,14 @@ System:
             - given: 'before {t: "line 1\n" … "line 20\n"}; after the same with line 2 = "LINE 2" and line 18 = "LINE 18"'
               when: "diffed"
               then: 'two hunks: "@@ -1,5 +1,5 @@" (line 1, -line 2, +LINE 2, lines 3-5) and "@@ -15,6 +15,6 @@" (lines 15-17, -line 18, +LINE 18, lines 19-20)'
-            - given: 'before {src/big.ts: null}; after {src/big.ts: the 400 lines "export const v000 = 0;" … "export const v399 = 399;"} (9890 chars; the full diff is 10339 chars)'
+            - given: 'before {src/big.ts: null}; after {src/big.ts: the 400 lines "export const v000 = 0;" … "export const v399 = 399;"} (9890 chars; its section is 10339 chars)'
               when: "diffed"
-              then: 'exactly 6000 chars, starting "--- /dev/null\n+++ b/src/big.ts\n@@ -0,0 +1,400 @@\n+export const v000 = 0;\n" and ending "\n[diff clipped: 10339 chars]\n"'
+              then: 'exactly 5952 chars, 234 lines: the first 119 lines of the section ("--- /dev/null\n+++ b/src/big.ts\n@@ -0,0 +1,400 @@\n+export const v000 = 0;\n" … "+export const v115 = 115;\n"), then "... [4420 characters elided] ...\n", then its last 114 lines ("+export const v286 = 286;\n" … "+export const v399 = 399;\n")'
               ref: "tests/fixtures/acceptance/bigAfter.txt (the after content)"
+            - given: 'before {src/a.ts: null, src/b.ts: null}; after {src/a.ts: the 400 lines of example 4, src/b.ts: the same 400 lines} (two sections of 10337 chars, 20674 together)'
+              when: "diffed"
+              then: 'exactly 11900 chars: two sections of 5950 chars, each clipped on its own; each holds its 3 header lines, "+export const v000 = 0;\n" … "+export const v115 = 115;\n", "... [4420 characters elided] ...\n" and "+export const v286 = 286;\n" … "+export const v399 = 399;\n"; the second starts at char 5950 with "--- /dev/null\n+++ b/src/b.ts\n" (the tail of src/a.ts is kept)'
+              ref: "tests/fixtures/acceptance/bigAfter.txt (the after content of both)"
       dataObjects:
         - name: Target Snapshot
           description: The bytes of a card's targets before any variant is written.
@@ -643,10 +653,11 @@ System:
             written card. A compile fault or stale inputs → {acceptanceOutput: the outcome's
             acceptanceLog, previousDiff: null}. A rejected card → the LAST variant whose
             acceptance ran (its verify result has a diff that is not null) gives
-            {acceptanceOutput: that variant's log, previousDiff: its diff, or null when the
-            diff is ""}; when no variant ran (every answer corrupt or truncated) →
-            {acceptanceOutput: the last result's log, previousDiff: null}. The log and the
-            diff of the retry always come from the same attempt.
+            {acceptanceOutput: that variant's log, previousDiff: its diff, "" when the
+            attempt changed nothing}; when no variant ran (every answer corrupt or
+            truncated) → {acceptanceOutput: the last result's log, previousDiff: null}. The
+            log and the diff of the retry always come from the same attempt, and
+            previousDiff is null exactly when no acceptance ran.
           steps:
             - uses: compiler
             - uses: processor
@@ -676,36 +687,52 @@ System:
             - given: 'a stub config (model "stub"); cards [a → out/a.ts with model null, b → out/b.ts with model "glm-x"], variants 1, both accepted'
               when: "processed"
               then: 'requests [{customId: "a.v1", model: "stub", provider: "stub", generationId: "stub-a.v1", inputTokens: 0, outputTokens: 0, cost: 0, finishReason: "stop", error: null}, {customId: "b.v1", model: "glm-x", provider: "stub", generationId: "stub-b.v1", inputTokens: 0, outputTokens: 0, cost: 0, finishReason: "stop", error: null}]; retryContexts {}'
+            - given: 'a stub config; out/a.ts holds ''export const x = "ONE";\n''; card a → out/a.ts, variants 1, acceptance ''grep -q PASS out/a.ts || { echo "red: $(cat out/a.ts)"; exit 1; }''; a.v1.md a fenced ts block holding ''export const x = "ONE";\n'' (the file unchanged)'
+              when: "processed"
+              then: 'outcome a status "failed", acceptanceLog ''red: export const x = "ONE";\n''; retryContexts {a: {acceptanceOutput: ''red: export const x = "ONE";\n'', previousDiff: ""}} (the acceptance ran on an attempt that changed nothing: the empty diff, not null)'
         - name: Build Retry
-          description: The retry card <base>.r<n> carrying the acceptance output and the previous attempt diff; at most 2 retries per card; a run-wide cap on retry batches is enforced by Run Deck.
+          description: The retry card <base>.r<n> carrying the acceptance command, its output and the previous attempt diff, or the word that the answer was discarded unread; at most 2 retries per card; a run-wide cap on retry batches is enforced by Run Deck.
           behavior: >
             buildRetry(card, attempt, acceptanceOutput, previousDiff) returns a NEW Card.
             attempt must be 1 or 2, else it throws Error "buildRetry: attempt must be 1 or
             2". The base id is card.customId with a trailing ".r<digits>" removed; the new
             customId is "<base>.r<attempt>". intent, targets, contextSlice, acceptance,
             model, maxTokens, reasoning and variants are copied from `card`; dependsOn is
-            []. instruction = card.instruction + "\n\nYour previous attempt failed its
-            acceptance. Fix exactly what the acceptance reports and return the whole file
-            again.\nAcceptance output:\n" + acceptanceOutput, and when previousDiff is not
-            null, + "\n\nYour previous attempt (rejected):\n" + previousDiff + "\n\nThe diff
-            above is your own previous edit: correct it where it went wrong instead of
-            rewriting the files from scratch."
+            []. previousDiff null means the acceptance never ran (the answer was discarded
+            unread, the card did not compile or its inputs went stale); a string, ""
+            included, means it ran. instruction = card.instruction + "\n\n<acceptance_output>\n"
+            + header + "\n" + acceptanceOutput + "\n</acceptance_output>\n" + closing, where
+            it ran → header "A previous attempt failed its acceptance check (`" +
+            card.acceptance + "`):" and closing "Please fix the issues and produce the
+            complete corrected file."; previousDiff null → header "A previous attempt was
+            discarded before acceptance could run:" and closing "Produce the complete file
+            again, from the context given above.". When previousDiff is a non-empty string,
+            + "\n\n<previous_attempt_diff>\nYour previous attempt changed the file like this
+            (unified diff):\n" + previousDiff + "\n</previous_attempt_diff>\nThe diff above is
+            YOUR OWN previous edit, not a proposed change: correct it where it went wrong
+            rather than rewriting the file from scratch."
           steps:
             - reads: Card
             - produces: Card
           examples:
-            - given: 'card {customId: "c", instruction: "Write c."}; attempt 1; acceptanceOutput "exit 1\n"; previousDiff "@@ -1,1 +1,1 @@\n-old\n+new"'
+            - given: 'card {customId: "c", instruction: "Write c.", acceptance: "grep -q MARK src/c.ts"}; attempt 1; acceptanceOutput "exit 1\n"; previousDiff "@@ -1,1 +1,1 @@\n-old\n+new"'
               when: "built"
-              then: 'customId "c.r1"; dependsOn []; instruction contains "Acceptance output:\nexit 1" and "Your previous attempt (rejected):\n@@ -1,1 +1,1 @@"; targets/contextSlice/acceptance/variants copied'
+              then: 'customId "c.r1"; dependsOn []; instruction contains "A previous attempt failed its acceptance check (`grep -q MARK src/c.ts`):\nexit 1\n" and "Your previous attempt changed the file like this (unified diff):\n@@ -1,1 +1,1 @@"; targets/contextSlice/acceptance/variants copied'
             - given: 'card {customId: "c.r1", instruction: "Write c."}; attempt 2; acceptanceOutput "still red"; previousDiff null'
               when: "built"
-              then: 'customId "c.r2" (the trailing .r1 stripped from the base); instruction ends with "Acceptance output:\nstill red" and has no "Your previous attempt" section'
+              then: 'customId "c.r2" (the trailing .r1 stripped from the base); instruction ends with "A previous attempt was discarded before acceptance could run:\nstill red\n</acceptance_output>\nProduce the complete file again, from the context given above." and has no "<previous_attempt_diff>" section'
             - given: 'any card; attempt 3'
               when: "built"
               then: 'throws Error "buildRetry: attempt must be 1 or 2"'
-            - given: 'card {customId: "c", instruction: "Write c."}; attempt 1; acceptanceOutput "red\n"; previousDiff "@@ -1,1 +1,1 @@\n-a\n+b\n"'
+            - given: 'card {customId: "c", instruction: "Write c.", acceptance: "grep -q MARK src/c.ts"}; attempt 1; acceptanceOutput "red\n"; previousDiff "@@ -1,1 +1,1 @@\n-a\n+b\n"'
               when: "built"
-              then: 'instruction is exactly "Write c.\n\nYour previous attempt failed its acceptance. Fix exactly what the acceptance reports and return the whole file again.\nAcceptance output:\nred\n\n\nYour previous attempt (rejected):\n@@ -1,1 +1,1 @@\n-a\n+b\n\n\nThe diff above is your own previous edit: correct it where it went wrong instead of rewriting the files from scratch."'
+              then: 'instruction is exactly "Write c.\n\n<acceptance_output>\nA previous attempt failed its acceptance check (`grep -q MARK src/c.ts`):\nred\n\n</acceptance_output>\nPlease fix the issues and produce the complete corrected file.\n\n<previous_attempt_diff>\nYour previous attempt changed the file like this (unified diff):\n@@ -1,1 +1,1 @@\n-a\n+b\n\n</previous_attempt_diff>\nThe diff above is YOUR OWN previous edit, not a proposed change: correct it where it went wrong rather than rewriting the file from scratch."'
+            - given: 'the card of example 4; attempt 1; acceptanceOutput "answer truncated"; previousDiff null'
+              when: "built"
+              then: 'instruction is exactly "Write c.\n\n<acceptance_output>\nA previous attempt was discarded before acceptance could run:\nanswer truncated\n</acceptance_output>\nProduce the complete file again, from the context given above." (the acceptance command is not named, no diff block)'
+            - given: 'the card of example 4; attempt 1; acceptanceOutput "red\n"; previousDiff "" (the acceptance ran on an attempt that changed nothing)'
+              when: "built"
+              then: 'instruction is exactly "Write c.\n\n<acceptance_output>\nA previous attempt failed its acceptance check (`grep -q MARK src/c.ts`):\nred\n\n</acceptance_output>\nPlease fix the issues and produce the complete corrected file." (no diff block)'
         - name: Run Deck
           description: Generations in order (layerGenerations), budget checked at each generation boundary (maxCards, maxRetryBatches, deadline), the Run Report produced at the end.
           behavior: >
@@ -752,7 +779,7 @@ System:
               then: 'a "written"; b "budget-exceeded", reason "deadline"; report.generations 2'
             - given: 'an openrouter config {id "glm", model "z-ai/glm-5.3", apiKey "k", baseUrl "https://openrouter.ai/api/v1", concurrency 1, maxRetries 0} over a fakeFetch whose route "https://openrouter.ai/api/v1/chat/completions" always answers {id: "gen-1", provider: "Novita", choices: [{message: {role: "assistant", content: a fenced ts block holding ''export const x = "MARK";\n''}, finish_reason: "stop"}], usage: {prompt_tokens: 100, completion_tokens: 20, cost: 0.001}}; a one-card deck a → out/a.ts (absent), variants 1, acceptance ''if [ -f seen ]; then grep -q MARK out/a.ts; else touch seen; echo first-red; exit 1; fi''; budget maxRetryBatches 1'
               when: "run"
-              then: 'a "written", attempts 2, earlierFailures ["first-red\n"]; two fetch calls; the last message of the second call''s body contains "Acceptance output:\nfirst-red\n" and "Your previous attempt (rejected):\n--- /dev/null\n+++ b/out/a.ts\n@@ -0,0 +1,1 @@\n+export const x = \"MARK\";\n", the first call''s holds no "Your previous attempt"; report.requests [{customId: "a.v1", model: "z-ai/glm-5.3", provider: "Novita", generationId: "gen-1", inputTokens: 100, outputTokens: 20, cost: 0.001, finishReason: "stop", error: null}, the same row with customId "a.r1.v1"]; usageTotals {inputTokens: 200, outputTokens: 40, cost: 0.002, requests: 2}'
+              then: 'a "written", attempts 2, earlierFailures ["first-red\n"]; two fetch calls; the last message of the second call''s body contains "A previous attempt failed its acceptance check (`if [ -f seen ]; then grep -q MARK out/a.ts; else touch seen; echo first-red; exit 1; fi`):\nfirst-red\n\n</acceptance_output>" and "<previous_attempt_diff>\nYour previous attempt changed the file like this (unified diff):\n--- /dev/null\n+++ b/out/a.ts\n@@ -0,0 +1,1 @@\n+export const x = \"MARK\";\n\n</previous_attempt_diff>", the first call''s holds no "<acceptance_output>"; report.requests [{customId: "a.v1", model: "z-ai/glm-5.3", provider: "Novita", generationId: "gen-1", inputTokens: 100, outputTokens: 20, cost: 0.001, finishReason: "stop", error: null}, the same row with customId "a.r1.v1"]; usageTotals {inputTokens: 200, outputTokens: 40, cost: 0.002, requests: 2}'
             - given: 'a two-generation deck [a, then b dependsOn a] on the stub, both accepted at once'
               when: "run"
               then: 'report.requests [{customId: "a.v1", model: "stub", provider: "stub", generationId: "stub-a.v1", inputTokens: 0, outputTokens: 0, cost: 0, finishReason: "stop", error: null}, the same with customId "b.v1" and generationId "stub-b.v1"] (rows of both generations, in send order)'
@@ -768,7 +795,7 @@ System:
           schema: "{ customId: string, model: string, provider: string | null, generationId: string | null, inputTokens: number, outputTokens: number, cost: number | null, finishReason: string | null, error: string | null }"
         - name: Retry Context
           description: What the retry of a failed card is told — the acceptance output and the diff of the same failed attempt.
-          schema: "{ acceptanceOutput: string, previousDiff: string | null }"
+          schema: "{ acceptanceOutput: string, previousDiff: string | null } — previousDiff is the diff of an attempt whose acceptance ran (\"\" when it changed nothing), null when no acceptance ran"
 
     # ---------------------------------------------------------------- P6
     - name: git

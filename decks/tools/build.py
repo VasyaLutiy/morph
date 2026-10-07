@@ -19,6 +19,10 @@ shared steps here. Hand-written data, never product code.
                                            git and no spawn in the tests; judges capped at examples + 8)
     python3 decks/tools/build.py p9     -> the same for the P9 cards (Component contour; pure, no node:* in src,
                                            yaml only in src/contour/load.ts; judges capped at examples + 8)
+    python3 decks/tools/build.py p9b    -> the P9b patch cards (runloop + compiler); do not re-run after p9c
+    python3 decks/tools/build.py p9c    -> the P9c patch cards (runloop + acceptance; judges patch one or two
+                                           files each, names kept per file; every failed vitest step also
+                                           prints where two long strings first differ)
 
 Paths are relative to the repository root (the parent of decks/); nothing here points
 outside the tree.
@@ -30,6 +34,9 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 GUARD = os.path.join(HERE, "guard.mjs")
+FIRSTDIFF = os.path.join(HERE, "firstdiff.mjs")
+# P9c on: a failed vitest step also prints where the two sides of a long comparison first differ
+LOCATE = {"on": False}
 CONVENTIONS = "docs/CONVENTIONS.md"
 FROZEN = "contour.yaml morph-map.json docs decks tests/fixtures"
 
@@ -88,14 +95,18 @@ def probe_dir(card, parts, probe_file=None, exclude=()):
          + heredoc("$P/guard.mjs", read(GUARD), "MORPH_GUARD_EOF")
          + heredoc("$P/probe.config.mts", conf, "MORPH_CONF_EOF")
          + heredoc("$P/tsconfig.card.json", tsconf, "MORPH_TSCONF_EOF"))
+    if LOCATE["on"]:
+        s += heredoc("$P/firstdiff.mjs", read(FIRSTDIFF), "MORPH_FIRSTDIFF_EOF")
     if probe_file:
         s += heredoc(f"$P/{card}.probe.ts", read(os.path.join(parts, probe_file)), "MORPH_PROBE_EOF")
     return s
 
 
 def vt(args):
+    locate = "; node $P/firstdiff.mjs $P/vt.log" if LOCATE["on"] else ""
     return (f"node_modules/.bin/vitest run {args} --reporter=dot > $P/vt.log 2>&1 || "
-            "{ grep -E '^ FAIL |Error|AssertionError|^ +Tests |^ +Test Files |expected|received' $P/vt.log | head -80; exit 1; }\n")
+            "{ grep -E '^ FAIL |Error|AssertionError|^ +Tests |^ +Test Files |expected|received' $P/vt.log | head -80"
+            + locate + "; exit 1; }\n")
 
 
 def tsc_probe():
@@ -351,6 +362,42 @@ P9B_JUDGE_OWN = {"process-generation-judge": 11, "build-retry-judge": 11, "run-d
 # their judges rewrite them (gen 2); deselected from every full step, each judge runs its own file
 P9B_KNOWN_RED = ["tests/compiler/compile.examples.test.ts", "tests/compiler/directive.examples.test.ts"]
 
+P9C_TEST_DIR = "tests/runloop"
+# docs/TASK_P9c_retry.md §3: every judge patches its file(s); per file the examples it holds (min), the cap
+# (max = min + 8, or + 12 for the P3 file), the literals of the new texts and the HEAD test names it may drop
+P9C_RD = "A previous attempt failed its acceptance check (`if [ -f seen ]; then grep -q MARK out/a.ts; else touch seen; echo first-red; exit 1; fi`):"
+P9C_JUDGE_FILES = {
+    "build-attempt-diff-judge": [
+        {"file": "tests/acceptance/diff.examples.test.ts", "min": 5, "max": 17,
+         "lits": ["... [4420 characters elided] ...", "5952", "11900", "src/b.ts", "bigAfter.txt", "Build Attempt Diff example 5"],
+         "drop": ["Build Attempt Diff example 4: a new 400-line file is clipped to exactly DIFF_CAP"]}],
+    "build-retry-judge": [
+        {"file": "tests/runloop/retry.examples.test.ts", "min": 3, "max": 11,
+         "lits": ["A previous attempt failed its acceptance check (`grep -q MARK src/c.ts`):",
+                  "A previous attempt was discarded before acceptance could run:", "c.r2",
+                  "buildRetry: attempt must be 1 or 2"],
+         "drop": []},
+        {"file": "tests/runloop/retry.p9b.examples.test.ts", "min": 3, "max": 11,
+         "lits": ["The diff above is YOUR OWN previous edit, not a proposed change: correct it where it went wrong rather "
+                  "than rewriting the file from scratch.", "Produce the complete file again, from the context given above.",
+                  "Please fix the issues and produce the complete corrected file.", "</previous_attempt_diff>",
+                  "Build Retry example 5", "Build Retry example 6"],
+         "drop": ["Build Retry: previousDiff null has no diff block and no closing sentence",
+                  "Build Retry: an empty string diff is not null and gets the block"]}],
+    "process-generation-judge": [
+        {"file": "tests/runloop/generation.p9b.examples.test.ts", "min": 5, "max": 13,
+         "lits": ["Process Generation example 8", 'previousDiff: ""'],
+         "drop": ["Process Generation own: an attempt that changed nothing gets the block-less context (empty diff is null)"]}],
+    "run-deck-judge": [
+        {"file": "tests/runloop/deck.p9b.examples.test.ts", "min": 2, "max": 13,
+         "lits": [P9C_RD, "<previous_attempt_diff>", "A previous attempt was discarded before acceptance could run:"],
+         "drop": []}],
+}
+P9C_JUDGE_EXAMPLES = {k: sum(f["min"] for f in v) for k, v in P9C_JUDGE_FILES.items()}
+# the five files that pin the old behaviour: red from their code card (gen 1) until their judge patches them
+# (gen 2); deselected from every full step, each judge runs its own file(s)
+P9C_KNOWN_RED = [f["file"] for v in P9C_JUDGE_FILES.values() for f in v]
+
 # one phase = the cards of one Component in morph-map.json (judges are <code>-judge); the
 # generation layering and the sibling exclusion are computed within the phase only.
 # smoke: whether a code card writes its own smoke test (P1-P2 yes; from P3 a code card covered
@@ -383,6 +430,13 @@ PHASES = {
                         "build-retry-judge", "output-directive-judge", "compile-card-judge", "run-deck-judge"],
             "smoke_dirs": {"output-directive": "tests/compiler"}, "full_exclude": P9B_KNOWN_RED,
             "keep_names": ["compile-card-judge"]},
+    # P9c patches two Components: explicit members (run-deck-judge has no code card in the deck: it follows
+    # build-retry), the judges patch per-file specs, the known-red files are deselected, firstdiff is on
+    "p9c": {"parts": "p9c", "test_dir": P9C_TEST_DIR, "examples": P9C_JUDGE_EXAMPLES, "literals": {},
+            "smoke": False, "judge_files": P9C_JUDGE_FILES, "locate": True,
+            "members": ["build-attempt-diff", "build-retry", "process-generation", "build-attempt-diff-judge",
+                        "build-retry-judge", "process-generation-judge", "run-deck-judge"],
+            "full_exclude": P9C_KNOWN_RED},
 }
 
 
@@ -426,9 +480,12 @@ def full_args(exclude=()):
     return " ".join(["--passWithNoTests"] + [f"--exclude {x}" for x in exclude])
 
 
-def names_kept(test):
-    """A patched test file keeps every test name it had at HEAD (docs/TASK_P9b_runloop.md §3)."""
-    return ("echo '== names'; git show HEAD:" + test + " | grep -oE '(test|it)\\(\"[^\"]+\"' | sed -E 's/^(test|it)\\(//' > $P/names; "
+def names_kept(test, drop=()):
+    """A patched test file keeps every test name it had at HEAD (docs/TASK_P9b_runloop.md §3), except the
+    names its spec replaces (docs/TASK_P9c_retry.md §3)."""
+    skip = "".join(" | grep -vxF " + json.dumps('"' + d + '"') for d in drop)
+    return ("echo '== names " + test + "'; git show HEAD:" + test + " | grep -oE '(test|it)\\(\"[^\"]+\"' | sed -E 's/^(test|it)\\(//'"
+            + skip + " > $P/names || true; "
             "while IFS= read -r n; do grep -qF \"$n\" " + test + " || { echo \"test removed: $n\"; exit 1; }; done < $P/names\n")
 
 
@@ -483,10 +540,29 @@ def judge_acceptance(card, targets, siblings, parts, phase="p1", examples=P1_JUD
     return wrap(card, phase, targets, body)
 
 
+def judge_files_acceptance(card, files, siblings, phase, exclude=()):
+    """A judge that patches one or more test files (P9c): per file its guard bounds, literals and kept
+    names; then its own files together, the full suite, frozen, untracked."""
+    targets = [f["file"] for f in files]
+    body = probe_dir(card, None, None, exclude=siblings) + tsc_probe()
+    body += "echo '== eslint'; node_modules/.bin/eslint " + " ".join(targets) + "\n"
+    for n, f in enumerate(files):
+        body += heredoc(f"$P/lits{n}.json", json.dumps(f["lits"]), "MORPH_LITS_EOF")
+        body += f"echo '== guard {f['file']}'; node $P/guard.mjs tests {f['file']} {f['min']} {f['max']} $P/lits{n}.json\n"
+    for f in files:
+        body += names_kept(f["file"], f["drop"])
+    body += ("echo '== own'; " + vt(" ".join(targets))
+             + "echo '== full'; " + vt(full_args(exclude))
+             + "echo '== frozen'; " + frozen()
+             + untracked(targets))
+    return wrap(card, phase, targets, body)
+
+
 def build_phase(phase):
     """Inject the acceptance of every card of ``phase`` (its judges and their code cards)
     into morph-map.json; the other phases' cards are left byte for byte."""
     spec = PHASES[phase]
+    LOCATE["on"] = spec.get("locate", False)
     parts = os.path.join(ROOT, "decks", spec["parts"], "parts")
     with open(MAP, encoding="utf-8") as fh:
         doc = json.load(fh)
@@ -502,7 +578,11 @@ def build_phase(phase):
         siblings = [t for other, o in cards.items() if other != cid and gen[other] == gen[cid]
                     for t in o["targets"]]
         exclude = spec.get("full_exclude", ())
-        if cid.endswith("-judge"):
+        if cid in spec.get("judge_files", {}):
+            files = spec["judge_files"][cid]
+            assert [f["file"] for f in files] == targets, (cid, targets)
+            c["acceptance"] = judge_files_acceptance(cid, files, siblings, phase, exclude)
+        elif cid.endswith("-judge"):
             c["acceptance"] = judge_acceptance(cid, targets, siblings, parts, phase,
                                                spec["examples"], spec["literals"], spec.get("own_git", False),
                                                spec.get("own", {}).get(cid, 12), exclude,
@@ -524,7 +604,8 @@ def build_phase(phase):
 BUILDERS = {"p0": build_p0, "p1": lambda: build_phase("p1"), "p2": lambda: build_phase("p2"),
             "p3": lambda: build_phase("p3"), "p4": lambda: build_phase("p4"), "p5": lambda: build_phase("p5"),
             "p6": lambda: build_phase("p6"), "p7": lambda: build_phase("p7"),
-            "p8": lambda: build_phase("p8"), "p9": lambda: build_phase("p9"), "p9b": lambda: build_phase("p9b")}
+            "p8": lambda: build_phase("p8"), "p9": lambda: build_phase("p9"), "p9b": lambda: build_phase("p9b"),
+            "p9c": lambda: build_phase("p9c")}
 
 
 def main(argv):
