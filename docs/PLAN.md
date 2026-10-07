@@ -873,12 +873,14 @@ compiler), а `store` и `wait` выделял в свои, хотя в запи
 | P10b2 | cli (+ builder) | `morph plan --checks`: чтение checks, guard, локатора и проб; checks на фазу; сквозная золотая сверка; скелет судьи | build.py в архив |
 | P10c | runloop + compiler + git (runner) | паритет бегунка, issue #3 C2–C7: бюджет повторов на карту (не на прогон; `--max-retry-batches 8` уходит), контекст повтора от варианта, дошедшего дальше всех, сырые ответы и сообщения запроса в `.morph/runs/<id>/answers/` + строка stderr на вариант, срез в `<file_contents path=…>` вместо блоков кода, свой таймаут приёмки 300 с, текст обрезанного ответа как у старого | после smoke P10b2; метка `P10c-runner` |
 | P11 | processor (batch) | `/api/beta/batches`, submit/collect | **первая фаза, собранная V2** после переключения |
+| P11b | processor + runloop + git + cli (batch) | P11b1: архив по решению оператора (ответы в git, копии запросов gzip в `requests/` под .gitignore), стоимость и id батча в отчёте, `.morph/batches/<id>.json`, ожидание батча 1 ч, отмена брошенного батча, дедлайн перед каждым повтором (issue #4); P11b2: `morph submit` / `morph collect` | P11b1 — первая фаза на процессоре ds (07.10) |
+| P11c | runloop + acceptance + cli + git + cards (runner hardening) | ревью кода 07.10, issue #5 (метка `P11c-runner`): архив при брошенной ошибке, разблокировка зависимых после позднего повтора, ключи не попадают в env приёмки (обязательны HIGH 1–2 и утечка ключа 5), сигналы, id `.r<n>`, null acceptance, дифф O(n·m), `..` и пустая колода | перед P12, который читает архивы; P11b2 после P11c |
 | P12 | primer | дерево, владение по трейлерам, архив, markdown | |
 | P13a | scout | протокол READ/GREP/LIST/ANSWER, клетка путей (realpath, symlink), бюджеты → stop_reason, seed из primer | разделено заранее (в старом плане две фазы) |
 | P13b | scout | цикл раундов, запись `scout/<id>/scout.json`, `plan --from-scout` (patch-карты на названные файлы) | `plan --from-scout` живёт в Component scout, не в planner |
 | P14 | reviewer | obligations, envelope, guardrails, findings | последняя |
 
-Итого (07.10): P0–P14 с подфазами P1b, P9b, P9c, P10a, P10b1, P10b2, P10c, P13a, P13b; после P10b1 остаются P10b2, P10c, P11, P12, P13a, P13b, P14. Оценка по P1–P2: ≈$0.1–0.2 исполнителя на фазу
+Итого (07.10): P0–P14 с подфазами P1b, P9b, P9c, P10a, P10b1, P10b2, P10c, P13a, P13b; после P10b1 остаются P10b2, P10c, P11, P11b, P11c, P12, P13a, P13b, P14 (P11c добавлена оператором 07.10). Оценка по P1–P2: ≈$0.1–0.2 исполнителя на фазу
 при 8 картах; потолок $5 не меняется.
 
 ## Совет автора Contour (переписка 06.10.2026) и два правила записи V2

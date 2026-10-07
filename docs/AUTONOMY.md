@@ -6,22 +6,22 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (07.10, after the P11 smoke)
+## State at handoff (07.10, after P11b1)
 
-P0–P11 merged (P10c1, P10c2, P11 + its fix 1); `main` = origin = VPS (dee594f). Issue #3 closed (C1–C7 built:
-retry cap per generation, retry context from the furthest variant, `<file_contents>` tags, acceptance timeout 300 s,
-old truncation text, `answers/` per variant + one stderr line per variant). `--max-retry-batches 8` is no longer passed:
-the runs use the binary's default cap (2 retry batches per generation). The P11 smoke (V2 run on the batch route,
-`z-ai/glm-5.3:batch`, one batch of 2 cards) is green, $0.0006, batch wait 569 s. Running total $2.6271 of $30.
-On restart, the first autonomous act is the PREPARATION of **P11b** (processor `submit/collect` with the persisted batch
-state `.morph/batches/<id>.json`, split from P11 — see TASK_P11 §7): read issue #4 (label `P11b-processor`: batch cost
-null, batch id not in the report, provider order, batch wait, size of the committed `answers/`) first; cli is at
-29 835 of 30 000 bytes and runloop at 29 178, so compact before patching. Then P12 (issue #1, label `P12-primer`),
-P13a, P13b, P14.
+P0–P11b1 merged; `main` = origin = VPS. Issue #3 closed (P10c), issue #4 closed (P11b1: archive by the operator's
+decision — answers committed, request copies gzipped under the ignored `requests/`; batch cost and id in the report,
+`.morph/batches/<id>.json`, batch wait 1 h, a given-up batch cancelled, the deadline checked before each retry batch).
+**Processor `ds` since P11b1** (operator 07.10; maxTokens ×3 by `decks/tools/scale_tokens.py`; glm53 the fallback);
+P11b1 ran 14/14 on ds, $0.1379. Running total $2.7650 of $30.
+Next, in order: **P11c runner hardening** (operator 07.10; issue #5, label `P11c-runner`, 8 code-review findings in
+runloop, acceptance, cli, git, cards; HIGH 1–2 and the key leak 5 are mandatory, the rest if they fit, else a P11c2);
+then **P11b2** (`morph submit` / `morph collect`, TASK_P11b §7; cli at 29 998 bytes, compact first); then P12 (issue #1,
+label `P12-primer`), P13a, P13b, P14. P11c goes before P11b2 because finding 5 (keys in the acceptance env) applies to
+every run, P11b2's included, and the operator's P11b items are merged.
 Lessons for the next preparations: default code targets add a test file (give a smoke cap or code-only targets); new
 files need `"intent": "generate"` in the map; a new `src/` folder needs its layer in `decks/tools/guard.mjs`; size a judge
-from its expected answer (a 20 KB answer was cut at 20 000 in P10c2: give ≥ 28 000); vary every constant the code must
-not hard-code across the examples (P11's batch model literal passed because every example used one model).
+from its expected answer (≥ 28 000 for a ~20 KB answer, before the ×3); vary every constant the code must not hard-code
+across the examples; every mutant run under a 120 s timeout.
 
 ## Machine
 
