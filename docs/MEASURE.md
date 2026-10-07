@@ -16,6 +16,7 @@
 | P7 | mrph | 10 / 10 / 6 (1 run, no re-cut) | 0.1276 / opus55 prep 252k/68/23 + run ≈110k/40/30 | 17 | 0 из 6 | 0 | 0 | 0 | — | 0 | 66256 |
 | P7 smoke | V2 binary (`dist/cli.js run`, glm53 z-ai/glm-5.3 via OpenRouter, Novita) | 3 / 3 / 0 (exit 0, 2 generations, 3 requests, 355 in / 106 out tokens) | 0.0003 (usageTotals.cost 0.00028902) / opus55 smoke ≈90k | 0.2 (10 s) | — | 0 | — | — | 0 | 0 errors, 2 implicit-read warnings | 0 |
 | P8 | mrph | 8 / 8 / 6 (1 run, no re-cut) | 0.0456 / opus55 prep 227k/63/36 + run ≈95k/30/12 | 5 | 2 из 6 | 0 | 0 | 0 | — | 0 | 46386 |
+| P9 | mrph | 8 / 8 / 12 (1 run, no re-cut) | 0.1556 / opus55 prep 270k/85/29 + run ≈110k/30/17 | 12 | 0 из 12 | 0 | 0 | 0 | — | 0 | 66539 |
 
 P7 smoke stdout (exit 0; deck and recipe in `decks/p7/smoke/`, no secret in it): `{"runId":"20261006-192809","branch":"morph/20261006-192809","base":"f3bd88ae78dcbd13324b9745bb0dc66a1a154ab3","report":{"runId":"20261006-192809","completedAt":1791314899462,"branch":"morph/20261006-192809","processor":"glm53","generations":2,"outcomes":[{"customId":"a","status":"written","reason":null,"attempts":1,"winningVariant":"a.v1","acceptanceLog":"a ok\n","earlierFailures":[],"commit":"9ccfd37c1ea669c7af51d95db6dd52ccc68eeeb7","diffstat":{"files":1,"insertions":3,"deletions":0}},{"customId":"b","status":"written","reason":null,"attempts":1,"winningVariant":"b.v1","acceptanceLog":"b ok\n","earlierFailures":[],"commit":"41836124e3fde2d9892baadddfd1373c86017bb0","diffstat":{"files":1,"insertions":3,"deletions":0}},{"customId":"c","status":"written","reason":null,"attempts":1,"winningVariant":"c.v1","acceptanceLog":"c ok\n","earlierFailures":[],"commit":"801f5018927ed96f568f3ea18a328e7da2f0c68f","diffstat":{"files":1,"insertions":6,"deletions":0}}],"usageTotals":{"inputTokens":355,"outputTokens":106,"cost":0.00028901999999999997,"requests":3}},"archive":{"ok":true,"dir":".morph/runs/20261006-192809","commit":"f1a81c18d63110e181e4e293af5360a9ce485b3a"}}`
 
@@ -38,4 +39,4 @@ Sonnet 5 — дифф внешним `diff -u`, сирота через `ps`, л
 
 ## Autonomous stretch
 
-Running total of the autonomous stretch: $0.9166 of $30 (P3 $0.2254 + P4 $0.1406 + P5 $0.2787 incl. debt run $0.0952 + P6 $0.0984 + P7 $0.1276 + P7 smoke $0.0003 + P8 $0.0456).
+Running total of the autonomous stretch: $1.0722 of $30 (P3 $0.2254 + P4 $0.1406 + P5 $0.2787 incl. debt run $0.0952 + P6 $0.0984 + P7 $0.1276 + P7 smoke $0.0003 + P8 $0.0456 + P9 $0.1556).

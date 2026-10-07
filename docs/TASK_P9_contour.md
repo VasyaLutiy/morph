@@ -480,3 +480,71 @@ own Data Objects only, the first of many; load: the whole message, case-sensitiv
 card's probe. Reference answers: code 1.7–11.4 KB (≈ 480–3 250 tokens) against `max_tokens` 12 000 /
 16 000 (≥ 4.9× headroom); judge files 5.2–8.2 KB (≈ 1 490–2 330 tokens) against 20 000 / 24 000 (≥ 8.6×).
 Forecast ≈ $0.13 (≤ $1). Gate holds.
+
+### Run
+
+One run on the VPS, processor glm53, autonomous mode, on the deck that passed the autonomous gate
+(8 cards, `deck check` 0 errors, 0 hazards). No re-cut was needed. "Burned" = every request that was
+not a winning write (requests − written).
+
+**Run 1** `20261007-055044-16e9b637`, branch `morph/20261007-055044-16e9b637`, 05:50:44 → 06:03:03
+(12.3 min), 20 requests, 337 865 in / 78 076 out, **$0.1556**. 8 written, 0 failed, 0 skipped; 12
+variants burned. Every finish reason `stop`: no truncation, but one near miss — validate-record.v2
+used 15 494 of its 16 000 output tokens (and returned `record.ts` twice); every judge ≤ 1 824 of
+20 000 / 24 000.
+
+| card | gen | attempts | winning variant | commit | first red of each burned variant |
+|---|---|---|---|---|---|
+| validate-record (types+record) | 1 | 3 | r2.v1 | 8ae662f | v1: discarded unread, `types.ts` missing from the answer; v2: discarded unread, `record.ts` returned twice (15 494 out tokens); r1.v1: probe, Validate Record example 2 (the 19 problems not in walk order); r1.v2: eslint, `ContourRecord` imported and unused; r2.v2: losing variant (not surfaced) |
+| select-components | 2 | 1 | v1 | 5a35485 | v2: losing variant (not surfaced) |
+| validate-map | 2 | 2 | r1.v1 | 650695b | v1: eslint, `prefer-const` (`docs`); v2: eslint, `prefer-const` ×4 + `prefer-as-const` (`let version: 1`); r1.v2: losing variant (not surfaced) |
+| validate-record-judge | 2 | 1 | — | 53c550a | — |
+| load-spec | 3 | 1 | v1 | a7085e3 | v2: losing variant (not surfaced) |
+| validate-map-judge | 3 | 1 | — | af401ff | — |
+| select-components-judge | 3 | 2 | r1 | f6a9517 | 0: eslint, `r` assigned and unused |
+| load-spec-judge | 4 | 2 | r1 | 761408b | 0: own expectation in Load Spec example 3 — the 11-group record's expected list built from the `.name: required` lines only, without the `.description: required` lines (the code's 22 problems are right; r1 built both) |
+
+Minutes per generation: 6.6 / 2.6 / 1.9 / 1.2. Archive commit ab6f92e (old Morph's own).
+
+Phase total: **$0.1556** executor (prediction ≈ $0.13 nominal, ≤ $0.30 with a re-cut — over the
+nominal by 20 %, inside the ceiling; validate-record's three attempts are $0.087 of it), 12.3 min, 20
+requests, 12 burned variants. tsc-first-red: 0 of 12. neighbour-red: 0.
+
+§9 check: cards 8 / generations 4 — as predicted; `deck check` 0 / 0 hazards — as predicted. Cards
+with a retry batch 4 of 8 (validate-record ×2, validate-map, select-components-judge,
+load-spec-judge) vs predicted 2. Tests after: 464 in 45 files (416 + 48 judge tests in 4 files:
+record 14, map 12, select 11, load 11); judge example tests 23 of 23 (6 + 4 + 6 + 7), ≥ 23 holds; own
+tests 8 / 8 / 5 / 4, each within its cap of 8. First red: of the predicted code first reds only the
+walk order showed (validate-record r1.v1, example 2); the rest were answer shape (a missing file, a
+doubled body — glm's P5/P8 mode, here caught by the file-count check before tsc) and eslint
+(unused import, `prefer-const`); the judges' reds an unused variable and one own expected list, never
+the code. Falsifiable claims: (1) no card red on a sibling's file — holds; (2) no judge red traced to
+§2.1 — holds (the load-spec-judge red is an inline literal of Load Spec 3, not a fixture); (3) no judge
+cut off at `max_tokens` — holds; (4) no test writes a file or reads one outside `tests/fixtures/`,
+`contour.yaml`, `morph-map.json` — holds (imports are vitest, `../helpers.js` and `src/contour/*` only;
+no `vi.`, `writeFile`, `spawn`, `exec`, `process.`).
+
+Max slice + targets, measured on the finished tree: select-components-judge 66 539 bytes (gate 200 KB).
+
+Verification on `morph/20261007-055044-16e9b637` by the run session: `git status --short` empty;
+`tsc --noEmit`, `eslint src tests` clean; `vitest run` 464/464 in 45 files; `npm run build` ok;
+`git for-each-ref` and symbolic HEAD identical before and after `vitest run`. `src/contour/*` read
+once against §2.2: types by the probe's type tests; record walk per object (required, then unknown
+keys in object order, then values in table order, depth first), `(root)` paths, trimming, absent
+lists `[]` and absent language/ref/schema `null`, version `!== 1`, steps (one key, verb table,
+target trimmed), `examples: []` / `exposes: []` messages, a mapping schema as `JSON.stringify(…,
+null, 2)` in document order, duplicates at the repeat's name (Components and Data Objects per record,
+Functions per Component); map unknown root keys first, values verbatim, groups' first owner, cards
+`{id, ...fields}`, extra cards required → unknown → component → fields, positive-integer and id
+patterns; load yaml by lower-cased extension, first line of the parser's message, `is not a mapping
+at the top level`, singular/plural, 20 listed + `… and <n> more`; select slug match, given order, a
+repeat once, the record's own objects, first unmatched name stops, self/unknown calls as errors,
+Data Objects of any Component. **No code defect found.** Judge defects (code defects a judge caught
+that the probes did not): 0.
+
+Lessons: (1) a two-file code card on glm is the expensive card again: validate-record (the largest
+target, ≈ 13 KB) spent 6 requests and $0.087 — the first two answers broke the file-set rule
+(a file missing, a file twice), and v2 ran to 97 % of its 16 000 ceiling; the P6 sizing rule (×2 of
+the reference) held only because the reference was 11.4 KB against the written 16 KB. (2) eslint's
+`prefer-const` / unused-import reds were 4 of 12 burned variants — cheap ($0.004–0.017 each), each
+absorbed by the second variant or the retry.
