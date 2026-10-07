@@ -1123,14 +1123,215 @@ System:
           description: The only entry point.
           exposes: [Parse Command]
 
-    # ---------------------------------------------------------------- later epics (skeleton)
+    # ---------------------------------------------------------------- P8
     - name: language
-      description: Language profiles (typescript first, python second) — what counts as code, the parse step, the test runner, default file names, the judge instruction, the acceptance template; the planner cuts by profile.
+      description: >
+        Language profiles: src/language/*.ts, pure data and pure functions. A profile says
+        what counts as code and as a test in one language, how a Function's name becomes the
+        card's file names, and which shell lines check a card (parse, lint, own test, full
+        run) — as text, never run here. Two profiles, typescript (the default) and python;
+        the python lines (py_compile, ruff, pytest) are data only and nothing in this
+        Component needs python installed. The consumers are the planner (P10: a Component's
+        profile, its card ids and targets, its judge instruction and acceptance) and later
+        primer and scout (which file is a test). Nothing is wired into the cli or the run
+        loop in this phase. No clock, no environment, no file system, no child process: the
+        only Node module used is node:path (posix).
       language: typescript
+      requirements: [Deterministic Core]
+      functions:
+        - name: Resolve Profile
+          description: The profile of a Component — its own language, else the map's, else typescript.
+          behavior: >
+            resolveProfile(componentLanguage, mapLanguage), both string | null. The choice is
+            the component's value unless it is null or "", then the map's unless null or "",
+            then "typescript". The key is the choice trimmed and lower-cased; the profile is
+            the PROFILES entry whose id equals the key → {ok: true, profile} (the registry
+            object itself). No entry → {ok: false, error: "unknown language '<the choice as
+            given>' (known: typescript, python)"}, the known ids in PROFILES order. PROFILES
+            is the registry, typescript first then python, each profile exactly the content of
+            its fixture.
+          steps:
+            - produces: Profile Result
+          examples:
+            - given: 'componentLanguage null, mapLanguage null'
+              ref: "tests/fixtures/language/typescript.json (the whole typescript profile)"
+              when: "resolved"
+              then: '{ok: true, profile: the typescript profile, equal to the fixture}'
+            - given: 'componentLanguage " Python ", mapLanguage "typescript"'
+              ref: "tests/fixtures/language/python.json (the whole python profile)"
+              when: "resolved"
+              then: '{ok: true, profile: the python profile, equal to the fixture} — the component wins, trimmed and lower-cased'
+            - given: 'componentLanguage "", mapLanguage "python"'
+              when: "resolved"
+              then: '{ok: true, profile} with profile.id "python" — an empty component value falls through to the map'
+            - given: 'componentLanguage "go", mapLanguage "python"'
+              when: "resolved"
+              then: "{ok: false, error: \"unknown language 'go' (known: typescript, python)\"}"
+        - name: Fill Template
+          description: Replaces every {key} of a profile template with its value, literally, in one pass.
+          behavior: >
+            fillTemplate(template, values: Record<string, string>) replaces every occurrence of
+            "{<key>}" (key = letters only) whose key is an own property of values with that
+            value, taken literally ("$&", "$1" are not replacement patterns), in a single pass
+            (a value that itself holds "{x}" is not expanded again). A placeholder whose key is
+            not in values stays as it is.
+          steps:
+            - produces: string
+          examples:
+            - given: 'template "tests/{component}/{name}.test.ts", values {component: "cli", name: "parseCommand"}'
+              when: "filled"
+              then: '"tests/cli/parseCommand.test.ts"'
+            - given: 'template "{a}-{a}-{c}", values {a: "$&"}'
+              when: "filled"
+              then: '"$&-$&-{c}" — every occurrence, the value literal, an unknown key kept'
+            - given: 'template "{a}{b}", values {a: "{b}", b: "x"}'
+              when: "filled"
+              then: '"{b}x" — one pass, a value is not expanded again'
+        - name: Classify Path
+          description: Which of a card's paths are code and which is its test, by one profile's rule.
+          behavior: >
+            A path is normalised first: every "\" becomes "/", then leading "./" prefixes are
+            removed. Its extension is path.posix.extname of the normalised path, lower-cased
+            (".ts" alone, "Makefile" and "src/.ts" have none). hasExtension(profile, path): the
+            extension is one of profile.extensions. isTest(profile, path): a directory part of
+            the normalised path (not the base name) is one of profile.testDirs, or the base name
+            matches new RegExp(profile.testFilePattern). codeTargets(profile, targets): the
+            targets with the extension that are not tests, as given, order kept.
+            testTarget(profile, targets): the first target with the extension that is a test,
+            as given, else null.
+          steps:
+            - reads: Language Profile
+          examples:
+            - given: 'the typescript profile; paths "tests/cli/parse.examples.test.ts", "src/cli/parse.ts", "src/__tests__/x.ts", "src/a.spec.tsx", "src/tests.ts"'
+              when: "isTest"
+              then: 'true, false, true, true, false — a directory named tests counts, a base name tests.ts does not'
+            - given: 'the python profile; paths "tests/conftest.py", "pkg/test_a.py", "pkg/a_test.py", "pkg/testing.py", "tests\a.py"'
+              when: "isTest"
+              then: 'true, true, true, false, true — the backslash path is normalised'
+            - given: 'the typescript profile; targets ["src/a.ts", "tests/a.test.ts", "README.md", "src/b.TSX", "./src/c.ts"]'
+              when: "codeTargets, then testTarget"
+              then: '["src/a.ts", "src/b.TSX", "./src/c.ts"] (as given, order kept); then "tests/a.test.ts"'
+            - given: 'the python profile; targets ["a/b.py", "docs/x.md"]'
+              when: "testTarget, then codeTargets"
+              then: 'null; then ["a/b.py"]'
+        - name: Detect Profile
+          description: The profile that claims a path by its extension, or null.
+          behavior: >
+            profileForPath(path): the first profile in PROFILES order whose extensions hold the
+            path's extension (as Classify Path computes it), else null.
+          steps:
+            - reads: Language Profile
+          examples:
+            - given: 'paths "src/a.ts", "x/y.PYI", "web/App.tsx"'
+              when: "profileForPath"
+              then: 'ids "typescript", "python", "typescript"'
+            - given: 'paths "README.md", "Makefile", ".ts"'
+              when: "profileForPath"
+              then: 'null, null, null'
+        - name: Name Targets
+          description: A Function's card id and its three default file names (code, own test, judge test) by profile.
+          behavior: >
+            The words of a name: the name lower-cased, split on every run of characters other
+            than a-z and 0-9, empty pieces dropped. slugName(name) = the words joined by "-"
+            (the card id). caseName(name, nameCase): "camel" = the first word, then every
+            further word with its first character upper-cased, joined with nothing; "snake" =
+            the words joined by "_". cutTargets(profile, component, functionName): a component
+            with no words → {ok: false, error: "no letters or digits in name '<component>'"},
+            then the same for the function name; else component and name are cased by
+            profile.nameCase and → {ok: true, slug: slugName(functionName), targets: {code,
+            test, judge}}, each = Fill Template of profile.codeTarget, testTarget, judgeTarget
+            with {component, name}.
+          steps:
+            - calls: Fill Template
+            - produces: Targets Result
+          examples:
+            - given: 'the typescript profile; component "cli", function "Parse Command"'
+              when: "cutTargets"
+              then: '{ok: true, slug: "parse-command", targets: {code: "src/cli/parseCommand.ts", test: "tests/cli/parseCommand.test.ts", judge: "tests/cli/parseCommand.examples.test.ts"}}'
+            - given: 'the python profile; component "Run Loop", function "Process Generation"'
+              when: "cutTargets"
+              then: '{ok: true, slug: "process-generation", targets: {code: "run_loop/process_generation.py", test: "tests/test_process_generation.py", judge: "tests/test_process_generation_examples.py"}}'
+            - given: 'the typescript profile; component "planner", function "Build HTTP Request (v2)"'
+              when: "cutTargets"
+              then: '{ok: true, slug: "build-http-request-v2", targets: {code: "src/planner/buildHttpRequestV2.ts", test: "tests/planner/buildHttpRequestV2.test.ts", judge: "tests/planner/buildHttpRequestV2.examples.test.ts"}}'
+            - given: 'the typescript profile; component "cli", function "--"; then component " ", function "Parse Command"'
+              when: "cutTargets"
+              then: "{ok: false, error: \"no letters or digits in name '--'\"}; then {ok: false, error: \"no letters or digits in name ' '\"}"
+        - name: Acceptance Lines
+          description: The check lines of a card's acceptance by profile — parse, lint, own test, full run.
+          behavior: >
+            acceptanceLines(profile, targets): own = the targets with the profile's extension
+            (code and tests), as given, order kept. When own is not empty: the parse line
+            (profile.parseLine, followed by " " + own joined by " " when parseTakesFiles), then
+            Fill Template of profile.lintLine with {files: own joined by " "}. When testTarget
+            gives a test: Fill Template of profile.ownTestLine with {test}. Always last:
+            profile.fullRunLine. The lines are text; nothing is run.
+          steps:
+            - calls: Classify Path
+            - calls: Fill Template
+          examples:
+            - given: 'the typescript profile; targets ["src/cli/parse.ts"]'
+              when: "acceptanceLines"
+              then: '["node_modules/.bin/tsc --noEmit", "node_modules/.bin/eslint src/cli/parse.ts", "node_modules/.bin/vitest run --reporter=dot"]'
+            - given: 'the typescript profile; targets ["src/a.ts", "tests/a.test.ts"]'
+              when: "acceptanceLines"
+              then: '["node_modules/.bin/tsc --noEmit", "node_modules/.bin/eslint src/a.ts tests/a.test.ts", "node_modules/.bin/vitest run tests/a.test.ts --reporter=dot", "node_modules/.bin/vitest run --reporter=dot"]'
+            - given: 'the python profile; targets ["pkg/a.py", "tests/test_a.py", "README.md"]'
+              when: "acceptanceLines"
+              then: '["python3 -m py_compile pkg/a.py tests/test_a.py", "ruff check pkg/a.py tests/test_a.py", "python3 -m pytest tests/test_a.py -q --tb=short", "python3 -m pytest -q --tb=short"]'
+            - given: 'the typescript profile; targets ["docs/x.md"]'
+              when: "acceptanceLines"
+              then: '["node_modules/.bin/vitest run --reporter=dot"] — no own target: no parse, no lint'
+        - name: Acceptance Script
+          description: The whole acceptance shell script of a card — snapshot of the targets, the lines in a set -e subshell, the log printed.
+          behavior: >
+            acceptanceScript(profile, customId, targets): the lines, each ending "\n": first
+            "D=/tmp/morph/<customId>; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log"; for the i-th
+            target (from 0) "cp <target> $D/<i>-$S<ext> 2>/dev/null", ext = path.posix.extname
+            of the target as given ("" when none, case kept); "("; " set -e"; one line " " +
+            each Acceptance Lines line; ") > $L 2>&1; rc=$?; cat $L; exit $rc". Paths are
+            written as given, unquoted.
+          steps:
+            - calls: Acceptance Lines
+            - produces: string
+          examples:
+            - given: 'the typescript profile; customId "parse-command"; targets ["src/cli/parse.ts", "tests/cli/parse.test.ts"]'
+              ref: "tests/fixtures/language/scriptTs.txt (the whole script)"
+              when: "acceptanceScript"
+              then: 'exactly the fixture text (10 lines, ending "exit $rc\n")'
+            - given: 'the python profile; customId "a"; targets ["pkg/a.py", "Makefile"]'
+              ref: "tests/fixtures/language/scriptPy.txt (the whole script)"
+              when: "acceptanceScript"
+              then: 'exactly the fixture text; the Makefile line is "cp Makefile $D/1-$S 2>/dev/null"'
+        - name: Judge Instruction
+          description: The profile's judge instruction filled for one judge card.
+          behavior: >
+            judgeInstruction(profile, {test, module, docs}) = Fill Template of
+            profile.judgeInstruction with {test, module, docs: [...docs, "this instruction"]
+            joined by ", "} — the examples are rendered into the judge's instruction, so it is
+            always a true place to point at.
+          steps:
+            - calls: Fill Template
+            - produces: string
+          examples:
+            - given: 'the typescript profile; test "tests/cli/parse.examples.test.ts", module "src/cli/parse.ts", docs ["docs/TASK_P7_cli.md", "docs/CONVENTIONS.md"]'
+              when: "judgeInstruction"
+              then: 'begins "Write ONLY the test file `tests/cli/parse.examples.test.ts`: one test per example of `src/cli/parse.ts` taken from docs/TASK_P7_cli.md, docs/CONVENTIONS.md, this instruction, in example order"; holds no "{"'
+            - given: 'the python profile; test "tests/test_a_examples.py", module "pkg/a.py", docs []'
+              when: "judgeInstruction"
+              then: 'begins "Write ONLY the test file `tests/test_a_examples.py`: one test per example of `pkg/a.py` taken from this instruction, in example order"; holds "Do not write or modify `pkg/a.py`"'
       dataObjects:
         - name: Language Profile
-          description: Everything the planner and the acceptance need to know about one language.
-          schema: "{ id, extensions, testDirs, testFilePattern, codeTarget, testTarget, judgeTarget, parseLine, ownTestLine, fullRunLine, finale, judgeInstruction, helpersModule }"
+          description: Everything the planner and the acceptance need to know about one language; templates hold {component}, {name}, {files}, {test}, {module}, {docs}.
+          schema: "{ id: \"typescript\" | \"python\", extensions: string[], testDirs: string[], testFilePattern: string, nameCase: \"camel\" | \"snake\", codeTarget: string, testTarget: string, judgeTarget: string, parseLine: string, parseTakesFiles: boolean, lintLine: string, ownTestLine: string, fullRunLine: string, finale: string, judgeInstruction: string, helpersModule: string }"
+        - name: Profile Result
+          description: A resolved profile, or the unknown language.
+          schema: "{ ok: true, profile: LanguageProfile } | { ok: false, error: string }"
+        - name: Targets Result
+          description: A Function's card id and default targets, or the name without words.
+          schema: "{ ok: true, slug: string, targets: { code: string, test: string, judge: string } } | { ok: false, error: string }"
+
+    # ---------------------------------------------------------------- later epics (skeleton)
     - name: primer
       description: Digest of the tree, git history (Morph-Card trailers) and the run archive for a fresh session; every owned path, most recent first; markdown under a cap with explicit "… N more" lines.
       language: typescript
@@ -1169,6 +1370,8 @@ Requirement:
       cli touches the process only in its entry src/cli.ts: the environment, the working
       directory, the clock and the output streams reach main() as parameters, and the
       environment reaches the processor only through Read Registry (P7).
+      language is pure data and pure functions: no clock, no environment, no file system,
+      no child process; node:path is its only Node module; its shell lines are text (P8).
   - name: Node Only
     description: >
       Runtime dependencies: Node 20 built-ins and the package `yaml` (the record reader), nothing

@@ -39,6 +39,9 @@ const GIT_SPAWNER = "src/git/run.ts";
 // process (env, argv, cwd, stdout, exitCode) and the wall clock: src/cli/* gets them as parameters
 // (docs/TASK_P7_cli.md §4)
 const CLI_ENTRY = "src/cli.ts";
+// P8: language is pure data and pure functions; of the Node modules only node:path (posix) is allowed
+// (docs/TASK_P8_language.md §4)
+const NODE_ONLY = { language: new Set(["node:path"]) };
 
 function parse(file) {
   return ts.createSourceFile(file, fs.readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true,
@@ -105,6 +108,8 @@ function checkSrc(files) {
     const allowed = layer === null ? [] : LAYERS[layer];
     for (const [node, spec] of moduleSpecifiers(sf)) {
       if (spec.startsWith("node:")) {
+        if (layer in NODE_ONLY && !NODE_ONLY[layer].has(spec))
+          report(sf, node, `${spec} in the pure layer ${layer} (only ${[...NODE_ONLY[layer]].join(", ")})`);
         if (spec === "node:child_process" && !SHELL.has(layer))
           report(sf, node, `node:child_process outside src/acceptance and src/git`);
         if (spec === "node:child_process" && layer === "git" && rel !== GIT_SPAWNER)

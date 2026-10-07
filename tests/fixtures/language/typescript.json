@@ -1,0 +1,25 @@
+{
+  "id": "typescript",
+  "extensions": [
+    ".ts",
+    ".tsx"
+  ],
+  "testDirs": [
+    "tests",
+    "test",
+    "__tests__"
+  ],
+  "testFilePattern": "^.*\\.(test|spec)\\.tsx?$",
+  "nameCase": "camel",
+  "codeTarget": "src/{component}/{name}.ts",
+  "testTarget": "tests/{component}/{name}.test.ts",
+  "judgeTarget": "tests/{component}/{name}.examples.test.ts",
+  "parseLine": "node_modules/.bin/tsc --noEmit",
+  "parseTakesFiles": false,
+  "lintLine": "node_modules/.bin/eslint {files}",
+  "ownTestLine": "node_modules/.bin/vitest run {test} --reporter=dot",
+  "fullRunLine": "node_modules/.bin/vitest run --reporter=dot",
+  "finale": "TypeScript with `strict` on, ESM with NodeNext resolution: every relative import carries the `.js` extension and types are imported with `import type`. No `any`: use `unknown` and narrow. Tests are vitest: `toBe` on scalars and short strings, `toStrictEqual` on a whole result; stubs come from `tests/helpers.ts`, never your own.",
+  "judgeInstruction": "Write ONLY the test file `{test}`: one test per example of `{module}` taken from {docs}, in example order, each named \"<Function> example <n>: <what>\". Do not write or modify `{module}`: the author of the criterion is not the author of the code. vitest, stubs imported from `tests/helpers.ts`; TypeScript with `strict` on, ESM, no `any`.",
+  "helpersModule": "tests/helpers.ts"
+}

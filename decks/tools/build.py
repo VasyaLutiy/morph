@@ -15,6 +15,8 @@ shared steps here. Hand-written data, never product code.
     python3 decks/tools/build.py p7     -> the same for the P7 cards (Component cli; own git as P6; the
                                            main card also builds the binary and runs it once; judges
                                            have their own-test caps)
+    python3 decks/tools/build.py p8     -> the same for the P8 cards (Component language; pure, no
+                                           git and no spawn in the tests; judges capped at examples + 8)
 
 Paths are relative to the repository root (the parent of decks/); nothing here points
 outside the tree.
@@ -287,6 +289,22 @@ P7_BIN_STEP = ("echo '== bin'; npm run build > $P/build.log 2>&1 || { echo 'bin:
                "[ \"$BC\" = 4 ] && [ \"$B\" = '{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"unknown command: frobnicate\"}}' ] || "
                "{ echo \"bin: node dist/cli.js frobnicate gave exit $BC and stdout: $B\" | head -c 600; echo; exit 1; }\n")
 
+P8_TEST_DIR = "tests/language"
+# docs/TASK_P8_language.md §3: the example literals of Component language
+P8_JUDGE_LITERALS = {
+    "profiles-judge": ["typescript.json", "python.json", "unknown language 'go' (known: typescript, python)",
+                       "$&-$&-{c}", "{b}x"],
+    "paths-judge": ["src/__tests__/x.ts", "pkg/a_test.py", "./src/c.ts", "x/y.PYI", "Makefile"],
+    "naming-judge": ["parse-command", "run_loop/process_generation.py", "buildHttpRequestV2",
+                     "no letters or digits in name '--'"],
+    "template-judge": ["scriptTs.txt", "scriptPy.txt", "python3 -m py_compile pkg/a.py tests/test_a.py",
+                       "node_modules/.bin/eslint src/a.ts tests/a.test.ts", "this instruction"],
+}
+# Resolve Profile 4 + Fill Template 3, Classify Path 4 + Detect Profile 2, Name Targets 4,
+# Acceptance Lines 4 + Acceptance Script 2 + Judge Instruction 2
+P8_JUDGE_EXAMPLES = {"profiles-judge": 7, "paths-judge": 6, "naming-judge": 4, "template-judge": 8}
+P8_JUDGE_OWN = {"profiles-judge": 8, "paths-judge": 8, "naming-judge": 8, "template-judge": 8}
+
 # one phase = the cards of one Component in morph-map.json (judges are <code>-judge); the
 # generation layering and the sibling exclusion are computed within the phase only.
 # smoke: whether a code card writes its own smoke test (P1-P2 yes; from P3 a code card covered
@@ -306,6 +324,8 @@ PHASES = {
            "smoke": False, "own_git": True},
     "p7": {"parts": "p7", "test_dir": P7_TEST_DIR, "examples": P7_JUDGE_EXAMPLES, "literals": P7_JUDGE_LITERALS,
            "smoke": False, "own_git": True, "own": P7_JUDGE_OWN, "extra": {"main": P7_BIN_STEP}},
+    "p8": {"parts": "p8", "test_dir": P8_TEST_DIR, "examples": P8_JUDGE_EXAMPLES, "literals": P8_JUDGE_LITERALS,
+           "smoke": False, "own": P8_JUDGE_OWN},
 }
 
 
@@ -432,7 +452,8 @@ def build_phase(phase):
 
 BUILDERS = {"p0": build_p0, "p1": lambda: build_phase("p1"), "p2": lambda: build_phase("p2"),
             "p3": lambda: build_phase("p3"), "p4": lambda: build_phase("p4"), "p5": lambda: build_phase("p5"),
-            "p6": lambda: build_phase("p6"), "p7": lambda: build_phase("p7")}
+            "p6": lambda: build_phase("p6"), "p7": lambda: build_phase("p7"),
+            "p8": lambda: build_phase("p8")}
 
 
 def main(argv):

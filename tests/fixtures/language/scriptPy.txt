@@ -1,0 +1,9 @@
+D=/tmp/morph/a; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log
+cp pkg/a.py $D/0-$S.py 2>/dev/null
+cp Makefile $D/1-$S 2>/dev/null
+(
+ set -e
+ python3 -m py_compile pkg/a.py
+ ruff check pkg/a.py
+ python3 -m pytest -q --tb=short
+) > $L 2>&1; rc=$?; cat $L; exit $rc
