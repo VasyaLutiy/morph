@@ -120,6 +120,10 @@ phase gets `max_tokens` ≥ 20000.
 - A red that comes from the environment (npm, network, provider error, `exit null`
   timeouts on a green log): one plain re-run later; still red → emergency stop with class
   `environment` (the processor swap does not apply; the operator fixes the environment).
+- **Operator stop after P9 (07.10)**: once P9 is merged and pushed, post `tools/tg.sh stop
+  "P9 merged: operator stop before the V2 switch"` with the phase numbers and stop; do not
+  prepare P10. The operator and the orchestrator test the switch to V2 by hand; P10 and
+  later start only on the operator's word, by the rules written after that test.
 - **Smoke stops**: a live glm53 smoke of the V2 binary after P7, after P10 (the
   dogfooding switch) and after P11 (the first phase built by V2). After each smoke the
   session stops for the operator, red or green. A red smoke is an emergency stop.
