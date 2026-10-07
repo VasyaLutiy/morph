@@ -1,4 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, expect, test } from "vitest";
@@ -25,6 +26,7 @@ beforeAll(() => {
     { cwd: REPO, stdio: "pipe" },
   );
   bin.write("package.json", '{"type":"module"}\n');
+  fs.symlinkSync(path.join(REPO, "node_modules"), path.join(bin.root, "node_modules"), "dir");
   cliJs = path.join(bin.root, "cli.js");
 }, 120000);
 
