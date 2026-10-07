@@ -1,5 +1,5 @@
 // src/acceptance/diff.ts — Build Attempt Diff (TASK_P3 §2.2, rules 1–4;
-// rule 5 patched by TASK_P9c §2.2).
+// rule 5 patched by TASK_P9c §2.2; rule 6 patched by TASK_P11c §2.2).
 //
 // A unified diff of the failed variant against the snapshot, each file's
 // section capped at DIFF_CAP chars (head and tail kept). Pure: no imports,
@@ -24,10 +24,19 @@
 //      is the longest run of lines from the start whose total length is
 //      <= budget; the tail the longest run from the end, never reaching a
 //      head line, whose total is <= budget; n = L - head - tail; the result
-//      is head + "... [" + n + " characters elided] ...\n" + tail.
+//      is head + "... [" + n + " characters elided] ...\n" + tail;
+//   6. a changed file whose before and after line counts multiply to MORE
+//      than DIFF_LCS_CAP gets, after its two header lines, the single line
+//      "... [diff skipped: " + <before lines> + " -> " + <after lines> +
+//      " lines] ...\n" instead of its hunks, and editOps is never called
+//      for it; the section is then clipped like any other. An unchanged
+//      file still contributes nothing; an absent side multiplies to 0.
 
 /** The cap of each file's section of the diff, in chars. */
 export const DIFF_CAP = 6000;
+
+/** The cap of the LCS table's size (before lines × after lines). */
+export const DIFF_LCS_CAP = 16000000;
 
 /** One edit-script operation: context, deletion or addition. */
 interface Op {
@@ -203,7 +212,10 @@ function clipSection(section: string): string {
  * lines differ from `before` (a missing or null entry is an absent file),
  * the file headers and the hunks — one section, clipped on its own by rule
  * 5 — per path; `""` when nothing changed; the sections concatenated in
- * key order with nothing between them.
+ * key order with nothing between them. A changed file whose before and
+ * after line counts multiply to MORE than DIFF_LCS_CAP gets, after its two
+ * header lines, the single skip line instead of its hunks, and editOps is
+ * never called for it (rule 6).
  */
 export function buildAttemptDiff(
   before: Record<string, string | null>,
@@ -220,7 +232,16 @@ export function buildAttemptDiff(
     let section: string = "";
     section += old === null ? "--- /dev/null\n" : "--- a/" + p + "\n";
     section += "+++ b/" + p + "\n";
-    section += hunksOf(editOps(a, b));
+    if (a.length * b.length > DIFF_LCS_CAP) {
+      section +=
+        "... [diff skipped: " +
+        a.length +
+        " -> " +
+        b.length +
+        " lines] ...\n";
+    } else {
+      section += hunksOf(editOps(a, b));
+    }
     text += clipSection(section);
   }
   return text;
