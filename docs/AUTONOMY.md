@@ -6,14 +6,12 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (06.10, evening)
+## State at handoff (07.10, afternoon)
 
-P0–P2 merged. P3 (`acceptance`) is PREPARED and passed the gate on the laptop: the record's
-Component is complete (14 examples), `docs/TASK_P3_acceptance.md`, fixtures, map entries, the
-`p3` builder and probes are on `main`. The first autonomous act is therefore P3's RUN, not its
-preparation: in `/home/morph/MorphV2` do `deck clear`, `deck reset`, `plan --spec … --component
-acceptance --judge --add`, `deck check` (expect 8 cards, 0 errors), then steps 3–6 of the
-cycle below with a fresh run agent (`morph-orch-opus55`). Every later phase starts at step 1.
+P0–P10b1 merged; `main` = origin = VPS. **MorphV2 is the builder now**: P10a was run by the V2
+binary (12/12), P10b1 was cut by `morph plan` and run by `morph run` (10/10, one run, no fix). The
+first autonomous act is the PREPARATION of P10b2 (step 1 of the cycle below, V2 flow). Old `mrph`
+stays only as a dry cross-check of the cut and as the fallback named in "Fallback".
 
 ## Machine
 
@@ -23,28 +21,48 @@ cycle below with a fresh run agent (`morph-orch-opus55`). Every later phase star
   with `venv/bin/mrph` and `.env` (mode 600; never printed). `mrph` reads `.env` from the
   current directory: every call runs from `/home/morph/MorphProject/morph-lab` with
   `--root /home/morph/MorphV2`. Processor `glm53`.
+- MorphV2 binary: `npm run build` in the repo, then a COPY of `dist/` in `/tmp/v2bin-<phase>/`
+  (with `node_modules` symlinked from the repo) runs the deck, so a card whose acceptance runs
+  `npm run build` cannot replace the running binary. The processor env is
+  `MORPH_PROCESSOR_glm53_<KEY>` = `MRPH_PROCESSOR_glm53_<KEY>` of `morph-lab/.env` for KEY in
+  TYPE, API_KEY, MODEL, ROUTE, CONCURRENCY, PROVIDER_ORDER, REASONING_MAX_TOKENS, set by
+  indirection in a subshell, never printed (recipe: `decks/p7/smoke/run.sh`).
 - Node 22, npm, git (auth through `gh`), tmux. Anything longer than a minute runs under
   `nohup`/`tmux` with a log file; the session must survive an SSH drop.
 
 ## The cycle of one phase
 
-1. **Prepare** (an orchestrator agent, fresh context, the brief in the form of P1–P2): spec
-   by `docs/TASK_TEMPLATE.md`, fixtures, map entries, probes, `build.py` builder; dry
-   `plan --spec`; `deck clear`, `deck reset`, `plan --add`, `deck check`; every acceptance
-   red per example on stubs in a scratch worktree; the data committed on `main`.
+1. **Prepare** (an orchestrator agent, fresh context, the brief in the form of P10a/P10b1):
+   spec by `docs/TASK_TEMPLATE.md`, fixtures, map entries, probes, the phase's acceptances
+   (`build.py p<N>` with `"locate": True, "full_report": True` until P10b2 lands; after it, the
+   phase's `checks.json` and `morph plan --checks`, as P10b2 defines). **The cut is V2's**:
+   `node dist/cli.js plan --root . --spec contour.yaml --map morph-map.json --component <C>…
+   --judge --out decks/<phase>/deck.json`. `morph plan` has no card filter yet: when the cut holds
+   cards outside the phase, keep the phase's cards with a short filter over the deck file and
+   commit the filtered deck. Then `node dist/cli.js deck check --root . --deck <deck>`; a dry
+   `mrph plan --spec` on the same Components as a cross-check (same ids, dependsOn, generations,
+   targets, slices, acceptances, max_tokens; instructions differ by the P10a design); every
+   acceptance red per example on stubs in a scratch worktree; mutations killed; the data and the
+   deck committed on `main`.
 2. **Gate without the operator.** The run starts by itself only when ALL hold:
-   dry `plan --spec` exit 0; `deck check` errors 0; every probe red per example with a
-   readable line on the stubs; chain under 250 s; forecast ≤ $1 for the phase; no slice
-   over 200 KB. Otherwise the phase stops with a report in `docs/MEASURE.md` (row with
+   `morph plan` exit 0; `morph deck check` errors 0; the mrph cross-check shows no difference
+   but the instructions; every probe red per example with a readable line on the stubs; chain
+   under 250 s; forecast ≤ $1 for the phase; no slice over 200 KB. Otherwise the phase stops with a report in `docs/MEASURE.md` (row with
    "stopped at gate: <reason>") and the session moves to the next phase whose dependencies
    are met.
-3. **Run** (a run agent, fresh context): `mrph run … --processor glm53 --deadline 2400`;
-   the tree is not touched while the run is in flight.
+3. **Run** (the session itself or a run agent): from the repo root, the binary copy
+   `node /tmp/v2bin-<phase>/dist/cli.js run --root . --deck decks/<phase>/deck.json --processor
+   glm53 --max-retry-batches 8 --deadline 2400` (`--max-retry-batches 8` until issue #3 C2 makes
+   the retry budget per card); stdout (the Run Document) to a file under /tmp. The run opens
+   `morph/<runId>`, commits each accepted card with trailers and archives `.morph/runs/<runId>/`.
+   The tree is not touched while the run is in flight. A re-run of failed cards uses a deck file of
+   those cards only (their dependencies are already on `main`). A failed run's archive commit is
+   cherry-picked onto `main` so every run is on record.
 4. **Verify** on the run branch: `git status --short` empty; `tsc --noEmit`, `eslint src
    tests`, `vitest run`, `npm run build` green; the written code and tests read once
    against §2.2 and the record; defects recorded, never fixed by hand.
-5. **Record**: §11 of the TASK and the row of `docs/MEASURE.md`, one commit on the run
-   branch with the trailer `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`.
+5. **Record**: §11 of the TASK and the row of `docs/MEASURE.md` (builder column "V2"), one
+   commit on the run branch with the trailer `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`.
 6. **Merge and push**: `git checkout main && git merge --ff-only morph/<run-id> && git
    push origin main`. Fast-forward only; force-push is forbidden; a non-ff state stops the
    session with a report.
@@ -120,13 +138,16 @@ phase gets `max_tokens` ≥ 20000.
 - A red that comes from the environment (npm, network, provider error, `exit null`
   timeouts on a green log): one plain re-run later; still red → emergency stop with class
   `environment` (the processor swap does not apply; the operator fixes the environment).
-- **Operator stop after P9 (07.10)**: once P9 is merged and pushed, post `tools/tg.sh stop
-  "P9 merged: operator stop before the V2 switch"` with the phase numbers and stop; do not
-  prepare P10. The operator and the orchestrator test the switch to V2 by hand; P10 and
-  later start only on the operator's word, by the rules written after that test.
-- **Smoke stops**: a live glm53 smoke of the V2 binary after P7, after P10 (the
-  dogfooding switch) and after P11 (the first phase built by V2). After each smoke the
-  session stops for the operator, red or green. A red smoke is an emergency stop.
+- **Fallback**: if `morph plan` or `morph deck check` fails on a phase's record for a reason
+  in V2's own code (not the data), the session cuts that phase with old `mrph plan --spec`,
+  converts it with `decks/tools/v2deck.py`, writes a DECISIONS line and opens an issue labelled
+  for the next phase that touches the failing Component. If the V2 runner itself fails (exit 3,
+  a crash, a wrong archive), emergency stop with class `environment`.
+- **Paying a debt on a V2 deck**: `/morph-agent-run` does not read V2 decks yet; on an emergency
+  stop the session stops and the operator decides the debt.
+- **Smoke stops**: a live glm53 smoke of the V2 binary after P7 (done), after P10b2 (the
+  switch complete: V2 cuts with its own acceptances, `build.py` archived) and after P11. After
+  each smoke the session stops for the operator, red or green. A red smoke is an emergency stop.
 
 ## Money
 
