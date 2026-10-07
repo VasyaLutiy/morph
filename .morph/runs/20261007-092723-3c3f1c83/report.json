@@ -1,0 +1,68 @@
+{
+  "deck_id": "20261007-092723-3c3f1c83",
+  "completed_at": "2026-10-07T09:28:23.135",
+  "branch": "morph/20261007-092723-3c3f1c83",
+  "backend_label": "glm53",
+  "generations": [
+    [
+      "output-directive-judge"
+    ]
+  ],
+  "batch_ids": [
+    "local-de073cb958d84e719dcb38ea3abfa2f8"
+  ],
+  "outcomes": {
+    "output-directive-judge": {
+      "custom_id": "output-directive-judge",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/tests/compiler/directive.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "output-directive-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "dad6fa355318f54fb0c560feb9e14df2bf0a6220",
+      "diffstat": [
+        {
+          "path": "tests/compiler/directive.examples.test.ts",
+          "insertions": 65,
+          "deletions": 58
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/compiler/directive.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    }
+  },
+  "usage": {
+    "output-directive-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791361644-SrWjimyHWkxPAaPbphiU",
+      "input_tokens": 9773,
+      "output_tokens": 3274,
+      "cost": 0.00842634,
+      "finish_reason": "stop"
+    }
+  },
+  "usage_totals": {
+    "input_tokens": 9773,
+    "output_tokens": 3274,
+    "cost": 0.00842634,
+    "requests": 1,
+    "requests_with_usage": 1
+  },
+  "orchestrator_usage": {}
+}
