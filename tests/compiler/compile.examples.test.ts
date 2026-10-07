@@ -24,10 +24,10 @@ describe("compileCard examples", () => {
     expect(r.requests[1].customId).toBe("a.v2");
     expect(r.requests[0].messages.length).toBe(3);
     expect(r.requests[0].messages[0].content).toBe(
-      "Contents of file docs/A.md:\n```md\n# A\n\nAlpha doc.\n```",
+      'Contents of file docs/A.md:\n<file_contents path="docs/A.md">\n# A\n\nAlpha doc.\n</file_contents>',
     );
     expect(r.requests[0].messages[1].content).toBe(
-      "Contents of file docs/B.md:\n```md\n# B\n\nBeta doc.\n```",
+      'Contents of file docs/B.md:\n<file_contents path="docs/B.md">\n# B\n\nBeta doc.\n</file_contents>',
     );
     expect(r.requests[0].messages[2].content).toBe(
       "Write src/a.ts.\n\n" + outputDirective(["src/a.ts"]),
@@ -45,12 +45,12 @@ describe("compileCard examples", () => {
     expect(r.requests[0].customId).toBe("p.v1");
     expect(r.requests[0].messages.length).toBe(3);
     expect(r.requests[0].messages[0].content).toBe(
-      "Original file src/x.ts:\n```ts\nexport const x = 1;\nexport const y = 2;\nexport const z = 3;\n```",
+      'Original file src/x.ts:\n<original_file path="src/x.ts">\nexport const x = 1;\nexport const y = 2;\nexport const z = 3;\n</original_file>',
     );
-    expect(r.requests[0].messages[0].content.startsWith("Original file src/x.ts:\n```ts\n")).toBe(true);
-    expect(r.requests[0].messages[0].content.length).toBe(93);
+    expect(r.requests[0].messages[0].content.startsWith('Original file src/x.ts:\n<original_file path="src/x.ts">\n')).toBe(true);
+    expect(r.requests[0].messages[0].content.length).toBe(132);
     expect(r.requests[0].messages[1].content).toBe(
-      "Contents of file docs/A.md:\n```md\n# A\n\nAlpha doc.\n```",
+      'Contents of file docs/A.md:\n<file_contents path="docs/A.md">\n# A\n\nAlpha doc.\n</file_contents>',
     );
     expect(r.requests[0].messages[2].content).toBe(
       "Patch src/x.ts.\n\n" + outputDirective(["src/x.ts"]),
@@ -67,6 +67,41 @@ describe("compileCard examples", () => {
     expect(r.faults.length).toBe(1);
     expect(r.faults[0].key).toBe("contextSlice");
     expect(r.faults[0].message).toBe("contextSlice 'docs/missing.md' does not exist");
+  });
+
+  test("Compile Card example 4: a slice file holding a fence is tagged, not fenced", () => {
+    const card = loadCard("fencedF");
+    const r: CompileResult = compileCard(card, root);
+    if (!r.ok) expect.unreachable("fencedF should compile");
+    expect(r.requests.length).toBe(1);
+    expect(r.requests[0].customId).toBe("f.v1");
+    expect(r.requests[0].messages.length).toBe(2);
+    expect(r.requests[0].messages[0].content).toBe(
+      'Contents of file docs/F.md:\n<file_contents path="docs/F.md">\n# F\n\n```ts\nconst f = 1;\n```\n</file_contents>',
+    );
+    for (const m of r.requests[0].messages) {
+      expect(m.content.split("\n").includes("```md")).toBe(false);
+    }
+  });
+
+  test("Compile Card example 5: patch of an existing target and an absent one", () => {
+    const card = loadCard("patchNew");
+    const r: CompileResult = compileCard(card, root);
+    if (!r.ok) expect.unreachable("patchNew should compile");
+    expect(r.requests.length).toBe(1);
+    expect(r.requests[0].customId).toBe("n.v1");
+    expect(r.requests[0].messages).toStrictEqual([
+      {
+        role: "user",
+        content:
+          'Original file src/x.ts:\n<original_file path="src/x.ts">\nexport const x = 1;\nexport const y = 2;\nexport const z = 3;\n</original_file>',
+      },
+      { role: "user", content: "Target src/z.ts is a new file: it does not exist yet." },
+      {
+        role: "user",
+        content: "Patch src/x.ts and add src/z.ts.\n\n" + outputDirective(["src/x.ts", "src/z.ts"]),
+      },
+    ]);
   });
 });
 
@@ -93,7 +128,7 @@ describe("compileCard rules", () => {
     expect(r.requests[0].customId).toBe("n.v1");
     expect(r.requests[0].messages.length).toBe(3);
     expect(r.requests[0].messages[0].content).toBe(
-      "Original file src/x.ts:\n```ts\nexport const x = 1;\nexport const y = 2;\nexport const z = 3;\n```",
+      'Original file src/x.ts:\n<original_file path="src/x.ts">\nexport const x = 1;\nexport const y = 2;\nexport const z = 3;\n</original_file>',
     );
     expect(r.requests[0].messages[1].content).toBe(
       "Target src/z.ts is a new file: it does not exist yet.",
