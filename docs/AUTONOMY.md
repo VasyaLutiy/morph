@@ -6,12 +6,15 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (07.10, afternoon)
+## State at handoff (07.10, after P10b2)
 
-P0–P10b1 merged; `main` = origin = VPS. **MorphV2 is the builder now**: P10a was run by the V2
-binary (12/12), P10b1 was cut by `morph plan` and run by `morph run` (10/10, one run, no fix). The
-first autonomous act is the PREPARATION of P10b2 (step 1 of the cycle below, V2 flow). Old `mrph`
-stays only as a dry cross-check of the cut and as the fallback named in "Fallback".
+P0–P10b2 merged; `main` = origin = VPS. **The switch is complete**: P10b2 was cut by `morph plan` and run
+by `morph run` (6/6, one run, no fix); `morph plan --checks decks/<phase>/checks.json` builds the
+acceptances, `build.py` is in `decks/tools/archive/`; the P10b2 smoke (V2 plan --checks → deck check → V2
+run on glm53) is green. The session stopped at the P10b2 smoke stop. On restart, the first autonomous act
+is the PREPARATION of P11 (processor batch) with checks.json + `morph plan --checks` (step 1, V2 flow).
+Smoke lessons for P11 prep: default code targets add a test file (give a smoke cap or code-only targets);
+new files need `"intent": "generate"` in the map; a new `src/` folder needs its layer in `decks/tools/guard.mjs`.
 
 ## Machine
 
