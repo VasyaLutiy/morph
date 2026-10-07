@@ -23,7 +23,7 @@ export async function main(argv: string[], deps: CliDeps, io: CliIo): Promise<Ex
     } else if (command.name === "plan") {
       result = planCommand(root, command);
     } else {
-      result = await runCommand(root, command, deps);
+      result = await runCommand(root, command, deps, io.stderr);
     }
   } catch (e) {
     result = classifyThrown(e);
