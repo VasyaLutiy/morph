@@ -7,6 +7,7 @@ import { makeCommitHook } from "../git/commit.js";
 import { archiveRun } from "../git/archive.js";
 import { errorDocument, readDeckFile, runExitCode } from "./document.js";
 import type { CliDeps, CommandResult, RunArgs, RunDocument } from "./types.js";
+import type { VariantRecord } from "../runloop/types.js";
 
 export function mintRunId(ms: number): string {
   // the UTC time of ms as YYYYMMDD-HHMMSS: new Date(ms).toISOString() is
@@ -23,10 +24,28 @@ export function mintRunId(ms: number): string {
   );
 }
 
+export function variantLine(record: VariantRecord): string {
+  return (
+    "morph run: " +
+    record.request.customId +
+    " " +
+    record.verdict +
+    " stage " +
+    record.stages +
+    (record.lastStage === null ? "" : " " + record.lastStage) +
+    " finish " +
+    (record.finishReason ?? "none") +
+    " chars " +
+    (record.text === null ? "none" : String(record.text.length)) +
+    "\n"
+  );
+}
+
 export async function runCommand(
   root: string,
   args: RunArgs,
-  deps: CliDeps
+  deps: CliDeps,
+  log?: (text: string) => void
 ): Promise<CommandResult> {
   // 1. the registry reads deps.env only, never the process environment
   const registry = readRegistry(deps.env);
@@ -87,7 +106,9 @@ export async function runCommand(
     };
   }
 
-  // 6. run the deck with git's commit hook and the injected clock
+  // 6. run the deck with git's commit hook, the injected clock and the
+  // variant recorder
+  const records: VariantRecord[] = [];
   const result = await runDeck(
     {
       root,
@@ -105,12 +126,23 @@ export async function runCommand(
       transport: deps.transport ?? realTransport(config.timeoutMs),
       commit: makeCommitHook(root, config.model, deps.env),
       now: deps.now,
-      env: deps.env
+      env: deps.env,
+      onVariant: (record) => {
+        records.push(record);
+        if (log !== undefined) {
+          log(variantLine(record));
+        }
+      }
     }
   );
 
-  // 7. archive deck and report; the checkout stays on morph/<runId>
-  const archive = archiveRun(root, { runId, deck, report: result.report }, deps.env);
+  // 7. archive deck, report and every variant's request and raw answer;
+  // the checkout stays on morph/<runId>
+  const archive = archiveRun(
+    root,
+    { runId, deck, report: result.report, answers: records },
+    deps.env
+  );
 
   // 8. the Run Document, its keys in the type's order
   const document: RunDocument = {
