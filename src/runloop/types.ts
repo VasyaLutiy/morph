@@ -22,6 +22,7 @@ export interface RequestUsage {
   customId: string; model: string; provider: string | null; generationId: string | null;
   inputTokens: number; outputTokens: number; cost: number | null;
   finishReason: string | null; error: string | null;
+  batchId?: string;
 }
 export interface RunReport {
   runId: string; completedAt: number; branch: string; processor: string;

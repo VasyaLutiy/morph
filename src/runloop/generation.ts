@@ -100,11 +100,12 @@ export async function processGeneration(
   const generation = await sendGeneration(deps.config, allRequests, deps.transport);
 
   // 2b. one request-usage row per request sent, in send order, with the
-  // usage and the answer of the same index
-  const requests: RequestUsage[] = allRequests.map((request, i) => {
+  // usage and the answer of the same index; the batch id is the LAST key,
+  // present only on a row whose customId the batch names
+  const requests: RequestUsage[] = allRequests.map((request, i): RequestUsage => {
     const usage = generation.usage[i];
     const answer = generation.answers[i];
-    return {
+    const row: RequestUsage = {
       customId: request.customId,
       model: request.model === null ? deps.config.model : request.model,
       provider: usage.provider,
@@ -115,6 +116,11 @@ export async function processGeneration(
       finishReason: answer.finishReason,
       error: answer.error
     };
+    const batch = generation.batch;
+    if (batch !== undefined && batch.customIds.includes(request.customId)) {
+      row.batchId = batch.batchId;
+    }
+    return row;
   });
 
   // 3. verify each compiled-ok card in card order, so an earlier card's
