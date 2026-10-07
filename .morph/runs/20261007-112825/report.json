@@ -1,0 +1,56 @@
+{
+  "runId": "20261007-112825",
+  "completedAt": 1791372637564,
+  "branch": "morph/20261007-112825",
+  "processor": "glm53",
+  "generations": 1,
+  "outcomes": [
+    {
+      "customId": "plan-spec-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "plan-spec-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/planner/plan.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/planner/plan.examples.test.ts(215,51): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.\n  Type 'null' is not assignable to type 'string'.\n"
+      ],
+      "commit": "b0f6dbc13de8cef38ca869cb7a91fd3ebb91ddc6",
+      "diffstat": {
+        "files": 1,
+        "insertions": 258,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 48435,
+    "outputTokens": 10052,
+    "cost": 0.026366412000000002,
+    "requests": 2
+  },
+  "requests": [
+    {
+      "customId": "plan-spec-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791372506-v65dRCfVvmBB9muSeeEU",
+      "inputTokens": 20796,
+      "outputTokens": 7066,
+      "cost": 0.017864448,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec-judge.r1.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791372602-HJDgrguwYm9mP6DxxaYD",
+      "inputTokens": 27639,
+      "outputTokens": 2986,
+      "cost": 0.008501964,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}
