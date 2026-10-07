@@ -10,6 +10,10 @@ const VALUE_FLAGS: ReadonlySet<string> = new Set([
   "--max-cards",
   "--max-retry-batches",
   "--slice-cap-bytes",
+  "--spec",
+  "--component",
+  "--map",
+  "--out",
 ]);
 
 const NOT_YET_WORDS: ReadonlySet<string> = new Set([
@@ -45,6 +49,16 @@ const RUN_FLAGS: ReadonlySet<string> = new Set([
   "--max-retry-batches",
 ]);
 
+const PLAN_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--spec",
+  "--component",
+  "--map",
+  "--judge",
+  "--out",
+]);
+
 function isPositiveInteger(v: string): boolean {
   return /^[0-9]+$/.test(v) && Number(v) >= 1;
 }
@@ -58,14 +72,15 @@ export function parseCommand(argv: string[]): ParseResult {
   const words: string[] = [];
   const order: string[] = [];
   const values = new Map<string, string>();
+  const components: string[] = [];
   const seen = new Set<string>();
   for (let i = 0; i < argv.length; i++) {
     const t = argv[i];
     if (t.startsWith("--")) {
-      if (!VALUE_FLAGS.has(t) && t !== "--pretty") {
+      if (!VALUE_FLAGS.has(t) && t !== "--pretty" && t !== "--judge") {
         return { ok: false, error: errorDocument(4, "UsageError", "unknown flag: " + t) };
       }
-      if (seen.has(t)) {
+      if (t !== "--component" && seen.has(t)) {
         return { ok: false, error: errorDocument(4, "UsageError", "flag " + t + " given twice") };
       }
       seen.add(t);
@@ -75,7 +90,11 @@ export function parseCommand(argv: string[]): ParseResult {
           return { ok: false, error: errorDocument(4, "UsageError", "flag " + t + " needs a value") };
         }
         i++;
-        values.set(t, argv[i]);
+        if (t === "--component") {
+          components.push(argv[i]);
+        } else {
+          values.set(t, argv[i]);
+        }
       }
     } else {
       words.push(t);
@@ -83,17 +102,20 @@ export function parseCommand(argv: string[]): ParseResult {
   }
 
   // Check 2: the command from the words.
-  let name: "deck check" | "run";
+  let name: "deck check" | "run" | "plan";
   let arity: number;
   if (words.length === 0) {
     return {
       ok: false,
-      error: errorDocument(4, "UsageError", "no command (commands: deck check, run)"),
+      error: errorDocument(4, "UsageError", "no command (commands: deck check, plan, run)"),
     };
   }
   const first = words[0];
   if (first === "run") {
     name = "run";
+    arity = 1;
+  } else if (first === "plan") {
+    name = "plan";
     arity = 1;
   } else if (first === "deck") {
     if (words.length >= 2 && words[1] === "check") {
@@ -135,7 +157,7 @@ export function parseCommand(argv: string[]): ParseResult {
   }
 
   // Check 4: a flag the command does not take, in argv order.
-  const allowed = name === "deck check" ? DECK_CHECK_FLAGS : RUN_FLAGS;
+  const allowed = name === "deck check" ? DECK_CHECK_FLAGS : name === "run" ? RUN_FLAGS : PLAN_FLAGS;
   for (const f of order) {
     if (!allowed.has(f)) {
       return {
@@ -145,17 +167,36 @@ export function parseCommand(argv: string[]): ParseResult {
     }
   }
 
-  // Check 5: missing --deck.
+  // Check 5: plan needs --spec.
+  if (name === "plan") {
+    if (!values.has("--spec")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --spec") };
+    }
+    const root = values.get("--root") ?? ".";
+    const command: Command = {
+      name: "plan",
+      root,
+      pretty: seen.has("--pretty"),
+      spec: values.get("--spec") ?? "",
+      components,
+      map: values.get("--map") ?? null,
+      judge: seen.has("--judge"),
+      out: values.get("--out") ?? null,
+    };
+    return { ok: true, command };
+  }
+
+  // Check 6: missing --deck.
   if (!values.has("--deck")) {
     return { ok: false, error: errorDocument(4, "UsageError", "missing --deck") };
   }
 
-  // Check 6: run without --processor.
+  // Check 7: run without --processor.
   if (name === "run" && !values.has("--processor")) {
     return { ok: false, error: errorDocument(4, "UsageError", "missing --processor") };
   }
 
-  // Check 7: the value validations, in the fixed order.
+  // Check 8: the value validations, in the fixed order.
   const deck = values.get("--deck") ?? "";
   const root = values.get("--root") ?? ".";
   const pretty = seen.has("--pretty");
@@ -225,7 +266,7 @@ export function parseCommand(argv: string[]): ParseResult {
     };
   }
 
-  // Check 8: success, the keys in the type's order, with the defaults.
+  // Check 9: success, the keys in the type's order, with the defaults.
   const command: Command = {
     name: "run",
     root,
