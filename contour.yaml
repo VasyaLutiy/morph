@@ -1089,7 +1089,8 @@ System:
         (never process.env), so a test pins the author, the committer, HOME and the locale
         and never depends on the host's git config. Expected refusals (a dirty tree, an
         existing branch or archive) are results; a failing git command is a thrown Error
-        naming the subcommand, its exit and git's first stderr line.
+        naming the subcommand, its exit and git's first stderr line. It reads the Morph trailers
+        back: the Morph-Card commits of the history and per path the cards that wrote it (P12b).
       language: typescript
       requirements: [Deterministic Core]
       guardrails: [No Shell Outside Acceptance]
@@ -1262,6 +1263,40 @@ System:
             - given: 'a tmp root t; answers [{customId: "clamp-value.v1", text: "A"}, {customId: "sign-of.v1", text: "B\n"}]; then the same with batchId "a b"; then customIds "x.v1", "../y"; then [] with batchId "batch-0"'
               when: 'saveBatchAnswers(t, "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W", answers)'
               then: '[".morph/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W/clamp-value.v1.md", the same with sign-of.v1.md], the files "A" and "B\n"; then [] three times: .morph/batches holds only that one directory, no x.v1.md, no batch-0 directory'
+        - name: Read Morph Log
+          description: The Morph-Card commits of HEAD's history, newest first, each with its card, model, run and paths, from one git log.
+          behavior: >
+            readMorphLog(root, env) → Morph Commit[]. Run Git `rev-parse --verify -q HEAD`: exit 1 (no
+            commit yet) → []. Else gitOk `log -z --name-only --no-renames --format=<MORPH_LOG_FORMAT>`
+            (exported: "%x1e%H%x1f" then for Morph-Card, Morph-Model, Morph-Run each
+            "%(trailers:key=<key>,valueonly,separator=%x1d)%x1f"), so a failure (not a repository) is
+            git's thrown Error. The output split on "\x1e", the piece before the first dropped; per
+            record, the text before its last "\x1f" split on "\x1f" gives sha, card, model, run (each
+            value the part before its first "\x1d", trimmed; "" when absent), the text after it split
+            on "\0" gives the paths (one leading "\n" removed, empty pieces dropped; git's order, a
+            rename as its two paths). The run of a card commit comes from the run commits above it:
+            walking the records in order with current = null, a record with a card → {sha, card,
+            model, run: current, paths} (current unchanged); else one with a run sets current to it;
+            else (any other commit) current = null. A run's cards sit between its archive commit and
+            the commit before the run, so a card with no archive (a debt paid by an agent) reads null.
+          steps: [{calls: Run Git}, {produces: Morph Commit}]
+          examples:
+            - {given: 'a tmpRepo (first commit "init"), then five commits, oldest first, each `commit -q -m <subject> -m <trailers>`: z writes src/z.ts, trailers "Morph-Card: z\nMorph-Model: m/w"; a data commit writes docs/n.md, no trailer; a writes src/a.ts, "Morph-Card: a\nMorph-Model: m/x\nMorph-Variant: a.v2\nMorph-Acceptance-Exit: 0"; an empty commit (--allow-empty) "Morph-Run: 20261109-120000\nMorph-Cards: 1"; a-judge rewrites src/a.ts and writes tests/a.test.ts, "Morph-Card: a-judge\nMorph-Model: m/y"; env {PATH}', when: readMorphLog, then: '[{sha: HEAD, card "a-judge", model "m/y", run null, paths ["src/a.ts", "tests/a.test.ts"]}, {sha: HEAD~2, card "a", model "m/x", run "20261109-120000", paths ["src/a.ts"]}, {sha: HEAD~4, card "z", model "m/w", run null, paths ["src/z.ts"]}] — the data commit ends the run above it'}
+            - {given: 'a tmpRepo, then oldest first: an empty commit "Morph-Run: 20261110-080000-89abcdef" (the mrph "deck as submitted"); b writes "lib/b one.ts", "Morph-Card: b\nMorph-Model: glm53"; c renames it (git mv) to lib/c.ts, trailer "Morph-Card: c" alone; an empty commit "Morph-Run: 20261110-080000-89abcdef"', when: readMorphLog, then: '[{card "c", model "", run "20261110-080000-89abcdef", paths ["lib/b one.ts", "lib/c.ts"]}, {card "b", model "glm53", run "20261110-080000-89abcdef", paths ["lib/b one.ts"]}] with their shas'}
+            - {given: 'a tmpRoot after `git init -q` (no commit); then a tmpRoot that is no repository', when: readMorphLog, then: '[]; then a thrown Error whose message begins "git log failed (exit 128): "'}
+        - name: Read Ownership
+          description: The Morph log folded per path, most recently written first, with the commits counted by model.
+          behavior: >
+            readOwnership(commits {card, model, run, paths}[], newest first) → Ownership {commits: the
+            count, models: [{model, commits}] in order of first appearance ("" kept), paths: [{path,
+            writes: [{card, model, run}]}]}: walking the commits in order and each commit's paths in
+            the order given (a path repeated in one commit counted once), a path seen first is
+            appended, and every commit naming it appends one write, so the paths run from the most
+            recently written and each path's writes from the newest. Pure; keys in this order.
+          steps: [{reads: Morph Commit}, {produces: Ownership}]
+          examples:
+            - {given: '[{card "p-judge", model "acme/q", run null, paths ["tests/p.test.ts", "src/p.ts"]}, {card "p", model "acme/r", run "20261109-120000", paths ["src/p.ts"]}, {card "o", model "acme/q", run "20261109-120000", paths ["src/o.ts", "src/p.ts"]}]', when: readOwnership, then: '{commits: 3, models: [{model "acme/q", commits 2}, {model "acme/r", commits 1}], paths: [{path "tests/p.test.ts", writes [p-judge]}, {path "src/p.ts", writes [p-judge, p, o]}, {path "src/o.ts", writes [o]}]}, each write {card, model, run} of its commit'}
+            - {given: '[]; then [{card "x", model "", run null, paths ["d/x", "d/x"]}, {card "y", model "", run "r", paths []}]', when: readOwnership, then: '{commits: 0, models: [], paths: []}; then {commits: 2, models: [{model: "", commits: 2}], paths: [{path: "d/x", writes: [{card: "x", model: "", run: null}]}]}'}
       dataObjects:
         - name: Git Result
           description: What one git call returned.
@@ -1278,6 +1313,12 @@ System:
         - name: Archive Result
           description: The archive written and committed, or the refusal.
           schema: "{ ok: true, dir: string, commit: string | null } | { ok: false, error: string }"
+        - name: Morph Commit
+          description: One Morph-Card commit as Read Morph Log returns it.
+          schema: "{ sha: string, card: string, model: string, run: string | null, paths: string[] }"
+        - name: Ownership
+          description: What Read Ownership returns.
+          schema: "{ commits: number, models: { model: string, commits: number }[], paths: { path: string, writes: { card: string, model: string, run: string | null }[] }[] }"
 
     # ---------------------------------------------------------------- P7
     - name: cli
@@ -2652,7 +2693,9 @@ System:
         switch points marked; what is next (the first open row of docs/PLAN.md and the "State at
         handoff" of docs/AUTONOMY.md); the last decisions of docs/DECISIONS.md; open issues from a
         file the session writes (.morph/issues.json; no network call). Markdown under a 16 000-char
-        cap, one JSON document. No model call. Ownership by trailers is P12b.
+        cap, one JSON document. No model call. P12b: file ownership from git's Morph trailers (per path
+        the cards, model and run, newest first), the debt rows and MEASURE's running total beside the
+        archive total.
       language: typescript
       requirements: [Deterministic Core]
       functions:
@@ -2747,12 +2790,25 @@ System:
             unpriced> priced runs (<unpriced> unpriced)", "- by format: V2 <runs> runs,
             <written>/<cards> written, $<cost>; mrph <the same of mrph>", "- models: " + each
             "<model> (<n> run|runs)" ", "-joined; then, when any skipped, "- skipped: " + each
-            "<dir> (<reason>)" "; "-joined. Every $ amount toFixed(4). "", "## Chronology
+            "<dir> (<reason>)" "; "-joined. Then always the debt rows (chronology lines whose phase
+            matches /\bdebt\b/i): none → "- debt rows (docs/MEASURE.md): none", else "- debt rows
+            (docs/MEASURE.md), not in these totals: " + each "<phase> $<cost or —>" ", "-joined; and
+            running null → "- running total (docs/MEASURE.md): none", else "- running total
+            (docs/MEASURE.md): \"<running>\" vs $<totals.cost> archived here" + (when running holds
+            a $<number>, the first: ", difference <number − totals.cost>") + " — the two differ by runs
+            made outside this repository (in MEASURE, no archive here) and archived runs MEASURE's
+            total leaves out; debt rows are in neither". Every $ amount and the difference toFixed(4). "", "## Chronology
             (docs/MEASURE.md)", "": no lines → "- no rows"; else "phase · date · builder · models ·
             written/planned · runs · $ · notes" and per line "- <phase> · <date or —> · <builder or
             —> · <models ", "-joined or —> · <written>/<planned> written (— when written is null) ·
             <runs> run|runs · $<cost or —>", + " · <notes>" when not empty, + " ← switch: " +
-            switches "; "-joined when any. "", "## What is next", "": row null → "- next phase:
+            switches "; "-joined when any. "", "## File ownership (git, Morph-Card trailers)", "":
+            commits 0 → "- git carries 0 Morph commits"; else "- git carries <n> Morph commit|commits: "
+            + each "<model or —> <commits>" ", "-joined, "- <n> path|paths written by cards, most recent
+            first; per path its cards, newest first:", then per path of the first OWNERSHIP_PATHS (30)
+            "- <path> ← " + its first OWNERSHIP_WRITES (3) writes "<card> (<model or —>, run <run or
+            —>)" "; "-joined, + "; … <k> more" when it has more, then "- … <m> more paths" when more.
+            "", "## What is next", "": row null → "- next phase:
             none open (docs/PLAN.md)", else "- next phase (docs/PLAN.md): <row>"; handoff [] → "-
             handoff: no \"## State at handoff\" section (docs/AUTONOMY.md)", else "- handoff
             (docs/AUTONOMY.md):" and "  > <line>" each. "", "## Last decisions
@@ -2766,10 +2822,11 @@ System:
             chars_\n".
           steps: [{reads: Primer Digest}, {produces: string}]
           examples:
-            - {given: 'render.json["digest 1"] (name "MorphV2", generatedAt "2026-10-07T22:00:00.000Z", files 701, tests typescript 84 files 641 tests, runs = Read Runs 1, story = Read Story 1), cap 16000', ref: "tests/fixtures/primer/render.json, primer1.md", when: renderPrimer, then: 'exactly primer1.md (5 952 chars): "- 641 tests in 84 test files by the typescript profile (counted from text, not a run)", "- cost: $0.2651 over 4 priced runs (0 unpriced)", the P11b1 line ending " ← switch: builder V2 cut + V2 run → V2/ds; model z-ai/glm-5.3 → deepseek/deepseek-v4.1-flash"'}
-            - {given: 'render.json["digest 2"]: name "empty", files 0, tests python 0 0, runs = Read Runs of [x with report null], story = Read Story 5, cap 16000', ref: "tests/fixtures/primer/primer2.md", when: renderPrimer, then: 'exactly primer2.md: "missing: docs/MEASURE.md, docs/PLAN.md, docs/AUTONOMY.md, docs/DECISIONS.md", "- archived runs: 0", "- skipped: x (no report.json)", "- no rows", "- next phase: none open (docs/PLAN.md)", "- none", the issues line "- not read: no .morph/issues.json …"'}
+            - {given: 'render.json["digest 1"] (name "MorphV2", generatedAt "2026-10-07T22:00:00.000Z", files 701, tests typescript 84 files 641 tests, runs = Read Runs 1, story = Read Story 1, ownership = the head of this repository''s at 06ca11e: 201 commits, 33 paths, running "Running total of the autonomous stretch: $3.2658 of $30"), cap 16000', ref: "tests/fixtures/primer/render.json, primer1.md", when: renderPrimer, then: 'exactly primer1.md (11 033 chars): "- cost: $0.2651 over 4 priced runs (0 unpriced)", "- debt rows (docs/MEASURE.md), not in these totals: P5 debt (fable) $4.1723", the running total line with "difference 3.0007", the P11b1 line ending " ← switch: builder V2 cut + V2 run → V2/ds; model z-ai/glm-5.3 → deepseek/deepseek-v4.1-flash", "- git carries 201 Morph commits: deepseek/deepseek-v4.1-flash 56, z-ai/glm-5.3 53, glm53 91, claude-fable-5-1 1", "- … 3 more paths"'}
+            - {given: 'render.json["digest 2"]: name "empty", files 0, tests python 0 0, runs = Read Runs of [x with report null], story = Read Story 5, ownership {commits 0, models [], paths []}, running null, cap 16000', ref: "tests/fixtures/primer/primer2.md", when: renderPrimer, then: 'exactly primer2.md: "missing: docs/MEASURE.md, docs/PLAN.md, docs/AUTONOMY.md, docs/DECISIONS.md", "- archived runs: 0", "- skipped: x (no report.json)", "- debt rows (docs/MEASURE.md): none", "- running total (docs/MEASURE.md): none", "- no rows", "- git carries 0 Morph commits", "- next phase: none open (docs/PLAN.md)", "- none", the issues line "- not read: no .morph/issues.json …"'}
             - {given: 'digest 1 with cap 600; then cap = the length of primer1.md (5952)', when: renderPrimer, then: 'primer1.md''s first 540 chars up to and including their last "\n", then "_… truncated to fit 600 chars_\n" (511 chars in all); then exactly primer1.md'}
             - {given: 'digest 2 with story.issues {state "read", items []}; then {state "unreadable", items []}; then story.next {phase "P7", row "P7 · cli · x", handoff ["H", "Next: P8"]} and decisions ["a · b"]', when: renderPrimer, then: 'its last line "- none open"; then "- not read: .morph/issues.json is not a JSON array"; then the lines "- next phase (docs/PLAN.md): P7 · cli · x", "- handoff (docs/AUTONOMY.md):", "  > H", "  > Next: P8", and "- a · b" under "## Last decisions (docs/DECISIONS.md)"'}
+            - {given: 'digest 2 with ownership {commits 1, models [{model "", commits 1}], paths [{path "a b.ts", writes [{card "k", model "", run null}]}]}, running "Running total: 12 runs", story.chronology two lines (the other keys of Read Story 2''s P1 smoke line) with phase "P3 Debt (x)" cost "" and phase "P4 debts" cost "1.5"; then digest 1 with running "Running total: $0.2000"', when: renderPrimer, then: 'the lines "- debt rows (docs/MEASURE.md), not in these totals: P3 Debt (x) $—", "- running total (docs/MEASURE.md): \"Running total: 12 runs\" vs $0.0000 archived here — the two differ …" (no difference), "- git carries 1 Morph commit: — 1", "- 1 path written by cards, most recent first; per path its cards, newest first:", "- a b.ts ← k (—, run —)"; then the running line holds "vs $0.2651 archived here, difference -0.0651 — "'}
         - name: Primer Command
           description: "`morph primer [--write]`: reads the tree, the archives and the docs, counts the tests by the profile, renders; one Primer Document."
           behavior: >
@@ -2792,21 +2849,26 @@ System:
             answers/ ending ".answer.txt" (0 without the directory)}; Read Runs. 5. Read Story
             with the texts of docs/MEASURE.md, docs/PLAN.md, docs/AUTONOMY.md, docs/DECISIONS.md and
             .morph/issues.json under root (null when not a regular file) and the Read Runs runs.
-            6. generatedAt = new Date(deps.now()).toISOString() (the only clock); markdown =
+            6. ownership = git's Read Ownership of git's Read Morph Log(root, deps.env); running =
+            runningLine(the MEASURE text) (exported): its first line whose trim starts "Running total",
+            trimmed, cut before its first " (", over 200 chars → 199 + "…"; null without one.
+            7. generatedAt = new Date(deps.now()).toISOString() (the only clock); markdown =
             Render Primer({name: path.basename(root), generatedAt, files: the count, tests, runs,
-            story}, 16000). 7. write → <root>/.morph/primer.md = markdown (mkdir -p), written
+            story, ownership, running}, 16000). 8. write → <root>/.morph/primer.md = markdown (mkdir -p), written
             ".morph/primer.md"; else null and nothing written. → {code 0, document {root,
             generatedAt, files, tests, runs: the totals, skipped: the skipped count, chronology:
-            the line count, next: the next phase, missing, issues: the issues state, chars: the
-            markdown's length, written, markdown}}, keys in that order. Nothing else is read or
+            the line count, next: the next phase, missing, issues: the issues state, ownership:
+            {commits, paths: the paths' count}, running, chars: the markdown's length, written,
+            markdown}}, keys in that order. Nothing else is read or
             written; no network, no model.
           steps: [{uses: git}, {uses: language}, {calls: Read Runs}, {calls: Read Story}, {calls: Render Primer}, {produces: Primer Document}]
           examples:
             - {given: 'a tmpRepo with tests/a.test.ts "test(\"a\", () => {});\ntest (\"b\", () => {});\n", tests/b.spec.ts "it(\"c\", () => {});\nit.skip(\"d\", () => {});\ntest.todo(\"e\");\nexpect(/x/.test(\"x\")).toBe(true);\n", src/c.ts "export const test = (s: string): string => s;\ntest(\"not a test file\");\n"; env {PATH}', when: 'primerCommand(t, false, {env, now: () => 1791400000000}); and countTests(typescript, those three files)', then: 'code 0; document.tests {language: "typescript", files: 2, tests: 3} — two test( and one it( give 3; files 3; generatedAt "2026-10-07T19:06:40.000Z"; written null; countTests gives the same'}
             - {given: 'a tmpRepo with pkg/a.py, pkg/b.py, tests/test_a.py "def test_x():\n    pass\n\nasync def test_y():\n    pass\n\ndef helper():\n    pass\n", pkg/b_test.py "class T:\n    def test_m(self):\n        pass\n", web/x.ts "test(\"ts\");\n"', when: 'primerCommand(t, false, deps)', then: 'document.tests {language: "python", files: 2, tests: 3}; files 5 — four python files outvote one typescript file'}
-            - {given: 'a tmpRepo t: docs/MEASURE.md, PLAN.md, AUTONOMY.md, DECISIONS.md and .morph/issues.json = the story fixtures; .morph/runs/<dir>/report.json for the five runs fixtures; .morph/runs/20261007-204822/answers/a.v1.answer.txt "A" and lines.txt "L"; .morph/runs/broken/deck.json "[]" (no report); tests/a.test.ts, tests/b.spec.ts, src/c.ts of example 1; now 1791400000000', ref: "tests/fixtures/primer/command.json, primer3.md", when: 'primerCommand(t, true, deps)', then: 'code 0; the document without root and markdown exactly command.json["Primer Command 3"] (files 16, tests 2 files 3 tests, runs 5: V2 3 and mrph 2, unpriced 1, answers 1, skipped 1, chronology 16, next "P12a", issues "read", written ".morph/primer.md"); root t; markdown = primer3.md with "{name}" replaced by the base name of t; .morph/primer.md holds the same text'}
+            - {given: 'a tmpRepo t: docs/MEASURE.md, PLAN.md, AUTONOMY.md, DECISIONS.md and .morph/issues.json = the story fixtures; .morph/runs/<dir>/report.json for the five runs fixtures; .morph/runs/20261007-204822/answers/a.v1.answer.txt "A" and lines.txt "L"; .morph/runs/broken/deck.json "[]" (no report); tests/a.test.ts, tests/b.spec.ts, src/c.ts of example 1; now 1791400000000', ref: "tests/fixtures/primer/command.json, primer3.md", when: 'primerCommand(t, true, deps)', then: 'code 0; the document without root and markdown exactly command.json["Primer Command 3"] (files 16, tests 2 files 3 tests, runs 5: V2 3 and mrph 2, unpriced 1, answers 1, skipped 1, chronology 16, next "P12a", issues "read", ownership {commits 0, paths 0}, running null, written ".morph/primer.md"); root t; markdown = primer3.md with "{name}" replaced by the base name of t; .morph/primer.md holds the same text'}
             - {given: 'example 1''s repo with write false; then a tmp root that is not a git repository', when: primerCommand, then: 'written null and no .morph/primer.md; then a thrown Error whose message begins "git ls-files failed (exit 128): "'}
             - {given: 'a tmpRepo with only its first empty commit; now () => 0', ref: "tests/fixtures/primer/primer5.md", when: 'primerCommand(t, false, deps)', then: 'code 0; files 0, tests {language: "typescript", files: 0, tests: 0}, runs.runs 0, skipped 0, chronology 0, next null, missing ["measure", "plan", "autonomy", "decisions"], issues "absent", generatedAt "1970-01-01T00:00:00.000Z"; markdown = primer5.md with "{name}" replaced'}
+            - {given: 'a tmpRepo with docs/MEASURE.md "# M\n\nRunning total of the stretch: $1.5000 of $9 (A $1 + B $0.5).\n\n| фаза | строитель | карт план/принято | $ исп. | прогоны |\n|---|---|---|---|---|\n| P1 | night | 1 / 1 | 0.5 | |\n| P1 debt (agent) | claude -p | 1 / 1 | 2.25 | |\n" (untracked) and three commits, oldest first: q writes src/q.ts, trailers "Morph-Card: q\nMorph-Model: m/q"; an empty commit "Morph-Run: 20261110-101010"; q-judge writes tests/q.test.ts "test(\"q\", () => {});\n", "Morph-Card: q-judge\nMorph-Model: m/r"; then runningLine of null, of "x\n  Running total: $1 (a (b)\n" and of "Running total " + 250 × "y"', when: 'primerCommand(t, false, deps); runningLine', then: 'document.ownership {commits: 2, paths: 2}, running "Running total of the stretch: $1.5000 of $9"; the markdown holds "- debt rows (docs/MEASURE.md), not in these totals: P1 debt (agent) $2.25", "- running total (docs/MEASURE.md): \"Running total of the stretch: $1.5000 of $9\" vs $0.0000 archived here, difference 1.5000 — ", "- git carries 2 Morph commits: m/r 1, m/q 1", "- tests/q.test.ts ← q-judge (m/r, run —)", "- src/q.ts ← q (m/q, run 20261110-101010)"; runningLine null, "Running total: $1", the first 199 chars + "…"'}
       dataObjects:
         - name: Run Archive
           description: One directory of .morph/runs as the command read it.
@@ -2822,10 +2884,10 @@ System:
           schema: "{ chronology: { phase, date, builder, models: string[], written: number | null, planned: number | null, runs, notes, cost, switches: string[] }[], next: { phase: string | null, row: string | null, handoff: string[] }, decisions: string[], issues: { state: 'read'|'absent'|'unreadable', items: { number, title, labels: string[] }[] }, missing: string[] }"
         - name: Primer Digest
           description: What Render Primer reads.
-          schema: "{ name, generatedAt, files, tests: { language, files, tests }, runs: { skipped, totals }, story: Story }"
+          schema: "{ name, generatedAt, files, tests: { language, files, tests }, runs: { skipped, totals }, story: Story, ownership: Ownership, running: string | null }"
         - name: Primer Document
           description: stdout of primer.
-          schema: "{ root, generatedAt, files, tests: { language, files, tests }, runs: totals, skipped, chronology, next: string | null, missing: string[], issues, chars, written: string | null, markdown }"
+          schema: "{ root, generatedAt, files, tests: { language, files, tests }, runs: totals, skipped, chronology, next: string | null, missing: string[], issues, ownership: { commits, paths }, running: string | null, chars, written: string | null, markdown }"
 
     # ---------------------------------------------------------------- later epics (skeleton)
     - name: scout

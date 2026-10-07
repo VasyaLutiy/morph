@@ -1,0 +1,101 @@
+{
+ "phase": "p12b",
+ "ownGit": true,
+ "fullExclude": [
+  "tests/primer/renderPrimer.examples.test.ts",
+  "tests/primer/primerCommand.examples.test.ts"
+ ],
+ "cards": [
+  {
+   "id": "read-morph-log"
+  },
+  {
+   "id": "read-ownership"
+  },
+  {
+   "id": "render-primer"
+  },
+  {
+   "id": "primer-command",
+   "extra": "echo '== old examples'; node_modules/.bin/vitest run tests/primer/primerCommand.examples.test.ts --reporter=dot > $P/vt.log 2>&1 || { if grep -q '^ FAIL ' $P/vt.log; then awk '/^ FAIL /{p=1} p' $P/vt.log | grep -vE '^ +(Start at|Duration) ' | head -200; else tail -60 $P/vt.log; fi; node $P/firstdiff.mjs $P/vt.log; exit 1; }\n"
+  },
+  {
+   "id": "read-morph-log-judge",
+   "files": [
+    {
+     "file": "tests/git/log.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": [
+      "Read Morph Log example 1",
+      "Read Morph Log example 2",
+      "Read Morph Log example 3",
+      "20261109-120000",
+      "lib/b one.ts",
+      "git log failed (exit 128): "
+     ]
+    }
+   ]
+  },
+  {
+   "id": "read-ownership-judge",
+   "files": [
+    {
+     "file": "tests/git/ownership.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Read Ownership example 1",
+      "Read Ownership example 2",
+      "acme/q",
+      "d/x"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "render-primer-judge",
+   "files": [
+    {
+     "file": "tests/primer/renderPrimer.examples.test.ts",
+     "min": 4,
+     "max": 6,
+     "lits": [
+      "11033"
+     ]
+    },
+    {
+     "file": "tests/primer/renderPrimer.p12b.examples.test.ts",
+     "min": 1,
+     "max": 7,
+     "new": true,
+     "lits": [
+      "Render Primer example 5",
+      "P3 Debt (x) $—",
+      "- git carries 1 Morph commit: — 1",
+      "difference -0.0651"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "primer-command-judge",
+   "files": [
+    {
+     "file": "tests/primer/primerCommand.p12b.examples.test.ts",
+     "min": 1,
+     "max": 7,
+     "new": true,
+     "lits": [
+      "Primer Command example 6",
+      "20261110-101010",
+      "P1 debt (agent) $2.25",
+      "Running total of the stretch: $1.5000 of $9"
+     ]
+    }
+   ]
+  }
+ ]
+}

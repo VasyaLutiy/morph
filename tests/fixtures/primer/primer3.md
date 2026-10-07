@@ -14,6 +14,8 @@ generated 2026-10-07T19:06:40.000Z · 16 files in the tree · no model call, no 
 - by format: V2 3 runs, 12/13 written, $0.1688; mrph 2 runs, 2/9 written, $0.0963
 - models: z-ai/glm-5.3 (3 runs), z-ai/glm-5.3:batch (1 run), deepseek/deepseek-v4.1-flash (1 run)
 - skipped: broken (no report.json)
+- debt rows (docs/MEASURE.md), not in these totals: P5 debt (fable) $4.1723
+- running total (docs/MEASURE.md): none
 
 ## Chronology (docs/MEASURE.md)
 
@@ -34,6 +36,10 @@ phase · date · builder · models · written/planned · runs · $ · notes
 - P11c1 · 2026-10-07 · V2/ds · — · 12/12 written · 1 run · $0.0941 · 1 run, no fix; 11 first attempt, run-command-judge won at r2; 6 untried v2
 - P11b2 · 2026-10-07 · V2/ds · deepseek/deepseek-v4.1-flash · 9/9 written · 1 run · $0.1183 · 1 run, no fix; 7 first attempt, retries won archive-run-judge r1, parse-command-judge r1; 4 untried… ← switch: model z-ai/glm-5.3 → deepseek/deepseek-v4.1-flash
 - P11b2 smoke · 2026-10-07 · V2 detached batch route · — · 2/2 written · 1 run · $0.0006 · submit exit 0, process exited, state with cards+inputs; collect in a second process: 12 × exit 1 pe…
+
+## File ownership (git, Morph-Card trailers)
+
+- git carries 0 Morph commits
 
 ## What is next
 

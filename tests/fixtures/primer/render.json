@@ -374,7 +374,591 @@
         ]
       },
       "missing": []
-    }
+    },
+    "ownership": {
+      "commits": 201,
+      "models": [
+        {
+          "model": "deepseek/deepseek-v4.1-flash",
+          "commits": 56
+        },
+        {
+          "model": "z-ai/glm-5.3",
+          "commits": 53
+        },
+        {
+          "model": "glm53",
+          "commits": 91
+        },
+        {
+          "model": "claude-fable-5-1",
+          "commits": 1
+        }
+      ],
+      "paths": [
+        {
+          "path": "tests/cli/parse.examples.test.ts",
+          "writes": [
+            {
+              "card": "parse-command-judge",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-231118"
+            },
+            {
+              "card": "parse-command-judge.r1",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-204822"
+            },
+            {
+              "card": "parse-command-judge",
+              "model": "z-ai/glm-5.3",
+              "run": "20261007-110744"
+            },
+            {
+              "card": "parse-command-judge",
+              "model": "glm53",
+              "run": "20261006-190649-08a206fd"
+            }
+          ]
+        },
+        {
+          "path": "tests/cli/main.p12.examples.test.ts",
+          "writes": [
+            {
+              "card": "main-judge",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-231118"
+            }
+          ]
+        },
+        {
+          "path": "tests/primer/primerCommand.examples.test.ts",
+          "writes": [
+            {
+              "card": "primer-command-judge.r1",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-231118"
+            }
+          ]
+        },
+        {
+          "path": "src/cli/main.ts",
+          "writes": [
+            {
+              "card": "parse-command",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-231118"
+            },
+            {
+              "card": "parse-command",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-204822"
+            },
+            {
+              "card": "main",
+              "model": "z-ai/glm-5.3",
+              "run": "20261007-142731"
+            },
+            {
+              "card": "plan-command",
+              "model": "z-ai/glm-5.3",
+              "run": "20261007-110744"
+            },
+            {
+              "card": "main",
+              "model": "glm53",
+              "run": "20261006-190649-08a206fd"
+            }
+          ]
+        },
+        {
+          "path": "src/cli/parse.ts",
+          "writes": [
+            {
+              "card": "parse-command",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-231118"
+            },
+            {
+              "card": "parse-command",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-204822"
+            },
+            {
+              "card": "parse-command",
+              "model": "z-ai/glm-5.3",
+              "run": "20261007-125418"
+            },
+            {
+              "card": "parse-command",
+              "model": "z-ai/glm-5.3",
+              "run": "20261007-110744"
+            },
+            {
+              "card": "parse-command",
+              "model": "glm53",
+              "run": "20261006-190649-08a206fd"
+            }
+          ]
+        },
+        {
+          "path": "src/cli/types.ts",
+          "writes": [
+            {
+              "card": "parse-command",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-231118"
+            },
+            {
+              "card": "parse-command",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-204822"
+            },
+            {
+              "card": "run-command",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-195351"
+            },
+            {
+              "card": "parse-command",
+              "model": "z-ai/glm-5.3",
+              "run": "20261007-125418"
+            },
+            {
+              "card": "plan-command",
+              "model": "z-ai/glm-5.3",
+              "run": "20261007-110744"
+            },
+            {
+              "card": "document",
+              "model": "glm53",
+              "run": "20261006-190649-08a206fd"
+            }
+          ]
+        },
+        {
+          "path": "tests/primer/readStory.examples.test.ts",
+          "writes": [
+            {
+              "card": "read-story-judge.r1",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-231118"
+            }
+          ]
+        },
+        {
+          "path": "tests/primer/readRuns.examples.test.ts",
+          "writes": [
+            {
+              "card": "read-runs-judge.r1",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-231118"
+            }
+          ]
+        },
+        {
+          "path": "tests/primer/renderPrimer.examples.test.ts",
+          "writes": [
+            {
+              "card": "render-primer-judge",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-231118"
+            }
+          ]
+        },
+        {
+          "path": "src/primer/primerCommand.ts",
+          "writes": [
+            {
+              "card": "primer-command",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-231118"
+            }
+          ]
+        },
+        {
+          "path": "src/primer/readStory.ts",
+          "writes": [
+            {
+              "card": "read-story.r1",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-231118"
+            }
+          ]
+        },
+        {
+          "path": "src/primer/renderPrimer.ts",
+          "writes": [
+            {
+              "card": "render-primer",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-231118"
+            }
+          ]
+        },
+        {
+          "path": "src/primer/readRuns.ts",
+          "writes": [
+            {
+              "card": "read-runs",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-231118"
+            }
+          ]
+        },
+        {
+          "path": "tests/cli/main.p11b2.examples.test.ts",
+          "writes": [
+            {
+              "card": "main-judge",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-204822"
+            }
+          ]
+        },
+        {
+          "path": "tests/batches/collect.examples.test.ts",
+          "writes": [
+            {
+              "card": "collect-batch-judge",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-204822"
+            }
+          ]
+        },
+        {
+          "path": "tests/git/archive.p11b2.examples.test.ts",
+          "writes": [
+            {
+              "card": "archive-run-judge.r1",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-204822"
+            }
+          ]
+        },
+        {
+          "path": "tests/batches/submit.examples.test.ts",
+          "writes": [
+            {
+              "card": "submit-deck-judge",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-204822"
+            }
+          ]
+        },
+        {
+          "path": "src/batches/collect.ts",
+          "writes": [
+            {
+              "card": "collect-batch",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-204822"
+            }
+          ]
+        },
+        {
+          "path": "src/batches/submit.ts",
+          "writes": [
+            {
+              "card": "submit-deck",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-204822"
+            }
+          ]
+        },
+        {
+          "path": "src/git/archive.ts",
+          "writes": [
+            {
+              "card": "archive-run",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-204822"
+            },
+            {
+              "card": "archive-run",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-174926"
+            },
+            {
+              "card": "archive-run",
+              "model": "z-ai/glm-5.3",
+              "run": "20261007-142731"
+            },
+            {
+              "card": "archive-run",
+              "model": "glm53",
+              "run": "20261006-172728-672ec2d2"
+            }
+          ]
+        },
+        {
+          "path": "tests/cli/main.p11c2.examples.test.ts",
+          "writes": [
+            {
+              "card": "main-judge",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-195351"
+            }
+          ]
+        },
+        {
+          "path": "tests/cli/runCommand.examples.test.ts",
+          "writes": [
+            {
+              "card": "run-command-judge",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-195351"
+            },
+            {
+              "card": "run-command-judge",
+              "model": "glm53",
+              "run": "20261006-190649-08a206fd"
+            }
+          ]
+        },
+        {
+          "path": "src/cli.ts",
+          "writes": [
+            {
+              "card": "main",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-195351"
+            },
+            {
+              "card": "main",
+              "model": "glm53",
+              "run": "20261006-190649-08a206fd"
+            }
+          ]
+        },
+        {
+          "path": "tests/runloop/deck.p11c2.examples.test.ts",
+          "writes": [
+            {
+              "card": "run-deck-judge",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-195351"
+            }
+          ]
+        },
+        {
+          "path": "src/cli/runCommand.ts",
+          "writes": [
+            {
+              "card": "run-command",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-195351"
+            },
+            {
+              "card": "run-command",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-185132"
+            },
+            {
+              "card": "run-command",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-174926"
+            },
+            {
+              "card": "run-command",
+              "model": "z-ai/glm-5.3",
+              "run": "20261007-142731"
+            },
+            {
+              "card": "run-command",
+              "model": "glm53",
+              "run": "20261006-190649-08a206fd"
+            }
+          ]
+        },
+        {
+          "path": "tests/acceptance/run.p11c2.examples.test.ts",
+          "writes": [
+            {
+              "card": "run-acceptance-judge",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-195351"
+            }
+          ]
+        },
+        {
+          "path": "tests/runloop/generation.examples.test.ts",
+          "writes": [
+            {
+              "card": "process-generation-judge",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-195351"
+            },
+            {
+              "card": "process-generation-judge",
+              "model": "z-ai/glm-5.3",
+              "run": "20261007-134217"
+            },
+            {
+              "card": "process-generation-judge",
+              "model": "claude-fable-5-1",
+              "run": null
+            }
+          ]
+        },
+        {
+          "path": "src/runloop/deck.ts",
+          "writes": [
+            {
+              "card": "run-deck",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-195351"
+            },
+            {
+              "card": "run-deck",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-185132"
+            },
+            {
+              "card": "run-deck",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-174926"
+            },
+            {
+              "card": "run-deck",
+              "model": "z-ai/glm-5.3",
+              "run": "20261007-134217"
+            },
+            {
+              "card": "run-deck",
+              "model": "glm53",
+              "run": "20261007-091848-91dcbf60"
+            },
+            {
+              "card": "run-deck",
+              "model": "glm53",
+              "run": "20261006-162537-de8699bf"
+            }
+          ]
+        },
+        {
+          "path": "src/runloop/types.ts",
+          "writes": [
+            {
+              "card": "run-deck",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-195351"
+            },
+            {
+              "card": "run-deck",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-185132"
+            },
+            {
+              "card": "process-generation",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-174926"
+            },
+            {
+              "card": "process-generation.r1",
+              "model": "z-ai/glm-5.3",
+              "run": "20261007-142731"
+            },
+            {
+              "card": "process-generation",
+              "model": "z-ai/glm-5.3",
+              "run": "20261007-134217"
+            },
+            {
+              "card": "process-generation",
+              "model": "glm53",
+              "run": "20261007-091848-91dcbf60"
+            },
+            {
+              "card": "resolve",
+              "model": "glm53",
+              "run": "20261006-162537-de8699bf"
+            }
+          ]
+        },
+        {
+          "path": "src/acceptance/run.ts",
+          "writes": [
+            {
+              "card": "run-acceptance",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-195351"
+            },
+            {
+              "card": "run-acceptance",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-185132"
+            },
+            {
+              "card": "run-acceptance",
+              "model": "glm53",
+              "run": "20261006-141841-4f95dce8"
+            }
+          ]
+        },
+        {
+          "path": "src/runloop/generation.ts",
+          "writes": [
+            {
+              "card": "process-generation",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-195351"
+            },
+            {
+              "card": "process-generation",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-174926"
+            },
+            {
+              "card": "process-generation.r1",
+              "model": "z-ai/glm-5.3",
+              "run": "20261007-142731"
+            },
+            {
+              "card": "process-generation",
+              "model": "z-ai/glm-5.3",
+              "run": "20261007-134217"
+            },
+            {
+              "card": "process-generation",
+              "model": "glm53",
+              "run": "20261007-105136-a1e1b533"
+            },
+            {
+              "card": "process-generation",
+              "model": "glm53",
+              "run": "20261007-091848-91dcbf60"
+            },
+            {
+              "card": "process-generation",
+              "model": "glm53",
+              "run": "20261006-162537-de8699bf"
+            }
+          ]
+        },
+        {
+          "path": "tests/cli/runCommand.p11c.examples.test.ts",
+          "writes": [
+            {
+              "card": "run-command-judge.r2",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-185132"
+            }
+          ]
+        },
+        {
+          "path": "tests/runloop/deck.p11c.examples.test.ts",
+          "writes": [
+            {
+              "card": "run-deck-judge",
+              "model": "deepseek/deepseek-v4.1-flash",
+              "run": "20261007-185132"
+            }
+          ]
+        }
+      ]
+    },
+    "running": "Running total of the autonomous stretch: $3.2658 of $30"
   },
   "digest 2": {
     "name": "empty",
@@ -438,6 +1022,12 @@
         "autonomy",
         "decisions"
       ]
-    }
+    },
+    "ownership": {
+      "commits": 0,
+      "models": [],
+      "paths": []
+    },
+    "running": null
   }
 }

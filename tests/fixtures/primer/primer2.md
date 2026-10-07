@@ -11,10 +11,16 @@ missing: docs/MEASURE.md, docs/PLAN.md, docs/AUTONOMY.md, docs/DECISIONS.md
 
 - archived runs: 0
 - skipped: x (no report.json)
+- debt rows (docs/MEASURE.md): none
+- running total (docs/MEASURE.md): none
 
 ## Chronology (docs/MEASURE.md)
 
 - no rows
+
+## File ownership (git, Morph-Card trailers)
+
+- git carries 0 Morph commits
 
 ## What is next
 

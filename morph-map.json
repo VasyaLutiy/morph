@@ -1,7 +1,7 @@
 {
   "package": "src",
   "docs": [
-    "docs/TASK_P12_primer.md"
+    "docs/TASK_P12b_primer.md"
   ],
   "groups": {
     "card-model": [
@@ -2241,45 +2241,41 @@
       "instruction": "Read docs/TASK_P12_primer.md sections 2.2 (src/primer/readStory.ts, Read Story: rules 1-8, which are exact) and 4. Write src/primer/readStory.ts, a NEW file of the layer primer that imports nothing (no Node module, no other src file). It exports StoryTexts, StoryRun, ChronologyLine, StoryIssue and Story exactly as section 2.2 shows and readStory(texts, runs): tables found by the rule of point 1 (a header cell \"\u0444\u0430\u0437\u0430\" anywhere, not only first), columns by header name, the escaped pipe kept inside a cell, every cut and every message copied exactly. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "render-primer": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "src/primer/renderPrimer.ts"
       ],
       "context_slice": [
-        "docs/TASK_P12_primer.md",
+        "docs/TASK_P12b_primer.md",
         "docs/CONVENTIONS.md",
         "tests/fixtures/primer/primer1.md",
         "tests/fixtures/primer/primer2.md"
       ],
       "depends_on": [],
       "variants": 2,
-      "max_tokens": 8000,
-      "instruction": "Read docs/TASK_P12_primer.md sections 2.2 (src/primer/renderPrimer.ts, Render Primer) and 4; tests/fixtures/primer/primer1.md and primer2.md (their texts follow) are two whole outputs of renderPrimer, every section in both forms. Write src/primer/renderPrimer.ts, a NEW file of the layer primer that imports nothing (no Node module, no other src file, not readRuns.ts or readStory.ts: it declares its own input types exactly as section 2.2 shows). renderPrimer(digest, cap) builds the lines of the record's behaviour, joins them with \"\\n\", ends with \"\\n\" and cuts at the cap as section 2.2 says; copy every word, separator and symbol exactly. Write no test file: a probe tests you and a judge writes the example tests."
+      "max_tokens": 16000,
+      "instruction": "Read docs/TASK_P12b_primer.md sections 2.2 (src/primer/renderPrimer.ts, Render Primer: additions 1 and 2) and 4; tests/fixtures/primer/primer1.md and primer2.md (their texts follow) are two whole outputs of the patched renderPrimer. Patch src/primer/renderPrimer.ts (its current text follows) and return it whole: add DigestOwnership, the two PrimerDigest keys ownership and running after story, OWNERSHIP_PATHS = 30 and OWNERSHIP_WRITES = 3; append the debt line and the running-total line after the last line of the Runs section; add the File ownership section between the Chronology section and What is next. Every other line, export and type of the file stays exactly as it is; it still imports nothing. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "primer-command": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "src/primer/primerCommand.ts"
       ],
       "context_slice": [
-        "docs/TASK_P12_primer.md",
+        "docs/TASK_P12b_primer.md",
         "docs/CONVENTIONS.md",
-        "src/git/run.ts",
-        "src/language/types.ts",
-        "src/language/profiles.ts",
-        "src/language/paths.ts",
-        "src/primer/readRuns.ts",
-        "src/primer/readStory.ts",
+        "src/git/log.ts",
+        "src/git/ownership.ts",
         "src/primer/renderPrimer.ts"
       ],
       "depends_on": [
-        "read-runs",
-        "read-story",
+        "read-morph-log",
+        "read-ownership",
         "render-primer"
       ],
       "variants": 2,
-      "max_tokens": 8000,
-      "instruction": "Read docs/TASK_P12_primer.md sections 2.1 (the functions you call, with their modules) and 2.2 (src/primer/primerCommand.ts, Primer Command) and 4. Write src/primer/primerCommand.ts, a NEW file of the layer primer (it may import git's gitOk, language's PROFILES, hasExtension, normalizePath, profileForPath and LanguageProfile, and ./readRuns.js, ./readStory.js, ./renderPrimer.js; node:fs and node:path; no process; new Date only to format deps.now()). It exports PrimerDeps, TestCount, PrimerDocument, PrimerResult, PRIMER_CAP, PRIMER_FILE, isTestFile, countTests, pickProfile and primerCommand exactly as section 2.2 shows; the steps in the record's order, the document's keys in the interface's order, a git failure thrown, not caught. Write no test file: a probe tests you and a judge writes the example tests."
+      "max_tokens": 12000,
+      "instruction": "Read docs/TASK_P12b_primer.md sections 2.1 (the functions you call, with their modules) and 2.2 (src/primer/primerCommand.ts: runningLine and Primer Command) and 4. Patch src/primer/primerCommand.ts (its current text follows) and return it whole: import readMorphLog from \"../git/log.js\" and readOwnership from \"../git/ownership.js\"; add ownership and running to PrimerDocument after issues; export runningLine(measure) after the existing exports; after Read Story compute ownership and running (from the MEASURE text Read Story got) and pass both to renderPrimer in the digest; the document's keys in the interface's order. Every other step stays as it is (the ls-files call first). Write no test file: a probe tests you and a judge writes the example tests."
     },
     "read-runs-judge": {
       "intent": "generate",
@@ -2318,12 +2314,13 @@
       "instruction": "You write tests/primer/readStory.examples.test.ts only, a NEW file with the tests of Read Story examples 1-5. Read docs/TASK_P12_primer.md sections 2.1 (the fixtures) and 2.3 (the readStory.examples bullet). Import readStory from \"../../src/primer/readStory.js\", fixture and fixtureJson from \"../helpers.js\"; example 1 reads the five story fixtures and story/runs.json; examples 1 and 2 compare the whole Story with story.json's entry; examples 3-5 build their texts as the record writes them (\\n is a newline) and compare with the record's values. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "render-primer-judge": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
-        "tests/primer/renderPrimer.examples.test.ts"
+        "tests/primer/renderPrimer.examples.test.ts",
+        "tests/primer/renderPrimer.p12b.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P12_primer.md",
+        "docs/TASK_P12b_primer.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/primer/renderPrimer.ts"
@@ -2331,26 +2328,90 @@
       "depends_on": [
         "render-primer"
       ],
-      "max_tokens": 14000,
-      "instruction": "You write tests/primer/renderPrimer.examples.test.ts only, a NEW file with the tests of Render Primer examples 1-4. Read docs/TASK_P12_primer.md sections 2.1 (render.json, primer1.md, primer2.md) and 2.3 (the renderPrimer.examples bullet). Import renderPrimer and PrimerDigest from \"../../src/primer/renderPrimer.js\", fixture and fixtureJson from \"../helpers.js\"; the digests are render.json[\"digest 1\"] and [\"digest 2\"] (cast to PrimerDigest), changed for examples 3 and 4 by spreading new values over a copy; texts compared with toBe. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "max_tokens": 16000,
+      "instruction": "You write two files. tests/primer/renderPrimer.examples.test.ts (its current text follows): change only the literal 5952 in expect(md.length).toBe(5952) to 11033 and return the file whole, every other line as it is. tests/primer/renderPrimer.p12b.examples.test.ts, a NEW file with the test of Render Primer example 5 only (examples 1-4 are already tested). Read docs/TASK_P12b_primer.md sections 2.2 (Render Primer, additions 1 and 2) and 2.3. Import renderPrimer and its types from \"../../src/primer/renderPrimer.js\", fixtureJson from \"../helpers.js\"; take digest 1 and digest 2 from fixtureJson(\"primer/render.json\"), build the changed digests with spreads, and check each line of the record with toContain on the markdown split on newlines."
     },
     "primer-command-judge": {
       "intent": "generate",
       "targets": [
-        "tests/primer/primerCommand.examples.test.ts"
+        "tests/primer/primerCommand.p12b.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P12_primer.md",
+        "docs/TASK_P12b_primer.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
-        "src/primer/primerCommand.ts",
-        "tests/fixtures/primer/command.json"
+        "src/primer/primerCommand.ts"
       ],
       "depends_on": [
         "primer-command"
       ],
-      "max_tokens": 20000,
-      "instruction": "You write tests/primer/primerCommand.examples.test.ts only, a NEW file with the tests of Primer Command examples 1-5. Read docs/TASK_P12_primer.md sections 2.1 (the fixtures, F1-F4 and the primer skeleton) and 2.3 (the primerCommand.examples bullet). Import primerCommand, countTests and PrimerDeps from \"../../src/primer/primerCommand.js\", TYPESCRIPT from \"../../src/language/profiles.js\", tmpRepo, tmpRoot, fixture and fixtureJson from \"../helpers.js\", path from \"node:path\"; the env is {PATH: process.env.PATH ?? \"\"}; markdown fixtures compared after replacing \"{name}\" with path.basename of the repo root. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "max_tokens": 14000,
+      "instruction": "You write tests/primer/primerCommand.p12b.examples.test.ts only, a NEW file with the test of Primer Command example 6 (examples 1-5 are already tested). Read docs/TASK_P12b_primer.md sections 2.1 (F1, F4 and the harness skeleton) and 2.2 (runningLine, Primer Command, the example 6 row) and the record's example 6. Import primerCommand, runningLine and PrimerDeps from \"../../src/primer/primerCommand.js\", tmpRepo and the TmpRepo type from \"../helpers.js\". Write docs/MEASURE.md with the record's literal, make the three commits with the skeleton's helper, call primerCommand(t.root, false, {env: {PATH: process.env.PATH ?? \"\"}, now: () => 1791400000000}), check ownership and running with toStrictEqual/toBe and each markdown line of the record with toContain on the lines; then the three runningLine calls; remove the tmp repo in finally."
+    },
+    "read-morph-log": {
+      "intent": "generate",
+      "targets": [
+        "src/git/log.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P12b_primer.md",
+        "docs/CONVENTIONS.md",
+        "src/git/run.ts",
+        "src/git/types.ts"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 8000,
+      "instruction": "Read docs/TASK_P12b_primer.md sections 2.2 (src/git/log.ts, Read Morph Log: points 1-4, which are exact) and 4. Write src/git/log.ts, a NEW file of the layer git that imports runGit and gitOk from \"./run.js\" and nothing else. It exports MorphCommit, MORPH_LOG_FORMAT (the exact string of section 2.2) and readMorphLog(root, env) in this order: the rev-parse check first, one git log, the records split as point 3 says (the paths without their one leading newline), the run carried from the run commits above each card commit and ended by any other commit, keys in the interface's order. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "read-ownership": {
+      "intent": "generate",
+      "targets": [
+        "src/git/ownership.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P12b_primer.md",
+        "docs/CONVENTIONS.md"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 8000,
+      "instruction": "Read docs/TASK_P12b_primer.md sections 2.2 (src/git/ownership.ts, Read Ownership) and 4. Write src/git/ownership.ts, a NEW pure file of the layer git that imports nothing. It exports OwnershipCommit, OwnershipWrite, OwnedPath, Ownership and readOwnership(commits) exactly as section 2.2 shows: paths in order of first appearance, each path's writes in commit order, a path repeated in one commit counted once, the models counted in order of first appearance, only the keys of the interfaces, the input not changed. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "read-morph-log-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/git/log.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P12b_primer.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/git/log.ts",
+        "src/git/run.ts"
+      ],
+      "depends_on": [
+        "read-morph-log"
+      ],
+      "max_tokens": 14000,
+      "instruction": "You write tests/git/log.examples.test.ts only, a NEW file with the tests of Read Morph Log examples 1-3. Read docs/TASK_P12b_primer.md sections 2.1 (F1-F3 and the harness skeleton) and 2.3 (the log.examples bullet). Import readMorphLog from \"../../src/git/log.js\", gitOk from \"../../src/git/run.js\" (example 3's git init), tmpRepo, tmpRoot and the TmpRepo type from \"../helpers.js\". Build every commit with the skeleton's commit helper, keep the sha it returns, and compare readMorphLog's whole result with toStrictEqual against the record's literal; remove every tmp directory in finally."
+    },
+    "read-ownership-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/git/ownership.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P12b_primer.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/git/ownership.ts"
+      ],
+      "depends_on": [
+        "read-ownership"
+      ],
+      "max_tokens": 12000,
+      "instruction": "You write tests/git/ownership.examples.test.ts only, a NEW file with the tests of Read Ownership examples 1-2. Read docs/TASK_P12b_primer.md sections 2.2 (Read Ownership) and 2.3 (the ownership.examples bullet). Import readOwnership and its types from \"../../src/git/ownership.js\". Each test compares the whole result with toStrictEqual against the record's literal, every write written out as {card, model, run}."
     }
   }
 }

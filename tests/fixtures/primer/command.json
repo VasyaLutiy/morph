@@ -51,7 +51,12 @@
     "next": "P12a",
     "missing": [],
     "issues": "read",
-    "chars": 5915,
+    "ownership": {
+      "commits": 0,
+      "paths": 0
+    },
+    "running": null,
+    "chars": 6108,
     "written": ".morph/primer.md"
   }
 }
