@@ -1,0 +1,42 @@
+{
+  "deck": "d.json",
+  "cards": 2,
+  "generations": [
+    [
+      "a",
+      "b"
+    ]
+  ],
+  "errors": 1,
+  "warnings": 0,
+  "hazards": [
+    {
+      "kind": "write-write",
+      "severity": "error",
+      "cards": [
+        "a",
+        "b"
+      ],
+      "path": "src/x.ts",
+      "repair": null
+    }
+  ],
+  "weights": [
+    {
+      "card": "a",
+      "bytes": 0,
+      "missing": [
+        "docs/a.md",
+        "src/x.ts"
+      ]
+    },
+    {
+      "card": "b",
+      "bytes": 0,
+      "missing": [
+        "docs/b.md",
+        "src/x.ts"
+      ]
+    }
+  ]
+}

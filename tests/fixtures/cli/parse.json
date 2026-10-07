@@ -1,0 +1,69 @@
+{
+  "1": {
+    "ok": true,
+    "command": {
+      "name": "deck check",
+      "root": ".",
+      "pretty": false,
+      "deck": "d.json",
+      "sliceCapBytes": 500000
+    }
+  },
+  "2": {
+    "ok": true,
+    "command": {
+      "name": "run",
+      "root": "/r",
+      "pretty": true,
+      "deck": "d.json",
+      "processor": "s",
+      "runId": "r1",
+      "deadlineSeconds": 60,
+      "maxCards": 3,
+      "maxRetryBatches": 0
+    }
+  },
+  "9": {
+    "ok": true,
+    "command": {
+      "name": "plan",
+      "root": ".",
+      "pretty": true,
+      "spec": "c.yaml",
+      "components": [
+        "a",
+        "b"
+      ],
+      "map": "m.json",
+      "judge": true,
+      "out": "d.json"
+    }
+  },
+  "10": {
+    "ok": true,
+    "command": {
+      "name": "plan",
+      "root": "/r",
+      "pretty": false,
+      "spec": "c.yaml",
+      "components": [],
+      "map": null,
+      "judge": false,
+      "out": null
+    }
+  },
+  "12": {
+    "ok": true,
+    "command": {
+      "name": "plan",
+      "root": ".",
+      "pretty": false,
+      "spec": "c.yaml",
+      "components": [],
+      "map": null,
+      "judge": false,
+      "out": null,
+      "checks": "decks/p1/checks.json"
+    }
+  }
+}

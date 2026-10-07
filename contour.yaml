@@ -1020,46 +1020,42 @@ System:
         - name: Parse Command
           description: argv into one Command or a usage error; global --root and --pretty anywhere.
           behavior: >
-            parseCommand(argv) scans argv left to right. A token starting with "--" is a
-            flag: --pretty and --judge take no value; --root, --deck, --processor, --run-id,
-            --deadline, --max-cards, --max-retry-batches, --slice-cap-bytes, --spec,
-            --component, --map, --out, --checks take the next token whatever it is; any other flag
-            (also --x=y) → "unknown flag: <t>"; a value flag as the last token → "flag <t>
-            needs a value"; a flag seen twice → "flag <t> given twice", except --component,
-            which repeats and keeps every value in argv order (the first such error in argv
-            order wins). Every other token is a word. Then the command from the words: none
-            → "no command (commands: deck check, plan, run)"; "run" → run; "plan" → plan;
-            "deck" "check" → deck check; a first word scout, primer, review or report →
-            NotYetError "command <word> is not available yet";
-            "deck" followed by add, status, reset or clear → NotYetError "command deck <w>
-            is not available yet"; anything else → "unknown command: <words joined by a
-            space>". More words than the command takes → "unexpected argument: <first
-            extra>". Then, in this order: a flag the command does not take → "flag <f> does
-            not apply to <command>" (deck check takes --root, --pretty, --deck,
-            --slice-cap-bytes; run takes --root, --pretty, --deck, --processor, --run-id,
-            --deadline, --max-cards, --max-retry-batches; plan takes --root, --pretty,
-            --spec, --component, --map, --judge, --out, --checks), in argv order; plan without
+            parseCommand(argv) scans argv left to right. A token starting with "--" is a flag:
+            --pretty and --judge take no value; --root, --deck, --processor, --run-id, --deadline,
+            --max-cards, --max-retry-batches, --slice-cap-bytes, --spec, --component, --map, --out,
+            --checks take the next token whatever it is; any other flag (also --x=y) → "unknown
+            flag: <t>"; a value flag last → "flag <t> needs a value"; a flag seen twice → "flag <t>
+            given twice", except --component, which repeats and keeps its values in argv order
+            (the first such error in argv order wins). Other tokens are words. The command from
+            the words: none → "no command (commands: deck check, plan, run)"; "run"; "plan";
+            "deck" "check"; a first word scout, primer, review or report → NotYetError "command
+            <word> is not available yet"; "deck" add|status|reset|clear → NotYetError "command deck
+            <w> is not available yet"; else "unknown command: <words joined by a space>". More
+            words than the command takes → "unexpected argument: <first extra>". Then in order: a
+            flag the command does not take → "flag <f> does not apply to <command>", in argv order
+            (deck check takes --root, --pretty, --deck, --slice-cap-bytes; run --root, --pretty,
+            --deck, --processor, --run-id, --deadline, --max-cards, --max-retry-batches; plan
+            --root, --pretty, --spec, --component, --map, --judge, --out, --checks); plan without
             --spec → "missing --spec", else plan is done: {name: "plan", root, pretty, spec,
-            components: the --component values ([] when none), map: the value or null, judge:
-            --judge given, out: the value or null, checks: the value, a key only when given}; no --deck → "missing --deck"; run without
-            --processor → "missing --processor"; for run a
-            --run-id not matching ^[A-Za-z0-9._-]+$ → "--run-id must match
-            ^[A-Za-z0-9._-]+$ (got '<v>')"; numbers in the order --slice-cap-bytes (deck
-            check), --deadline, --max-cards, --max-retry-batches (run): digits only, ≥ 1
-            ("<f> must be a positive integer (got '<v>')"), --max-retry-batches ≥ 0 ("must
-            be a non-negative integer"). Every failure is {ok: false, error: {error: {code:
-            4, kind: "UsageError" | "NotYetError", message}}}. Defaults: root ".", pretty
-            false, sliceCapBytes 500000, runId null, deadlineSeconds 2400, maxCards null
-            (= the deck's card count), maxRetryBatches 2.
+            components ([] when none), map (or null), judge (--judge given), out (or null), checks
+            (a key only when given)}; no --deck → "missing --deck"; run without --processor →
+            "missing --processor"; a run --run-id not matching ^[A-Za-z0-9._-]+$ → "--run-id must
+            match ^[A-Za-z0-9._-]+$ (got '<v>')"; numbers in the order --slice-cap-bytes (deck
+            check), --deadline, --max-cards, --max-retry-batches (run): digits only, ≥ 1 ("<f> must
+            be a positive integer (got '<v>')"), --max-retry-batches ≥ 0 ("must be a non-negative
+            integer"). A failure is {ok: false, error: {error: {code: 4, kind: "UsageError" |
+            "NotYetError", message}}}. Defaults: root ".", pretty false, sliceCapBytes 500000, runId
+            null, deadlineSeconds 2400, maxCards null (= the deck's card count), maxRetryBatches 2.
           steps:
             - produces: Command
           examples:
             - given: 'argv ["deck", "check", "--deck", "d.json"]'
+              ref: "tests/fixtures/cli/parse.json (example number → the whole result)"
               when: "parsed"
-              then: '{ok: true, command: {name: "deck check", root: ".", pretty: false, deck: "d.json", sliceCapBytes: 500000}}'
+              then: 'parse.json["1"]'
             - given: 'argv ["--pretty", "run", "--deck", "d.json", "--processor", "s", "--root", "/r", "--run-id", "r1", "--deadline", "60", "--max-cards", "3", "--max-retry-batches", "0"]'
               when: "parsed"
-              then: '{ok: true, command: {name: "run", root: "/r", pretty: true, deck: "d.json", processor: "s", runId: "r1", deadlineSeconds: 60, maxCards: 3, maxRetryBatches: 0}}'
+              then: 'parse.json["2"]'
             - given: 'argv ["frobnicate"]'
               when: "parsed"
               then: '{ok: false, error: {error: {code: 4, kind: "UsageError", message: "unknown command: frobnicate"}}}'
@@ -1080,16 +1076,16 @@ System:
               then: 'UsageError "flag --root needs a value", then UsageError "no command (commands: deck check, plan, run)"'
             - given: 'argv ["plan", "--spec", "c.yaml", "--component", "a", "--map", "m.json", "--component", "b", "--judge", "--out", "d.json", "--pretty"]'
               when: "parsed"
-              then: '{ok: true, command: {name: "plan", root: ".", pretty: true, spec: "c.yaml", components: ["a", "b"], map: "m.json", judge: true, out: "d.json"}}'
+              then: 'parse.json["9"]'
             - given: 'argv ["plan", "--root", "/r", "--spec", "c.yaml"]'
               when: "parsed"
-              then: '{ok: true, command: {name: "plan", root: "/r", pretty: false, spec: "c.yaml", components: [], map: null, judge: false, out: null}}'
+              then: 'parse.json["10"]'
             - given: 'argv ["plan", "--component", "a"]; then ["plan", "--spec", "c", "--judge", "--judge"]; then ["run", "--deck", "d", "--processor", "s", "--judge"]'
               when: "parsed"
               then: 'UsageError "missing --spec"; then "flag --judge given twice"; then "flag --judge does not apply to run"'
             - given: 'argv ["plan", "--spec", "c.yaml", "--checks", "decks/p1/checks.json"]'
               when: "parsed"
-              then: '{ok: true, command: {name: "plan", root: ".", pretty: false, spec: "c.yaml", components: [], map: null, judge: false, out: null, checks: "decks/p1/checks.json"}}'
+              then: 'parse.json["12"]'
             - given: 'argv ["run", "--deck", "d", "--processor", "s", "--checks", "x"]; ["plan", "--checks"]; ["plan", "--checks", "a", "--checks", "b"]'
               when: "parsed"
               then: 'UsageError "flag --checks does not apply to run"; "flag --checks needs a value"; "flag --checks given twice"'
@@ -1113,12 +1109,7 @@ System:
               when: "rendered compact"
               then: '"{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"unknown command: x\"}}\n"'
         - name: Classify Error
-          description: >
-            Exit codes: 0 ok; 1 a run with any card not written; 2 a refusal before any
-            spend (invalid deck, hazard errors, dirty tree, existing branch); 3 a fault
-            thrown once a command is under way (a failing git command, an archive not
-            committed, I/O); 4 a usage error (bad flag, unknown or not-yet command, missing
-            file, unconfigured processor). Error document {"error": {"code", "kind", "message"}}.
+          description: "Exit codes: 0 ok; 1 a card not written; 2 a refusal before spend; 3 a fault under way; 4 a usage error."
           behavior: >
             classifyThrown(e) → {code: 3, document: errorDocument(3, "RuntimeError", e's
             message when e is an Error, else String(e))}. runExitCode(report, archive) → 3
@@ -1176,9 +1167,9 @@ System:
             - produces: Deck Check Document
           examples:
             - given: 'a tmp root holding only d.json = the write-write fixture (a and b both write src/x.ts)'
-              ref: "tests/fixtures/decks/hazardsWriteWrite.json"
+              ref: "tests/fixtures/decks/hazardsWriteWrite.json, tests/fixtures/cli/deckCheck.writeWrite.json"
               when: 'deckCheckCommand(root, "d.json", 500000)'
-              then: 'code 2; document {deck: "d.json", cards: 2, generations: [["a", "b"]], errors: 1, warnings: 0, hazards: [{kind: "write-write", severity: "error", cards: ["a", "b"], path: "src/x.ts", repair: null}], weights: [{card: "a", bytes: 0, missing: ["docs/a.md", "src/x.ts"]}, {card: "b", bytes: 0, missing: ["docs/b.md", "src/x.ts"]}]}'
+              then: 'code 2; document equal to tests/fixtures/cli/deckCheck.writeWrite.json'
             - given: 'd.json = the tiny fixture and src/a.ts = "export const a = 1;\n" (20 bytes)'
               ref: "tests/fixtures/decks/tiny.json"
               when: 'deckCheckCommand(root, "d.json", 500000)'
@@ -1215,7 +1206,7 @@ System:
           examples:
             - given: 'a tmpRepo; env with an explicit git identity and MORPH_PROCESSOR_s_TYPE stub, MORPH_PROCESSOR_s_ANSWERS_DIR a side tmp root holding a.md and b.md (fenced ts blocks); a deck file in the side root: a → out/a.ts (acceptance "test -f out/a.ts"), b → out/b.ts dependsOn [a]; runId "r1"'
               when: "run"
-              then: 'code 0; document runId "r1", branch "morph/r1", base = the HEAD before; outcomes a and b "written", generations 2, processor "s", usageTotals.requests 2; archive {ok: true, dir: ".morph/runs/r1", commit: HEAD}; the subjects since base, newest first: "morph run r1: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; HEAD on morph/r1; status clean'
+              then: 'code 0; runId "r1", branch "morph/r1", base = HEAD before; a, b "written", generations 2, processor "s", usageTotals.requests 2; archive {ok: true, dir: ".morph/runs/r1", commit: HEAD}; subjects since base, newest first: "morph run r1: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; HEAD on morph/r1; status clean'
             - given: 'the same setup, one card a with acceptance "exit 1", maxRetryBatches 0'
               when: "run"
               then: 'code 1; outcome a "failed", reason "acceptance failed"; archive ok with the trailer Morph-Failed: 1; out/a.ts absent'
@@ -1234,24 +1225,22 @@ System:
         - name: Plan Command
           description: "`morph plan --spec`: the record and the map read under the root, cut by Plan Spec, the deck written to --out; one Plan Document."
           behavior: >
-            planCommand(root, args), in this order. The spec file path.resolve(root, args.spec)
-            not a regular file → code 4 UsageError "spec file not found: <spec as given>"; a map
-            given and not a regular file → code 4 UsageError "map file not found: <map as
-            given>". Load Spec: loadContour(the spec's UTF-8 text, args.spec), then loadMap(the
-            map's text, args.map) when a map is given (none → the empty map {version: 1, package:
-            null, language: null, docs: [], groups: [], cards: [], extraCards: []}); an error →
-            code 2 DeckError with that error as the message. Plan Spec({record, map, spec:
-            args.spec, components: args.components, judge: args.judge, hasFile: a path is a
-            regular file under root}); an error → code 2 DeckError with it. When args.out is not
-            null the cards are written to path.resolve(root, args.out) as JSON.stringify(cards,
-            null, 2) + "\n", parent directories created; that file is a deck `morph run --deck`
-            and `morph deck check` read. With args.checks, before the write: Read Plan Checks (a
-            failure is the result); Build Acceptances({cards, checks, profile: resolveProfile(null,
-            map.language), texts}), errors → 2 DeckError "acceptances not built (<n> error|errors):\n"
-            + them joined by "\n"; its cards replace the plan's, but a card the map gives an
-            acceptance (map card by customId ?? id, extra card by customId) stays. → {code: 0, document: {spec, components, cards,
-            generations, externalDependsOn, out: args.out}}. Nothing else is written; nothing is
-            written on an error.
+            planCommand(root, args), in order. The spec path.resolve(root, args.spec) not a
+            regular file → 4 UsageError "spec file not found: <spec as given>"; a map given and not
+            a regular file → 4 UsageError "map file not found: <map as given>". loadContour(the
+            spec's UTF-8 text, args.spec), then loadMap(the map's text, args.map) when a map is
+            given (none → the empty map {version: 1, package: null, language: null, docs: [],
+            groups: [], cards: [], extraCards: []}); an error → 2 DeckError, it. Plan Spec({record,
+            map, spec: args.spec, components: args.components, judge: args.judge, hasFile: a path
+            is a regular file under root}); an error → 2 DeckError, it. With args.checks: Read Plan
+            Checks (a failure is the result); Build Acceptances({cards, checks, profile:
+            resolveProfile(null, map.language), texts}), errors → 2 DeckError "acceptances not built
+            (<n> error|errors):\n" + them joined by "\n"; its cards replace the plan's, but a card
+            the map gives an acceptance (map card by customId ?? id, extra card by customId) stays.
+            Then, args.out not null: the cards written to path.resolve(root, args.out) as
+            JSON.stringify(cards, null, 2) + "\n", parent directories created. → {code: 0,
+            document: {spec, components, cards, generations, externalDependsOn, out: args.out}}.
+            Nothing else is written; nothing on an error.
           steps:
             - uses: contour
             - uses: planner
@@ -1325,7 +1314,7 @@ System:
             node`) builds env from process.env without undefined values and calls main(
             process.argv.slice(2), {env, now: Date.now, cwd: process.cwd(), transport: null},
             {stdout, stderr: process streams' write}), then sets process.exitCode to the
-            result; it never calls process.exit (a piped stdout would be cut).
+            result; it never calls process.exit.
           steps:
             - calls: Parse Command
             - calls: Deck Check
@@ -1367,7 +1356,7 @@ System:
           description: stdout of plan; the Plan of the planner plus the deck file written.
           schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]>, out: string | null }"
         - name: Plan Checks
-          description: Result.
+          description: What Read Plan Checks returns.
           schema: "{ ok: true, checks: Checks, texts: BuildTexts } | { ok: false, result: Command Result }"
         - name: Run Document
           description: stdout of run.
