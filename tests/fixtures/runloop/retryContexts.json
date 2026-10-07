@@ -1,0 +1,30 @@
+{
+  "4": {
+    "a": {
+      "acceptanceOutput": "red: export const x = \"ONE\";\n",
+      "previousDiff": "--- a/out/a.ts\n+++ b/out/a.ts\n@@ -1,1 +1,1 @@\n-export const x = \"OLD\";\n+export const x = \"ONE\";\n"
+    }
+  },
+  "5": {
+    "a": {
+      "acceptanceOutput": "red: export const x = \"TWO\";\n",
+      "previousDiff": "--- a/out/a.ts\n+++ b/out/a.ts\n@@ -1,1 +1,1 @@\n-export const x = \"OLD\";\n+export const x = \"TWO\";\n"
+    }
+  },
+  "6": {
+    "b": {
+      "acceptanceOutput": "The previous answer was cut off mid-file: it opened a ``` code fence and never closed it, so the file body could not be extracted. Answer again with the COMPLETE file, and close the fence.",
+      "previousDiff": null
+    },
+    "c": {
+      "acceptanceOutput": "contextSlice 'docs/missing.md' does not exist",
+      "previousDiff": null
+    }
+  },
+  "9": {
+    "a": {
+      "acceptanceOutput": "== tsc\n== probe\nred: one\n",
+      "previousDiff": "--- a/out/a.ts\n+++ b/out/a.ts\n@@ -1,1 +1,1 @@\n-export const x = \"OLD\";\n+export const x = \"ONE\";\n"
+    }
+  }
+}

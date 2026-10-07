@@ -1,0 +1,109 @@
+{
+ "phase": "p11c2",
+ "ownGit": true,
+ "fullExclude": [
+  "tests/runloop/generation.examples.test.ts",
+  "tests/cli/runCommand.examples.test.ts"
+ ],
+ "cards": [
+  {
+   "id": "process-generation"
+  },
+  {
+   "id": "run-deck"
+  },
+  {
+   "id": "run-acceptance"
+  },
+  {
+   "id": "run-command"
+  },
+  {
+   "id": "main"
+  },
+  {
+   "id": "process-generation-judge",
+   "files": [
+    {
+     "file": "tests/runloop/generation.examples.test.ts",
+     "min": 16,
+     "max": 18,
+     "lits": [
+      "Process Generation example 15",
+      "no acceptance",
+      "docs/missing.md",
+      "MARK_C"
+     ],
+     "drop": [
+      "Process Generation: a null acceptance is the empty command and accepts"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "run-deck-judge",
+   "files": [
+    {
+     "file": "tests/runloop/deck.p11c2.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Run Deck example 11",
+      "Run Deck example 12",
+      "interrupted by SIGTERM",
+      "interrupted by SIGINT"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "run-acceptance-judge",
+   "files": [
+    {
+     "file": "tests/acceptance/run.p11c2.examples.test.ts",
+     "min": 1,
+     "max": 7,
+     "new": true,
+     "lits": [
+      "Run Acceptance example 6",
+      "kill -TERM $PPID",
+      "acceptance interrupted by SIGTERM",
+      "spawnSync"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "run-command-judge",
+   "files": [
+    {
+     "file": "tests/cli/runCommand.examples.test.ts",
+     "min": 10,
+     "max": 12,
+     "lits": [
+      "Run Command example 12",
+      "deck has 2 card(s) with no acceptance: q,d"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "main-judge",
+   "files": [
+    {
+     "file": "tests/cli/main.p11c2.examples.test.ts",
+     "min": 1,
+     "max": 7,
+     "new": true,
+     "lits": [
+      "Main example 6",
+      "kill -INT $PPID",
+      "interrupted by SIGINT",
+      "src/cli.ts"
+     ]
+    }
+   ]
+  }
+ ]
+}

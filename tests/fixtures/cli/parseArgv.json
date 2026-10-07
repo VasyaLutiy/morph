@@ -1,0 +1,157 @@
+{
+  "1": [
+    [
+      "deck",
+      "check",
+      "--deck",
+      "d.json"
+    ]
+  ],
+  "2": [
+    [
+      "--pretty",
+      "run",
+      "--deck",
+      "d.json",
+      "--processor",
+      "s",
+      "--root",
+      "/r",
+      "--run-id",
+      "r1",
+      "--deadline",
+      "60",
+      "--max-cards",
+      "3",
+      "--max-retry-batches",
+      "0"
+    ]
+  ],
+  "3": [
+    [
+      "frobnicate"
+    ]
+  ],
+  "4": [
+    [
+      "scout"
+    ],
+    [
+      "deck",
+      "status"
+    ]
+  ],
+  "5": [
+    [
+      "run",
+      "--deck",
+      "d.json"
+    ]
+  ],
+  "6": [
+    [
+      "deck",
+      "check",
+      "--deck",
+      "d.json",
+      "--processor",
+      "s"
+    ]
+  ],
+  "7": [
+    [
+      "run",
+      "--deck",
+      "d",
+      "--processor",
+      "s",
+      "--deadline",
+      "0"
+    ]
+  ],
+  "8": [
+    [
+      "--root"
+    ],
+    []
+  ],
+  "9": [
+    [
+      "plan",
+      "--spec",
+      "c.yaml",
+      "--component",
+      "a",
+      "--map",
+      "m.json",
+      "--component",
+      "b",
+      "--judge",
+      "--out",
+      "d.json",
+      "--pretty"
+    ]
+  ],
+  "10": [
+    [
+      "plan",
+      "--root",
+      "/r",
+      "--spec",
+      "c.yaml"
+    ]
+  ],
+  "11": [
+    [
+      "plan",
+      "--component",
+      "a"
+    ],
+    [
+      "plan",
+      "--spec",
+      "c",
+      "--judge",
+      "--judge"
+    ],
+    [
+      "run",
+      "--deck",
+      "d",
+      "--processor",
+      "s",
+      "--judge"
+    ]
+  ],
+  "12": [
+    [
+      "plan",
+      "--spec",
+      "c.yaml",
+      "--checks",
+      "decks/p1/checks.json"
+    ]
+  ],
+  "13": [
+    [
+      "run",
+      "--deck",
+      "d",
+      "--processor",
+      "s",
+      "--checks",
+      "x"
+    ],
+    [
+      "plan",
+      "--checks"
+    ],
+    [
+      "plan",
+      "--checks",
+      "a",
+      "--checks",
+      "b"
+    ]
+  ]
+}

@@ -344,7 +344,11 @@ System:
             appended. The log is clipped by clipLog: over 4000 chars it keeps the
             first 1500 and the last 1500 chars and, between them, a marker and every
             middle line that looks like a diagnosis (FAIL, Error, assert, expected),
-            within 800 chars. Returns Acceptance Result.
+            within 800 chars. While the child lives, a SIGINT or SIGTERM of this process kills
+            the group the same way: listeners added after the spawn, removed when the child
+            closes or fails to start (none outlives the call; Node's default exit waits
+            meanwhile); the result is exit null, timedOut false, the output so far with the
+            line "acceptance interrupted by <signal name>" appended. Returns Acceptance Result.
           steps:
             - produces: Acceptance Result
           examples:
@@ -364,6 +368,9 @@ System:
             - given: 'env {PATH: "/usr/bin:/bin", MORPH_PROCESSOR_x_API_KEY: "k1", MORPH_PROCESSOR_x_MODEL: "m/x", OPENROUTER_API_KEY: "k2", GH_TOKEN: "t3", KEYBOARD: "us", TOKENS_LEFT: "7"}; command `env`'
               when: "run"
               then: 'exit 0; the log has the lines KEYBOARD=us, TOKENS_LEFT=7, PATH=/usr/bin:/bin, NO_COLOR=1, CI=1 and holds none of "MORPH_PROCESSOR_", "k1", "m/x", "k2", "t3"'
+            - given: 'a child `node --import tsx <tmp>/child.mts <command> <root>` (cwd the repository) whose script awaits runAcceptance(argv command, argv root, {env {PATH: "/usr/bin:/bin"}}) and prints {result, listeners: its SIGINT + SIGTERM listener count after the call} as JSON; command `echo started; sleep 30 & echo $! > sleep.pid; kill -TERM $PPID; wait`'
+              when: "spawned (spawnSync, timeout 20000 ms; the test process is never signalled)"
+              then: 'status 0; stdout {"result":{"exit":null,"log":"started\nacceptance interrupted by SIGTERM\n","timedOut":false},"listeners":0} and a newline; the sleep whose pid is in root/sleep.pid is gone (no /proc/<pid>, or state Z)'
         - name: Verify Card
           description: Best-of-N over the parsed variants.
           behavior: >
@@ -815,14 +822,17 @@ System:
               then: 'runnable [b]; skipped [] (a is written, ext is ignored)'
             - given: 'cards [b] with dependsOn ["a"]; done {a: "failed"}'
               when: "resolved"
-              then: 'runnable []; skipped [{customId: "b", status: "skipped", reason: "dependency a failed", attempts: 0, winningVariant: null, acceptanceLog: "", earlierFailures: [], commit: null, diffstat: null}]'
+              then: 'runnable []; skipped [b''s skipped outcome (the shape above), reason "dependency a failed"]'
             - given: 'cards [c] with dependsOn ["x", "b"]; done {x: "written", b: "skipped"}'
               when: "resolved"
               then: 'runnable []; skipped [c] with reason "dependency b skipped" (the first non-written dependency in order)'
         - name: Process Generation
           description: compile → send → parse → verify per card; a compile fault or stale inputs discard the answer; accepted cards fire the commit hook.
           behavior: >
-            processGeneration(cards, deps, root) compiles every card with compileCard,
+            processGeneration(cards, deps, root): a card whose acceptance is null or blank
+            (whitespace only) is never compiled or sent → {status "failed", reason "no
+            acceptance", acceptanceLog "no acceptance"}, handled like a compile fault (its
+            retry context, no row, no record). It compiles every other card with compileCard,
             keeping each input digest; sends all variants of all cards in ONE
             sendGeneration(deps.config, requests, deps.transport) call, answers and usage
             sliced back by request index; then verifies each card in input order. A compile
@@ -850,7 +860,7 @@ System:
             ran (diff not null), the FURTHEST gives {acceptanceOutput: its log, previousDiff:
             its diff, "" when it changed nothing}: the greatest stageCount(log), a tie → the
             later; stageCount(log) (exported) counts the log's lines (split on "\n") that
-            begin with "== " (the stage headers: == tsc, == probe, …). No variant ran (all
+            begin with "== ". No variant ran (all
             corrupt or truncated) → {acceptanceOutput: the last result's log, previousDiff:
             null}; the outcome's acceptanceLog and earlierFailures as above. Each variant sent
             gets one Variant Record for deps.onVariant when set (without it nothing changes),
@@ -880,14 +890,17 @@ System:
               when: "processed"
               then: 'a status "written"; b status "failed", reason "stale inputs", acceptanceLog beginning "stale inputs: shared.ts"; b''s acceptance was never run'
             - given: 'a stub config; out/a.ts holds ''export const x = "OLD";\n''; card a → out/a.ts, variants 2, acceptance ''grep -q PASS out/a.ts || { echo "red: $(cat out/a.ts)"; exit 1; }''; a.v1.md a fenced ts block holding ''export const x = "ONE";\n''; a.v2.md the text ''```ts\nexport const x = 2;\n'' (one fence line: truncated)'
+              ref: "tests/fixtures/runloop/retryContexts.json (example number → retryContexts)"
               when: "processed"
-              then: 'outcome a status "failed", reason "acceptance failed", acceptanceLog TRUNCATED_RESPONSE_MESSAGE (Verify Card), earlierFailures [''red: export const x = "ONE";\n'']; retryContexts {a: {acceptanceOutput: ''red: export const x = "ONE";\n'', previousDiff: ''--- a/out/a.ts\n+++ b/out/a.ts\n@@ -1,1 +1,1 @@\n-export const x = "OLD";\n+export const x = "ONE";\n''}} (the variant that ran, not the last one); out/a.ts holds ''export const x = "OLD";\n'' again'
+              then: 'outcome a status "failed", reason "acceptance failed", acceptanceLog TRUNCATED_RESPONSE_MESSAGE (Verify Card), earlierFailures [''red: export const x = "ONE";\n'']; retryContexts retryContexts.json["4"] (the variant that ran, not the last one); out/a.ts holds ''export const x = "OLD";\n'' again'
             - given: 'as example 4, but a.v2.md a fenced ts block holding ''export const x = "TWO";\n'''
               when: "processed"
-              then: 'outcome a status "failed", acceptanceLog ''red: export const x = "TWO";\n'', earlierFailures [''red: export const x = "ONE";\n'']; retryContexts {a: {acceptanceOutput: ''red: export const x = "TWO";\n'', previousDiff: ''--- a/out/a.ts\n+++ b/out/a.ts\n@@ -1,1 +1,1 @@\n-export const x = "OLD";\n+export const x = "TWO";\n''}} (both ran, no stage header in either: the tie goes to the later one)'
+              ref: "tests/fixtures/runloop/retryContexts.json"
+              then: 'outcome a status "failed", acceptanceLog ''red: export const x = "TWO";\n'', earlierFailures [''red: export const x = "ONE";\n'']; retryContexts retryContexts.json["5"] (both ran, no stage header in either: the tie goes to the later one)'
             - given: 'a stub config; cards [a → out/a.ts (a.v1.md fenced, its acceptance passes), b → out/b.ts (b.v1.md the text ''```ts\nexport const x = 2;\n''), c → out/c.ts with contextSlice [docs/missing.md], which does not exist], variants 1 each'
               when: "processed"
-              then: 'a "written"; b and c "failed"; retryContexts exactly {b: {acceptanceOutput: TRUNCATED_RESPONSE_MESSAGE, previousDiff: null}, c: {acceptanceOutput: "contextSlice ''docs/missing.md'' does not exist", previousDiff: null}} (no entry for a)'
+              ref: "tests/fixtures/runloop/retryContexts.json"
+              then: 'a "written"; b and c "failed"; retryContexts exactly retryContexts.json["6"] (b: TRUNCATED_RESPONSE_MESSAGE; no entry for a)'
             - given: 'a stub config (model "stub"); cards [a → out/a.ts with model null, b → out/b.ts with model "glm-x"], variants 1, both accepted'
               when: "processed"
               ref: "tests/fixtures/runloop/stubRows.json"
@@ -897,7 +910,8 @@ System:
               then: 'outcome a status "failed", acceptanceLog ''red: export const x = "ONE";\n''; retryContexts {a: {acceptanceOutput: ''red: export const x = "ONE";\n'', previousDiff: ""}} (the acceptance ran on an attempt that changed nothing: the empty diff, not null)'
             - given: 'a stub config; out/a.ts holds ''export const x = "OLD";\n''; card a → out/a.ts, variants 2, acceptance "grep -q ONE out/a.ts && { echo ''== tsc''; echo ''== probe''; echo ''red: one''; exit 1; }; echo ''== tsc''; echo ''red: two''; exit 1"; a.v1.md a fenced ts block holding ''export const x = "ONE";\n'', a.v2.md one holding ''export const x = "TWO";\n'''
               when: "processed"
-              then: 'outcome a status "failed", acceptanceLog "== tsc\nred: two\n", earlierFailures ["== tsc\n== probe\nred: one\n"]; retryContexts {a: {acceptanceOutput: "== tsc\n== probe\nred: one\n", previousDiff: ''--- a/out/a.ts\n+++ b/out/a.ts\n@@ -1,1 +1,1 @@\n-export const x = "OLD";\n+export const x = "ONE";\n''}} (v1 reached 2 stages, v2 1: the furthest, not the last); stageCount of the two logs 2 and 1, of "" 0, of "a == b\n" 0'
+              ref: "tests/fixtures/runloop/retryContexts.json"
+              then: 'outcome a status "failed", acceptanceLog "== tsc\nred: two\n", earlierFailures ["== tsc\n== probe\nred: one\n"]; retryContexts retryContexts.json["9"] (v1 reached 2 stages, v2 1: the furthest, not the last); stageCount of the two logs 2 and 1, of "" 0, of "a == b\n" 0'
             - given: 'a stub config whose timeoutMs (the processor''s HTTP timeout) is 100; deps without acceptanceTimeoutMs; card a → out/a.ts, acceptance "sleep 1; grep -q PASS out/a.ts"; a.v1.md a fenced ts block holding ''export const x = "PASS";\n'''
               when: "processed"
               then: 'a "written", winningVariant "a.v1" — the acceptance ran under its own default of 300000 ms, not the config''s 100 ms'
@@ -914,6 +928,9 @@ System:
               ref: "tests/fixtures/runloop/batchRows.json"
               when: "processed"
               then: 'clamp-value and sign-of "written", pin "failed"; requests exactly the fixture''s three rows: clamp-value.v1 and sign-of.v1 with cost 0.0003029253 / 0.0002774747, provider "DeepInfra", batchId "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W" last; pin.v1 model "other/m", error "batch runs one model: pin.v1 pins other/m, the batch is z-ai/glm-5.3:batch", no batchId key'
+            - given: 'a stub config; a.v1.md … d.v1.md fenced, c''s with MARK_C; cards a → out/a.ts acceptance null, b → out/b.ts " \n", c → out/c.ts "grep -q MARK_C out/c.ts", d → out/d.ts null, contextSlice [docs/missing.md]'
+              when: "processed"
+              then: 'a, b, d "failed", reason and acceptanceLog "no acceptance", attempts 1; c "written"; requests one row (c.v1); the hook fired c only; retryContexts exactly {a, b, d: each {acceptanceOutput: "no acceptance", previousDiff: null}}; out/b.ts absent'
         - name: Build Retry
           description: The retry card <base>.r<n> carrying the acceptance command, its output and the previous diff, or word that the answer was discarded unread.
           behavior: >
@@ -949,14 +966,17 @@ System:
               when: "built"
               then: 'throws Error "buildRetry: attempt must be 1 or 2"'
             - given: 'card {customId: "c", instruction: "Write c.", acceptance: "grep -q MARK src/c.ts"}; attempt 1; acceptanceOutput "red\n"; previousDiff "@@ -1,1 +1,1 @@\n-a\n+b\n"'
+              ref: "tests/fixtures/runloop/retryInstructions.json (example number → the instruction)"
               when: "built"
-              then: 'instruction is exactly "Write c.\n\n<acceptance_output>\nA previous attempt failed its acceptance check (`grep -q MARK src/c.ts`):\nred\n\n</acceptance_output>\nPlease fix the issues and produce the complete corrected file.\n\n<previous_attempt_diff>\nYour previous attempt changed the file like this (unified diff):\n@@ -1,1 +1,1 @@\n-a\n+b\n\n</previous_attempt_diff>\nThe diff above is YOUR OWN previous edit, not a proposed change: correct it where it went wrong rather than rewriting the file from scratch."'
+              then: 'instruction is exactly retryInstructions.json["4"]'
             - given: 'the card of example 4; attempt 1; acceptanceOutput "answer truncated"; previousDiff null'
+              ref: "tests/fixtures/runloop/retryInstructions.json"
               when: "built"
-              then: 'instruction is exactly "Write c.\n\n<acceptance_output>\nA previous attempt was discarded before acceptance could run:\nanswer truncated\n</acceptance_output>\nProduce the complete file again, from the context given above." (the acceptance command is not named, no diff block)'
+              then: 'instruction is exactly retryInstructions.json["5"] (the acceptance command is not named, no diff block)'
             - given: 'the card of example 4; attempt 1; acceptanceOutput "red\n"; previousDiff "" (the acceptance ran on an attempt that changed nothing)'
+              ref: "tests/fixtures/runloop/retryInstructions.json"
               when: "built"
-              then: 'instruction is exactly "Write c.\n\n<acceptance_output>\nA previous attempt failed its acceptance check (`grep -q MARK src/c.ts`):\nred\n\n</acceptance_output>\nPlease fix the issues and produce the complete corrected file." (no diff block)'
+              then: 'instruction is exactly retryInstructions.json["6"] (no diff block)'
         - name: Run Deck
           description: Generations in order, the budget at each boundary, retries per card (2) capped per generation, a carried-over retry before its dependants, a fault caught, the Run Report.
           behavior: >
@@ -988,7 +1008,9 @@ System:
             usage row count}, requests = every Request Usage row of the run in send order.
             Returns {report, outcomes}. deps reach every processGeneration call as given
             (onVariant sees the retries). It writes and commits nothing. It never rejects: a
-            value thrown inside the run (the commit hook, an answer write) stops it; every card
+            value thrown inside the run (the commit hook, an answer write) stops it, and so
+            does deps.interrupted (optional) returning a string s, called right before each
+            deadline check (boundary and retry batch), as the thrown Error "interrupted by <s>"; every card
             with no outcome yet becomes {status "skipped", reason "fault", attempts 0,
             winningVariant null, acceptanceLog "", earlierFailures [], commit null, diffstat
             null} (the usage of the call in flight is lost) and the report's last key is fault
@@ -1009,10 +1031,10 @@ System:
             - given: 'a two-generation deck [a, then b dependsOn a] on the stub; deps.now returns a value below the deadline at the first boundary and a value at or past it at the second'
               when: "run"
               then: 'a "written"; b "budget-exceeded", reason "deadline"; report.generations 2'
-            - given: 'an openrouter config {id "glm", model "z-ai/glm-5.3", apiKey "k", baseUrl "https://openrouter.ai/api/v1", concurrency 1, maxRetries 0} over a fakeFetch whose route "https://openrouter.ai/api/v1/chat/completions" always answers {id: "gen-1", provider: "Novita", choices: [{message: {role: "assistant", content: a fenced ts block holding ''export const x = "MARK";\n''}, finish_reason: "stop"}], usage: {prompt_tokens: 100, completion_tokens: 20, cost: 0.001}}; a one-card deck a → out/a.ts (absent), variants 1, acceptance ''if [ -f seen ]; then grep -q MARK out/a.ts; else touch seen; echo first-red; exit 1; fi''; budget maxRetryBatches 1'
-              ref: "tests/fixtures/runloop/glmRows.json"
+            - given: 'an openrouter config {id "glm", model "z-ai/glm-5.3", apiKey "k", baseUrl "https://openrouter.ai/api/v1", concurrency 1, maxRetries 0} over a fakeFetch whose route "https://openrouter.ai/api/v1/chat/completions" always answers glmAnswer.json; a one-card deck a → out/a.ts (absent), variants 1, acceptance ''if [ -f seen ]; then grep -q MARK out/a.ts; else touch seen; echo first-red; exit 1; fi''; budget maxRetryBatches 1'
+              ref: "tests/fixtures/runloop/glmRows.json, glmAnswer.json (the body), glmMessage.json (two strings)"
               when: "run"
-              then: 'a "written", attempts 2, earlierFailures ["first-red\n"]; two fetch calls; the last message of the second call''s body contains "A previous attempt failed its acceptance check (`if [ -f seen ]; then grep -q MARK out/a.ts; else touch seen; echo first-red; exit 1; fi`):\nfirst-red\n\n</acceptance_output>" and "<previous_attempt_diff>\nYour previous attempt changed the file like this (unified diff):\n--- /dev/null\n+++ b/out/a.ts\n@@ -0,0 +1,1 @@\n+export const x = \"MARK\";\n\n</previous_attempt_diff>", the first call''s holds no "<acceptance_output>"; report.requests exactly glmRows.json (a.v1, a.r1.v1); usageTotals {inputTokens: 200, outputTokens: 40, cost: 0.002, requests: 2}'
+              then: 'a "written", attempts 2, earlierFailures ["first-red\n"]; two fetch calls; the last message of the second call''s body contains both glmMessage.json strings, the first call''s holds no "<acceptance_output>"; report.requests exactly glmRows.json (a.v1, a.r1.v1); usageTotals {inputTokens: 200, outputTokens: 40, cost: 0.002, requests: 2}'
             - given: 'a two-generation deck [a, then b dependsOn a] on the stub, both accepted at once'
               when: "run"
               ref: "tests/fixtures/runloop/stubRows.json"
@@ -1032,19 +1054,25 @@ System:
             - given: 'a deck on the stub [a → a.ts "grep -q MARK_A a.ts", then b → b.ts dependsOn a "grep -q MARK_B b.ts"]; answers a.md, a.r1.md without the mark, a.r2.md and b.md with it; maxRetryBatches 1'
               when: "run"
               then: 'a "written", attempts 3, winningVariant "a.r2.v1"; b "written", attempts 1; requests in send order a.v1, a.r1.v1, a.r2.v1, b.v1 (a.r2 ran before b resolved); the hook fired a.r2 then b; no fault key'
+            - given: '[a, then b dependsOn a] on the stub, a accepted; deps.interrupted null on its first call, "SIGTERM" after'
+              when: "run"
+              then: 'a "written"; b "skipped" "fault"; report.fault "interrupted by SIGTERM", the last key; usageTotals.requests 1; interrupted called twice'
+            - given: 'one card c → c.ts "exit 1" on the stub, answers c.md, c.r1.md; maxRetryBatches 2; deps.interrupted null, then "SIGINT"'
+              when: "run"
+              then: 'c "failed", attempts 1 (kept); report.fault "interrupted by SIGINT"; usageTotals.requests 1 (no retry batch)'
       dataObjects:
         - name: Card Outcome
           description: How one card ended in a run.
           schema: "{ customId: string, status: 'written'|'failed'|'skipped'|'budget-exceeded', reason: string | null, attempts: number, winningVariant: string | null, acceptanceLog: string, earlierFailures: string[], commit: string | null, diffstat: { files: number, insertions: number, deletions: number } | null }"
         - name: Run Report
           description: The summary of one run (its schema and archive layout are runloop's; the file write and commit are P6 git's).
-          schema: "{ runId: string, completedAt: number, branch: string, processor: string, generations: number, outcomes: CardOutcome[], usageTotals: { inputTokens: number, outputTokens: number, cost: number | null, requests: number }, requests?: RequestUsage[], fault?: string } — fault only when a thrown value stopped the run; requests is always set by Run Deck; it is optional in the type so a report literal built elsewhere stays valid"
+          schema: "{ runId: string, completedAt: number, branch: string, processor: string, generations: number, outcomes: CardOutcome[], usageTotals: { inputTokens: number, outputTokens: number, cost: number | null, requests: number }, requests?: RequestUsage[], fault?: string } — fault only when the run stopped on a fault; requests always set by Run Deck (optional for report literals built elsewhere)"
         - name: Request Usage
           description: One request a run sent, as the processor answered it (one row per variant, retries included).
           schema: "{ customId: string, model: string, provider: string | null, generationId: string | null, inputTokens: number, outputTokens: number, cost: number | null, finishReason: string | null, error: string | null, batchId?: string }"
         - name: Retry Context
           description: What the retry of a failed card is told — the acceptance output and the diff of the same failed attempt.
-          schema: "{ acceptanceOutput: string, previousDiff: string | null } — previousDiff is the diff of an attempt whose acceptance ran (\"\" when it changed nothing), null when no acceptance ran"
+          schema: "{ acceptanceOutput: string, previousDiff: string | null } — previousDiff null when no acceptance ran"
         - name: Variant Record
           description: One variant sent — its exact request, its raw answer and how far its acceptance got.
           schema: "{ request: Request, text: string | null, finishReason: string | null, error: string | null, verdict: 'accepted'|'rejected'|'corrupt'|'truncated'|'untried'|'stale', stages: number, lastStage: string | null }"
@@ -1248,8 +1276,7 @@ System:
         The `morph` binary: src/cli/*.ts and the entry src/cli.ts (bin dist/cli.js). Parses
         argv, routes to a command, prints one JSON document on stdout and log lines on stderr,
         maps every outcome to an exit code. Only the entry touches the process. Commands:
-        `deck check`, `run`, `plan`; scout, primer, review, report, deck add|status|reset|clear
-        answer NotYetError.
+        `deck check`, `run`, `plan`; the rest answer NotYetError.
       language: typescript
       requirements: [One Document Out]
       functions:
@@ -1272,8 +1299,8 @@ System:
             --slice-cap-bytes; run: --root, --pretty, --deck, --processor, --run-id, --deadline,
             --max-cards, --max-retry-batches; plan: --root, --pretty, --spec, --component, --map,
             --judge, --out, --checks); plan without --spec → "missing --spec", else plan is done:
-            {name: "plan", root, pretty, spec, components ([] when none), map (or null), judge,
-            out (or null), checks (a key only when given)}; no --deck → "missing --deck"; run
+            the plan Command (components [] and map, out null when not given; checks a key only
+            when given); no --deck → "missing --deck"; run
             without --processor → "missing --processor"; a run --run-id not matching
             ^[A-Za-z0-9._-]+$ → "--run-id must match ^[A-Za-z0-9._-]+$ (got '<v>')"; numbers in
             the order --slice-cap-bytes (deck check), --deadline, --max-cards,
@@ -1285,44 +1312,44 @@ System:
           steps:
             - produces: Command
           examples:
-            - given: 'argv ["deck", "check", "--deck", "d.json"]'
-              ref: "tests/fixtures/cli/parse.json (example number → the whole result; a list of them for several argv, in order)"
+            - given: 'parseArgv.json["1"]'
+              ref: "tests/fixtures/cli/parseArgv.json (example number → its argv lists), parse.json (→ the result; a list for several)"
               when: "parsed"
               then: 'parse.json["1"]'
-            - given: 'argv ["--pretty", "run", "--deck", "d.json", "--processor", "s", "--root", "/r", "--run-id", "r1", "--deadline", "60", "--max-cards", "3", "--max-retry-batches", "0"]'
+            - given: 'parseArgv.json["2"]'
               when: "parsed"
               then: 'parse.json["2"]'
-            - given: 'argv ["frobnicate"]'
+            - given: 'parseArgv.json["3"]'
               when: "parsed"
               then: 'parse.json["3"]'
-            - given: 'argv ["scout"], then ["deck", "status"]'
+            - given: 'parseArgv.json["4"]'
               when: "parsed"
               then: 'parse.json["4"]'
-            - given: 'argv ["run", "--deck", "d.json"]'
+            - given: 'parseArgv.json["5"]'
               when: "parsed"
               then: 'parse.json["5"]'
-            - given: 'argv ["deck", "check", "--deck", "d.json", "--processor", "s"]'
+            - given: 'parseArgv.json["6"]'
               when: "parsed"
               then: 'parse.json["6"]'
-            - given: 'argv ["run", "--deck", "d", "--processor", "s", "--deadline", "0"]'
+            - given: 'parseArgv.json["7"]'
               when: "parsed"
               then: 'parse.json["7"]'
-            - given: 'argv ["--root"], then []'
+            - given: 'parseArgv.json["8"]'
               when: "parsed"
               then: 'parse.json["8"]'
-            - given: 'argv ["plan", "--spec", "c.yaml", "--component", "a", "--map", "m.json", "--component", "b", "--judge", "--out", "d.json", "--pretty"]'
+            - given: 'parseArgv.json["9"]'
               when: "parsed"
               then: 'parse.json["9"]'
-            - given: 'argv ["plan", "--root", "/r", "--spec", "c.yaml"]'
+            - given: 'parseArgv.json["10"]'
               when: "parsed"
               then: 'parse.json["10"]'
-            - given: 'argv ["plan", "--component", "a"]; then ["plan", "--spec", "c", "--judge", "--judge"]; then ["run", "--deck", "d", "--processor", "s", "--judge"]'
+            - given: 'parseArgv.json["11"]'
               when: "parsed"
               then: 'parse.json["11"]'
-            - given: 'argv ["plan", "--spec", "c.yaml", "--checks", "decks/p1/checks.json"]'
+            - given: 'parseArgv.json["12"]'
               when: "parsed"
               then: 'parse.json["12"]'
-            - given: 'argv ["run", "--deck", "d", "--processor", "s", "--checks", "x"]; ["plan", "--checks"]; ["plan", "--checks", "a", "--checks", "b"]'
+            - given: 'parseArgv.json["13"]'
               when: "parsed"
               then: 'parse.json["13"]'
         - name: Emit Document
@@ -1358,7 +1385,7 @@ System:
               then: '{code: 3, document: {error: {code: 3, kind: "RuntimeError", message: "git add failed (exit 1): fatal: x"}}}'
             - given: 'the string "boom"'
               when: "classifyThrown"
-              then: '{code: 3, document: {error: {code: 3, kind: "RuntimeError", message: "boom"}}}'
+              then: 'as example 1, message "boom"'
             - given: 'reports with outcomes [written, written] and [written, skipped], archive ok; then [written] with archive {ok: false}'
               when: "runExitCode"
               then: '0, 1, 3'
@@ -1419,14 +1446,17 @@ System:
             "MORPH_PROCESSOR_<id>_…", "; "-joined, when any). 2. Read Deck File (its failure is
             the result); no cards → 2 RefusalError "deck has no cards". 3. Find Hazards errors
             → 2 RefusalError "deck has <n> hazard error(s): " + each "<kind> <cards
-            ","-joined>[ <path>]", "; "-joined. 4. start = deps.now() (its only call here);
+            ","-joined>[ <path>]", "; "-joined; then cards whose acceptance is null or blank → 2
+            RefusalError "deck has <n> card(s) with no acceptance: <ids in deck order,
+            ","-joined>". 4. start = deps.now() (its only call here);
             runId = args.runId or mintRunId(start) (UTC "YYYYMMDD-HHMMSS"). 5. Open Run
             Branch(root, runId, deps.env); a refusal → 2 RefusalError, its error. 6. Run Deck,
             input {root, runId, branch, deck, budget {maxCards: args.maxCards or the card
             count, maxRetryBatches, deadline: start + deadlineSeconds × 1000}}, deps {config,
             transport: {...(deps.transport or realTransport(config.timeoutMs)), saveBatch:
             (record) => git's saveBatchRecord(root, record)}, commit: makeCommitHook(root,
-            config.model, deps.env), now: deps.now, env: deps.env, onVariant: line =
+            config.model, deps.env), now: deps.now, env: deps.env, interrupted:
+            deps.interrupted, onVariant: line =
             variantLine(record), keep {...record, line}, log given → log(line)}. 7. Archive
             Run(root, {runId, deck, report, answers: the kept records}, deps.env). → {code: 3
             when report.fault is set (the partial report archived), else runExitCode(report,
@@ -1464,9 +1494,10 @@ System:
               then: '"morph run: a.v1 rejected stage 4 probe finish stop chars 30\n"; "morph run: b.r1.v2 corrupt stage 0 finish none chars none\n"'
             - given: 'example 2 with maxRetryBatches 1, answers a.md and a.r1.md (each a 30-char fenced ts block); a log pushing its texts'
               when: "run"
-              then: 'code 1; the log ["morph run: a.v1 rejected stage 0 finish stop chars 30\n", "morph run: a.r1.v1 rejected stage 0 finish stop chars 30\n"]; the archive commit adds exactly deck.json, report.json, answers/a.v1.answer.txt, a.r1.v1.answer.txt and answers/lines.txt (the two log lines) under .morph/runs/r1; the a.r1.v1 request (gunzipSync of requests/a.r1.v1.request.json.gz) has a last message holding "<acceptance_output>"; status clean'
-            - given: 'example 1 with MORPH_PROCESSOR_b_TYPE openrouter, _MODEL "acme/m:batch", _API_KEY "k", _ROUTE "batch", _TIMEOUT_MS "30000"; deps.transport answering 202 batchSubmittedLive.json, then 200 batchCompletedLive.json; cards clamp-value → out/clamp.ts, sign-of → out/sign.ts, "test -f <target>"; runId "r9"'
-              ref: "tests/fixtures/processor/batchSubmittedLive.json, batchCompletedLive.json, tests/fixtures/cli/batch.r9.json (the record file's text)"
+              ref: "tests/fixtures/cli/literals.json (\"<Function> <n>\" → the literal)"
+              then: 'code 1; the log literals.json["Run Command 8"]; the archive commit adds exactly deck.json, report.json, answers/a.v1.answer.txt, a.r1.v1.answer.txt and answers/lines.txt (the two log lines) under .morph/runs/r1; the a.r1.v1 request (gunzipSync of requests/a.r1.v1.request.json.gz) has a last message holding "<acceptance_output>"; status clean'
+            - given: 'example 1 with the env of literals.json["Run Command 9"]; deps.transport answering 202 batchSubmittedLive.json, then 200 batchCompletedLive.json; cards clamp-value → out/clamp.ts, sign-of → out/sign.ts, "test -f <target>"; runId "r9"'
+              ref: "tests/fixtures/processor/batchSubmittedLive.json, batchCompletedLive.json, tests/fixtures/cli/batch.r9.json (the record file's text), tests/fixtures/cli/literals.json"
               when: "run"
               then: 'code 0, both written; every report.requests row batchId "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W"; usageTotals.cost 0.0005804; .morph/batches/<that id>.json exactly batch.r9.json; git status --porcelain exactly "?? .morph/batches/"'
             - given: 'example 1, runId "r10"; a .git/hooks/commit-msg (755) that prints "card commits refused" to stderr, exit 1, on a message starting "morph a:"'
@@ -1475,6 +1506,9 @@ System:
             - given: 'a deck file "[]"'
               when: "run"
               then: 'code 2 RefusalError "deck has no cards"; no morph/* branch; no .morph'
+            - given: 'example 1, deck [x → out/x.ts "true", q → out/q.ts no acceptance, d → out/d.ts " \n"]'
+              when: "run"
+              then: 'code 2 RefusalError "deck has 2 card(s) with no acceptance: q,d"; no morph/* branch'
         - name: Plan Command
           description: "`morph plan --spec`: record and map cut by Plan Spec, the deck to --out; one Plan Document."
           behavior: >
@@ -1510,7 +1544,8 @@ System:
               then: '{code: 4, document: {error: {code: 4, kind: "UsageError", message: "spec file not found: nope.yaml"}}}; then the same with "map file not found: m.json"'
             - given: 'bad.yaml = "System: {}\n" as the spec; then spec ledger.yaml with m.json = "{\"docs\": \"x\"}" as the map'
               when: "planCommand"
-              then: 'code 2 DeckError "bad.yaml is not a valid record (3 problems):\nSystem.name: required\nSystem.description: required\nSystem.groups: required"; then code 2 DeckError "m.json is not a valid map (1 problem):\ndocs: must be a list"'
+              ref: "tests/fixtures/cli/literals.json"
+              then: 'code 2 DeckError, then code 2 DeckError: the messages literals.json["Plan Command 3"]'
             - given: 'the same root, components ["nope"], out "decks/q.json"'
               when: "planCommand"
               then: "code 2 DeckError \"no Component 'nope' in the record (have: ledger, store)\"; decks/q.json not written"
@@ -1566,9 +1601,10 @@ System:
             io.stdout(renderDocument(result.document, command.pretty)), one io.stderr("morph
             <command name>: exit <code>\n"), return result.code. The entry src/cli.ts (shebang
             `#!/usr/bin/env node`) calls main(process.argv.slice(2), {env: process.env without
-            undefined values, now: Date.now, cwd: process.cwd(), transport: null}, {stdout,
-            stderr: the process streams' write}), sets process.exitCode to the result, never
-            calls process.exit.
+            undefined values, now: Date.now, cwd: process.cwd(), transport: null, interrupted:
+            () => the first SIGINT or SIGTERM its own listeners caught, or null},
+            {stdout, stderr: the process streams' write}), sets process.exitCode to the result,
+            never calls process.exit.
           steps:
             - calls: Parse Command
             - calls: Deck Check
@@ -1588,11 +1624,15 @@ System:
               when: "main"
               then: '3; one document {error: {code: 3, kind: "RuntimeError", message beginning "git status failed (exit 128): "}}; stderr ["morph run: exit 3\n"]'
             - given: 'the binary built by tsc -p tsconfig.build.json into a tmp out dir ({"type":"module"}, node_modules linked); a tmpRepo, a side root with a.md, b.md and the deck a, then b dependsOn a; `node <out>/cli.js run --root <repo> --deck <deck> --processor s --run-id e2e`, the stub env'
+              ref: "tests/fixtures/cli/literals.json"
               when: "spawned"
-              then: 'exit 0; stdout one line of JSON: runId "e2e", branch "morph/e2e", outcomes written, written, archive ok; the last three subjects "morph run e2e: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; stderr "morph run: a.v1 accepted stage 0 finish stop chars 30\nmorph run: b.v1 accepted stage 0 finish stop chars 30\nmorph run: exit 0\n" (a.md, b.md 30 chars each)'
+              then: 'exit 0; stdout one line of JSON: runId "e2e", branch "morph/e2e", outcomes written, written, archive ok; the last three subjects "morph run e2e: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; stderr literals.json["Main 4"] (a.md, b.md 30 chars each)'
             - given: 'the built binary, argv ["frobnicate"]'
               when: "spawned"
-              then: 'exit 4; stdout exactly "{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"unknown command: frobnicate\"}}\n"'
+              then: 'exit 4; stdout exactly example 1''s one stdout chunk'
+            - given: 'a tmpRepo; side root: a.md, deck a → out/a.ts (`sleep 30 & echo $! > <side>/sleep.pid; kill -INT $PPID; wait`), then b ("true"); `node --import tsx src/cli.ts run --root <repo> --deck <deck> --processor s --run-id sig`, cwd the repository, the stub env'
+              when: "spawned (spawnSync, timeout 30000 ms)"
+              then: 'status 3; one Run Document: fault "interrupted by SIGINT", a "failed" (log ending "acceptance interrupted by SIGINT\n"), b "skipped" "fault", archive ok; the sleep gone; HEAD on morph/sig; status clean'
       dataObjects:
         - name: Command
           description: One parsed invocation.

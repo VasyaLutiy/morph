@@ -1,0 +1,18 @@
+{
+  "Run Command 8": [
+    "morph run: a.v1 rejected stage 0 finish stop chars 30\n",
+    "morph run: a.r1.v1 rejected stage 0 finish stop chars 30\n"
+  ],
+  "Run Command 9": {
+    "MORPH_PROCESSOR_b_TYPE": "openrouter",
+    "MORPH_PROCESSOR_b_MODEL": "acme/m:batch",
+    "MORPH_PROCESSOR_b_API_KEY": "k",
+    "MORPH_PROCESSOR_b_ROUTE": "batch",
+    "MORPH_PROCESSOR_b_TIMEOUT_MS": "30000"
+  },
+  "Plan Command 3": [
+    "bad.yaml is not a valid record (3 problems):\nSystem.name: required\nSystem.description: required\nSystem.groups: required",
+    "m.json is not a valid map (1 problem):\ndocs: must be a list"
+  ],
+  "Main 4": "morph run: a.v1 accepted stage 0 finish stop chars 30\nmorph run: b.v1 accepted stage 0 finish stop chars 30\nmorph run: exit 0\n"
+}

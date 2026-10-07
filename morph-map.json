@@ -1,7 +1,7 @@
 {
   "package": "src",
   "docs": [
-    "docs/TASK_P11c_runner.md"
+    "docs/TASK_P11c2_runner.md"
   ],
   "groups": {
     "card-model": [
@@ -508,14 +508,14 @@
         "src/acceptance/run.ts"
       ],
       "context_slice": [
-        "docs/TASK_P11c_runner.md",
+        "docs/TASK_P11c2_runner.md",
         "docs/CONVENTIONS.md",
         "src/acceptance/types.ts"
       ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000,
-      "instruction": "Read docs/TASK_P11c_runner.md sections 2.2 (Run Acceptance: issue #5 finding 5) and 4. Patch src/acceptance/run.ts (its current text follows); change nothing else in it. The child's env becomes a NEW object: every entry of options.env except those whose key, upper-cased, starts with \"MORPH_PROCESSOR_\" or ends with \"_KEY\" or \"_TOKEN\"; then NO_COLOR \"1\" and CI \"1\" laid over it. options.env itself is never changed. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P11c2_runner.md sections 2.2 (Run Acceptance: issue #5 finding 6) and 4. Patch src/acceptance/run.ts (its current text follows); change nothing else in it. After the spawn succeeds, ONE listener function `(signal: NodeJS.Signals): void` is added with process.on(\"SIGINT\", …) and process.on(\"SIGTERM\", …): it records the first signal's name and kills the group exactly as the timer does (process.kill(-child.pid, \"SIGKILL\") in try/catch). Both listeners are removed (process.off) in the \"close\" handler and in the \"error\" handler, before resolving. On close after a signal: exit null, timedOut unchanged, the log as now (clipped, plus the timeout line when timed out), then \"\\n\" when it is non-empty and does not end in one, then \"acceptance interrupted by \" + the signal name + \"\\n\". Read no process.env. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "verify-card": {
       "intent": "patch",
@@ -569,10 +569,10 @@
     "run-acceptance-judge": {
       "intent": "generate",
       "targets": [
-        "tests/acceptance/run.p11c.examples.test.ts"
+        "tests/acceptance/run.p11c2.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P11c_runner.md",
+        "docs/TASK_P11c2_runner.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/acceptance/types.ts",
@@ -582,7 +582,7 @@
         "run-acceptance"
       ],
       "max_tokens": 12000,
-      "instruction": "You write tests/acceptance/run.p11c.examples.test.ts only, a NEW file with the test of Run Acceptance example 5; examples 1-4 are already tested and you do not repeat them. Read docs/TASK_P11c_runner.md section 2.3 (the run.p11c bullet). Strings with toBe, a whole outcome, result or document with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer, no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/acceptance/run.p11c2.examples.test.ts only, a NEW file with the test of Run Acceptance example 6; examples 1-5 are already tested and you do not repeat them. Read docs/TASK_P11c2_runner.md sections 2.1 (F2, F3, F5 and the run.p11c2 skeleton: write the child script and spawn it exactly so) and 2.3 (the run.p11c2 bullet). Never signal the test process itself; in finally kill the sleep's pid if sleep.pid was written (try/catch) and remove every tmp root. Strings with toBe, a whole outcome, result or document with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "verify-card-judge": {
       "intent": "patch",
@@ -778,23 +778,20 @@
     "process-generation": {
       "intent": "patch",
       "targets": [
-        "src/runloop/types.ts",
         "src/runloop/generation.ts"
       ],
       "context_slice": [
-        "docs/TASK_P11b_processor.md",
+        "docs/TASK_P11c2_runner.md",
         "docs/CONVENTIONS.md",
         "src/cards/types.ts",
         "src/compiler/types.ts",
         "src/processor/types.ts",
         "src/acceptance/types.ts"
       ],
-      "depends_on": [
-        "send-batch"
-      ],
+      "depends_on": [],
       "variants": 2,
-      "max_tokens": 16000,
-      "instruction": "Read docs/TASK_P11b_processor.md sections 2.2 (Request Usage, processGeneration: issue #4 item 2) and 4. Patch two files (their current texts follow); change nothing else in them. src/runloop/types.ts: RequestUsage gains the optional last member `batchId?: string`. src/runloop/generation.ts: when the sendGeneration result has a batch, each request row whose customId is in batch.customIds gets batchId = batch.batchId as its LAST key; every other row has no batchId key at all (never `batchId: undefined`). Write no test file: a probe tests you and a judge writes the example tests."
+      "max_tokens": 10000,
+      "instruction": "Read docs/TASK_P11c2_runner.md sections 2.2 (Process Generation: issue #5 finding 4) and 4. Patch src/runloop/generation.ts (its current text follows); change nothing else in it. In step 1, BEFORE compileCard: a card whose acceptance is null or whose acceptance.trim() is \"\" is put into the compile-fault map as failedOutcome(card.customId, \"no acceptance\", \"no acceptance\") and is not compiled; it then follows the compile-fault path exactly (no request, no row, no Variant Record, its retry context from step 4, its place in input order). Every other card is handled as now. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "build-retry": {
       "intent": "patch",
@@ -819,15 +816,16 @@
         "src/runloop/types.ts"
       ],
       "context_slice": [
-        "docs/TASK_P11c_runner.md",
+        "docs/TASK_P11c2_runner.md",
         "docs/CONVENTIONS.md",
         "src/cards/types.ts",
+        "src/compiler/types.ts",
         "src/processor/types.ts"
       ],
       "depends_on": [],
       "variants": 2,
-      "max_tokens": 14000,
-      "instruction": "Read docs/TASK_P11c_runner.md sections 2.2 (Run Deck: issue #5 findings 1 and 2) and 4. Patch src/runloop/deck.ts and src/runloop/types.ts (their current texts follow); change nothing else in them. types.ts: RunReport gains the optional LAST member `fault?: string`. deck.ts, finding 2: move the retry loop (`for (;;)` with its deadline check) into a local async function over the same per-generation counter; call it after processGeneration as now, and ALSO before resolveRunnable when some not-yet-done card of the generation has a dependsOn id whose outcome is \"failed\" and that has been retried fewer than 2 times (only then); build the status map for resolveRunnable after that call. Finding 1: the generation loop runs inside try/catch; a caught value sets fault = (an Error's message, else String(value)), ends the loop, and every card of the deck with no outcome yet gets {customId, status: \"skipped\", reason: \"fault\", attempts: 0, winningVariant: null, acceptanceLog: \"\", earlierFailures: [], commit: null, diffstat: null}; the report object gets `fault` as its last key only when a value was caught. runDeck never rejects. Write no test file: a probe tests you and a judge writes the example tests."
+      "max_tokens": 12000,
+      "instruction": "Read docs/TASK_P11c2_runner.md sections 2.2 (types.ts and Run Deck: issue #5 finding 6) and 4. Patch src/runloop/deck.ts and src/runloop/types.ts (their current texts follow); change nothing else in them. types.ts: RunDeps gains the optional LAST member `interrupted?: () => string | null`. deck.ts: inside the existing try, at the top of each generation boundary (before the boundary's deps.now()) and in the retry loop right before the deadline check of a batch that would run (after the break for nothing to retry or the cap reached), `const s = deps.interrupted?.() ?? null;` and when s is not null `throw new Error(\"interrupted by \" + s)`: the existing catch makes it the fault. No other call order changes. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "resolve-judge": {
       "intent": "generate",
@@ -849,25 +847,24 @@
       "instruction": "You write tests/runloop/resolve.examples.test.ts only. Import resolveRunnable from \"../../src/runloop/resolve.js\" and the types from \"../../src/cards/types.js\" and \"../../src/runloop/types.js\". One test(...) per Resolve Runnable example of docs/TASK_P5_runloop.md section 2.2, in order, named \"Resolve Runnable example <n>: <what>\"; then at most twelve of your own on section 2.2. Build Cards inline (every field set). Compare outcomes whole with toStrictEqual, strings with toBe; check a null inside toStrictEqual or === null, never through ??. Import only the names you use; eslint rejects an unused import."
     },
     "process-generation-judge": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
-        "tests/runloop/generation.p11b.examples.test.ts"
+        "tests/runloop/generation.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P11b_processor.md",
+        "docs/TASK_P11c2_runner.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/cards/types.ts",
         "src/processor/types.ts",
         "src/runloop/types.ts",
-        "src/runloop/generation.ts",
-        "tests/fixtures/processor/batchConfig.json"
+        "src/runloop/generation.ts"
       ],
       "depends_on": [
         "process-generation"
       ],
-      "max_tokens": 16000,
-      "instruction": "You write tests/runloop/generation.p11b.examples.test.ts only, a NEW file with the test of Process Generation example 14; examples 1-13 are already tested in tests/runloop/generation.examples.test.ts, generation.p9b and generation.p10c2, which you do not touch and do not repeat. Read docs/TASK_P11b_processor.md sections 2.1 (F1, the generation.p11b skeleton: build deps from it) and 2.3 (the generation.p11b bullet). The rows are compared with toStrictEqual against fixtureJson(\"runloop/batchRows.json\"). Strings with toBe, a whole answer, usage, row, record or result with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer, no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "max_tokens": 28000,
+      "instruction": "You patch tests/runloop/generation.examples.test.ts and return it WHOLE (its current text follows). Read docs/TASK_P11c2_runner.md sections 2.2 (Process Generation) and 2.3 (the generation.examples bullet). The one change: the test \"Process Generation: a null acceptance is the empty command and accepts\" is replaced, at the same place, by the test \"Process Generation example 15: no acceptance fails before any request\", built with the file's own harness(), h.answer, card(id, targets, acceptance, contextSlice) and fenced (a.v1.md, b.v1.md, d.v1.md may exist or not: nothing is sent for them). Keep every other test, its name and every other line exactly as it is; add no import you do not use. Strings with toBe, a whole outcome, result or document with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "build-retry-judge": {
       "intent": "patch",
@@ -891,10 +888,10 @@
     "run-deck-judge": {
       "intent": "generate",
       "targets": [
-        "tests/runloop/deck.p11c.examples.test.ts"
+        "tests/runloop/deck.p11c2.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P11c_runner.md",
+        "docs/TASK_P11c2_runner.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/cards/types.ts",
@@ -904,8 +901,8 @@
       "depends_on": [
         "run-deck"
       ],
-      "max_tokens": 16000,
-      "instruction": "You write tests/runloop/deck.p11c.examples.test.ts only, a NEW file with the tests of Run Deck examples 9 and 10; examples 1-8 are already tested elsewhere and you do not repeat them. Read docs/TASK_P11c_runner.md sections 2.1 (F1, the deck.p11c skeleton: build deps from it) and 2.3 (the deck.p11c bullet). Strings with toBe, a whole outcome, result or document with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer, no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "max_tokens": 14000,
+      "instruction": "You write tests/runloop/deck.p11c2.examples.test.ts only, a NEW file with the tests of Run Deck examples 11 and 12; examples 1-10 are already tested elsewhere and you do not repeat them. Read docs/TASK_P11c2_runner.md sections 2.1 (F1, the skeletons) and 2.3 (the deck.p11c2 bullet). Build deps as the P11c deck.p11c skeleton (stub config with answersDir, fakeFetch transport, a recording commit hook, now () => 0, env PATH) plus `interrupted`, a function counting its calls that returns null on the first and the signal name after. Strings with toBe, a whole outcome, result or document with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "run-git": {
       "intent": "generate",
@@ -1115,12 +1112,13 @@
     "run-command": {
       "intent": "patch",
       "targets": [
-        "src/cli/runCommand.ts"
+        "src/cli/runCommand.ts",
+        "src/cli/types.ts"
       ],
       "context_slice": [
-        "docs/TASK_P11c_runner.md",
+        "docs/TASK_P11c2_runner.md",
         "docs/CONVENTIONS.md",
-        "src/cli/types.ts",
+        "src/cards/types.ts",
         "src/git/types.ts",
         "src/processor/types.ts",
         "src/runloop/types.ts"
@@ -1129,26 +1127,26 @@
         "run-deck"
       ],
       "variants": 2,
-      "max_tokens": 10000,
-      "instruction": "Read docs/TASK_P11c_runner.md sections 2.2 (Run Command: issue #5 findings 1 and 9) and 4. Patch src/cli/runCommand.ts (its current text follows); change nothing else in it. Right after the deck file is read (step 2) and before the hazard check, a deck with no cards returns {code: 2, document: errorDocument(2, \"RefusalError\", \"deck has no cards\")}. The returned code is 3 when result.report.fault !== undefined, else runExitCode(result.report, archive) as now; the archive step and the Run Document are unchanged. Write no test file: a probe tests you and a judge writes the example tests."
+      "max_tokens": 8000,
+      "instruction": "Read docs/TASK_P11c2_runner.md sections 2.2 (src/cli/types.ts and Run Command: issue #5 findings 4 and 6) and 4. Patch src/cli/runCommand.ts and src/cli/types.ts (their current texts follow); change nothing else in them. types.ts: CliDeps gains the optional LAST member `interrupted?: () => string | null`. runCommand.ts: right after the hazard check (hazard errors still first) and before deps.now(), the cards whose acceptance is null or whose acceptance.trim() is \"\", in deck order, refuse the run: {code: 2, document: errorDocument(2, \"RefusalError\", \"deck has \" + n + \" card(s) with no acceptance: \" + their customIds joined by \",\")}. In step 6 Run Deck's deps get `interrupted: deps.interrupted`. Nothing else changes. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "main": {
       "intent": "patch",
       "targets": [
-        "src/cli/main.ts"
+        "src/cli.ts"
       ],
       "context_slice": [
-        "docs/TASK_P10c2_runner.md",
+        "docs/TASK_P11c2_runner.md",
         "docs/CONVENTIONS.md",
         "src/cli/types.ts",
-        "src/cli/runCommand.ts"
+        "src/cli/main.ts"
       ],
       "depends_on": [
         "run-command"
       ],
       "variants": 2,
-      "max_tokens": 6000,
-      "instruction": "Read docs/TASK_P10c2_runner.md section 2.2 (main: issue #3 C4). Patch src/cli/main.ts (its current text follows): the one change is that the run command is called as `await runCommand(root, command, deps, io.stderr)`, so a run's variant lines reach stderr before the exit line. Change nothing else. Write no test file: a probe tests you and a judge patches the example test."
+      "max_tokens": 8000,
+      "instruction": "Read docs/TASK_P11c2_runner.md sections 2.2 (Main / the entry: issue #5 finding 6) and 4. Patch src/cli.ts, the binary's entry (its current text follows); change nothing else in it. Before main is called: `let signalled: string | null = null;` and ONE listener `(signal: NodeJS.Signals): void => { if (signalled === null) signalled = signal; }` added with process.on(\"SIGINT\", …) and process.on(\"SIGTERM\", …); the deps object passed to main gains, as its last key, `interrupted: () => signalled`. Keep `process.exitCode = code`; never call process.exit. Write no test file: a probe tests you and a judge writes the example test."
     },
     "document-judge": {
       "intent": "generate",
@@ -1215,14 +1213,15 @@
       "acceptance": "D=/tmp/morph/deck-check-judge-p7; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp tests/cli/deckCheck.examples.test.ts $D/0-$S.ts 2>/dev/null\n(\n set -e\n export NO_COLOR=1 CI=1\nP=$PWD/probe/deck-check-judge; rm -rf $P; mkdir -p $P; trap 'rm -rf $P' EXIT\ncat > $P/guard.mjs <<'MORPH_GUARD_EOF'\n// MorphV2 guard: the layer rules of docs/CONVENTIONS.md and the test-file rules, checked on\n// the TypeScript syntax tree. Inlined into every acceptance by decks/tools/build.py.\n//   node guard.mjs src [file,file,...]                   every .ts under src/, or only these\n//   node guard.mjs helpers <file> <name,name,...>        the stub module: node:* only, exports\n//   node guard.mjs tests <file> <min> <max> [lits.json]  one test file; lits = strings it must hold\nimport ts from \"typescript\";\nimport fs from \"node:fs\";\nimport path from \"node:path\";\n\nconst bad = [];\n\n// which internal layers a layer may import; \"*\" = any; unknown dirs are reported\nconst LAYERS = {\n  cards: [], wait: [],\n  response: [\"cards\"], store: [\"cards\"], compiler: [\"cards\"], language: [\"cards\"],\n  contour: [\"cards\"], git: [\"cards\"], acceptance: [\"cards\", \"wait\", \"compiler\"],\n  processor: [\"cards\", \"wait\", \"compiler\"], planner: [\"cards\", \"contour\", \"language\"],\n  primer: [\"cards\", \"git\", \"store\", \"language\"],\n  scout: [\"cards\", \"processor\", \"wait\", \"primer\"],\n  reviewer: [\"cards\", \"contour\", \"primer\", \"scout\", \"git\"],\n  runloop: [\"cards\", \"wait\", \"store\", \"compiler\", \"response\", \"acceptance\", \"language\",\n    \"git\", \"processor\"],\n  cli: \"*\",\n};\nconst ROOT_FILES = new Set([\"src/index.ts\"]);\nconst SHELL = new Set([\"acceptance\", \"git\"]);          // node:child_process\nconst NET = new Set([\"processor\"]);                    // fetch, WebSocket, XMLHttpRequest\nconst CONSOLE = new Set([\"cli\"]);                      // console, process.exit\nconst PROCESS = new Set([\"cli\", \"processor\", \"acceptance\"]);\nconst NO_CLOCK = new Set([\"cards\", \"compiler\", \"response\", \"language\", \"contour\", \"planner\"]);\nconst YAML = new Set([\"contour\"]);\n// P3: the acceptance gets the child's environment as a parameter (docs/TASK_P3_acceptance.md §4)\nconst NO_ENV = new Set([\"acceptance\", \"processor\", \"git\"]);\n// P4: the one file of a NO_ENV layer that may read process.env (Read Registry, docs/TASK_P4_processor.md §4)\nconst ENV_READERS = new Set([\"src/processor/registry.ts\"]);\n// P6: the one file of src/git that spawns (Run Git, docs/TASK_P6_git.md §4); git takes the env whole\nconst GIT_SPAWNER = \"src/git/run.ts\";\n// P7: the binary's entry is src/cli.ts (package.json bin dist/cli.js), layer cli; it alone touches\n// process (env, argv, cwd, stdout, exitCode) and the wall clock: src/cli/* gets them as parameters\n// (docs/TASK_P7_cli.md §4)\nconst CLI_ENTRY = \"src/cli.ts\";\n\nfunction parse(file) {\n  return ts.createSourceFile(file, fs.readFileSync(file, \"utf8\"), ts.ScriptTarget.Latest, true,\n    ts.ScriptKind.TS);\n}\nfunction line(sf, node) {\n  return sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1;\n}\nfunction report(sf, node, rule) {\n  bad.push(`guard: ${sf.fileName}:${line(sf, node)} ${rule}`);\n}\nfunction walk(node, fn) {\n  fn(node);\n  ts.forEachChild(node, (child) => walk(child, fn));\n}\n// an identifier that refers to a value binding (not a property name, a type, a declared name)\nfunction isValueRef(node) {\n  const p = node.parent;\n  if (!p) return false;\n  if (ts.isPropertyAccessExpression(p) && p.name === node) return false;\n  if ((ts.isPropertyAssignment(p) || ts.isPropertyDeclaration(p) || ts.isPropertySignature(p) ||\n       ts.isMethodDeclaration(p) || ts.isMethodSignature(p) || ts.isGetAccessor(p) ||\n       ts.isSetAccessor(p) || ts.isEnumMember(p)) && p.name === node) return false;\n  if (ts.isTypeReferenceNode(p) || ts.isQualifiedName(p) || ts.isTypeQueryNode(p)) return false;\n  if ((ts.isParameter(p) || ts.isVariableDeclaration(p) || ts.isFunctionDeclaration(p) ||\n       ts.isBindingElement(p)) && p.name === node) return false;\n  if (ts.isImportSpecifier(p) || ts.isExportSpecifier(p) || ts.isImportClause(p)) return false;\n  if (ts.isLabeledStatement(p) || ts.isBreakOrContinueStatement(p)) return false;\n  return true;\n}\nfunction tsFiles(dir) {\n  const out = [];\n  if (!fs.existsSync(dir)) return out;\n  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {\n    const f = path.join(dir, e.name);\n    if (e.isDirectory()) out.push(...tsFiles(f));\n    else if (f.endsWith(\".ts\")) out.push(f);\n  }\n  return out.sort();\n}\nfunction moduleSpecifiers(sf) {\n  const out = [];\n  walk(sf, (node) => {\n    if ((ts.isImportDeclaration(node) || (ts.isExportDeclaration(node) && node.moduleSpecifier)) &&\n        ts.isStringLiteralLike(node.moduleSpecifier)) out.push([node, node.moduleSpecifier.text]);\n    if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword)\n      report(sf, node, \"dynamic import\");\n  });\n  return out;\n}\nfunction layerOf(rel) {\n  if (rel === CLI_ENTRY) return \"cli\";\n  const parts = rel.split(\"/\");\n  return parts.length >= 3 && parts[0] === \"src\" ? parts[1] : null;\n}\n\nfunction checkSrc(files) {\n  for (const file of files ?? tsFiles(\"src\")) {\n    const sf = parse(file);\n    const rel = file.split(path.sep).join(\"/\");\n    const layer = layerOf(rel);\n    if (layer === null && !ROOT_FILES.has(rel)) { bad.push(`guard: ${rel} is not under a layer directory`); continue; }\n    if (layer !== null && !(layer in LAYERS)) { bad.push(`guard: ${rel} is in an unknown layer \"${layer}\"`); continue; }\n    const allowed = layer === null ? [] : LAYERS[layer];\n    for (const [node, spec] of moduleSpecifiers(sf)) {\n      if (spec.startsWith(\"node:\")) {\n        if (spec === \"node:child_process\" && !SHELL.has(layer))\n          report(sf, node, `node:child_process outside src/acceptance and src/git`);\n        if (spec === \"node:child_process\" && layer === \"git\" && rel !== GIT_SPAWNER)\n          report(sf, node, `node:child_process in ${rel} (only ${GIT_SPAWNER} spawns git)`);\n        continue;\n      }\n      if (spec === \"yaml\") { if (!YAML.has(layer)) report(sf, node, `\"yaml\" outside src/contour`); continue; }\n      if (!spec.startsWith(\"./\") && !spec.startsWith(\"../\")) { report(sf, node, `package import \"${spec}\" (node:* only)`); continue; }\n      const target = path.posix.normalize(path.posix.join(path.posix.dirname(rel), spec));\n      const tl = layerOf(target);\n      if (tl === null) { if (!ROOT_FILES.has(target)) report(sf, node, `import of \"${spec}\" outside src/<layer>/`); continue; }\n      if (tl !== layer && allowed !== \"*\" && !allowed.includes(tl))\n        report(sf, node, `layer ${layer ?? \"src\"} imports layer ${tl} (allowed: ${allowed.join(\", \") || \"none\"})`);\n    }\n    walk(sf, (node) => {\n      if (node.kind === ts.SyntaxKind.AnyKeyword) report(sf, node, \"explicit any\");\n      if (ts.isIdentifier(node) && isValueRef(node)) {\n        const n = node.text;\n        if ([\"fetch\", \"WebSocket\", \"XMLHttpRequest\"].includes(n) && !NET.has(layer))\n          report(sf, node, `global ${n} outside src/processor`);\n        if (n === \"console\" && !CONSOLE.has(layer)) report(sf, node, \"console outside src/cli\");\n        if (n === \"process\" && !PROCESS.has(layer)) report(sf, node, \"process outside src/cli, src/processor, src/acceptance\");\n        if ((n === \"process\" || n === \"console\") && layer === \"cli\" && rel !== CLI_ENTRY)\n          report(sf, node, `${n} in ${rel} (only ${CLI_ENTRY} touches it; env, cwd, clock and io are parameters)`);\n        if (n === \"Date\" && NO_CLOCK.has(layer)) report(sf, node, `Date in the deterministic layer ${layer}`);\n        if (n === \"Math\" && node.parent && ts.isPropertyAccessExpression(node.parent) &&\n            node.parent.name.text === \"random\") report(sf, node, \"Math.random\");\n      }\n      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&\n          node.expression.text === \"process\" && node.name.text === \"exit\" && !CONSOLE.has(layer))\n        report(sf, node, \"process.exit outside src/cli\");\n      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&\n          node.expression.text === \"process\" && node.name.text === \"exit\" && rel === CLI_ENTRY)\n        report(sf, node, `process.exit in ${CLI_ENTRY} (set process.exitCode: exit cuts a piped stdout)`);\n      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&\n          node.expression.text === \"Date\" && node.name.text === \"now\" && layer === \"cli\" && rel !== CLI_ENTRY)\n        report(sf, node, `Date.now in ${rel} (the clock is the parameter now)`);\n      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&\n          node.expression.text === \"process\" && node.name.text === \"env\" && NO_ENV.has(layer) &&\n          !ENV_READERS.has(rel))\n        report(sf, node, `process.env in src/${layer} (the environment is a parameter)`);\n    });\n  }\n}\n\nfunction checkHelpers(file, names) {\n  if (!fs.existsSync(file)) { bad.push(`guard: ${file} missing`); return; }\n  const sf = parse(file);\n  for (const [node, spec] of moduleSpecifiers(sf))\n    if (!spec.startsWith(\"node:\")) report(sf, node, `helpers import \"${spec}\" (node:* only)`);\n  const exported = new Set();\n  walk(sf, (node) => {\n    if (node.kind === ts.SyntaxKind.AnyKeyword) report(sf, node, \"explicit any\");\n    const mods = ts.canHaveModifiers(node) ? ts.getModifiers(node) ?? [] : [];\n    if (!mods.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) return;\n    if ((ts.isFunctionDeclaration(node) || ts.isInterfaceDeclaration(node) ||\n         ts.isTypeAliasDeclaration(node) || ts.isClassDeclaration(node)) && node.name)\n      exported.add(node.name.text);\n    if (ts.isVariableStatement(node))\n      for (const d of node.declarationList.declarations) if (ts.isIdentifier(d.name)) exported.add(d.name.text);\n  });\n  for (const n of names) if (!exported.has(n)) bad.push(`guard: ${file} does not export ${n}`);\n}\n\nfunction checkTest(file, min, max, lits) {\n  if (!fs.existsSync(file)) { bad.push(`guard: ${file} missing`); return; }\n  const sf = parse(file);\n  const text = sf.getFullText();\n  let count = 0;\n  for (const [node, spec] of moduleSpecifiers(sf))\n    if (spec !== \"vitest\" && !spec.startsWith(\"node:\") && !spec.startsWith(\"./\") && !spec.startsWith(\"../\"))\n      report(sf, node, `import of a package \"${spec}\" (vitest, node:* and relative paths only)`);\n  walk(sf, (node) => {\n    if (node.kind === ts.SyntaxKind.AnyKeyword) report(sf, node, \"explicit any\");\n    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) &&\n        (node.expression.text === \"test\" || node.expression.text === \"it\")) count += 1;\n    if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression)) {\n      const o = node.expression.text, p = node.name.text;\n      if ([\"test\", \"it\", \"describe\"].includes(o) && [\"skip\", \"only\", \"todo\", \"fails\"].includes(p))\n        report(sf, node, `${o}.${p}`);\n      if (o === \"vi\" && [\"stubGlobal\", \"useFakeTimers\", \"mock\", \"doMock\"].includes(p))\n        report(sf, node, `vi.${p} (stubs come from tests/helpers.ts)`);\n    }\n    if (ts.isIdentifier(node) && isValueRef(node) &&\n        [\"setTimeout\", \"setInterval\", \"setImmediate\"].includes(node.text))\n      report(sf, node, `${node.text} (real timers are not used under tests/; use fakeClock)`);\n    const declared = (ts.isFunctionDeclaration(node) || ts.isVariableDeclaration(node) ||\n      ts.isClassDeclaration(node)) && node.name && ts.isIdentifier(node.name) ? node.name.text : null;\n    if (declared && (declared === \"fetch\" || /^[Ff]ake/.test(declared)))\n      report(sf, node, `own stub \"${declared}\" (stubs come from tests/helpers.ts)`);\n  });\n  if (count < min || count > max)\n    bad.push(`guard: ${file} has ${count} test/it calls, expected ${min}..${max}`);\n  for (const lit of lits) if (!text.includes(lit)) bad.push(`guard: ${file} does not mention the example literal ${JSON.stringify(lit)}`);\n}\n\nconst [mode, a, b, c, d] = process.argv.slice(2);\nif (mode === \"src\") checkSrc(a ? a.split(\",\").filter(Boolean) : null);\nelse if (mode === \"helpers\") checkHelpers(a, (b ?? \"\").split(\",\").filter(Boolean));\nelse if (mode === \"tests\") checkTest(a, Number(b), Number(c), d ? JSON.parse(fs.readFileSync(d, \"utf8\")) : []);\nelse bad.push(`guard: unknown mode ${mode}`);\nfor (const x of bad) console.log(x);\nprocess.exit(bad.length ? 1 : 0);\nMORPH_GUARD_EOF\ncat > $P/probe.config.mts <<'MORPH_CONF_EOF'\nimport { defineConfig } from \"vitest/config\";\nimport { fileURLToPath } from \"node:url\";\nexport default defineConfig({\n  root: fileURLToPath(new URL(\"../..\", import.meta.url)),\n  test: { environment: \"node\", include: [\"probe/deck-check-judge/**/*.probe.ts\"],\n    setupFiles: [\"tests/setup.ts\"], chaiConfig: { truncateThreshold: 200 } },\n});\nMORPH_CONF_EOF\ncat > $P/tsconfig.card.json <<'MORPH_TSCONF_EOF'\n{\n  \"extends\": \"../../tsconfig.json\",\n  \"include\": [\n    \"../../src\",\n    \"../../tests\",\n    \"./*.probe.ts\"\n  ],\n  \"exclude\": [\n    \"../../src/cli/main.ts\",\n    \"../../src/cli.ts\",\n    \"../../tests/cli/parse.examples.test.ts\",\n    \"../../tests/cli/runCommand.examples.test.ts\"\n  ]\n}\nMORPH_TSCONF_EOF\nG0=$( (git symbolic-ref -q HEAD || true; git rev-parse HEAD; git for-each-ref --format='%(refname) %(objectname)') 2>&1)\necho '== tsc'; node_modules/.bin/tsc --noEmit -p $P/tsconfig.card.json\necho '== eslint'; node_modules/.bin/eslint tests/cli/deckCheck.examples.test.ts\ncat > $P/lits.json <<'MORPH_LITS_EOF'\n[\"write-write\", \"oversized-slice\", \"docs/b.md\"]\nMORPH_LITS_EOF\necho '== guard'; node $P/guard.mjs tests tests/cli/deckCheck.examples.test.ts 3 9 $P/lits.json\necho '== own'; node_modules/.bin/vitest run tests/cli/deckCheck.examples.test.ts --reporter=dot > $P/vt.log 2>&1 || { grep -E '^ FAIL |Error|AssertionError|^ +Tests |^ +Test Files |expected|received' $P/vt.log | head -80; exit 1; }\necho '== full'; node_modules/.bin/vitest run --passWithNoTests --reporter=dot > $P/vt.log 2>&1 || { grep -E '^ FAIL |Error|AssertionError|^ +Tests |^ +Test Files |expected|received' $P/vt.log | head -80; exit 1; }\necho '== own git'; G1=$( (git symbolic-ref -q HEAD || true; git rev-parse HEAD; git for-each-ref --format='%(refname) %(objectname)') 2>&1); [ \"$G0\" = \"$G1\" ] || { echo \"tests changed this repository's HEAD or refs:\"; echo \"before: $G0\" | head -5; echo \"after: $G1\" | head -5; exit 1; }\necho '== frozen'; git diff --quiet HEAD -- contour.yaml morph-map.json docs decks tests/fixtures || { echo \"changed outside the targets: $(git diff --name-only HEAD -- contour.yaml morph-map.json docs decks tests/fixtures | tr \"\\n\" \" \")\"; exit 1; }\nX=$(git ls-files --others --exclude-standard | grep -vxF -e tests/cli/deckCheck.examples.test.ts || true); [ -z \"$X\" ] || { echo \"files left in the tree: $X\"; exit 1; }\n) > $L 2>&1; rc=$?; cat $L; exit $rc"
     },
     "run-command-judge": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
-        "tests/cli/runCommand.p11c.examples.test.ts"
+        "tests/cli/runCommand.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P11c_runner.md",
+        "docs/TASK_P11c2_runner.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
+        "src/cards/types.ts",
         "src/cli/types.ts",
         "src/runloop/types.ts",
         "src/cli/runCommand.ts"
@@ -1230,26 +1229,26 @@
       "depends_on": [
         "run-command"
       ],
-      "max_tokens": 16000,
-      "instruction": "You write tests/cli/runCommand.p11c.examples.test.ts only, a NEW file with the tests of Run Command examples 10 and 11; examples 1-9 are already tested elsewhere and you do not repeat them. Read docs/TASK_P11c_runner.md sections 2.1 (F2-F3, the runCommand.p11c skeleton: build the repo, the deck and deps from it) and 2.3 (the runCommand.p11c bullet). Strings with toBe, a whole outcome, result or document with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer, no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "max_tokens": 20000,
+      "instruction": "You patch tests/cli/runCommand.examples.test.ts and return it WHOLE (its current text follows). Read docs/TASK_P11c2_runner.md sections 2.2 (Run Command) and 2.3 (the runCommand.examples bullet). Two changes only: in \"Run Command example 4\" the deck's card becomes card(\"a\", \"out/a.ts\", { acceptance: \"test -f out/a.ts\" }); after the last test add \"Run Command example 12: cards with no acceptance refuse the run before any git call\" with the file's own setupRun, makeRunArgs and card (q without an acceptance key, d with acceptance \" \\n\"). Keep every other test, its name and every other line exactly as it is. Strings with toBe, a whole outcome, result or document with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "main-judge": {
-      "intent": "patch",
+      "intent": "generate",
       "targets": [
-        "tests/cli/main.examples.test.ts"
+        "tests/cli/main.p11c2.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P10c2_runner.md",
+        "docs/TASK_P11c2_runner.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/cli/types.ts",
-        "src/cli/main.ts"
+        "src/cli.ts"
       ],
       "depends_on": [
         "main"
       ],
-      "max_tokens": 16000,
-      "instruction": "You patch tests/cli/main.examples.test.ts and return it whole (its current text follows). Read docs/TASK_P10c2_runner.md sections 2.2 (main) and 2.3 (the main.examples bullet): in \"Main example 4\" the expectation on res.stderr becomes the three lines \"morph run: a.v1 accepted stage 0 finish stop chars 30\\nmorph run: b.v1 accepted stage 0 finish stop chars 30\\nmorph run: exit 0\\n\" (the file's a.md and b.md are 30 chars each). Of the record's examples below only example 4 changes; examples 1-3 and 5 stay as they are. Keep every other test, name and line exactly as it is. Strings with toBe, a whole record or result with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer, no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "max_tokens": 14000,
+      "instruction": "You write tests/cli/main.p11c2.examples.test.ts only, a NEW file with the test of Main example 6; examples 1-5 are already tested and you do not repeat them. Read docs/TASK_P11c2_runner.md sections 2.1 (F2-F5 and the main.p11c2 skeleton: spawn the entry exactly so, cwd the repository) and 2.3 (the main.p11c2 bullet). The deck file is a JSON array of plain card objects {customId, intent: \"generate\", targets, instruction, acceptance, dependsOn?}; a.md is a fenced ts block. Never signal the test process itself; in finally kill the sleep's pid if sleep.pid was written (try/catch) and remove the tmp repo and roots. Strings with toBe, a whole outcome, result or document with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "profiles": {
       "intent": "generate",
