@@ -432,23 +432,23 @@ P10_PLANNER = "tests/planner/"
 # (+ the own tests kept at HEAD for a patched file), max = min + 8 (parse: + 4), the literals, the HEAD names it may drop
 P10_JUDGE_FILES = {
     "render-judge": [
-        {"file": P10_PLANNER + "render.examples.test.ts", "min": 11, "max": 19,
+        {"file": P10_PLANNER + "render.examples.test.ts", "new": True, "min": 11, "max": 19,
          "lits": ["sumEntries.section.txt", "checkLedger.section.txt", "Exact Sums", "(definition not found in the record)",
                   "29500"], "drop": []}],
     "cut-component-judge": [
-        {"file": P10_PLANNER + "cut.examples.test.ts", "min": 7, "max": 15,
+        {"file": P10_PLANNER + "cut.examples.test.ts", "new": True, "min": 7, "max": 15,
          "lits": ["ledger.cut.json", "store.cut.json", "badCalls.json", "duplicate customId 'parse-entry'",
                   "Interface 'x' exposes unknown Function 'Nope'"], "drop": []}],
     "cut-judges-judge": [
-        {"file": P10_PLANNER + "judges.examples.test.ts", "min": 4, "max": 12,
+        {"file": P10_PLANNER + "judges.examples.test.ts", "new": True, "min": 4, "max": 12,
          "lits": ["ledger.judges.json", "extras.judges.json", "Preconditions a test's setup depends on:",
                   "Write the CLI tests."], "drop": []}],
     "plan-spec-judge": [
-        {"file": P10_PLANNER + "plan.examples.test.ts", "min": 8, "max": 16,
+        {"file": P10_PLANNER + "plan.examples.test.ts", "new": True, "min": 8, "max": 16,
          "lits": ["ledger.golden.json", "ledger.plan.json", "layered.json", "dependency cycle among a, b",
                   "../../contour.yaml", "validate-record"], "drop": []}],
     "plan-command-judge": [
-        {"file": "tests/cli/planCommand.examples.test.ts", "min": 5, "max": 13,
+        {"file": "tests/cli/planCommand.examples.test.ts", "new": True, "min": 5, "max": 13,
          "lits": ["ledger.plan.json", "spec file not found: nope.yaml", "morph plan: exit 0\\n", "decks/p.json"], "drop": []},
         {"file": "tests/cli/main.examples.test.ts", "min": 5, "max": 5, "lits": ["symlinkSync"], "drop": []}],
     "parse-command-judge": [
@@ -625,7 +625,8 @@ def judge_files_acceptance(card, files, siblings, phase, exclude=()):
         body += heredoc(f"$P/lits{n}.json", json.dumps(f["lits"]), "MORPH_LITS_EOF")
         body += f"echo '== guard {f['file']}'; node $P/guard.mjs tests {f['file']} {f['min']} {f['max']} $P/lits{n}.json\n"
     for f in files:
-        body += names_kept(f["file"], f["drop"])
+        if not f.get("new"):  # a file the judge creates has no names at HEAD (P10a)
+            body += names_kept(f["file"], f["drop"])
     body += ("echo '== own'; " + vt(" ".join(targets))
              + eslint_verdict()
              + "echo '== full'; " + vt(full_args(exclude))
