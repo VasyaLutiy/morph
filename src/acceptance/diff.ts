@@ -1,7 +1,9 @@
-// src/acceptance/diff.ts — Build Attempt Diff (TASK_P3 §2.2, rules 1–5).
+// src/acceptance/diff.ts — Build Attempt Diff (TASK_P3 §2.2, rules 1–4;
+// rule 5 patched by TASK_P9c §2.2).
 //
-// A unified diff of the failed variant against the snapshot, capped at
-// DIFF_CAP chars. Pure: no imports, no clock, no randomness, no environment.
+// A unified diff of the failed variant against the snapshot, each file's
+// section capped at DIFF_CAP chars (head and tail kept). Pure: no imports,
+// no clock, no randomness, no environment.
 //
 // Rules (the record is the contract; the illustrations below were computed
 // by a reference implementation of exactly these rules):
@@ -13,10 +15,18 @@
 //      (deletions before additions inside a changed region);
 //   4. hunks of 3 context ops around changes; changes with 6 or fewer
 //      context ops between them share one hunk; both counts always printed;
-//   5. over DIFF_CAP chars: slice, "\n", then the clip marker, exactly
-//      DIFF_CAP chars.
+//   5. each file's section (its `---`/`+++` lines and its hunks) is clipped
+//      on its own, then the sections are concatenated in key order with
+//      nothing between them; a section of DIFF_CAP chars or fewer is kept
+//      whole; a longer one, L chars, split into lines each keeping its `\n`:
+//      u = the length of "... [" + L + " characters elided] ..."; budget =
+//      Math.floor(DIFF_CAP / 2) - u (the same for head and tail); the head
+//      is the longest run of lines from the start whose total length is
+//      <= budget; the tail the longest run from the end, never reaching a
+//      head line, whose total is <= budget; n = L - head - tail; the result
+//      is head + "... [" + n + " characters elided] ...\n" + tail.
 
-/** The cap of the returned diff, in chars. */
+/** The cap of each file's section of the diff, in chars. */
 export const DIFF_CAP = 6000;
 
 /** One edit-script operation: context, deletion or addition. */
@@ -143,10 +153,57 @@ function hunksOf(ops: readonly Op[]): string {
 }
 
 /**
+ * Clip one file's section on its own (rule 5). A section of DIFF_CAP chars
+ * or fewer is kept whole. A longer one, L chars, split into lines each
+ * keeping its `\n`: u = the length of "... [" + L + " characters elided]
+ * ..."; budget = Math.floor(DIFF_CAP / 2) - u; the head is the longest run
+ * of lines from the start whose total length is <= budget; the tail the
+ * longest run from the end, never reaching a head line, whose total is
+ * <= budget; n = L - head - tail; the result is the head, the line
+ * "... [" + n + " characters elided] ...\n", then the tail.
+ */
+function clipSection(section: string): string {
+  if (section.length <= DIFF_CAP) return section;
+  const L: number = section.length;
+  const u: number = ("... [" + L + " characters elided] ...").length;
+  const budget: number = Math.floor(DIFF_CAP / 2) - u;
+  const lines: string[] = section.split("\n");
+  // A section's every line ends in `\n`, so the split ends with "".
+  lines.pop();
+  let headLen: number = 0;
+  let headCount: number = 0;
+  while (
+    headCount < lines.length &&
+    headLen + lines[headCount].length + 1 <= budget
+  ) {
+    headLen += lines[headCount].length + 1;
+    headCount++;
+  }
+  let tailLen: number = 0;
+  let tailCount: number = 0;
+  while (
+    tailCount < lines.length - headCount &&
+    tailLen + lines[lines.length - 1 - tailCount].length + 1 <= budget
+  ) {
+    tailLen += lines[lines.length - 1 - tailCount].length + 1;
+    tailCount++;
+  }
+  const n: number = L - headLen - tailLen;
+  const head: string =
+    headCount > 0 ? lines.slice(0, headCount).join("\n") + "\n" : "";
+  const tail: string =
+    tailCount > 0
+      ? lines.slice(lines.length - tailCount).join("\n") + "\n"
+      : "";
+  return head + "... [" + n + " characters elided] ...\n" + tail;
+}
+
+/**
  * Build the attempt diff: for each path of `after` in its key order whose
  * lines differ from `before` (a missing or null entry is an absent file),
- * the file headers and the hunks; `""` when nothing changed; capped at
- * DIFF_CAP chars by the clip marker, to exactly DIFF_CAP chars.
+ * the file headers and the hunks — one section, clipped on its own by rule
+ * 5 — per path; `""` when nothing changed; the sections concatenated in
+ * key order with nothing between them.
  */
 export function buildAttemptDiff(
   before: Record<string, string | null>,
@@ -160,11 +217,11 @@ export function buildAttemptDiff(
     const same: boolean =
       a.length === b.length && a.every((line: string, k: number): boolean => line === b[k]);
     if (same) continue;
-    text += old === null ? "--- /dev/null\n" : "--- a/" + p + "\n";
-    text += "+++ b/" + p + "\n";
-    text += hunksOf(editOps(a, b));
+    let section: string = "";
+    section += old === null ? "--- /dev/null\n" : "--- a/" + p + "\n";
+    section += "+++ b/" + p + "\n";
+    section += hunksOf(editOps(a, b));
+    text += clipSection(section);
   }
-  if (text.length <= DIFF_CAP) return text;
-  const marker: string = "[diff clipped: " + text.length + " chars]\n";
-  return text.slice(0, DIFF_CAP - marker.length - 1) + "\n" + marker;
+  return text;
 }
