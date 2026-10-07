@@ -10,15 +10,27 @@ export function buildRetry(
     throw new Error("buildRetry: attempt must be 1 or 2");
   }
   const base = card.customId.replace(/\.r[0-9]+$/, "");
-  let instruction =
-    card.instruction +
-    "\n\nYour previous attempt failed its acceptance. Fix exactly what the acceptance reports and return the whole file again.\nAcceptance output:\n" +
-    acceptanceOutput;
-  if (previousDiff !== null) {
-    instruction +=
-      "\n\nYour previous attempt (rejected):\n" +
-      previousDiff +
-      "\n\nThe diff above is your own previous edit: correct it where it went wrong instead of rewriting the files from scratch.";
+  let instruction: string;
+  if (previousDiff === null) {
+    instruction =
+      card.instruction +
+      "\n\n<acceptance_output>\nA previous attempt was discarded before acceptance could run:\n" +
+      acceptanceOutput +
+      "\n</acceptance_output>\nProduce the complete file again, from the context given above.";
+  } else {
+    instruction =
+      card.instruction +
+      "\n\n<acceptance_output>\nA previous attempt failed its acceptance check (`" +
+      (card.acceptance ?? "") +
+      "`):\n" +
+      acceptanceOutput +
+      "\n</acceptance_output>\nPlease fix the issues and produce the complete corrected file.";
+    if (previousDiff !== "") {
+      instruction +=
+        "\n\n<previous_attempt_diff>\nYour previous attempt changed the file like this (unified diff):\n" +
+        previousDiff +
+        "\n</previous_attempt_diff>\nThe diff above is YOUR OWN previous edit, not a proposed change: correct it where it went wrong rather than rewriting the file from scratch.";
+    }
   }
   return {
     customId: base + ".r" + attempt,
