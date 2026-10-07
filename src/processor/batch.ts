@@ -14,19 +14,33 @@ function errorUsage(customId: string): Usage {
   return { customId, inputTokens: 0, outputTokens: 0, cost: null, provider: null, generationId: null };
 }
 
-function failure(requests: Request[], errorOf: (customId: string) => string): GenerationResult {
+function pinnedError(config: ProcessorConfig): (customId: string, model: string) => string {
+  return (customId, model) =>
+    "batch runs one model: " + customId + " pins " + model + ", the batch is " + config.model;
+}
+
+function failure(requests: Request[], errorOf: (request: Request) => string): GenerationResult {
   return {
-    answers: requests.map((r) => errorAnswer(r.customId, errorOf(r.customId))),
+    answers: requests.map((r) => errorAnswer(r.customId, errorOf(r))),
     usage: requests.map((r) => errorUsage(r.customId))
   };
 }
 
-function finishWithReplies(requests: Request[], replies: Reply[], batchId: string, status: string, batchError: string | null): GenerationResult {
+function finishWithReplies(
+  requests: Request[],
+  replies: Reply[],
+  batchId: string,
+  status: string,
+  batchError: string | null
+): GenerationResult {
   return {
     answers: requests.map((r) => {
       const reply = replies.find((x) => x.answer.customId === r.customId);
       if (reply !== undefined) return reply.answer;
-      return errorAnswer(r.customId, "batch " + batchId + " " + status + ": " + (batchError ?? "no result"));
+      return errorAnswer(
+        r.customId,
+        "batch " + batchId + " " + status + ": " + (batchError ?? "no result")
+      );
     }),
     usage: requests.map((r) => {
       const reply = replies.find((x) => x.answer.customId === r.customId);
@@ -41,15 +55,14 @@ export async function sendBatch(
   requests: Request[],
   transport: Transport
 ): Promise<GenerationResult> {
+  const pinned = pinnedError(config);
   const included = requests.filter((r) => r.model === null || r.model === config.model);
   const rejected = requests.filter((r) => !(r.model === null || r.model === config.model));
 
   if (included.length === 0) {
-    return failure(requests, (customId) => {
-      const r = requests.find((x) => x.customId === customId);
-      const pinned = r !== undefined && r.model !== null ? r.model : "";
-      return "batch runs one model: " + customId + " pins " + pinned + ", the batch is " + config.model;
-    });
+    return failure(requests, (r) =>
+      r.model !== null ? pinned(r.customId, r.model) : pinned(r.customId, r.model ?? "")
+    );
   }
 
   const call = assembleBatch(included, config);
@@ -57,32 +70,34 @@ export async function sendBatch(
   let submitStatus = 0;
   let submitText = "";
   try {
-    const reply = await transport.fetch(call.url, { method: "POST", headers: call.headers, body: call.body });
+    const reply = await transport.fetch(call.url, {
+      method: "POST",
+      headers: call.headers,
+      body: call.body
+    });
     submitStatus = reply.status;
     submitText = await reply.text();
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    const result = failure(requests, () => "batch submit: transport: " + message);
-    for (const r of rejected) {
-      const pinned = r.model !== null ? r.model : "";
-      const i = result.answers.findIndex((a) => a.customId === r.customId);
-      if (i >= 0) result.answers[i] = errorAnswer(r.customId, "batch runs one model: " + r.customId + " pins " + pinned + ", the batch is " + config.model);
-    }
-    return result;
+    return failure(requests, (r) =>
+      rejected.some((x) => x.customId === r.customId)
+        ? pinned(r.customId, r.model ?? "")
+        : "batch submit: transport: " + message
+    );
   }
 
   const submitRead = readBatch(submitStatus, submitText);
   if (submitRead.state === "error") {
-    return failure(requests, (customId) =>
-      rejected.some((r) => r.customId === customId)
-        ? "batch runs one model: " + customId + " pins " + (requests.find((x) => x.customId === customId)?.model ?? "") + ", the batch is " + config.model
+    return failure(requests, (r) =>
+      rejected.some((x) => x.customId === r.customId)
+        ? pinned(r.customId, r.model ?? "")
         : "batch submit: " + submitRead.error
     );
   }
   if (submitRead.batchId === null) {
-    return failure(requests, (customId) =>
-      rejected.some((r) => r.customId === customId)
-        ? "batch runs one model: " + customId + " pins " + (requests.find((x) => x.customId === customId)?.model ?? "") + ", the batch is " + config.model
+    return failure(requests, (r) =>
+      rejected.some((x) => x.customId === r.customId)
+        ? pinned(r.customId, r.model ?? "")
         : "batch submit: no batch id"
     );
   }
@@ -96,7 +111,10 @@ export async function sendBatch(
     let pollStatus = 0;
     let pollText = "";
     try {
-      const reply = await transport.fetch(call.url + "/" + batchId, { method: "GET", headers: call.headers });
+      const reply = await transport.fetch(call.url + "/" + batchId, {
+        method: "GET",
+        headers: call.headers
+      });
       pollStatus = reply.status;
       pollText = await reply.text();
     } catch {
@@ -110,38 +128,29 @@ export async function sendBatch(
         pollStatus === 429 ||
         pollStatus >= 500;
       if (retryable) continue;
-      return failure(requests, (customId) =>
-        rejected.some((r) => r.customId === customId)
-          ? "batch runs one model: " + customId + " pins " + (requests.find((x) => x.customId === customId)?.model ?? "") + ", the batch is " + config.model
+      return failure(requests, (r) =>
+        rejected.some((x) => x.customId === r.customId)
+          ? pinned(r.customId, r.model ?? "")
           : "batch " + batchId + ": " + read.error
       );
     }
     if (read.status !== null) lastStatus = read.status;
     if (read.state === "pending") continue;
-    return finishWithRepliesForRejected(requests, rejected, read, batchId);
+    const status = read.status !== null ? read.status : "unknown";
+    const result = finishWithReplies(requests, read.replies, batchId, status, read.error);
+    for (const r of rejected) {
+      const i = result.answers.findIndex((a) => a.customId === r.customId);
+      if (i >= 0 && r.model !== null) {
+        result.answers[i] = errorAnswer(r.customId, pinned(r.customId, r.model));
+      }
+    }
+    return result;
   }
 
   const finalStatus = lastStatus !== null ? lastStatus : "unknown";
-  return failure(requests, (customId) =>
-    rejected.some((r) => r.customId === customId)
-      ? "batch runs one model: " + customId + " pins " + (requests.find((x) => x.customId === customId)?.model ?? "") + ", the batch is " + config.model
+  return failure(requests, (r) =>
+    rejected.some((x) => x.customId === r.customId)
+      ? pinned(r.customId, r.model ?? "")
       : "batch " + batchId + " still " + finalStatus + " after " + polls + " polls"
   );
-}
-
-function finishWithRepliesForRejected(
-  requests: Request[],
-  rejected: Request[],
-  read: { state: string; status: string | null; error: string | null; replies: Reply[] },
-  batchId: string
-): GenerationResult {
-  const status = read.status !== null ? read.status : "unknown";
-  const result = finishWithReplies(requests, read.replies, batchId, status, read.error);
-  for (const r of rejected) {
-    const i = result.answers.findIndex((a) => a.customId === r.customId);
-    if (i >= 0) {
-      result.answers[i] = errorAnswer(r.customId, "batch runs one model: " + r.customId + " pins " + (r.model ?? "") + ", the batch is " + "z-ai/glm-5.3:batch");
-    }
-  }
-  return result;
 }
