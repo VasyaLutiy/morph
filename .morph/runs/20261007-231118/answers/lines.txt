@@ -1,0 +1,21 @@
+morph run: read-runs.v1 accepted stage 7 frozen finish stop chars 6072
+morph run: read-runs.v2 untried stage 0 finish stop chars 7302
+morph run: read-story.v1 corrupt stage 0 finish length chars none
+morph run: read-story.v2 truncated stage 0 finish length chars 2538
+morph run: render-primer.v1 accepted stage 7 frozen finish stop chars 7103
+morph run: render-primer.v2 untried stage 0 finish stop chars 6138
+morph run: read-story.r1.v1 truncated stage 0 finish length chars 3354
+morph run: read-story.r1.v2 accepted stage 7 frozen finish stop chars 11816
+morph run: primer-command.v1 accepted stage 7 frozen finish stop chars 5914
+morph run: primer-command.v2 untried stage 0 finish stop chars 6073
+morph run: read-runs-judge.v1 rejected stage 3 guard tests/primer/readRuns.examples.test.ts finish stop chars 2115
+morph run: read-story-judge.v1 rejected stage 1 tsc finish stop chars 4156
+morph run: render-primer-judge.v1 accepted stage 7 frozen finish stop chars 3045
+morph run: read-runs-judge.r1.v1 accepted stage 7 frozen finish stop chars 2181
+morph run: read-story-judge.r1.v1 accepted stage 7 frozen finish stop chars 4193
+morph run: parse-command.v1 accepted stage 7 frozen finish stop chars 14024
+morph run: parse-command.v2 untried stage 0 finish stop chars 14024
+morph run: primer-command-judge.v1 rejected stage 3 guard tests/primer/primerCommand.examples.test.ts finish stop chars 5936
+morph run: primer-command-judge.r1.v1 accepted stage 7 frozen finish stop chars 5612
+morph run: main-judge.v1 accepted stage 7 frozen finish stop chars 2150
+morph run: parse-command-judge.v1 accepted stage 8 frozen finish stop chars 11737

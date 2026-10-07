@@ -1,0 +1,195 @@
+```ts
+export interface DigestTotals {
+  runs: number;
+  v2: { runs: number; cards: number; written: number; cost: number };
+  mrph: { runs: number; cards: number; written: number; cost: number };
+  cards: number;
+  written: number;
+  failed: number;
+  skipped: number;
+  requests: number;
+  answers: number;
+  cost: number;
+  unpriced: number;
+  models: { model: string; runs: number }[];
+  from: string;
+  to: string;
+}
+
+export interface DigestLine {
+  phase: string;
+  date: string;
+  builder: string;
+  models: string[];
+  written: number | null;
+  planned: number | null;
+  runs: number;
+  notes: string;
+  cost: string;
+  switches: string[];
+}
+
+export interface DigestStory {
+  chronology: DigestLine[];
+  next: { phase: string | null; row: string | null; handoff: string[] };
+  decisions: string[];
+  issues: {
+    state: "read" | "absent" | "unreadable";
+    items: { number: number; title: string; labels: string[] }[];
+  };
+  missing: string[];
+}
+
+export interface PrimerDigest {
+  name: string;
+  generatedAt: string;
+  files: number;
+  tests: { language: string; files: number; tests: number };
+  runs: { skipped: { dir: string; reason: string }[]; totals: DigestTotals };
+  story: DigestStory;
+}
+
+export function renderPrimer(digest: PrimerDigest, cap: number): string {
+  const lines: string[] = [];
+  const { name, generatedAt, files, tests, runs, story } = digest;
+
+  lines.push(`# Primer: ${name}`);
+  lines.push("");
+  lines.push(`generated ${generatedAt} · ${files} files in the tree · no model call, no network`);
+
+  if (story.missing.length > 0) {
+    const paths: string[] = [];
+    for (const key of story.missing) {
+      if (key === "measure") paths.push("docs/MEASURE.md");
+      else if (key === "plan") paths.push("docs/PLAN.md");
+      else if (key === "autonomy") paths.push("docs/AUTONOMY.md");
+      else if (key === "decisions") paths.push("docs/DECISIONS.md");
+      else paths.push(key);
+    }
+    lines.push(`missing: ${paths.join(", ")}`);
+  }
+
+  lines.push("");
+  lines.push("## Tests");
+  lines.push("");
+  lines.push(`- ${tests.tests} tests in ${tests.files} test files by the ${tests.language} profile (counted from text, not a run)`);
+
+  lines.push("");
+  lines.push("## Runs");
+  lines.push("");
+
+  const totals = runs.totals;
+  if (totals.runs === 0) {
+    lines.push("- archived runs: 0");
+  } else {
+    lines.push(
+      `- archived runs: ${totals.runs} (V2 ${totals.v2.runs}, mrph ${totals.mrph.runs}), ${totals.from} → ${totals.to}`,
+    );
+    lines.push(
+      `- cards: ${totals.written} written of ${totals.cards} (${totals.failed} failed, ${totals.skipped} skipped); requests ${totals.requests}, answers kept ${totals.answers}`,
+    );
+    lines.push(
+      `- cost: $${totals.cost.toFixed(4)} over ${totals.runs - totals.unpriced} priced runs (${totals.unpriced} unpriced)`,
+    );
+    lines.push(
+      `- by format: V2 ${totals.v2.runs} runs, ${totals.v2.written}/${totals.v2.cards} written, $${totals.v2.cost.toFixed(4)}; mrph ${totals.mrph.runs} runs, ${totals.mrph.written}/${totals.mrph.cards} written, $${totals.mrph.cost.toFixed(4)}`,
+    );
+    lines.push(
+      `- models: ${totals.models.map((m) => `${m.model} (${m.runs} ${m.runs === 1 ? "run" : "runs"})`).join(", ")}`,
+    );
+  }
+
+  if (runs.skipped.length > 0) {
+    lines.push(
+      `- skipped: ${runs.skipped.map((s) => `${s.dir} (${s.reason})`).join("; ")}`,
+    );
+  }
+
+  lines.push("");
+  lines.push("## Chronology (docs/MEASURE.md)");
+  lines.push("");
+
+  if (story.chronology.length === 0) {
+    lines.push("- no rows");
+  } else {
+    lines.push("phase · date · builder · models · written/planned · runs · $ · notes");
+    for (const line of story.chronology) {
+      const date = line.date || "—";
+      const builder = line.builder || "—";
+      const models = line.models.length > 0 ? line.models.join(", ") : "—";
+      const writtenPart = line.written === null ? "—" : `${line.written}/${line.planned} written`;
+      const runsPart = `${line.runs} ${line.runs === 1 ? "run" : "runs"}`;
+      const costPart = line.cost ? `$${line.cost}` : "$—";
+
+      let text = `- ${line.phase} · ${date} · ${builder} · ${models} · ${writtenPart} · ${runsPart} · ${costPart}`;
+      if (line.notes !== "") {
+        text += ` · ${line.notes}`;
+      }
+      if (line.switches.length > 0) {
+        text += ` ← switch: ${line.switches.join("; ")}`;
+      }
+      lines.push(text);
+    }
+  }
+
+  lines.push("");
+  lines.push("## What is next");
+  lines.push("");
+
+  if (story.next.row === null) {
+    lines.push("- next phase: none open (docs/PLAN.md)");
+  } else {
+    lines.push(`- next phase (docs/PLAN.md): ${story.next.row}`);
+  }
+
+  if (story.next.handoff.length === 0) {
+    lines.push("- handoff: no \"## State at handoff\" section (docs/AUTONOMY.md)");
+  } else {
+    lines.push("- handoff (docs/AUTONOMY.md):");
+    for (const h of story.next.handoff) {
+      lines.push(`  > ${h}`);
+    }
+  }
+
+  lines.push("");
+  lines.push("## Last decisions (docs/DECISIONS.md)");
+  lines.push("");
+
+  if (story.decisions.length === 0) {
+    lines.push("- none");
+  } else {
+    for (const d of story.decisions) {
+      lines.push(`- ${d}`);
+    }
+  }
+
+  lines.push("");
+  lines.push("## Open issues (.morph/issues.json)");
+  lines.push("");
+
+  if (story.issues.state === "absent") {
+    lines.push(
+      "- not read: no .morph/issues.json (the primer makes no network call; `gh issue list --state open --json number,title,labels > .morph/issues.json` writes it)",
+    );
+  } else if (story.issues.state === "unreadable") {
+    lines.push("- not read: .morph/issues.json is not a JSON array");
+  } else if (story.issues.items.length === 0) {
+    lines.push("- none open");
+  } else {
+    for (const item of story.issues.items) {
+      const labels = item.labels.length > 0 ? ` [${item.labels.join(", ")}]` : "";
+      lines.push(`- #${item.number} ${item.title}${labels}`);
+    }
+  }
+
+  const md = lines.join("\n") + "\n";
+  if (md.length > cap) {
+    const head = md.slice(0, cap - 60);
+    return (
+      head.slice(0, head.lastIndexOf("\n") + 1) +
+      `_… truncated to fit ${cap} chars_\n`
+    );
+  }
+  return md;
+}
+```

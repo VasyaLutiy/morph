@@ -1,0 +1,217 @@
+```
+import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { basename, join } from "node:path";
+import { gitOk } from "../git/run.js";
+import { hasExtension, normalizePath, profileForPath } from "../language/paths.js";
+import { PROFILES } from "../language/profiles.js";
+import type { LanguageProfile } from "../language/types.js";
+import { readRuns } from "./readRuns.js";
+import type { RunArchive, RunsTotals } from "./readRuns.js";
+import { readStory } from "./readStory.js";
+import type { StoryTexts } from "./readStory.js";
+import { renderPrimer } from "./renderPrimer.js";
+import type { PrimerDigest } from "./renderPrimer.js";
+
+export interface PrimerDeps {
+  env: Record<string, string>;
+  now: () => number;
+}
+
+export interface TestCount {
+  language: string;
+  files: number;
+  tests: number;
+}
+
+export interface PrimerDocument {
+  root: string;
+  generatedAt: string;
+  files: number;
+  tests: TestCount;
+  runs: RunsTotals;
+  skipped: number;
+  chronology: number;
+  next: string | null;
+  missing: string[];
+  issues: "read" | "absent" | "unreadable";
+  chars: number;
+  written: string | null;
+  markdown: string;
+}
+
+export interface PrimerResult {
+  code: 0 | 1 | 2 | 3 | 4;
+  document: PrimerDocument;
+}
+
+export const PRIMER_CAP = 16000;
+export const PRIMER_FILE = ".morph/primer.md";
+
+function readText(path: string): string | null {
+  try {
+    if (!statSync(path).isFile()) return null;
+    return readFileSync(path, "utf8");
+  } catch {
+    return null;
+  }
+}
+
+function listDirs(path: string): string[] {
+  let names: string[];
+  try {
+    names = readdirSync(path).sort();
+  } catch {
+    return [];
+  }
+  const dirs: string[] = [];
+  for (const name of names) {
+    try {
+      if (statSync(join(path, name)).isDirectory()) dirs.push(name);
+    } catch {
+      // a name that vanished between readdir and stat is not an archive
+    }
+  }
+  return dirs;
+}
+
+function countAnswers(path: string): number {
+  let names: string[];
+  try {
+    names = readdirSync(path);
+  } catch {
+    return 0;
+  }
+  let count = 0;
+  for (const name of names) {
+    if (name.endsWith(".answer.txt")) count += 1;
+  }
+  return count;
+}
+
+function baseName(file: string): string {
+  const normalized = normalizePath(file);
+  const at = normalized.lastIndexOf("/");
+  return at === -1 ? normalized : normalized.slice(at + 1);
+}
+
+function callRule(profile: LanguageProfile): RegExp {
+  return profile.id === "python" ? /^[ \t]*(?:async[ \t]+)?def[ \t]+test_\w+/gm : /(?<![\w.$])(?:test|it)\s*\(/g;
+}
+
+function countFor(profile: LanguageProfile, files: readonly string[]): number {
+  let count = 0;
+  for (const file of files) {
+    const claimed = profileForPath(file);
+    if (claimed !== null && claimed.id === profile.id) count += 1;
+  }
+  return count;
+}
+
+export function isTestFile(profile: LanguageProfile, file: string): boolean {
+  if (!hasExtension(profile, file)) return false;
+  return new RegExp(profile.testFilePattern).test(baseName(file));
+}
+
+export function countTests(profile: LanguageProfile, files: { path: string; text: string }[]): TestCount {
+  let testFiles = 0;
+  let tests = 0;
+  for (const file of files) {
+    if (!isTestFile(profile, file.path)) continue;
+    testFiles += 1;
+    const matches = file.text.match(callRule(profile));
+    tests += matches === null ? 0 : matches.length;
+  }
+  return { language: profile.id, files: testFiles, tests };
+}
+
+export function pickProfile(files: string[]): LanguageProfile {
+  let best: LanguageProfile = PROFILES[0];
+  let bestCount = countFor(best, files);
+  for (const profile of PROFILES) {
+    const count = countFor(profile, files);
+    if (count > bestCount) {
+      bestCount = count;
+      best = profile;
+    }
+  }
+  return best;
+}
+
+export function primerCommand(root: string, write: boolean, deps: PrimerDeps): PrimerResult {
+  const listing = gitOk(root, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"], deps.env);
+  const files: string[] = [];
+  const seen = new Set<string>();
+  for (const piece of listing.split("\0")) {
+    if (piece === "" || seen.has(piece)) continue;
+    seen.add(piece);
+    files.push(piece);
+  }
+
+  const profile = pickProfile(files);
+  const sources: { path: string; text: string }[] = [];
+  for (const file of files) {
+    if (!isTestFile(profile, file)) continue;
+    const text = readText(join(root, file));
+    if (text === null) continue;
+    sources.push({ path: file, text });
+  }
+  const tests = countTests(profile, sources);
+
+  const runsRoot = join(root, ".morph", "runs");
+  const archives: RunArchive[] = [];
+  for (const dir of listDirs(runsRoot)) {
+    archives.push({
+      dir,
+      report: readText(join(runsRoot, dir, "report.json")),
+      answers: countAnswers(join(runsRoot, dir, "answers")),
+    });
+  }
+  const runs = readRuns(archives);
+
+  const texts: StoryTexts = {
+    measure: readText(join(root, "docs", "MEASURE.md")),
+    plan: readText(join(root, "docs", "PLAN.md")),
+    autonomy: readText(join(root, "docs", "AUTONOMY.md")),
+    decisions: readText(join(root, "docs", "DECISIONS.md")),
+    issues: readText(join(root, ".morph", "issues.json")),
+  };
+  const story = readStory(texts, runs.runs);
+
+  const generatedAt = new Date(deps.now()).toISOString();
+  const digest: PrimerDigest = {
+    name: basename(root),
+    generatedAt,
+    files: files.length,
+    tests,
+    runs: { skipped: runs.skipped, totals: runs.totals },
+    story,
+  };
+  const markdown = renderPrimer(digest, PRIMER_CAP);
+
+  let written: string | null = null;
+  if (write) {
+    mkdirSync(join(root, ".morph"), { recursive: true });
+    writeFileSync(join(root, PRIMER_FILE), markdown);
+    written = PRIMER_FILE;
+  }
+
+  return {
+    code: 0,
+    document: {
+      root,
+      generatedAt,
+      files: files.length,
+      tests,
+      runs: runs.totals,
+      skipped: runs.skipped.length,
+      chronology: story.chronology.length,
+      next: story.next.phase,
+      missing: story.missing,
+      issues: story.issues.state,
+      chars: markdown.length,
+      written,
+      markdown,
+    },
+  };
+}
+```

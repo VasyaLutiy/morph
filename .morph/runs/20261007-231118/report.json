@@ -1,0 +1,423 @@
+{
+  "runId": "20261007-231118",
+  "completedAt": 1791415689164,
+  "branch": "morph/20261007-231118",
+  "processor": "ds",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "read-runs",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "read-runs.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "a1a3fc9935e20aa296aa3abf282513954b2372d4",
+      "diffstat": {
+        "files": 1,
+        "insertions": 216,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "read-story",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "read-story.r1.v2",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "answer corrupt: no text returned",
+        "The previous answer was cut off mid-file: it opened a ``` code fence and never closed it, so the file body could not be extracted. Answer again with the COMPLETE file, and close the fence.",
+        "The previous answer was cut off mid-file: it opened a ``` code fence and never closed it, so the file body could not be extracted. Answer again with the COMPLETE file, and close the fence."
+      ],
+      "commit": "e25e33306ac06bab88b7439f45cb51e7b392fa91",
+      "diffstat": {
+        "files": 1,
+        "insertions": 379,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "render-primer",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "render-primer.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "29a1c469f06b2d9efa47bae45b3468191c338aa1",
+      "diffstat": {
+        "files": 1,
+        "insertions": 236,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "primer-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "primer-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "a667280c618d5498d6e045221768597a8aec6fbd",
+      "diffstat": {
+        "files": 1,
+        "insertions": 214,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "read-runs-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "read-runs-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/primer/readRuns.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard tests/primer/readRuns.examples.test.ts\nguard: tests/primer/readRuns.examples.test.ts does not mention the example literal \"unknown report format\"\n"
+      ],
+      "commit": "ce2417b8b53d68325a4ea8deb2ac0b7b8681fb8b",
+      "diffstat": {
+        "files": 1,
+        "insertions": 55,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "read-story-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "read-story-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/primer/readStory.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/primer/readStory.examples.test.ts(13,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/primer/readStory.examples.test.ts(23,3): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/primer/readStory.examples.test.ts(26,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/primer/readStory.examples.test.ts(46,3): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/primer/readStory.examples.test.ts(49,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/primer/readStory.examples.test.ts(60,3): error TS2304: Cannot find name 'expect'.\ntests/primer/readStory.examples.test.ts(65,3): error TS2304: Cannot find name 'expect'.\ntests/primer/readStory.examples.test.ts(70,3): error TS2304: Cannot find name 'expect'.\ntests/primer/readStory.examples.test.ts(75,3): error TS2304: Cannot find name 'expect'.\ntests/primer/readStory.examples.test.ts(80,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/primer/readStory.examples.test.ts(87,3): error TS2304: Cannot find name 'expect'.\ntests/primer/readStory.examples.test.ts(88,3): error TS2304: Cannot find name 'expect'.\ntests/primer/readStory.examples.test.ts(91,3): error TS2304: Cannot find name 'expect'.\ntests/primer/readStory.examples.test.ts(100,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/primer/readStory.examples.test.ts(101,3): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": "b5e8fb63c6a012d682ef11b81cdd3ac1c68ba1e7",
+      "diffstat": {
+        "files": 1,
+        "insertions": 109,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "render-primer-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "render-primer-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/primer/renderPrimer.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "ebc584beac0c1750c1c779bec279bb896c22dedd",
+      "diffstat": {
+        "files": 1,
+        "insertions": 79,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "parse-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "3a159b2d0072e3b218d3a6bfa7daffaf4b79d7c0",
+      "diffstat": {
+        "files": 3,
+        "insertions": 36,
+        "deletions": 12
+      }
+    },
+    {
+      "customId": "primer-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "primer-command-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/primer/primerCommand.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard tests/primer/primerCommand.examples.test.ts\nguard: tests/primer/primerCommand.examples.test.ts does not mention the example literal \"git ls-files failed (exit 128): \"\n"
+      ],
+      "commit": "1974a9ab7341b3c70964bb7c56a6645e41b5c047",
+      "diffstat": {
+        "files": 1,
+        "insertions": 148,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "main-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "main-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/main.p12.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "925bc0c0eb1e00b399be698f6140a97779ceb3d3",
+      "diffstat": {
+        "files": 1,
+        "insertions": 62,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "parse-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/parse.examples.test.ts\n== names tests/cli/parse.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "94523dde7e808d6132f9507c9f10a6d7373234ad",
+      "diffstat": {
+        "files": 1,
+        "insertions": 53,
+        "deletions": 1
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 492584,
+    "outputTokens": 249289,
+    "cost": 0.19982195999999997,
+    "requests": 21
+  },
+  "requests": [
+    {
+      "customId": "read-runs.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791414679-szEpm5uAzkqOP4ppKi0W",
+      "inputTokens": 18338,
+      "outputTokens": 9447,
+      "cost": 0.0084189,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-runs.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791414679-ULOpoxWJlMgw7XSaqMLb",
+      "inputTokens": 18338,
+      "outputTokens": 7390,
+      "cost": 0.0071847,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-story.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791414679-mmJamA8WbYBx3nvs1eKq",
+      "inputTokens": 19278,
+      "outputTokens": 30000,
+      "cost": 0.0208917,
+      "finishReason": "length",
+      "error": null
+    },
+    {
+      "customId": "read-story.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791414704-OC6ijaV2hJ72ZJN9POzo",
+      "inputTokens": 19278,
+      "outputTokens": 30000,
+      "cost": 0.0182997,
+      "finishReason": "length",
+      "error": null
+    },
+    {
+      "customId": "render-primer.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791414709-aCk9LedJfmXKArriJdUs",
+      "inputTokens": 20922,
+      "outputTokens": 13674,
+      "cost": 0.0092691,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "render-primer.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791414760-waI71aCz209PcljtgMdd",
+      "inputTokens": 20922,
+      "outputTokens": 10403,
+      "cost": 0.0079977,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-story.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791414919-mXh6gtjcX7OcwGDeO4Jz",
+      "inputTokens": 19354,
+      "outputTokens": 30000,
+      "cost": 0.02048838,
+      "finishReason": "length",
+      "error": null
+    },
+    {
+      "customId": "read-story.r1.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791414919-wqbaIRS519WA5w29pOqr",
+      "inputTokens": 19354,
+      "outputTokens": 26948,
+      "cost": 0.01865718,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "primer-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791415097-KxN71oEzZevUeCPwsmIm",
+      "inputTokens": 27838,
+      "outputTokens": 14004,
+      "cost": 0.01243986,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "primer-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791415097-N5rRhqYi8VeaFlAv6xCn",
+      "inputTokens": 27838,
+      "outputTokens": 12174,
+      "cost": 0.00773034,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-runs-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791415097-C1jRD5jOq7cGZIaGxsU6",
+      "inputTokens": 22454,
+      "outputTokens": 2188,
+      "cost": 0.00454266,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-story-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791415109-qoflCGHuAP0iU9o1aIky",
+      "inputTokens": 26176,
+      "outputTokens": 12918,
+      "cost": 0.0096036,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "render-primer-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791415149-xD0vL4VZvrTH4BO7VNRo",
+      "inputTokens": 20822,
+      "outputTokens": 7283,
+      "cost": 0.00535038,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-runs-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791415295-Sq10NJkdoj7D5H97LfYp",
+      "inputTokens": 29019,
+      "outputTokens": 1153,
+      "cost": 0.00290193,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-story-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791415295-K1KIM6ehZwHShVsLfs9I",
+      "inputTokens": 34222,
+      "outputTokens": 3091,
+      "cost": 0.0069879,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791415402-fk2RIoYFA7P2sHpqWLvJ",
+      "inputTokens": 24314,
+      "outputTokens": 9221,
+      "cost": 0.0091797,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791415402-M6NoCcWyUD61dJmDhIFm",
+      "inputTokens": 24314,
+      "outputTokens": 4995,
+      "cost": 0.00337818,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "primer-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791415402-Jf4p4ZpXSEpe2evtXZMe",
+      "inputTokens": 23177,
+      "outputTokens": 12050,
+      "cost": 0.00856383,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "primer-command-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791415505-EerXFWU6nvW23RBTjep7",
+      "inputTokens": 30975,
+      "outputTokens": 2318,
+      "cost": 0.00562233,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "main-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791415563-neYu5vpUzRDszatk1cT9",
+      "inputTokens": 22356,
+      "outputTokens": 5444,
+      "cost": 0.00606684,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791415563-jQ9okM2BlavnokEiZYd1",
+      "inputTokens": 23295,
+      "outputTokens": 4588,
+      "cost": 0.00624705,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}

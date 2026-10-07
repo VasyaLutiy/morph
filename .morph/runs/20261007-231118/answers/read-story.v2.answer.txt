@@ -1,0 +1,97 @@
+```ts
+export interface StoryTexts {
+  measure: string | null;
+  plan: string | null;
+  autonomy: string | null;
+  decisions: string | null;
+  issues: string | null;
+}
+
+export interface StoryRun {
+  runId: string;
+  models: string[];
+}
+
+export interface ChronologyLine {
+  phase: string;
+  date: string;
+  builder: string;
+  models: string[];
+  written: number | null;
+  planned: number | null;
+  runs: number;
+  notes: string;
+  cost: string;
+  switches: string[];
+}
+
+export interface StoryIssue {
+  number: number;
+  title: string;
+  labels: string[];
+}
+
+export interface Story {
+  chronology: ChronologyLine[];
+  next: { phase: string | null; row: string | null; handoff: string[] };
+  decisions: string[];
+  issues: { state: "read" | "absent" | "unreadable"; items: StoryIssue[] };
+  missing: string[];
+}
+
+const DELIMITER = /^\|?[\s:|-]*-[\s:|-]*$/;
+const MAIN_PHASE = /^P\d+[a-z0-9]*$/;
+const RUN_ID = /\d{8}-\d{6}(?:-[0-9a-f]{8})?/g;
+
+interface Table {
+  header: string[];
+  rows: string[][];
+}
+
+function item(list: string[], index: number): string {
+  const value: string | undefined = list[index];
+  return value === undefined ? "" : value;
+}
+
+function bare(value: string): string {
+  return value.split("**").join("").trim();
+}
+
+function cells(line: string): string[] {
+  let text = line.trim();
+  if (text.startsWith("|")) text = text.slice(1);
+  if (text.endsWith("|") && !text.endsWith("\\|")) text = text.slice(0, -1);
+  return text.split(/(?<!\\)\|/).map((piece) => piece.trim().split("\\|").join("|"));
+}
+
+function tables(text: string | null): Table[] {
+  if (text === null) return [];
+  const lines = text.split("\n");
+  const found: Table[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const start = item(lines, i);
+    if (start.trim().startsWith("|") && DELIMITER.test(item(lines, i + 1).trim())) {
+      const collected: string[] = [start];
+      let j = i + 1;
+      if (!item(lines, j).trim().startsWith("|")) j += 1;
+      while (j < lines.length && item(lines, j).trim().startsWith("|")) {
+        collected.push(item(lines, j));
+        j += 1;
+      }
+      const rows: string[][] = [];
+      for (const raw of collected.slice(1)) {
+        if (DELIMITER.test(raw.trim())) continue;
+        rows.push(cells(raw));
+      }
+      found.push({ header: cells(item(collected, 0)), rows });
+      i = j;
+    } else {
+      i += 1;
+    }
+  }
+  return found;
+}
+
+function chronologyOf(measure: string | null, runs: StoryRun[]): ChronologyLine[] {
+  const table = tables(measure).find((candidate) => candidate.header

@@ -1,0 +1,57 @@
+```
+import { expect, test } from "vitest";
+import { readRuns } from "../../src/primer/readRuns.js";
+import { fixture, fixtureJson } from "../helpers.js";
+
+function report(dir: string): string {
+  return fixture("primer/runs/" + dir + "/report.json");
+}
+
+function expected(name: string): unknown {
+  return (fixtureJson("primer/runs.json") as Record<string, unknown>)[name];
+}
+
+test("Read Runs example 1: the real archives of both forms, sorted by dir", () => {
+  const result = readRuns([
+    { dir: "20261007-204822", report: report("20261007-204822"), answers: 15 },
+    { dir: "20261007-092723-3c3f1c83", report: report("20261007-092723-3c3f1c83"), answers: 0 },
+    { dir: "20261007-111944", report: report("20261007-111944"), answers: 0 },
+    { dir: "20261006-135524-8c114477", report: report("20261006-135524-8c114477"), answers: 0 },
+  ]);
+  expect(result).toStrictEqual(expected("Read Runs 1"));
+});
+
+test("Read Runs example 2: a broken, a foreign or a missing report is skipped, never thrown", () => {
+  const result = readRuns([
+    { dir: "x", report: null, answers: 0 },
+    { dir: "y", report: "{", answers: 0 },
+    { dir: "z", report: "[]", answers: 0 },
+    { dir: "w", report: '{"runId": 5, "outcomes": []}', answers: 0 },
+    {
+      dir: "e2e",
+      report: '{"runId": "e2e", "outcomes": [{"status": "budget-exceeded"}, 7]}',
+      answers: 2,
+    },
+    {
+      dir: "20261108-010203",
+      report: JSON.stringify({
+        runId: "20261108-010203",
+        processor: "night",
+        outcomes: [{ status: "written" }, { status: "failed" }],
+        requests: [{ model: "x/y" }, { model: "a/b" }, { model: "x/y" }, "q"],
+      }),
+      answers: 3,
+    },
+  ]);
+  expect(result.skipped[0].reason).toBe("unknown report format");
+  expect(result).toStrictEqual(expected("Read Runs 2"));
+});
+
+test("Read Runs example 3: the batch route reports no cost and is counted unpriced", () => {
+  const result = readRuns([
+    { dir: "20261007-155108", report: report("20261007-155108"), answers: 0 },
+    { dir: "20261006-135524-8c114477", report: report("20261006-135524-8c114477"), answers: 0 },
+  ]);
+  expect(result).toStrictEqual(expected("Read Runs 3"));
+});
+```

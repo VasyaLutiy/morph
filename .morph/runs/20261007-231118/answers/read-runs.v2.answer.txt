@@ -1,0 +1,249 @@
+```
+/**
+ * Read Runs — every archived run of both report forms summarised, with totals
+ * over both; nothing read twice, nothing thrown. Pure: it imports nothing.
+ */
+
+export interface RunArchive {
+  dir: string;
+  report: string | null;
+  answers: number;
+}
+
+export interface RunSummary {
+  runId: string;
+  format: "v2" | "mrph";
+  date: string;
+  processor: string;
+  models: string[];
+  cards: number;
+  written: number;
+  failed: number;
+  skipped: number;
+  requests: number;
+  cost: number | null;
+  answers: number;
+}
+
+export interface FormatTotals {
+  runs: number;
+  cards: number;
+  written: number;
+  cost: number;
+}
+
+export interface RunsTotals {
+  runs: number;
+  v2: FormatTotals;
+  mrph: FormatTotals;
+  cards: number;
+  written: number;
+  failed: number;
+  skipped: number;
+  requests: number;
+  answers: number;
+  cost: number;
+  unpriced: number;
+  models: { model: string; runs: number }[];
+  from: string;
+  to: string;
+}
+
+export interface RunsDigest {
+  runs: RunSummary[];
+  skipped: { dir: string; reason: string }[];
+  totals: RunsTotals;
+}
+
+/** A non-null, non-array object — the only shape a report may have. */
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** A finite number, else null; a wrong type is absent. */
+function finiteNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/** The values of a plain object, else no values. */
+function objectValues(value: unknown): unknown[] {
+  return isPlainObject(value) ? Object.values(value) : [];
+}
+
+/** The distinct `model` strings of the object rows, sorted. */
+function modelsOf(rows: unknown[]): string[] {
+  const seen = new Set<string>();
+  for (const row of rows) {
+    if (isPlainObject(row) && typeof row.model === "string") {
+      seen.add(row.model);
+    }
+  }
+  return [...seen].sort();
+}
+
+/** How many of the outcomes are objects carrying this status. */
+function countStatus(outcomes: unknown[], status: string): number {
+  let count = 0;
+  for (const outcome of outcomes) {
+    if (isPlainObject(outcome) && outcome.status === status) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+/** "YYYY-MM-DD" from a runId beginning with 8 digits and "-", else "". */
+function dateOf(runId: string): string {
+  const match = /^(\d{4})(\d{2})(\d{2})-/.exec(runId);
+  return match === null ? "" : `${match[1]}-${match[2]}-${match[3]}`;
+}
+
+function v2Summary(report: Record<string, unknown>, answers: number): RunSummary {
+  const runId = typeof report.runId === "string" ? report.runId : "";
+  const processor = typeof report.processor === "string" ? report.processor : "";
+  const rows: unknown[] = Array.isArray(report.requests) ? report.requests : [];
+  const outcomes: unknown[] = Array.isArray(report.outcomes) ? report.outcomes : [];
+  const usageTotals = isPlainObject(report.usageTotals) ? report.usageTotals : {};
+  const requests = finiteNumber(usageTotals.requests);
+  const cost = finiteNumber(usageTotals.cost);
+  return {
+    runId,
+    format: "v2",
+    date: dateOf(runId),
+    processor,
+    models: modelsOf(rows),
+    cards: outcomes.length,
+    written: countStatus(outcomes, "written"),
+    failed: countStatus(outcomes, "failed"),
+    skipped: countStatus(outcomes, "skipped"),
+    requests: requests === null ? rows.length : requests,
+    cost,
+    answers,
+  };
+}
+
+function mrphSummary(report: Record<string, unknown>, answers: number): RunSummary {
+  const runId = typeof report.deck_id === "string" ? report.deck_id : "";
+  const processor = typeof report.backend_label === "string" ? report.backend_label : "";
+  const rows = objectValues(report.usage);
+  const outcomes = objectValues(report.outcomes);
+  const usageTotals = isPlainObject(report.usage_totals) ? report.usage_totals : {};
+  const requests = finiteNumber(usageTotals.requests);
+  const cost = finiteNumber(usageTotals.cost);
+  return {
+    runId,
+    format: "mrph",
+    date: dateOf(runId),
+    processor,
+    models: modelsOf(rows),
+    cards: outcomes.length,
+    written: countStatus(outcomes, "written"),
+    failed: countStatus(outcomes, "failed"),
+    skipped: countStatus(outcomes, "skipped"),
+    requests: requests === null ? rows.length : requests,
+    cost,
+    answers,
+  };
+}
+
+/** Tell the two forms apart by their keys, else null: unknown format. */
+function summarise(report: Record<string, unknown>, answers: number): RunSummary | null {
+  if (typeof report.runId === "string" && Array.isArray(report.outcomes)) {
+    return v2Summary(report, answers);
+  }
+  if (typeof report.deck_id === "string" && isPlainObject(report.outcomes)) {
+    return mrphSummary(report, answers);
+  }
+  return null;
+}
+
+function parseReport(text: string): Record<string, unknown> | "not-object" {
+  let value: unknown;
+  try {
+    value = JSON.parse(text);
+  } catch {
+    return "not-object";
+  }
+  return isPlainObject(value) ? value : "not-object";
+}
+
+function totalsOf(runs: RunSummary[]): RunsTotals {
+  const v2: FormatTotals = { runs: 0, cards: 0, written: 0, cost: 0 };
+  const mrph: FormatTotals = { runs: 0, cards: 0, written: 0, cost: 0 };
+  let cards = 0;
+  let written = 0;
+  let failed = 0;
+  let skipped = 0;
+  let requests = 0;
+  let answers = 0;
+  let cost = 0;
+  let unpriced = 0;
+  const order: string[] = [];
+  const counts = new Map<string, number>();
+  for (const run of runs) {
+    const byFormat = run.format === "v2" ? v2 : mrph;
+    byFormat.runs += 1;
+    byFormat.cards += run.cards;
+    byFormat.written += run.written;
+    byFormat.cost += run.cost ?? 0;
+    cards += run.cards;
+    written += run.written;
+    failed += run.failed;
+    skipped += run.skipped;
+    requests += run.requests;
+    answers += run.answers;
+    if (run.cost === null) {
+      unpriced += 1;
+    } else {
+      cost += run.cost;
+    }
+    for (const model of run.models) {
+      if (!counts.has(model)) {
+        counts.set(model, 0);
+        order.push(model);
+      }
+      counts.set(model, (counts.get(model) ?? 0) + 1);
+    }
+  }
+  return {
+    runs: runs.length,
+    v2,
+    mrph,
+    cards,
+    written,
+    failed,
+    skipped,
+    requests,
+    answers,
+    cost,
+    unpriced,
+    models: order.map((model) => ({ model, runs: counts.get(model) ?? 0 })),
+    from: runs.length === 0 ? "" : runs[0].date,
+    to: runs.length === 0 ? "" : runs[runs.length - 1].date,
+  };
+}
+
+export function readRuns(archives: RunArchive[]): RunsDigest {
+  const ordered = [...archives].sort((a, b) => (a.dir < b.dir ? -1 : a.dir > b.dir ? 1 : 0));
+  const runs: RunSummary[] = [];
+  const skipped: { dir: string; reason: string }[] = [];
+  for (const archive of ordered) {
+    if (archive.report === null) {
+      skipped.push({ dir: archive.dir, reason: "no report.json" });
+      continue;
+    }
+    const report = parseReport(archive.report);
+    if (report === "not-object") {
+      skipped.push({ dir: archive.dir, reason: "report.json is not a JSON object" });
+      continue;
+    }
+    const summary = summarise(report, archive.answers);
+    if (summary === null) {
+      skipped.push({ dir: archive.dir, reason: "unknown report format" });
+      continue;
+    }
+    runs.push(summary);
+  }
+  return { runs, skipped, totals: totalsOf(runs) };
+}
+```
