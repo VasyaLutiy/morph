@@ -19,7 +19,8 @@ export interface PlanArgs {
 }
 export interface SubmitArgs { name: "submit"; root: string; pretty: boolean; deck: string; processor: string }
 export interface CollectArgs { name: "collect"; root: string; pretty: boolean; batch: string }
-export type Command = DeckCheckArgs | RunArgs | PlanArgs | SubmitArgs | CollectArgs;
+export interface PrimerArgs { name: "primer"; root: string; pretty: boolean; write: boolean }
+export type Command = DeckCheckArgs | RunArgs | PlanArgs | SubmitArgs | CollectArgs | PrimerArgs;
 export type ParseResult = { ok: true; command: Command } | { ok: false; error: ErrorDocument };
 export type DeckFileResult = { ok: true; deck: Deck } | { ok: false; result: CommandResult };
 export interface DeckCheckDocument {

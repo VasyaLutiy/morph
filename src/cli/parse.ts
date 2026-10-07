@@ -19,9 +19,7 @@ const VALUE_FLAGS: ReadonlySet<string> = new Set([
 ]);
 
 const NOT_YET_WORDS: ReadonlySet<string> = new Set([
-  "plan",
   "scout",
-  "primer",
   "review",
   "report",
 ]);
@@ -75,6 +73,12 @@ const COLLECT_FLAGS: ReadonlySet<string> = new Set([
   "--batch",
 ]);
 
+const PRIMER_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--write",
+]);
+
 function isPositiveInteger(v: string): boolean {
   return /^[0-9]+$/.test(v) && Number(v) >= 1;
 }
@@ -93,7 +97,7 @@ export function parseCommand(argv: string[]): ParseResult {
   for (let i = 0; i < argv.length; i++) {
     const t = argv[i];
     if (t.startsWith("--")) {
-      if (!VALUE_FLAGS.has(t) && t !== "--pretty" && t !== "--judge") {
+      if (!VALUE_FLAGS.has(t) && t !== "--pretty" && t !== "--judge" && t !== "--write") {
         return { ok: false, error: errorDocument(4, "UsageError", "unknown flag: " + t) };
       }
       if (t !== "--component" && seen.has(t)) {
@@ -118,7 +122,7 @@ export function parseCommand(argv: string[]): ParseResult {
   }
 
   // Check 2: the command from the words.
-  let name: "deck check" | "run" | "plan" | "submit" | "collect";
+  let name: "deck check" | "run" | "plan" | "submit" | "collect" | "primer";
   let arity: number;
   if (words.length === 0) {
     return {
@@ -126,7 +130,7 @@ export function parseCommand(argv: string[]): ParseResult {
       error: errorDocument(
         4,
         "UsageError",
-        "no command (commands: deck check, plan, run, submit, collect)",
+        "no command (commands: deck check, plan, run, submit, collect, primer)",
       ),
     };
   }
@@ -142,6 +146,9 @@ export function parseCommand(argv: string[]): ParseResult {
     arity = 1;
   } else if (first === "collect") {
     name = "collect";
+    arity = 1;
+  } else if (first === "primer") {
+    name = "primer";
     arity = 1;
   } else if (first === "deck") {
     if (words.length >= 2 && words[1] === "check") {
@@ -192,7 +199,9 @@ export function parseCommand(argv: string[]): ParseResult {
           ? PLAN_FLAGS
           : name === "submit"
             ? SUBMIT_FLAGS
-            : COLLECT_FLAGS;
+            : name === "collect"
+              ? COLLECT_FLAGS
+              : PRIMER_FLAGS;
   for (const f of order) {
     if (!allowed.has(f)) {
       return {
@@ -250,17 +259,28 @@ export function parseCommand(argv: string[]): ParseResult {
     return { ok: true, command };
   }
 
-  // Check 7: missing --deck.
+  // Check 7: primer is done.
+  if (name === "primer") {
+    const command: Command = {
+      name: "primer",
+      root,
+      pretty,
+      write: seen.has("--write"),
+    };
+    return { ok: true, command };
+  }
+
+  // Check 8: missing --deck.
   if (!values.has("--deck")) {
     return { ok: false, error: errorDocument(4, "UsageError", "missing --deck") };
   }
 
-  // Check 8: run or submit without --processor.
+  // Check 9: run or submit without --processor.
   if ((name === "run" || name === "submit") && !values.has("--processor")) {
     return { ok: false, error: errorDocument(4, "UsageError", "missing --processor") };
   }
 
-  // Check 9: submit is done.
+  // Check 10: submit is done.
   if (name === "submit") {
     const command: Command = {
       name: "submit",
@@ -272,7 +292,7 @@ export function parseCommand(argv: string[]): ParseResult {
     return { ok: true, command };
   }
 
-  // Check 10: the value validations, in the fixed order.
+  // Check 11: the value validations, in the fixed order.
   if (name === "deck check") {
     const cap = values.get("--slice-cap-bytes");
     if (cap !== undefined && !isPositiveInteger(cap)) {
@@ -339,7 +359,7 @@ export function parseCommand(argv: string[]): ParseResult {
     };
   }
 
-  // Check 11: success, the keys in the type's order, with the defaults.
+  // Check 12: success, the keys in the type's order, with the defaults.
   const command: Command = {
     name: "run",
     root,

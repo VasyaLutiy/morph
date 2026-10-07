@@ -8,6 +8,7 @@ import { collectBatch } from "../batches/collect.js";
 import { submitDeck } from "../batches/submit.js";
 import type { DetachedDeps } from "../batches/submit.js";
 import { saveBatchAnswers, saveBatchRecord } from "../git/archive.js";
+import { primerCommand } from "../primer/primerCommand.js";
 import type { CliDeps, CliIo, CommandResult, ExitCode } from "./types.js";
 
 export async function main(argv: string[], deps: CliDeps, io: CliIo): Promise<ExitCode> {
@@ -38,6 +39,8 @@ export async function main(argv: string[], deps: CliDeps, io: CliIo): Promise<Ex
       result = await submitDeck(root, command.deck, command.processor, detached);
     } else if (command.name === "collect") {
       result = await collectBatch(root, command.batch, detached);
+    } else if (command.name === "primer") {
+      result = primerCommand(root, command.write, { env: deps.env, now: deps.now });
     } else {
       result = await runCommand(root, command, deps, io.stderr);
     }
