@@ -686,7 +686,16 @@ System:
             {acceptanceOutput: the last result's log, previousDiff: null}. The log and the diff
             of the retry always come from the same attempt, and previousDiff is null exactly
             when no acceptance ran. The outcome's acceptanceLog and earlierFailures do not
-            change (the last variant's log, the earlier ones').
+            change (the last variant's log, the earlier ones'). Every variant sent gets one
+            Variant Record, given to deps.onVariant when it is set (optional; without it nothing
+            changes), after its card is decided (an accepted card's commit hook first), in card
+            order then variant order: {request: the Request as sent, text, finishReason, error
+            (its Answer's), verdict, stages, lastStage}; verdict "stale" for every variant of a
+            stale card, else "corrupt" or "truncated" by its parsed answer, else "untried" when
+            Verify Card stopped before it, "accepted" for the winner, "rejected" otherwise. For
+            accepted and rejected, stages = stageCount(its log) and lastStage(its log) (exported:
+            the text after "== " of the log's last stage header, null when none); else 0 and
+            null. A card with a compile fault sends nothing and gets no record.
           steps:
             - uses: compiler
             - uses: processor
@@ -728,6 +737,12 @@ System:
             - given: 'a stub config with timeoutMs 600000 and deps.acceptanceTimeoutMs 200; card a → out/a.ts, acceptance "sleep 30"; a.v1.md a fenced ts block'
               when: "processed"
               then: 'outcome a status "failed", reason "acceptance failed", its acceptanceLog holding "acceptance timed out after 200 ms"; the commit hook did not fire'
+            - given: 'a stub config; out/a.ts holds ''export const x = "OLD";\n''; card a → out/a.ts, variants 2, acceptance "echo ''== tsc''; echo ''== probe''; grep -q TWO out/a.ts"; a.v1.md a fenced ts block holding ''export const x = "ONE";\n'', a.v2.md one holding ''export const x = "TWO";\n''; deps.onVariant pushes each record to a list'
+              when: "processed"
+              then: 'a "written", winningVariant "a.v2"; the list [{request: compileCard(card a, root).requests[0] (customId "a.v1"), text: a.v1.md''s text, finishReason "stop", error: null, verdict: "rejected", stages: 2, lastStage: "probe"}, the same for a.v2 (requests[1], a.v2.md''s text) with verdict "accepted"]; lastStage of "== tsc\n== probe\nred\n" "probe", of "" null, of "a == b\n== eslint failed (see above)\n" "eslint failed (see above)"'
+            - given: 'a stub config; shared.ts exists; cards [a → shared.ts, variants 2, acceptance "grep -q ONE shared.ts" (a.v1.md fenced ''export const x = "ONE";\n'', a.v2.md fenced ''export const x = "TWO";\n''), b → out/b.ts with contextSlice [shared.ts] (b.v1.md fenced), c → out/c.ts (c.v1.md the text ''```ts\nexport const x = 2;\n''), d → out/d.ts with no answer file, e → out/e.ts with contextSlice [docs/missing.md]], variants 1 but a; deps.onVariant pushes each record'
+              when: "processed"
+              then: 'the verdicts in order a.v1 "accepted", a.v2 "untried" (its text a.v2.md''s), b.v1 "stale", c.v1 "truncated", d.v1 "corrupt" (text null, finishReason null, error "stub has no answer: <answersDir>/d.v1.md"); every one stages 0, lastStage null; no record of e'
         - name: Build Retry
           description: The retry card <base>.r<n> carrying the acceptance command, its output and the previous attempt diff, or the word that the answer was discarded unread; at most 2 retries per card; Run Deck caps the retry batches of each generation.
           behavior: >
@@ -800,8 +815,8 @@ System:
             {inputTokens, outputTokens summed; cost the sum of the reported costs or null
             when none was reported; requests = the number of usage rows}, requests = every
             Request Usage row of every processGeneration call of the run, in send order.
-            Returns {report, outcomes}. It writes and commits nothing: the archive is P6
-            git's.
+            Returns {report, outcomes}. deps reach every processGeneration call as given (so
+            deps.onVariant also sees the retries' variants). It writes and commits nothing.
           steps:
             - calls: Resolve Runnable
             - calls: Process Generation
@@ -843,6 +858,9 @@ System:
         - name: Retry Context
           description: What the retry of a failed card is told — the acceptance output and the diff of the same failed attempt.
           schema: "{ acceptanceOutput: string, previousDiff: string | null } — previousDiff is the diff of an attempt whose acceptance ran (\"\" when it changed nothing), null when no acceptance ran"
+        - name: Variant Record
+          description: One variant sent — its exact request, its raw answer and how far its acceptance got.
+          schema: "{ request: Request, text: string | null, finishReason: string | null, error: string | null, verdict: 'accepted'|'rejected'|'corrupt'|'truncated'|'untried'|'stale', stages: number, lastStage: string | null }"
 
     # ---------------------------------------------------------------- P6
     - name: git
@@ -850,7 +868,7 @@ System:
         The run's git side: src/git/*.ts over the git CLI. Opens the run branch, commits one
         accepted card's targets with Morph trailers and returns its sha and diffstat (the
         commit hook runloop fires), and writes and commits the run archive
-        .morph/runs/<runId>/{deck.json, report.json}. Every git call is a synchronous child
+        .morph/runs/<runId>/{deck.json, report.json, answers/}. Every git call is a synchronous child
         process with cwd = the repo root and an environment given whole as a parameter
         (never process.env), so a test pins the author, the committer, HOME and the locale
         and never depends on the host's git config. Expected refusals (a dirty tree, an
@@ -960,15 +978,20 @@ System:
               when: 'hook("h", ["out/h.ts"]), then hook("h", ["out/h.ts"])'
               then: 'first {commit: HEAD, diffstat {files: 1, insertions: 1, deletions: 0}} with the HEAD message "morph h: out/h.ts\n\nMorph-Card: h\nMorph-Model: stub\nMorph-Acceptance-Exit: 0"; second null and HEAD unchanged'
         - name: Archive Run
-          description: Writes .morph/runs/<runId>/{deck.json, report.json} and commits them with Morph-Run trailers; append-only.
+          description: Writes .morph/runs/<runId>/{deck.json, report.json, answers/} and commits them with Morph-Run trailers; append-only.
           behavior: >
-            archiveRun(root, {runId, deck, report}, env): runId must match ^[A-Za-z0-9._-]+$,
-            else {ok: false, error: "invalid runId: <runId>"}. dir = ".morph/runs/<runId>"; an
-            existing root/dir → {ok: false, error: "archive <dir> already exists"}, nothing
-            written (a run id names one run forever). Else mkdir -p, write <dir>/deck.json =
+            archiveRun(root, {runId, deck, report, answers?}, env): runId must match
+            ^[A-Za-z0-9._-]+$, else {ok: false, error: "invalid runId: <runId>"}; an answer whose
+            request.customId does not match it → {ok: false, error: "invalid answer id: <customId>"}
+            (the first such, in order). dir = ".morph/runs/<runId>"; an existing root/dir → {ok:
+            false, error: "archive <dir> already exists"} (a run id names one run forever). A
+            refusal writes nothing. Else mkdir -p, write <dir>/deck.json =
             JSON.stringify(deck.cards, null, 2) + "\n" (the Deck File form, a JSON array of
-            cards) and <dir>/report.json = JSON.stringify(report, null, 2) + "\n", then Commit
-            Paths over [<dir>/deck.json, <dir>/report.json] with subject "morph run <runId>:
+            cards) and <dir>/report.json = JSON.stringify(report, null, 2) + "\n", then per answer
+            in order <dir>/answers/<customId>.request.json = JSON.stringify(request, null, 2) +
+            "\n" and, when text is not null, <dir>/answers/<customId>.answer.txt = text exactly;
+            answers absent or [] → no answers/ directory. Then Commit Paths over [<dir>/deck.json,
+            <dir>/report.json, the answer files in the order written] with subject "morph run <runId>:
             deck and report" and trailers Morph-Run <runId>, Morph-Cards <deck.cards.length>,
             Morph-Written, Morph-Failed, Morph-Skipped, Morph-Budget-Exceeded (the number of
             report.outcomes with that status). → {ok: true, dir, commit: the sha, or null when
@@ -990,6 +1013,12 @@ System:
             - given: 'a repo whose committed .gitignore holds ".morph/"; runId "r2"'
               when: "archived"
               then: '{ok: false, error beginning "archive .morph/runs/r2 written but not committed: git add failed (exit 1): "}; .morph/runs/r2/deck.json and report.json exist on disk; HEAD unchanged'
+            - given: 'example 1 with answers [{request: {customId: "a.v1", model: null, maxTokens: null, reasoning: null, messages: [{role: "user", content: "Write a."}]}, text: "```ts\nexport const a = 1;\n```\n"}, {request: the same with customId "b.v1" and "Write b.", text: null}]'
+              when: "archived"
+              then: '{ok: true, dir: ".morph/runs/r1", commit: HEAD}; answers/a.v1.request.json reads JSON.stringify(the a.v1 request, null, 2) + "\n", answers/a.v1.answer.txt the text byte for byte, answers/b.v1.request.json the b.v1 request, no b.v1.answer.txt; the commit lists exactly deck.json, report.json and these three files under .morph/runs/r1; the HEAD message as in example 1'
+            - given: 'answers [{request: {customId: "../x"}, text: "t"}], runId "r3"; then answers [], runId "r4"'
+              when: "archived"
+              then: '{ok: false, error: "invalid answer id: ../x"}, no .morph/runs/r3, HEAD unchanged; then {ok: true, dir: ".morph/runs/r4", commit: HEAD} and no .morph/runs/r4/answers'
       dataObjects:
         - name: Git Result
           description: What one git call returned.
@@ -1000,6 +1029,9 @@ System:
         - name: Commit Info
           description: One commit and what it changed; structurally runloop's CommitInfo, so makeCommitHook is a CommitHook.
           schema: "{ commit: string, diffstat: { files: number, insertions: number, deletions: number } }"
+        - name: Archived Answer
+          description: One variant's request and raw answer for answers/; structurally runloop's Variant Record, so the records pass as they are.
+          schema: "{ request: { customId: string }, text: string | null }"
         - name: Archive Result
           description: The archive written and committed, or the refusal.
           schema: "{ ok: true, dir: string, commit: string | null } | { ok: false, error: string }"
@@ -1008,7 +1040,7 @@ System:
     - name: cli
       description: >
         The `morph` binary: src/cli/*.ts plus the entry src/cli.ts (bin dist/cli.js). Parses
-        argv, dispatches, prints one JSON document on stdout and one log line on stderr, maps
+        argv, dispatches, prints one JSON document on stdout and log lines on stderr, maps
         every outcome to an exit code. Only the entry touches the process: main() gets the
         environment, the working directory, the clock and the output streams as parameters.
         Commands: `deck check` (cards), `run` (runloop + processor + git), `plan` (contour +
@@ -1180,23 +1212,25 @@ System:
         - name: Run Command
           description: "`morph run`: processor, deck, hazards, run branch, Run Deck with git's commit hook, archive; one Run Document."
           behavior: >
-            runCommand(root, args, deps), every check before any git call or spend, in this
-            order. 1. readRegistry(deps.env); no config with id args.processor → code 4
-            UsageError "processor <id> is not configured", plus ": " and the messages of the
-            registry faults whose key starts with "MORPH_PROCESSOR_<id>_" joined by "; " when
-            there are any. 2. Read Deck File (its failure is the result). 3. Find Hazards
-            errors → code 2 RefusalError "deck has <n> hazard error(s): " + each as "<kind>
-            <cards joined by ",">[ <path>]" joined by "; ". 4. start = deps.now() (the only
-            call of runCommand itself); runId = args.runId, or mintRunId(start) = the UTC
-            time of start as "YYYYMMDD-HHMMSS". 5. Open Run Branch(root, runId, deps.env);
-            a refusal → code 2 RefusalError with its error. 6. Run Deck with input {root,
+            runCommand(root, args, deps, log?), every check before any git call or spend, in
+            order. 1. readRegistry(deps.env); no config with id args.processor → 4 UsageError
+            "processor <id> is not configured", plus ": " and the messages of the registry faults
+            whose key starts with "MORPH_PROCESSOR_<id>_" joined by "; " when there are any. 2.
+            Read Deck File (its failure is the result). 3. Find Hazards errors → 2 RefusalError
+            "deck has <n> hazard error(s): " + each as "<kind> <cards joined by ",">[ <path>]"
+            joined by "; ". 4. start = deps.now() (its only call here); runId = args.runId, or
+            mintRunId(start) = the UTC time of start as "YYYYMMDD-HHMMSS". 5. Open Run Branch(root,
+            runId, deps.env); a refusal → 2 RefusalError, its error. 6. Run Deck, input {root,
             runId, branch, deck, budget {maxCards: args.maxCards or the card count,
-            maxRetryBatches, deadline: start + deadlineSeconds × 1000}} and deps {config,
-            transport: deps.transport or realTransport(config.timeoutMs), commit:
-            makeCommitHook(root, config.model, deps.env), now: deps.now, env: deps.env}.
-            7. Archive Run(root, {runId, deck, report}, deps.env). → {code: runExitCode(report,
-            archive), document: {runId, branch, base, report, archive}}. A thrown Error (a git
-            command failing, I/O) propagates to main. The checkout stays on the run branch.
+            maxRetryBatches, deadline: start + deadlineSeconds × 1000}}, deps {config, transport:
+            deps.transport or realTransport(config.timeoutMs), commit: makeCommitHook(root,
+            config.model, deps.env), now: deps.now, env: deps.env, onVariant: keeps each Variant
+            Record and, log given, calls log(variantLine(record))}. 7. Archive Run(root, {runId,
+            deck, report, answers: the records in order}, deps.env). → {code: runExitCode(report,
+            archive), document: {runId, branch, base, report, archive}}. variantLine(r) (exported)
+            = "morph run: <r.request.customId> <verdict> stage <stages>[ <lastStage>] finish
+            <finishReason, or none> chars <text length, or none>\n". A thrown Error propagates to
+            main. The checkout stays on the run branch.
           steps:
             - uses: processor
             - calls: Read Deck File
@@ -1222,6 +1256,12 @@ System:
             - given: 'one card a; runId null; deps.now always 1791310149000'
               when: "run"
               then: 'mintRunId(1791310149000) is "20261006-180909"; code 0; runId, report.runId "20261006-180909", branch "morph/20261006-180909"; .morph/runs/20261006-180909/report.json exists'
+            - given: 'records {request.customId "a.v1", verdict "rejected", stages 4, lastStage "probe", finishReason "stop", text 30 chars}, {request.customId "b.r1.v2", verdict "corrupt", stages 0, lastStage null, finishReason null, text null}'
+              when: "variantLine"
+              then: '"morph run: a.v1 rejected stage 4 probe finish stop chars 30\n"; "morph run: b.r1.v2 corrupt stage 0 finish none chars none\n"'
+            - given: 'example 2 with maxRetryBatches 1, answers a.md and a.r1.md (each a 30-char fenced ts block); a log pushing its texts'
+              when: "run"
+              then: 'code 1; the log ["morph run: a.v1 rejected stage 0 finish stop chars 30\n", "morph run: a.r1.v1 rejected stage 0 finish stop chars 30\n"]; the archive commit adds exactly deck.json, report.json, answers/a.v1.request.json, a.v1.answer.txt, a.r1.v1.request.json, a.r1.v1.answer.txt under .morph/runs/r1; the a.r1.v1 request''s last message holds "<acceptance_output>"; status clean'
         - name: Plan Command
           description: "`morph plan --spec`: the record and the map read under the root, cut by Plan Spec, the deck written to --out; one Plan Document."
           behavior: >
@@ -1302,13 +1342,13 @@ System:
               when: 'readPlanChecks(root, "c.json")'
               then: '2 DeckError beginning "cannot parse c.json: "; then "c.json is not a valid checks document (2 problems):\nphase: required\ncards: must be a non-empty list"'
         - name: Main
-          description: Dispatch, one document out, one log line, the exit code; the entry src/cli.ts wires the process.
+          description: Dispatch, one document out, the log lines, the exit code; the entry src/cli.ts wires the process.
           behavior: >
             main(argv, deps, io) → Promise<ExitCode>. Parse Command; a failure → io.stdout(
             renderDocument(the error document, pretty = argv holds "--pretty")),
             io.stderr("morph: <message>\n"), return 4. Else root = path.resolve(deps.cwd,
             command.root); result = Deck Check (deck check), Plan Command (plan) or await Run
-            Command (run) inside try/catch, a thrown value → classifyThrown. Then exactly one io.stdout(
+            Command (run, io.stderr its log) inside try/catch, a thrown value → classifyThrown. Then exactly one io.stdout(
             renderDocument(result.document, command.pretty)), one io.stderr("morph <command
             name>: exit <code>\n"), return result.code. The entry src/cli.ts (shebang `#!/usr/bin/env
             node`) builds env from process.env without undefined values and calls main(
@@ -1335,7 +1375,7 @@ System:
               then: '3; one document {error: {code: 3, kind: "RuntimeError", message beginning "git status failed (exit 128): "}}; stderr ["morph run: exit 3\n"]'
             - given: 'the binary built by tsc -p tsconfig.build.json into a tmp out dir with {"type":"module"} and node_modules linked; a tmpRepo, a side root with answers a.md, b.md and the deck a, then b dependsOn a; `node <out>/cli.js run --root <repo> --deck <deck> --processor s --run-id e2e` with the stub env'
               when: "spawned"
-              then: 'exit 0; stdout one line of JSON: runId "e2e", branch "morph/e2e", outcomes written, written, archive ok; the last three subjects "morph run e2e: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; stderr "morph run: exit 0\n"'
+              then: 'exit 0; stdout one line of JSON: runId "e2e", branch "morph/e2e", outcomes written, written, archive ok; the last three subjects "morph run e2e: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; stderr "morph run: a.v1 accepted stage 0 finish stop chars 30\nmorph run: b.v1 accepted stage 0 finish stop chars 30\nmorph run: exit 0\n" (a.md, b.md 30 chars each)'
             - given: 'the built binary, argv ["frobnicate"]'
               when: "spawned"
               then: 'exit 4; stdout exactly "{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"unknown command: frobnicate\"}}\n"'

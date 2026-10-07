@@ -1,0 +1,93 @@
+{
+  "phase": "p10c2",
+  "ownGit": true,
+  "fullExclude": [
+    "tests/cli/main.examples.test.ts"
+  ],
+  "cards": [
+    {
+      "id": "process-generation"
+    },
+    {
+      "id": "process-generation-judge",
+      "files": [
+        {
+          "file": "tests/runloop/generation.p10c2.examples.test.ts",
+          "min": 2,
+          "max": 8,
+          "lits": [
+            "Process Generation example 12",
+            "Process Generation example 13",
+            "onVariant",
+            "lastStage",
+            "untried",
+            "stale",
+            "truncated",
+            "stub has no answer"
+          ],
+          "new": true
+        }
+      ]
+    },
+    {
+      "id": "archive-run"
+    },
+    {
+      "id": "archive-run-judge",
+      "files": [
+        {
+          "file": "tests/git/archive.p10c2.examples.test.ts",
+          "min": 2,
+          "max": 8,
+          "lits": [
+            "Archive Run example 4",
+            "Archive Run example 5",
+            "a.v1.request.json",
+            "a.v1.answer.txt",
+            "invalid answer id: ../x"
+          ],
+          "new": true
+        }
+      ]
+    },
+    {
+      "id": "run-command"
+    },
+    {
+      "id": "run-command-judge",
+      "files": [
+        {
+          "file": "tests/cli/runCommand.p10c2.examples.test.ts",
+          "min": 2,
+          "max": 8,
+          "lits": [
+            "Run Command example 7",
+            "Run Command example 8",
+            "variantLine",
+            "morph run: a.v1 rejected stage 4 probe finish stop chars 30",
+            "morph run: b.r1.v2 corrupt stage 0 finish none chars none",
+            "a.r1.v1.request.json"
+          ],
+          "new": true
+        }
+      ]
+    },
+    {
+      "id": "main"
+    },
+    {
+      "id": "main-judge",
+      "files": [
+        {
+          "file": "tests/cli/main.examples.test.ts",
+          "min": 5,
+          "max": 9,
+          "lits": [
+            "morph run: a.v1 accepted stage 0 finish stop chars 30",
+            "morph run: b.v1 accepted stage 0 finish stop chars 30"
+          ]
+        }
+      ]
+    }
+  ]
+}
