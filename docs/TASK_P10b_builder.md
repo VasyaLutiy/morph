@@ -349,3 +349,12 @@ P9b/P9c patches).
 
 Max slice + targets (reference in place): build-acceptances-judge 43 358 bytes (gate 200 KB). Forecast ≈ $0.20
 (≤ $1). Gate holds; the run waits for the operator.
+
+### Run (07.10, laptop) — the first phase cut AND run by MorphV2
+
+Deck cut by `morph plan --component builder --judge --out decks/p10b/deck.json`, run by the V2 binary
+(copy in /tmp/v2bin) with `--max-retry-batches 8`: run 20261007-121203, **10 / 10 written in one run, no
+fix**, $0.0998, 7.7 min, 18 requests (every finish reason `stop`). Retries won `probe-dir-judge` (r1) and
+`build-acceptances` (r1); `steps` won on its v2. On `main` after the fast-forward: tsc, eslint, build clean;
+vitest 563/563 in 58 files. The golden (Build Acceptances example 1: the 12 P10a acceptances byte for byte)
+is green in the judge's own test.
