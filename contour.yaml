@@ -344,11 +344,12 @@ System:
             appended. The log is clipped by clipLog: over 4000 chars it keeps the
             first 1500 and the last 1500 chars and, between them, a marker and every
             middle line that looks like a diagnosis (FAIL, Error, assert, expected),
-            within 800 chars. While the child lives, a SIGINT or SIGTERM of this process kills
-            the group the same way: listeners added after the spawn, removed when the child
-            closes or fails to start (none outlives the call; Node's default exit waits
-            meanwhile); the result is exit null, timedOut false, the output so far with the
-            line "acceptance interrupted by <signal name>" appended. Returns Acceptance Result.
+            within 800 chars. A SIGINT or SIGTERM of this process during the call kills the
+            group the same way: listeners added BEFORE the spawn (a signal caught before the
+            child exists kills it once spawned), removed when the child closes or fails to
+            start (none outlives the call; Node's default exit waits meanwhile); the result is
+            exit null, timedOut false, the output so far with the line "acceptance interrupted
+            by <signal name>" appended. Returns Acceptance Result.
           steps:
             - produces: Acceptance Result
           examples:

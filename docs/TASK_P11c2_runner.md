@@ -29,7 +29,7 @@ so the new refusal comes before the dirty-tree check). Placing the refusal AFTER
 hazards. Every other new shape is optional (`RunDeps.interrupted?`, `CliDeps.interrupted?`) or additive.
 
 **Record sizes** (bytes of each Component block, the 30 000 rule), before → after: runloop 29 992 → **29 986**, cli
-29 988 → **29 996**, acceptance 14 017 → **15 127**; git 17 825, cards 8 048 unchanged. Compaction moved literals to
+29 988 → **29 996**, acceptance 14 017 → **15 197**; git 17 825, cards 8 048 unchanged. Compaction moved literals to
 fixtures by `ref`, each generated from the code on main (or copied from its test) and equal to the old literal:
 `runloop/retryContexts.json` (Process Generation 4, 5, 6, 9's retryContexts), `runloop/retryInstructions.json` (Build
 Retry 4–6's exact instructions, by `buildRetry`), `runloop/glmAnswer.json` and `runloop/glmMessage.json` (Run Deck 4's
@@ -122,11 +122,13 @@ absent or always null → nothing changes (no call order of `now` changes).
 | 11 | [a; b dependsOn a] on the stub, a accepted (`grep -q MARK_A a.ts`); null on the 1st call, "SIGTERM" after | a written; b skipped "fault" attempts 0; fault "interrupted by SIGTERM", last key; usageTotals.requests 1; interrupted called 2 times |
 | 12 | one card c → c.ts "exit 1", answers c.md, c.r1.md; maxRetryBatches 2; null on the 1st call, "SIGINT" after | c failed "acceptance failed" attempts 1; fault "interrupted by SIGINT"; usageTotals.requests 1 (no retry batch) |
 
-**Run Acceptance** (`run.ts`) — finding 6, the group. After the spawn succeeds: one listener function `onSignal(signal)`
-added with `process.on("SIGINT", …)` and `process.on("SIGTERM", …)`; it records the FIRST signal's name and kills the
-group exactly as the timeout does (`process.kill(-child.pid, "SIGKILL")` in try/catch). Both listeners are removed
-(`process.off` / `removeListener`) in the "close" handler and in the "error" handler, before resolving: no listener
-outlives the call (a spawn that throws synchronously adds none). On close after a signal: `exit` null, `timedOut` as
+**Run Acceptance** (`run.ts`) — finding 6, the group. BEFORE the spawn: one listener function `onSignal(signal)` added
+with `process.on("SIGINT", …)` and `process.on("SIGTERM", …)`; it records the FIRST signal's name and kills the group
+exactly as the timeout does (`process.kill(-child.pid, "SIGKILL")` in try/catch) when the child exists; right after the
+spawn, a signal already recorded kills the new group at once (measured: with the listeners added after the spawn, a
+`kill $PPID` in the first milliseconds of the acceptance killed the node process — 0 of 5 runs survived; before the
+spawn, 30 of 30). Both listeners are removed (`process.off`) in the "close" handler, in the "error" handler and in the
+catch of a spawn that throws, before resolving: no listener outlives the call. On close after a signal: `exit` null, `timedOut` as
 is (false unless the timer fired), the log = the clipped output (+ the timeout line when timed out), then a "\n" when it
 is non-empty and does not end in one, then `"acceptance interrupted by " + <signal name> + "\n"`. While a listener is
 present Node does not exit on that signal: the caller decides (Run Command, through `deps.interrupted`). Example 6: the
@@ -166,6 +168,9 @@ SIGINT", a "failed" "acceptance failed" (acceptanceLog ending "acceptance interr
   `fullExclude` from the code cards' generation to their judges'.
 - **#5 4, Run Deck**: a "no acceptance" card is retried like any failed card (retries send nothing); Run Command's
   refusal makes this unreachable through the cli.
+- **#5 6, before the spawn**: the listeners are added before `spawn` so no signal can fall between the child's start
+  and the listener (a node process with no SIGTERM listener dies of it: measured, the in-acceptance `kill $PPID` won
+  that race every time with the listeners after the spawn).
 - **#5 6, where the listeners live**: Run Acceptance for the group (the layer that spawns it, `process` allowed there),
   the entry `src/cli.ts` for the run (only the entry touches `process` in cli; guard), handed down as
   `CliDeps.interrupted` → `RunDeps.interrupted` (a parameter, like the clock).
