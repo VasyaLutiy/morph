@@ -65,3 +65,11 @@ Sonnet 5 — дифф внешним `diff -u`, сирота через `ps`, л
 ## Autonomous stretch
 
 Running total of the autonomous stretch: $3.2658 of $30 (P3 $0.2254 + P4 $0.1406 + P5 $0.2787 incl. debt run $0.0952 + P6 $0.0984 + P7 $0.1276 + P7 smoke $0.0003 + P8 $0.0456 + P9 $0.1556 + P9b $0.0944 + P9c $0.0873 + P9 switch test $0.4219 + P10a $0.3718 + P10b1 $0.0998 + P10b2 $0.0780 + P10b2 smoke $0.0005 + P10c1 $0.1289 + P10c2 $0.1840 + P11 $0.0737 + P11 fix 1 $0.0140 + P11 smoke $0.0006 incl. slug probe + P11b1 $0.1379 + P11c1 $0.0941 + P11c2 $0.0880 + P11b2 $0.1183 + P11b2 smoke $0.0006 incl. ds slug check + P12a $0.1998).
+
+Running total vs the primer's archived total (operator question 08.10): the running total $3.2658 counts the autonomous
+stretch from P3 incl. runs made in scratch repositories that leave no archive here — P9 switch test $0.4219 (laptop
+/tmp replays), P7 smoke $0.0003, P10b2 smoke $0.0005, P11 smoke $0.0006, P11b2 smoke $0.0006 = $0.4239; the primer
+(`morph primer`, P12a smoke $3.1558) sums `.morph/runs/*/report.json` of this repository, which hold P0–P2 ($0.3138,
+before the stretch) and no smoke. $3.2658 − $0.4239 + $0.3138 = $3.1557 ≈ $3.1558 (rounding of the per-row figures).
+Neither total holds the debt row P5 debt (fable) $4.1723 (Claude subscription list price, no archive, not a processor
+spend).

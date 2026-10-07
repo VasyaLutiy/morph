@@ -10,10 +10,10 @@ and can change any line; the session reads it at the start of every phase.
 
 P0–P12a merged; `main` = origin = VPS. Issues #3, #4, #5 closed; #1 answered by P12a (`morph primer`: V2 and mrph archives,
 phase chronology, what is next, decisions and issues, TS tests by profile), closed after the operator's experiment.
-**Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). No code reviews until further notice (operator
-07.10): verify keeps the mechanical checks. Every new MEASURE row fills the `прогоны` column (run ids) — the primer joins
+**Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). No external review passes (operator 08.10); the
+session's own pre-merge code read stays. Every new MEASURE row fills the `прогоны` column (run ids) — the primer joins
 runs to phases by it. Running total $3.2658 of $30.
-**Stopped at the operator's smoke stop after P12a (primer on this repo); the operator resumes.** Next, in order: **P12b**
+Resumed by the operator 08.10 (smoke green, issue #1 experiment 4/4, #1 closed). Next, in order: **P12b**
 primer ownership by trailers (TASK_P12 §7; the seed of P13a); P13a, P13b, P14 → **final smoke stop**.
 Lessons for the next preparations: default code targets add a test file (give a smoke cap or code-only targets); new
 files need `"intent": "generate"` in the map; a new `src/` folder needs its layer in `decks/tools/guard.mjs`; size a judge
@@ -76,8 +76,8 @@ across the examples; every mutant run under a 120 s timeout; kill leftover watch
 4. **Verify** on the run branch: `git status --short` empty; `tsc --noEmit`, `eslint src
    tests`, `vitest run`, `npm run build` green; the written code and tests read once
    against §2.2 and the record; defects recorded, never fixed by hand.
-   **Operator 07.10: no code reviews until further notice** — the read of the written code is skipped; the
-   mechanical checks above stay; the goal is to close all phases through P14.
+   **Operator 08.10 (correcting 07.10): no EXTERNAL review passes (Fable) until further notice** — the session's
+   own read of the written code above stays; the goal is to close all phases through P14.
 5. **Record**: §11 of the TASK and the row of `docs/MEASURE.md` (builder column "V2"), one
    commit on the run branch with the trailer `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`.
 6. **Merge and push**: `git checkout main && git merge --ff-only morph/<run-id> && git
