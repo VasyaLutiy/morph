@@ -575,3 +575,7 @@ retry cap: run 20261007-231118, **11 / 11 written in one run, no fix**, 7 at the
 of its four answers (v1 corrupt, v2 and r1.v1 truncated, finish `length`) and won with r1.v2 — not a failure, no fix; its
 next cut needs ≥ 16 000 before the ×3. On the run branch: `git status` clean; tsc, eslint, `npm run build` clean; vitest
 **660 / 660** in 89 files. The read of the written code is skipped (operator 07.10: no code reviews until further notice).
+Code read (08.10, retroactive, after the operator restored the session's own read): src/primer/{readRuns,readStory,
+renderPrimer,primerCommand}.ts against §2.2 — both report forms by their keys (`runId`+`outcomes[]` V2, `deck_id`+
+`outcomes{}` mrph), broken reports skipped with a reason, totals over both with unpriced runs counted; the command only
+reads the tree (`git ls-files`, fs reads) and writes `.morph/primer.md` with `--write`; no network, no env read. 0 defects.
