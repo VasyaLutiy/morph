@@ -163,7 +163,7 @@ test("Run Command example 3: an unconfigured processor is a usage error before a
 });
 
 test("Run Command example 4: a dirty tree refuses before the branch is opened", async () => {
-  const s = setupRun([card("a", "out/a.ts")], ["a"]);
+  const s = setupRun([card("a", "out/a.ts", { acceptance: "test -f out/a.ts" })], ["a"]);
   try {
     s.r.write("notes.txt", "note\n");
     const got = await runCommand(s.r.root, makeRunArgs(s.side), s.deps);
@@ -282,6 +282,35 @@ test("runCommand own 3: a dependsOn cycle is a deck error", async () => {
         },
       },
     });
+  } finally {
+    s.r.rm();
+    s.side.rm();
+  }
+});
+
+test("Run Command example 12: cards with no acceptance refuse the run before any git call", async () => {
+  const s = setupRun(
+    [
+      card("x", "out/x.ts", { acceptance: "true" }),
+      card("q", "out/q.ts"),
+      card("d", "out/d.ts", { acceptance: " \n" }),
+    ],
+    ["x"]
+  );
+  try {
+    const got = await runCommand(s.r.root, makeRunArgs(s.side), s.deps);
+    expect(got).toStrictEqual({
+      code: 2,
+      document: {
+        error: {
+          code: 2,
+          kind: "RefusalError",
+          message: "deck has 2 card(s) with no acceptance: q,d",
+        },
+      },
+    });
+    expect(s.r.git(["for-each-ref", "refs/heads/morph/*"])).toBe("");
+    expect(s.r.exists(".morph")).toBe(false);
   } finally {
     s.r.rm();
     s.side.rm();
