@@ -1,0 +1,139 @@
+{
+ "phase": "p12",
+ "ownGit": true,
+ "fullExclude": [
+  "tests/cli/parse.examples.test.ts"
+ ],
+ "cards": [
+  {
+   "id": "read-runs"
+  },
+  {
+   "id": "read-story"
+  },
+  {
+   "id": "render-primer"
+  },
+  {
+   "id": "primer-command"
+  },
+  {
+   "id": "parse-command"
+  },
+  {
+   "id": "read-runs-judge",
+   "files": [
+    {
+     "file": "tests/primer/readRuns.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": [
+      "Read Runs example 1",
+      "Read Runs example 2",
+      "Read Runs example 3",
+      "runs.json",
+      "unknown report format",
+      "20261007-155108"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "read-story-judge",
+   "files": [
+    {
+     "file": "tests/primer/readStory.examples.test.ts",
+     "min": 5,
+     "max": 11,
+     "new": true,
+     "lits": [
+      "Read Story example 1",
+      "Read Story example 2",
+      "Read Story example 3",
+      "Read Story example 4",
+      "Read Story example 5",
+      "story.json",
+      "20261101-100000-0123abcd",
+      "Next: P12",
+      "unreadable"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "render-primer-judge",
+   "files": [
+    {
+     "file": "tests/primer/renderPrimer.examples.test.ts",
+     "min": 4,
+     "max": 10,
+     "new": true,
+     "lits": [
+      "Render Primer example 1",
+      "Render Primer example 2",
+      "Render Primer example 3",
+      "Render Primer example 4",
+      "primer1.md",
+      "primer2.md",
+      "truncated to fit 600 chars",
+      "- none open"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "primer-command-judge",
+   "files": [
+    {
+     "file": "tests/primer/primerCommand.examples.test.ts",
+     "min": 5,
+     "max": 11,
+     "new": true,
+     "lits": [
+      "Primer Command example 1",
+      "Primer Command example 2",
+      "Primer Command example 3",
+      "Primer Command example 4",
+      "Primer Command example 5",
+      "command.json",
+      "primer3.md",
+      "primer5.md",
+      "git ls-files failed (exit 128): ",
+      "async def test_y"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "parse-command-judge",
+   "files": [
+    {
+     "file": "tests/cli/parse.examples.test.ts",
+     "min": 22,
+     "max": 24,
+     "lits": [
+      "Parse Command example 16",
+      "submit, collect, primer)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "main-judge",
+   "files": [
+    {
+     "file": "tests/cli/main.p12.examples.test.ts",
+     "min": 1,
+     "max": 7,
+     "new": true,
+     "lits": [
+      "Main example 9",
+      "morph primer: exit 0",
+      "git ls-files failed (exit 128): "
+     ]
+    }
+   ]
+  }
+ ]
+}

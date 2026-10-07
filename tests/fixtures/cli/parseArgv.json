@@ -212,5 +212,38 @@
       "x",
       "extra"
     ]
+  ],
+  "16": [
+    [
+      "primer"
+    ],
+    [
+      "primer",
+      "--write",
+      "--root",
+      "/r",
+      "--pretty"
+    ],
+    [
+      "primer",
+      "--deck",
+      "d.json"
+    ],
+    [
+      "primer",
+      "x"
+    ],
+    [
+      "deck",
+      "check",
+      "--deck",
+      "d.json",
+      "--write"
+    ],
+    [
+      "--write",
+      "primer",
+      "--write"
+    ]
   ]
 }

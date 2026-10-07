@@ -30,10 +30,12 @@ const SHELL = new Set(["acceptance", "git"]);          // node:child_process
 const NET = new Set(["processor"]);                    // fetch, WebSocket, XMLHttpRequest
 const CONSOLE = new Set(["cli"]);                      // console, process.exit
 const PROCESS = new Set(["cli", "processor", "acceptance"]);
-const NO_CLOCK = new Set(["cards", "compiler", "response", "language", "contour", "planner", "builder", "batches"]);
+const NO_CLOCK = new Set(["cards", "compiler", "response", "language", "contour", "planner", "builder", "batches", "primer"]);
+// P12a: the one file of src/primer that turns the clock parameter deps.now() into an ISO string (docs/TASK_P12_primer.md §4)
+const CLOCK_FORMATTERS = new Set(["src/primer/primerCommand.ts"]);
 const YAML = new Set(["contour"]);
 // P3: the acceptance gets the child's environment as a parameter (docs/TASK_P3_acceptance.md §4)
-const NO_ENV = new Set(["acceptance", "processor", "git", "batches"]);
+const NO_ENV = new Set(["acceptance", "processor", "git", "batches", "primer"]);
 // P4: the one file of a NO_ENV layer that may read process.env (Read Registry, docs/TASK_P4_processor.md §4)
 const ENV_READERS = new Set(["src/processor/registry.ts"]);
 // P6: the one file of src/git that spawns (Run Git, docs/TASK_P6_git.md §4); git takes the env whole
@@ -147,7 +149,7 @@ function checkSrc(files) {
         if (n === "process" && !PROCESS.has(layer)) report(sf, node, "process outside src/cli, src/processor, src/acceptance");
         if ((n === "process" || n === "console") && layer === "cli" && rel !== CLI_ENTRY)
           report(sf, node, `${n} in ${rel} (only ${CLI_ENTRY} touches it; env, cwd, clock and io are parameters)`);
-        if (n === "Date" && NO_CLOCK.has(layer)) report(sf, node, `Date in the deterministic layer ${layer}`);
+        if (n === "Date" && NO_CLOCK.has(layer) && !CLOCK_FORMATTERS.has(rel)) report(sf, node, `Date in the deterministic layer ${layer}`);
         if (n === "Math" && node.parent && ts.isPropertyAccessExpression(node.parent) &&
             node.parent.name.text === "random") report(sf, node, "Math.random");
       }

@@ -1,0 +1,303 @@
+{
+  "deck_id": "20261006-135524-8c114477",
+  "completed_at": "2026-10-06T14:15:44.522",
+  "branch": "morph/20261006-135524-8c114477",
+  "backend_label": "glm53",
+  "generations": [
+    [
+      "build-attempt-diff",
+      "snapshot-targets"
+    ],
+    [
+      "build-attempt-diff-judge",
+      "run-acceptance",
+      "snapshot-targets-judge"
+    ],
+    [
+      "run-acceptance-judge",
+      "verify-card"
+    ],
+    [
+      "verify-card-judge"
+    ]
+  ],
+  "batch_ids": [
+    "local-af3c4406dc6340d086ce6dd0123bbf9e",
+    "local-bbd9d746365c4ec3b9ad0f208673a2c6",
+    "local-e9c8fb6e93e641ed9fabc1569d5d92eb",
+    "local-51efef30babc49c19b59af30ef11a4c0",
+    "local-fe33802139a545d9b54ae4155616b60f",
+    "local-fca3092505784cc4b30f67e3f830175a"
+  ],
+  "outcomes": {
+    "build-attempt-diff": {
+      "custom_id": "build-attempt-diff",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/acceptance/diff.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "build-attempt-diff.v2",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "dffba3aea087faced4a18ff0bf96dacb5768acba",
+      "diffstat": [
+        {
+          "path": "src/acceptance/diff.ts",
+          "insertions": 132,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/acceptance/diff.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "snapshot-targets": {
+      "custom_id": "snapshot-targets",
+      "status": "failed",
+      "paths": [],
+      "reason": null,
+      "finish_reason": "length",
+      "attempts": 3,
+      "winning_variant": null,
+      "acceptance_output": "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/snapshot-targets/snapshot-targets.probe.ts > Snapshot Targets example 1: a changed file and a created file are rolled back\nAssertionError: src/b.ts with bytes null: expected 'missing entry' to be null // Object.is equality\n Test Files  1 failed (1)\n      Tests  1 failed | 2 passed (3)\n",
+      "earlier_failures": null,
+      "commit": null,
+      "diffstat": null,
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/acceptance/types.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "src/acceptance/snapshot.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "run-acceptance": {
+      "custom_id": "run-acceptance",
+      "status": "skipped",
+      "paths": [],
+      "reason": "snapshot-targets",
+      "finish_reason": null,
+      "attempts": 0,
+      "winning_variant": null,
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": null,
+      "diffstat": null,
+      "syntax_gate": null
+    },
+    "snapshot-targets-judge": {
+      "custom_id": "snapshot-targets-judge",
+      "status": "skipped",
+      "paths": [],
+      "reason": "snapshot-targets",
+      "finish_reason": null,
+      "attempts": 0,
+      "winning_variant": null,
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": null,
+      "diffstat": null,
+      "syntax_gate": null
+    },
+    "build-attempt-diff-judge": {
+      "custom_id": "build-attempt-diff-judge",
+      "status": "failed",
+      "paths": [],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 3,
+      "winning_variant": null,
+      "acceptance_output": "== tsc\n== eslint\n== guard\n== own\n FAIL  tests/acceptance/diff.examples.test.ts > buildAttemptDiff > Build Attempt Diff own: lines 2 and 9 of 20 (6 unchanged between) share one hunk\nAssertionError: expected '--- a/t\\n+++ b/t\\n@@ -1,12 +1,12 @@\\n line 1\\n-line 2\\n+LINE 2\\n line 3\\n line 4\\n line 5\\n line 6\\n line 7\\n line 8\\n-line 9\\n+LINE 9\\n line 10\\n line 11\\n line 12\\n' to be '--- a/t\\n+++ b/t\\n@@ -1,12 +1,12 @@\\n line 1\\n-line 2\\n+LINE 2\\n line 3\\n line 4\\n line 5\\n line 6\\n line 7\\n line 8\\n line 9\\n+LINE 9\\n line 10\\n line 11\\n line 12\\n' // Object.is equality\n Test Files  1 failed (1)\n      Tests  1 failed | 11 passed (12)\n",
+      "earlier_failures": null,
+      "commit": null,
+      "diffstat": null,
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/acceptance/diff.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "run-acceptance-judge": {
+      "custom_id": "run-acceptance-judge",
+      "status": "skipped",
+      "paths": [],
+      "reason": "run-acceptance",
+      "finish_reason": null,
+      "attempts": 0,
+      "winning_variant": null,
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": null,
+      "diffstat": null,
+      "syntax_gate": null
+    },
+    "verify-card": {
+      "custom_id": "verify-card",
+      "status": "skipped",
+      "paths": [],
+      "reason": "snapshot-targets",
+      "finish_reason": null,
+      "attempts": 0,
+      "winning_variant": null,
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": null,
+      "diffstat": null,
+      "syntax_gate": null
+    },
+    "verify-card-judge": {
+      "custom_id": "verify-card-judge",
+      "status": "skipped",
+      "paths": [],
+      "reason": "verify-card",
+      "finish_reason": null,
+      "attempts": 0,
+      "winning_variant": null,
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": null,
+      "diffstat": null,
+      "syntax_gate": null
+    }
+  },
+  "usage": {
+    "snapshot-targets.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791294924-PPzrGf91k7RJMIc51y8k",
+      "input_tokens": 9593,
+      "output_tokens": 438,
+      "cost": 0.001345908,
+      "finish_reason": "stop"
+    },
+    "snapshot-targets.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791294940-26SaVo2Xae3kunvJroN9",
+      "input_tokens": 9593,
+      "output_tokens": 440,
+      "cost": 0.001348548,
+      "finish_reason": "stop"
+    },
+    "build-attempt-diff.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791294924-Jwd2XfANbhrG0pQ4EP8y",
+      "input_tokens": 9494,
+      "output_tokens": 2534,
+      "cost": 0.004092936,
+      "finish_reason": "stop"
+    },
+    "build-attempt-diff.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791294924-n6CpptG4gfoV7h2BDCjB",
+      "input_tokens": 9494,
+      "output_tokens": 4019,
+      "cost": 0.006053136,
+      "finish_reason": "stop"
+    },
+    "snapshot-targets.r1.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791295050-918LIKuQvSUDqiAkm767",
+      "input_tokens": 14506,
+      "output_tokens": 3072,
+      "cost": 0.00522276,
+      "finish_reason": "stop"
+    },
+    "snapshot-targets.r1.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791295050-D5L2i8NaINwOKwsDBoOg",
+      "input_tokens": 14506,
+      "output_tokens": 10000,
+      "cost": 0.016096872,
+      "finish_reason": "length"
+    },
+    "snapshot-targets.r2.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791295443-GKl5OgwimhDeqiTPfhS8",
+      "input_tokens": 14506,
+      "output_tokens": 9767,
+      "cost": 0.014038272,
+      "finish_reason": "stop"
+    },
+    "snapshot-targets.r2.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791295443-MLyCBaasTwaHYpsSOpmo",
+      "input_tokens": 14506,
+      "output_tokens": 10000,
+      "cost": 0.014345832,
+      "finish_reason": "length"
+    },
+    "build-attempt-diff-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791295846-JmMNbkExy9lJO83XwE5d",
+      "input_tokens": 15649,
+      "output_tokens": 4130,
+      "cost": 0.009244404,
+      "finish_reason": "stop"
+    },
+    "build-attempt-diff-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791295947-4s4cb8VbC4LNdL3QkPK0",
+      "input_tokens": 21550,
+      "output_tokens": 1757,
+      "cost": 0.006073344,
+      "finish_reason": "stop"
+    },
+    "build-attempt-diff-judge.r2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791295990-lxAZDeCMbOEXtXqfLwJw",
+      "input_tokens": 21448,
+      "output_tokens": 5718,
+      "cost": 0.010055184,
+      "finish_reason": "stop"
+    }
+  },
+  "usage_totals": {
+    "input_tokens": 154845,
+    "output_tokens": 51875,
+    "cost": 0.08791719599999999,
+    "requests": 11,
+    "requests_with_usage": 11
+  },
+  "orchestrator_usage": {}
+}

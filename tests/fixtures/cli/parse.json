@@ -102,7 +102,7 @@
         "error": {
           "code": 4,
           "kind": "UsageError",
-          "message": "no command (commands: deck check, plan, run, submit, collect)"
+          "message": "no command (commands: deck check, plan, run, submit, collect, primer)"
         }
       }
     }
@@ -303,6 +303,66 @@
           "code": 4,
           "kind": "UsageError",
           "message": "unexpected argument: extra"
+        }
+      }
+    }
+  ],
+  "16": [
+    {
+      "ok": true,
+      "command": {
+        "name": "primer",
+        "root": ".",
+        "pretty": false,
+        "write": false
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "primer",
+        "root": "/r",
+        "pretty": true,
+        "write": true
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --deck does not apply to primer"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "unexpected argument: x"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --write does not apply to deck check"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --write given twice"
         }
       }
     }

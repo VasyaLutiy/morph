@@ -1,0 +1,57 @@
+{
+  "Primer Command 3": {
+    "generatedAt": "2026-10-07T19:06:40.000Z",
+    "files": 16,
+    "tests": {
+      "language": "typescript",
+      "files": 2,
+      "tests": 3
+    },
+    "runs": {
+      "runs": 5,
+      "v2": {
+        "runs": 3,
+        "cards": 13,
+        "written": 12,
+        "cost": 0.16878482399999997
+      },
+      "mrph": {
+        "runs": 2,
+        "cards": 9,
+        "written": 2,
+        "cost": 0.096343536
+      },
+      "cards": 22,
+      "written": 14,
+      "failed": 3,
+      "skipped": 5,
+      "requests": 34,
+      "answers": 1,
+      "cost": 0.26512835999999995,
+      "unpriced": 1,
+      "models": [
+        {
+          "model": "z-ai/glm-5.3",
+          "runs": 3
+        },
+        {
+          "model": "z-ai/glm-5.3:batch",
+          "runs": 1
+        },
+        {
+          "model": "deepseek/deepseek-v4.1-flash",
+          "runs": 1
+        }
+      ],
+      "from": "2026-10-06",
+      "to": "2026-10-07"
+    },
+    "skipped": 1,
+    "chronology": 16,
+    "next": "P12a",
+    "missing": [],
+    "issues": "read",
+    "chars": 5915,
+    "written": ".morph/primer.md"
+  }
+}

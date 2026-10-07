@@ -1,0 +1,266 @@
+{
+  "Read Runs 1": {
+    "runs": [
+      {
+        "runId": "20261006-135524-8c114477",
+        "format": "mrph",
+        "date": "2026-10-06",
+        "processor": "glm53",
+        "models": [
+          "z-ai/glm-5.3"
+        ],
+        "cards": 8,
+        "written": 1,
+        "failed": 2,
+        "skipped": 5,
+        "requests": 11,
+        "cost": 0.08791719599999999,
+        "answers": 0
+      },
+      {
+        "runId": "20261007-092723-3c3f1c83",
+        "format": "mrph",
+        "date": "2026-10-07",
+        "processor": "glm53",
+        "models": [
+          "z-ai/glm-5.3"
+        ],
+        "cards": 1,
+        "written": 1,
+        "failed": 0,
+        "skipped": 0,
+        "requests": 1,
+        "cost": 0.00842634,
+        "answers": 0
+      },
+      {
+        "runId": "20261007-111944",
+        "format": "v2",
+        "date": "2026-10-07",
+        "processor": "glm53",
+        "models": [
+          "z-ai/glm-5.3"
+        ],
+        "cards": 2,
+        "written": 1,
+        "failed": 1,
+        "skipped": 0,
+        "requests": 5,
+        "cost": 0.050531903999999996,
+        "answers": 0
+      },
+      {
+        "runId": "20261007-204822",
+        "format": "v2",
+        "date": "2026-10-07",
+        "processor": "ds",
+        "models": [
+          "deepseek/deepseek-v4.1-flash"
+        ],
+        "cards": 9,
+        "written": 9,
+        "failed": 0,
+        "skipped": 0,
+        "requests": 15,
+        "cost": 0.11825291999999998,
+        "answers": 15
+      }
+    ],
+    "skipped": [],
+    "totals": {
+      "runs": 4,
+      "v2": {
+        "runs": 2,
+        "cards": 11,
+        "written": 10,
+        "cost": 0.16878482399999997
+      },
+      "mrph": {
+        "runs": 2,
+        "cards": 9,
+        "written": 2,
+        "cost": 0.096343536
+      },
+      "cards": 20,
+      "written": 12,
+      "failed": 3,
+      "skipped": 5,
+      "requests": 32,
+      "answers": 15,
+      "cost": 0.26512835999999995,
+      "unpriced": 0,
+      "models": [
+        {
+          "model": "z-ai/glm-5.3",
+          "runs": 3
+        },
+        {
+          "model": "deepseek/deepseek-v4.1-flash",
+          "runs": 1
+        }
+      ],
+      "from": "2026-10-06",
+      "to": "2026-10-07"
+    }
+  },
+  "Read Runs 2": {
+    "runs": [
+      {
+        "runId": "20261108-010203",
+        "format": "v2",
+        "date": "2026-11-08",
+        "processor": "night",
+        "models": [
+          "a/b",
+          "x/y"
+        ],
+        "cards": 2,
+        "written": 1,
+        "failed": 1,
+        "skipped": 0,
+        "requests": 4,
+        "cost": null,
+        "answers": 3
+      },
+      {
+        "runId": "e2e",
+        "format": "v2",
+        "date": "",
+        "processor": "",
+        "models": [],
+        "cards": 2,
+        "written": 0,
+        "failed": 0,
+        "skipped": 0,
+        "requests": 0,
+        "cost": null,
+        "answers": 2
+      }
+    ],
+    "skipped": [
+      {
+        "dir": "w",
+        "reason": "unknown report format"
+      },
+      {
+        "dir": "x",
+        "reason": "no report.json"
+      },
+      {
+        "dir": "y",
+        "reason": "report.json is not a JSON object"
+      },
+      {
+        "dir": "z",
+        "reason": "report.json is not a JSON object"
+      }
+    ],
+    "totals": {
+      "runs": 2,
+      "v2": {
+        "runs": 2,
+        "cards": 4,
+        "written": 1,
+        "cost": 0
+      },
+      "mrph": {
+        "runs": 0,
+        "cards": 0,
+        "written": 0,
+        "cost": 0
+      },
+      "cards": 4,
+      "written": 1,
+      "failed": 1,
+      "skipped": 0,
+      "requests": 4,
+      "answers": 5,
+      "cost": 0,
+      "unpriced": 2,
+      "models": [
+        {
+          "model": "a/b",
+          "runs": 1
+        },
+        {
+          "model": "x/y",
+          "runs": 1
+        }
+      ],
+      "from": "2026-11-08",
+      "to": ""
+    }
+  },
+  "Read Runs 3": {
+    "runs": [
+      {
+        "runId": "20261006-135524-8c114477",
+        "format": "mrph",
+        "date": "2026-10-06",
+        "processor": "glm53",
+        "models": [
+          "z-ai/glm-5.3"
+        ],
+        "cards": 8,
+        "written": 1,
+        "failed": 2,
+        "skipped": 5,
+        "requests": 11,
+        "cost": 0.08791719599999999,
+        "answers": 0
+      },
+      {
+        "runId": "20261007-155108",
+        "format": "v2",
+        "date": "2026-10-07",
+        "processor": "glm53b",
+        "models": [
+          "z-ai/glm-5.3:batch"
+        ],
+        "cards": 2,
+        "written": 2,
+        "failed": 0,
+        "skipped": 0,
+        "requests": 2,
+        "cost": null,
+        "answers": 0
+      }
+    ],
+    "skipped": [],
+    "totals": {
+      "runs": 2,
+      "v2": {
+        "runs": 1,
+        "cards": 2,
+        "written": 2,
+        "cost": 0
+      },
+      "mrph": {
+        "runs": 1,
+        "cards": 8,
+        "written": 1,
+        "cost": 0.08791719599999999
+      },
+      "cards": 10,
+      "written": 3,
+      "failed": 2,
+      "skipped": 5,
+      "requests": 13,
+      "answers": 0,
+      "cost": 0.08791719599999999,
+      "unpriced": 1,
+      "models": [
+        {
+          "model": "z-ai/glm-5.3",
+          "runs": 1
+        },
+        {
+          "model": "z-ai/glm-5.3:batch",
+          "runs": 1
+        }
+      ],
+      "from": "2026-10-06",
+      "to": "2026-10-07"
+    }
+  }
+}

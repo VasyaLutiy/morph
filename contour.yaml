@@ -1282,46 +1282,33 @@ System:
     # ---------------------------------------------------------------- P7
     - name: cli
       description: >
-        The `morph` binary: src/cli/*.ts and the entry src/cli.ts (bin dist/cli.js). Parses
-        argv, routes to a command, prints one JSON document on stdout and log lines on stderr,
-        maps every outcome to an exit code. Only the entry touches the process. Commands:
-        `deck check`, `run`, `plan`, `submit` and `collect` (routed to batches); the rest NotYetError.
+        The `morph` binary: src/cli/*.ts and the entry src/cli.ts (bin dist/cli.js): argv parsed, routed to a command, one JSON document on stdout, log lines on
+        stderr, an exit code per outcome. Only the entry touches the process. Commands: `deck check`, `run`, `plan`; `submit`, `collect` (routed to batches);
+        `primer` (routed to primer); the rest NotYetError.
       language: typescript
       requirements: [One Document Out]
       functions:
         - name: Parse Command
           description: argv into one Command or a usage error.
           behavior: >
-            parseCommand(argv) scans argv left to right. A token starting with "--" is a flag:
-            --pretty and --judge take no value; --root, --deck, --processor, --run-id, --deadline,
-            --max-cards, --max-retry-batches, --slice-cap-bytes, --spec, --component, --map, --out,
-            --checks, --batch take the next token whatever it is; any other flag (--x=y too) → "unknown
-            flag: <t>"; a value flag last → "flag <t> needs a value"; a flag twice → "flag <t>
-            given twice", but --component repeats, its values in argv order (the first error by
-            argv wins). Other tokens are words, giving the command: none → "no command
-            (commands: deck check, plan, run, submit, collect)"; "run"; "plan"; "submit";
-            "collect"; "deck" "check"; a first word
-            scout, primer, review or report → NotYetError "command <word> is not available yet";
-            "deck" add|status|reset|clear → NotYetError "command deck <w> is not available yet";
-            else "unknown command: <words, space-joined>". An extra word → "unexpected argument:
-            <first extra>". Then in order: a flag the command does not take → "flag <f> does not
-            apply to <command>", in argv order (deck check: --root, --pretty, --deck,
-            --slice-cap-bytes; run: --root, --pretty, --deck, --processor, --run-id, --deadline,
-            --max-cards, --max-retry-batches; plan: --root, --pretty, --spec, --component, --map,
-            --judge, --out, --checks; submit: --root, --pretty, --deck, --processor; collect:
-            --root, --pretty, --batch); plan without --spec → "missing --spec", else plan is done:
-            the plan Command (components [] and map, out null when not given; checks a key only
-            when given); collect without --batch → "missing --batch", a --batch not matching
-            ^[A-Za-z0-9._-]+$ → "--batch must match ^[A-Za-z0-9._-]+$ (got '<v>')", else collect
-            is done; no --deck → "missing --deck"; run or submit without --processor → "missing
-            --processor"; submit is then done; a run --run-id not matching
-            ^[A-Za-z0-9._-]+$ → "--run-id must match ^[A-Za-z0-9._-]+$ (got '<v>')"; numbers in
-            the order --slice-cap-bytes (deck check), --deadline, --max-cards,
-            --max-retry-batches (run): digits only, ≥ 1 ("<f> must be a positive integer (got
-            '<v>')"), --max-retry-batches ≥ 0 ("must be a non-negative integer"). A failure is
-            {ok: false, error: {error: {code: 4, kind: "UsageError" | "NotYetError", message}}}.
-            Defaults: root ".", pretty false, sliceCapBytes 500000, runId null, deadlineSeconds
-            2400, maxCards null (the card count), maxRetryBatches 2.
+            parseCommand(argv) scans argv left to right. A token starting with "--" is a flag: --pretty, --judge and --write take no value; --root, --deck,
+            --processor, --run-id, --deadline, --max-cards, --max-retry-batches, --slice-cap-bytes, --spec, --component, --map, --out, --checks, --batch take
+            the next token whatever it is; any other flag (--x=y too) → "unknown flag: <t>"; a value flag last → "flag <t> needs a value"; a flag twice → "flag
+            <t> given twice", but --component repeats, its values in argv order (the first error by argv wins). Other tokens are words, giving the command: none
+            → "no command (commands: deck check, plan, run, submit, collect, primer)"; "run"; "plan"; "submit"; "collect"; "primer"; "deck" "check"; a first
+            word scout, review or report → NotYetError "command <word> is not available yet"; "deck" add|status|reset|clear → NotYetError "command deck <w> is
+            not available yet"; else "unknown command: <words, space-joined>". An extra word → "unexpected argument: <first extra>". Then in order: a flag the
+            command does not take → "flag <f> does not apply to <command>", in argv order (deck check: --root, --pretty, --deck, --slice-cap-bytes; run: --root,
+            --pretty, --deck, --processor, --run-id, --deadline, --max-cards, --max-retry-batches; plan: --root, --pretty, --spec, --component, --map, --judge,
+            --out, --checks; submit: --root, --pretty, --deck, --processor; collect: --root, --pretty, --batch; primer: --root, --pretty, --write); plan without
+            --spec → "missing --spec", else plan is done: the plan Command (components [] and map, out null when not given; checks a key only when given);
+            collect without --batch → "missing --batch", a --batch not matching ^[A-Za-z0-9._-]+$ → "--batch must match ^[A-Za-z0-9._-]+$ (got '<v>')", else
+            collect is done; primer is done: {name, root, pretty, write: --write given}; no --deck → "missing --deck"; run or submit without --processor →
+            "missing --processor"; submit is then done; a run --run-id not matching ^[A-Za-z0-9._-]+$ → "--run-id must match ^[A-Za-z0-9._-]+$ (got '<v>')";
+            numbers in the order --slice-cap-bytes (deck check), --deadline, --max-cards, --max-retry-batches (run): digits only, ≥ 1 ("<f> must be a positive
+            integer (got '<v>')"), --max-retry-batches ≥ 0 ("must be a non-negative integer"). A failure is {ok: false, error: {error: {code: 4, kind:
+            "UsageError" | "NotYetError", message}}}. Defaults: root ".", pretty false, sliceCapBytes 500000, runId null, deadlineSeconds 2400, maxCards null
+            (the card count), maxRetryBatches 2.
           steps: [{produces: Command}]
           examples:
             - {given: 'parseArgv.json["1"]', ref: "tests/fixtures/cli/parseArgv.json (example number → its argv lists), parse.json (→ the result; a list for several)", when: parsed, then: 'parse.json["1"]'}
@@ -1339,12 +1326,12 @@ System:
             - {given: 'parseArgv.json["13"]', when: parsed, then: 'parse.json["13"]'}
             - {given: 'parseArgv.json["14"]', when: parsed, then: 'parse.json["14"]'}
             - {given: 'parseArgv.json["15"]', when: parsed, then: 'parse.json["15"]'}
+            - {given: 'parseArgv.json["16"]', when: parsed, then: 'parse.json["16"]'}
         - name: Emit Document
           description: One JSON document + newline on stdout; --pretty indents by 2.
           behavior: >
-            renderDocument(doc, pretty) = JSON.stringify(doc, null, 2 when pretty) + "\n".
-            errorDocument(code, kind, message) = {error: {code, kind, message}}, keys in that
-            order (main writes one per invocation to stdout; the log goes to stderr).
+            renderDocument(doc, pretty) = JSON.stringify(doc, null, 2 when pretty) + "\n". errorDocument(code, kind, message) = {error: {code, kind, message}},
+            keys in that order.
           steps: [{produces: Error Document}]
           examples:
             - {given: 'doc {a: 1, b: [true, null]}, pretty false', when: rendered, then: '"{\"a\":1,\"b\":[true,null]}\n"'}
@@ -1353,23 +1340,20 @@ System:
         - name: Classify Error
           description: "Exit codes: 0 ok; 1 a card not written; 2 a refusal before spend; 3 a fault under way; 4 a usage error."
           behavior: >
-            classifyThrown(e) → {code: 3, document: errorDocument(3, "RuntimeError", e.message
-            for an Error, else String(e))}. runExitCode(report, archive) → 3 when the archive is
-            not ok; else 1 when any outcome is not "written"; else 0. Kinds: UsageError and
-            NotYetError (4), DeckError and RefusalError (2), RuntimeError (3).
+            classifyThrown(e) → {code: 3, document: errorDocument(3, "RuntimeError", e.message for an Error, else String(e))}. runExitCode(report, archive) → 3
+            when the archive is not ok; else 1 when any outcome is not "written"; else 0. Kinds: UsageError and NotYetError (4), DeckError and RefusalError (2),
+            RuntimeError (3).
           steps: [{produces: Command Result}]
           examples:
             - {given: 'new Error("git add failed (exit 1): fatal: x")', when: classifyThrown, then: '{code: 3, document: {error: {code: 3, kind: "RuntimeError", message: "git add failed (exit 1): fatal: x"}}}'}
             - {given: 'the string "boom"', when: classifyThrown, then: 'as example 1, message "boom"'}
             - {given: 'reports with outcomes [written, written] and [written, skipped], archive ok; then [written] with archive {ok: false}', when: runExitCode, then: '0, 1, 3'}
         - name: Read Deck File
-          description: The deck file a command names, under the root, by Load Deck.
+          description: The deck file a command names, read by Load Deck.
           behavior: >
-            readDeckFile(root, deckPath): abs = path.resolve(root, deckPath). Not a regular file
-            → {ok: false, result: {code 4, document errorDocument(4, "UsageError", "deck file not
-            found: <deckPath as given>")}}. Else Load Deck on its UTF-8 text; faults → {ok:
-            false, result: {code 2, document errorDocument(2, "DeckError", "invalid deck: " +
-            each "<key>: <message>", "; "-joined)}}. Else {ok: true, deck}.
+            readDeckFile(root, deckPath): abs = path.resolve(root, deckPath). Not a regular file → {ok: false, result: {code 4, document errorDocument(4,
+            "UsageError", "deck file not found: <deckPath as given>")}}. Else Load Deck on its UTF-8 text; faults → {ok: false, result: {code 2, document
+            errorDocument(2, "DeckError", "invalid deck: " + each "<key>: <message>", "; "-joined)}}. Else {ok: true, deck}.
           steps: [{reads: Deck}, {produces: Command Result}]
           examples:
             - {given: 'a tmp root with d.json = the deck of the tiny fixture', ref: "tests/fixtures/decks/tiny.json (one card a → src/a.ts)", when: 'readDeckFile(root, "d.json")', then: '{ok: true, deck: {cards: [card a with every default filled], externalDependsOn: []}}'}
@@ -1378,12 +1362,9 @@ System:
         - name: Deck Check
           description: "`morph deck check`: generations, hazards, slice weights."
           behavior: >
-            deckCheckCommand(root, deckPath, sliceCapBytes): Read Deck File (its failure is the
-            result); weighing = Weigh Slices(deck, root, sliceCapBytes); hazards = Find
-            Hazards(deck), then the weighing's; document {deck: deckPath as given, cards: the
-            count, generations: Layer Generations(deck), errors and warnings: the hazards of
-            each severity counted, hazards, weights: the weighing's}, keys in that order;
-            code 2 when errors > 0, else 0.
+            deckCheckCommand(root, deckPath, sliceCapBytes): Read Deck File (its failure is the result); weighing = Weigh Slices(deck, root, sliceCapBytes);
+            hazards = Find Hazards(deck), then the weighing's; document {deck: deckPath as given, cards: the count, generations: Layer Generations(deck), errors
+            and warnings: the hazards of each severity counted, hazards, weights: the weighing's}, keys in that order; code 2 when errors > 0, else 0.
           steps: [{calls: Read Deck File}, {uses: cards}, {produces: Deck Check Document}]
           examples:
             - {given: 'a tmp root holding only d.json = the write-write fixture (a and b both write src/x.ts)', ref: "tests/fixtures/decks/hazardsWriteWrite.json, tests/fixtures/cli/deckCheck.writeWrite.json", when: 'deckCheckCommand(root, "d.json", 500000)', then: 'code 2; document equal to tests/fixtures/cli/deckCheck.writeWrite.json'}
@@ -1392,30 +1373,19 @@ System:
         - name: Run Command
           description: "`morph run`: processor, deck, hazards, run branch, Run Deck, archive; one Run Document."
           behavior: >
-            runCommand(root, args, deps, log?), every check before any git call or spend, in
-            order. 1. readRegistry(deps.env); no config with id args.processor → 4 UsageError
-            "processor <id> is not configured" + (": " + the messages of the faults keyed
-            "MORPH_PROCESSOR_<id>_…", "; "-joined, when any). 2. Read Deck File (its failure is
-            the result); no cards → 2 RefusalError "deck has no cards". 3. Find Hazards errors
-            → 2 RefusalError "deck has <n> hazard error(s): " + each "<kind> <cards
-            ","-joined>[ <path>]", "; "-joined; then cards whose acceptance is null or blank → 2
-            RefusalError "deck has <n> card(s) with no acceptance: <ids in deck order,
-            ","-joined>". 4. start = deps.now() (its only call here);
-            runId = args.runId or mintRunId(start) (UTC "YYYYMMDD-HHMMSS"). 5. Open Run
-            Branch(root, runId, deps.env); a refusal → 2 RefusalError, its error. 6. Run Deck,
-            input {root, runId, branch, deck, budget {maxCards: args.maxCards or the card
-            count, maxRetryBatches, deadline: start + deadlineSeconds × 1000}}, deps {config,
-            transport: {...(deps.transport or realTransport(config.timeoutMs)), saveBatch:
-            (record) => git's saveBatchRecord(root, record)}, commit: makeCommitHook(root,
-            config.model, deps.env), now: deps.now, env: deps.env, interrupted:
-            deps.interrupted, onVariant: line =
-            variantLine(record), keep {...record, line}, log given → log(line)}. 7. Archive
-            Run(root, {runId, deck, report, answers: the kept records}, deps.env). → {code: 3
-            when report.fault is set (the partial report archived), else runExitCode(report,
-            archive), document: {runId, branch, base, report, archive}}. variantLine(r)
-            (exported) = "morph run: <r.request.customId> <verdict> stage <stages>[
-            <lastStage>] finish <finishReason, or none> chars <text length, or none>\n". The
-            checkout stays on the run branch.
+            runCommand(root, args, deps, log?), every check before any git call or spend, in order. 1. readRegistry(deps.env); no config with id args.processor
+            → 4 UsageError "processor <id> is not configured" + (": " + the messages of the faults keyed "MORPH_PROCESSOR_<id>_…", "; "-joined, when any). 2.
+            Read Deck File (its failure is the result); no cards → 2 RefusalError "deck has no cards". 3. Find Hazards errors → 2 RefusalError "deck has <n>
+            hazard error(s): " + each "<kind> <cards ","-joined>[ <path>]", "; "-joined; then cards whose acceptance is null or blank → 2 RefusalError "deck has
+            <n> card(s) with no acceptance: <ids in deck order, ","-joined>". 4. start = deps.now() (its only call here); runId = args.runId or mintRunId(start)
+            (UTC "YYYYMMDD-HHMMSS"). 5. Open Run Branch(root, runId, deps.env); a refusal → 2 RefusalError, its error. 6. Run Deck, input {root, runId, branch,
+            deck, budget {maxCards: args.maxCards or the card count, maxRetryBatches, deadline: start + deadlineSeconds × 1000}}, deps {config, transport:
+            {...(deps.transport or realTransport(config.timeoutMs)), saveBatch: (record) => git's saveBatchRecord(root, record)}, commit: makeCommitHook(root,
+            config.model, deps.env), now: deps.now, env: deps.env, interrupted: deps.interrupted, onVariant: line = variantLine(record), keep {...record, line},
+            log given → log(line)}. 7. Archive Run(root, {runId, deck, report, answers: the kept records}, deps.env). → {code: 3 when report.fault is set (the
+            partial report archived), else runExitCode(report, archive), document: {runId, branch, base, report, archive}}. variantLine(r) (exported) = "morph
+            run: <r.request.customId> <verdict> stage <stages>[ <lastStage>] finish <finishReason, or none> chars <text length, or none>\n". The checkout stays
+            on the run branch.
           steps: [{uses: processor}, {calls: Read Deck File}, {uses: git}, {uses: runloop}, {produces: Run Document}]
           examples:
             - {given: 'a tmpRepo; env with a git identity, MORPH_PROCESSOR_s_TYPE stub, MORPH_PROCESSOR_s_ANSWERS_DIR a side tmp root with a.md, b.md (fenced ts blocks); a deck file there: a → out/a.ts ("test -f out/a.ts"), b → out/b.ts dependsOn [a]; runId "r1"', when: run, then: 'code 0; runId "r1", branch "morph/r1", base = HEAD before; a, b "written", generations 2, processor "s", usageTotals.requests 2; archive {ok: true, dir: ".morph/runs/r1", commit: HEAD}; subjects since base, newest first: "morph run r1: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; HEAD on morph/r1; status clean'}
@@ -1433,22 +1403,15 @@ System:
         - name: Plan Command
           description: "`morph plan --spec`: record and map cut by Plan Spec, the deck to --out; one Plan Document."
           behavior: >
-            planCommand(root, args), in order. The spec (path.resolve(root, args.spec)) not a
-            regular file → 4 UsageError "spec file not found: <spec as given>"; a given map not
-            a regular file → 4 UsageError "map file not found: <map as given>".
-            loadContour(the spec's UTF-8 text, args.spec), then loadMap(the map's text, args.map)
-            when given (else the empty map {version: 1, package: null, language: null, docs: [],
-            groups: [], cards: [], extraCards: []}); an error → 2 DeckError, it. Plan Spec({record,
-            map, spec: args.spec, components: args.components, judge: args.judge, hasFile: a path
-            is a regular file under root}); an error → 2 DeckError, it. With args.checks: Read Plan
-            Checks (a failure is the result); Build Acceptances({cards, checks, profile:
-            resolveProfile(null, map.language), texts}), errors → 2 DeckError "acceptances not built
-            (<n> error|errors):\n" + them "\n"-joined; its cards replace the plan's, except a card
-            the map gives an acceptance (map card by customId ?? id, extra card by customId).
-            args.out not null → the cards written to path.resolve(root, args.out) as
-            JSON.stringify(cards, null, 2) + "\n", parents created. → {code: 0, document: {spec,
-            components, cards, generations, externalDependsOn, out: args.out}}. Nothing else
-            written; nothing on an error.
+            planCommand(root, args), in order. The spec (path.resolve(root, args.spec)) not a regular file → 4 UsageError "spec file not found: <spec as
+            given>"; a given map not a regular file → 4 UsageError "map file not found: <map as given>". loadContour(the spec's UTF-8 text, args.spec), then
+            loadMap(the map's text, args.map) when given (else the empty map {version: 1, package: null, language: null, docs: [], groups: [], cards: [],
+            extraCards: []}); an error → 2 DeckError, it. Plan Spec({record, map, spec: args.spec, components: args.components, judge: args.judge, hasFile: a
+            path is a regular file under root}); an error → 2 DeckError, it. With args.checks: Read Plan Checks (a failure is the result); Build
+            Acceptances({cards, checks, profile: resolveProfile(null, map.language), texts}), errors → 2 DeckError "acceptances not built (<n> error|errors):\n"
+            + them "\n"-joined; its cards replace the plan's, except a card the map gives an acceptance (map card by customId ?? id, extra card by customId).
+            args.out not null → the cards written to path.resolve(root, args.out) as JSON.stringify(cards, null, 2) + "\n", parents created. → {code: 0,
+            document: {spec, components, cards, generations, externalDependsOn, out: args.out}}. Nothing else written; nothing on an error.
           steps: [{uses: contour}, {uses: planner}, {calls: Read Plan Checks}, {uses: builder}, {produces: Plan Document}]
           examples:
             - {given: 'a tmp root holding ledger.yaml and ledger.map.json (the planner fixtures'' texts) and a tests/helpers.ts; args spec "ledger.yaml", components ["ledger", "store"], map "ledger.map.json", judge true, out "decks/p.json"', ref: "tests/fixtures/planner/ledger.yaml, tests/fixtures/planner/ledger.map.json, tests/fixtures/planner/ledger.plan.json", when: planCommand, then: 'code 0; document equal to ledger.plan.json plus out "decks/p.json"; the file decks/p.json is exactly JSON.stringify(document.cards, null, 2) + "\n"; Read Deck File of it is ok with 17 cards and externalDependsOn ["outside"]'}
@@ -1462,38 +1425,28 @@ System:
         - name: Read Plan Checks
           description: Files of `plan --checks`.
           behavior: >
-            readPlanChecks(root, checksPath), in order, a failure {ok: false, result}: the file not
-            regular under root → 4 UsageError "checks file not found: <checksPath>"; Parse
-            Document(text, checksPath) error → 2 DeckError, it; Read Checks' problems → 2 DeckError
-            "<checksPath> is not a valid checks document (<n> problem|problems):\n" + them
-            "\n"-joined; GUARD_PATH "decks/tools/guard.mjs", LOCATOR_PATH
-            "decks/tools/firstdiff.mjs" not regular → 4 UsageError "guard|locator file not found:
-            <path>". Probes: per card with files null, <parts>/<id>.probe.ts if regular. → {ok:
-            true, checks, texts: {guard, firstdiff, probes}}.
+            readPlanChecks(root, checksPath), in order, a failure {ok: false, result}: the file not regular under root → 4 UsageError "checks file not found:
+            <checksPath>"; Parse Document(text, checksPath) error → 2 DeckError, it; Read Checks' problems → 2 DeckError "<checksPath> is not a valid checks
+            document (<n> problem|problems):\n" + them "\n"-joined; GUARD_PATH "decks/tools/guard.mjs", LOCATOR_PATH "decks/tools/firstdiff.mjs" not regular → 4
+            UsageError "guard|locator file not found: <path>". Probes: per card with files null, <parts>/<id>.probe.ts if regular. → {ok: true, checks, texts:
+            {guard, firstdiff, probes}}.
           steps: [{reads: Checks}, {uses: contour}, {uses: builder}, {produces: Plan Checks}]
           examples:
             - {given: 'decks/p1/checks.json, decks/tools/guard.mjs "// guard\n", firstdiff.mjs "// firstdiff\n", decks/p1/parts/a.probe.ts "// probe a\n", a-judge.probe.ts "// no\n"', ref: "tests/fixtures/cli/p1.checks.json (cards a, b, a-judge), tests/fixtures/cli/p1.planChecks.json", when: 'readPlanChecks(root, "decks/p1/checks.json")', then: 'equal to p1.planChecks.json'}
             - {given: 'that root; then no guard.mjs; then no firstdiff.mjs', when: 'readPlanChecks(root, "nope.json"); then "decks/p1/checks.json" twice', then: '4 UsageError "checks file not found: nope.json"; "guard file not found: decks/tools/guard.mjs"; "locator file not found: decks/tools/firstdiff.mjs"'}
             - {given: 'c.json = "{"; then {"cards": []}', when: 'readPlanChecks(root, "c.json")', then: '2 DeckError beginning "cannot parse c.json: "; then "c.json is not a valid checks document (2 problems):\nphase: required\ncards: must be a non-empty list"'}
         - name: Main
-          description: Routing, one document out, the log lines, the exit code; src/cli.ts wires the process.
+          description: Routing, one document, log lines, exit code; src/cli.ts wires the process.
           behavior: >
-            main(argv, deps, io) → Promise<ExitCode>. Parse Command; a failure →
-            io.stdout(renderDocument(its error document, pretty = argv holds "--pretty")),
-            io.stderr("morph: <message>\n"), 4. Else root = path.resolve(deps.cwd,
-            command.root); result = Deck Check, Plan Command, await Submit Deck(root, deck,
-            processor, D), await Collect Batch(root, batch, D) (D = {env, now, transport of deps,
-            saveState: git's saveBatchRecord(root, ·), saveAnswers: git's saveBatchAnswers(root,
-            ·, ·)}) or await Run Command (io.stderr its log) by command, in try/catch, a thrown
-            value → classifyThrown. Then one
-            io.stdout(renderDocument(result.document, command.pretty)), one io.stderr("morph
-            <command name>: exit <code>\n"), return result.code. The entry src/cli.ts (shebang
-            `#!/usr/bin/env node`) calls main(process.argv.slice(2), {env: process.env without
-            undefined values, now: Date.now, cwd: process.cwd(), transport: null, interrupted:
-            () => the first SIGINT or SIGTERM its own listeners caught, or null},
-            {stdout, stderr: the process streams' write}), sets process.exitCode to the result,
-            never calls process.exit.
-          steps: [{calls: Parse Command}, {calls: Deck Check}, {calls: Plan Command}, {calls: Run Command}, {uses: batches}, {calls: Emit Document}, {calls: Classify Error}]
+            main(argv, deps, io) → Promise<ExitCode>. Parse Command; a failure → io.stdout(renderDocument(its error document, pretty = argv holds "--pretty")),
+            io.stderr("morph: <message>\n"), 4. Else root = path.resolve(deps.cwd, command.root); result = Deck Check, Plan Command, await Submit Deck(root,
+            deck, processor, D), await Collect Batch(root, batch, D), Primer Command(root, write, {env, now of deps}) (D = {env, now, transport of deps,
+            saveState: git's saveBatchRecord(root, ·), saveAnswers: git's saveBatchAnswers(root, ·, ·)}) or await Run Command (io.stderr its log) by command, in
+            try/catch, a thrown value → classifyThrown. Then one io.stdout(renderDocument(result.document, command.pretty)), one io.stderr("morph <command
+            name>: exit <code>\n"), return result.code. The entry src/cli.ts (`#!/usr/bin/env node`) calls main(process.argv.slice(2), {env: process.env without
+            undefined values, now: Date.now, cwd: process.cwd(), transport: null, interrupted: () => the first SIGINT or SIGTERM its own listeners caught, or
+            null}, {stdout, stderr: the process streams' write}), sets process.exitCode to the result, never calls process.exit.
+          steps: [{calls: Parse Command}, {calls: Deck Check}, {calls: Plan Command}, {calls: Run Command}, {uses: batches}, {uses: primer}, {calls: Emit Document}, {calls: Classify Error}]
           examples:
             - {given: 'argv ["frobnicate"], in process', when: main, then: '4; stdout exactly ["{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"unknown command: frobnicate\"}}\n"]; stderr ["morph: unknown command: frobnicate\n"]'}
             - {given: 'a tmp root with d.json = the write-write fixture; argv ["deck", "check", "--deck", "d.json", "--root", <root>, "--pretty"]', ref: "tests/fixtures/decks/hazardsWriteWrite.json", when: main, then: '2; one stdout chunk beginning "{\n  \"deck\": \"d.json\",\n  \"cards\": 2,"; stderr ["morph deck check: exit 2\n"]'}
@@ -1503,10 +1456,11 @@ System:
             - {given: 'a tmpRepo; side root: a.md, deck a → out/a.ts (`sleep 30 & echo $! > <side>/sleep.pid; kill -INT $PPID; wait`), then b ("true"); `node --import tsx src/cli.ts run --root <repo> --deck <deck> --processor s --run-id sig`, cwd the repository, the stub env', when: "spawned (spawnSync, timeout 30000 ms)", then: 'status 3; one Run Document: fault "interrupted by SIGINT", a "failed" (log ending "acceptance interrupted by SIGINT\n"), b "skipped" "fault", archive ok; the sleep gone; HEAD on morph/sig; status clean'}
             - {given: 'in process, deps {env: {}, now: () => 0, cwd: "/", transport: null}; argv ["collect", "--batch", "batch-none", "--root", <a tmp root>]', when: main, then: '4; one stdout document {error: {code: 4, kind: "UsageError", message: "batch state not found: .morph/batches/batch-none.json"}}; stderr ["morph collect: exit 4\n"]'}
             - {given: 'the setup of Submit Deck 1, argv ["submit", "--deck", "d.json", "--processor", "b", "--root", t]; then the transport and now of Collect Batch 1 in new deps, argv ["collect", "--batch", <its id>, "--root", t]', when: "main, twice", then: '0 and 0; the two documents of those examples on stdout; stderr "morph submit: exit 0\n", "morph collect: exit 0\n"; the state file and answer files as Collect Batch 1'}
+            - {given: 'a tmpRepo t, tests/a.test.ts "test(\"a\", () => {});\nit(\"b\", () => {});\n"; deps {env {PATH}, now 1791400000000, cwd "/"}; argv [primer, --write, --root, t]; then [primer, --root, a non-repo tmp root]', when: main, then: '0; one document: tests {language "typescript", files 1, tests 2}, written ".morph/primer.md" = its markdown; stderr ["morph primer: exit 0\n"]; then 3 RuntimeError beginning "git ls-files failed (exit 128): ", stderr ["morph primer: exit 3\n"]'}
       dataObjects:
         - name: Command
           description: One parsed invocation.
-          schema: "{ name: 'deck check', root, pretty, deck, sliceCapBytes } | { name: 'run', root, pretty, deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches } | { name: 'plan', root, pretty, spec, components: string[], map: string | null, judge: boolean, out: string | null, checks?: string } | { name: 'submit', root, pretty, deck, processor } | { name: 'collect', root, pretty, batch }"
+          schema: "{ name: 'deck check', root, pretty, deck, sliceCapBytes } | { name: 'run', root, pretty, deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches } | { name: 'plan', root, pretty, spec, components: string[], map: string | null, judge: boolean, out: string | null, checks?: string } | { name: 'submit', root, pretty, deck, processor } | { name: 'collect', root, pretty, batch } | { name: 'primer', root, pretty, write: boolean }"
         - name: Error Document
           description: The document of every non-result exit.
           schema: "{ error: { code: 0|1|2|3|4, kind: 'UsageError'|'NotYetError'|'DeckError'|'RefusalError'|'RuntimeError', message: string } }"
@@ -2687,10 +2641,193 @@ System:
           description: The cards with their acceptances, or every error.
           schema: "{ ok: true, cards: Card[] } | { ok: false, errors: string[] }"
 
-    # ---------------------------------------------------------------- later epics (skeleton)
+    # ---------------------------------------------------------------- P12a
     - name: primer
-      description: Digest of the tree, git history (Morph-Card trailers) and the run archive for a fresh session; every owned path, most recent first; markdown under a cap with explicit "… N more" lines.
+      description: >
+        `morph primer [--write]`: the one digest a fresh session (an agent with no tools) reads to
+        tell the project's story: src/primer/*.ts. The tree and its tests counted by the language
+        profile; every archived run, the V2 form (.morph/runs/<id>/report.json with usageTotals,
+        requests, answers/) and the old mrph form next to it, with totals over both; a phase
+        chronology from docs/MEASURE.md joined to the archives by run id, the builder and model
+        switch points marked; what is next (the first open row of docs/PLAN.md and the "State at
+        handoff" of docs/AUTONOMY.md); the last decisions of docs/DECISIONS.md; open issues from a
+        file the session writes (.morph/issues.json; no network call). Markdown under a 16 000-char
+        cap, one JSON document. No model call. Ownership by trailers is P12b.
       language: typescript
+      requirements: [Deterministic Core]
+      functions:
+        - name: Read Runs
+          description: Every archived run of both report forms summarised, with totals over both; nothing read twice, nothing thrown.
+          behavior: >
+            readRuns(archives: {dir, report: string | null, answers: number}[]) → Runs Digest. The
+            archives sorted by dir (code-unit order); per archive, the first that applies: report
+            null → skipped {dir, reason "no report.json"}; JSON.parse fails or gives no plain object
+            (null, an array, a scalar) → "report.json is not a JSON object"; a string runId and an
+            array outcomes → the V2 form; a string deck_id and a plain-object outcomes → the mrph
+            form; else "unknown report format". A summary {runId, format "v2"|"mrph", date,
+            processor, models, cards, written, failed, skipped, requests, cost, answers}: V2 —
+            runId; processor = report.processor; models from report.requests (an array) rows;
+            outcomes = report.outcomes; requests = usageTotals.requests, else the requests array's
+            length; cost = usageTotals.cost. mrph — runId = deck_id; processor = backend_label;
+            models from the values of report.usage (an object); outcomes = the values of
+            report.outcomes; requests = usage_totals.requests, else the number of usage values;
+            cost = usage_totals.cost. Every field is read tolerantly: a wrong type is absent
+            (processor "", models [], a cost not a finite number → null, a missing totals object
+            → {}); generations is never read (an int in V2, a list in mrph). models = the distinct
+            string `model` of the object rows, sorted; cards = the outcomes' count; written,
+            failed, skipped = the object outcomes with that status; date = "YYYY-MM-DD" from a
+            runId starting with 8 digits and "-", else ""; answers as given. Totals, every sum
+            from 0 in run order: runs; v2 and mrph each {runs, cards, written, cost: the sum of
+            cost ?? 0}; cards, written, failed, skipped, requests, answers; cost = the sum of the
+            non-null costs; unpriced = runs with cost null; models = [{model, runs}] in order of
+            first appearance over the runs and their sorted models; from, to = the first and last
+            run's date ("" without runs).
+          steps: [{reads: Run Archive}, {produces: Runs Digest}]
+          examples:
+            - {given: 'archives, in this order: 20261007-204822 (answers 15), 20261007-092723-3c3f1c83, 20261007-111944, 20261006-135524-8c114477 (answers 0), each report = its fixture text', ref: "tests/fixtures/primer/runs/<dir>/report.json (real archives: V2 on ds, mrph, V2 on glm53, mrph), tests/fixtures/primer/runs.json", when: readRuns, then: 'exactly runs.json["Read Runs 1"]: 4 runs sorted by dir, 2 v2 and 2 mrph; totals cards 20, written 12, failed 3, skipped 5, requests 32, answers 15, unpriced 0, models z-ai/glm-5.3 (3 runs) then deepseek/deepseek-v4.1-flash (1), from "2026-10-06" to "2026-10-07"'}
+            - {given: 'archives x (report null), y "{", z "[]", w "{\"runId\": 5, \"outcomes\": []}", e2e "{\"runId\": \"e2e\", \"outcomes\": [{\"status\": \"budget-exceeded\"}, 7]}" (answers 2), 20261108-010203 = a V2 report: processor "night", outcomes written and failed, requests [{model "x/y"}, {model "a/b"}, {model "x/y"}, "q"], no usageTotals (answers 3)', when: readRuns, then: 'exactly runs.json["Read Runs 2"]: runs 20261108-010203 {date "2026-11-08", processor "night", models ["a/b", "x/y"], cards 2, written 1, failed 1, requests 4, cost null, answers 3} and e2e {date "", processor "", models [], cards 2, written 0, requests 0, cost null}; skipped w "unknown report format", x "no report.json", y and z "report.json is not a JSON object"; totals cost 0, unpriced 2, from "2026-11-08", to ""'}
+            - {given: 'archives 20261007-155108 = the P11 smoke''s report (V2 on the batch route: processor glm53b, model z-ai/glm-5.3:batch, usageTotals.cost null) and 20261006-135524-8c114477', ref: "tests/fixtures/primer/runs/20261007-155108/report.json", when: readRuns, then: 'exactly runs.json["Read Runs 3"]: the mrph run first (written 1, failed 2, skipped 5 of 8), then the V2 run (cost null); totals unpriced 1, cost = the mrph run''s, models z-ai/glm-5.3 then z-ai/glm-5.3:batch'}
+        - name: Read Story
+          description: The phase chronology, what is next, the last decisions and the open issues, from the texts of four docs and an issues file.
+          behavior: >
+            readStory(texts {measure, plan, autonomy, decisions, issues: string | null}, runs
+            {runId, models}[]) → Story. A table: a line whose trim starts with "|", the next
+            line's trim made of "|", ":", "-" and spaces with at least one "-", then every
+            following line whose trim starts with "|"; cells = the trimmed line without its first
+            "|" and its last unescaped "|", split on each "|" not preceded by "\", each trimmed,
+            "\|" → "|"; bare(cell) = the cell with every "**" removed, trimmed. Chronology: the
+            FIRST table of measure with a header cell bare "фаза"; columns by bare header: phase
+            "фаза", builder "строитель", cards the first starting "карт", cost the first starting
+            "$", runs "прогоны" (a missing column reads ""). Per row: phase = bare; builder = bare,
+            cut before its first " (", trimmed; planned, written = the two integers of
+            ^(\d+)\s*/\s*(\d+) on the trimmed cards cell, else null, null; notes = the cards cell's
+            text after its first "(" up to its last ")" (to the end without one), trimmed, a text
+            over 100 chars → its first 99 + "…", else ""; cost = the first \d+(\.\d+)? of the cost
+            cell, else ""; ids = every \d{8}-\d{6}(-[0-9a-f]{8})? of the runs cell, in order, runs
+            = their count; date = the first id's "YYYY-MM-DD", else ""; models = for each id the
+            first run with that runId, its models in order, distinct. A main row has a phase
+            matching ^P\d+[a-z0-9]*$; switches only on main rows, against the previous main row:
+            "builder <prev> → <this>" when the builders differ, then "model <prev> → <this>" (each
+            ", "-joined) when this row's models are not empty and differ from the last non-empty
+            models of an earlier main row; else []. Next: the LAST table of plan with a header
+            cell bare "фаза"; its first row whose phase (that column, bare) is not done → phase
+            and row = the row's first three cells bare, " · "-joined, over 300 chars → 299 + "…";
+            none → null, null. p is done when a main chronology phase m equals p, or starts with p
+            and the rest begins with a letter, or p ends with a letter and the rest is digits only
+            (P11b1 does P11b, P12a does P12, P10a does not do P1). handoff: the first autonomy line
+            starting "## State at handoff" → its text after "## " trimmed, then up to 4 non-empty
+            lines (trimmed) of its section (to the next line starting "## "), from the first one
+            holding the word Next, else from the first; each over 200 chars → 199 + "…"; no such
+            line → []. decisions: the last 5 non-empty lines of decisions, trimmed, a leading "- "
+            removed, over 300 chars → 299 + "…". issues: null → {state "absent", items []}; not a
+            JSON array → "unreadable", []; else "read", items = the elements with an integer
+            number and a string title, {number, title, labels: the strings of labels and the
+            string name of its objects (gh issue list --json labels)}, in order. missing = the
+            keys measure, plan, autonomy, decisions whose text is null, in that order.
+          steps: [{reads: Story Texts}, {produces: Story}]
+          examples:
+            - {given: 'texts = the excerpts of the real docs/MEASURE.md (16 rows with their runs column, then a later table without "фаза"), docs/PLAN.md (the first plan''s table with a **P12** contour row, then the last "фаза" table P10b1 … P14 with P12a and P12b), docs/AUTONOMY.md (its State at handoff section), docs/DECISIONS.md (its last 9 lines) and the open issues as `gh issue list --json number,title,labels` wrote them; runs = story/runs.json (the 32 archived runs'' ids and models)', ref: "tests/fixtures/primer/story/measure.md, plan.md, autonomy.md, decisions.md, issues.json, runs.json; tests/fixtures/primer/story.json", when: readStory, then: 'exactly story.json["Read Story 1"]: 16 lines, P0 mrph z-ai/glm-5.3 1/1 on 2026-10-06; switches only on P10a ["builder mrph → V2 binary"], P10b1 ["builder V2 binary → V2 cut + V2 run"] and P11b1 ["builder V2 cut + V2 run → V2/ds", "model z-ai/glm-5.3 → deepseek/deepseek-v4.1-flash"]; next phase "P12a"; handoff the heading then 4 lines from "Resumed by the operator 07.10"; 5 decisions; issues read: #6 [P15-golang], #1 [P12-primer]'}
+            - {given: 'measure = "intro\n| $ исп. | прогоны | фаза | x | **строитель** | карт план/принято |\n|---|---|:---:|---|---|---|\n| 0.5 / — | 20261101-090000 20261101-100000-0123abcd | P1 | a\|b | **night** (old) | 3 / 2 (two runs) |\n| — | | P1 smoke | | night | n/a |\n| 1.25 | 20261102-080000 | **P2** | | day | 4/4 |\n\n| фаза | строитель |\n|---|---|\n| P9 | late |\n"; runs [{runId "20261101-100000-0123abcd", models ["m/b"]}, {runId "20261101-090000", models ["m/a", "m/b"]}, {runId "20261102-080000", models ["m/c"]}]; the other texts null', when: readStory, then: 'story.json["Read Story 2"]: chronology [{phase "P1", date "2026-11-01", builder "night", models ["m/a", "m/b"], written 2, planned 3, runs 2, notes "two runs", cost "0.5", switches []}, {phase "P1 smoke", date "", builder "night", models [], written null, planned null, runs 0, notes "", cost "", switches []}, {phase "P2", date "2026-11-02", builder "day", models ["m/c"], written 4, planned 4, runs 1, notes "", cost "1.25", switches ["builder night → day", "model m/a, m/b → m/c"]}]; next {phase null, row null, handoff []}; missing ["plan", "autonomy", "decisions"]'}
+            - {given: 'plan = "| фаза | C | what |\n|---|---|---|\n| P1 | a | x |\n| P10a | b | y |\n| P11b | c | z |\n| P12 | d | w |\n"; measure = "| фаза |\n|---|\n| P10a |\n| P11b1 |\n| P12 smoke |\n"; then measure with rows P1, P10a, P11b1; then with rows P1, P10a, P11b1, P12a; autonomy = "## State at handoff (x)\n\nline 1\nline 2\nNext: P12\nline 4\nline 5\nline 6\n## Machine\n"; then autonomy "## State at handoff\na\n\nb\n"', when: readStory, then: 'next {phase "P1", row "P1 · a · x"}; then {phase "P12", row "P12 · d · w"}; then {phase null, row null}; handoff ["State at handoff (x)", "Next: P12", "line 4", "line 5", "line 6"]; then ["State at handoff", "a", "b"]'}
+            - {given: 'decisions = "# D\n\n- a\n  b  \n\n- c\nd\n- e\nf\n" + "- " + 310 × "g" + "\n"; issues = "{"; then "[{\"number\": 3, \"title\": \"t\", \"labels\": [\"x\", {\"name\": \"y\"}, 5]}, {\"number\": \"4\", \"title\": \"bad\"}, {\"number\": 5, \"title\": \"u\"}]"', when: readStory, then: 'decisions ["c", "d", "e", "f", 299 × "g" + "…"]; issues {state "unreadable", items []}; then {state "read", items [{number 3, title "t", labels ["x", "y"]}, {number 5, title "u", labels []}]}'}
+            - {given: 'every text null, runs []', when: readStory, then: '{chronology: [], next: {phase: null, row: null, handoff: []}, decisions: [], issues: {state: "absent", items: []}, missing: ["measure", "plan", "autonomy", "decisions"]}'}
+        - name: Render Primer
+          description: The markdown a fresh session reads, its sections and line formats fixed; one cut at the cap.
+          behavior: >
+            renderPrimer(digest {name, generatedAt, files, tests {language, files, tests}, runs
+            {skipped, totals}, story: Story}, cap) → string, lines joined "\n", ending "\n". "#
+            Primer: <name>", ""; "generated <generatedAt> · <files> files in the tree · no model
+            call, no network"; when story.missing: "missing: " + their paths ", "-joined (measure
+            docs/MEASURE.md, plan docs/PLAN.md, autonomy docs/AUTONOMY.md, decisions
+            docs/DECISIONS.md). "", "## Tests", "", "- <tests> tests in <files> test files by the
+            <language> profile (counted from text, not a run)". "", "## Runs", "": runs 0 → "-
+            archived runs: 0"; else "- archived runs: <runs> (V2 <v2.runs>, mrph <mrph.runs>),
+            <from> → <to>", "- cards: <written> written of <cards> (<failed> failed, <skipped>
+            skipped); requests <requests>, answers kept <answers>", "- cost: $<cost> over <runs −
+            unpriced> priced runs (<unpriced> unpriced)", "- by format: V2 <runs> runs,
+            <written>/<cards> written, $<cost>; mrph <the same of mrph>", "- models: " + each
+            "<model> (<n> run|runs)" ", "-joined; then, when any skipped, "- skipped: " + each
+            "<dir> (<reason>)" "; "-joined. Every $ amount toFixed(4). "", "## Chronology
+            (docs/MEASURE.md)", "": no lines → "- no rows"; else "phase · date · builder · models ·
+            written/planned · runs · $ · notes" and per line "- <phase> · <date or —> · <builder or
+            —> · <models ", "-joined or —> · <written>/<planned> written (— when written is null) ·
+            <runs> run|runs · $<cost or —>", + " · <notes>" when not empty, + " ← switch: " +
+            switches "; "-joined when any. "", "## What is next", "": row null → "- next phase:
+            none open (docs/PLAN.md)", else "- next phase (docs/PLAN.md): <row>"; handoff [] → "-
+            handoff: no \"## State at handoff\" section (docs/AUTONOMY.md)", else "- handoff
+            (docs/AUTONOMY.md):" and "  > <line>" each. "", "## Last decisions
+            (docs/DECISIONS.md)", "": "- <line>" each, or "- none". "", "## Open issues
+            (.morph/issues.json)", "": absent → "- not read: no .morph/issues.json (the primer
+            makes no network call; `gh issue list --state open --json number,title,labels >
+            .morph/issues.json` writes it)"; unreadable → "- not read: .morph/issues.json is not a
+            JSON array"; read with none → "- none open"; else "- #<number> <title>" + " [<labels
+            ", "-joined>]" when any. A text longer than cap (in string length) is cut: its first
+            cap − 60 chars, up to and including their last "\n", then "_… truncated to fit <cap>
+            chars_\n".
+          steps: [{reads: Primer Digest}, {produces: string}]
+          examples:
+            - {given: 'render.json["digest 1"] (name "MorphV2", generatedAt "2026-10-07T22:00:00.000Z", files 701, tests typescript 84 files 641 tests, runs = Read Runs 1, story = Read Story 1), cap 16000', ref: "tests/fixtures/primer/render.json, primer1.md", when: renderPrimer, then: 'exactly primer1.md (5 952 chars): "- 641 tests in 84 test files by the typescript profile (counted from text, not a run)", "- cost: $0.2651 over 4 priced runs (0 unpriced)", the P11b1 line ending " ← switch: builder V2 cut + V2 run → V2/ds; model z-ai/glm-5.3 → deepseek/deepseek-v4.1-flash"'}
+            - {given: 'render.json["digest 2"]: name "empty", files 0, tests python 0 0, runs = Read Runs of [x with report null], story = Read Story 5, cap 16000', ref: "tests/fixtures/primer/primer2.md", when: renderPrimer, then: 'exactly primer2.md: "missing: docs/MEASURE.md, docs/PLAN.md, docs/AUTONOMY.md, docs/DECISIONS.md", "- archived runs: 0", "- skipped: x (no report.json)", "- no rows", "- next phase: none open (docs/PLAN.md)", "- none", the issues line "- not read: no .morph/issues.json …"'}
+            - {given: 'digest 1 with cap 600; then cap = the length of primer1.md (5952)', when: renderPrimer, then: 'primer1.md''s first 540 chars up to and including their last "\n", then "_… truncated to fit 600 chars_\n" (511 chars in all); then exactly primer1.md'}
+            - {given: 'digest 2 with story.issues {state "read", items []}; then {state "unreadable", items []}; then story.next {phase "P7", row "P7 · cli · x", handoff ["H", "Next: P8"]} and decisions ["a · b"]', when: renderPrimer, then: 'its last line "- none open"; then "- not read: .morph/issues.json is not a JSON array"; then the lines "- next phase (docs/PLAN.md): P7 · cli · x", "- handoff (docs/AUTONOMY.md):", "  > H", "  > Next: P8", and "- a · b" under "## Last decisions (docs/DECISIONS.md)"'}
+        - name: Primer Command
+          description: "`morph primer [--write]`: reads the tree, the archives and the docs, counts the tests by the profile, renders; one Primer Document."
+          behavior: >
+            primerCommand(root, write, deps {env, now}) → {code, document}, synchronous. 1. files
+            = git's gitOk(root, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+            deps.env) split on "\0", empty pieces dropped, duplicates dropped (first kept); a
+            failure is git's thrown Error (not a repository: "git ls-files failed (exit 128): …"),
+            not caught. 2. profile = the PROFILES entry claiming the most files by language's
+            profileForPath, the first in PROFILES order on a tie or when none claims a file
+            (typescript). 3. A test file of a profile (isTestFile, exported): hasExtension and its
+            base name (after normalizePath) matching new RegExp(profile.testFilePattern) — test
+            directories alone do not count (tests/helpers.ts is not a test file). countTests(profile,
+            files {path, text}[]) (exported) → {language: profile.id, files: the test files among
+            them, tests: the sum over them of the matches of the profile's call rule}: typescript
+            /(?<![\w.$])(?:test|it)\s*\(/g (test( and it( — test.skip(, it.todo(, x.test( and
+            split( do not match), python /^[ \t]*(?:async[ \t]+)?def[ \t]+test_\w+/gm. The command
+            reads every test file of the listing (UTF-8; an unreadable one is left out) and calls
+            countTests. 4. Archives: each directory under <root>/.morph/runs (none → []), sorted:
+            {dir: its name, report: the text of its report.json or null, answers: the names in its
+            answers/ ending ".answer.txt" (0 without the directory)}; Read Runs. 5. Read Story
+            with the texts of docs/MEASURE.md, docs/PLAN.md, docs/AUTONOMY.md, docs/DECISIONS.md and
+            .morph/issues.json under root (null when not a regular file) and the Read Runs runs.
+            6. generatedAt = new Date(deps.now()).toISOString() (the only clock); markdown =
+            Render Primer({name: path.basename(root), generatedAt, files: the count, tests, runs,
+            story}, 16000). 7. write → <root>/.morph/primer.md = markdown (mkdir -p), written
+            ".morph/primer.md"; else null and nothing written. → {code 0, document {root,
+            generatedAt, files, tests, runs: the totals, skipped: the skipped count, chronology:
+            the line count, next: the next phase, missing, issues: the issues state, chars: the
+            markdown's length, written, markdown}}, keys in that order. Nothing else is read or
+            written; no network, no model.
+          steps: [{uses: git}, {uses: language}, {calls: Read Runs}, {calls: Read Story}, {calls: Render Primer}, {produces: Primer Document}]
+          examples:
+            - {given: 'a tmpRepo with tests/a.test.ts "test(\"a\", () => {});\ntest (\"b\", () => {});\n", tests/b.spec.ts "it(\"c\", () => {});\nit.skip(\"d\", () => {});\ntest.todo(\"e\");\nexpect(/x/.test(\"x\")).toBe(true);\n", src/c.ts "export const test = (s: string): string => s;\ntest(\"not a test file\");\n"; env {PATH}', when: 'primerCommand(t, false, {env, now: () => 1791400000000}); and countTests(typescript, those three files)', then: 'code 0; document.tests {language: "typescript", files: 2, tests: 3} — two test( and one it( give 3; files 3; generatedAt "2026-10-07T19:06:40.000Z"; written null; countTests gives the same'}
+            - {given: 'a tmpRepo with pkg/a.py, pkg/b.py, tests/test_a.py "def test_x():\n    pass\n\nasync def test_y():\n    pass\n\ndef helper():\n    pass\n", pkg/b_test.py "class T:\n    def test_m(self):\n        pass\n", web/x.ts "test(\"ts\");\n"', when: 'primerCommand(t, false, deps)', then: 'document.tests {language: "python", files: 2, tests: 3}; files 5 — four python files outvote one typescript file'}
+            - {given: 'a tmpRepo t: docs/MEASURE.md, PLAN.md, AUTONOMY.md, DECISIONS.md and .morph/issues.json = the story fixtures; .morph/runs/<dir>/report.json for the five runs fixtures; .morph/runs/20261007-204822/answers/a.v1.answer.txt "A" and lines.txt "L"; .morph/runs/broken/deck.json "[]" (no report); tests/a.test.ts, tests/b.spec.ts, src/c.ts of example 1; now 1791400000000', ref: "tests/fixtures/primer/command.json, primer3.md", when: 'primerCommand(t, true, deps)', then: 'code 0; the document without root and markdown exactly command.json["Primer Command 3"] (files 16, tests 2 files 3 tests, runs 5: V2 3 and mrph 2, unpriced 1, answers 1, skipped 1, chronology 16, next "P12a", issues "read", written ".morph/primer.md"); root t; markdown = primer3.md with "{name}" replaced by the base name of t; .morph/primer.md holds the same text'}
+            - {given: 'example 1''s repo with write false; then a tmp root that is not a git repository', when: primerCommand, then: 'written null and no .morph/primer.md; then a thrown Error whose message begins "git ls-files failed (exit 128): "'}
+            - {given: 'a tmpRepo with only its first empty commit; now () => 0', ref: "tests/fixtures/primer/primer5.md", when: 'primerCommand(t, false, deps)', then: 'code 0; files 0, tests {language: "typescript", files: 0, tests: 0}, runs.runs 0, skipped 0, chronology 0, next null, missing ["measure", "plan", "autonomy", "decisions"], issues "absent", generatedAt "1970-01-01T00:00:00.000Z"; markdown = primer5.md with "{name}" replaced'}
+      dataObjects:
+        - name: Run Archive
+          description: One directory of .morph/runs as the command read it.
+          schema: "{ dir: string, report: string | null, answers: number }"
+        - name: Runs Digest
+          description: What Read Runs returns; totals over both report forms.
+          schema: "{ runs: { runId, format: 'v2'|'mrph', date, processor, models: string[], cards, written, failed, skipped, requests, cost: number | null, answers }[], skipped: { dir, reason }[], totals: { runs, v2: { runs, cards, written, cost }, mrph: { runs, cards, written, cost }, cards, written, failed, skipped, requests, answers, cost, unpriced, models: { model, runs }[], from, to } }"
+        - name: Story Texts
+          description: The texts Read Story reads, each null when the file is absent.
+          schema: "{ measure, plan, autonomy, decisions, issues: string | null }"
+        - name: Story
+          description: What Read Story returns.
+          schema: "{ chronology: { phase, date, builder, models: string[], written: number | null, planned: number | null, runs, notes, cost, switches: string[] }[], next: { phase: string | null, row: string | null, handoff: string[] }, decisions: string[], issues: { state: 'read'|'absent'|'unreadable', items: { number, title, labels: string[] }[] }, missing: string[] }"
+        - name: Primer Digest
+          description: What Render Primer reads.
+          schema: "{ name, generatedAt, files, tests: { language, files, tests }, runs: { skipped, totals }, story: Story }"
+        - name: Primer Document
+          description: stdout of primer.
+          schema: "{ root, generatedAt, files, tests: { language, files, tests }, runs: totals, skipped, chronology, next: string | null, missing: string[], issues, chars, written: string | null, markdown }"
+
+    # ---------------------------------------------------------------- later epics (skeleton)
     - name: scout
       description: Recon session with a cheap model and read-only tools under call/read/char/round budgets; seed from the primer's ownership head; one final answer-only turn after the budget closes; scout.json with provenance and spend.
       language: typescript
@@ -2732,6 +2869,9 @@ Requirement:
       builder reads no file, no clock and no environment: the caller passes the checks, the cards,
       the profile and the texts of the guard, the locator and the probes; node:path is its only Node
       module (P10b).
+      primer reads files and spawns git (git's gitOk, the environment a parameter) only in Primer
+      Command, the clock only there through deps.now; Read Runs, Read Story and Render Primer are pure
+      functions of what they are given, no network anywhere (P12a).
   - name: Node Only
     description: >
       Runtime dependencies: Node 20 built-ins and the package `yaml` (the record reader), nothing

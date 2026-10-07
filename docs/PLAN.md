@@ -875,7 +875,8 @@ compiler), а `store` и `wait` выделял в свои, хотя в запи
 | P11 | processor (batch) | `/api/beta/batches`, submit/collect | **первая фаза, собранная V2** после переключения |
 | P11b | processor + runloop + git + cli (batch) | P11b1: архив по решению оператора (ответы в git, копии запросов gzip в `requests/` под .gitignore), стоимость и id батча в отчёте, `.morph/batches/<id>.json`, ожидание батча 1 ч, отмена брошенного батча, дедлайн перед каждым повтором (issue #4); P11b2: `morph submit` / `morph collect` | P11b1 — первая фаза на процессоре ds (07.10) |
 | P11c | runloop + acceptance + cli + git + cards (runner hardening) | ревью кода 07.10, issue #5 (метка `P11c-runner`): архив при брошенной ошибке, разблокировка зависимых после позднего повтора, ключи не попадают в env приёмки (обязательны HIGH 1–2 и утечка ключа 5), сигналы, id `.r<n>`, null acceptance, дифф O(n·m), `..` и пустая колода | перед P12, который читает архивы; P11b2 после P11c |
-| P12 | primer | дерево, владение по трейлерам, архив, markdown | |
+| P12a | primer + cli | issue #1: архивы V2 и mrph с итогами, хронология фаз из MEASURE (столбец «прогоны»), «что дальше» из PLAN и AUTONOMY, хвост DECISIONS и issues из файла, тесты по профилю языка; `morph primer [--write]` | **smoke stop** после P12a (эксперимент #1 — оператор) |
+| P12b | primer | владение по трейлерам (`%(trailers)`): путь → карты, модель, прогон; секция ownership для seed scout | перед P13a (seed из головы владения) |
 | P13a | scout | протокол READ/GREP/LIST/ANSWER, клетка путей (realpath, symlink), бюджеты → stop_reason, seed из primer | разделено заранее (в старом плане две фазы) |
 | P13b | scout | цикл раундов, запись `scout/<id>/scout.json`, `plan --from-scout` (patch-карты на названные файлы) | `plan --from-scout` живёт в Component scout, не в planner |
 | P14 | reviewer | obligations, envelope, guardrails, findings | последняя |
