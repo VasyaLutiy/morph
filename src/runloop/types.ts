@@ -27,7 +27,7 @@ export interface RequestUsage {
 export interface RunReport {
   runId: string; completedAt: number; branch: string; processor: string;
   generations: number; outcomes: CardOutcome[]; usageTotals: UsageTotals;
-  requests?: RequestUsage[];
+  requests?: RequestUsage[]; fault?: string;
 }
 export interface RunBudget { maxCards: number; maxRetryBatches: number; deadline: number }
 export interface RunDeps {

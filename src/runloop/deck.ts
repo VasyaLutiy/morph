@@ -1,5 +1,7 @@
 // src/runloop/deck.ts — Run Deck (TASK_P5 §2.2, steps 1–5; P9b §2.2 runDeck;
-// P10c §2.2 issue #3 C2: the retry batch cap is per generation).
+// P10c §2.2 issue #3 C2: the retry batch cap is per generation;
+// P11c §2.2: a carried-over retry runs before its dependants, a thrown value
+// is caught and the report carries `fault`).
 //
 // Drives a deck generation by generation in the order of layerGenerations,
 // with the budget (maxCards, deadline) checked at every generation
@@ -10,10 +12,17 @@
 // earlier one). The retry batches are capped by maxRetryBatches PER
 // GENERATION: the counter starts at 0 at every generation, so a card of an
 // earlier generation whose retries the cap stopped is picked up by the next
-// generation's batch. The Run Report is built and RETURNED: nothing is
-// written or committed here (the archive and the git commit are P6). The
-// clock, the transport and the commit hook are injected through deps, so the
-// loop is deterministic and testable.
+// generation's batch. When a not-yet-done card of a generation waits on a
+// failed dependency that still has retries, the retry loop runs FIRST at
+// that generation, so a dependency written by a carried-over retry unblocks
+// it; otherwise the request order is unchanged. The whole generation loop
+// runs inside try/catch: a thrown value (an Error from the commit hook, an
+// answer write, anything) ends the loop, every card with no outcome yet
+// becomes "skipped" reason "fault", and the Run Report's last key is `fault`
+// (only when a value was caught). runDeck never rejects. The Run Report is
+// built and RETURNED: nothing is written or committed here (the archive and
+// the git commit are P6). The clock, the transport and the commit hook are
+// injected through deps, so the loop is deterministic and testable.
 
 import { layerGenerations } from "../cards/layer.js";
 import { resolveRunnable } from "./resolve.js";
@@ -28,6 +37,7 @@ import type {
   RetryContext,
   RunDeps,
   RunInput,
+  RunReport,
   RunResult,
   UsageTotals
 } from "./types.js";
@@ -37,6 +47,20 @@ function budgetOutcome(customId: string, reason: string): CardOutcome {
     customId,
     status: "budget-exceeded",
     reason,
+    attempts: 0,
+    winningVariant: null,
+    acceptanceLog: "",
+    earlierFailures: [],
+    commit: null,
+    diffstat: null
+  };
+}
+
+function faultOutcome(customId: string): CardOutcome {
+  return {
+    customId,
+    status: "skipped",
+    reason: "fault",
     attempts: 0,
     winningVariant: null,
     acceptanceLog: "",
@@ -65,153 +89,199 @@ export async function runDeck(
   const requests: RequestUsage[] = [];
   const usage: Usage[] = [];
   let cardsProcessed = 0;
+  let fault: string | null = null;
 
-  // generations in order; a budget breach at a boundary marks every
-  // not-yet-done card of this and the later generations and stops the run
-  for (let g = 0; g < gens.length; g++) {
-    const now = deps.now();
+  try {
+    // generations in order; a budget breach at a boundary marks every
+    // not-yet-done card of this and the later generations and stops the run
+    for (let g = 0; g < gens.length; g++) {
+      const now = deps.now();
 
-    if (now >= input.budget.deadline) {
-      for (let h = g; h < gens.length; h++) {
-        for (const id of gens[h]) {
-          if (!done.has(id)) done.set(id, budgetOutcome(id, "deadline"));
+      if (now >= input.budget.deadline) {
+        for (let h = g; h < gens.length; h++) {
+          for (const id of gens[h]) {
+            if (!done.has(id)) done.set(id, budgetOutcome(id, "deadline"));
+          }
         }
-      }
-      break;
-    }
-    if (cardsProcessed >= input.budget.maxCards) {
-      const reason = "maxCards " + input.budget.maxCards;
-      for (let h = g; h < gens.length; h++) {
-        for (const id of gens[h]) {
-          if (!done.has(id)) done.set(id, budgetOutcome(id, reason));
-        }
-      }
-      break;
-    }
-
-    // the retry batch cap is per generation: the counter starts at 0
-    // at every generation (issue #3 C2), so every generation gets its
-    // own maxRetryBatches retry batches
-    let retryBatches = 0;
-
-    // the cards of this generation that are not yet decided
-    const statusMap: Record<string, CardStatus> = {};
-    for (const [id, outcome] of done) statusMap[id] = outcome.status;
-
-    const pending: Card[] = [];
-    for (const id of gens[g]) {
-      if (done.has(id)) continue;
-      const card = byId.get(id);
-      if (card !== undefined) pending.push(card);
-    }
-
-    const { runnable, skipped } = resolveRunnable(pending, statusMap);
-    for (const outcome of skipped) done.set(outcome.customId, outcome);
-
-    if (runnable.length > 0) {
-      const generation = await processGeneration(runnable, deps, input.root);
-      usage.push(...generation.usage);
-      requests.push(...generation.requests);
-      for (const outcome of generation.outcomes) {
-        done.set(outcome.customId, outcome);
-      }
-      for (const [id, ctx] of Object.entries(generation.retryContexts)) {
-        contexts.set(originalId(id), ctx);
-      }
-      cardsProcessed += runnable.length;
-    }
-
-    // retries: while some card is failed and retried fewer than 2 times,
-    // and this generation's batch cap allows it, run one retry batch for
-    // all of them (a card of an earlier generation whose retries the
-    // cap stopped is included)
-    for (;;) {
-      const batch: string[] = [];
-      for (const [id, outcome] of done) {
-        if (
-          outcome.status === "failed" &&
-          (retried.get(id) ?? 0) < 2
-        ) {
-          batch.push(id);
-        }
-      }
-      if (batch.length === 0 || retryBatches >= input.budget.maxRetryBatches) {
         break;
       }
-
-      // finding 7: once a retry batch would run, the deadline is checked
-      // before it; when it has passed, the cards of the stopped batch
-      // become budget-exceeded "deadline" (attempts, logs and
-      // earlierFailures kept) and no retry batch runs
-      if (deps.now() >= input.budget.deadline) {
-        for (const id of batch) {
-          const previous = done.get(id);
-          if (previous === undefined) continue;
-          done.set(id, {
-            ...previous,
-            status: "budget-exceeded",
-            reason: "deadline"
-          });
+      if (cardsProcessed >= input.budget.maxCards) {
+        const reason = "maxCards " + input.budget.maxCards;
+        for (let h = g; h < gens.length; h++) {
+          for (const id of gens[h]) {
+            if (!done.has(id)) done.set(id, budgetOutcome(id, reason));
+          }
         }
         break;
       }
 
-      retryBatches += 1;
+      // the retry batch cap is per generation: the counter starts at 0
+      // at every generation (issue #3 C2), so every generation gets its
+      // own maxRetryBatches retry batches
+      let retryBatches = 0;
 
-      const retryCards: Card[] = [];
-      const numbers: number[] = [];
-      for (const id of batch) {
-        const retryNumber = (retried.get(id) ?? 0) + 1;
-        retried.set(id, retryNumber);
-        const previous = done.get(id);
-        const original = byId.get(id);
-        if (previous === undefined || original === undefined) continue;
-        const ctx = contexts.get(id);
-        if (ctx !== undefined) {
-          retryCards.push(
-            buildRetry(
-              original,
-              retryNumber,
-              ctx.acceptanceOutput,
-              ctx.previousDiff
-            )
+      // one retry loop for this generation, so it can run both before
+      // resolving (a carried-over retry whose dependant waits) and after
+      // the generation's own processGeneration call
+      const runRetryLoop = async (): Promise<void> => {
+        for (;;) {
+          const batch: string[] = [];
+          for (const [id, outcome] of done) {
+            if (outcome.status === "failed" && (retried.get(id) ?? 0) < 2) {
+              batch.push(id);
+            }
+          }
+          if (
+            batch.length === 0 ||
+            retryBatches >= input.budget.maxRetryBatches
+          ) {
+            break;
+          }
+
+          // finding 7: once a retry batch would run, the deadline is checked
+          // before it; when it has passed, the cards of the stopped batch
+          // become budget-exceeded "deadline" (attempts, logs and
+          // earlierFailures kept) and no retry batch runs
+          if (deps.now() >= input.budget.deadline) {
+            for (const id of batch) {
+              const previous = done.get(id);
+              if (previous === undefined) continue;
+              done.set(id, {
+                ...previous,
+                status: "budget-exceeded",
+                reason: "deadline"
+              });
+            }
+            break;
+          }
+
+          retryBatches += 1;
+
+          const retryCards: Card[] = [];
+          const numbers: number[] = [];
+          for (const id of batch) {
+            const retryNumber = (retried.get(id) ?? 0) + 1;
+            retried.set(id, retryNumber);
+            const previous = done.get(id);
+            const original = byId.get(id);
+            if (previous === undefined || original === undefined) continue;
+            const ctx = contexts.get(id);
+            if (ctx !== undefined) {
+              retryCards.push(
+                buildRetry(
+                  original,
+                  retryNumber,
+                  ctx.acceptanceOutput,
+                  ctx.previousDiff
+                )
+              );
+            } else {
+              retryCards.push(
+                buildRetry(original, retryNumber, previous.acceptanceLog, null)
+              );
+            }
+            numbers.push(retryNumber);
+          }
+
+          const retryGeneration = await processGeneration(
+            retryCards,
+            deps,
+            input.root
           );
-        } else {
-          retryCards.push(
-            buildRetry(original, retryNumber, previous.acceptanceLog, null)
-          );
+          usage.push(...retryGeneration.usage);
+          requests.push(...retryGeneration.requests);
+          for (const [id, ctx] of Object.entries(
+            retryGeneration.retryContexts
+          )) {
+            contexts.set(originalId(id), ctx);
+          }
+
+          for (let i = 0; i < retryCards.length; i++) {
+            const id = originalId(retryCards[i].customId);
+            const retryOutcome = retryGeneration.outcomes[i];
+            const previous = done.get(id);
+            if (retryOutcome === undefined || previous === undefined) continue;
+            const merged: CardOutcome = {
+              ...retryOutcome,
+              customId: id,
+              attempts: numbers[i] + 1,
+              earlierFailures: [
+                ...previous.earlierFailures,
+                previous.acceptanceLog,
+                ...retryOutcome.earlierFailures
+              ]
+            };
+            done.set(id, merged);
+          }
         }
-        numbers.push(retryNumber);
+      };
+
+      // finding 2: when a not-yet-done card of this generation waits on a
+      // failed dependency that still has retries, run the retry loop FIRST,
+      // so a dependency written by a carried-over retry unblocks it; the
+      // batch counts against this generation's cap
+      let carryOver = false;
+      outer: for (const id of gens[g]) {
+        if (done.has(id)) continue;
+        const card = byId.get(id);
+        if (card === undefined) continue;
+        for (const depId of card.dependsOn) {
+          const depOutcome = done.get(depId);
+          if (
+            depOutcome !== undefined &&
+            depOutcome.status === "failed" &&
+            (retried.get(depId) ?? 0) < 2
+          ) {
+            carryOver = true;
+            break outer;
+          }
+        }
+      }
+      if (carryOver) {
+        await runRetryLoop();
       }
 
-      const retryGeneration = await processGeneration(
-        retryCards,
-        deps,
-        input.root
-      );
-      usage.push(...retryGeneration.usage);
-      requests.push(...retryGeneration.requests);
-      for (const [id, ctx] of Object.entries(retryGeneration.retryContexts)) {
-        contexts.set(originalId(id), ctx);
+      const statusMap: Record<string, CardStatus> = {};
+      for (const [id, outcome] of done) statusMap[id] = outcome.status;
+
+      const pending: Card[] = [];
+      for (const id of gens[g]) {
+        if (done.has(id)) continue;
+        const card = byId.get(id);
+        if (card !== undefined) pending.push(card);
       }
 
-      for (let i = 0; i < retryCards.length; i++) {
-        const id = originalId(retryCards[i].customId);
-        const retryOutcome = retryGeneration.outcomes[i];
-        const previous = done.get(id);
-        if (retryOutcome === undefined || previous === undefined) continue;
-        const merged: CardOutcome = {
-          ...retryOutcome,
-          customId: id,
-          attempts: numbers[i] + 1,
-          earlierFailures: [
-            ...previous.earlierFailures,
-            previous.acceptanceLog,
-            ...retryOutcome.earlierFailures
-          ]
-        };
-        done.set(id, merged);
+      const { runnable, skipped } = resolveRunnable(pending, statusMap);
+      for (const outcome of skipped) done.set(outcome.customId, outcome);
+
+      if (runnable.length > 0) {
+        const generation = await processGeneration(runnable, deps, input.root);
+        usage.push(...generation.usage);
+        requests.push(...generation.requests);
+        for (const outcome of generation.outcomes) {
+          done.set(outcome.customId, outcome);
+        }
+        for (const [id, ctx] of Object.entries(generation.retryContexts)) {
+          contexts.set(originalId(id), ctx);
+        }
+        cardsProcessed += runnable.length;
       }
+
+      // retries after this generation's own cards: while some card is failed
+      // and retried fewer than 2 times, and this generation's batch cap
+      // allows it, run one retry batch for all of them (a card of an earlier
+      // generation whose retries the cap stopped is included)
+      await runRetryLoop();
+    }
+  } catch (value) {
+    // finding 1: a thrown value (the commit hook, an answer write, anything)
+    // ends the run; the usage and rows of the call in flight are lost, every
+    // card with no outcome yet is "skipped" reason "fault", and the report
+    // carries `fault` as its last key. runDeck never rejects.
+    fault = value instanceof Error ? value.message : String(value);
+    for (const card of input.deck.cards) {
+      if (done.has(card.customId)) continue;
+      done.set(card.customId, faultOutcome(card.customId));
     }
   }
 
@@ -241,17 +311,17 @@ export async function runDeck(
     requests: usage.length
   };
 
-  return {
-    report: {
-      runId: input.runId,
-      completedAt: deps.now(),
-      branch: input.branch,
-      processor: deps.config.id,
-      generations: gens.length,
-      outcomes,
-      usageTotals,
-      requests
-    },
-    outcomes
+  const report: RunReport = {
+    runId: input.runId,
+    completedAt: deps.now(),
+    branch: input.branch,
+    processor: deps.config.id,
+    generations: gens.length,
+    outcomes,
+    usageTotals,
+    requests
   };
+  if (fault !== null) report.fault = fault;
+
+  return { report, outcomes };
 }
