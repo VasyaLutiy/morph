@@ -62,20 +62,48 @@ test("Build Attempt Diff example 3: two changed lines of twenty give two hunks",
   );
 });
 
-// Build Attempt Diff example 4: a new 400-line file, clipped to DIFF_CAP.
-test("Build Attempt Diff example 4: a new 400-line file is clipped to exactly DIFF_CAP", () => {
+// Build Attempt Diff example 4: a new 400-line file, its section clipped on
+// its own by rule 5 (TASK_P9c §2.2): head and tail by whole lines.
+test("Build Attempt Diff example 4: a new 400-line file is clipped head and tail", () => {
   const before: Record<string, string | null> = { "src/big.ts": null };
   const after: Record<string, string> = {
     "src/big.ts": fixture("acceptance/bigAfter.txt"),
   };
   const diff: string = buildAttemptDiff(before, after);
-  expect(diff.length).toBe(DIFF_CAP);
+  expect(diff.length).toBe(5952);
   expect(
     diff.startsWith(
       "--- /dev/null\n+++ b/src/big.ts\n@@ -0,0 +1,400 @@\n+export const v000 = 0;\n",
     ),
   ).toBe(true);
-  expect(diff.endsWith("\n[diff clipped: 10339 chars]\n")).toBe(true);
+  expect(
+    diff.includes(
+      "+export const v115 = 115;\n... [4420 characters elided] ...\n+export const v286 = 286;\n",
+    ),
+  ).toBe(true);
+  expect(diff.endsWith("+export const v399 = 399;\n")).toBe(true);
+});
+
+// Build Attempt Diff example 5: the same 400-line text under two paths, each
+// section clipped on its own, the sections concatenated with nothing between.
+test("Build Attempt Diff example 5: two new files of the same text, each clipped on its own", () => {
+  const text: string = fixture("acceptance/bigAfter.txt");
+  const before: Record<string, string | null> = {
+    "src/a.ts": null,
+    "src/b.ts": null,
+  };
+  const after: Record<string, string> = {
+    "src/a.ts": text,
+    "src/b.ts": text,
+  };
+  const diff: string = buildAttemptDiff(before, after);
+  const marker: string = "... [4420 characters elided] ...\n";
+  expect(diff.length).toBe(11900);
+  expect(diff.slice(0, 5950).endsWith("+export const v399 = 399;\n")).toBe(true);
+  expect(
+    diff.slice(5950).startsWith("--- /dev/null\n+++ b/src/b.ts\n"),
+  ).toBe(true);
+  expect(diff.split(marker).length).toBe(3);
 });
 
 // Own tests on §2.2, on inputs whose diff is unique.
