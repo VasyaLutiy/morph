@@ -128,7 +128,7 @@ test("Parse Command example 8: --root as the last token, then no command", () =>
       error: {
         code: 4,
         kind: "UsageError",
-        message: "no command (commands: deck check, plan, run, submit, collect)",
+        message: "no command (commands: deck check, plan, run, submit, collect, primer)",
       },
     },
   });
@@ -377,5 +377,57 @@ test("Parse Command example 15: the usage errors of submit and collect", () => {
   expect(extra).toStrictEqual({
     ok: false,
     error: { error: { code: 4, kind: "UsageError", message: "unexpected argument: extra" } },
+  });
+});
+
+test("Parse Command example 16: the word primer and --write", () => {
+  const bare = parseCommand(["primer"]);
+  const bareCommand: Command = {
+    name: "primer",
+    root: ".",
+    pretty: false,
+    write: false,
+  };
+  expect(bare).toStrictEqual({ ok: true, command: bareCommand });
+
+  const flags = parseCommand(["primer", "--write", "--root", "/r", "--pretty"]);
+  const flagsCommand: Command = {
+    name: "primer",
+    root: "/r",
+    pretty: true,
+    write: true,
+  };
+  expect(flags).toStrictEqual({ ok: true, command: flagsCommand });
+
+  const deckOnPrimer = parseCommand(["primer", "--deck", "d.json"]);
+  expect(deckOnPrimer).toStrictEqual({
+    ok: false,
+    error: {
+      error: { code: 4, kind: "UsageError", message: "flag --deck does not apply to primer" },
+    },
+  });
+
+  const extraWord = parseCommand(["primer", "x"]);
+  expect(extraWord).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "unexpected argument: x" } },
+  });
+
+  const writeOnDeckCheck = parseCommand(["deck", "check", "--deck", "d.json", "--write"]);
+  expect(writeOnDeckCheck).toStrictEqual({
+    ok: false,
+    error: {
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "flag --write does not apply to deck check",
+      },
+    },
+  });
+
+  const writeTwice = parseCommand(["--write", "primer", "--write"]);
+  expect(writeTwice).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "flag --write given twice" } },
   });
 });
