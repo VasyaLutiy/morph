@@ -101,6 +101,26 @@ export async function runCommand(
     };
   }
 
+  // 3b. a card with no acceptance, or a blank one, would be committed as
+  // written after a paid request (sh -c "" exits 0): refuse them, in deck
+  // order, still before any git call or spend
+  const noAcceptance = deck.cards.filter(
+    (c) => c.acceptance === null || c.acceptance.trim() === ""
+  );
+  if (noAcceptance.length > 0) {
+    return {
+      code: 2,
+      document: errorDocument(
+        2,
+        "RefusalError",
+        "deck has " +
+          noAcceptance.length +
+          " card(s) with no acceptance: " +
+          noAcceptance.map((c) => c.customId).join(",")
+      ),
+    };
+  }
+
   // 4. the one call of deps.now by runCommand itself (runDeck calls it at
   // every generation boundary and at the end)
   const start = deps.now();
@@ -141,6 +161,7 @@ export async function runCommand(
       commit: makeCommitHook(root, config.model, deps.env),
       now: deps.now,
       env: deps.env,
+      interrupted: deps.interrupted,
       onVariant: (record) => {
         const line = variantLine(record);
         records.push({ ...record, line });

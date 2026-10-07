@@ -26,5 +26,8 @@ export interface DeckCheckDocument {
 }
 export interface RunDocument { runId: string; branch: string; base: string; report: RunReport; archive: ArchiveResult }
 export interface PlanDocument extends Plan { out: string | null }
-export interface CliDeps { env: Record<string, string>; now: () => number; cwd: string; transport: Transport | null }
+export interface CliDeps {
+  env: Record<string, string>; now: () => number; cwd: string; transport: Transport | null;
+  interrupted?: () => string | null;
+}
 export interface CliIo { stdout(text: string): void; stderr(text: string): void }
