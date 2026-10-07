@@ -1,0 +1,286 @@
+{
+  "runId": "20261007-153224",
+  "completedAt": 1791387616402,
+  "branch": "morph/20261007-153224",
+  "processor": "glm53",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "assemble-batch",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "assemble-batch.v2",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\nsrc/processor/batchRequest.ts(31,11): error TS2322: Type '{ max_tokens: number; } | { effort: Effort; } | null' is not assignable to type 'ProviderReasoning'.\n  Type 'null' is not assignable to type 'ProviderReasoning'.\n"
+      ],
+      "commit": "06e377777fa090124a441d7b41958c112fb1289c",
+      "diffstat": {
+        "files": 1,
+        "insertions": 58,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "read-batch",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "read-batch.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "d10a4cea1d406cff7aec352d97683d97789a8da6",
+      "diffstat": {
+        "files": 1,
+        "insertions": 100,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "assemble-batch-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "assemble-batch-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/processor/batchRequest.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "015b1d6897fdaca05ce796915cbc152742513e1e",
+      "diffstat": {
+        "files": 1,
+        "insertions": 67,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "read-batch-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "read-batch-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/processor/batchResponse.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "7fabc2be5c1f4a2b71d9997d32a58091023b1757",
+      "diffstat": {
+        "files": 1,
+        "insertions": 102,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "send-batch",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "send-batch.v2",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "answer corrupt: duplicate section for src/processor/batch.ts"
+      ],
+      "commit": "78b76fd69e4fb8e18ae7f141d0356fc0f2b2d81d",
+      "diffstat": {
+        "files": 2,
+        "insertions": 148,
+        "deletions": 1
+      }
+    },
+    {
+      "customId": "send-batch-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "send-batch-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/processor/batch.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/processor/batch.examples.test.ts(44,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/processor/batch.examples.test.ts(52,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(53,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(54,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(55,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(56,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(58,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(59,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(60,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(61,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(62,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(68,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(69,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(75,3): error TS2304: Cannot find name 'ex\n[... 2402 chars clipped; diagnosis lines kept:]\n[...]\nt.ts(155,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(156,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(159,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/processor/batch.examples.test.ts(163,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(164,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(165,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(166,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(176,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/processor/batch.examples.test.ts(184,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(186,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(188,3): error TS2304: Cannot find name 'expect'.\ntests/processor/batch.examples.test.ts(194,3): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": "4b58fe7caed4653d9a0d63c1761db591918e9f98",
+      "diffstat": {
+        "files": 1,
+        "insertions": 201,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "send-generation",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "send-generation.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "8c0a08aeb9a676331fe5d38c9809c67fa7985b08",
+      "diffstat": {
+        "files": 1,
+        "insertions": 5,
+        "deletions": 13
+      }
+    },
+    {
+      "customId": "send-generation-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "send-generation-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/processor/send.examples.test.ts\n== names tests/processor/send.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "d15ca77df9b8bbb0a7d7d185112b7d9b3cf5eef1",
+      "diffstat": {
+        "files": 1,
+        "insertions": 78,
+        "deletions": 28
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 207553,
+    "outputTokens": 20282,
+    "cost": 0.073692468,
+    "requests": 13
+  },
+  "requests": [
+    {
+      "customId": "assemble-batch.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791387145-JXmH9tICjpFdICvC072n",
+      "inputTokens": 13933,
+      "outputTokens": 948,
+      "cost": 0.00710322,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "assemble-batch.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791387145-RQG8rFU7FyY26L4vStLa",
+      "inputTokens": 13933,
+      "outputTokens": 400,
+      "cost": 0.001630164,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-batch.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791387145-hfSlv8bCG0i2GUQALnS1",
+      "inputTokens": 13702,
+      "outputTokens": 1007,
+      "cost": 0.00347256,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-batch.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791387152-qU2HKHdrMA0biWAXvSPF",
+      "inputTokens": 13702,
+      "outputTokens": 848,
+      "cost": 0.002190168,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "assemble-batch-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791387245-xVPZVM9FEZoShmlSjHxB",
+      "inputTokens": 14087,
+      "outputTokens": 703,
+      "cost": 0.003211092,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-batch-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791387245-9kmIjMoffJ8zJpiSEwNH",
+      "inputTokens": 15782,
+      "outputTokens": 850,
+      "cost": 0.004117032,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "send-batch.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791387245-mgDjgug1KMCEi5Vatsso",
+      "inputTokens": 15307,
+      "outputTokens": 3447,
+      "cost": 0.01097898,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "send-batch.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791387255-Is19o1hgYnp4HUE0EaCM",
+      "inputTokens": 15307,
+      "outputTokens": 2003,
+      "cost": 0.003841668,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "send-batch-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791387398-X0YZWUB9Ft5UTPRtjZ6E",
+      "inputTokens": 16640,
+      "outputTokens": 2386,
+      "cost": 0.006439248,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "send-generation.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791387398-HsXogm2vreb75bisMHwj",
+      "inputTokens": 15824,
+      "outputTokens": 862,
+      "cost": 0.002399472,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "send-generation.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791387398-OKH9hpbkpiU9nT2nM7kb",
+      "inputTokens": 15824,
+      "outputTokens": 862,
+      "cost": 0.00778392,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "send-batch-judge.r1.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791387467-tXPH7JnwBypeeajVcMg8",
+      "inputTokens": 24533,
+      "outputTokens": 2584,
+      "cost": 0.008089524,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "send-generation-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791387541-3DIz3hxp442L06p47IPQ",
+      "inputTokens": 18979,
+      "outputTokens": 3382,
+      "cost": 0.01243542,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}

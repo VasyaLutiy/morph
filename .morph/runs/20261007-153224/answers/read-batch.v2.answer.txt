@@ -1,0 +1,86 @@
+```ts
+import type { Reply } from "./types.js";
+import { readResponse } from "./response.js";
+
+export type BatchState = "pending" | "done" | "failed" | "error";
+export interface BatchRead {
+  batchId: string | null; state: BatchState; status: string | null;
+  error: string | null; replies: Reply[]
+}
+
+const FAILED_WORDS: readonly string[] = ["failed", "expired", "cancelled", "canceled", "cancelling"];
+
+function isObj(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+function errorRead(error: string): BatchRead {
+  return { batchId: null, state: "error", status: null, error, replies: [] };
+}
+
+function itemErrorReply(customId: string, error: string): Reply {
+  return {
+    answer: { customId, text: null, finishReason: null, error },
+    usage: { customId, inputTokens: 0, outputTokens: 0, cost: null, provider: null, generationId: null }
+  };
+}
+
+export function readBatch(status: number, text: string): BatchRead {
+  let j: unknown = undefined;
+  let parsed = true;
+  try {
+    j = JSON.parse(text);
+  } catch {
+    parsed = false;
+  }
+  const obj = parsed && isObj(j) ? j : null;
+
+  if (status < 200 || status > 299) {
+    const errRec = obj !== null && isObj(obj.error) ? obj.error : null;
+    const msg = errRec !== null && typeof errRec.message === "string" ? errRec.message : null;
+    return errorRead("http " + String(status) + ": " + (msg ?? text.slice(0, 200)));
+  }
+  if (obj === null) {
+    return errorRead("unreadable response: " + text.slice(0, 200));
+  }
+  if (typeof obj.status !== "string") {
+    const errRec = isObj(obj.error) ? obj.error : null;
+    const msg = errRec !== null && typeof errRec.message === "string" ? errRec.message : null;
+    return errorRead("provider error: " + (msg ?? "no batch status"));
+  }
+
+  const batchId = typeof obj.id === "string" ? obj.id : null;
+  const statusWord = obj.status;
+  const state: BatchState =
+    statusWord === "completed" ? "done"
+      : FAILED_WORDS.includes(statusWord) ? "failed"
+        : "pending";
+  const errRec = isObj(obj.error) ? obj.error : null;
+  const error = errRec !== null && typeof errRec.message === "string" ? errRec.message : null;
+
+  const replies: Reply[] = [];
+  if (Array.isArray(obj.results)) {
+    for (const raw of obj.results) {
+      if (!isObj(raw) || typeof raw.custom_id !== "string") continue;
+      const customId = raw.custom_id;
+      const itemErr = raw.error !== undefined && raw.error !== null;
+      if (itemErr) {
+        const rec = isObj(raw.error) ? raw.error : null;
+        const msg = rec !== null && typeof rec.message === "string"
+          ? rec.message
+          : JSON.stringify(raw.error).slice(0, 200);
+        replies.push(itemErrorReply(customId, "batch item error: " + msg));
+        continue;
+      }
+      if (!isObj(raw.response)) {
+        replies.push(itemErrorReply(customId, "batch item error: no response"));
+        continue;
+      }
+      const statusCode = typeof raw.response.status_code === "number" ? raw.response.status_code : 200;
+      replies.push(readResponse(customId, statusCode, JSON.stringify(raw.response.body ?? null)));
+    }
+  }
+
+  return { batchId, state, status: statusWord, error, replies };
+}
+```

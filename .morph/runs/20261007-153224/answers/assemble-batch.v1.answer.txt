@@ -1,0 +1,111 @@
+```ts
+import type { Request } from "../compiler/types.js";
+import type { ProcessorConfig, ProviderReasoning } from "./types.js";
+
+export interface BatchCall {
+  url: string;
+  headers: Record<string, string>;
+  body: string;
+}
+
+export function batchUrl(baseUrl: string): string {
+  let base = baseUrl.replace(/\/+$/, "");
+  if (base.endsWith("/v1")) {
+    base = base.slice(0, base.length - "/v1".length) + "/beta";
+  }
+  return base + "/batches";
+}
+
+export function assembleBatch(
+  requests: Request[],
+  config: ProcessorConfig
+): BatchCall {
+  const url = batchUrl(config.baseUrl);
+  const headers: Record<string, string> = {};
+  if (config.apiKey !== null) {
+    headers.Authorization = "Bearer " + config.apiKey;
+  }
+  headers["Content-Type"] = "application/json";
+
+  const items = requests.map((request) => {
+    const reasoning = request.reasoning ?? config.reasoning;
+    const reasoningBody: ProviderReasoning =
+      reasoning !== null
+        ? "maxTokens" in reasoning
+          ? { max_tokens: reasoning.maxTokens }
+          : { effort: reasoning.effort }
+        : null;
+    const body = {
+      ...(request.maxTokens !== null ? { max_tokens: request.maxTokens } : {}),
+      ...(reasoningBody !== null ? { reasoning: reasoningBody } : {}),
+      messages: request.messages.map((m) => ({ role: m.role, content: m.content })),
+    };
+    return { custom_id: request.customId, body };
+  });
+
+  const payload = {
+    endpoint: "/v1/chat/completions",
+    model: config.model,
+    requests: items,
+  };
+
+  return { url, headers, body: JSON.stringify(payload) };
+}
+```
+
+Wait — the spread conditional means `reasoning` key placement is fine, but when reasoningBody is null the spread adds nothing, keeping key order max_tokens, messages. That matches example 2. One fix: example 1's a.v1 has request reasoning null but config reasoning {maxTokens: 2500} → reasoning {"max_tokens":2500}; a.v2 has request reasoning {effort: "low"} → {"effort":"low"}. Both handled. The file is correct as written above; here is the final content:
+
+```ts
+import type { Request } from "../compiler/types.js";
+import type { ProcessorConfig, ProviderReasoning } from "./types.js";
+
+export interface BatchCall {
+  url: string;
+  headers: Record<string, string>;
+  body: string;
+}
+
+export function batchUrl(baseUrl: string): string {
+  let base = baseUrl.replace(/\/+$/, "");
+  if (base.endsWith("/v1")) {
+    base = base.slice(0, base.length - "/v1".length) + "/beta";
+  }
+  return base + "/batches";
+}
+
+export function assembleBatch(
+  requests: Request[],
+  config: ProcessorConfig
+): BatchCall {
+  const url = batchUrl(config.baseUrl);
+  const headers: Record<string, string> = {};
+  if (config.apiKey !== null) {
+    headers.Authorization = "Bearer " + config.apiKey;
+  }
+  headers["Content-Type"] = "application/json";
+
+  const items = requests.map((request) => {
+    const reasoning = request.reasoning ?? config.reasoning;
+    const reasoningBody: ProviderReasoning | null =
+      reasoning !== null
+        ? "maxTokens" in reasoning
+          ? { max_tokens: reasoning.maxTokens }
+          : { effort: reasoning.effort }
+        : null;
+    const body = {
+      ...(request.maxTokens !== null ? { max_tokens: request.maxTokens } : {}),
+      ...(reasoningBody !== null ? { reasoning: reasoningBody } : {}),
+      messages: request.messages.map((m) => ({ role: m.role, content: m.content })),
+    };
+    return { custom_id: request.customId, body };
+  });
+
+  const payload = {
+    endpoint: "/v1/chat/completions",
+    model: config.model,
+    requests: items,
+  };
+
+  return { url, headers, body: JSON.stringify(payload) };
+}
+```

@@ -1,0 +1,353 @@
+FILE: src/processor/types.ts
+```ts
+import type { Effort, Fault, Reasoning } from "../cards/types.js";
+import type { Message } from "../compiler/types.js";
+export type ProcessorType = "openrouter" | "stub";
+export type Route = "sync" | "batch";
+export interface ProcessorConfig {
+  id: string; type: ProcessorType; model: string; apiKey: string | null; baseUrl: string;
+  route: Route; concurrency: number; providerOrder: string[] | null; reasoning: Reasoning | null;
+  timeoutMs: number; maxRetries: number; answersDir: string | null;
+}
+export interface Registry { configs: ProcessorConfig[]; faults: Fault[] }
+export type ProviderReasoning = { max_tokens: number } | { effort: Effort };
+export interface ProviderBody {
+  model: string; messages: Message[]; max_tokens?: number; reasoning?: ProviderReasoning;
+  provider?: { order: string[]; allow_fallbacks: false }; usage: { include: true };
+}
+export interface ProviderRequest { url: string; headers: Record<string, string>; body: ProviderBody }
+export interface Answer { customId: string; text: string | null; finishReason: string | null; error: string | null }
+export interface Usage {
+  customId: string; inputTokens: number; outputTokens: number;
+  cost: number | null; provider: string | null; generationId: string | null;
+}
+export interface Reply { answer: Answer; usage: Usage }
+export interface HttpReply { status: number; text(): Promise<string> }
+export interface Transport {
+  fetch(url: string, init: { method: string; headers: Record<string, string>; body?: string }): Promise<HttpReply>;
+  sleep(ms: number): Promise<void>;
+}
+export interface GenerationResult { answers: Answer[]; usage: Usage[] }
+```
+
+FILE: src/processor/batch.ts
+```ts
+import type { Request } from "../compiler/types.js";
+import { assembleBatch } from "./batchRequest.js";
+import { readBatch } from "./batchResponse.js";
+import type { Answer, GenerationResult, ProcessorConfig, Reply, Transport, Usage } from "./types.js";
+
+export const BATCH_POLL_MS = 15000;
+export const BATCH_GRACE_MS = 60000;
+
+function zeroUsage(customId: string): Usage {
+  return { customId, inputTokens: 0, outputTokens: 0, cost: null, provider: null, generationId: null };
+}
+
+function errorAnswer(customId: string, error: string): Answer {
+  return { customId, text: null, finishReason: null, error };
+}
+
+function finalize(requests: Request[], replyBy: Map<string, Reply>): GenerationResult {
+  return {
+    answers: requests.map((r) => replyBy.get(r.customId)?.answer ?? errorAnswer(r.customId, "")),
+    usage: requests.map((r) => replyBy.get(r.customId)?.usage ?? zeroUsage(r.customId))
+  };
+}
+
+function fail(requests: Request[], toError: (r: Request) => string): GenerationResult {
+  return {
+    answers: requests.map((r) => errorAnswer(r.customId, toError(r))),
+    usage: requests.map((r) => zeroUsage(r.customId))
+  };
+}
+
+export async function sendBatch(
+  config: ProcessorConfig,
+  requests: Request[],
+  transport: Transport
+): Promise<GenerationResult> {
+  const pinned: Request[] = [];
+  const rest: Request[] = [];
+  for (const r of requests) {
+    if (r.model !== null && r.model !== config.model) pinned.push(r);
+    else rest.push(r);
+  }
+  if (rest.length === 0) {
+    return fail(requests, (r) =>
+      "batch runs one model: " + r.customId + " pins " + (r.model ?? "null") + ", the batch is " + config.model
+    );
+  }
+
+  const call = assembleBatch(rest, config);
+  let batchId: string | null = null;
+  let lastStatus: string | null = null;
+
+  try {
+    const reply = await transport.fetch(call.url, {
+      method: "POST", headers: call.headers, body: call.body
+    });
+    const read = readBatch(reply.status, await reply.text());
+    if (read.state === "error") {
+      return fail(requests, () => "batch submit: " + read.error);
+    }
+    batchId = read.batchId;
+    lastStatus = read.status;
+    if (batchId === null) {
+      return fail(requests, () => "batch submit: no batch id");
+    }
+    if (read.state === "done" || read.state === "failed") {
+      return collect(requests, read.batchId, read.status, read.error, read.replies);
+    }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return fail(requests, () => "batch submit: transport: " + message);
+  }
+
+  const polls = Math.max(1, Math.floor(config.timeoutMs / BATCH_POLL_MS));
+  for (let k = 1; k <= polls; k++) {
+    try {
+      await transport.sleep(BATCH_POLL_MS);
+      const reply = await transport.fetch(call.url + "/" + batchId, {
+        method: "GET", headers: call.headers
+      });
+      const read = readBatch(reply.status, await reply.text());
+      if (read.state === "error") {
+        const retryable = read.error.startsWith("http 404:") && k * BATCH_POLL_MS <= BATCH_GRACE_MS;
+        if (!retryable && read.error.startsWith("http 408:")) {
+          continue;
+        }
+        if (!retryable && read.error.startsWith("http 429:")) {
+          continue;
+        }
+        const m = /^http (\d+):/.exec(read.error);
+        const code = m !== null ? Number(m[1]) : 0;
+        if (!retryable && code >= 500) {
+          continue;
+        }
+        if (retryable || code === 408 || code === 429 || code >= 500) {
+          continue;
+        }
+        const id = read.batchId ?? batchId;
+        return fail(requests, () => "batch " + id + ": " + read.error);
+      }
+      lastStatus = read.status;
+      if (read.state === "done" || read.state === "failed") {
+        return collect(requests, read.batchId ?? batchId, read.status, read.error, read.replies);
+      }
+    } catch {
+      continue;
+    }
+  }
+  return fail(requests, () => "batch " + batchId + " still " + (lastStatus ?? "validating") + " after " + polls + " polls");
+}
+
+function collect(
+  requests: Request[],
+  batchId: string | null,
+  status: string | null,
+  batchError: string | null,
+  replies: Reply[]
+): GenerationResult {
+  const byId = new Map<string, Reply>();
+  for (const rep of replies) {
+    if (!byId.has(rep.answer.customId)) byId.set(rep.answer.customId, rep);
+  }
+  const sent = requests.filter((r) => !(r.model !== null && r.model !== ""));
+  return {
+    answers: requests.map((r) => {
+      const rep = byId.get(r.customId);
+      if (rep !== undefined) return rep.answer;
+      return errorAnswer(r.customId, "batch " + batchId + " " + status + ": " + (batchError ?? "no result"));
+    }),
+    usage: requests.map((r) => {
+      const rep = byId.get(r.customId);
+      if (rep !== undefined) return rep.usage;
+      return zeroUsage(r.customId);
+    })
+  };
+}
+```
+
+Wait — there are two defects above: the pinned-model check is dropped in `collect` (a pinned request would get a "no result" error instead of its own) and the retryable-error logic is tangled. Rewrite `batch.ts` cleanly:FILE: src/processor/types.ts
+```ts
+import type { Effort, Fault, Reasoning } from "../cards/types.js";
+import type { Message } from "../compiler/types.js";
+export type ProcessorType = "openrouter" | "stub";
+export type Route = "sync" | "batch";
+export interface ProcessorConfig {
+  id: string; type: ProcessorType; model: string; apiKey: string | null; baseUrl: string;
+  route: Route; concurrency: number; providerOrder: string[] | null; reasoning: Reasoning | null;
+  timeoutMs: number; maxRetries: number; answersDir: string | null;
+}
+export interface Registry { configs: ProcessorConfig[]; faults: Fault[] }
+export type ProviderReasoning = { max_tokens: number } | { effort: Effort };
+export interface ProviderBody {
+  model: string; messages: Message[]; max_tokens?: number; reasoning?: ProviderReasoning;
+  provider?: { order: string[]; allow_fallbacks: false }; usage: { include: true };
+}
+export interface ProviderRequest { url: string; headers: Record<string, string>; body: ProviderBody }
+export interface Answer { customId: string; text: string | null; finishReason: string | null; error: string | null }
+export interface Usage {
+  customId: string; inputTokens: number; outputTokens: number;
+  cost: number | null; provider: string | null; generationId: string | null;
+}
+export interface Reply { answer: Answer; usage: Usage }
+export interface HttpReply { status: number; text(): Promise<string> }
+export interface Transport {
+  fetch(url: string, init: { method: string; headers: Record<string, string>; body?: string }): Promise<HttpReply>;
+  sleep(ms: number): Promise<void>;
+}
+export interface GenerationResult { answers: Answer[]; usage: Usage[] }
+```
+
+FILE: src/processor/batch.ts
+```ts
+import type { Request } from "../compiler/types.js";
+import { assembleBatch } from "./batchRequest.js";
+import { readBatch } from "./batchResponse.js";
+import type { BatchRead } from "./batchResponse.js";
+import type { Answer, GenerationResult, ProcessorConfig, Reply, Transport, Usage } from "./types.js";
+
+export const BATCH_POLL_MS = 15000;
+export const BATCH_GRACE_MS = 60000;
+
+function zeroUsage(customId: string): Usage {
+  return { customId, inputTokens: 0, outputTokens: 0, cost: null, provider: null, generationId: null };
+}
+
+function errorAnswer(customId: string, error: string): Answer {
+  return { customId, text: null, finishReason: null, error };
+}
+
+function failAll(requests: Request[], toError: (r: Request) => string): GenerationResult {
+  return {
+    answers: requests.map((r) => errorAnswer(r.customId, toError(r))),
+    usage: requests.map((r) => zeroUsage(r.customId))
+  };
+}
+
+function isPinned(request: Request, config: ProcessorConfig): boolean {
+  return request.model !== null && request.model !== config.model;
+}
+
+function pinnedError(request: Request, config: ProcessorConfig): string {
+  return "batch runs one model: " + request.customId + " pins " + request.model +
+    ", the batch is " + config.model;
+}
+
+function collectFinal(
+  requests: Request[],
+  config: ProcessorConfig,
+  batchId: string | null,
+  status: string | null,
+  batchError: string | null,
+  replies: Reply[]
+): GenerationResult {
+  const byId = new Map<string, Reply>();
+  for (const rep of replies) {
+    if (!byId.has(rep.answer.customId)) byId.set(rep.answer.customId, rep);
+  }
+  return {
+    answers: requests.map((r) => {
+      if (isPinned(r, config)) return errorAnswer(r.customId, pinnedError(r, config));
+      const rep = byId.get(r.customId);
+      if (rep !== undefined) return rep.answer;
+      return errorAnswer(
+        r.customId,
+        "batch " + batchId + " " + status + ": " + (batchError ?? "no result")
+      );
+    }),
+    usage: requests.map((r) => {
+      if (isPinned(r, config)) return zeroUsage(r.customId);
+      const rep = byId.get(r.customId);
+      if (rep !== undefined) return rep.usage;
+      return zeroUsage(r.customId);
+    })
+  };
+}
+
+function pollErrorStatus(read: BatchRead): number | null {
+  const m = /^http (\d+): /.exec(read.error ?? "");
+  return m !== null ? Number(m[1]) : null;
+}
+
+function retryablePollError(read: BatchRead, pollNumber: number): boolean {
+  const code = pollErrorStatus(read);
+  if (code === null) return false;
+  if (code === 404) return pollNumber * BATCH_POLL_MS <= BATCH_GRACE_MS;
+  return code === 408 || code === 429 || code >= 500;
+}
+
+export async function sendBatch(
+  config: ProcessorConfig,
+  requests: Request[],
+  transport: Transport
+): Promise<GenerationResult> {
+  const rest = requests.filter((r) => !isPinned(r, config));
+  if (rest.length === 0) {
+    return failAll(requests, (r) => pinnedError(r, config));
+  }
+
+  const call = assembleBatch(rest, config);
+  let batchId: string | null = null;
+  let lastStatus: string | null = null;
+
+  try {
+    const reply = await transport.fetch(call.url, {
+      method: "POST",
+      headers: call.headers,
+      body: call.body
+    });
+    const read = readBatch(reply.status, await reply.text());
+    if (read.state === "error") {
+      return failAll(requests, (r) =>
+        isPinned(r, config) ? pinnedError(r, config) : "batch submit: " + read.error);
+    }
+    batchId = read.batchId;
+    lastStatus = read.status;
+    if (batchId === null) {
+      return failAll(requests, (r) =>
+        isPinned(r, config) ? pinnedError(r, config) : "batch submit: no batch id");
+    }
+    if (read.state === "done" || read.state === "failed") {
+      return collectFinal(requests, config, read.batchId, read.status, read.error, read.replies);
+    }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return failAll(requests, (r) =>
+      isPinned(r, config) ? pinnedError(r, config) : "batch submit: transport: " + message);
+  }
+
+  const polls = Math.max(1, Math.floor(config.timeoutMs / BATCH_POLL_MS));
+  for (let k = 1; k <= polls; k++) {
+    try {
+      await transport.sleep(BATCH_POLL_MS);
+      const reply = await transport.fetch(call.url + "/" + batchId, {
+        method: "GET",
+        headers: call.headers
+      });
+      const read = readBatch(reply.status, await reply.text());
+      if (read.state === "error") {
+        if (retryablePollError(read, k)) {
+          continue;
+        }
+        const id = read.batchId ?? batchId;
+        return failAll(requests, (r) =>
+          isPinned(r, config) ? pinnedError(r, config) : "batch " + id + ": " + read.error);
+      }
+      lastStatus = read.status;
+      if (read.state === "done" || read.state === "failed") {
+        return collectFinal(
+          requests, config, read.batchId ?? batchId, read.status, read.error, read.replies);
+      }
+    } catch {
+      continue;
+    }
+  }
+  return failAll(requests, (r) =>
+    isPinned(r, config)
+      ? pinnedError(r, config)
+      : "batch " + batchId + " still " + (lastStatus ?? "validating") + " after " + polls + " polls");
+}
+```
