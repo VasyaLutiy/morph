@@ -1,15 +1,19 @@
-// src/runloop/deck.ts — Run Deck (TASK_P5 §2.2, steps 1–5; P9b §2.2 runDeck).
+// src/runloop/deck.ts — Run Deck (TASK_P5 §2.2, steps 1–5; P9b §2.2 runDeck;
+// P10c §2.2 issue #3 C2: the retry batch cap is per generation).
 //
 // Drives a deck generation by generation in the order of layerGenerations,
-// with the budget (maxCards, maxRetryBatches, deadline) checked at every
-// generation boundary. Failed cards are retried through buildRetry (at most
-// two retries per card, batches capped by maxRetryBatches), and each retry
+// with the budget (maxCards, deadline) checked at every generation
+// boundary. Failed cards are retried through buildRetry (at most two
+// retries per card, in whichever generation they run), and each retry
 // carries the Retry Context of the failed attempt: its acceptance output and
 // its own diff, keyed by the ORIGINAL card id (a later round replaces the
-// earlier one). The Run Report is built and RETURNED: nothing is written or
-// committed here (the archive and the git commit are P6). The clock, the
-// transport and the commit hook are injected through deps, so the loop is
-// deterministic and testable.
+// earlier one). The retry batches are capped by maxRetryBatches PER
+// GENERATION: the counter starts at 0 at every generation, so a card of an
+// earlier generation whose retries the cap stopped is picked up by the next
+// generation's batch. The Run Report is built and RETURNED: nothing is
+// written or committed here (the archive and the git commit are P6). The
+// clock, the transport and the commit hook are injected through deps, so the
+// loop is deterministic and testable.
 
 import { layerGenerations } from "../cards/layer.js";
 import { resolveRunnable } from "./resolve.js";
@@ -61,7 +65,6 @@ export async function runDeck(
   const requests: RequestUsage[] = [];
   const usage: Usage[] = [];
   let cardsProcessed = 0;
-  let retryBatches = 0;
 
   // generations in order; a budget breach at a boundary marks every
   // not-yet-done card of this and the later generations and stops the run
@@ -85,6 +88,11 @@ export async function runDeck(
       }
       break;
     }
+
+    // the retry batch cap is per generation: the counter starts at 0
+    // at every generation (issue #3 C2), so every generation gets its
+    // own maxRetryBatches retry batches
+    let retryBatches = 0;
 
     // the cards of this generation that are not yet decided
     const statusMap: Record<string, CardStatus> = {};
@@ -114,7 +122,9 @@ export async function runDeck(
     }
 
     // retries: while some card is failed and retried fewer than 2 times,
-    // and the batch cap allows it, run one retry batch for all of them
+    // and this generation's batch cap allows it, run one retry batch for
+    // all of them (a card of an earlier generation whose retries the
+    // cap stopped is included)
     for (;;) {
       const batch: string[] = [];
       for (const [id, outcome] of done) {
