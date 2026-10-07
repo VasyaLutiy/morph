@@ -1,0 +1,388 @@
+{
+  "deck_id": "20261007-105136-a1e1b533",
+  "completed_at": "2026-10-07T10:55:09.620",
+  "branch": "morph/20261007-105136-a1e1b533",
+  "backend_label": "glm53",
+  "generations": [
+    [
+      "build-attempt-diff",
+      "build-retry",
+      "process-generation"
+    ],
+    [
+      "build-attempt-diff-judge",
+      "build-retry-judge",
+      "process-generation-judge",
+      "run-deck-judge"
+    ]
+  ],
+  "batch_ids": [
+    "local-ecb4be36d2874c9881be11fdcbccf477",
+    "local-80519fe02e26403d914a60112ab5aa25",
+    "local-bbf37fb2548645d18cfac5e68f787c1e"
+  ],
+  "outcomes": {
+    "build-attempt-diff": {
+      "custom_id": "build-attempt-diff",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/src/acceptance/diff.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "build-attempt-diff.v2",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "c0390c266a2d58099f8734f6dfcf0cff4c5b0521",
+      "diffstat": [
+        {
+          "path": "src/acceptance/diff.ts",
+          "insertions": 71,
+          "deletions": 14
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/acceptance/diff.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "build-retry": {
+      "custom_id": "build-retry",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/src/runloop/retry.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "build-retry.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "4bc302b89e72f6ca4f2c7783614830852fed9621",
+      "diffstat": [
+        {
+          "path": "src/runloop/retry.ts",
+          "insertions": 21,
+          "deletions": 9
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/runloop/retry.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "process-generation": {
+      "custom_id": "process-generation",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/src/runloop/generation.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "process-generation.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "e77edbee724fa56600851d5b195f1bac95c6ddff",
+      "diffstat": [
+        {
+          "path": "src/runloop/generation.ts",
+          "insertions": 4,
+          "deletions": 3
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/runloop/generation.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "build-attempt-diff-judge": {
+      "custom_id": "build-attempt-diff-judge",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/tests/acceptance/diff.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "build-attempt-diff-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "03a05c31543947cdd8d5212bc56eb1f512cbe237",
+      "diffstat": [
+        {
+          "path": "tests/acceptance/diff.examples.test.ts",
+          "insertions": 32,
+          "deletions": 4
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/acceptance/diff.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "run-deck-judge": {
+      "custom_id": "run-deck-judge",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/tests/runloop/deck.p9b.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "run-deck-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "edef96b2b3486759d2566eea3dcc272002a2a3d4",
+      "diffstat": [
+        {
+          "path": "tests/runloop/deck.p9b.examples.test.ts",
+          "insertions": 14,
+          "deletions": 10
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/runloop/deck.p9b.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "build-retry-judge": {
+      "custom_id": "build-retry-judge",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/tests/runloop/retry.examples.test.ts",
+        "/home/john/Documents/Work2026/MorphV2/tests/runloop/retry.p9b.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 2,
+      "winning_variant": "build-retry-judge.r1",
+      "acceptance_output": null,
+      "earlier_failures": "The previous answer did not return every file this card writes -- missing: tests/runloop/retry.examples.test.ts, tests/runloop/retry.p9b.examples.test.ts. This card writes exactly: tests/runloop/retry.examples.test.ts, tests/runloop/retry.p9b.examples.test.ts. Answer again with ALL of them, each as a 'FILE: <path>' line followed by a fenced block holding the complete file body.",
+      "commit": "3bfa9ebb64a899a4f075bf6877ffa61c58382513",
+      "diffstat": [
+        {
+          "path": "tests/runloop/retry.examples.test.ts",
+          "insertions": 5,
+          "deletions": 8
+        },
+        {
+          "path": "tests/runloop/retry.p9b.examples.test.ts",
+          "insertions": 6,
+          "deletions": 10
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/runloop/retry.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "tests/runloop/retry.p9b.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "process-generation-judge": {
+      "custom_id": "process-generation-judge",
+      "status": "written",
+      "paths": [
+        "/home/john/Documents/Work2026/MorphV2/tests/runloop/generation.p9b.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 2,
+      "winning_variant": "process-generation-judge.r1",
+      "acceptance_output": null,
+      "earlier_failures": "The previous answer was cut off mid-file: it opened a ``` code fence and never closed it, so the file body could not be extracted. Answer again with the COMPLETE file, and close the fence.",
+      "commit": "ceca3633bf00cd4e1c33e35dd9cc70c6e307056a",
+      "diffstat": [
+        {
+          "path": "tests/runloop/generation.p9b.examples.test.ts",
+          "insertions": 3,
+          "deletions": 2
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/runloop/generation.p9b.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    }
+  },
+  "usage": {
+    "build-retry.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791366698-0abugdOEu7iGUPk2kFEA",
+      "input_tokens": 10542,
+      "output_tokens": 404,
+      "cost": 0.004917144,
+      "finish_reason": "stop"
+    },
+    "build-retry.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791366703-XEcj4Isia6grBKTLNCrh",
+      "input_tokens": 10542,
+      "output_tokens": 408,
+      "cost": 0.001376568,
+      "finish_reason": "stop"
+    },
+    "process-generation.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791366709-EyosPKn8YyFRyTJCBPMx",
+      "input_tokens": 14188,
+      "output_tokens": 1712,
+      "cost": 0.0082188,
+      "finish_reason": "stop"
+    },
+    "process-generation.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791366726-61HchUXQEhrj6EH9ICqf",
+      "input_tokens": 14188,
+      "output_tokens": 1715,
+      "cost": 0.003385512,
+      "finish_reason": "stop"
+    },
+    "build-attempt-diff.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791366696-0WwdbbHmdd3K9dI9k1ie",
+      "input_tokens": 11690,
+      "output_tokens": 5076,
+      "cost": 0.007648392,
+      "finish_reason": "stop"
+    },
+    "build-attempt-diff.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791366696-EjYL8TjnkkblrSRigEth",
+      "input_tokens": 11690,
+      "output_tokens": 9540,
+      "cost": 0.0175026,
+      "finish_reason": "stop"
+    },
+    "build-retry-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791366828-ZFoeJihGvMBMloLrRYNh",
+      "input_tokens": 11611,
+      "output_tokens": 1730,
+      "cost": 0.00716022,
+      "finish_reason": "stop"
+    },
+    "build-attempt-diff-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791366828-iIwSzj8XOjVR8J7vxUkQ",
+      "input_tokens": 18671,
+      "output_tokens": 2085,
+      "cost": 0.01059402,
+      "finish_reason": "stop"
+    },
+    "process-generation-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791366828-CIUYhufjIX0oRbdyImlu",
+      "input_tokens": 15854,
+      "output_tokens": 2165,
+      "cost": 0.00951648,
+      "finish_reason": "stop"
+    },
+    "run-deck-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791366844-mrSyn5H7BPaQKVGG7ovH",
+      "input_tokens": 14367,
+      "output_tokens": 2463,
+      "cost": 0.0092853,
+      "finish_reason": "stop"
+    },
+    "build-retry-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791366879-f5MRQkkz1DVwqvenZjzy",
+      "input_tokens": 11733,
+      "output_tokens": 1757,
+      "cost": 0.003372924,
+      "finish_reason": "stop"
+    },
+    "process-generation-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791366879-vklkpuLdZcBs1cDWdOxD",
+      "input_tokens": 15928,
+      "output_tokens": 2297,
+      "cost": 0.00435924,
+      "finish_reason": "stop"
+    }
+  },
+  "usage_totals": {
+    "input_tokens": 161004,
+    "output_tokens": 31352,
+    "cost": 0.08733719999999999,
+    "requests": 12,
+    "requests_with_usage": 12
+  },
+  "orchestrator_usage": {}
+}
