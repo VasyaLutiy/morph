@@ -412,3 +412,21 @@ node /tmp/v2bin-p11/dist/cli.js run --root . --deck decks/p11/deck.json --proces
 ```
 
 After the merge: the live batch smoke of §8 (AUTONOMY "Smoke stops"), then the session stops for the operator.
+
+### Run (07.10, VPS, autonomous) — cut by V2, run by the V2 binary
+
+Deck `decks/p11/deck.json` (V2 cut of processor, filtered to 8 cards by `decks/p11/filter.py`), run by the V2 binary
+copy in `/tmp/v2bin-p11` (2a6474d + data; default retry cap per generation, `--deadline 2400`, sync glm53): run
+20261007-153224, **8 / 8 written in one run**, $0.0737, 7.9 min (472 s), 13 requests, 207 553 in / 20 282 out tokens.
+The first run with the P10c2 archive: `answers/` holds 13 request + 13 answer files (run dir 1.1 MB), and stderr has one
+line per variant (`assemble-batch.v1 rejected stage 1 tsc`, `send-batch.v1 corrupt stage 0`, …). Retry won
+`send-batch-judge` (r1.v1, v1 red at tsc); `assemble-batch` and `send-batch` won on v2. On the run branch: `git status`
+clean; tsc, eslint, `npm run build` clean; vitest **599 / 599**.
+
+Read once against §2.2: **1 code defect** (class code defect, `FIX` by one re-cut, P1b pattern): `src/processor/batch.ts`
+`finishWithRepliesForRejected` writes the pinned-model error of a COMPLETED batch with the literal
+`"z-ai/glm-5.3:batch"` instead of `config.model` (the submit-error and timeout paths use `config.model`). Every example and
+probe row uses the batch model `z-ai/glm-5.3:batch`, so the literal passed the probe and the judge. Everything else
+matches §2.2: one submit, polls every 15 s for `floor(timeoutMs / 15000)` polls, 404 within 60 s grace / 408 / 429 /
+5xx / transport errors retried, results mapped by custom_id, a missing result "batch <id> <status>: <error|no result>",
+stub before batch, the sync path unchanged.
