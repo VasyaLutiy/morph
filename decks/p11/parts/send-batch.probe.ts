@@ -103,6 +103,37 @@ test("Send Batch example 7: a pinned model is left out; a thrown poll goes on", 
   expect(`${got.answers[1]?.customId} ${got.answers[1]?.finishReason} ${got.answers[1]?.error}`, "a.v1").toBe("a.v1 stop null");
 });
 
+test("Send Batch example 8: a second batch model; the pinned text names config.model on the completed path", async () => {
+  const t = script([ok(202, "batchSubmitted.json"), ok(200, "batchCompleted.json")]);
+  const got = await sendBatch(config({ model: "acme/m:batch" }), [req("x.v1", "z-ai/glm-5.3:batch"), req("a.v1")], t.transport);
+  expect(t.calls.length, "calls").toBe(2);
+  const posted = JSON.parse(t.calls[0]?.body ?? "null") as { model: string; requests: { custom_id: string }[] };
+  expect(`${posted.model} ${posted.requests.map((r) => r.custom_id).join(",")}`, "posted").toBe("acme/m:batch a.v1");
+  expect(got.answers[0]?.error, "x.v1 (expected the batch model acme/m:batch)")
+    .toBe("batch runs one model: x.v1 pins z-ai/glm-5.3:batch, the batch is acme/m:batch");
+  expect(`${got.answers[1]?.customId} ${got.answers[1]?.finishReason} ${got.answers[1]?.error}`, "a.v1").toBe("a.v1 stop null");
+});
+
+test("Send Batch rows: a pinned request names config.model on every path (batch model acme/m:batch)", async () => {
+  const pin = "batch runs one model: x.v1 pins o/m, the batch is acme/m:batch";
+  const acme = config({ model: "acme/m:batch" });
+  const paths: [string, Step[], ProcessorConfig][] = [
+    ["only pinned", [ok(202, "batchSubmitted.json")], acme],
+    ["submit thrown", [new Error("down")], acme],
+    ["submit refused", [{ status: 503, text: "upstream down" }], acme],
+    ["no batch id", [{ status: 202, text: JSON.stringify({ status: "validating" }) }], acme],
+    ["final poll error", [ok(202, "batchSubmitted.json"), { status: 401, text: "no" }], acme],
+    ["failed batch", [ok(202, "batchSubmitted.json"), ok(200, "batchFailed.json")], acme],
+    ["polls run out", [ok(202, "batchSubmitted.json"), ok(200, "batchInProgress.json")], { ...acme, timeoutMs: 15000 }],
+  ];
+  for (const [name, steps, cfg] of paths) {
+    const t = script(steps);
+    const reqs = name === "only pinned" ? [req("x.v1", "o/m")] : [req("x.v1", "o/m"), req("a.v1")];
+    const got = await sendBatch(cfg, reqs, t.transport);
+    expect(got.answers[0]?.error, name + " (expected the batch model acme/m:batch)").toBe(pin);
+  }
+});
+
 test("Send Batch rows: no call for no request or only pinned ones; the model equal to the config's is kept", async () => {
   const t = script([ok(202, "batchSubmitted.json")]);
   expect(await sendBatch(config(), [], t.transport), "empty").toStrictEqual({ answers: [], usage: [] });

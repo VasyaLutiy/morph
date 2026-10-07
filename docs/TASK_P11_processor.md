@@ -161,7 +161,9 @@ finishReason: null, error}` with usage `{customId, inputTokens: 0, outputTokens:
 generationId: null}`.
 
 1. A request with `model !== null && model !== config.model` → `batch runs one model: <customId> pins <model>, the batch
-   is <config.model>`; it is left out. No request left (`[]` included) → no call.
+   is <config.model>`; it is left out. No request left (`[]` included) → no call. This text is built in ONE helper
+   from `config.model`, and every path (only pinned, submit thrown or refused, final poll error, done or failed, polls
+   run out) answers a pinned request through it; the batch model is never written as a literal (Send Batch 8).
 2. **Submit**: `call = assembleBatch(rest, config)`; ONE `transport.fetch(call.url, {method: "POST", headers:
    call.headers, body: call.body})`, never retried (a POST that reached the provider may already be a paid batch);
    `readBatch(status, text)`. Thrown → every request `batch submit: transport: <message>`; an error read → `batch
@@ -187,6 +189,7 @@ generationId: null}`.
 | 5 submit 400 noBatchEndpoint; a.v1 b.v1 | 1 | none | both `batch submit: http 400: HTTP 400: invalid batch inference job: Model 'z-ai/glm-5.3:batch' does not have a :batch endpoint.` |
 | 6 submit, in_progress forever; a.v1 | 5 | ×4 | `batch batch-…Nm still in_progress after 4 polls` |
 | 7 x.v1 model "other/m", a.v1; submit, thrown, completed | 3 (the POST's requests: a.v1 only) | ×2 | x.v1 `batch runs one model: x.v1 pins other/m, the batch is z-ai/glm-5.3:batch`; a.v1 stop |
+| 8 config model "acme/m:batch"; x.v1 model "z-ai/glm-5.3:batch", a.v1; submit, completed | 2 (the POST's model "acme/m:batch", requests: a.v1 only) | ×1 | x.v1 `batch runs one model: x.v1 pins z-ai/glm-5.3:batch, the batch is acme/m:batch`; a.v1 stop |
 
 (`batch-…Nm` = `batch-1789576284-Ejahe4wq9AgVdp5xGdNm`; every literal in a test is written whole.)
 
@@ -430,3 +433,31 @@ probe row uses the batch model `z-ai/glm-5.3:batch`, so the literal passed the p
 matches §2.2: one submit, polls every 15 s for `floor(timeoutMs / 15000)` polls, 404 within 60 s grace / 408 / 429 /
 5xx / transport errors retried, results mapped by custom_id, a missing result "batch <id> <status>: <error|no result>",
 stub before batch, the sync path unchanged.
+
+### Fix 1 gate (preparation) — send-batch, FIX[code defect]
+
+07.10, VPS, Opus 5.5; no paid run. ONE re-cut of `send-batch` by the P1b pattern; card instruction, slice, intent
+(`patch`: the current types.ts and batch.ts go in as "Original file", the answer is both files whole), variants 2,
+max_tokens 10 000 unchanged. Data: record Send Batch **example 8** (config model `acme/m:batch`, x.v1 pinned to
+`z-ai/glm-5.3:batch`, a.v1; submit, completed → x.v1 `batch runs one model: x.v1 pins z-ai/glm-5.3:batch, the batch is
+acme/m:batch`); §2.2 item 1 asks for ONE helper building the text from `config.model` on every path, table row 8; the
+probe gains example 8 and one row walking 7 paths (only pinned, submit thrown, 503, no id, final 401, failed batch,
+polls out) with the batch model `acme/m:batch` (send-batch probe 11 → **13 tests**). Component processor 28 527 →
+**29 059** bytes. The judge file `tests/processor/batch.examples.test.ts` stays (7 tests, green on the reference).
+
+Cut by V2 (`plan --component processor --judge --checks decks/p11/checks.json`, exit 0, 14 cards), kept by
+`decks/p11/fix1/filter.py` to `send-batch` alone with dependsOn emptied (assemble-batch, read-batch on main; kept
+as external ids the deck check is also 0/0) → `decks/p11/fix1/deck.json`; `deck check` **0 errors, 0 warnings**, slice +
+targets 52 680 bytes. Against the run's card: instruction differs only by example 8's line, acceptance only by the two
+new probe tests. Dry `mrph plan --spec` cross-check: id, intent, targets, slice, max_tokens 10 000, reasoning 2 500,
+variants 2 equal; dependsOn differ by the filter only; instruction differs (P10a design).
+
+Scratch worktree (deleted): main's batch.ts → **red** at the probe, 2 of 13 (`Expected: "… the batch is acme/m:batch"`
+`Received: "… the batch is z-ai/glm-5.3:batch"`, the path named, first-difference locator), 8.6 s; a reference passing
+`config.model` to `finishWithRepliesForRejected` → **green**, chain 39.7 s; tree tsc, `eslint src tests` clean, vitest
+**599 / 599** in 67 files. Forecast ≈ $0.02 (one card, 2 variants, ≈ 15 k in each), ≤ $1. **Gate holds.**
+
+```
+npm run build && rm -rf /tmp/v2bin-p11fix && mkdir -p /tmp/v2bin-p11fix && cp -r dist /tmp/v2bin-p11fix/ && ln -s $PWD/node_modules /tmp/v2bin-p11fix/node_modules
+node /tmp/v2bin-p11fix/dist/cli.js run --root . --deck decks/p11/fix1/deck.json --processor glm53 --deadline 2400 > /tmp/p11-fix1-run.json
+```

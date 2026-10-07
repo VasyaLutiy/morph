@@ -723,6 +723,9 @@ System:
             - given: 'the batch config; requests x.v1 (model "other/m") and a.v1 (model null); calls answer 202 batchSubmitted.json, then a thrown Error("socket hang up"), then 200 batchCompleted.json'
               when: "sent"
               then: 'three calls; the POST body''s requests hold only a.v1; answers x.v1 error "batch runs one model: x.v1 pins other/m, the batch is z-ai/glm-5.3:batch", a.v1 finishReason "stop" error null'
+            - given: 'the batch config with model "acme/m:batch"; requests x.v1 (model "z-ai/glm-5.3:batch") and a.v1 (model null); calls answer 202 batchSubmitted.json, then 200 batchCompleted.json'
+              when: "sent"
+              then: 'two calls; the POST body''s model is "acme/m:batch", its requests hold only a.v1; answers x.v1 error "batch runs one model: x.v1 pins z-ai/glm-5.3:batch, the batch is acme/m:batch" (the batch model is config.model on every path, never a literal), a.v1 finishReason "stop" error null'
       dataObjects:
         - name: Processor Config
           description: One processor as read from the environment.
