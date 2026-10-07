@@ -112,7 +112,12 @@ function buildConfig(id: string, entry: Entry): ProcessorConfig {
       : effort !== undefined
         ? { effort: effort as Effort }
         : null;
-  const timeoutMs = get("TIMEOUT_MS") !== undefined ? Number(get("TIMEOUT_MS")) : 600000;
+  const timeoutMs =
+    get("TIMEOUT_MS") !== undefined
+      ? Number(get("TIMEOUT_MS"))
+      : route === "batch"
+        ? 3600000
+        : 600000;
   const maxRetries = get("MAX_RETRIES") !== undefined ? Number(get("MAX_RETRIES")) : 2;
   const answersDir = get("ANSWERS_DIR") ?? null;
   return {
