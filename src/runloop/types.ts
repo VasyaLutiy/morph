@@ -34,6 +34,7 @@ export interface RunDeps {
   config: ProcessorConfig; transport: Transport; commit: CommitHook;
   now: () => number; env: Record<string, string>; acceptanceTimeoutMs?: number;
   onVariant?: (record: VariantRecord) => void;
+  interrupted?: () => string | null;
 }
 export interface RunInput { root: string; runId: string; branch: string; deck: Deck; budget: RunBudget }
 export interface RetryContext { acceptanceOutput: string; previousDiff: string | null }

@@ -1,7 +1,9 @@
 // src/runloop/deck.ts — Run Deck (TASK_P5 §2.2, steps 1–5; P9b §2.2 runDeck;
 // P10c §2.2 issue #3 C2: the retry batch cap is per generation;
 // P11c §2.2: a carried-over retry runs before its dependants, a thrown value
-// is caught and the report carries `fault`).
+// is caught and the report carries `fault`;
+// P11c2 §2.2 issue #5 finding 6: deps.interrupted short-circuits the run at
+// each deadline check with the fault "interrupted by <s>".
 //
 // Drives a deck generation by generation in the order of layerGenerations,
 // with the budget (maxCards, deadline) checked at every generation
@@ -22,7 +24,12 @@
 // (only when a value was caught). runDeck never rejects. The Run Report is
 // built and RETURNED: nothing is written or committed here (the archive and
 // the git commit are P6). The clock, the transport and the commit hook are
-// injected through deps, so the loop is deterministic and testable.
+// injected through deps, so the loop is deterministic and testable. The
+// optional deps.interrupted is called right before each deadline check (a
+// generation boundary and a retry batch that would run): a non-null string
+// throws "interrupted by <s>", which the catch turns into the fault, so a
+// signal stops the run with the partial report and the decided outcomes
+// kept.
 
 import { layerGenerations } from "../cards/layer.js";
 import { resolveRunnable } from "./resolve.js";
@@ -95,6 +102,13 @@ export async function runDeck(
     // generations in order; a budget breach at a boundary marks every
     // not-yet-done card of this and the later generations and stops the run
     for (let g = 0; g < gens.length; g++) {
+      // finding 6 (P11c2): an interrupt stops the run at the boundary,
+      // before the deadline check and before any further now() call
+      const boundarySignal = deps.interrupted?.() ?? null;
+      if (boundarySignal !== null) {
+        throw new Error("interrupted by " + boundarySignal);
+      }
+
       const now = deps.now();
 
       if (now >= input.budget.deadline) {
@@ -136,6 +150,15 @@ export async function runDeck(
             retryBatches >= input.budget.maxRetryBatches
           ) {
             break;
+          }
+
+          // finding 6 (P11c2): a retry batch that would run checks the
+          // interrupt first, right before its deadline check (after the
+          // "nothing to retry / cap reached" break, so an empty batch
+          // never calls interrupted)
+          const batchSignal = deps.interrupted?.() ?? null;
+          if (batchSignal !== null) {
+            throw new Error("interrupted by " + batchSignal);
           }
 
           // finding 7: once a retry batch would run, the deadline is checked
