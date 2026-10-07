@@ -1,3 +1,4 @@
+
 import { expect, test } from "vitest";
 import { fakeFetch, tmpRoot, type TmpRoot } from "../helpers.js";
 import type { Card } from "../../src/cards/types.js";
@@ -137,7 +138,7 @@ test("Process Generation own: a stale card's context carries the stale log and n
   }
 });
 
-test("Process Generation own: an attempt that changed nothing gets the block-less context (empty diff is null)", async () => {
+test("Process Generation example 8: the acceptance ran on an attempt that changed nothing (empty diff, not null)", async () => {
   const { t, deps } = harness();
   try {
     t.write("out/a.ts", 'export const x = "ONE";\n');
@@ -145,7 +146,7 @@ test("Process Generation own: an attempt that changed nothing gets the block-les
     const g = await processGeneration([card("a", "out/a.ts", GREP)], deps, t.root);
     expect(g.outcomes[0]?.acceptanceLog).toBe('red: export const x = "ONE";\n');
     expect(g.retryContexts).toStrictEqual({
-      a: { acceptanceOutput: 'red: export const x = "ONE";\n', previousDiff: null }
+      a: { acceptanceOutput: 'red: export const x = "ONE";\n', previousDiff: "" }
     });
   } finally {
     t.rm();
