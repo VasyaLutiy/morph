@@ -272,14 +272,15 @@ frozen → untracked.
 
 | file | min | max | drop | lits |
 |---|---|---|---|---|
-| `tests/compiler/compile.examples.test.ts` | 5 | 16 | — | `<file_contents path="docs/A.md">`, `<original_file path="src/x.ts">`, `fencedF`, `Compile Card example 4`, `Compile Card example 5` |
-| `tests/acceptance/verify.examples.test.ts` | 4 | 16 | — | `TRUNCATED_RESPONSE_MESSAGE`, `Verify Card example 4`, `it opened a ``` code fence and never closed it` |
+| `tests/compiler/compile.examples.test.ts` | 5 | 16 | — | `<file_contents path=`, `<original_file path=`, `</original_file>`, `fencedF`, `Compile Card example 4`, `Compile Card example 5` |
+| `tests/acceptance/verify.examples.test.ts` | 4 | 16 | — | `TRUNCATED_RESPONSE_MESSAGE`, `Verify Card example 4`, `code fence and never closed it`, `Answer again with the COMPLETE file` |
 | `tests/runloop/generation.p9b.examples.test.ts` | 5 | 9 | — | `TRUNCATED_RESPONSE_MESSAGE` |
 | `tests/runloop/deck.p9b.examples.test.ts` | 2 | 6 | — | `TRUNCATED_RESPONSE_MESSAGE` |
 | `tests/runloop/generation.examples.test.ts` | 6 | 20 | `Process Generation: the config's timeoutMs bounds the acceptance` | `Process Generation example 9`, `Process Generation example 10`, `Process Generation example 11`, `stageCount`, `acceptanceTimeoutMs`, `acceptance timed out after 200 ms`, `== probe` |
-| `tests/runloop/deck.examples.test.ts` | 5 | 13 | — | `Run Deck example 6`, `Run Deck example 7`, `mark-a`, `mark-b`, `c.r2.md` |
+| `tests/runloop/deck.examples.test.ts` | 5 | 13 | — | `Run Deck example 6`, `Run Deck example 7`, `mark-a`, `mark-b`, `c.r2` |
 
-min = the file's record examples after the patch; max = its tests after the patch + 4.
+min = the file's record examples after the patch; max = its tests after the patch + 4. Literals are
+quote-agnostic (a judge may write `path="…"` inside single or double quotes).
 
 **Output budget per card** (`max_tokens`): code = the reference target in tokens (≈ bytes / 3.5) × 2 + 2 500
 reasoning, rounded up with margin; judges by the files they return (the judge with the most examples, Process

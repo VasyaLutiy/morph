@@ -19,8 +19,9 @@
           "min": 5,
           "max": 16,
           "lits": [
-            "<file_contents path=\"docs/A.md\">",
-            "<original_file path=\"src/x.ts\">",
+            "<file_contents path=",
+            "<original_file path=",
+            "</original_file>",
             "fencedF",
             "Compile Card example 4",
             "Compile Card example 5"
@@ -68,7 +69,7 @@
             "Run Deck example 7",
             "mark-a",
             "mark-b",
-            "c.r2.md"
+            "c.r2"
           ]
         }
       ]
@@ -86,7 +87,8 @@
           "lits": [
             "TRUNCATED_RESPONSE_MESSAGE",
             "Verify Card example 4",
-            "it opened a ``` code fence and never closed it"
+            "code fence and never closed it",
+            "Answer again with the COMPLETE file"
           ]
         },
         {
