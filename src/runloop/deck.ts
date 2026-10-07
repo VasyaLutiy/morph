@@ -1,12 +1,15 @@
-// src/runloop/deck.ts — Run Deck (TASK_P5 §2.2, steps 1–5).
+// src/runloop/deck.ts — Run Deck (TASK_P5 §2.2, steps 1–5; P9b §2.2 runDeck).
 //
 // Drives a deck generation by generation in the order of layerGenerations,
 // with the budget (maxCards, maxRetryBatches, deadline) checked at every
 // generation boundary. Failed cards are retried through buildRetry (at most
-// two retries per card, batches capped by maxRetryBatches). The Run Report
-// is built and RETURNED: nothing is written or committed here (the archive
-// and the git commit are P6). The clock, the transport and the commit hook
-// are injected through deps, so the loop is deterministic and testable.
+// two retries per card, batches capped by maxRetryBatches), and each retry
+// carries the Retry Context of the failed attempt: its acceptance output and
+// its own diff, keyed by the ORIGINAL card id (a later round replaces the
+// earlier one). The Run Report is built and RETURNED: nothing is written or
+// committed here (the archive and the git commit are P6). The clock, the
+// transport and the commit hook are injected through deps, so the loop is
+// deterministic and testable.
 
 import { layerGenerations } from "../cards/layer.js";
 import { resolveRunnable } from "./resolve.js";
@@ -17,6 +20,8 @@ import type { Usage } from "../processor/types.js";
 import type {
   CardOutcome,
   CardStatus,
+  RequestUsage,
+  RetryContext,
   RunDeps,
   RunInput,
   RunResult,
@@ -37,6 +42,10 @@ function budgetOutcome(customId: string, reason: string): CardOutcome {
   };
 }
 
+function originalId(customId: string): string {
+  return customId.replace(/\.r[0-9]+$/, "");
+}
+
 export async function runDeck(
   input: RunInput,
   deps: RunDeps
@@ -48,6 +57,8 @@ export async function runDeck(
 
   const done = new Map<string, CardOutcome>();
   const retried = new Map<string, number>();
+  const contexts = new Map<string, RetryContext>();
+  const requests: RequestUsage[] = [];
   const usage: Usage[] = [];
   let cardsProcessed = 0;
   let retryBatches = 0;
@@ -92,8 +103,12 @@ export async function runDeck(
     if (runnable.length > 0) {
       const generation = await processGeneration(runnable, deps, input.root);
       usage.push(...generation.usage);
+      requests.push(...generation.requests);
       for (const outcome of generation.outcomes) {
         done.set(outcome.customId, outcome);
+      }
+      for (const [id, ctx] of Object.entries(generation.retryContexts)) {
+        contexts.set(originalId(id), ctx);
       }
       cardsProcessed += runnable.length;
     }
@@ -123,9 +138,21 @@ export async function runDeck(
         const previous = done.get(id);
         const original = byId.get(id);
         if (previous === undefined || original === undefined) continue;
-        retryCards.push(
-          buildRetry(original, retryNumber, previous.acceptanceLog, null)
-        );
+        const ctx = contexts.get(id);
+        if (ctx !== undefined) {
+          retryCards.push(
+            buildRetry(
+              original,
+              retryNumber,
+              ctx.acceptanceOutput,
+              ctx.previousDiff
+            )
+          );
+        } else {
+          retryCards.push(
+            buildRetry(original, retryNumber, previous.acceptanceLog, null)
+          );
+        }
         numbers.push(retryNumber);
       }
 
@@ -135,9 +162,13 @@ export async function runDeck(
         input.root
       );
       usage.push(...retryGeneration.usage);
+      requests.push(...retryGeneration.requests);
+      for (const [id, ctx] of Object.entries(retryGeneration.retryContexts)) {
+        contexts.set(originalId(id), ctx);
+      }
 
       for (let i = 0; i < retryCards.length; i++) {
-        const id = retryCards[i].customId.replace(/\.r[0-9]+$/, "");
+        const id = originalId(retryCards[i].customId);
         const retryOutcome = retryGeneration.outcomes[i];
         const previous = done.get(id);
         if (retryOutcome === undefined || previous === undefined) continue;
@@ -157,7 +188,8 @@ export async function runDeck(
   }
 
   // Run Report: outcomes in the deck's card order; usage totals over every
-  // usage row the run produced (cost null when no row reported a cost)
+  // usage row the run produced (cost null when no row reported a cost);
+  // requests = every row of every processGeneration call, in send order
   const outcomes: CardOutcome[] = [];
   for (const card of input.deck.cards) {
     const outcome = done.get(card.customId);
@@ -189,9 +221,9 @@ export async function runDeck(
       processor: deps.config.id,
       generations: gens.length,
       outcomes,
-      usageTotals
+      usageTotals,
+      requests
     },
     outcomes
   };
 }
-
