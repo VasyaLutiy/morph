@@ -364,3 +364,33 @@ Attempts and first red per variant, minutes per generation, $ (provider), trunca
 `morph plan --checks`.
 
 ## 11. Actual
+
+### Gate (preparation)
+
+07.10, on the VPS, by the preparing orchestrator (Opus 5.5); no paid run. Data commit 4a90e06. The deck **cut by
+V2**: `node dist/cli.js plan --component cli --judge --out decks/p10b2/deck.json` exit 0, 14 cards, filtered by
+`decks/p10b2/filter.py` to 6; generations `[parse-command, read-plan-checks] [parse-command-judge, plan-command,
+read-plan-checks-judge] [plan-command-judge]`; `node dist/cli.js deck check` 0 errors / 0 warnings / 0 hazards.
+Cross-check: the old `mrph plan --spec … --component cli --judge` (dry) gives the same 14 ids and generations
+and, for the 6 cards, the same dependsOn, targets, slices, acceptances, max_tokens, intent, reasoning (2 500) and
+variants (mrph leaves a judge's unset = 1); only the instructions differ (the P10a design).
+
+Scratch worktree from 4a90e06 (a reference of the four targets and three judge files shaped as the probes,
+deleted afterwards), cards run in deck order, each accepted card committed before the next: **6 of 6 chains
+green, 32.9–36.3 s each** (205 s in all; limit 250 s per chain); the final tree `tsc`, `eslint`, `npm run build`
+clean, `vitest run` **571 / 571** in 61 files (563 + 8): **ripple 0**, no old test red in any full step. Typed
+one-line throwing stubs (`Error: stub <fn> <args>`; types.ts as specified): every code card red at the probe —
+parse-command 4 of 5, read-plan-checks 6 of 7, plan-command 6 of 7 (the types test passes on typed stubs); **all 8
+record examples red** with a readable line; chains 7.7–8.1 s. Judges with their file absent: red at the guard
+("… missing", 5.7–6.0 s). Mutation check: 27 single-rule mutations of the reference (parse-command 5,
+read-plan-checks 10, plan-command 12) — 27 of 27 killed by the card's probe (1 survivor of the first design,
+checks read before Plan Spec, closed by two probe rows before the cut).
+
+Golden (reference, before the cut): `morph plan --checks decks/p10/checks.json` on this repository with
+`tests/fixtures/cli/p10.map.json` = the 12 P10a acceptances byte for byte once the guard text is the live one
+(= Plan Command example 8), and = `python3 build.py p10` run today 12 / 12; `--checks decks/p10b/checks.json`
+with the map's acceptances stripped = the P10b1 deck 9 / 10 (compose-judge: TASK_P10b §2.2 intended difference
+3 only).
+
+Max slice + targets (reference in place): plan-command-judge 49 426 bytes (gate 200 KB). Forecast ≈ $0.06
+(P10b1: 10 cards $0.0998), ≤ $1. Gate holds.
