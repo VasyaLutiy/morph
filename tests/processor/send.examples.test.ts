@@ -126,6 +126,86 @@ test("Send Generation example 5: concurrency caps calls in flight", async () => 
   expect(sleeps).toStrictEqual([]);
 });
 
+test("Send Generation example 6: the batch route submits and polls one batch", async () => {
+  const config = fixtureJson("processor/batchConfig.json") as ProcessorConfig;
+  const steps = [
+    { status: 202, text: fixture("processor/batchSubmitted.json") },
+    { status: 200, text: fixture("processor/batchCompleted.json") }
+  ];
+  const calls: { url: string; method: string; body: string | undefined }[] = [];
+  const sleeps: number[] = [];
+  const transport: Transport = {
+    fetch: async (url: string, init: { method: string; headers: Record<string, string>; body?: string }) => {
+      calls.push({ url, method: init.method, body: init.body });
+      const s = steps[Math.min(calls.length, steps.length) - 1];
+      return { status: s.status, text: async () => s.text };
+    },
+    sleep: async (ms: number) => { sleeps.push(ms); }
+  };
+  const result = await sendGeneration(config, [req("a.v1")], transport);
+  expect(calls).toStrictEqual([
+    {
+      url: "https://openrouter.ai/api/beta/batches",
+      method: "POST",
+      body: calls[0]?.body
+    },
+    {
+      url: "https://openrouter.ai/api/beta/batches/batch-1789576284-Ejahe4wq9AgVdp5xGdNm",
+      method: "GET",
+      body: undefined
+    }
+  ]);
+  expect(calls[0]?.method).toBe("POST");
+  expect(calls[1]?.method).toBe("GET");
+  expect(calls[1]?.body).toBeUndefined();
+  expect(sleeps).toStrictEqual([15000]);
+  expect(result.answers).toStrictEqual([
+    {
+      customId: "a.v1",
+      text: "```ts\nexport const a = 1;\n```",
+      finishReason: "stop",
+      error: null
+    }
+  ]);
+  expect(result.usage[0]?.inputTokens).toBe(11030);
+  expect(result.usage[0]?.outputTokens).toBe(571);
+  expect(result.usage[0]?.cost).toBe(0.00269316);
+});
+
+test("Send Generation example 7: the stub answers on the batch route with no call", async () => {
+  const r = tmpRoot();
+  try {
+    r.write("a.v1.md", "A\n");
+    const config = {
+      ...(fixtureJson("processor/glmConfig.json") as ProcessorConfig),
+      type: "stub" as const,
+      apiKey: null,
+      model: "stub",
+      route: "batch" as const,
+      answersDir: r.root,
+      providerOrder: null,
+      reasoning: null
+    };
+    const ff = fakeFetch();
+    const sleeps: number[] = [];
+    const transport: Transport = {
+      fetch: ff.fetch,
+      sleep: async (ms: number) => { sleeps.push(ms); }
+    };
+    const result = await sendGeneration(config, [req("a.v1")], transport);
+    expect(ff.calls.length).toBe(0);
+    expect(sleeps).toStrictEqual([]);
+    expect(result.answers[0]).toStrictEqual({
+      customId: "a.v1",
+      text: "A\n",
+      finishReason: "stop",
+      error: null
+    });
+  } finally {
+    r.rm();
+  }
+});
+
 test("Send Generation: an empty request list gives empty results", async () => {
   const config = fixtureJson("processor/glmConfig.json") as ProcessorConfig;
   const ff = fakeFetch();
@@ -137,36 +217,6 @@ test("Send Generation: an empty request list gives empty results", async () => {
   const result = await sendGeneration(config, [], transport);
   expect(result).toStrictEqual({ answers: [], usage: [] });
   expect(ff.calls.length).toBe(0);
-});
-
-test("Send Generation: the batch route answers every request with the route error", async () => {
-  const config = {
-    ...(fixtureJson("processor/glmConfig.json") as ProcessorConfig),
-    route: "batch" as const
-  };
-  const ff = fakeFetch();
-  const sleeps: number[] = [];
-  const transport: Transport = {
-    fetch: ff.fetch,
-    sleep: async (ms: number) => { sleeps.push(ms); }
-  };
-  const result = await sendGeneration(config, [req("a.v1"), req("a.v2")], transport);
-  expect(ff.calls.length).toBe(0);
-  expect(sleeps).toStrictEqual([]);
-  expect(result.answers).toStrictEqual([
-    { customId: "a.v1", text: null, finishReason: null, error: "route batch is not available on the sync sender" },
-    { customId: "a.v2", text: null, finishReason: null, error: "route batch is not available on the sync sender" }
-  ]);
-  for (const u of result.usage) {
-    expect(u).toStrictEqual({
-      customId: u.customId,
-      inputTokens: 0,
-      outputTokens: 0,
-      cost: null,
-      provider: null,
-      generationId: null
-    });
-  }
 });
 
 test("Send Generation: a stub config answers from files with no call", async () => {
