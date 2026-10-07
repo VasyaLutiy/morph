@@ -1,9 +1,12 @@
+import fs from "node:fs";
+import { gunzipSync } from "node:zlib";
 import { expect, test } from "vitest";
 import { runCommand, variantLine } from "../../src/cli/runCommand.js";
-import type { CliDeps, RunArgs } from "../../src/cli/types.js";
+import type { CliDeps, RunArgs, RunDocument } from "../../src/cli/types.js";
+import type { Transport } from "../../src/processor/types.js";
 import type { VariantRecord } from "../../src/runloop/types.js";
 import type { Request } from "../../src/compiler/types.js";
-import { tmpRepo, tmpRoot } from "../helpers.js";
+import { fixture, tmpRepo, tmpRoot } from "../helpers.js";
 import type { TmpRepo, TmpRoot } from "../helpers.js";
 
 test("Run Command example 7", () => {
@@ -107,24 +110,131 @@ test("Run Command example 8", async () => {
       "morph run: a.v1 rejected stage 0 finish stop chars 30\n",
       "morph run: a.r1.v1 rejected stage 0 finish stop chars 30\n"
     ]);
+    expect(r.read(".morph/runs/r1/answers/lines.txt")).toBe(
+      "morph run: a.v1 rejected stage 0 finish stop chars 30\n" +
+        "morph run: a.r1.v1 rejected stage 0 finish stop chars 30\n"
+    );
     const paths = r
       .git(["show", "--name-only", "--format=", "HEAD"])
       .split("\n");
     expect(paths).toStrictEqual([
       ".morph/runs/r1/answers/a.r1.v1.answer.txt",
-      ".morph/runs/r1/answers/a.r1.v1.request.json",
       ".morph/runs/r1/answers/a.v1.answer.txt",
-      ".morph/runs/r1/answers/a.v1.request.json",
+      ".morph/runs/r1/answers/lines.txt",
       ".morph/runs/r1/deck.json",
       ".morph/runs/r1/report.json"
     ]);
     const retryRequest = JSON.parse(
-      r.read(".morph/runs/r1/answers/a.r1.v1.request.json")
+      gunzipSync(
+        fs.readFileSync(
+          r.path(".morph/runs/r1/requests/a.r1.v1.request.json.gz")
+        )
+      ).toString("utf8")
     ) as { messages: { content: string }[] };
     const lastMessage =
       retryRequest.messages[retryRequest.messages.length - 1].content;
     expect(lastMessage.includes("<acceptance_output>")).toBe(true);
     expect(r.git(["status", "--porcelain"])).toBe("");
+  } finally {
+    r.rm();
+    side.rm();
+  }
+});
+
+test("Run Command example 9: a batch route run", async () => {
+  const r: TmpRepo = tmpRepo();
+  const side: TmpRoot = tmpRoot("morph-p10c2-");
+  try {
+    const gitEnv = (home: string): Record<string, string> => ({
+      PATH: process.env.PATH ?? "",
+      HOME: home,
+      GIT_CONFIG_NOSYSTEM: "1",
+      GIT_AUTHOR_NAME: "Ada",
+      GIT_AUTHOR_EMAIL: "ada@example.invalid",
+      GIT_COMMITTER_NAME: "Ada",
+      GIT_COMMITTER_EMAIL: "ada@example.invalid"
+    });
+    side.write(
+      "deck.json",
+      JSON.stringify([
+        {
+          customId: "clamp-value",
+          intent: "generate",
+          targets: ["out/clamp.ts"],
+          instruction: "x",
+          acceptance: "test -f out/clamp.ts",
+          dependsOn: []
+        },
+        {
+          customId: "sign-of",
+          intent: "generate",
+          targets: ["out/sign.ts"],
+          instruction: "x",
+          acceptance: "test -f out/sign.ts",
+          dependsOn: []
+        }
+      ])
+    );
+    const steps = [
+      { status: 202, text: fixture("processor/batchSubmittedLive.json") },
+      { status: 200, text: fixture("processor/batchCompletedLive.json") }
+    ];
+    let n = 0;
+    const transport: Transport = {
+      fetch: async () => {
+        const s = steps[Math.min(n, steps.length - 1)];
+        n += 1;
+        return { status: s.status, text: async () => s.text };
+      },
+      sleep: async () => {}
+    };
+    const env: Record<string, string> = {
+      ...gitEnv(side.root),
+      MORPH_PROCESSOR_b_TYPE: "openrouter",
+      MORPH_PROCESSOR_b_MODEL: "acme/m:batch",
+      MORPH_PROCESSOR_b_API_KEY: "k",
+      MORPH_PROCESSOR_b_ROUTE: "batch",
+      MORPH_PROCESSOR_b_TIMEOUT_MS: "30000"
+    };
+    const deps: CliDeps = {
+      env,
+      now: (): number => 1791310149000,
+      cwd: r.root,
+      transport
+    };
+    const args: RunArgs = {
+      name: "run",
+      root: ".",
+      pretty: false,
+      deck: side.path("deck.json"),
+      processor: "b",
+      runId: "r9",
+      deadlineSeconds: 2400,
+      maxCards: null,
+      maxRetryBatches: 1
+    };
+    const result = await runCommand(r.root, args, deps);
+    expect(result.code).toBe(0);
+    const document = result.document as RunDocument;
+    expect(document.runId).toBe("r9");
+    expect(document.report.outcomes.map((o) => o.customId)).toStrictEqual([
+      "clamp-value",
+      "sign-of"
+    ]);
+    expect(document.report.outcomes.map((o) => o.status)).toStrictEqual([
+      "written",
+      "written"
+    ]);
+    const rows = document.report.requests ?? [];
+    expect(rows.length).toBe(2);
+    for (const row of rows) {
+      expect(row.batchId).toBe("batch-1791388269-cp5qOr5IQ0xoz1ntuc8W");
+    }
+    expect(document.report.usageTotals.cost).toBe(0.0005804);
+    expect(
+      r.read(".morph/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W.json")
+    ).toBe(fixture("cli/batch.r9.json"));
+    expect(r.git(["status", "--porcelain"])).toBe("?? .morph/batches/");
   } finally {
     r.rm();
     side.rm();
