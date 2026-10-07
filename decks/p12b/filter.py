@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""P12b: `morph plan --component git --component primer` cuts every Function of the two Components; keep the eight cards
-of this phase (Read Morph Log, Read Ownership, Render Primer, Primer Command and their judges), in the cut's order, and
-rewrite the deck file in place in the form `morph plan --out` writes (JSON, indent 2, newline). A dependency outside the
-phase is already on main and is dropped. Data only (docs/TASK_P12b_primer.md §8)."""
+"""P12b: `morph plan --component git --component primer` cuts every Function of the two Components; keep the seven cards
+of this phase (Read Morph Log, Read Ownership, Primer Command and the four judges), in the cut's order, and rewrite the
+deck file in place in the form `morph plan --out` writes (JSON, indent 2, newline). A dependency outside the phase is
+already on main and is dropped. Render Primer's code card is not in the phase: primer-command writes
+src/primer/renderPrimer.ts AND primerCommand.ts (the digest's new keys break primerCommand.ts under tsc until the wiring
+lands), and render-primer-judge depends on primer-command in the map. Data only (docs/TASK_P12b_primer.md §8)."""
 import json
 import sys
 
-PHASE = ["read-morph-log", "read-ownership", "render-primer", "primer-command", "read-morph-log-judge",
-         "read-ownership-judge", "render-primer-judge", "primer-command-judge"]
+PHASE = ["read-morph-log", "read-ownership", "primer-command", "read-morph-log-judge", "read-ownership-judge",
+         "render-primer-judge", "primer-command-judge"]
 
 
 def main(path):

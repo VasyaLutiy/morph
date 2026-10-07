@@ -2259,6 +2259,7 @@
     "primer-command": {
       "intent": "patch",
       "targets": [
+        "src/primer/renderPrimer.ts",
         "src/primer/primerCommand.ts"
       ],
       "context_slice": [
@@ -2266,16 +2267,16 @@
         "docs/CONVENTIONS.md",
         "src/git/log.ts",
         "src/git/ownership.ts",
-        "src/primer/renderPrimer.ts"
+        "tests/fixtures/primer/primer1.md",
+        "tests/fixtures/primer/primer2.md"
       ],
       "depends_on": [
         "read-morph-log",
-        "read-ownership",
-        "render-primer"
+        "read-ownership"
       ],
       "variants": 2,
-      "max_tokens": 12000,
-      "instruction": "Read docs/TASK_P12b_primer.md sections 2.1 (the functions you call, with their modules) and 2.2 (src/primer/primerCommand.ts: runningLine and Primer Command) and 4. Patch src/primer/primerCommand.ts (its current text follows) and return it whole: import readMorphLog from \"../git/log.js\" and readOwnership from \"../git/ownership.js\"; add ownership and running to PrimerDocument after issues; export runningLine(measure) after the existing exports; after Read Story compute ownership and running (from the MEASURE text Read Story got) and pass both to renderPrimer in the digest; the document's keys in the interface's order. Every other step stays as it is (the ls-files call first). Write no test file: a probe tests you and a judge writes the example tests."
+      "max_tokens": 20000,
+      "instruction": "Read docs/TASK_P12b_primer.md sections 2.1 (the functions you call, with their modules) and 2.2 (Render Primer: additions 1 and 2; runningLine and Primer Command) and 4; tests/fixtures/primer/primer1.md and primer2.md (their texts follow) are two whole outputs of the patched renderPrimer. You patch two files and return each whole (their current texts follow); they are one card because the digest's two new keys break primerCommand.ts under tsc until the wiring lands. src/primer/renderPrimer.ts: add DigestOwnership, the PrimerDigest keys ownership and running after story, OWNERSHIP_PATHS = 30 and OWNERSHIP_WRITES = 3; append the debt line and the running-total line after the last line of the Runs section; add the File ownership section between the Chronology section and What is next; every other line stays exactly as it is and the file still imports nothing. src/primer/primerCommand.ts: import readMorphLog from \"../git/log.js\" and readOwnership from \"../git/ownership.js\"; add ownership and running to PrimerDocument after issues; export runningLine(measure) after the existing exports; after Read Story compute ownership and running (from the MEASURE text Read Story got) and pass both in the digest; the document's keys in the interface's order; every other step stays (the ls-files call first). Write no test file: a probe tests you and judges write the example tests."
     },
     "read-runs-judge": {
       "intent": "generate",
@@ -2326,7 +2327,7 @@
         "src/primer/renderPrimer.ts"
       ],
       "depends_on": [
-        "render-primer"
+        "primer-command"
       ],
       "max_tokens": 16000,
       "instruction": "You write two files. tests/primer/renderPrimer.examples.test.ts (its current text follows): change only the literal 5952 in expect(md.length).toBe(5952) to 11033 and return the file whole, every other line as it is. tests/primer/renderPrimer.p12b.examples.test.ts, a NEW file with the test of Render Primer example 5 only (examples 1-4 are already tested). Read docs/TASK_P12b_primer.md sections 2.2 (Render Primer, additions 1 and 2) and 2.3. Import renderPrimer and its types from \"../../src/primer/renderPrimer.js\", fixtureJson from \"../helpers.js\"; take digest 1 and digest 2 from fixtureJson(\"primer/render.json\"), build the changed digests with spreads, and check each line of the record with toContain on the markdown split on newlines."

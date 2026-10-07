@@ -71,7 +71,7 @@ test("Read Morph Log example 3: no commit yet gives []; no repository throws git
   }
 });
 
-test("§2.2 rows: the format constant; trailer values trimmed, the first of two kept; an empty card commit; the reset after a run", () => {
+test("§2.2 rows: the format constant; the first of two trailers kept; an empty card commit; the reset after a run; a path with a leading space", () => {
   expect(MORPH_LOG_FORMAT).toBe(
     "%x1e%H%x1f%(trailers:key=Morph-Card,valueonly,separator=%x1d)%x1f%(trailers:key=Morph-Model,valueonly,separator=%x1d)%x1f%(trailers:key=Morph-Run,valueonly,separator=%x1d)%x1f");
   const r = tmpRepo();
@@ -81,9 +81,9 @@ test("§2.2 rows: the format constant; trailer values trimmed, the first of two 
     const q = commit(r, "morph q", "Morph-Card: q\nMorph-Model: m/3", {});
     commit(r, "morph run R-2", "Morph-Run: R-2", {});
     commit(r, "plain", "", { "y.md": "y\n" });
-    const s = commit(r, "morph s", "Morph-Card: s\nMorph-Model: m/4", { "a/s.ts": "s\n", "b/s.ts": "s\n" });
+    const s = commit(r, "morph s", "Morph-Card: s\nMorph-Model: m/4", { "a/s.ts": "s\n", "b/s.ts": "s\n", " c.ts": "c\n" });
     expect(readMorphLog(r.root, ENV)).toStrictEqual([
-      { sha: s, card: "s", model: "m/4", run: null, paths: ["a/s.ts", "b/s.ts"] },
+      { sha: s, card: "s", model: "m/4", run: null, paths: [" c.ts", "a/s.ts", "b/s.ts"] },
       { sha: q, card: "q", model: "m/3", run: "R-2", paths: [] },
       { sha: p, card: "p", model: "m/1", run: "R-1", paths: ["x/p.ts"] },
     ]);
