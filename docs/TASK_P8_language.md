@@ -329,4 +329,22 @@ reverse), the row of `docs/MEASURE.md`.
 
 ### Gate (preparation, autonomous)
 
-Filled at the gate before the run.
+07.10, by the preparing orchestrator (Opus 5.5), data commit `f7dcc06`. Dry `mrph plan --spec
+--component language --judge` exit 0; `deck clear`, `deck reset`, `plan --add` (8 cards, generations
+`[profiles] [naming, paths, profiles-judge] [naming-judge, paths-judge, template] [template-judge]`),
+`deck check` 0 errors / 0 warnings / 0 hazards. Max slice + targets (reference targets in place):
+template-judge 44 222 bytes (gate 200 KB).
+
+Scratch worktree outside the tree (data + a scratch reference of the four modules + reference judge
+files shaped as the probes; deleted afterwards): every chain green on the reference, 24.8–32.6 s
+(max naming-judge 32.6 s; limit 250 s). One-line throwing typed stubs: each code card red at the
+probe, 25 of 25 record examples red with a readable `Error: stub <fn> <args>` line, 39 of 43 probe
+tests red (the 4 type-only tests pass on typed stubs), chains 6.7–7.7 s; judges with their file
+absent red at eslint (`No files matching the pattern`), 3.8–4.0 s. Mutation check: 22 single-rule
+mutations of the reference (choice fall-through, trim, error quoting, own-property and letters-only
+keys, registry order, a finale character; normalise loop, lower-case, dir parts, as-given return,
+backslash; camel first word, component casing, check order, slug; final newline, full-run always,
+lint over tests, ext case, "this instruction", parseTakesFiles) — 22 of 22 killed by the card's probe
+(the check-order survivor of the first pass killed after the naming probe's row was strengthened to
+two different wordless names). Reference judge files 3.5–5.2 KB ≈ 1 000–1 500 output tokens against
+`max_tokens` 20 000 / 24 000 (≥ 13× headroom). Forecast ≈ $0.11 (≤ $1). Gate holds.
