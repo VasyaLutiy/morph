@@ -1,5 +1,6 @@
 import { setTimeout as delay } from "node:timers/promises";
 import type { Request } from "../compiler/types.js";
+import { sendBatch } from "./batch.js";
 import { assembleRequest } from "./assemble.js";
 import { readResponse } from "./response.js";
 import { stubAnswer } from "./stub.js";
@@ -91,19 +92,6 @@ export async function sendGeneration(
   const answers: Answer[] = new Array<Answer>(requests.length);
   const usage: Usage[] = new Array<Usage>(requests.length);
 
-  if (config.route === "batch") {
-    for (let i = 0; i < requests.length; i++) {
-      answers[i] = {
-        customId: requests[i].customId,
-        text: null,
-        finishReason: null,
-        error: "route batch is not available on the sync sender"
-      };
-      usage[i] = zeroUsage(requests[i].customId);
-    }
-    return { answers, usage };
-  }
-
   if (config.type === "stub") {
     for (let i = 0; i < requests.length; i++) {
       const r = stubAnswer(requests[i], config);
@@ -111,6 +99,10 @@ export async function sendGeneration(
       usage[i] = r.usage;
     }
     return { answers, usage };
+  }
+
+  if (config.route === "batch") {
+    return sendBatch(config, requests, transport);
   }
 
   let next = 0;
