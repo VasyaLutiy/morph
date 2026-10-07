@@ -1,0 +1,10 @@
+--- /home/morph/MorphV2/decks/tools/guard.mjs	2026-10-07 20:18:42.111199647 +0000
++++ /tmp/smoke11b2/repo/decks/tools/guard.mjs	2026-10-07 21:06:37.975826710 +0000
+@@ -24,6 +24,7 @@
+   // P11b2: the detached batch commands (morph submit / morph collect), the processor layer's second Component
+   batches: ["cards", "wait", "compiler", "processor"],
+   cli: "*",
++  calc: [], // smoke11: the one layer of this throwaway project
+ };
+ const ROOT_FILES = new Set(["src/index.ts"]);
+ const SHELL = new Set(["acceptance", "git"]);          // node:child_process
