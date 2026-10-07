@@ -960,19 +960,13 @@ System:
     # ---------------------------------------------------------------- P7
     - name: cli
       description: >
-        The `morph` binary: src/cli/*.ts plus the entry src/cli.ts (package.json bin
-        dist/cli.js). Parses argv, dispatches, prints exactly one JSON document on stdout
-        and one log line on stderr, maps every outcome to an exit code. Only the entry
-        touches the process: it hands main() the environment, the working directory, the
-        clock and the two output streams as parameters, so every command is testable in
-        process and the processor registry (Read Registry) is the only reader of the
-        environment it was given. Three commands exist now, those whose modules exist:
-        `deck check` (cards), `run` (runloop + processor + git: open the run branch, run
-        the deck with git's commit hook, archive the run) and `plan` (contour + planner: the
-        record and the map cut into a deck file, P10a). The commands of later phases
-        (scout, primer, review, report, deck add|status|reset|clear) answer a fixed
-        NotYetError. The milestone is an end-to-end run of the built binary on the stub
-        processor inside vitest, in a tmp repo, with no network.
+        The `morph` binary: src/cli/*.ts plus the entry src/cli.ts (bin dist/cli.js). Parses
+        argv, dispatches, prints one JSON document on stdout and one log line on stderr, maps
+        every outcome to an exit code. Only the entry touches the process: main() gets the
+        environment, the working directory, the clock and the output streams as parameters.
+        Commands: `deck check` (cards), `run` (runloop + processor + git), `plan` (contour +
+        planner; --checks: builder's acceptances). scout, primer, review, report, deck
+        add|status|reset|clear answer a fixed NotYetError.
       language: typescript
       requirements: [One Document Out]
       functions:
@@ -982,7 +976,7 @@ System:
             parseCommand(argv) scans argv left to right. A token starting with "--" is a
             flag: --pretty and --judge take no value; --root, --deck, --processor, --run-id,
             --deadline, --max-cards, --max-retry-batches, --slice-cap-bytes, --spec,
-            --component, --map, --out take the next token whatever it is; any other flag
+            --component, --map, --out, --checks take the next token whatever it is; any other flag
             (also --x=y) → "unknown flag: <t>"; a value flag as the last token → "flag <t>
             needs a value"; a flag seen twice → "flag <t> given twice", except --component,
             which repeats and keeps every value in argv order (the first such error in argv
@@ -997,10 +991,10 @@ System:
             not apply to <command>" (deck check takes --root, --pretty, --deck,
             --slice-cap-bytes; run takes --root, --pretty, --deck, --processor, --run-id,
             --deadline, --max-cards, --max-retry-batches; plan takes --root, --pretty,
-            --spec, --component, --map, --judge, --out), in argv order; plan without --spec →
-            "missing --spec", else plan is done: {name: "plan", root, pretty, spec,
+            --spec, --component, --map, --judge, --out, --checks), in argv order; plan without
+            --spec → "missing --spec", else plan is done: {name: "plan", root, pretty, spec,
             components: the --component values ([] when none), map: the value or null, judge:
-            --judge given, out: the value or null}; no --deck → "missing --deck"; run without
+            --judge given, out: the value or null, checks: the value, a key only when given}; no --deck → "missing --deck"; run without
             --processor → "missing --processor"; for run a
             --run-id not matching ^[A-Za-z0-9._-]+$ → "--run-id must match
             ^[A-Za-z0-9._-]+$ (got '<v>')"; numbers in the order --slice-cap-bytes (deck
@@ -1046,6 +1040,12 @@ System:
             - given: 'argv ["plan", "--component", "a"]; then ["plan", "--spec", "c", "--judge", "--judge"]; then ["run", "--deck", "d", "--processor", "s", "--judge"]'
               when: "parsed"
               then: 'UsageError "missing --spec"; then "flag --judge given twice"; then "flag --judge does not apply to run"'
+            - given: 'argv ["plan", "--spec", "c.yaml", "--checks", "decks/p1/checks.json"]'
+              when: "parsed"
+              then: '{ok: true, command: {name: "plan", root: ".", pretty: false, spec: "c.yaml", components: [], map: null, judge: false, out: null, checks: "decks/p1/checks.json"}}'
+            - given: 'argv ["run", "--deck", "d", "--processor", "s", "--checks", "x"]; ["plan", "--checks"]; ["plan", "--checks", "a", "--checks", "b"]'
+              when: "parsed"
+              then: 'UsageError "flag --checks does not apply to run"; "flag --checks needs a value"; "flag --checks given twice"'
         - name: Emit Document
           description: One JSON document + newline on stdout; --pretty indents by 2.
           behavior: >
@@ -1198,12 +1198,18 @@ System:
             regular file under root}); an error → code 2 DeckError with it. When args.out is not
             null the cards are written to path.resolve(root, args.out) as JSON.stringify(cards,
             null, 2) + "\n", parent directories created; that file is a deck `morph run --deck`
-            and `morph deck check` read. → {code: 0, document: {spec, components, cards,
+            and `morph deck check` read. With args.checks, before the write: Read Plan Checks (a
+            failure is the result); Build Acceptances({cards, checks, profile: resolveProfile(null,
+            map.language), texts}), errors → 2 DeckError "acceptances not built (<n> error|errors):\n"
+            + them joined by "\n"; its cards replace the plan's, but a card the map gives an
+            acceptance (map card by customId ?? id, extra card by customId) stays. → {code: 0, document: {spec, components, cards,
             generations, externalDependsOn, out: args.out}}. Nothing else is written; nothing is
             written on an error.
           steps:
             - uses: contour
             - uses: planner
+            - calls: Read Plan Checks
+            - uses: builder
             - produces: Plan Document
           examples:
             - given: 'a tmp root holding ledger.yaml and ledger.map.json (the planner fixtures'' texts) and a tests/helpers.ts; args spec "ledger.yaml", components ["ledger", "store"], map "ledger.map.json", judge true, out "decks/p.json"'
@@ -1222,6 +1228,43 @@ System:
             - given: 'main(["plan", "--root", <the root>, "--spec", "ledger.yaml", "--component", "store", "--map", "ledger.map.json"]) in process, deps {env: {}, now: () => 0, cwd: "/", transport: null}'
               when: "main"
               then: '0; one stdout chunk, a document with components ["store"], 4 cards, out null; stderr ["morph plan: exit 0\n"]; nothing written under the root'
+            - given: 'example 1 plus checks decks/l1/checks.json, decks/tools/guard.mjs "// guard\n", firstdiff.mjs "// firstdiff\n", decks/l1/parts/parse.probe.ts, ledger-types.probe.ts "// probe\n"'
+              ref: "tests/fixtures/cli/l1.checks.json"
+              when: "planCommand"
+              then: 'code 0; example 1 but parse''s acceptance codeAcceptance(ctx {phase "l1", siblings ["src/ledger/types.ts"]}, "// probe\n", null, null), parse-judge''s judgeAcceptance(ctx, files); ledger-types keeps the map''s "exit 0\n"'
+            - given: 'example 6, checks decks/l2/checks.json = {"phase": "l2", "cards": [{"id": "zz"}]}'
+              when: "planCommand"
+              then: '2 DeckError "acceptances not built (1 error):\nchecks card ''zz'' is not in the deck"'
+            - given: 'the repository; contour.yaml, planner, cli, judge, map tests/fixtures/cli/p10.map.json, checks decks/p10/checks.json'
+              ref: "decks/p10/v2deck.json, tests/fixtures/builder/guard.p10.txt"
+              when: "planCommand"
+              then: 'code 0; v2deck.json''s 12 acceptances byte for byte, guard.p10.txt (trimEnd) replaced by decks/tools/guard.mjs'
+        - name: Read Plan Checks
+          description: Files of `plan --checks`.
+          behavior: >
+            readPlanChecks(root, checksPath), in order, a failure {ok: false, result}: the file not
+            regular under root → 4 UsageError "checks file not found: <checksPath>"; Parse
+            Document(text, checksPath) error → 2 DeckError, it; Read Checks' problems → 2 DeckError
+            "<checksPath> is not a valid checks document (<n> problem|problems):\n" + them joined by
+            "\n"; GUARD_PATH "decks/tools/guard.mjs", LOCATOR_PATH "decks/tools/firstdiff.mjs" not
+            regular → 4 UsageError "guard|locator file not found: <path>". Probes: per card, files
+            null, <parts>/<id>.probe.ts if regular. → {ok: true, checks, texts: {guard, firstdiff, probes}}.
+          steps:
+            - reads: Checks
+            - uses: contour
+            - uses: builder
+            - produces: Plan Checks
+          examples:
+            - given: 'decks/p1/checks.json, decks/tools/guard.mjs "// guard\n", firstdiff.mjs "// firstdiff\n", decks/p1/parts/a.probe.ts "// probe a\n", a-judge.probe.ts "// no\n"'
+              ref: "tests/fixtures/cli/p1.checks.json (cards a, b, a-judge), tests/fixtures/cli/p1.planChecks.json"
+              when: 'readPlanChecks(root, "decks/p1/checks.json")'
+              then: 'equal to p1.planChecks.json'
+            - given: 'that root; then no guard.mjs; then no firstdiff.mjs'
+              when: 'readPlanChecks(root, "nope.json"); then "decks/p1/checks.json" twice'
+              then: '4 UsageError "checks file not found: nope.json"; "guard file not found: decks/tools/guard.mjs"; "locator file not found: decks/tools/firstdiff.mjs"'
+            - given: 'c.json = "{"; then {"cards": []}'
+              when: 'readPlanChecks(root, "c.json")'
+              then: '2 DeckError beginning "cannot parse c.json: "; then "c.json is not a valid checks document (2 problems):\nphase: required\ncards: must be a non-empty list"'
         - name: Main
           description: Dispatch, one document out, one log line, the exit code; the entry src/cli.ts wires the process.
           behavior: >
@@ -1254,7 +1297,7 @@ System:
             - given: 'a run with a valid stub env and deck, --run-id r1, --root and cwd both a tmp root that is not a git repository'
               when: "main"
               then: '3; one document {error: {code: 3, kind: "RuntimeError", message beginning "git status failed (exit 128): "}}; stderr ["morph run: exit 3\n"]'
-            - given: 'the binary built by tsc -p tsconfig.build.json into a tmp out dir (with {"type":"module"} and a node_modules link to the repository''s own: the binary imports the package yaml since P10a); a tmpRepo, a side root with answers a.md, b.md and the deck a, then b dependsOn a; `node <out>/cli.js run --root <repo> --deck <deck> --processor s --run-id e2e` with the stub env'
+            - given: 'the binary built by tsc -p tsconfig.build.json into a tmp out dir with {"type":"module"} and node_modules linked; a tmpRepo, a side root with answers a.md, b.md and the deck a, then b dependsOn a; `node <out>/cli.js run --root <repo> --deck <deck> --processor s --run-id e2e` with the stub env'
               when: "spawned"
               then: 'exit 0; stdout one line of JSON: runId "e2e", branch "morph/e2e", outcomes written, written, archive ok; the last three subjects "morph run e2e: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; stderr "morph run: exit 0\n"'
             - given: 'the built binary, argv ["frobnicate"]'
@@ -1263,7 +1306,7 @@ System:
       dataObjects:
         - name: Command
           description: One parsed invocation.
-          schema: "{ name: 'deck check', root, pretty, deck, sliceCapBytes } | { name: 'run', root, pretty, deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches } | { name: 'plan', root, pretty, spec, components: string[], map: string | null, judge: boolean, out: string | null }"
+          schema: "{ name: 'deck check', root, pretty, deck, sliceCapBytes } | { name: 'run', root, pretty, deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches } | { name: 'plan', root, pretty, spec, components: string[], map: string | null, judge: boolean, out: string | null, checks?: string }"
         - name: Error Document
           description: The document of every non-result exit.
           schema: "{ error: { code: 0|1|2|3|4, kind: 'UsageError'|'NotYetError'|'DeckError'|'RefusalError'|'RuntimeError', message: string } }"
@@ -1276,6 +1319,9 @@ System:
         - name: Plan Document
           description: stdout of plan; the Plan of the planner plus the deck file written.
           schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]>, out: string | null }"
+        - name: Plan Checks
+          description: Result.
+          schema: "{ ok: true, checks: Checks, texts: BuildTexts } | { ok: false, result: Command Result }"
         - name: Run Document
           description: stdout of run.
           schema: "{ runId: string, branch: string, base: string, report: RunReport, archive: ArchiveResult }"
@@ -2076,7 +2122,7 @@ System:
         suite, own git, frozen, untracked; every failed vitest step prints its whole failure section
         and the first difference. The scripts equal build.py's P10a form byte for byte. Only the
         typescript profile has a builder. No file read, no clock, no environment; node:path is the
-        only Node module. Not wired into the cli in this phase (P10b2).
+        only Node module. `morph plan --checks` (cli) reads the files and calls it.
       language: typescript
       requirements: [Deterministic Core]
       functions:

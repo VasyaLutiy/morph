@@ -1,0 +1,53 @@
+{
+  "ok": true,
+  "checks": {
+    "version": 1,
+    "phase": "p1",
+    "parts": "decks/p1/parts",
+    "frozen": [
+      "contour.yaml",
+      "morph-map.json",
+      "docs",
+      "decks",
+      "tests/fixtures"
+    ],
+    "fullExclude": [],
+    "ownGit": false,
+    "cards": [
+      {
+        "id": "a",
+        "smoke": null,
+        "extra": null,
+        "files": null
+      },
+      {
+        "id": "b",
+        "smoke": null,
+        "extra": null,
+        "files": null
+      },
+      {
+        "id": "a-judge",
+        "smoke": null,
+        "extra": null,
+        "files": [
+          {
+            "file": "tests/a.examples.test.ts",
+            "min": 1,
+            "max": 9,
+            "lits": [],
+            "drop": [],
+            "new": false
+          }
+        ]
+      }
+    ]
+  },
+  "texts": {
+    "guard": "// guard\n",
+    "firstdiff": "// firstdiff\n",
+    "probes": {
+      "a": "// probe a\n"
+    }
+  }
+}

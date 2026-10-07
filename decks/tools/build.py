@@ -26,6 +26,8 @@ shared steps here. Hand-written data, never product code.
     python3 decks/tools/build.py p10    -> the P10a cards (planner + cli; judges by files, two patched cli test files
                                            deselected from the full step; locate and full_report on)
     python3 decks/tools/build.py p10b   -> the P10b1 cards (Component builder; judges by files, all new; the deck is cut by V2)
+    python3 decks/tools/build.py p10b2  -> the P10b2 cards (Component cli: --checks; judges by files, all new; the last
+                                           phase built here: from P10b2 on `morph plan --checks decks/<phase>/checks.json`)
 
 From P10 a phase sets "locate": True and "full_report": True: a failed vitest step prints its whole
 failure section with the Expected/Received diff, and a red eslint is reported after the probe / own
@@ -488,6 +490,26 @@ P10B_JUDGE_FILES = {
 }
 P10B_JUDGE_EXAMPLES = {k: sum(f["min"] for f in v) for k, v in P10B_JUDGE_FILES.items()}
 
+P10B2 = "tests/cli/"
+# docs/TASK_P10b2_cli.md §3: every judge writes one new file with the Function's NEW examples only (Parse Command 12-13,
+# Read Plan Checks 1-3, Plan Command 6-8); min = those examples, max = min + 8, the literals
+P10B2_JUDGE_FILES = {
+    "parse-command-judge": [
+        {"file": P10B2 + "parseChecks.examples.test.ts", "new": True, "min": 2, "max": 10,
+         "lits": ["decks/p1/checks.json", "flag --checks does not apply to run", "flag --checks needs a value",
+                  "flag --checks given twice", "Parse Command example 13"], "drop": []}],
+    "read-plan-checks-judge": [
+        {"file": P10B2 + "readPlanChecks.examples.test.ts", "new": True, "min": 3, "max": 11,
+         "lits": ["p1.checks.json", "p1.planChecks.json", "checks file not found: nope.json",
+                  "guard file not found: decks/tools/guard.mjs", "locator file not found: decks/tools/firstdiff.mjs",
+                  "cannot parse c.json: ", "is not a valid checks document (2 problems)"], "drop": []}],
+    "plan-command-judge": [
+        {"file": P10B2 + "planChecks.examples.test.ts", "new": True, "min": 3, "max": 11,
+         "lits": ["l1.checks.json", "exit 0", "acceptances not built (1 error)", "checks card 'zz' is not in the deck",
+                  "p10.map.json", "v2deck.json", "guard.p10.txt", "decks/p10/checks.json"], "drop": []}],
+}
+P10B2_JUDGE_EXAMPLES = {k: sum(f["min"] for f in v) for k, v in P10B2_JUDGE_FILES.items()}
+
 # one phase = the cards of one Component in morph-map.json (judges are <code>-judge); the
 # generation layering and the sibling exclusion are computed within the phase only.
 # smoke: whether a code card writes its own smoke test (P1-P2 yes; from P3 a code card covered
@@ -541,6 +563,12 @@ PHASES = {
              "smoke": False, "judge_files": P10B_JUDGE_FILES, "locate": True, "full_report": True,
              "members": ["read-checks", "steps", "probe-dir", "compose", "build-acceptances", "steps-judge",
                          "read-checks-judge", "probe-dir-judge", "compose-judge", "build-acceptances-judge"]},
+    # P10b2 (the last phase built here): Component cli, three code cards and three judges, new test files only, no
+    # known-red file (the new PlanArgs key is optional: tests/cli/*.examples.test.ts stay green); locate and full on
+    "p10b2": {"parts": "p10b2", "test_dir": P10B2, "examples": P10B2_JUDGE_EXAMPLES, "literals": {},
+              "smoke": False, "judge_files": P10B2_JUDGE_FILES, "locate": True, "full_report": True,
+              "members": ["parse-command", "read-plan-checks", "plan-command", "parse-command-judge",
+                          "read-plan-checks-judge", "plan-command-judge"]},
 }
 
 
@@ -714,7 +742,8 @@ BUILDERS = {"p0": build_p0, "p1": lambda: build_phase("p1"), "p2": lambda: build
             "p3": lambda: build_phase("p3"), "p4": lambda: build_phase("p4"), "p5": lambda: build_phase("p5"),
             "p6": lambda: build_phase("p6"), "p7": lambda: build_phase("p7"),
             "p8": lambda: build_phase("p8"), "p9": lambda: build_phase("p9"), "p9b": lambda: build_phase("p9b"),
-            "p9c": lambda: build_phase("p9c"), "p10": lambda: build_phase("p10"), "p10b": lambda: build_phase("p10b")}
+            "p9c": lambda: build_phase("p9c"), "p10": lambda: build_phase("p10"), "p10b": lambda: build_phase("p10b"),
+            "p10b2": lambda: build_phase("p10b2")}
 
 
 def main(argv):

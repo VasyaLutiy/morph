@@ -1,0 +1,73 @@
+{
+  "phase": "p10b2",
+  "cards": [
+    {
+      "id": "parse-command"
+    },
+    {
+      "id": "parse-command-judge",
+      "files": [
+        {
+          "file": "tests/cli/parseChecks.examples.test.ts",
+          "min": 2,
+          "max": 10,
+          "lits": [
+            "decks/p1/checks.json",
+            "flag --checks does not apply to run",
+            "flag --checks needs a value",
+            "flag --checks given twice",
+            "Parse Command example 13"
+          ],
+          "new": true
+        }
+      ]
+    },
+    {
+      "id": "plan-command"
+    },
+    {
+      "id": "plan-command-judge",
+      "files": [
+        {
+          "file": "tests/cli/planChecks.examples.test.ts",
+          "min": 3,
+          "max": 11,
+          "lits": [
+            "l1.checks.json",
+            "exit 0",
+            "acceptances not built (1 error)",
+            "checks card 'zz' is not in the deck",
+            "p10.map.json",
+            "v2deck.json",
+            "guard.p10.txt",
+            "decks/p10/checks.json"
+          ],
+          "new": true
+        }
+      ]
+    },
+    {
+      "id": "read-plan-checks"
+    },
+    {
+      "id": "read-plan-checks-judge",
+      "files": [
+        {
+          "file": "tests/cli/readPlanChecks.examples.test.ts",
+          "min": 3,
+          "max": 11,
+          "lits": [
+            "p1.checks.json",
+            "p1.planChecks.json",
+            "checks file not found: nope.json",
+            "guard file not found: decks/tools/guard.mjs",
+            "locator file not found: decks/tools/firstdiff.mjs",
+            "cannot parse c.json: ",
+            "is not a valid checks document (2 problems)"
+          ],
+          "new": true
+        }
+      ]
+    }
+  ]
+}

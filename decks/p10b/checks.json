@@ -1,0 +1,114 @@
+{
+  "phase": "p10b",
+  "cards": [
+    {
+      "id": "read-checks"
+    },
+    {
+      "id": "steps"
+    },
+    {
+      "id": "probe-dir"
+    },
+    {
+      "id": "compose"
+    },
+    {
+      "id": "build-acceptances"
+    },
+    {
+      "id": "steps-judge",
+      "files": [
+        {
+          "file": "tests/builder/steps.examples.test.ts",
+          "min": 8,
+          "max": 16,
+          "lits": [
+            "wrap.txt",
+            "vitestStep.txt",
+            "frozen.txt",
+            "untracked.txt",
+            "names.txt",
+            "ownGit.txt",
+            "MORPH_X_EOF",
+            "--exclude tests/y.test.ts"
+          ],
+          "new": true
+        }
+      ]
+    },
+    {
+      "id": "read-checks-judge",
+      "files": [
+        {
+          "file": "tests/builder/readChecks.examples.test.ts",
+          "min": 4,
+          "max": 12,
+          "lits": [
+            "p10.checks.json",
+            "p10.checks.typed.json",
+            "badChecks.json",
+            "badChecks.problems.json",
+            "(root): checks must be an object",
+            "phase: required"
+          ],
+          "new": true
+        }
+      ]
+    },
+    {
+      "id": "probe-dir-judge",
+      "files": [
+        {
+          "file": "tests/builder/probeDir.examples.test.ts",
+          "min": 3,
+          "max": 11,
+          "lits": [
+            "probeDir.txt",
+            "../../src/b.ts",
+            "./*.probe.ts"
+          ],
+          "new": true
+        }
+      ]
+    },
+    {
+      "id": "compose-judge",
+      "files": [
+        {
+          "file": "tests/builder/compose.examples.test.ts",
+          "min": 5,
+          "max": 13,
+          "lits": [
+            "code1.txt",
+            "code2.txt",
+            "judge1.txt",
+            "judge2.txt",
+            "B example 2: old",
+            "é"
+          ],
+          "new": true
+        }
+      ]
+    },
+    {
+      "id": "build-acceptances-judge",
+      "files": [
+        {
+          "file": "tests/builder/buildAcceptances.examples.test.ts",
+          "min": 4,
+          "max": 12,
+          "lits": [
+            "v2deck.json",
+            "guard.p10.txt",
+            "firstdiff.p10.txt",
+            "p10.checks.typed.json",
+            "only typescript",
+            "is not in the deck"
+          ],
+          "new": true
+        }
+      ]
+    }
+  ]
+}

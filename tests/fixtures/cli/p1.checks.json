@@ -1,0 +1,8 @@
+{
+  "phase": "p1",
+  "cards": [
+    { "id": "a" },
+    { "id": "b" },
+    { "id": "a-judge", "files": [{ "file": "tests/a.examples.test.ts", "min": 1, "max": 9 }] }
+  ]
+}
