@@ -92,6 +92,7 @@ test("Archive Run example 7: saveBatchRecord writes .morph/batches/<batchId>.jso
     expect(saveBatchRecord(t.root, record), "path").toBe(".morph/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W.json");
     expect(t.read(".morph/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W.json"), "file").toBe(JSON.stringify(record, null, 2) + "\n");
     expect(saveBatchRecord(t.root, { ...record, batchId: "../x" }), "bad id").toBeNull();
+    expect(saveBatchRecord(t.root, { ...record, batchId: "a b" }), "an id outside ^[A-Za-z0-9._-]+$ (a space)").toBeNull();
     expect(`${fs.readdirSync(t.path(".morph/batches")).join(",")} ${t.exists(".morph/x.json")}`, "nothing else")
       .toBe("batch-1791388269-cp5qOr5IQ0xoz1ntuc8W.json false");
     const later = { ...record, status: "completed", cost: 0.25 };
