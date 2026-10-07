@@ -447,3 +447,20 @@ session applies maxTokens × 3 first, as the operator ordered):
 npm run build && rm -rf /tmp/v2bin-p11b2 && mkdir -p /tmp/v2bin-p11b2 && cp -r dist /tmp/v2bin-p11b2/ && ln -s $PWD/node_modules /tmp/v2bin-p11b2/node_modules
 node /tmp/v2bin-p11b2/dist/cli.js run --root . --deck decks/p11b2/deck.json --processor ds --deadline 2400 > /tmp/p11b2-run.json
 ```
+
+### Run (07.10, VPS, autonomous) — cut by V2, run by the V2 binary on processor ds
+
+Deck `decks/p11b2/deck.json` (V2 cut of batches, cli, git, filtered to 9 cards by `decks/p11b2/filter.py`, maxTokens ×3 by
+`decks/tools/scale_tokens.py`), run by the V2 binary copy in `/tmp/v2bin-p11b2` with `--processor ds --deadline 2400`,
+default retry cap: run 20261007-204822, **9 / 9 written in one run, no fix**, 7 at the first attempt (retries won
+`archive-run-judge` r1, v1 red at tsc, and `parse-command-judge` r1, v1 red at the full suite), $0.1183, 15.9 min (956 s),
+15 requests, 301 172 in / 144 864 out tokens. On the run branch: `git status` clean; tsc, eslint, `npm run build` clean;
+vitest **641 / 641** in 84 files. Read once against §2.2: `morph submit` sends generation 0 as one batch POST (cards
+without an acceptance, pinned to another model or failing to compile listed in `refused`), saves the state with the cards
+whole and their input digests through `saveBatchRecord`, lists later generations as `deferred`, exit 0, no git call;
+`morph collect --batch <id>` (id checked by Parse Command) reads only `.morph/batches/<id>.json`, refuses a missing state
+(4) or a foreign one naming the first bad key (2), one GET, pending → exit 1 with the state's status saved and nothing
+written, done/failed → stale cards found by the input digests, answers of fresh cards written to
+`.morph/batches/<id>/<customId>.md` for a stub replay, exit 0 only when every answer is whole and nothing is stale. 0
+defects. The commands live in a new Component `batches` (`src/batches/`), not processor: processor's record is at
+29 969 bytes (PLAN rule: a record over 30 KB is two Components); cli only routes.
