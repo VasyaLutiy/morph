@@ -4,9 +4,10 @@ import { findHazards } from "../cards/hazards.js";
 import { runDeck } from "../runloop/deck.js";
 import { openRunBranch } from "../git/branch.js";
 import { makeCommitHook } from "../git/commit.js";
-import { archiveRun } from "../git/archive.js";
+import { archiveRun, saveBatchRecord } from "../git/archive.js";
 import { errorDocument, readDeckFile, runExitCode } from "./document.js";
 import type { CliDeps, CommandResult, RunArgs, RunDocument } from "./types.js";
+import type { ArchivedAnswer } from "../git/types.js";
 import type { VariantRecord } from "../runloop/types.js";
 
 export function mintRunId(ms: number): string {
@@ -108,7 +109,7 @@ export async function runCommand(
 
   // 6. run the deck with git's commit hook, the injected clock and the
   // variant recorder
-  const records: VariantRecord[] = [];
+  const records: ArchivedAnswer[] = [];
   const result = await runDeck(
     {
       root,
@@ -123,21 +124,27 @@ export async function runCommand(
     },
     {
       config,
-      transport: deps.transport ?? realTransport(config.timeoutMs),
+      transport: {
+        ...(deps.transport ?? realTransport(config.timeoutMs)),
+        saveBatch: (record) => {
+          saveBatchRecord(root, record);
+        }
+      },
       commit: makeCommitHook(root, config.model, deps.env),
       now: deps.now,
       env: deps.env,
       onVariant: (record) => {
-        records.push(record);
+        const line = variantLine(record);
+        records.push({ ...record, line });
         if (log !== undefined) {
-          log(variantLine(record));
+          log(line);
         }
       }
     }
   );
 
-  // 7. archive deck, report and every variant's request and raw answer;
-  // the checkout stays on morph/<runId>
+  // 7. archive deck, report and every variant's answer and stderr line; the
+  // checkout stays on morph/<runId>
   const archive = archiveRun(
     root,
     { runId, deck, report: result.report, answers: records },
