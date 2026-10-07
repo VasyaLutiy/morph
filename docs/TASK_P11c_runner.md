@@ -318,4 +318,44 @@ Attempts and first red per variant, minutes per generation, $ (provider), trunca
 
 ### Gate (preparation)
 
-(filled at the gate)
+07.10, on the VPS, by the preparing orchestrator (Opus 5.5); no paid run. Data commits cd0e93b (spec, record, map,
+fixtures, checks, probes, deck, DECISIONS) and 1c79b51 (a build-attempt-diff probe row pinning the exported
+`DIFF_LCS_CAP`, deck re-cut). Component sizes after the patch: runloop **29 992**, cli **29 988**, git **17 825**,
+acceptance **14 017**, cards **8 048** (≤ 30 000 each).
+
+The deck **cut by V2**: `node dist/cli.js plan --component runloop --component acceptance --component cli --component
+git --component cards --judge --checks decks/p11c/checks.json --out decks/p11c/deck.json` exit 0, 46 cards, filtered by
+`decks/p11c/filter.py` to 12; generations `[build-attempt-diff, card-model, commit-card, run-acceptance, run-deck]
+[build-attempt-diff-judge, card-model-judge, commit-card-judge, run-acceptance-judge, run-command, run-deck-judge]
+[run-command-judge]`; `node dist/cli.js deck check` **0 errors, 0 warnings**. Cross-check: the old `mrph plan --spec …
+--component runloop acceptance cli git cards --judge` (dry) gives the same 46 ids and the same 4 generations; targets,
+slices, dependsOn, intent, variants and reasoning (2 500) equal on all 46; max_tokens equal on the 12 phase cards (5
+judges outside the phase differ: V2's P10a judge formula); instructions differ on all 46 (the P10a design); acceptances
+differ on the 12 phase cards (V2's builder chain from checks.json — run below) and on 8 cards outside the phase with no
+map acceptance.
+
+Scratch worktree from cd0e93b (references of the 7 code files and the 6 test files, deleted afterwards), cards run in
+deck order with the deck's own acceptances, each accepted card committed before the next: **12 of 12 chains green,
+41.2–61.6 s each (540.3 s in all; limit 250 s per chain; the 61.6 s ran beside an orphan vitest worker of an earlier
+scratch tree, killed)**; build-attempt-diff re-run on 1c79b51 green (43.1 s). The final tree `tsc`, `eslint src tests`,
+build clean, `vitest run` **620 / 620** in 77 files (610 + 10; ripple 0). Typed one-line throwing stubs (`Error: stub
+<fn> <args>`; runloop/types.ts as specified; run-command over the reference of run-deck, its dependency): every code
+card red at the probe — run-deck 3/3, run-command 3/3, commit-card 2/2, run-acceptance 2/2, card-model 3/3,
+build-attempt-diff 3/3 (16/16); **all new record examples red** (RD 9, 10, RC 10, 11, CC 4, RA 5, VC 5, 6, BAD 6, 7),
+each with a readable line; chains 6.3–9.3 s. Judges with the reference code: the six new files absent → red at the guard
+("… missing", 6.0–6.9 s). Mutation check: **42 single-rule mutations** of the references (run-deck 12, run-command 4,
+commit-card 3, run-acceptance 7, card-model 8, build-attempt-diff 8), every run under a 120 s timeout: **42 killed by the
+card's probe, 0 by timeout, 0 survivors** (the cap-value mutant was closed by the 1c79b51 row before the run).
+
+Max slice + targets: run-deck-judge 47 982 bytes (gate 200 KB). **Forecast** on `ds` with every maxTokens × 3: P11b1 ran
+14 cards, 22 requests, 410 k in / 157 k out for $0.1379; here 12 cards of 33–48 KB in (P11b: 41–59 KB), ≈ 18 requests,
+≈ 300 k in / 120 k out ≈ **$0.10–0.15**, ≤ $0.30 with a re-cut; ≤ $1. **Gate holds.**
+
+**Run command** (from the repo root, the binary copied first; today's binary = 1c79b51's code + data; default retry cap;
+the session applies maxTokens × 3 first, as the operator ordered):
+
+```
+python3 decks/tools/scale_tokens.py decks/p11c/deck.json 3      # the session, committed with the deck
+npm run build && rm -rf /tmp/v2bin-p11c && mkdir -p /tmp/v2bin-p11c && cp -r dist /tmp/v2bin-p11c/ && ln -s $PWD/node_modules /tmp/v2bin-p11c/node_modules
+node /tmp/v2bin-p11c/dist/cli.js run --root . --deck decks/p11c/deck.json --processor ds --deadline 2400 > /tmp/p11c-run.json
+```
