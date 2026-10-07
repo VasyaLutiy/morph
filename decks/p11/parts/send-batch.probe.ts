@@ -127,7 +127,7 @@ test("Send Batch rows: submit failures are never retried", async () => {
 });
 
 test("Send Batch rows: 429 and 5xx polls are transient, another 4xx is final; polls >= 1", async () => {
-  const t = script([ok(202, "batchSubmitted.json"), { status: 429, text: "slow" }, { status: 502, text: "bad" }, ok(200, "batchCompleted.json")]);
+  const t = script([ok(202, "batchSubmitted.json"), { status: 429, text: "slow" }, { status: 500, text: "bad" }, ok(200, "batchCompleted.json")]);
   const got = await sendBatch(config(), [req("a.v1")], t.transport);
   expect(`${t.calls.length} ${got.answers[0]?.error}`, "transient").toBe("4 null");
   const f = script([ok(202, "batchSubmitted.json"), { status: 401, text: JSON.stringify({ error: { message: "No auth" } }) }]);
@@ -136,6 +136,21 @@ test("Send Batch rows: 429 and 5xx polls are transient, another 4xx is final; po
   const one = script([ok(202, "batchSubmitted.json"), ok(200, "batchInProgress.json")]);
   const h = await sendBatch(config({ timeoutMs: 1000 }), [req("a.v1")], one.transport);
   expect(`${one.calls.length} ${h.answers[0]?.error}`, "one poll").toBe("2 batch " + ID + " still in_progress after 1 polls");
+  const r408 = script([ok(202, "batchSubmitted.json"), { status: 408, text: "timeout" }, ok(200, "batchCompleted.json")]);
+  const m = await sendBatch(config(), [req("a.v1")], r408.transport);
+  expect(`${r408.calls.length} ${m.answers[0]?.error}`, "408 transient").toBe("3 null");
+  const p = ok(200, "batchInProgress.json");
+  const edge = script([ok(202, "batchSubmitted.json"), p, p, p, ok(404, "batchNotFound.json"), ok(200, "batchCompleted.json")]);
+  const n = await sendBatch(config({ timeoutMs: 90000 }), [req("a.v1")], edge.transport);
+  expect(`${edge.calls.length} ${n.answers[0]?.error}`, "a 404 at poll 4 (60000 ms) is still inside the grace").toBe("6 null");
+  const three = script([ok(202, "batchSubmitted.json"), p]);
+  const q = await sendBatch(config({ timeoutMs: 50000 }), [req("a.v1")], three.transport);
+  expect(q.answers[0]?.error, "floor(50000 / 15000) = 3").toBe("batch " + ID + " still in_progress after 3 polls");
+  const dup = JSON.stringify({ id: ID, status: "completed", error: null, results: [
+    { custom_id: "a.v1", response: null, error: { message: "first" } }, { custom_id: "a.v1", response: null, error: { message: "second" } }] });
+  const twice = script([ok(202, "batchSubmitted.json"), { status: 200, text: dup }]);
+  const d = await sendBatch(config(), [req("a.v1")], twice.transport);
+  expect(d.answers[0]?.error, "the first reply of a customId").toBe("batch item error: first");
   const sub = script([ok(202, "batchSubmitted.json"), new Error("down")]);
   const k = await sendBatch(config({ timeoutMs: 30000 }), [req("a.v1")], sub.transport);
   expect(k.answers[0]?.error, "the submit's status when no poll read").toBe("batch " + ID + " still validating after 2 polls");
