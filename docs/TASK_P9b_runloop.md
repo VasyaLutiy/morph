@@ -270,7 +270,7 @@ Narrow to broad; the first red is the regeneration's diagnosis.
 Code cards: `probe/<card>/` (guard, vitest config, `tsconfig.card.json` excluding the targets of
 the same generation's other cards) → `tsc` → `eslint <targets>` → `guard.mjs src <src targets>`
 (output-directive also `guard tests directive.test.ts 1 5`) → `decks/p9b/parts/<card>.probe.ts`
-(process-generation 4 + 3 §2.2 = 7 tests; build-retry 1 + 2 = 3; run-deck 2 + 2 = 4;
+(process-generation 4 + 3 §2.2 = 7 tests; build-retry 1 + 2 = 3; run-deck 2 + 3 = 5;
 output-directive 4 + 2 = 6) → output-directive: its smoke test → full `vitest run` → frozen →
 untracked.
 

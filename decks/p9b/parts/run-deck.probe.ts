@@ -11,9 +11,9 @@ import { fakeFetch, tmpRoot } from "../../tests/helpers.js";
 
 const CHAT = "https://openrouter.ai/api/v1/chat/completions";
 const fenced = (marker: string): string => '```ts\nexport const x = "' + marker + '";\n```\n';
-const card = (customId: string, target: string, acceptance: string, dependsOn: string[] = []): Card => ({ customId,
-  intent: "generate", targets: [target], contextSlice: [], instruction: "write " + target, acceptance, model: null,
-  maxTokens: null, reasoning: null, variants: 1, dependsOn });
+const card = (customId: string, target: string, acceptance: string, dependsOn: string[] = [], variants = 1): Card => ({
+  customId, intent: "generate", targets: [target], contextSlice: [], instruction: "write " + target, acceptance, model: null,
+  maxTokens: null, reasoning: null, variants, dependsOn });
 const config = (type: "stub" | "openrouter", answersDir: string | null): ProcessorConfig => ({ id: type === "stub" ? "stub" : "glm",
   type, model: type === "stub" ? "stub" : "z-ai/glm-5.3", apiKey: type === "stub" ? null : "k", baseUrl: "https://openrouter.ai/api/v1",
   route: "sync", concurrency: 1, providerOrder: null, reasoning: null, timeoutMs: 600000, maxRetries: 0, answersDir });
@@ -103,6 +103,27 @@ test("§2.2: the second retry's request carries the first retry's attempt, not t
     expect(lastMessage(f, 2).includes('Acceptance output:\nred: export const x = "TWO";\n'), "r2 gets r1's output").toBe(true);
     expect(lastMessage(f, 2).includes('+export const x = "TWO";\n'), "r2 gets r1's diff").toBe(true);
     expect(lastMessage(f, 2).includes('"ONE"'), "nothing of attempt 0 in r2").toBe(false);
+  } finally {
+    t.rm();
+  }
+});
+
+test("§2.2: the retry gets the output of the variant whose diff it gets, not the last variant's stand-in log", async () => {
+  const t = tmpRoot("morph-p9b-");
+  try {
+    const f = fakeFetch();
+    let n = 0;
+    const counting: ReturnType<typeof fakeFetch> = { ...f, fetch: (url, init) => {
+      n += 1;
+      f.set(CHAT, reply(n === 1 ? fenced("ONE") : n === 2 ? "```ts\nexport const x = 2;\n" : fenced("PASS")));
+      return f.fetch(url, init);
+    } };
+    const red = 'grep -q PASS out/a.ts || { echo "red: $(cat out/a.ts)"; exit 1; }';
+    const { outcomes } = await runDeck(input(t.root, [card("a", "out/a.ts", red, [], 2)], 1), deps(config("openrouter", null), counting));
+    expect(`${outcomes[0]?.status} ${outcomes[0]?.attempts}`, "written on r1").toBe("written 2");
+    expect(lastMessage(f, 2).includes('Acceptance output:\nred: export const x = "ONE";\n'), "v1's output").toBe(true);
+    expect(lastMessage(f, 2).includes("answer truncated"), "not v2's stand-in").toBe(false);
+    expect(lastMessage(f, 2).includes('+export const x = "ONE";\n'), "v1's diff").toBe(true);
   } finally {
     t.rm();
   }
