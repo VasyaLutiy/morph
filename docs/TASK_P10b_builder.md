@@ -321,4 +321,31 @@ first V2-cut deck's behaviour, the row of `docs/MEASURE.md`.
 
 ### Gate (preparation)
 
-(filled at the gate)
+07.10, on the laptop, by the preparing orchestrator (Opus 5.5); no paid run. The first deck **cut by V2**:
+`node dist/cli.js plan --component builder --judge --out decks/p10b/deck.json` exit 0, 10 cards, generations
+`[read-checks, steps] [probe-dir, read-checks-judge, steps-judge] [compose, probe-dir-judge] [build-acceptances,
+compose-judge] [build-acceptances-judge]`; `node dist/cli.js deck check` 0 errors / 0 warnings / 0 hazards.
+Cross-check: the old `mrph plan --spec … --component builder --judge` (dry) gives the same 10 ids and, card for
+card, the same dependsOn, generations, targets, slices, acceptances, max_tokens, intent, reasoning and variants
+(mrph leaves a judge's variants unset = 1); the instructions differ by the P10a design only (Data Objects of
+other Components, callee contracts, no "Module …; test" line).
+
+Scratch worktree (a reference of the six targets and five judge files shaped as the probes, deleted
+afterwards), cards run in deck order, each accepted card committed before the next: **10 of 10 chains green,
+7.7–8.3 s each** (81 s in all; limit 250 s); the final tree `tsc`, `eslint`, `vitest run` **558 / 558** (534 +
+24). Typed one-line throwing stubs (`Error: stub <fn> <args>`; types.ts as specified): every code card red at the
+probe — read-checks 7 of 8, steps 11 of 12, probe-dir 5 of 6, compose 8 of 9, build-acceptances 7 of 8 (the
+types test passes on typed stubs); **all 24 record examples red** with a readable line; chains 4.0–4.3 s.
+Judges with their file absent: red at eslint and the guard (2.2–2.6 s). Mutation check: 39 single-rule
+mutations of the reference (steps 12, probe-dir 4, compose 9, read-checks 7, build-acceptances 7) — 39 of 39
+killed by the card's probe (3 survivors of the first pass closed by three new probe rows; one equivalent
+mutation not counted).
+
+Golden: the reference fed with checks documents written from `build.py`'s `PHASES`: P10a 12 / 12 byte for byte
+(= Build Acceptances example 1), P9c 7 / 7; P6–P9 code cards 16 / 16 with `locate`/`full_report` forced on; the
+17 single-file judges of P6–P9 differ in the two lines of §2.2 "Intended differences" (P9 load-spec-judge also
+in the escaped `…`); P3–P5, P9b not comparable from today's map (their judges' map entries were replaced by
+P9b/P9c patches).
+
+Max slice + targets (reference in place): build-acceptances-judge 43 358 bytes (gate 200 KB). Forecast ≈ $0.20
+(≤ $1). Gate holds; the run waits for the operator.
