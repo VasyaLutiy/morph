@@ -3,6 +3,7 @@ import type { Card } from "../../src/cards/types.js";
 import { validateCard } from "../../src/cards/model.js";
 import { compileCard } from "../../src/compiler/compile.js";
 import type { CompileResult } from "../../src/compiler/types.js";
+import { outputDirective } from "../../src/compiler/directive.js";
 import { fixtureJson, fixturePath } from "../helpers.js";
 
 function loadCard(name: string): Card {
@@ -29,7 +30,7 @@ describe("compileCard examples", () => {
       "Contents of file docs/B.md:\n```md\n# B\n\nBeta doc.\n```",
     );
     expect(r.requests[0].messages[2].content).toBe(
-      "Write src/a.ts.\n\nAnswer with the complete new content of src/a.ts in one fenced block and nothing else.",
+      "Write src/a.ts.\n\n" + outputDirective(["src/a.ts"]),
     );
     expect(JSON.stringify(r.inputs)).toBe(
       '{"docs/A.md":"5ab70d8e40bc35ca","docs/B.md":"18fe47246e49d6ea","src/a.ts":"absent"}',
@@ -52,7 +53,7 @@ describe("compileCard examples", () => {
       "Contents of file docs/A.md:\n```md\n# A\n\nAlpha doc.\n```",
     );
     expect(r.requests[0].messages[2].content).toBe(
-      "Patch src/x.ts.\n\nAnswer with the complete new content of src/x.ts in one fenced block and nothing else.",
+      "Patch src/x.ts.\n\n" + outputDirective(["src/x.ts"]),
     );
     expect(JSON.stringify(r.inputs)).toBe(
       '{"docs/A.md":"5ab70d8e40bc35ca","src/x.ts":"73ab5a7f1128f2bb"}',
@@ -104,9 +105,7 @@ describe("compileCard rules", () => {
     if (!r.ok) expect.unreachable("patchNew should compile");
     expect(r.requests[0].messages[2].content).toBe(
       "Patch src/x.ts and add src/z.ts.\n\n" +
-        "Answer with one section per file, each starting with a line `FILE: <path>` " +
-        "followed by one fenced block; every target exactly once, no other text. " +
-        "The targets, in this order: src/x.ts, src/z.ts.",
+        outputDirective(["src/x.ts", "src/z.ts"]),
     );
   });
 
