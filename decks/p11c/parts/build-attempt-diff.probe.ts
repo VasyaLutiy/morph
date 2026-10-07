@@ -3,7 +3,7 @@
 // -> <after lines> lines] ...\n" instead of hunks, and the LCS table is never built. Record Build Attempt Diff examples
 // 6-7, then the §2.2 rows.
 import { test, expect } from "vitest";
-import { buildAttemptDiff, DIFF_CAP } from "../../src/acceptance/diff.js";
+import { buildAttemptDiff, DIFF_CAP, DIFF_LCS_CAP } from "../../src/acceptance/diff.js";
 
 const lines = (n: number, f: (i: number) => string): string => Array.from({ length: n }, (_, i) => f(i) + "\n").join("");
 
@@ -18,12 +18,12 @@ test("Build Attempt Diff example 7: 4000 x 4000 lines is still diffed", () => {
   expect(got).toBe("--- a/src/c.ts\n+++ b/src/c.ts\n@@ -3997,4 +3997,4 @@\n c 3996\n c 3997\n c 3998\n-c 3999\n+C 3999\n");
 });
 
-test("§2.2 rows: the cap is a product of line counts; an absent side; per file; equal files; the cap is not a hard-coded count", () => {
+test("§2.2 rows: the cap is a product of line counts; an absent side; per file; equal files; the cap exported", () => {
   const big = lines(20000, (i) => "n" + i);
   const fresh = buildAttemptDiff({ "gen/n.txt": null }, { "gen/n.txt": big });
   expect(`${fresh.length} ${fresh.includes("diff skipped")} ${fresh.startsWith("--- /dev/null\n+++ b/gen/n.txt\n@@ -0,0 +1,20000 @@\n+n0\n")}`,
     "0 x 20000: clipped, not skipped").toBe(`5959 false true`);
-  expect(DIFF_CAP, "the section cap unchanged").toBe(6000);
+  expect(`${DIFF_CAP} ${DIFF_LCS_CAP}`, "the section cap unchanged; the LCS cap exported").toBe("6000 16000000");
   const wide = buildAttemptDiff({ w: lines(2, (i) => "w" + i) }, { w: lines(8000001, () => "") });
   expect(wide, "2 x 8000001").toBe("--- a/w\n+++ b/w\n... [diff skipped: 2 -> 8000001 lines] ...\n");
   const two = buildAttemptDiff(
