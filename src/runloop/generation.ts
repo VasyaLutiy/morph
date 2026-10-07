@@ -1,15 +1,17 @@
-// src/runloop/generation.ts — Process Generation (TASK_P5 §2.2, patched by TASK_P9b §2.2, TASK_P10c §2.2 and TASK_P10c2 §2.2).
+// src/runloop/generation.ts — Process Generation (TASK_P5 §2.2, patched by TASK_P9b §2.2, TASK_P10c §2.2, TASK_P10c2 §2.2 and TASK_P11c2 §2.2).
 //
-// compile → send → parse → verify per card. A compile fault or a stale input
-// digest discards the answer before any acceptance runs; an accepted card
-// fires the injected commit hook. All compiled-ok requests go out in ONE
-// sendGeneration call so the config's concurrency pools across the whole
-// generation. The acceptance runs under its own timeout (deps.acceptanceTimeoutMs
-// or Run Acceptance's default), never the processor's HTTP timeout; a rejected
-// card's retry context comes from the variant that got furthest. When
-// deps.onVariant is set, every request SENT gets one VariantRecord, right
-// after its card is decided (an accepted card's commit hook first), in card
-// order then variant order; a compile fault sends nothing, so no record.
+// compile → send → parse → verify per card. A card with no acceptance (null or
+// blank) is never compiled or sent: it fails "no acceptance" on the compile-fault
+// path. A compile fault or a stale input digest discards the answer before any
+// acceptance runs; an accepted card fires the injected commit hook. All compiled-ok
+// requests go out in ONE sendGeneration call so the config's concurrency pools
+// across the whole generation. The acceptance runs under its own timeout
+// (deps.acceptanceTimeoutMs or Run Acceptance's default), never the processor's
+// HTTP timeout; a rejected card's retry context comes from the variant that got
+// furthest. When deps.onVariant is set, every request SENT gets one VariantRecord,
+// right after its card is decided (an accepted card's commit hook first), in card
+// order then variant order; a compile fault or a no-acceptance card sends nothing,
+// so no record.
 
 import { compileCard } from "../compiler/compile.js";
 import { parseAnswer } from "../compiler/parse.js";
@@ -71,10 +73,18 @@ export async function processGeneration(
   deps: RunDeps,
   root: string
 ): Promise<GenerationOutcome> {
-  // 1. compile every card; a fault becomes the failed outcome at once
+  // 1. a card with no acceptance is never compiled or sent; else compile every
+  // card and a fault becomes the failed outcome at once
   const compiled: CompiledCard[] = [];
   const compileFailed = new Map<string, CardOutcome>();
   for (const card of cards) {
+    if (card.acceptance === null || card.acceptance.trim() === "") {
+      compileFailed.set(
+        card.customId,
+        failedOutcome(card.customId, "no acceptance", "no acceptance")
+      );
+      continue;
+    }
     const r = compileCard(card, root);
     if (r.ok) {
       compiled.push({ card, requests: r.requests, inputs: r.inputs });
@@ -282,8 +292,8 @@ export async function processGeneration(
   }
 
   // 4. merge the two paths back into the input card order; a compile fault
-  // carries its own retry context (the fault messages, no diff) and, having
-  // sent nothing, no variant record
+  // or a no-acceptance card carries its own retry context and, having sent
+  // nothing, no variant record
   const merged: CardOutcome[] = [];
   let pi = 0;
   for (const card of cards) {
