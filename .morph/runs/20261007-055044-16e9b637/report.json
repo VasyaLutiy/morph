@@ -1,0 +1,504 @@
+{
+  "deck_id": "20261007-055044-16e9b637",
+  "completed_at": "2026-10-07T06:03:03.437",
+  "branch": "morph/20261007-055044-16e9b637",
+  "backend_label": "glm53",
+  "generations": [
+    [
+      "validate-record"
+    ],
+    [
+      "select-components",
+      "validate-map",
+      "validate-record-judge"
+    ],
+    [
+      "load-spec",
+      "select-components-judge",
+      "validate-map-judge"
+    ],
+    [
+      "load-spec-judge"
+    ]
+  ],
+  "batch_ids": [
+    "local-a11dc019e91745c79f4cd80e7e9a2107",
+    "local-4f8abe514e2c457799cd4941812b4974",
+    "local-405d6cf98f2640ae8e3fe89fc0c1b1aa",
+    "local-462fe7cd2cc24ca19619ceb5ce4faf4f",
+    "local-488aba58137e42309c085e03d4328050",
+    "local-f87bb77a163544e3854fb54cb56f23db",
+    "local-f6664907fb0a4c65ac73ba80914caa33",
+    "local-f2a8c886a8cc4d23877ffc8b1c8df82d",
+    "local-34934ad4d97b457f828fd4a15a954fd7"
+  ],
+  "outcomes": {
+    "validate-record": {
+      "custom_id": "validate-record",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/contour/types.ts",
+        "/home/morph/MorphV2/src/contour/record.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 3,
+      "winning_variant": "validate-record.r2.v1",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\n== eslint\n\n/home/morph/MorphV2/src/contour/record.ts\n  6:3  error  'ContourRecord' is defined but never used  @typescript-eslint/no-unused-vars\n\n✖ 1 problem (1 error, 0 warnings)\n\n",
+      "commit": "8ae662ff5f73b3e96299c39d2b005a0187b274e4",
+      "diffstat": [
+        {
+          "path": "src/contour/record.ts",
+          "insertions": 377,
+          "deletions": 0
+        },
+        {
+          "path": "src/contour/types.ts",
+          "insertions": 44,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/contour/types.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          },
+          {
+            "path": "src/contour/record.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "select-components": {
+      "custom_id": "select-components",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/contour/select.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "select-components.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "5a354853b03125fe2009e0445844feb24c070990",
+      "diffstat": [
+        {
+          "path": "src/contour/select.ts",
+          "insertions": 63,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/contour/select.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "validate-record-judge": {
+      "custom_id": "validate-record-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/contour/record.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "validate-record-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "53c550a38e4fbc845941acb22e5557a278cedc3f",
+      "diffstat": [
+        {
+          "path": "tests/contour/record.examples.test.ts",
+          "insertions": 237,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/contour/record.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "validate-map": {
+      "custom_id": "validate-map",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/contour/map.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 2,
+      "winning_variant": "validate-map.r1.v1",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\n== eslint\n\n/home/morph/MorphV2/src/contour/map.ts\n  114:7   error  'version' is never reassigned. Use 'const' instead                 prefer-const\n  114:16  error  Expected a `const` assertion instead of a literal type annotation  @typescript-eslint/prefer-as-const\n  144:7   error  'groups' is never reassigned. Use 'const' instead                  prefer-const\n  175:7   error  'cards' is never reassigned. Use 'const' instead                   prefer-const\n  195:7   error  'extraCards' is never reassigned. Use 'const' instead              prefer-const\n\n✖ 5 problems (5 errors, 0 warnings)\n  4 errors and 0 warnings potentially fixable with the `--fix` option.\n\n",
+      "commit": "650695b151cf1427ce843204f0a1c66dfacd9577",
+      "diffstat": [
+        {
+          "path": "src/contour/map.ts",
+          "insertions": 229,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/contour/map.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "load-spec": {
+      "custom_id": "load-spec",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/src/contour/load.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "load-spec.v1",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "a7085e3f398d19aa3d81e317dea3e3cc1240b37e",
+      "diffstat": [
+        {
+          "path": "src/contour/load.ts",
+          "insertions": 68,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "src/contour/load.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "validate-map-judge": {
+      "custom_id": "validate-map-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/contour/map.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 1,
+      "winning_variant": "validate-map-judge",
+      "acceptance_output": null,
+      "earlier_failures": null,
+      "commit": "af401fff48f0d27bdb7b94eddb9bc877617fd06b",
+      "diffstat": [
+        {
+          "path": "tests/contour/map.examples.test.ts",
+          "insertions": 145,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/contour/map.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "select-components-judge": {
+      "custom_id": "select-components-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/contour/select.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 2,
+      "winning_variant": "select-components-judge.r1",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\n== eslint\n\n/home/morph/MorphV2/tests/contour/select.examples.test.ts\n  114:7  error  'r' is assigned a value but never used  @typescript-eslint/no-unused-vars\n\n✖ 1 problem (1 error, 0 warnings)\n\n",
+      "commit": "f6a9517d489388d68c5194e4bd6c20fa76cff226",
+      "diffstat": [
+        {
+          "path": "tests/contour/select.examples.test.ts",
+          "insertions": 112,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/contour/select.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    },
+    "load-spec-judge": {
+      "custom_id": "load-spec-judge",
+      "status": "written",
+      "paths": [
+        "/home/morph/MorphV2/tests/contour/load.examples.test.ts"
+      ],
+      "reason": null,
+      "finish_reason": "stop",
+      "attempts": 2,
+      "winning_variant": "load-spec-judge.r1",
+      "acceptance_output": null,
+      "earlier_failures": "== tsc\n== eslint\n== guard\n== own\n FAIL  tests/contour/load.examples.test.ts > Load Spec example 3: many problems are cut at twenty, one is singular, a bad parse surfaces\nAssertionError: expected { ok: false, …(1) } to strictly equal { ok: false, …(1) }\n Test Files  1 failed (1)\n      Tests  1 failed | 10 passed (11)\n",
+      "commit": "761408b37d405855be747db6ad38fa4520c1b6ca",
+      "diffstat": [
+        {
+          "path": "tests/contour/load.examples.test.ts",
+          "insertions": 153,
+          "deletions": 0
+        }
+      ],
+      "syntax_gate": {
+        "passed": true,
+        "checks": [
+          {
+            "path": "tests/contour/load.examples.test.ts",
+            "level": "tree-sitter",
+            "status": "skipped",
+            "line": null,
+            "message": "tree-sitter not installed (pip install tree-sitter tree-sitter-typescript)"
+          }
+        ]
+      }
+    }
+  },
+  "usage": {
+    "validate-record.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352245-q7NBtvfIITyS0UPajCkh",
+      "input_tokens": 12899,
+      "output_tokens": 5629,
+      "cost": 0.00847026,
+      "finish_reason": "stop"
+    },
+    "validate-record.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352245-DcHH2y89aGGkKJDRmTdV",
+      "input_tokens": 12899,
+      "output_tokens": 15494,
+      "cost": 0.025672668,
+      "finish_reason": "stop"
+    },
+    "validate-record.r1.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352407-UBHNuszS3edAxYU68ecS",
+      "input_tokens": 13001,
+      "output_tokens": 9245,
+      "cost": 0.013220556,
+      "finish_reason": "stop"
+    },
+    "validate-record.r1.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352406-AcdMHe7IhaUpnNxSNMnl",
+      "input_tokens": 13001,
+      "output_tokens": 11788,
+      "cost": 0.016686756,
+      "finish_reason": "stop"
+    },
+    "validate-record.r2.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352550-4lULpxfLbaEhAC68ENlI",
+      "input_tokens": 21803,
+      "output_tokens": 6349,
+      "cost": 0.013204116,
+      "finish_reason": "stop"
+    },
+    "validate-record.r2.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352550-oCyDSXRvefcXmSTmCzVj",
+      "input_tokens": 21803,
+      "output_tokens": 6092,
+      "cost": 0.009778668,
+      "finish_reason": "stop"
+    },
+    "select-components.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352644-5qqJyFDzA9wCjPjB6gSQ",
+      "input_tokens": 13447,
+      "output_tokens": 623,
+      "cost": 0.002902356,
+      "finish_reason": "stop"
+    },
+    "select-components.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352644-9SkpFh43AuXEVT1Jzyc7",
+      "input_tokens": 13447,
+      "output_tokens": 1336,
+      "cost": 0.003843516,
+      "finish_reason": "stop"
+    },
+    "validate-record-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352656-MzD6MG3B7lVaPgfugHxx",
+      "input_tokens": 17295,
+      "output_tokens": 1737,
+      "cost": 0.005967108,
+      "finish_reason": "stop"
+    },
+    "validate-map.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352650-9S3PbixtilBnA9U2mln3",
+      "input_tokens": 13191,
+      "output_tokens": 2313,
+      "cost": 0.004084452,
+      "finish_reason": "stop"
+    },
+    "validate-map.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352643-njxXYY2s24tdnIvCqfAp",
+      "input_tokens": 13191,
+      "output_tokens": 4306,
+      "cost": 0.007415628,
+      "finish_reason": "stop"
+    },
+    "validate-map.r1.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352752-hJ3eLqDjzKedYchHR6Lm",
+      "input_tokens": 20742,
+      "output_tokens": 2088,
+      "cost": 0.007024536,
+      "finish_reason": "stop"
+    },
+    "validate-map.r1.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352752-n8frm9URsqMgciNf2TkB",
+      "input_tokens": 20742,
+      "output_tokens": 2235,
+      "cost": 0.004592016,
+      "finish_reason": "stop"
+    },
+    "load-spec.v2": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352797-O9WxBYM4dmwX8ZPYE96y",
+      "input_tokens": 18802,
+      "output_tokens": 582,
+      "cost": 0.005075448,
+      "finish_reason": "stop"
+    },
+    "load-spec.v1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352797-4zGmxRnz4bCGx4nb6xU7",
+      "input_tokens": 18802,
+      "output_tokens": 626,
+      "cost": 0.002331864,
+      "finish_reason": "stop"
+    },
+    "select-components-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352797-70SfP79hfUEjac1daaTj",
+      "input_tokens": 17839,
+      "output_tokens": 1281,
+      "cost": 0.004433604,
+      "finish_reason": "stop"
+    },
+    "validate-map-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352803-w3G45aUMni7ebatqpsK6",
+      "input_tokens": 15836,
+      "output_tokens": 1553,
+      "cost": 0.004411032,
+      "finish_reason": "stop"
+    },
+    "select-components-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352876-XqongYSjU2yx5bhDpYPN",
+      "input_tokens": 23420,
+      "output_tokens": 1239,
+      "cost": 0.005430792,
+      "finish_reason": "stop"
+    },
+    "load-spec-judge": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352913-ZMqDO6xy3dbu9iK49xD6",
+      "input_tokens": 14847,
+      "output_tokens": 1736,
+      "cost": 0.004937628,
+      "finish_reason": "stop"
+    },
+    "load-spec-judge.r1": {
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generation_id": "gen-1791352938-F7T6ygmGR12YhYtOAZaM",
+      "input_tokens": 20858,
+      "output_tokens": 1824,
+      "cost": 0.006155688,
+      "finish_reason": "stop"
+    }
+  },
+  "usage_totals": {
+    "input_tokens": 337865,
+    "output_tokens": 78076,
+    "cost": 0.155638692,
+    "requests": 20,
+    "requests_with_usage": 20
+  },
+  "orchestrator_usage": {}
+}
