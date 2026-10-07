@@ -1,0 +1,147 @@
+import { describe, expect, it } from "vitest";
+import { runDeck } from "../../src/runloop/deck.js";
+import { fakeFetch, tmpRoot } from "../helpers.js";
+import type { TmpRoot } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+import type { RunDeps, RunInput } from "../../src/runloop/types.js";
+
+function card(customId: string, acceptance: string, dependsOn: string[] = []): Card {
+  return {
+    customId,
+    intent: "generate",
+    targets: [customId + ".ts"],
+    contextSlice: [],
+    instruction: "write " + customId,
+    acceptance,
+    model: null,
+    maxTokens: null,
+    reasoning: null,
+    variants: 1,
+    dependsOn
+  };
+}
+
+function deps(t: TmpRoot, fired: string[], throwOn: string | null): RunDeps {
+  return {
+    config: {
+      id: "stub",
+      type: "stub",
+      model: "stub",
+      apiKey: null,
+      baseUrl: "https://openrouter.ai/api/v1",
+      route: "sync",
+      concurrency: 4,
+      providerOrder: null,
+      reasoning: null,
+      timeoutMs: 600000,
+      maxRetries: 0,
+      answersDir: t.path("answers")
+    },
+    transport: { fetch: fakeFetch().fetch, sleep: async (): Promise<void> => {} },
+    now: (): number => 0,
+    env: { PATH: process.env.PATH ?? "" },
+    commit: (customId: string) => {
+      fired.push(customId);
+      if (customId === throwOn) throw new Error("index.lock: File exists");
+      return {
+        commit: "sha-" + customId,
+        diffstat: { files: 1, insertions: 1, deletions: 0 }
+      };
+    }
+  };
+}
+
+function runInput(t: TmpRoot, runId: string, cards: Card[]): RunInput {
+  return {
+    root: t.root,
+    runId,
+    branch: "morph/" + runId,
+    deck: { cards, externalDependsOn: [] },
+    budget: { maxCards: cards.length, maxRetryBatches: 1, deadline: 1e15 }
+  };
+}
+
+function fencedTs(body: string): string {
+  return "```ts\n" + body + "```\n";
+}
+
+describe("Run Deck", () => {
+  it("Run Deck example 9", async () => {
+    const t = tmpRoot();
+    try {
+      t.write("answers/a.md", fencedTs("export const a = 1;\n"));
+      t.write("answers/b.md", fencedTs("export const b = 1;\n"));
+      t.write("answers/c.md", fencedTs("export const c = 1;\n"));
+      const fired: string[] = [];
+      const cards = [card("a", "true"), card("b", "true", ["a"]), card("c", "true", ["b"])];
+      const result = await runDeck(runInput(t, "r9", cards), deps(t, fired, "b"));
+      const report = result.report;
+      expect(report.generations).toBe(3);
+      expect(report.usageTotals.requests).toBe(1);
+      expect(report.fault).toBe("index.lock: File exists");
+      const keys = Object.keys(report);
+      expect(keys[keys.length - 1]).toBe("fault");
+      expect(fired).toStrictEqual(["a", "b"]);
+      const a = result.outcomes.find((o) => o.customId === "a");
+      expect(a?.status).toBe("written");
+      expect(a?.attempts).toBe(1);
+      expect(a?.winningVariant).toBe("a.v1");
+      expect(a?.commit).toBe("sha-a");
+      const b = result.outcomes.find((o) => o.customId === "b");
+      expect(b).toStrictEqual({
+        customId: "b",
+        status: "skipped",
+        reason: "fault",
+        attempts: 0,
+        winningVariant: null,
+        acceptanceLog: "",
+        earlierFailures: [],
+        commit: null,
+        diffstat: null
+      });
+      const c = result.outcomes.find((o) => o.customId === "c");
+      expect(c).toStrictEqual({
+        customId: "c",
+        status: "skipped",
+        reason: "fault",
+        attempts: 0,
+        winningVariant: null,
+        acceptanceLog: "",
+        earlierFailures: [],
+        commit: null,
+        diffstat: null
+      });
+    } finally {
+      t.rm();
+    }
+  });
+
+  it("Run Deck example 10", async () => {
+    const t = tmpRoot();
+    try {
+      t.write("answers/a.md", fencedTs("export const a = 1;\n"));
+      t.write("answers/a.r1.md", fencedTs("export const a = 1;\n"));
+      t.write("answers/a.r2.md", fencedTs("export const MARK_A = 1;\n"));
+      t.write("answers/b.md", fencedTs("export const MARK_B = 1;\n"));
+      const fired: string[] = [];
+      const cards = [card("a", "grep -q MARK_A a.ts"), card("b", "grep -q MARK_B b.ts", ["a"])];
+      const result = await runDeck(runInput(t, "r10", cards), deps(t, fired, null));
+      const a = result.outcomes.find((o) => o.customId === "a");
+      expect(a?.status).toBe("written");
+      expect(a?.attempts).toBe(3);
+      expect(a?.winningVariant).toBe("a.r2.v1");
+      expect(a?.commit).toBe("sha-a.r2");
+      const b = result.outcomes.find((o) => o.customId === "b");
+      expect(b?.status).toBe("written");
+      expect(b?.attempts).toBe(1);
+      expect(b?.winningVariant).toBe("b.v1");
+      expect(b?.commit).toBe("sha-b");
+      const requestIds = (result.report.requests ?? []).map((row) => row.customId);
+      expect(requestIds).toStrictEqual(["a.v1", "a.r1.v1", "a.r2.v1", "b.v1"]);
+      expect(fired).toStrictEqual(["a.r2", "b"]);
+      expect("fault" in result.report).toBe(false);
+    } finally {
+      t.rm();
+    }
+  });
+});
