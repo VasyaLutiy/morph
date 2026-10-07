@@ -82,7 +82,7 @@ longer exists anywhere.
 **`buildRetry`** (`src/runloop/retry.ts`) — the signature, the attempt check, the id rule and the
 copied fields stay as P5 (byte for byte). `previousDiff === null` means the acceptance never ran
 (answer discarded unread, compile fault, stale inputs); a string, `""` included, means it ran. With
-`I` = `card.instruction`, `A` = `card.acceptance`, `O` = `acceptanceOutput`, `D` = `previousDiff`
+`I` = `card.instruction`, `A` = `card.acceptance ?? ""` (the command processGeneration runs), `O` = `acceptanceOutput`, `D` = `previousDiff`
 (`\n` is a line break):
 
 | case | instruction, exactly |
@@ -292,9 +292,9 @@ venv/bin/mrph run --root <repo> --processor glm53 --deadline 2400   # on the ope
 | quantity | prediction |
 |---|---|
 | cards / generations | 7 (3 code, 4 judges) / 2: [build-attempt-diff, build-retry, process-generation] [the four judges] |
-| executor bill | ≈ $0.08 nominal (≈ 10 first requests of ≈ 8–14k in / ≈ 1–5k out, + ≈ 40 % retries), ≤ $0.25 with a re-cut |
+| executor bill | ≈ $0.06 nominal (10 first requests — 3 code × 2 variants + 4 judges — of ≈ 8–12k in / ≈ 1–5k out; a retry now carries its 17–23k-char acceptance, ≈ +5k tokens), ≤ $0.15 with retries and a re-cut |
 | cards with regeneration | 2 of 7 (build-attempt-diff: the budget arithmetic; build-retry-judge: two files and backticks inside strings) |
-| tests after the run | 479 − 3 replaced + 5 new example tests ≈ 481 |
+| tests after the run | 480 (479 + Build Attempt Diff 5; BR 5–6 and PG 8 replace three tests) — the reference tree's count |
 | first red | build-attempt-diff: the head/tail budget off by the marker length, or a global clip left in place; build-retry: "the file" pluralised or the backticks escaped; judges: a hand-copied text one word off (the firstdiff line names it) |
 
 **Falsifiable claims:** (1) no judge red traces to a fact of §2.1 F1–F4; (2) no card red on a
@@ -311,4 +311,44 @@ the P9 deck replayed on the V2 binary built from this phase's tree.
 
 ### Gate (preparation)
 
-Filled at the gate.
+07.10, on the laptop, by the preparing orchestrator (Opus 5.5); no paid run. Record validated by a dry
+`mrph plan --spec --component runloop --component acceptance --judge` (exit 0; 16 cards: the 7 of P9c +
+resolve, run-deck, snapshot-targets, run-acceptance, verify-card and their judges but run-deck-judge,
+not added; per Component: runloop 5 of 8, acceptance 2 of 8). `deck clear`, `deck reset`, `deck add`
+of the 7 cards, `deck check`: 7 cards, 0 errors, 0 warnings, 0 hazards; generations
+`[build-attempt-diff, build-retry, process-generation] [build-attempt-diff-judge, build-retry-judge,
+process-generation-judge, run-deck-judge]`; every card's acceptance in `.morph/deck.json` equals the
+map's. run-deck-judge keeps the planner's `depends_on` run-deck, absent from the deck (external).
+
+Old runner parity: the reference clip, applied to V2's section text of examples 4 and 5, equals mrph
+`cards/attempt_diff.py::_clip_diff` on the same text, byte for byte (python import of mrph's module).
+
+Ripple spike (scratch worktree, crude reference of the three code changes): exactly 10 tests red in 5
+files — `diff.examples` 1 (example 4), `retry.examples` 3 (examples 1, 2, "exact prefix"),
+`retry.p9b.examples` 3 (example 4 + the two replaced), `generation.p9b.examples` 1 (the replaced own
+test), `deck.p9b.examples` 2 (example 4, the truncated row); every one in a file a judge of this deck
+patches. verify.examples, the P5 deck/generation files: green.
+
+Stubs (scratch worktree at the data commit; the patch targets at HEAD are the stubs): build-attempt-diff
+red at the probe on 5 of 8 (examples 4, 5 and the three rows, each with a readable `AssertionError`
+line and a `first difference at char` line; examples 1–3 hold: rules 1–4 unchanged); build-retry red on
+8 of 9 (every example but 3, the throw, unchanged); process-generation red on PG 8 alone (`previousDiff:
+null` vs `""`; examples 4–6 and the stale row hold: unchanged behaviour). Judges on the HEAD files (code
+references in place): red at the guard, the new example literals missing; build-retry-judge with a
+test name removed red at the names step (`test removed: "Build Retry: only the trailing retry suffix is
+stripped"`); with one blank line dropped from example 6's expected text red at its own step with
+`first difference at char 108 (line 6) of 191/192: expected "...src/c.ts`):\nred\n</acceptance_output>..."`.
+Stub chains 1.7–2.6 s.
+
+Reference (scratch, per card in generation order, each card's targets committed after its acceptance as
+Morph would): 7 of 7 chains green, 4.8–7.8 s each (limit 250 s); the tree after: 480 tests in 48 files
+green, `tsc --noEmit` and `eslint src tests` green. Mutations: 16 single-rule mutations of the reference
+— build-attempt-diff 6 (one global clip, tail budget 0, head budget without the marker, marker without
+its newline, `n` counting the marker, `<` for `<=` at the cap), build-retry 8 (backticks replaced,
+`""` given the diff block, always the ran framing, "files", no newline before the closing tag, "your
+own", the command clipped at 2 000, a null acceptance printed `null`), process-generation 2 (`""` →
+null, the first ran variant) — 16 of 16 killed by the card's probe. The null-acceptance case was found
+by the mutation run (`Card.acceptance` is `string | null`); §2.2 now pins `A = card.acceptance ?? ""`.
+
+Max slice + targets + instruction: build-attempt-diff-judge 48 989 bytes, process-generation-judge
+45 233 (gate 200 KB). Forecast ≈ $0.06 nominal, ≤ $0.15 (≤ $1 gate, cap $5).

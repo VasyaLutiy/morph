@@ -703,7 +703,7 @@ System:
             included, means it ran. instruction = card.instruction + "\n\n<acceptance_output>\n"
             + header + "\n" + acceptanceOutput + "\n</acceptance_output>\n" + closing, where
             it ran → header "A previous attempt failed its acceptance check (`" +
-            card.acceptance + "`):" and closing "Please fix the issues and produce the
+            (card.acceptance ?? "") + "`):" and closing "Please fix the issues and produce the
             complete corrected file."; previousDiff null → header "A previous attempt was
             discarded before acceptance could run:" and closing "Produce the complete file
             again, from the context given above.". When previousDiff is a non-empty string,

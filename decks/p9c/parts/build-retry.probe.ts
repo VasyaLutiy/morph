@@ -61,6 +61,8 @@ test("§2.2: the command goes between the backticks as it is, never escaped or c
   const cmd = 'echo `date` "$HOME" \'x\'\n' + "y".repeat(30000) + "\n(\n set -e\n)";
   const r = buildRetry(card("c", cmd), 1, "o", "d");
   expect(r.instruction.startsWith("Write c.\n\n<acceptance_output>\nA previous attempt failed its acceptance check (`" + cmd + "`):\no\n"), "raw command").toBe(true);
+  expect(buildRetry({ ...card("c"), acceptance: null }, 1, "o", "d").instruction.includes("acceptance check (``):\no\n"),
+    "a null acceptance is the empty command").toBe(true);
   expect(r.instruction.length, "nothing clipped").toBe(RAN.length - "grep -q MARK src/c.ts".length + cmd.length + 1 + FIX.length + DIFF_HEAD.length + 1 + DIFF_TAIL.length);
 });
 

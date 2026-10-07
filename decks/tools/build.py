@@ -386,7 +386,7 @@ P9C_JUDGE_FILES = {
                   "Build Retry: an empty string diff is not null and gets the block"]}],
     "process-generation-judge": [
         {"file": "tests/runloop/generation.p9b.examples.test.ts", "min": 5, "max": 13,
-         "lits": ["Process Generation example 8", 'previousDiff: ""'],
+         "lits": ["Process Generation example 8"],
          "drop": ["Process Generation own: an attempt that changed nothing gets the block-less context (empty diff is null)"]}],
     "run-deck-judge": [
         {"file": "tests/runloop/deck.p9b.examples.test.ts", "min": 2, "max": 13,
