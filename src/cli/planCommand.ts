@@ -2,9 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { loadContour, loadMap } from "../contour/load.js";
 import { planSpec } from "../planner/plan.js";
+import { buildAcceptances } from "../builder/buildAcceptances.js";
+import { resolveProfile } from "../language/profiles.js";
+import { readPlanChecks } from "./readPlanChecks.js";
 import { errorDocument } from "./document.js";
 import type { ContourMap } from "../contour/types.js";
 import type { PlanResult } from "../planner/types.js";
+import type { Card } from "../cards/types.js";
 import type { CommandResult, PlanArgs } from "./types.js";
 
 export const EMPTY_MAP: ContourMap = {
@@ -75,10 +79,52 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
   }
   const plan = planned.plan;
 
+  let cards: Card[] = plan.cards;
+  if (args.checks !== undefined) {
+    const read = readPlanChecks(root, args.checks);
+    if (!read.ok) {
+      return read.result;
+    }
+    const profiled = resolveProfile(null, map.language);
+    if (!profiled.ok) {
+      return { code: 2, document: errorDocument(2, "DeckError", "the map: " + profiled.error) };
+    }
+    const built = buildAcceptances({
+      cards: plan.cards,
+      checks: read.checks,
+      profile: profiled.profile,
+      texts: read.texts,
+    });
+    if (!built.ok) {
+      const n = built.errors.length;
+      return {
+        code: 2,
+        document: errorDocument(
+          2,
+          "DeckError",
+          "acceptances not built (" +
+            n +
+            " error" +
+            (n === 1 ? "" : "s") +
+            "):\n" +
+            built.errors.join("\n"),
+        ),
+      };
+    }
+    const overridden = new Set<string>();
+    for (const m of map.cards) {
+      if (m.acceptance !== null) overridden.add(m.customId ?? m.id);
+    }
+    for (const e of map.extraCards) {
+      if (e.acceptance !== null && e.customId !== null) overridden.add(e.customId);
+    }
+    cards = built.cards.map((c, i) => (overridden.has(c.customId) ? plan.cards[i] : c));
+  }
+
   if (args.out !== null) {
     const outAbs = path.resolve(root, args.out);
     fs.mkdirSync(path.dirname(outAbs), { recursive: true });
-    fs.writeFileSync(outAbs, JSON.stringify(plan.cards, null, 2) + "\n", "utf8");
+    fs.writeFileSync(outAbs, JSON.stringify(cards, null, 2) + "\n", "utf8");
   }
 
   return {
@@ -86,7 +132,7 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
     document: {
       spec: plan.spec,
       components: plan.components,
-      cards: plan.cards,
+      cards,
       generations: plan.generations,
       externalDependsOn: plan.externalDependsOn,
       out: args.out,
