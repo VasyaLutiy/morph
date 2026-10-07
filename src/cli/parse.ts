@@ -14,6 +14,7 @@ const VALUE_FLAGS: ReadonlySet<string> = new Set([
   "--component",
   "--map",
   "--out",
+  "--checks",
 ]);
 
 const NOT_YET_WORDS: ReadonlySet<string> = new Set([
@@ -57,6 +58,7 @@ const PLAN_FLAGS: ReadonlySet<string> = new Set([
   "--map",
   "--judge",
   "--out",
+  "--checks",
 ]);
 
 function isPositiveInteger(v: string): boolean {
@@ -182,6 +184,7 @@ export function parseCommand(argv: string[]): ParseResult {
       map: values.get("--map") ?? null,
       judge: seen.has("--judge"),
       out: values.get("--out") ?? null,
+      ...(values.has("--checks") ? { checks: values.get("--checks") ?? "" } : {}),
     };
     return { ok: true, command };
   }

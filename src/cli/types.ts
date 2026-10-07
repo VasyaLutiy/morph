@@ -15,7 +15,7 @@ export interface RunArgs {
 }
 export interface PlanArgs {
   name: "plan"; root: string; pretty: boolean; spec: string; components: string[]; map: string | null;
-  judge: boolean; out: string | null;
+  judge: boolean; out: string | null; checks?: string;
 }
 export type Command = DeckCheckArgs | RunArgs | PlanArgs;
 export type ParseResult = { ok: true; command: Command } | { ok: false; error: ErrorDocument };
