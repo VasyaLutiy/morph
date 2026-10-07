@@ -6,9 +6,11 @@ export function commitPaths(
   paths: string[],
   subject: string,
   trailers: Trailer[],
-  env: Record<string, string>
+  env: Record<string, string>,
+  force = false
 ): CommitInfo | null {
-  gitOk(root, ["add", "-A", "--", ...paths], env);
+  const addArgs = force ? ["add", "-A", "-f", "--", ...paths] : ["add", "-A", "--", ...paths];
+  gitOk(root, addArgs, env);
   const staged = gitOk(root, ["diff", "--cached", "--name-only", "--", ...paths], env);
   if (staged.trim() === "") {
     return null;
@@ -46,7 +48,7 @@ export function commitCard(
     trailers.push(["Morph-Variant", input.variant]);
   }
   trailers.push(["Morph-Acceptance-Exit", String(input.acceptanceExit)]);
-  return commitPaths(root, input.targets, subject, trailers, env);
+  return commitPaths(root, input.targets, subject, trailers, env, true);
 }
 
 export function makeCommitHook(
