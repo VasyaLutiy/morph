@@ -97,6 +97,11 @@ const STORE = REC.system.groups[1] as Component;
 const EMPTY_MAP: ContourMap = { version: 1, package: null, language: null, docs: [], groups: [], cards: [], extraCards: [] };
 ```
 
+**Copy this skeleton, then delete every constant your file does not use** (`LEDGER`, `STORE`,
+`EMPTY_MAP`, … and their now-unused type imports): eslint rejects an unused variable, and "verbatim"
+means the text of what you keep, not keeping all of it (run 20261007-111944: plan-spec-judge was green
+on every test and red only on an unused `EMPTY_MAP`).
+
 Order Deck builds cards with `const card = (id: string, dependsOn: string[]): Card => ({ customId: id,
 intent: "patch", targets: ["src/" + id + ".ts"], contextSlice: [], instruction: "x", acceptance: null,
 model: null, maxTokens: null, reasoning: null, variants: 1, dependsOn });`. Cut Judges builds its six
