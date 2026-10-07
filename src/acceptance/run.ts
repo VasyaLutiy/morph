@@ -48,10 +48,28 @@ export function clipLog(text: string): string {
 }
 
 /**
+ * Builds the child's environment as a NEW object: every entry of `env` whose
+ * upper-cased key starts with MORPH_PROCESSOR_ or ends with _KEY or _TOKEN is
+ * dropped, so no API key reaches a model-written test. `env` is not changed.
+ */
+function childEnv(env: Record<string, string>): Record<string, string> {
+  const filtered: Record<string, string> = {};
+  for (const [key, value] of Object.entries(env)) {
+    const upper = key.toUpperCase();
+    if (upper.startsWith("MORPH_PROCESSOR_") || upper.endsWith("_KEY") || upper.endsWith("_TOKEN")) {
+      continue;
+    }
+    filtered[key] = value;
+  }
+  return filtered;
+}
+
+/**
  * Runs the card's acceptance command in `/bin/sh -c` with cwd = root, the given
- * environment (with NO_COLOR=1 and CI=1 laid over it), detached in its own
- * process group. On expiry of timeoutMs the whole group is killed. Resolves on
- * the child's "close" event; the promise never rejects.
+ * environment minus the processor/secret keys (with NO_COLOR=1 and CI=1 laid
+ * over it), detached in its own process group. On expiry of timeoutMs the whole
+ * group is killed. Resolves on the child's "close" event; the promise never
+ * rejects.
  */
 export function runAcceptance(
   command: string,
@@ -67,7 +85,7 @@ export function runAcceptance(
     try {
       child = spawn("/bin/sh", ["-c", "exec 2>&1\n" + command], {
         cwd: root,
-        env: { ...options.env, NO_COLOR: "1", CI: "1" },
+        env: { ...childEnv(options.env), NO_COLOR: "1", CI: "1" },
         detached: true,
         stdio: ["ignore", "pipe", "pipe"],
       });
