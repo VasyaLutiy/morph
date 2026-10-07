@@ -1,0 +1,490 @@
+{
+  "runId": "20261007-110744",
+  "completedAt": 1791371858804,
+  "branch": "morph/20261007-110744",
+  "processor": "glm53",
+  "generations": 6,
+  "outcomes": [
+    {
+      "customId": "render",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "render.v2",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [
+        "answer corrupt: missing section for src/planner/types.ts"
+      ],
+      "commit": "97841cd6584616c50c9af68561949cee7d26906c",
+      "diffstat": {
+        "files": 2,
+        "insertions": 181,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "cut-component",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "cut-component.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "6267cbbf34fa728d9a71d49f93c4f1c4ebbd6d30",
+      "diffstat": {
+        "files": 1,
+        "insertions": 224,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "cut-judges",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "cut-judges.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "262bdf047cad543d937fa68c96af3937086fac69",
+      "diffstat": {
+        "files": 1,
+        "insertions": 154,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "render-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "render-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/planner/render.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n\n/home/john/Documents/Work2026/MorphV2/tests/planner/render.examples.test.ts\n  27:7  error  'MAP' is assigned a value but never used        @typescript-eslint/no-unused-vars\n  30:7  error  'EMPTY_MAP' is assigned a value but never used  @typescript-eslint/no-unused-vars\n\n✖ 2 problems (2 errors, 0 warnings)\n\n== guard tests/planner/render.examples.test.ts\n== own\n== eslint failed (see above); every step between it and here passed\n"
+      ],
+      "commit": "a23831e65746073f6fb42135be2c54ffd1476e68",
+      "diffstat": {
+        "files": 1,
+        "insertions": 167,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "cut-component-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "cut-component-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/planner/cut.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n\n/home/john/Documents/Work2026/MorphV2/tests/planner/cut.examples.test.ts\n  6:15  error  'Card' is defined but never used  @typescript-eslint/no-unused-vars\n\n✖ 1 problem (1 error, 0 warnings)\n\n== guard tests/planner/cut.examples.test.ts\n== own\n== eslint failed (see above); every step between it and here passed\n"
+      ],
+      "commit": "e091c49e9b5ede363401749de5bda5657da49b2b",
+      "diffstat": {
+        "files": 1,
+        "insertions": 228,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "cut-judges-judge",
+      "status": "failed",
+      "reason": "acceptance failed",
+      "attempts": 3,
+      "winningVariant": null,
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/planner/judges.examples.test.ts\n== own\n FAIL  tests/planner/judges.examples.test.ts > a cut that carries no profile infers it from its code target\nAssertionError: expected [ 'tests/src/bare.examples.test.ts' ] to strictly equal [ 'tests/bare.examples.test.ts' ]\n\n- Expected\n+ Received\n\n  [\n-   \"tests/bare.examples.test.ts\",\n+   \"tests/src/bare.examples.test.ts\",\n  ]\n\n ❯ tests/planner/judges.examples.test.ts:115:38\n    113|   const cards = cutJudges(input({ cuts: [bare] }));\n    114|   expect(cards.length).toBe(1);\n    115|   expect((cards[0] as Card).targets).toStrictEqual([\"tests/bare.exampl…\n       |                                      ^\n    116| });\n    117| \n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 8 passed (9)\n\nfirst difference at char 11 (line 2) of 36/40: expected \"[\\n  \\\"tests/bare.examples.test.ts\\\",\\n]\" received \"[\\n  \\\"tests/src/bare.examples.test.ts\\\",\\n]\"\n",
+      "earlierFailures": [
+        "== tsc\ntests/planner/judges.examples.test.ts(33,52): error TS2322: Type 'ContourFunction[]' is not assignable to type 'import(\"/home/john/Documents/Work2026/MorphV2/src/contour/types\", { with: { \"resolution-mode\": \"import\" } }).ContourFunction[]'.\n  Type 'ContourFunction' is not assignable to type 'import(\"/home/john/Documents/Work2026/MorphV2/src/contour/types\", { with: { \"resolution-mode\": \"import\" } }).ContourFunction'.\n    Types of property 'steps' are incompatible.\n      Type '{ verb: string; target: string; }[]' is not assignable to type 'Step[]'.\n        Type '{ verb: string; target: string; }' is not assignable to type 'Step'.\n          Types of property 'verb' are incompatible.\n            Type 'string' is not assignable to type 'StepVerb'.\n",
+        "== tsc\n== eslint\n== guard tests/planner/judges.examples.test.ts\n== own\n FAIL  tests/planner/judges.examples.test.ts > the default profile is used when a cut carries none and the path says nothing\nAssertionError: expected +0 to be 1 // Object.is equality\n\n- Expected\n+ Received\n\n- 1\n+ 0\n\n ❯ tests/planner/judges.examples.test.ts:114:24\n    112|   };\n    113|   const cards = cutJudges(input({ cuts: [bare] }));\n    114|   expect(cards.length).toBe(1);\n       |                        ^\n    115|   expect((cards[0] as Card).targets).toStrictEqual([\"tests/bare.exampl…\n    116| });\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 8 passed (9)\n\nfirst difference at char 0 (line 1) of 1/1: expected \"1\" received \"0\"\n"
+      ],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "plan-spec",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "plan-spec.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\nsrc/planner/plan.ts(50,5): error TS2322: Type '`extra card 'null' names Component '${string}' the record does not have (have: ${string})` | `extra card '${string}' names Component '${string}' the record does not have (have: ${string})`' is not assignable to type '\"error\" | CutCard | \"skip\"'.\n  Type '`extra card 'null' names Component '${string}' the record does not have (have: ${string})`' is not assignable to type '\"error\" | CutCard | \"skip\"'.\nsrc/planner/plan.ts(58,5): error TS2322: Type 'string | null' is not assignable to type 'string'.\n  Type 'null' is not assignable to type 'string'.\nsrc/planner/plan.ts(111,9): error TS2367: This comparison appears to be unintentional because the types 'CutCard' and 'string' have no overlap.\n",
+        "== tsc\nsrc/planner/plan.ts(110,86): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.\n  Type 'null' is not assignable to type 'string'.\n"
+      ],
+      "commit": "7cbcc601191b2b00282704c297fcf07c50fac1a2",
+      "diffstat": {
+        "files": 1,
+        "insertions": 170,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "f71d35b5a09e90c6e80636a12e97824cf52595c9",
+      "diffstat": {
+        "files": 3,
+        "insertions": 105,
+        "deletions": 1
+      }
+    },
+    {
+      "customId": "plan-spec-judge",
+      "status": "failed",
+      "reason": "acceptance failed",
+      "attempts": 3,
+      "winningVariant": null,
+      "acceptanceLog": "== tsc\ntests/planner/plan.examples.test.ts(153,56): error TS2698: Spread types may only be created from object types.\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard tests/planner/plan.examples.test.ts\n== own\n FAIL  tests/planner/plan.examples.test.ts > Order Deck example 1: layered deck reversed orders into generations\nAssertionError: expected { ok: true, …(3) } to strictly equal { ok: true, …(3) }\n\n- Expected\n+ Received\n\n@@ -4,11 +4,11 @@\n        \"acceptance\": null,\n        \"contextSlice\": [],\n        \"customId\": \"a\",\n        \"dependsOn\": [],\n        \"instruction\": \"x\",\n-       \"intent\": \"patch\",\n+       \"intent\": \"generate\",\n        \"maxTokens\": null,\n        \"model\": null,\n        \"reasoning\": null,\n        \"targets\": [\n          \"src/a.ts\",\n@@ -21,11 +21,11 @@\n        \"customId\": \"b\",\n        \"dependsOn\": [\n          \"a\",\n        ],\n        \"instruction\": \"x\",\n-       \"intent\": \"patch\",\n+       \"intent\": \"generate\",\n        \"maxTokens\": null,\n        \"model\": null,\n        \"reasoning\": null,\n        \"targets\": [\n          \"src/b.ts\",\n@@ -38,11 +38,11 @@\n        \"customId\": \"c\",\n        \"dependsOn\": [\n          \"a\",\n        ],\n        \"instruction\": \"x\",\n-       \"intent\": \"patch\",\n+       \"intent\": \"generate\",\n        \"maxTokens\": null,\n        \"model\": null,\n        \"reasoning\": null,\n        \"targets\": [\n          \"src/c.ts\",\n@@ -56,11 +56,11 @@\n        \"dependsOn\": [\n          \"b\",\n          \"c\",\n        ],\n        \"instruction\": \"x\",\n-       \"intent\": \"patch\",\n+       \"intent\": \"generate\",\n        \"maxTokens\": null,\n        \"model\": null,\n        \"reasoning\": null,\n        \"targets\": [\n          \"src/d.ts\n[... 3565 chars clipped; diagnosis lines kept:]\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec own 3: the plan names the selected Components in record order\nAssertionError: expected [ 'store', 'ledger' ] to strictly equal [ 'ledger', 'store' ]\n    256|   if (!r.ok) throw new Error(r.error);\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec own 4: an empty map with no Components cuts nothing\nAssertionError: expected [ { customId: 'load-ledger', intent: 'patch', targets: [ 'store/load_ledger.py', 'tests/test_load_ledger.py' ], contextSlice: [ 'store/load_ledger.py' ], …(7) }, …(6) ] to str\n+ Python 3.10 or later, standard library only, type hints on every public function. Tests are pytest: plain `assert` on scalars and short values; fixtures and stubs come from `tests/conftest.py`, neve\n[...]\nles/.bin/eslint src/ledger/parseEntry.ts tests/ledger/parseEntry.test.ts\n+  node_modules/.bin/vitest run tests/ledger/parseEntry.test.ts --reporter=dot\n+  node_modules/.bin/vitest run --reporter=dot\n+ ) > $L 2>&1; rc=$?; cat $L; exit $rc\n+ \",\n+     \"contextSlice\": [\n+       \"src/ledger/parseEntry.ts\",\n+     ],\n+     \"customId\": \"parse-entry\",\n+     \"dependsOn\": [],\n+     \"instruction\": \"Every name you need is below -- the record `ledger.yaml` is cut into this instruction; do not invent names, keys or files.\n+\n+ ## Function Parse Entry\n+\n+ One line of text into an Entry.\n+\n+ Behaviour: Splits \\\"<name> <cents>\\\" at the last space; the cents are digits.\n+\n+ Steps:\n+ - produces: Entry\n+\n+ Examples (the tests must prove each one):\n+ 1. given the line \\\"rent 1200\\\"; when parsed; then {name: \\\"rent\\\", cents: 1200}\n+ 2. given the line \\\"x\\\"; when parsed; then the error \\\"no amount in line 1\\\"\n+\n+ Data Entry: One ledger entry.\n+ Schema:\n+ { name: string, cents: number }\nfirst difference at char 157 (line 7) of 999/1011: expected \"...   \\\"instruction\\\": \\\"x\\\",\\n      \\\"intent\\\": \\\"patch\\\",\\n      \\\"maxTokens\\\": null,\\n      \\\"\" received \"...   \\\"instruction\\\": \\\"x\\\",\\n      \\\"intent\\\": \\\"generate\\\",\\n      \\\"maxTokens\\\": null,\\n    \"\nfirst difference at char 5 (line 2) of 26/26: expected \"[\\n  \\\"ledger\\\",\\n  \\\"store\\\",\\n]\" received \"[\\n  \\\"store\\\",\\n  \\\"ledger\\\",\\n]\"\nfirst difference at char 1 (line 1) of 2/14044: expected \"[]\" received \"[\\n  {\\n    \\\"acceptance\\\": \\\"D=/tmp/morph/loa\"\n",
+        "== tsc\n== eslint\n\n/home/john/Documents/Work2026/MorphV2/tests/planner/plan.examples.test.ts\n  24:7  error  'EMPTY_MAP' is assigned a value but never used  @typescript-eslint/no-unused-vars\n\n✖ 1 problem (1 error, 0 warnings)\n\n== guard tests/planner/plan.examples.test.ts\n== own\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec own 4: an empty components list keeps only the map's own extras\nError: the record has 2 Components (ledger, store): pass --component\n ❯ tests/planner/plan.examples.test.ts:294:20\n    292| test(\"Plan Spec own 4: an empty components list keeps only the map's o…\n    293|   const r = planSpec(planInput({ components: [], judge: false }));\n    294|   if (!r.ok) throw new Error(r.error);\n       |                    ^\n    295|   expect(r.plan.cards.map((c) => c.customId)).toStrictEqual([\"notes\"]);\n    296|   expect(r.plan.generations).toStrictEqual([[\"notes\"]]);\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 15 passed (16)\n\n"
+      ],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "parse-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "fb960d5e1524e36aae8ab489b55785006eb61427",
+      "diffstat": {
+        "files": 1,
+        "insertions": 51,
+        "deletions": 10
+      }
+    },
+    {
+      "customId": "parse-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/parse.examples.test.ts\n== names tests/cli/parse.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "60a9119284a0f4e0ee9308e23385598f67abbaeb",
+      "diffstat": {
+        "files": 1,
+        "insertions": 67,
+        "deletions": 5
+      }
+    },
+    {
+      "customId": "plan-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/planCommand.examples.test.ts\n== guard tests/cli/main.examples.test.ts\n== names tests/cli/main.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "099a029cda328b242c6a2e16e32c13b1666ce600",
+      "diffstat": {
+        "files": 2,
+        "insertions": 169,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 546000,
+    "outputTokens": 84625,
+    "cost": 0.2406685199999999,
+    "requests": 26
+  },
+  "requests": [
+    {
+      "customId": "render.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371265-9PAX6xxSHyWRua7RVb06",
+      "inputTokens": 15459,
+      "outputTokens": 2145,
+      "cost": 0.00407106,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "render.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371265-9nrDh9kDvWT1uLmjzwBw",
+      "inputTokens": 15459,
+      "outputTokens": 1977,
+      "cost": 0.007657812,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-component.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371294-IR8yFgJaFzLdkYOd7QPD",
+      "inputTokens": 19752,
+      "outputTokens": 8947,
+      "cost": 0.016100376,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-component.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371294-Lq0Oy8kOdwvXGeCS14uV",
+      "inputTokens": 19752,
+      "outputTokens": 8874,
+      "cost": 0.016004016,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-judges.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371294-GKdUPozY9ibL7Kvbw7Qc",
+      "inputTokens": 19003,
+      "outputTokens": 4196,
+      "cost": 0.009054828,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-judges.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371336-DIicIV29b6g3alJ5u6eL",
+      "inputTokens": 19003,
+      "outputTokens": 3262,
+      "cost": 0.005808252,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "render-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371367-kwW4xFgyPIMTVmJP3G6X",
+      "inputTokens": 17407,
+      "outputTokens": 2367,
+      "cost": 0.006583092,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "render-judge.r1.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371425-VulkxJsrXcVgsYptyezz",
+      "inputTokens": 24287,
+      "outputTokens": 2017,
+      "cost": 0.012665988,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-component-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371451-02WmAyDNxxR4cwp4OblM",
+      "inputTokens": 19051,
+      "outputTokens": 4336,
+      "cost": 0.009413004,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-judges-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371451-C7QkerQ0f3iTSQF2cvMX",
+      "inputTokens": 18882,
+      "outputTokens": 1833,
+      "cost": 0.006344496,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371451-6EyVuZJAQQsLnjklcm4J",
+      "inputTokens": 20601,
+      "outputTokens": 3077,
+      "cost": 0.008248908,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371469-WFtxpcJpTFApOk8LgBaD",
+      "inputTokens": 20601,
+      "outputTokens": 4709,
+      "cost": 0.007842252,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-component-judge.r1.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371534-dKKFrf21rqCTyJK6Pc2h",
+      "inputTokens": 25948,
+      "outputTokens": 2479,
+      "cost": 0.00771348,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-judges-judge.r1.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371534-y0Z0lJG9VgzeCZnDWujG",
+      "inputTokens": 25826,
+      "outputTokens": 1827,
+      "cost": 0.006867264,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec.r1.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371534-NaPFtjqOPk49x7yVcl7r",
+      "inputTokens": 29714,
+      "outputTokens": 1818,
+      "cost": 0.007897368,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec.r1.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371552-HOTRTkXEmErB6ZHP8I3p",
+      "inputTokens": 29714,
+      "outputTokens": 1662,
+      "cost": 0.004517688,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-judges-judge.r2.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371585-7rCqC6ymWQThj5GwBj31",
+      "inputTokens": 25913,
+      "outputTokens": 2112,
+      "cost": 0.013474308,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371613-IBoxzE2uHOi44EC1q5Cv",
+      "inputTokens": 17686,
+      "outputTokens": 1534,
+      "cost": 0.009453,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371613-SlZD0Jq2Ie2u8ISutQ40",
+      "inputTokens": 17686,
+      "outputTokens": 1473,
+      "cost": 0.003331392,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371613-rx8eJxkhdGM9aOwMPArE",
+      "inputTokens": 20339,
+      "outputTokens": 5559,
+      "cost": 0.015683268,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec-judge.r1.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371688-7te9vuNQr84UWz7Z4xNy",
+      "inputTokens": 28252,
+      "outputTokens": 5407,
+      "cost": 0.018806088,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec-judge.r2.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371756-2dUpA7B9VQRnyxAk9ifv",
+      "inputTokens": 27503,
+      "outputTokens": 3160,
+      "cost": 0.007120476,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371788-ueoS5h57Jk5peKAMsbV0",
+      "inputTokens": 16542,
+      "outputTokens": 2092,
+      "cost": 0.00970908,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371788-gpgyXepzOFUecuFkVegB",
+      "inputTokens": 16542,
+      "outputTokens": 2129,
+      "cost": 0.004132704,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371812-5gzcZT1CXOjPkBuVJY3g",
+      "inputTokens": 16706,
+      "outputTokens": 2202,
+      "cost": 0.00992316,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371812-G7d3DSr5aSxwpJ3kGBL9",
+      "inputTokens": 18372,
+      "outputTokens": 3431,
+      "cost": 0.01224516,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}
