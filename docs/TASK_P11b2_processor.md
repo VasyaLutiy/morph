@@ -273,7 +273,7 @@ the two documents of `documents.json`, stderr `morph submit: exit 0\n`, `morph c
 - `collect.examples`: "Collect Batch example 1: …" … "6: …"; 1 against `documents.json["Collect Batch 1"]`,
   `collected.json` and the texts of `replies.json["live"]`.
 - `archive.p11b2`: "Archive Run example 8: …".
-- `parse.examples` (13 tests → 15): example 8's no-command literal changed; "Parse Command example 14: …" and "Parse Command
+- `parse.examples` (19 tests → 21): example 8's no-command literal changed; "Parse Command example 14: …" and "Parse Command
   example 15: …" after the last test, each result `toStrictEqual`.
 - `main.p11b2`: "Main example 7: …", "Main example 8: …" (in process, an io pushing chunks, stdout parsed per chunk).
 
@@ -304,7 +304,7 @@ every test name at HEAD still there → `vitest run <targets>` → eslint's verd
 | `tests/batches/submit.examples.test.ts` | yes | 5 | 11 | `Submit Deck example 1` … `5`, `submitted.json`, `nothing to submit: `, `state not saved: disk full` |
 | `tests/batches/collect.examples.test.ts` | yes | 6 | 12 | `Collect Batch example 1` … `6`, `collected.json`, `batchInProgress.json`, `is not a submit's state: cards`, `Clamp it.` |
 | `tests/git/archive.p11b2.examples.test.ts` | yes | 1 | 7 | `Archive Run example 8`, `saveBatchAnswers`, `../y` |
-| `tests/cli/parse.examples.test.ts` | no | 15 | 17 | `Parse Command example 14`, `Parse Command example 15`, `submit, collect)`, `missing --batch` |
+| `tests/cli/parse.examples.test.ts` | no | 21 | 23 | `Parse Command example 14`, `Parse Command example 15`, `submit, collect)`, `missing --batch` |
 | `tests/cli/main.p11b2.examples.test.ts` | yes | 2 | 8 | `Main example 7`, `Main example 8`, `morph collect: exit 4`, `documents.json` |
 
 min = the file's tests after the change (new files: its record examples); max = min + 2 (patched) or + 6 (new).
@@ -405,4 +405,45 @@ Attempts and first red per variant, minutes per generation, $ (provider), trunca
 
 ### Gate (preparation)
 
-(written at the gate)
+07.10, on the VPS, by the preparing orchestrator (Opus 5.5); no paid run, no call to the live service. Data commits 6098986
+(spec, record, compaction, map, fixtures, guard layer, checks, probes, deck, DECISIONS) and the gate commit (two submit-deck
+probe rows closing the two mutation survivors, parse.examples' guard count 21..23, deck re-cut, this section). Component
+sizes after the patch: cli **29 850** (29 996 → 28 127 compacted → + routing), git **18 902**, batches **13 034** (new);
+processor 29 969 and runloop 29 986 untouched (≤ 30 000 each).
+
+The deck **cut by V2**: `node dist/cli.js plan --component batches --component git --component cli --judge --checks
+decks/p11b2/checks.json --out decks/p11b2/deck.json` exit 0, 26 cards, filtered by `decks/p11b2/filter.py` to 9;
+generations `[archive-run, submit-deck] [archive-run-judge, collect-batch, submit-deck-judge] [collect-batch-judge,
+parse-command] [main-judge, parse-command-judge]`; `node dist/cli.js deck check` **0 errors, 0 warnings**. Cross-check: the
+old `mrph plan --spec … --component batches git cli --judge` (dry) gives the same 26 ids and the same 5 generations;
+targets, slices, dependsOn, intent, variants, max_tokens and reasoning (2 500) equal on all 26; instructions differ on all 26
+(the P10a design); acceptances differ on the 9 phase cards (V2's builder chain from checks.json) and on 5 cards outside the
+phase with no map acceptance (commit-card, commit-card-judge, main, run-command, run-command-judge), the other 12 equal.
+
+Scratch worktree from 6098986 (references of the 6 code files and the 5 test files, deleted afterwards), cards run in deck
+order with the deck's own acceptances, each accepted card committed before the next: **9 of 9 chains green, 43.3–87.4 s
+each (481 s in all; limit 250 s per chain; the 62.7 and 87.4 s ran beside the mutation run)**. The final tree `tsc`, `eslint
+src tests`, build clean, `vitest run` **641 / 641** in 84 files (625 + 16; ripple as measured: parse.examples example 8, red
+only between parse-command and its judge); the built binary answers `collect --batch none` with exit 4 and the no-command
+message with five commands. Typed one-line throwing stubs (`Error: stub <fn> <args>`; the types of submit.ts, collect.ts and
+cli/types.ts as specified; archive.ts = main's + a throwing saveBatchAnswers): every code card red at the probe —
+submit-deck 7/7, collect-batch 8/8, archive-run 2/2, parse-command 7/7 (**24/24**); **all new and changed record examples
+red** (SD 1–5, CB 1–6, AR 8, PC 8, 14, 15, Main 7, 8), each with a readable line; chains 8.4–9.0 s. Judges with the reference
+code: the four new files absent → red at the guard ("… missing", 5.7–6.8 s); parse.examples at HEAD → red at the guard
+("does not mention the example literal \"missing --batch\"", 7.4 s). Mutation check: **62 single-rule mutations** of the
+references (submit 21, collect 21, parse 9, archive 5, main 4), each run under a 120 s timeout: **62 killed by the card's
+probe, 0 by timeout** (max 4.6 s); the first pass left 2 survivors (the type half of the batch-route check; the `; ` join of
+several deck faults), closed by the gate commit's rows (a stub on route batch; a deck with two faults).
+
+Max slice + targets: collect-batch-judge ≈ 69 KB with its answer (51 371 bytes before; gate 200 KB). **Forecast** on `ds`
+with every maxTokens × 3: P11c2 ran 10 cards, 15 requests, 250 k in / 100 k out for $0.0880; here 9 cards of 43–69 KB in,
+13 first requests (4 code × 2 variants + 5 judges), ≈ 15–18 requests ≈ **$0.08–0.12**, ≤ $0.25 with a re-cut; ≤ $1.
+**Gate holds.**
+
+**Run command** (from the repo root, the binary copied first; today's binary = this commit's code; default retry cap; the
+session applies maxTokens × 3 first, as the operator ordered):
+
+```
+npm run build && rm -rf /tmp/v2bin-p11b2 && mkdir -p /tmp/v2bin-p11b2 && cp -r dist /tmp/v2bin-p11b2/ && ln -s $PWD/node_modules /tmp/v2bin-p11b2/node_modules
+node /tmp/v2bin-p11b2/dist/cli.js run --root . --deck decks/p11b2/deck.json --processor ds --deadline 2400 > /tmp/p11b2-run.json
+```

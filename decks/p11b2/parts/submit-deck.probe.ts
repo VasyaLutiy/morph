@@ -143,7 +143,7 @@ test("§2.2 rows: another processor, base url, key, clock, deck path; variants; 
   }
 });
 
-test("§2.2 rows: registry faults named, an openrouter sync processor refused, an invalid deck, a submit without a batch id", async () => {
+test("§2.2 rows: registry faults named, a sync openrouter and a batch stub refused, invalid decks, a submit without a batch id", async () => {
   const t = setup();
   try {
     const s = script([{ status: 202, text: "{\"status\": \"validating\"}" }]);
@@ -153,6 +153,12 @@ test("§2.2 rows: registry faults named, an openrouter sync processor refused, a
     expect(await submitDeck(t.root, "d.json", "o", deps(t, s.transport, env)), "sync").toStrictEqual(err(2, "RefusalError", "processor o is not an openrouter processor on route batch"));
     t.write("c.json", fixture("decks/cycle.json"));
     expect(await submitDeck(t.root, "c.json", "b", deps(t, s.transport, env)), "cycle").toStrictEqual(err(2, "DeckError", "invalid deck: dependsOn: dependsOn cycle a -> b -> a"));
+    t.write("two.json", JSON.stringify([{ customId: "a", intent: "generate", targets: ["out/a.ts"] }, { customId: "a b", intent: "generate", targets: ["out/b.ts"], instruction: "x" }]));
+    expect(await submitDeck(t.root, "two.json", "b", deps(t, s.transport, env)), "two faults").toStrictEqual(err(2, "DeckError",
+      "invalid deck: cards[0].instruction: instruction is required; cards[1].customId: customId 'a b' does not match ^[A-Za-z0-9._-]+$"));
+    const stubBatch = { ...env, MORPH_PROCESSOR_ns_TYPE: "stub", MORPH_PROCESSOR_ns_ANSWERS_DIR: "/x", MORPH_PROCESSOR_ns_ROUTE: "batch" };
+    expect(await submitDeck(t.root, "d.json", "ns", deps(t, s.transport, stubBatch)), "stub on route batch").toStrictEqual(
+      err(2, "RefusalError", "processor ns is not an openrouter processor on route batch"));
     expect(s.calls.length, "no call yet").toBe(0);
     expect(await submitDeck(t.root, "d.json", "b", deps(t, s.transport, env)), "no id").toStrictEqual(err(3, "RuntimeError", "batch submit: no batch id"));
   } finally {

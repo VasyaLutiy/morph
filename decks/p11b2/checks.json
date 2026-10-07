@@ -82,8 +82,8 @@
    "files": [
     {
      "file": "tests/cli/parse.examples.test.ts",
-     "min": 15,
-     "max": 17,
+     "min": 21,
+     "max": 23,
      "lits": [
       "Parse Command example 14",
       "Parse Command example 15",
