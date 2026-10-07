@@ -15,7 +15,10 @@ export function buildRetry(
     "\n\nYour previous attempt failed its acceptance. Fix exactly what the acceptance reports and return the whole file again.\nAcceptance output:\n" +
     acceptanceOutput;
   if (previousDiff !== null) {
-    instruction += "\n\nYour previous attempt (rejected):\n" + previousDiff;
+    instruction +=
+      "\n\nYour previous attempt (rejected):\n" +
+      previousDiff +
+      "\n\nThe diff above is your own previous edit: correct it where it went wrong instead of rewriting the files from scratch.";
   }
   return {
     customId: base + ".r" + attempt,
