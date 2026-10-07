@@ -2,6 +2,7 @@ import path from "node:path";
 import type { Card, CardResult, Deck, DeckResult, Fault } from "./types.js";
 
 const ID_PATTERN = /^[A-Za-z0-9._-]+$/;
+const RETRY_SUFFIX_PATTERN = /\.r[0-9]+$/;
 const SCHEMA_KEYS: readonly string[] = [
   "customId",
   "intent",
@@ -32,7 +33,13 @@ function normalizeRepoPath(p: string): string {
 
 function isRepoRelative(p: string): boolean {
   const n = normalizeRepoPath(p);
-  return n !== "" && n !== "." && !n.startsWith("/") && !n.startsWith("../");
+  return (
+    n !== "" &&
+    n !== "." &&
+    n !== ".." &&
+    !n.startsWith("/") &&
+    !n.startsWith("../")
+  );
 }
 
 function isPositiveInteger(v: unknown): v is number {
@@ -70,6 +77,8 @@ export function validateCard(input: unknown): CardResult {
   else if (typeof customIdV !== "string") add("customId", "customId is not a string");
   else if (!ID_PATTERN.test(customIdV))
     add("customId", `customId '${customIdV}' does not match ^[A-Za-z0-9._-]+$`);
+  else if (RETRY_SUFFIX_PATTERN.test(customIdV))
+    add("customId", `customId '${customIdV}' ends in .r<n>, the suffix of a retry`);
   else customId = customIdV;
 
   // intent
