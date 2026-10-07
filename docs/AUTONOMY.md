@@ -6,22 +6,20 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (07.10, after P11b1)
+## State at handoff (07.10, after P11c1)
 
-P0–P11b1 merged; `main` = origin = VPS. Issue #3 closed (P10c), issue #4 closed (P11b1: archive by the operator's
-decision — answers committed, request copies gzipped under the ignored `requests/`; batch cost and id in the report,
-`.morph/batches/<id>.json`, batch wait 1 h, a given-up batch cancelled, the deadline checked before each retry batch).
-**Processor `ds` since P11b1** (operator 07.10; maxTokens ×3 by `decks/tools/scale_tokens.py`; glm53 the fallback);
-P11b1 ran 14/14 on ds, $0.1379. Running total $2.7650 of $30.
-Next, in order: **P11c runner hardening** (operator 07.10; issue #5, label `P11c-runner`, 8 code-review findings in
-runloop, acceptance, cli, git, cards; HIGH 1–2 and the key leak 5 are mandatory, the rest if they fit, else a P11c2);
-then **P11b2** (`morph submit` / `morph collect`, TASK_P11b §7; cli at 29 998 bytes, compact first); then P12 (issue #1,
-label `P12-primer`), P13a, P13b, P14. P11c goes before P11b2 because finding 5 (keys in the acceptance env) applies to
-every run, P11b2's included, and the operator's P11b items are merged.
+P0–P11c1 merged; `main` = origin = VPS. Issues #3 and #4 closed; #5 open for P11c2. **Processor `ds`** since P11b1
+(maxTokens ×3 by `decks/tools/scale_tokens.py`; glm53 the fallback). P11c1 (12/12 on ds, $0.0941) built #5 findings 1, 2,
+3, 5, 8, 9: keys no longer reach the acceptance env, a thrown error is archived with `report.fault` and exit 3, a
+carried-over retry unblocks its dependants. Running total $2.8591 of $30.
+Next, in order: **P11c2** (#5 findings 4 null acceptance, 6 signals; TASK_P11c §7; its merge closes #5); **P11b2**
+(`morph submit` / `morph collect`, TASK_P11b §7; cli at ~29 988 bytes, compact first) → **smoke stop** (submit/collect
+live, state read back by a second process); **P12** primer (issue #1, label `P12-primer`) → **smoke stop** (V2 primer on
+this repo); P13a, P13b, P14 → **final smoke stop**. At each smoke stop: 🧪, then stop; the operator resumes.
 Lessons for the next preparations: default code targets add a test file (give a smoke cap or code-only targets); new
 files need `"intent": "generate"` in the map; a new `src/` folder needs its layer in `decks/tools/guard.mjs`; size a judge
 from its expected answer (≥ 28 000 for a ~20 KB answer, before the ×3); vary every constant the code must not hard-code
-across the examples; every mutant run under a 120 s timeout.
+across the examples; every mutant run under a 120 s timeout; kill leftover watchers/workers of the scratch tree.
 
 ## Machine
 
@@ -166,6 +164,14 @@ phase gets `max_tokens` ≥ 20000.
 - **Smoke stops**: a live glm53 smoke of the V2 binary after P7 (done), after P10b2 (the
   switch complete: V2 cuts with its own acceptances, `build.py` archived) and after P11. After
   each smoke the session stops for the operator, red or green. A red smoke is an emergency stop.
+- **Smoke stops added by the operator (07.10)**, each a live smoke, then `tools/tg.sh smoke` 🧪 with the numbers, then
+  STOP and wait; the operator side resumes the session after its own check — **the session never resumes itself**:
+  1. after **P11b2**: `morph submit` / `morph collect` on the real batch route (processor ds or glm53b), the persisted
+     state `.morph/batches/<id>.json` read back by a SECOND process (collect in a new process after submit exits);
+  2. after **P12**: the V2 primer on this repository (`primer --write`); the issue #1 experiment (a fresh agent with no
+     tools tells the project story from the V2 primer alone) is run by the operator side, not by the session;
+  3. after **P14**: the final smoke of the whole V2 on a tiny repository: `plan --checks`, `run` on ds, primer, scout,
+     review.
 
 ## Money
 
