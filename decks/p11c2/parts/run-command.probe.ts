@@ -71,7 +71,7 @@ test("§2.2 rows: deps.interrupted reaches Run Deck — code 3, fault, the parti
     const doc = got.document as RunDocument;
     expect(`${got.code} ${doc.report.fault}`, JSON.stringify(got).slice(0, 600)).toBe("3 interrupted by SIGTERM");
     expect(doc.report.outcomes.map((o) => `${o.customId} ${o.status} ${o.reason}`).join("; "), "outcomes").toBe("a skipped fault; b skipped fault");
-    expect(`${doc.report.usageTotals.requests} ${doc.archive.ok} ${doc.archive.dir}`, "no spend, archive").toBe("0 true .morph/runs/p6");
+    expect(`${doc.report.usageTotals.requests} ${doc.archive.ok} ${doc.archive.ok ? doc.archive.dir : doc.archive.error}`, "no spend, archive").toBe("0 true .morph/runs/p6");
     expect(`${r.git(["rev-list", "--count", base + "..HEAD"])} ${r.git(["symbolic-ref", "--short", "HEAD"])}`, "one archive commit").toBe("1 morph/p6");
     expect(r.read(".morph/runs/p6/report.json").includes("interrupted by SIGTERM"), "report.json holds the fault").toBe(true);
   } finally {

@@ -313,4 +313,46 @@ Attempts and first red per variant, minutes per generation, $ (provider), trunca
 
 ### Gate (preparation)
 
-(filled at the gate)
+07.10, on the VPS, by the preparing orchestrator (Opus 5.5); no paid run. Data commits ed1ef67 (spec, record, compaction,
+map, fixtures, checks, probes, deck, DECISIONS), ab7da2d (Run Acceptance's listeners before the spawn: the first draft
+lost the race to an in-acceptance `kill $PPID` 5 of 5 times) and the gate commit (two probe rows narrowed
+`ArchiveResult` before `.dir`, deck re-cut, this section). Component sizes after the patch: runloop **29 986**, cli
+**29 996**, acceptance **15 197**, git 17 825, cards 8 048 (≤ 30 000 each).
+
+The deck **cut by V2**: `node dist/cli.js plan --component runloop --component acceptance --component cli --judge
+--checks decks/p11c2/checks.json --out decks/p11c2/deck.json` exit 0, 30 cards, filtered by `decks/p11c2/filter.py` to
+10; generations `[process-generation, run-acceptance, run-deck] [process-generation-judge, run-acceptance-judge,
+run-command, run-deck-judge] [main, run-command-judge] [main-judge]`; `node dist/cli.js deck check` **0 errors, 0
+warnings**. Cross-check: the old `mrph plan --spec … --component runloop acceptance cli --judge` (dry) gives the same 30
+ids and the same 4 generations; targets, slices, dependsOn, intent, variants and reasoning (2 500) equal on all 30;
+max_tokens equal on the 10 phase cards (2 judges outside the phase differ: V2's P10a judge formula); instructions differ
+on all 30 (the P10a design); acceptances differ on the 10 phase cards (V2's builder chain from checks.json) and on 4
+cards outside the phase with no map acceptance.
+
+Scratch worktree from ab7da2d (references of the 7 code files and the 5 test files, deleted afterwards), cards run in
+deck order with the deck's own acceptances, each accepted card committed before the next: **10 of 10 chains green,
+40.8–42.8 s each (418.5 s in all; limit 250 s per chain)**. The final tree `tsc`, `eslint src tests`, build clean,
+`vitest run` **625 / 625** in 80 files (620 − 1 + 6). Typed one-line throwing stubs (`Error: stub <fn> <args>`; the two
+types files as specified; run-command over the reference of run-deck; the entry a top-level throw): every code card red
+at the probe — process-generation 3/3, run-deck 4/4, run-acceptance 3/3, run-command 3/3, main 2/2 (15/15); **all new
+record examples red** (PG 15, RD 11, 12, RA 6, RC 12, Main 6), each with a readable line; chains 7.6–9.6 s. Judges with
+the reference code and their file absent (the new ones) or as on main (the two patched): red at the guard ("… missing";
+"does not mention the example literal …", "has 9 test/it calls, expected 10..12"), 5.8–7.3 s. Mutation check: **28
+single-rule mutations** of the references (process-generation 6, run-deck 5, run-acceptance 8, run-command 5, main 4),
+each run under a 120 s timeout: **28 killed by the card's probe, 0 by timeout, 0 survivors** (two took 68 s: the
+unkilled `sleep 30` held the child's pipe). Not run, equivalent under the tests: the exit kept as the close code (null
+after SIGKILL anyway), first vs last signal (the group dies at the first), SIGTERM vs SIGKILL to the group, the kill of a
+group signalled before its spawn (no test can place a signal there).
+
+Max slice + targets: process-generation-judge 70 618 bytes (gate 200 KB). **Forecast** on `ds` with every maxTokens × 3:
+P11c1 ran 12 cards, 20 requests, 333 k in / 106 k out for $0.0941; here 10 cards of 31–71 KB in (15 requests at the
+first attempt: 5 code × 2 variants + 5 judges), ≈ 18 requests, ≈ 300 k in / 120 k out ≈ **$0.08–0.15**, ≤ $0.30 with a
+re-cut; ≤ $1. **Gate holds.**
+
+**Run command** (from the repo root, the binary copied first; today's binary = this commit's code; default retry cap;
+the session applies maxTokens × 3 first, as the operator ordered):
+
+```
+npm run build && rm -rf /tmp/v2bin-p11c2 && mkdir -p /tmp/v2bin-p11c2 && cp -r dist /tmp/v2bin-p11c2/ && ln -s $PWD/node_modules /tmp/v2bin-p11c2/node_modules
+node /tmp/v2bin-p11c2/dist/cli.js run --root . --deck decks/p11c2/deck.json --processor ds --deadline 2400 > /tmp/p11c2-run.json
+```

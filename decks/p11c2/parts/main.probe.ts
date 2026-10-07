@@ -42,7 +42,7 @@ function signalled(sig: "INT" | "TERM", runId: string): void {
     expect(doc.report.outcomes.map((o) => `${o.customId} ${o.status} ${o.reason}`).join("; "), "outcomes")
       .toBe("a failed acceptance failed; b skipped fault");
     expect(doc.report.outcomes[0]?.acceptanceLog.endsWith("acceptance interrupted by SIG" + sig + "\n"), "a's log").toBe(true);
-    expect(`${doc.archive.ok} ${doc.archive.dir}`, "archive").toBe("true .morph/runs/" + runId);
+    expect(`${doc.archive.ok} ${doc.archive.ok ? doc.archive.dir : doc.archive.error}`, "archive").toBe("true .morph/runs/" + runId);
     expect(res.stderr.endsWith("morph run: exit 3\n"), "stderr's last line").toBe(true);
     expect(pid > 0 && gone(pid), "the sleep " + pid + " is gone").toBe(true);
     expect(`${r.git(["symbolic-ref", "--short", "HEAD"])}|${r.git(["log", "-1", "--format=%s"])}|${r.git(["status", "--porcelain"])}`, "git")
