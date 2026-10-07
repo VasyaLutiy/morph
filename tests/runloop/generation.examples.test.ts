@@ -7,7 +7,7 @@
 // answers in its "answers" subdirectory — and removed at the end of the test.
 
 import { test, expect } from "vitest";
-import { processGeneration } from "../../src/runloop/generation.js";
+import { processGeneration, stageCount } from "../../src/runloop/generation.js";
 import type { CardOutcome, CommitHook, RunDeps } from "../../src/runloop/types.js";
 import type { Usage } from "../../src/processor/types.js";
 import type { Card, Intent } from "../../src/cards/types.js";
@@ -169,6 +169,10 @@ function failed(
     diffstat: null,
   };
 }
+
+// §2.1 (verbatim): the two-stage acceptance of example 9 — v1 passes tsc and probe before
+// failing, v2 fails at tsc, so the furthest variant is countable from the stage headers.
+const STAGES = "grep -q ONE out/a.ts && { echo '== tsc'; echo '== probe'; echo 'red: one'; exit 1; }; echo '== tsc'; echo 'red: two'; exit 1";
 
 test("Process Generation example 1: two stub cards accepted, the commit hook fired for each", async () => {
   const h = harness();
@@ -511,16 +515,67 @@ test("Process Generation: a card with two targets parses both files and commits 
   }
 });
 
-test("Process Generation: the config's timeoutMs bounds the acceptance", async () => {
+test("Process Generation example 9: the retry context comes from the variant that got furthest", async () => {
   const h = harness();
   try {
-    h.deps.config.timeoutMs = 200;
+    h.write("out/a.ts", fileOf("OLD"));
+    h.answer("a.v1", fenced("ONE"));
+    h.answer("a.v2", fenced("TWO"));
+    const g = await processGeneration([card("a", ["out/a.ts"], STAGES, [], 2)], h.deps, h.root);
+    expect(g.outcomes).toStrictEqual([
+      failed("a", "acceptance failed", "== tsc\nred: two\n", [
+        "== tsc\n== probe\nred: one\n",
+      ]),
+    ]);
+    // v1 reached 2 stages, v2 only 1: the context is v1's log and v1's diff, not the last one's
+    expect(g.retryContexts).toStrictEqual({
+      a: {
+        acceptanceOutput: "== tsc\n== probe\nred: one\n",
+        previousDiff:
+          '--- a/out/a.ts\n+++ b/out/a.ts\n@@ -1,1 +1,1 @@\n-export const x = "OLD";\n+export const x = "ONE";\n',
+      },
+    });
+    expect(h.read("out/a.ts")).toBe(fileOf("OLD"));
+    expect(stageCount("== tsc\n== probe\nred: one\n")).toBe(2);
+    expect(stageCount("== tsc\nred: two\n")).toBe(1);
+    expect(stageCount("")).toBe(0);
+    expect(stageCount("a == b\n")).toBe(0);
+    expect(stageCount("x\n== full")).toBe(1);
+    expect(stageCount(" == tsc\n==tsc\n")).toBe(0);
+  } finally {
+    h.rm();
+  }
+});
+
+test("Process Generation example 10: the acceptance runs under its own default, not the config's timeoutMs", async () => {
+  const h = harness();
+  try {
+    // timeoutMs 100 is the processor's HTTP timeout: the acceptance gets Run Acceptance's
+    // default of 300000 ms, so the sleep finishes and the acceptance passes
+    h.deps.config.timeoutMs = 100;
+    h.answer("a.v1", fenced("PASS"));
+    const g = await processGeneration(
+      [card("a", ["out/a.ts"], "sleep 1; grep -q PASS out/a.ts")],
+      h.deps,
+      h.root,
+    );
+    expect(g.outcomes).toStrictEqual([written("a", "a.v1", "", [], 1)]);
+    expect(h.fired.map((f) => f.customId)).toStrictEqual(["a"]);
+  } finally {
+    h.rm();
+  }
+});
+
+test("Process Generation example 11: deps.acceptanceTimeoutMs bounds the acceptance", async () => {
+  const h = harness();
+  try {
+    h.deps.acceptanceTimeoutMs = 200;
     h.answer("a.v1", fenced("MARK_A"));
     const g = await processGeneration([card("a", ["out/a.ts"], "sleep 30")], h.deps, h.root);
     expect(g.outcomes.length).toBe(1);
     const o = g.outcomes[0];
     expect({ ...o, acceptanceLog: "" }).toStrictEqual(failed("a", "acceptance failed", "", []));
-    expect(o.acceptanceLog).toContain("timed out after 200 ms");
+    expect(o.acceptanceLog).toContain("acceptance timed out after 200 ms");
     expect(h.fired).toStrictEqual([]);
   } finally {
     h.rm();
