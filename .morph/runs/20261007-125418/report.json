@@ -1,0 +1,244 @@
+{
+  "runId": "20261007-125418",
+  "completedAt": 1791378076823,
+  "branch": "morph/20261007-125418",
+  "processor": "glm53",
+  "generations": 3,
+  "outcomes": [
+    {
+      "customId": "parse-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "d8524080f31af769875ec09dd7baa37004790b19",
+      "diffstat": {
+        "files": 2,
+        "insertions": 4,
+        "deletions": 1
+      }
+    },
+    {
+      "customId": "read-plan-checks",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "read-plan-checks.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "49c04b73230d46abceb768e239e190bc85b15aba",
+      "diffstat": {
+        "files": 1,
+        "insertions": 91,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "parse-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/parseChecks.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "8881639d0ec237a74964664008dc6fd82d3a99eb",
+      "diffstat": {
+        "files": 1,
+        "insertions": 38,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "290d35891fb9eac33cf306ed9cc119534a97bc97",
+      "diffstat": {
+        "files": 1,
+        "insertions": 48,
+        "deletions": 2
+      }
+    },
+    {
+      "customId": "read-plan-checks-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "read-plan-checks-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/readPlanChecks.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard tests/cli/readPlanChecks.examples.test.ts\n== own\n FAIL  tests/cli/readPlanChecks.examples.test.ts > Read Plan Checks example 2: checks, guard and locator not found\nAssertionError: expected { ok: false, result: { code: 4, document: { error: { code: 4, kind: 'UsageError', message: 'guard file not found: decks/tools/guard.mjs' } } } } to strictly equal { ok: false, result: { code: 4, document: { error: { code: 4, kind: 'UsageError', message: 'locator file not found: decks/tools/firstdiff.mjs' } } } }\n\n- Expected\n+ Received\n\n@@ -4,10 +4,10 @@\n      \"code\": 4,\n      \"document\": {\n        \"error\": {\n          \"code\": 4,\n          \"kind\": \"UsageError\",\n-         \"message\": \"locator file not found: decks/tools/firstdiff.mjs\",\n+         \"message\": \"guard file not found: decks/tools/guard.mjs\",\n        },\n      },\n    },\n  }\n\n ❯ tests/cli/readPlanChecks.examples.test.ts:44:19\n     42|     fs.rmSync(r.path(\"decks/tools/firstdiff.mjs\"));\n     43|     const third = readPlanChecks(r.root, \"decks/p1/checks.json\");\n     44|     expect(third).toStrictEqual({\n       |                   ^\n     45|       ok: false,\n     46|       result: { code: 4, document: { error: { code: 4, kind: \"UsageErr…\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 2 passed (3)\n\nfirst difference at char 135 (line 7) of 209/203: expected \"...ind\\\": \\\"UsageError\\\",\\n        \\\"message\\\": \\\"locator file not found: decks/tools/firs\" received \"...ind\\\": \\\"UsageError\\\",\\n        \\\"message\\\": \\\"guard file not found: decks/tools/guard.\"\n"
+      ],
+      "commit": "91f8d261f28c643ef0add9a84caa220c06e0d137",
+      "diffstat": {
+        "files": 1,
+        "insertions": 85,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 3,
+      "winningVariant": "plan-command-judge.r2.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/planChecks.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard tests/cli/planChecks.examples.test.ts\nguard: tests/cli/planChecks.examples.test.ts does not mention the example literal \"exit 0\"\n",
+        "== tsc\n== eslint\n== guard tests/cli/planChecks.examples.test.ts\n== own\n FAIL  tests/cli/planChecks.examples.test.ts > Plan Command example 8: the P10a deck byte for byte on the repository\nAssertionError: expected [ { customId: 'classify-error', intent: 'patch', targets: [ 'src/cli/classifyError.ts', 'tests/cli/classifyError.test.ts' ], contextSlice: [ 'src/cli/classifyError.ts' ], …(7) }, …(25) ] to strictly equal [ { customId: 'render', intent: 'generate', targets: [ 'src/planner/types.ts', 'src/planner/render.ts' ], …(8) }, …(11) ]\n\n- Expected\n+ Received\n\n@@ -1,7 +1,282 @@\n  [\n    {\n+     \"acceptance\": \"D=/tmp/morph/classify-error; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\n+ cp src/cli/classifyError.ts $D/0-$S.ts 2>/dev/null\n+ cp tests/cli/classifyError.test.ts $D/1-$S.ts 2>/dev/null\n+ (\n+  set -e\n+  node_modules/.bin/tsc --noEmit\n+  node_modules/.bin/eslint src/cli/classifyError.ts tests/cli/classifyError.test.ts\n+  node_modules/.bin/vitest run tests/cli/classifyError.test.ts --reporter=dot\n+  node_modules/.bin/vitest run --reporter=dot\n+ ) > $L 2>&1; rc=$?; cat $L; exit $rc\n+ \",\n+     \"contextSlice\": [\n+       \"src/cli/classifyError.ts\",\n+     ],\n+     \"customId\": \"classify-error\",\n+     \"dependsOn\": [],\n+     \"instruction\": \"Every name you need is below -- the record `contour.yaml` is cut into this instruction; do not invent names, keys or files.\n+\n+ ## Function Classify Error\n+\n+ Exit codes: 0 ok; 1 a run with any card not written; 2 a refusal before any spend (inv\n[... 14211 chars clipped; diagnosis lines kept:]\n+ Behaviour: classifyThrown(e) → {code: 3, document: errorDocument(3, \\\"RuntimeError\\\", e's message when e is an Error, else String(e))}. runExitCode(report, archive) → 3 when the archive is not ok; e\n+ 1. given new Error(\\\"git add failed (exit 1): fatal: x\\\"); when classifyThrown; then {code: 3, document: {error: {code: 3, kind: \\\"RuntimeError\\\", message: \\\"git add failed (exit 1): fatal: x\\\"}}}\n+ 2. given the string \\\"boom\\\"; when classifyThrown; then {code: 3, document: {error: {code: 3, kind: \\\"RuntimeError\\\", message: \\\"boom\\\"}}}\n+ Write the files: `src/cli/classifyError.ts`, `tests/cli/classifyError.test.ts`.\n+       \"src/cli/classifyError.ts\",\n+       \"tests/cli/classifyError.test.ts\",\n+ - produces: Error Document\n[...]\nrds, the profile and the texts of the guard, the locator and the probes; node:path is its only Node module (P10b).\n+ - Node Only: Runtime dependencies: Node 20 built-ins and the package `yaml` (the record reader), nothing else; dev dependencies pinned exactly, no ^ or ~.\n+\n+ Guardrails:\n+ - No Network In Tests: tests/setup.ts makes fetch, XMLHttpRequest, WebSocket and net.connect throw \\\"network blocked in tests\\\"; only the processor's own transport is mocked.\n+ - No Shell Outside Acceptance: child processes are spawned only by Run Acceptance, the git module (in Run Git alone, P6) and the processor's none; everything else is pure.\n+ - Frozen Tree During Run: while a run is in flight no file outside the cards' targets and .morph/ changes; a changed declared input discards the answer unread.\n+\n+ Write the files: `src/cli/readDeckFile.ts`, `tests/cli/readDeckFile.test.ts`.\n+\n+ TypeScript with `strict` on, ESM with NodeNext resolution: every relative import carries the `.js` extension and types are imported with `import type`. No `any`: use `unknown` and narrow. Tests are vitest: `toBe` on scalars and short strings, `toStrictEqual` on a whole result; stubs come from `tests/helpers.ts`, never your own.\",\n+     \"intent\": \"patch\",\nfirst difference at char 54 (line 4) of 84175/164641: expected \"...@\\n[\\n  {\\n    \\\"acceptance\\\": \\\"D=/tmp/morph/render-p10; mkdir -p $D; S=$(date +%s)-$\" received \"...@\\n[\\n  {\\n    \\\"acceptance\\\": \\\"D=/tmp/morph/classify-error; mkdir -p $D; S=$(date +%\"\n"
+      ],
+      "commit": "f22696f82c8de71e3f2af70acf3646808616eddf",
+      "diffstat": {
+        "files": 1,
+        "insertions": 110,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 180905,
+    "outputTokens": 18339,
+    "cost": 0.07801503600000001,
+    "requests": 12
+  },
+  "requests": [
+    {
+      "customId": "parse-command.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791377659-EMFPLsIXqTSAd6IAOKRP",
+      "inputTokens": 14295,
+      "outputTokens": 2609,
+      "cost": 0.009425892,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791377659-UL5AzBmxfzkVkn2DpiDq",
+      "inputTokens": 14295,
+      "outputTokens": 2610,
+      "cost": 0.004568076,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-plan-checks.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791377659-vnfLNDs2CNA3cVRVLU3D",
+      "inputTokens": 10878,
+      "outputTokens": 722,
+      "cost": 0.005324808,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-plan-checks.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791377671-s7aKkOo4ehBvD3FqlPrG",
+      "inputTokens": 10878,
+      "outputTokens": 699,
+      "cost": 0.001792368,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791377758-VUhgzIcSb5zLOaQMXEn9",
+      "inputTokens": 12563,
+      "outputTokens": 929,
+      "cost": 0.00650274,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791377758-1w0VbdOJJzgW5yvzmXYK",
+      "inputTokens": 14220,
+      "outputTokens": 1457,
+      "cost": 0.00789564,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v2",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791377759-2nHpzfkHrYfsh9avWr4L",
+      "inputTokens": 14220,
+      "outputTokens": 1569,
+      "cost": 0.00804348,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-plan-checks-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791377781-bxSpT59iTmyvdwOlH2WH",
+      "inputTokens": 12076,
+      "outputTokens": 942,
+      "cost": 0.006118368,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-plan-checks-judge.r1.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791377873-G6I1t6lOHWlruIq4QC0W",
+      "inputTokens": 18646,
+      "outputTokens": 908,
+      "cost": 0.008832888,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791377921-FJF93YLBzlHlq5TVROXm",
+      "inputTokens": 14897,
+      "outputTokens": 2836,
+      "cost": 0.007089156,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command-judge.r1.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791377984-AtC16VSyPj8TuTlFWZ57",
+      "inputTokens": 21411,
+      "outputTokens": 1427,
+      "cost": 0.00584202,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command-judge.r2.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791378013-pQB1iQz63uOxbiMCXMq3",
+      "inputTokens": 22526,
+      "outputTokens": 1631,
+      "cost": 0.0065796,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}
