@@ -369,4 +369,46 @@ Attempts and first red per variant, minutes per generation, $ (provider), trunca
 
 ### Gate (preparation)
 
-(filled at the gate)
+07.10, on the VPS, by the preparing orchestrator (Opus 5.5); no paid run, no live provider call. Data commits 4d9606f
+(spec, record, map, fixtures, checks, probes, deck) and ca5d510 (send-batch probe rows closing the mutation survivors,
+deck re-cut). Component sizes after the patch: processor 14 870 → **28 527** (≤ 30 000); cli 29 835 and runloop 29 178
+untouched.
+
+The deck **cut by V2**: `node dist/cli.js plan --component processor --judge --checks decks/p11/checks.json --out
+decks/p11/deck.json` exit 0, 14 cards, filtered by `decks/p11/filter.py` to 8; generations `[assemble-batch, read-batch]
+[assemble-batch-judge, read-batch-judge, send-batch] [send-batch-judge, send-generation] [send-generation-judge]`;
+`node dist/cli.js deck check` **0 errors**, 2 warnings, both `unordered-read` of `src/processor/types.ts`
+(assemble-batch and read-batch, generation 0, read it; send-batch, generation 1, adds `body?` to it — intended: the
+readers use no Transport). Cross-check: the old `mrph plan --spec … --component processor --judge` (dry) gives the same
+14 ids and the same 4 generations; dependsOn, targets, slices, intent, variants and reasoning (2 500) equal on all 14
+(mrph omits an empty dependsOn and variants 1 — representation only); max_tokens equal on the 8 phase cards (3 judges
+outside the phase differ: V2's P10a judge formula, as in P10c2); instructions differ on all 14 (the P10a design);
+acceptances differ on the 8 phase cards only (no map override: mrph prints its old default, V2 the builder's chain from
+checks.json — checked by the chains below), the 6 others equal.
+
+Scratch worktree from ca5d510 (references of the 5 code targets and the 4 test files, deleted afterwards), cards run in
+deck order with the deck's own acceptances, each accepted card committed before the next: **8 of 8 chains green, 36.0–41.8
+s each (315.0 s in all; limit 250 s per chain)**; the final tree `tsc`, `eslint src tests`, `npm run build` clean, `vitest
+run` **599 / 599** in 67 files (584 − 1 + 16). Ripple as measured (§1): 1 test (the P4 batch-route test, dropped by
+send-generation-judge; the one fullExclude file), no other old test red in any full step. Typed one-line throwing stubs
+(`Error: stub <fn> <args>`; types.ts as specified): every code card red at the probe — assemble-batch 4 of 5, read-batch
+8 of 9 (the type row passes on typed stubs), send-batch 11 of 11, send-generation 4 of 4; **all 16 new record examples
+red** (AB 1–2, RB 1–5, SB 1–7, SG 6–7), each with a readable line; chains 7.7–8.4 s. Judges: the three new files absent →
+red at the guard ("… missing", 5.5–5.7 s); send-generation-judge with send.examples unpatched (HEAD) → red at the guard
+(the three literals, 6.3 s). Mutation check: 36 single-rule mutations of the references (assemble-batch 8, read-batch 10,
+send-batch 16, send-generation 2) — after ca5d510 **36 killed** by the card's probe; the survivors of the first pass
+(5xx bound `>= 500` → `> 500`) and the rows written before it (408, 404 at exactly 60 000 ms, floor of 50 000 → 3 polls,
+the first of two replies of one customId) are probe rows of ca5d510.
+
+Max slice + targets: send-generation-judge 55 525 bytes (gate 200 KB). Forecast ≈ $0.12 (P10c2: 8 cards, 15 requests,
+$0.1840; here 12 first requests, slices 35–56 KB, ≈ 2–3 retries), ≤ $1. **Gate holds.**
+
+**Run command** (from the repo root, the binary copied first; today's binary = 2a6474d + data, per-generation retry cap,
+no `--max-retry-batches`; the deck runs on the SYNC glm53 processor — the batch route is what it builds):
+
+```
+npm run build && rm -rf /tmp/v2bin-p11 && mkdir -p /tmp/v2bin-p11 && cp -r dist /tmp/v2bin-p11/ && ln -s $PWD/node_modules /tmp/v2bin-p11/node_modules
+node /tmp/v2bin-p11/dist/cli.js run --root . --deck decks/p11/deck.json --processor glm53 --deadline 2400 > /tmp/p11-run.json
+```
+
+After the merge: the live batch smoke of §8 (AUTONOMY "Smoke stops"), then the session stops for the operator.
