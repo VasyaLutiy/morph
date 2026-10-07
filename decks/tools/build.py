@@ -326,6 +326,31 @@ P9_JUDGE_EXAMPLES = {"validate-record-judge": 6, "validate-map-judge": 4, "selec
                      "load-spec-judge": 7}
 P9_JUDGE_OWN = {"validate-record-judge": 8, "validate-map-judge": 8, "select-components-judge": 8, "load-spec-judge": 8}
 
+P9B_TEST_DIR = "tests/runloop"
+# docs/TASK_P9b_runloop.md §3: the example literals of the new examples (runloop, compiler)
+P9B_JUDGE_LITERALS = {
+    "process-generation-judge": ["retryContexts", "answer truncated", "contextSlice 'docs/missing.md' does not exist",
+                                 "glm-x", "@@ -1,1 +1,1 @@"],
+    "build-retry-judge": ["The diff above is your own previous edit: correct it where it went wrong instead of "
+                          "rewriting the files from scratch.", "Write c."],
+    "run-deck-judge": ["https://openrouter.ai/api/v1/chat/completions", "Novita", "gen-1", "first-red", "--- /dev/null",
+                       "z-ai/glm-5.3"],
+    "output-directive-judge": ["This card writes 2 files.", "This card writes 3 files.",
+                               "Return the complete content of src/a.ts as ONE fenced block, and nothing else:",
+                               "outputDirective"],
+    "compile-card-judge": ["outputDirective", "Compile Card example 1", "several targets get the section directive"],
+}
+# min = the NEW examples each judge writes (Process Generation 4-7, Build Retry 4, Run Deck 4-5, Output
+# Directive 1-4; the compile patch keeps Compile Card 1-3); max = min + own below (= all the Function's
+# examples + 8; the compile patch keeps exactly its 10 tests)
+P9B_JUDGE_EXAMPLES = {"process-generation-judge": 4, "build-retry-judge": 1, "run-deck-judge": 2,
+                      "output-directive-judge": 4, "compile-card-judge": 3}
+P9B_JUDGE_OWN = {"process-generation-judge": 11, "build-retry-judge": 11, "run-deck-judge": 11,
+                 "output-directive-judge": 8, "compile-card-judge": 7}
+# the two P2 files that pin the old directive text: red from output-directive's acceptance (gen 1) until
+# their judges rewrite them (gen 2); deselected from every full step, each judge runs its own file
+P9B_KNOWN_RED = ["tests/compiler/compile.examples.test.ts", "tests/compiler/directive.examples.test.ts"]
+
 # one phase = the cards of one Component in morph-map.json (judges are <code>-judge); the
 # generation layering and the sibling exclusion are computed within the phase only.
 # smoke: whether a code card writes its own smoke test (P1-P2 yes; from P3 a code card covered
@@ -349,6 +374,15 @@ PHASES = {
            "smoke": False, "own": P8_JUDGE_OWN},
     "p9": {"parts": "p9", "test_dir": P9_TEST_DIR, "examples": P9_JUDGE_EXAMPLES, "literals": P9_JUDGE_LITERALS,
            "smoke": False, "own": P9_JUDGE_OWN},
+    # P9b patches two Components: explicit members (compile-card-judge has no code card in the deck), the
+    # output-directive card keeps its P2 smoke test, the known-red files are deselected, and the patched judge
+    # keeps every test name it had at HEAD
+    "p9b": {"parts": "p9b", "test_dir": P9B_TEST_DIR, "examples": P9B_JUDGE_EXAMPLES, "literals": P9B_JUDGE_LITERALS,
+            "smoke": False, "own": P9B_JUDGE_OWN,
+            "members": ["process-generation", "build-retry", "output-directive", "run-deck", "process-generation-judge",
+                        "build-retry-judge", "output-directive-judge", "compile-card-judge", "run-deck-judge"],
+            "smoke_dirs": {"output-directive": "tests/compiler"}, "full_exclude": P9B_KNOWN_RED,
+            "keep_names": ["compile-card-judge"]},
 }
 
 
@@ -388,8 +422,18 @@ def layer(cards):
     return gen
 
 
+def full_args(exclude=()):
+    return " ".join(["--passWithNoTests"] + [f"--exclude {x}" for x in exclude])
+
+
+def names_kept(test):
+    """A patched test file keeps every test name it had at HEAD (docs/TASK_P9b_runloop.md §3)."""
+    return ("echo '== names'; git show HEAD:" + test + " | grep -oE '(test|it)\\(\"[^\"]+\"' | sed -E 's/^(test|it)\\(//' > $P/names; "
+            "while IFS= read -r n; do grep -qF \"$n\" " + test + " || { echo \"test removed: $n\"; exit 1; }; done < $P/names\n")
+
+
 def code_acceptance(card, targets, siblings, parts, phase="p1", test_dir=P1_TEST_DIR, smoke_test=True,
-                    own_git=False, extra=""):
+                    own_git=False, extra="", exclude=()):
     """A code card: probe-dir, tsc, eslint, guard, probe, [own smoke test], full suite, frozen.
     ``smoke_test=False`` (P3 on: a code card covered by a probe writes no test file) drops the
     own-test guard and step and asserts the card targets no test file."""
@@ -411,7 +455,7 @@ def code_acceptance(card, targets, siblings, parts, phase="p1", test_dir=P1_TEST
             + "echo '== probe'; " + vt("--config $P/probe.config.mts")
             + own
             + extra
-            + "echo '== full'; " + vt("--passWithNoTests")
+            + "echo '== full'; " + vt(full_args(exclude))
             + (own_git_after() if own_git else "")
             + "echo '== frozen'; " + frozen()
             + untracked(targets))
@@ -419,7 +463,7 @@ def code_acceptance(card, targets, siblings, parts, phase="p1", test_dir=P1_TEST
 
 
 def judge_acceptance(card, targets, siblings, parts, phase="p1", examples=P1_JUDGE_EXAMPLES,
-                     literals=P1_JUDGE_LITERALS, own_git=False, own_cap=12):
+                     literals=P1_JUDGE_LITERALS, own_git=False, own_cap=12, exclude=(), keep_names=False):
     assert len(targets) == 1, (card, targets)
     test = targets[0]
     n = examples[card]
@@ -430,8 +474,9 @@ def judge_acceptance(card, targets, siblings, parts, phase="p1", examples=P1_JUD
             + "echo '== eslint'; node_modules/.bin/eslint " + test + "\n"
             + heredoc("$P/lits.json", lits, "MORPH_LITS_EOF")
             + f"echo '== guard'; node $P/guard.mjs tests {test} {n} {n + own_cap} $P/lits.json\n"
+            + (names_kept(test) if keep_names else "")
             + "echo '== own'; " + vt(test)
-            + "echo '== full'; " + vt("--passWithNoTests")
+            + "echo '== full'; " + vt(full_args(exclude))
             + (own_git_after() if own_git else "")
             + "echo '== frozen'; " + frozen()
             + untracked(targets))
@@ -446,7 +491,7 @@ def build_phase(phase):
     with open(MAP, encoding="utf-8") as fh:
         doc = json.load(fh)
     judges = list(spec["examples"])
-    members = [j[:-6] for j in judges] + judges
+    members = spec.get("members") or [j[:-6] for j in judges] + judges
     cards = {cid: c for cid, c in doc["cards"].items() if cid in members}
     missing = [m for m in members if m not in cards]
     assert not missing, f"{phase}: cards missing from {MAP}: {missing}"
@@ -456,14 +501,17 @@ def build_phase(phase):
         targets = list(c["targets"])
         siblings = [t for other, o in cards.items() if other != cid and gen[other] == gen[cid]
                     for t in o["targets"]]
+        exclude = spec.get("full_exclude", ())
         if cid.endswith("-judge"):
             c["acceptance"] = judge_acceptance(cid, targets, siblings, parts, phase,
                                                spec["examples"], spec["literals"], spec.get("own_git", False),
-                                               spec.get("own", {}).get(cid, 12))
+                                               spec.get("own", {}).get(cid, 12), exclude,
+                                               cid in spec.get("keep_names", ()))
         else:
-            c["acceptance"] = code_acceptance(cid, targets, siblings, parts, phase, spec["test_dir"],
-                                              spec["smoke"], spec.get("own_git", False),
-                                              spec.get("extra", {}).get(cid, ""))
+            smoke_dir = spec.get("smoke_dirs", {}).get(cid)
+            c["acceptance"] = code_acceptance(cid, targets, siblings, parts, phase, smoke_dir or spec["test_dir"],
+                                              spec["smoke"] or smoke_dir is not None, spec.get("own_git", False),
+                                              spec.get("extra", {}).get(cid, ""), exclude)
         rows.append((gen[cid], cid, len(c["acceptance"]), len(siblings)))
     with open(MAP, "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2, ensure_ascii=False)
@@ -476,7 +524,7 @@ def build_phase(phase):
 BUILDERS = {"p0": build_p0, "p1": lambda: build_phase("p1"), "p2": lambda: build_phase("p2"),
             "p3": lambda: build_phase("p3"), "p4": lambda: build_phase("p4"), "p5": lambda: build_phase("p5"),
             "p6": lambda: build_phase("p6"), "p7": lambda: build_phase("p7"),
-            "p8": lambda: build_phase("p8"), "p9": lambda: build_phase("p9")}
+            "p8": lambda: build_phase("p8"), "p9": lambda: build_phase("p9"), "p9b": lambda: build_phase("p9b")}
 
 
 def main(argv):

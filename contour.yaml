@@ -186,16 +186,44 @@ System:
               when: "compiled"
               then: "a compile fault naming docs/missing.md; no Request"
         - name: Output Directive
-          description: The fixed tail of every instruction that tells the model how to answer.
-          behavior: >
-            One target: "Answer with the complete new content of <path> in one fenced
-            block and nothing else." Several targets: "Answer with one section per
-            file, each starting with a line `FILE: <path>` followed by one fenced
-            block; every target exactly once, no other text."
+          description: The fixed tail of every instruction that tells the model how to answer, with the format rules Parse Answer applies.
+          behavior: |
+            outputDirective(targets) throws an Error whose message starts "outputDirective" on
+            an empty list. The fence lines it shows are bare (three backticks, no language tag:
+            the text names no language). One target <p> gives, with \n line breaks:
+              Return the complete content of <p> as ONE fenced block, and nothing else:
+              (empty line)
+              ```
+              <the complete content of <p>>
+              ```
+              (empty line)
+              The opening fence may name the file's language. Only the FIRST fenced block of the answer becomes the file: a second block (a diff, an edit summary, an example) is dropped, and every line outside the fence is discarded. An answer with no fence at all is written to the file verbatim, prose and all. An answer whose fences do not pair up is discarded unread as cut off, so no line of the file may begin with three backticks. No preamble, no closing commentary, no diff, no elision: the whole file.
+            Several targets (n of them) give:
+              This card writes <n> files. Return each one as a line `FILE: <path>` followed by ONE fenced block holding its complete content:
+              (empty line)
+              FILE: <path>
+              ```
+              <the complete content of that file>
+              ```
+              (empty line)
+              One such pair per file, every file exactly once, in this order:
+              <each target on its own line, in the given order>
+              (empty line)
+              Use exactly these paths, each file whole: no diff, no elision. An answer that misses a file, gives one twice or names a file not in this list is discarded whole. Only the first fenced block after a FILE: line is that file's content: a second block (a diff, an edit summary, an example) is dropped. Lines outside the fenced blocks are ignored, but no other line may begin with FILE:. An answer whose fences do not pair up is discarded unread as cut off, so no line of a file may begin with three backticks.
+            Every rule the text states is what Parse Answer does; no trailing newline.
           examples:
             - given: "targets [src/a.ts, tests/a.test.ts]"
               when: "the directive is rendered"
-              then: "it names both paths in that order and the literal line prefix 'FILE: '"
+              then: "it begins 'This card writes 2 files. Return each one as a line `FILE: <path>`', holds the line block 'in this order:\\nsrc/a.ts\\ntests/a.test.ts\\n\\n' (the two paths in that order), and ends 'so no line of a file may begin with three backticks.'"
+            - given: "targets [src/a.ts]"
+              when: "the directive is rendered"
+              then: "exactly 'Return the complete content of src/a.ts as ONE fenced block, and nothing else:\\n\\n```\\n<the complete content of src/a.ts>\\n```\\n\\nThe opening fence may name the file's language. Only the FIRST fenced block of the answer becomes the file: a second block (a diff, an edit summary, an example) is dropped, and every line outside the fence is discarded. An answer with no fence at all is written to the file verbatim, prose and all. An answer whose fences do not pair up is discarded unread as cut off, so no line of the file may begin with three backticks. No preamble, no closing commentary, no diff, no elision: the whole file.'"
+            - given: "targets [docs/B.md, src/b.ts, tests/b.test.ts]"
+              when: "the directive is rendered"
+              then: "it begins 'This card writes 3 files.'; every fence line in it is exactly '```' (no language tag); it holds 'docs/B.md\\nsrc/b.ts\\ntests/b.test.ts\\n' in that order"
+            - given: "targets []"
+              when: "the directive is rendered"
+              then: "throws an Error whose message starts 'outputDirective'"
         - name: Capture Inputs
           description: Digests the declared inputs of a card so a run can detect a change under its feet.
           behavior: >
@@ -606,13 +634,26 @@ System:
             hook}; no variant accepted → {status: "failed", reason "acceptance failed",
             acceptanceLog = the last variant's log, earlierFailures = the earlier variants'
             logs, commit null, diffstat null}. attempts is 1 for every outcome of one
-            round. Returns {outcomes: CardOutcome[], usage: Usage[]} with the usage of
-            every request sent.
+            round. Returns {outcomes, usage, requests, retryContexts}: usage is the Usage
+            of every request sent; requests is one Request Usage per request sent, in send
+            order ({customId: the request id, model: the request's model ?? deps.config.model,
+            provider, generationId, inputTokens, outputTokens, cost from its Usage,
+            finishReason and error from its Answer}); retryContexts holds one Retry Context
+            per FAILED outcome, keyed by its customId, in outcome order, and nothing for a
+            written card. A compile fault or stale inputs → {acceptanceOutput: the outcome's
+            acceptanceLog, previousDiff: null}. A rejected card → the LAST variant whose
+            acceptance ran (its verify result has a diff that is not null) gives
+            {acceptanceOutput: that variant's log, previousDiff: its diff, or null when the
+            diff is ""}; when no variant ran (every answer corrupt or truncated) →
+            {acceptanceOutput: the last result's log, previousDiff: null}. The log and the
+            diff of the retry always come from the same attempt.
           steps:
             - uses: compiler
             - uses: processor
             - uses: acceptance
             - produces: Card Outcome
+            - produces: Request Usage
+            - produces: Retry Context
           examples:
             - given: 'a stub config (answersDir a tmp root with a.v1.md and b.v1.md, each a fenced ts block); cards [a → out/a.ts, b → out/b.ts], each acceptance passes when its file holds the marker; a recording commit hook'
               when: "processed"
@@ -623,6 +664,18 @@ System:
             - given: 'a stub config; cards [a → shared.ts, b] where b.contextSlice holds shared.ts and a (processed first) is accepted and writes shared.ts'
               when: "processed"
               then: 'a status "written"; b status "failed", reason "stale inputs", acceptanceLog beginning "stale inputs: shared.ts"; b''s acceptance was never run'
+            - given: 'a stub config; out/a.ts holds ''export const x = "OLD";\n''; card a → out/a.ts, variants 2, acceptance ''grep -q PASS out/a.ts || { echo "red: $(cat out/a.ts)"; exit 1; }''; a.v1.md a fenced ts block holding ''export const x = "ONE";\n''; a.v2.md the text ''```ts\nexport const x = 2;\n'' (one fence line: truncated)'
+              when: "processed"
+              then: 'outcome a status "failed", reason "acceptance failed", acceptanceLog "answer truncated", earlierFailures [''red: export const x = "ONE";\n'']; retryContexts {a: {acceptanceOutput: ''red: export const x = "ONE";\n'', previousDiff: ''--- a/out/a.ts\n+++ b/out/a.ts\n@@ -1,1 +1,1 @@\n-export const x = "OLD";\n+export const x = "ONE";\n''}} (the variant that ran, not the last one); out/a.ts holds ''export const x = "OLD";\n'' again'
+            - given: 'as example 4, but a.v2.md a fenced ts block holding ''export const x = "TWO";\n'''
+              when: "processed"
+              then: 'outcome a status "failed", acceptanceLog ''red: export const x = "TWO";\n'', earlierFailures [''red: export const x = "ONE";\n'']; retryContexts {a: {acceptanceOutput: ''red: export const x = "TWO";\n'', previousDiff: ''--- a/out/a.ts\n+++ b/out/a.ts\n@@ -1,1 +1,1 @@\n-export const x = "OLD";\n+export const x = "TWO";\n''}} (both ran: the last one)'
+            - given: 'a stub config; cards [a → out/a.ts (a.v1.md fenced, its acceptance passes), b → out/b.ts (b.v1.md the text ''```ts\nexport const x = 2;\n''), c → out/c.ts with contextSlice [docs/missing.md], which does not exist], variants 1 each'
+              when: "processed"
+              then: 'a "written"; b and c "failed"; retryContexts exactly {b: {acceptanceOutput: "answer truncated", previousDiff: null}, c: {acceptanceOutput: "contextSlice ''docs/missing.md'' does not exist", previousDiff: null}} (no entry for a)'
+            - given: 'a stub config (model "stub"); cards [a → out/a.ts with model null, b → out/b.ts with model "glm-x"], variants 1, both accepted'
+              when: "processed"
+              then: 'requests [{customId: "a.v1", model: "stub", provider: "stub", generationId: "stub-a.v1", inputTokens: 0, outputTokens: 0, cost: 0, finishReason: "stop", error: null}, {customId: "b.v1", model: "glm-x", provider: "stub", generationId: "stub-b.v1", inputTokens: 0, outputTokens: 0, cost: 0, finishReason: "stop", error: null}]; retryContexts {}'
         - name: Build Retry
           description: The retry card <base>.r<n> carrying the acceptance output and the previous attempt diff; at most 2 retries per card; a run-wide cap on retry batches is enforced by Run Deck.
           behavior: >
@@ -634,7 +687,9 @@ System:
             []. instruction = card.instruction + "\n\nYour previous attempt failed its
             acceptance. Fix exactly what the acceptance reports and return the whole file
             again.\nAcceptance output:\n" + acceptanceOutput, and when previousDiff is not
-            null, + "\n\nYour previous attempt (rejected):\n" + previousDiff.
+            null, + "\n\nYour previous attempt (rejected):\n" + previousDiff + "\n\nThe diff
+            above is your own previous edit: correct it where it went wrong instead of
+            rewriting the files from scratch."
           steps:
             - reads: Card
             - produces: Card
@@ -648,6 +703,9 @@ System:
             - given: 'any card; attempt 3'
               when: "built"
               then: 'throws Error "buildRetry: attempt must be 1 or 2"'
+            - given: 'card {customId: "c", instruction: "Write c."}; attempt 1; acceptanceOutput "red\n"; previousDiff "@@ -1,1 +1,1 @@\n-a\n+b\n"'
+              when: "built"
+              then: 'instruction is exactly "Write c.\n\nYour previous attempt failed its acceptance. Fix exactly what the acceptance reports and return the whole file again.\nAcceptance output:\nred\n\n\nYour previous attempt (rejected):\n@@ -1,1 +1,1 @@\n-a\n+b\n\n\nThe diff above is your own previous edit: correct it where it went wrong instead of rewriting the files from scratch."'
         - name: Run Deck
           description: Generations in order (layerGenerations), budget checked at each generation boundary (maxCards, maxRetryBatches, deadline), the Run Report produced at the end.
           behavior: >
@@ -658,23 +716,29 @@ System:
             cardsProcessed >= input.budget.maxCards → reason "maxCards <maxCards>". Otherwise
             it resolves the runnable cards (resolveRunnable with the statuses so far),
             records the skipped outcomes, runs processGeneration on the runnable cards,
-            accumulates their usage, and adds the runnable count to cardsProcessed. A card
-            that failed is retried: for the failed cards of a round, while retryBatches <
-            input.budget.maxRetryBatches and the card has been retried fewer than 2 times,
-            a retry batch runs (retryBatches += 1): buildRetry(card, retryNumber, last
-            acceptanceLog, last diff of the winning/last variant) for each, processGeneration
+            accumulates their usage and request rows, keeps the Retry Context of every failed
+            card (by its original id; a later round's context replaces an earlier one), and
+            adds the runnable count to cardsProcessed. A card that failed is retried: for
+            the failed cards of a round, while retryBatches < input.budget.maxRetryBatches
+            and the card has been retried fewer than 2 times, a retry batch runs
+            (retryBatches += 1): buildRetry(original card, retryNumber, the card's latest
+            Retry Context acceptanceOutput, its previousDiff) for each — so the retry
+            carries the output and the diff of the same failed attempt — processGeneration
             on the retries, and a retry that is written updates the card's outcome (status
             "written", its commit, attempts = the retry number + 1) while every attempt's
             log is appended to earlierFailures. At the end it builds the Run Report: runId,
             completedAt = deps.now(), branch = input.branch, processor = deps.config.id,
             generations = the generation count, outcomes in deck order, usageTotals
             {inputTokens, outputTokens summed; cost the sum of the reported costs or null
-            when none was reported; requests = the number of usage rows}. Returns {report,
-            outcomes}. It writes and commits nothing: the archive is P6 git's.
+            when none was reported; requests = the number of usage rows}, requests = every
+            Request Usage row of every processGeneration call of the run, in send order.
+            Returns {report, outcomes}. It writes and commits nothing: the archive is P6
+            git's.
           steps:
             - calls: Resolve Runnable
             - calls: Process Generation
             - calls: Build Retry
+            - reads: Retry Context
             - produces: Run Report
           examples:
             - given: 'a two-generation deck [a, then b dependsOn a] on the stub (answers that satisfy each acceptance); budget wide; now constant'
@@ -686,13 +750,25 @@ System:
             - given: 'a two-generation deck [a, then b dependsOn a] on the stub; deps.now returns a value below the deadline at the first boundary and a value at or past it at the second'
               when: "run"
               then: 'a "written"; b "budget-exceeded", reason "deadline"; report.generations 2'
+            - given: 'an openrouter config {id "glm", model "z-ai/glm-5.3", apiKey "k", baseUrl "https://openrouter.ai/api/v1", concurrency 1, maxRetries 0} over a fakeFetch whose route "https://openrouter.ai/api/v1/chat/completions" always answers {id: "gen-1", provider: "Novita", choices: [{message: {role: "assistant", content: a fenced ts block holding ''export const x = "MARK";\n''}, finish_reason: "stop"}], usage: {prompt_tokens: 100, completion_tokens: 20, cost: 0.001}}; a one-card deck a → out/a.ts (absent), variants 1, acceptance ''if [ -f seen ]; then grep -q MARK out/a.ts; else touch seen; echo first-red; exit 1; fi''; budget maxRetryBatches 1'
+              when: "run"
+              then: 'a "written", attempts 2, earlierFailures ["first-red\n"]; two fetch calls; the last message of the second call''s body contains "Acceptance output:\nfirst-red\n" and "Your previous attempt (rejected):\n--- /dev/null\n+++ b/out/a.ts\n@@ -0,0 +1,1 @@\n+export const x = \"MARK\";\n", the first call''s holds no "Your previous attempt"; report.requests [{customId: "a.v1", model: "z-ai/glm-5.3", provider: "Novita", generationId: "gen-1", inputTokens: 100, outputTokens: 20, cost: 0.001, finishReason: "stop", error: null}, the same row with customId "a.r1.v1"]; usageTotals {inputTokens: 200, outputTokens: 40, cost: 0.002, requests: 2}'
+            - given: 'a two-generation deck [a, then b dependsOn a] on the stub, both accepted at once'
+              when: "run"
+              then: 'report.requests [{customId: "a.v1", model: "stub", provider: "stub", generationId: "stub-a.v1", inputTokens: 0, outputTokens: 0, cost: 0, finishReason: "stop", error: null}, the same with customId "b.v1" and generationId "stub-b.v1"] (rows of both generations, in send order)'
       dataObjects:
         - name: Card Outcome
           description: How one card ended in a run.
           schema: "{ customId: string, status: 'written'|'failed'|'skipped'|'budget-exceeded', reason: string | null, attempts: number, winningVariant: string | null, acceptanceLog: string, earlierFailures: string[], commit: string | null, diffstat: { files: number, insertions: number, deletions: number } | null }"
         - name: Run Report
           description: The summary of one run (its schema and archive layout are runloop's; the file write and commit are P6 git's).
-          schema: "{ runId: string, completedAt: number, branch: string, processor: string, generations: number, outcomes: CardOutcome[], usageTotals: { inputTokens: number, outputTokens: number, cost: number | null, requests: number } }"
+          schema: "{ runId: string, completedAt: number, branch: string, processor: string, generations: number, outcomes: CardOutcome[], usageTotals: { inputTokens: number, outputTokens: number, cost: number | null, requests: number }, requests?: RequestUsage[] } — requests is always set by Run Deck; it is optional in the type so a report literal built elsewhere stays valid"
+        - name: Request Usage
+          description: One request a run sent, as the processor answered it (one row per variant, retries included).
+          schema: "{ customId: string, model: string, provider: string | null, generationId: string | null, inputTokens: number, outputTokens: number, cost: number | null, finishReason: string | null, error: string | null }"
+        - name: Retry Context
+          description: What the retry of a failed card is told — the acceptance output and the diff of the same failed attempt.
+          schema: "{ acceptanceOutput: string, previousDiff: string | null }"
 
     # ---------------------------------------------------------------- P6
     - name: git
