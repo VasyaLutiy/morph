@@ -194,7 +194,11 @@ test("Main example 4: the built binary runs a stub deck end to end and exits 0",
       "morph b: out/b.ts",
       "morph a: out/a.ts",
     ]);
-    expect(res.stderr).toBe("morph run: exit 0\n");
+    expect(res.stderr).toBe(
+      "morph run: a.v1 accepted stage 0 finish stop chars 30\n" +
+        "morph run: b.v1 accepted stage 0 finish stop chars 30\n" +
+        "morph run: exit 0\n",
+    );
   } finally {
     r.rm();
     side.rm();
