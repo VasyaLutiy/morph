@@ -6,6 +6,13 @@ for (const [key, value] of Object.entries(process.env)) {
   if (value !== undefined) env[key] = value;
 }
 
+let signalled: string | null = null;
+const onSignal = (signal: NodeJS.Signals): void => {
+  if (signalled === null) signalled = signal;
+};
+process.on("SIGINT", onSignal);
+process.on("SIGTERM", onSignal);
+
 const code = await main(
   process.argv.slice(2),
   {
@@ -13,6 +20,7 @@ const code = await main(
     now: () => Date.now(),
     cwd: process.cwd(),
     transport: null,
+    interrupted: () => signalled,
   },
   {
     stdout: (text: string) => {
