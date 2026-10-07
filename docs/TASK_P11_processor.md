@@ -461,3 +461,10 @@ Scratch worktree (deleted): main's batch.ts → **red** at the probe, 2 of 13 (`
 npm run build && rm -rf /tmp/v2bin-p11fix && mkdir -p /tmp/v2bin-p11fix && cp -r dist /tmp/v2bin-p11fix/ && ln -s $PWD/node_modules /tmp/v2bin-p11fix/node_modules
 node /tmp/v2bin-p11fix/dist/cli.js run --root . --deck decks/p11/fix1/deck.json --processor glm53 --deadline 2400 > /tmp/p11-fix1-run.json
 ```
+
+### Fix 1 run (07.10) — send-batch, FIX[code defect]
+
+One-card deck `decks/p11/fix1/deck.json`, binary copy `/tmp/v2bin-p11fix` (main 0fa0231): run 20261007-154650, **1 / 1
+written**, v1 accepted at the first attempt, $0.0140, 68 s, 2 requests. `src/processor/batch.ts` now builds the
+pinned-model text in one helper `pinnedError(config)` from `config.model` on every path; no model literal is left in the
+file. On the run branch: tsc, eslint, `npm run build` clean; vitest **599 / 599**; `git status` clean. The defect is closed.
