@@ -56,11 +56,11 @@ test("Parse Command example 3: unknown command frobnicate", () => {
   });
 });
 
-test("Parse Command example 4: plan and deck status answer NotYetError", () => {
-  const plan = parseCommand(["plan"]);
-  expect(plan).toStrictEqual({
+test("Parse Command example 4: scout and deck status answer NotYetError", () => {
+  const scout = parseCommand(["scout"]);
+  expect(scout).toStrictEqual({
     ok: false,
-    error: { error: { code: 4, kind: "NotYetError", message: "command plan is not available yet" } },
+    error: { error: { code: 4, kind: "NotYetError", message: "command scout is not available yet" } },
   });
   const status = parseCommand(["deck", "status"]);
   expect(status).toStrictEqual({
@@ -125,8 +125,70 @@ test("Parse Command example 8: --root as the last token, then no command", () =>
   expect(empty).toStrictEqual({
     ok: false,
     error: {
-      error: { code: 4, kind: "UsageError", message: "no command (commands: deck check, run)" },
+      error: { code: 4, kind: "UsageError", message: "no command (commands: deck check, plan, run)" },
     },
+  });
+});
+
+test("Parse Command example 9: plan with every flag and a repeated --component", () => {
+  const got = parseCommand([
+    "plan",
+    "--spec",
+    "c.yaml",
+    "--component",
+    "a",
+    "--map",
+    "m.json",
+    "--component",
+    "b",
+    "--judge",
+    "--out",
+    "d.json",
+    "--pretty",
+  ]);
+  const command: Command = {
+    name: "plan",
+    root: ".",
+    pretty: true,
+    spec: "c.yaml",
+    components: ["a", "b"],
+    map: "m.json",
+    judge: true,
+    out: "d.json",
+  };
+  expect(got).toStrictEqual({ ok: true, command });
+});
+
+test("Parse Command example 10: plan with only --root and --spec", () => {
+  const got = parseCommand(["plan", "--root", "/r", "--spec", "c.yaml"]);
+  const command: Command = {
+    name: "plan",
+    root: "/r",
+    pretty: false,
+    spec: "c.yaml",
+    components: [],
+    map: null,
+    judge: false,
+    out: null,
+  };
+  expect(got).toStrictEqual({ ok: true, command });
+});
+
+test("Parse Command example 11: plan without --spec, --judge twice, --judge on run", () => {
+  const missingSpec = parseCommand(["plan", "--component", "a"]);
+  expect(missingSpec).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "missing --spec" } },
+  });
+  const twice = parseCommand(["plan", "--spec", "c", "--judge", "--judge"]);
+  expect(twice).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "flag --judge given twice" } },
+  });
+  const notForRun = parseCommand(["run", "--deck", "d", "--processor", "s", "--judge"]);
+  expect(notForRun).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "flag --judge does not apply to run" } },
   });
 });
 
