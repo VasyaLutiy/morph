@@ -402,3 +402,16 @@ python3 decks/tools/scale_tokens.py decks/p12b/deck.json 3
 npm run build && rm -rf /tmp/v2bin-p12b && mkdir -p /tmp/v2bin-p12b && cp -r dist /tmp/v2bin-p12b/ && ln -s $PWD/node_modules /tmp/v2bin-p12b/node_modules
 node /tmp/v2bin-p12b/dist/cli.js run --root . --deck decks/p12b/deck.json --processor ds --deadline 2400 > /tmp/p12b-run.json
 ```
+
+### Run (08.10, VPS, autonomous) — cut by V2, run by the V2 binary on processor ds
+
+Deck `decks/p12b/deck.json` (V2 cut filtered to 7 cards by `decks/p12b/filter.py`, maxTokens ×3), run by the V2 binary copy
+in `/tmp/v2bin-p12b` with `--processor ds --deadline 2400`, default retry cap: run 20261008-000800, **7 / 7 written in one
+run, no fix, no retry** (primer-command won on v2, v1 red at the probe; its answer 16 798 chars, both files whole), $0.1162,
+8.0 min (479 s), 10 requests, 164 661 in / 66 401 out tokens. On the run branch: `git status` clean; tsc, eslint,
+`npm run build` clean; vitest **667 / 667** in 93 files. Read once against §2.2: Read Morph Log walks `git log -z
+--name-only --no-renames` newest first with the Morph-Card / Morph-Model / Morph-Run trailers, a card commit takes the run
+of the archive commit above it and any other commit ends the run; Read Ownership counts commits by model and lists per path
+its writes in log order; the primer renders "git carries N Morph commits: …", 30 paths × 3 writes with "… N more", the debt
+rows (phase holding "debt") as "not in these totals", and MEASURE's first "Running total" line up to " (" next to its
+archive total with the difference and the fixed sentence (operator notes 08.10 a, b). 0 defects.
