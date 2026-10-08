@@ -40,7 +40,7 @@ test("Main examples 12 and 13: review routed in process with its deps; its refus
     t.write("contour.yaml", fixture("reviewer/record.yaml"));
     t.write("morph-map.json", fixture("reviewer/map.json"));
     t.git(["add", "."]); t.git(["commit", "-q", "-m", "base"]); t.git(["tag", "b0"]);
-    t.write("src/shop/addTax.ts", "export const addTax = (p: number): number => p * 1.2;\n");
+    t.write("src/shop/addTax.ts", "export const addTax = (p: number): number => p * 1.2 + 0;\n");
     t.git(["add", "."]); t.git(["commit", "-q", "-m", "morph add-tax: src/shop/addTax.ts\n\nMorph-Card: add-tax\nMorph-Model: m/x"]); t.git(["tag", "h1"]);
     const deps: CliDeps = { env: { PATH: process.env.PATH ?? "" }, now: () => 0, cwd: t.root, transport: null };
     const o = io();
@@ -66,6 +66,9 @@ test("Main examples 12 and 13: review routed in process with its deps; its refus
     const fault = JSON.parse(s.out[0]) as { error: { code: number; kind: string; message: string } };
     expect([fault.error.code, fault.error.kind, fault.error.message.startsWith("git rev-parse failed (exit 128): ")]).toStrictEqual([3, "RuntimeError", true]);
     expect(s.err).toStrictEqual(["morph review: exit 3\n"]);
+    const m = io();
+    expect(await main(["review", "b0", "h1", "--mutants", "1", "--test", 'test "$MARK" = m9'], { ...deps, env: { ...deps.env, MARK: "m9" } }, m)).toBe(1);
+    expect((JSON.parse(m.out[0]) as { baseline: unknown }).baseline, "deps.env reaches the mutant runs").toStrictEqual({ exit: 0, timedOut: false });
   } finally {
     t.rm();
     e.rm();

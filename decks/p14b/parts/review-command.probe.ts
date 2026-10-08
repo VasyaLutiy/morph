@@ -160,13 +160,30 @@ test("§2.2 rows: the scout session's refusals; a broken spec; the timeout in se
     expect(await r({ scout: "latest" })).toStrictEqual(usage(".morph/scout/20991231-000000-ffffffff/scout.json: schema 2, expected 1"));
     t.write(".morph/scout/20991231-000000-ffffffff/scout.json", '{"schema": 1, "status": "no_answer", "answer": null, "stopReason": "why"}');
     expect(await r({ scout: "latest" })).toStrictEqual(usage("scout session 20991231-000000-ffffffff has no answer (no_answer): why"));
+    t.write(".morph/scout/20991231-000000-ffffffff/scout.json", "null");
+    expect(await r({ scout: "latest" })).toStrictEqual(usage(".morph/scout/20991231-000000-ffffffff/scout.json: schema null, expected 1"));
+    t.write(".morph/scout/20991231-000000-ffffffff/scout.json", '{"schema": 1, "status": "ok", "answer": null, "stopReason": "s"}');
+    expect(await r({ scout: "latest" })).toStrictEqual(usage("scout session 20991231-000000-ffffffff has no answer (ok): s"));
+    t.write(".morph/scout/20991231-000000-ffffffff/scout.json", '{"schema": 1, "status": "ok", "answer": "x", "stopReason": "s"}');
+    expect(await r({ scout: "latest" })).toStrictEqual(usage("scout session 20991231-000000-ffffffff has no answer (ok): s"));
     expect((await r({ scout: SCOUT_ID })).document, "a named older session").toMatchObject({ scout: SCOUT_ID });
     fs.rmSync(t.path(".morph/scout"), { recursive: true });
     expect(await r({ scout: "latest" })).toStrictEqual(usage("no scout session under .morph/scout"));
     t.write("bad.yaml", "System: {}\n");
     const bad = await r({ spec: "bad.yaml" });
     expect([bad.code, JSON.stringify(bad.document).includes("bad.yaml is not a valid record")]).toStrictEqual([4, true]);
-    t.write("lib/two.ts", "export const z = a && b;\n");
+    t.git(["mv", "README.md", "r2.md"]);
+    expect(await r({ head: "HEAD", mutants: 1 })).toStrictEqual(usage("--mutants needs a clean tree: dirty outside .morph/: bad.yaml, r2.md"));
+    t.git(["mv", "r2.md", "README.md"]);
+    t.write("src/shop/addTax.ts", "export const addTax = 1;\n");
+    t.git(["add", "-A"]); t.git(["commit", "-q", "-m", "hand2"]);
+    t.write("docs/n.md", "n\n");
+    t.git(["add", "-A"]); t.git(["commit", "-q", "-m", "morph zz: docs/n.md\n\nMorph-Card: zz\nMorph-Model: q"]);
+    const owned = (await r({ base: "h1", head: "HEAD" })).document as { findings: { path: string; got: string }[] };
+    expect(owned.findings.find((f) => f.path === "src/shop/addTax.ts")?.got, "the whole log's owner").toBe(
+      "changed outside every card's targets; last Morph write add-tax (m/x, run r7)");
+    t.write("lib/two.ts", "export const z = a && b;\nexport const k = c > d;\n");
+    fs.rmSync(t.path("tests/shop/old.test.ts"));
     t.write("tests/shop/t.test.ts", 'test("x", () => { expect(1 === 1).toBe(true); });\n');
     fs.rmSync(t.path("src/shop/addTax.ts"));
     t.git(["add", "-A"]); t.git(["commit", "-q", "-m", "more"]);
@@ -177,6 +194,12 @@ test("§2.2 rows: the scout session's refusals; a broken spec; the timeout in se
     expect([d.counts.mutants, d.counts.killed]).toStrictEqual([3, 1]);
     expect(d.markdown.includes("## Mutants (1 of 3 killed)\n\n| at | rule | result |\n|---|---|---|\n| lib/three.ts:1 | \\|\\| → && | survived |\n" +
       "| lib/three.ts:2 | === → !== | survived |\n| lib/two.ts:1 | && → \\|\\| | killed |\n")).toBe(true);
+    const two = await r({ base: "h1", head: "HEAD", mutants: 2, test: 'if grep -q "a || b" lib/two.ts; then sleep 5; fi', mutantTimeoutSeconds: 1 });
+    expect((two.document as { markdown: string }).markdown.includes("| lib/three.ts:1 | \\|\\| → && | survived |\n| lib/two.ts:1 | && → \\|\\| | killed |\n"),
+      "spread over the joined list").toBe(true);
+    t.git(["mv", "lib/three.ts", "lib/four.ts"]); t.git(["commit", "-q", "-m", "rename"]);
+    const moved = (await r({ base: "HEAD~1", head: "HEAD" })).document as { markdown: string };
+    expect(moved.markdown.includes("| lib/four.ts | added | +2 -0 | — | — |\n| lib/three.ts | deleted | +0 -2 | — | — |\n"), "--no-renames on both").toBe(true);
   } finally {
     t.rm();
   }
