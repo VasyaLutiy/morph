@@ -1,0 +1,250 @@
+```
+import { mkdirSync, readdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import type { Card } from "../cards/types.js";
+import { hasExtension, profileForPath } from "../language/paths.js";
+import { cagePath } from "./cagePath.js";
+import type { ScoutFs, ScoutTree } from "./cagePath.js";
+
+export interface FromScoutOptions {
+  fromScout: string;
+  out: string | null;
+}
+
+export interface FromScoutResult {
+  code: 0 | 1 | 2 | 3 | 4;
+  document: unknown;
+}
+
+export const SCOUT_SESSIONS = ".morph/scout";
+
+export const PATCH_CONTRACT = "Change the target files of this card to do the task above. Return each target file COMPLETE, not a diff. Keep the public names the files already declare: other code imports them. Write or change no other file.";
+
+export interface PatchInput {
+  scoutId: string;
+  question: string;
+  targets: string[];
+  contextSlice: string[];
+  targetBytes: number;
+}
+
+export function patchAcceptance(targets: string[]): string | null {
+  for (const target of targets) {
+    const profile = profileForPath(target);
+    if (profile === null) {
+      continue;
+    }
+    let line = profile.parseLine;
+    if (profile.parseTakesFiles) {
+      const files = targets.filter((t) => hasExtension(profile, t));
+      line = line + " " + files.join(" ");
+    }
+    return line + " && " + profile.fullRunLine;
+  }
+  return null;
+}
+
+export function patchCard(input: PatchInput): Card {
+  const scaled = Math.ceil(input.targetBytes / 3) * 2;
+  const maxTokens = scaled > 16000 ? scaled : 16000;
+  return {
+    customId: "scout-" + input.scoutId,
+    intent: "patch",
+    targets: input.targets,
+    contextSlice: input.contextSlice,
+    instruction: input.question.trim() + "\n\n" + PATCH_CONTRACT,
+    acceptance: patchAcceptance(input.targets),
+    model: null,
+    maxTokens,
+    reasoning: null,
+    variants: 1,
+    dependsOn: [],
+  };
+}
+
+export function planFromScout(root: string, args: FromScoutOptions): FromScoutResult {
+  const sessionsDir = join(root, SCOUT_SESSIONS);
+  let id: string;
+  if (args.fromScout === "latest") {
+    const found = latestSession(sessionsDir);
+    if (found === null) {
+      return usage("no scout session under " + SCOUT_SESSIONS);
+    }
+    id = found;
+  } else {
+    if (!isFile(join(sessionsDir, args.fromScout, "scout.json"))) {
+      return usage("scout session not found: " + args.fromScout);
+    }
+    id = args.fromScout;
+  }
+
+  const at = SCOUT_SESSIONS + "/" + id + "/scout.json";
+  let text: string;
+  try {
+    text = readFileSync(join(sessionsDir, id, "scout.json"), "utf8");
+  } catch {
+    return deckError(at + " does not parse");
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return deckError(at + " does not parse");
+  }
+  if (!isObject(parsed)) {
+    return deckError(at + ": schema null, expected 1");
+  }
+  if (parsed.schema !== 1) {
+    const shown = JSON.stringify(parsed.schema ?? null) ?? "null";
+    return deckError(at + ": schema " + shown + ", expected 1");
+  }
+  const status = typeof parsed.status === "string" ? parsed.status : "";
+  const stopReason = typeof parsed.stopReason === "string" ? parsed.stopReason : "";
+  const answer = parsed.answer;
+  if (status !== "ok" || answer === null || answer === undefined) {
+    return refused("scout session " + id + " has no answer (" + status + "): " + stopReason);
+  }
+  const question = typeof parsed.question === "string" ? parsed.question : "";
+  const answerObj = isObject(answer) ? answer : {};
+  const targets = stringArray(answerObj.targets);
+  const slice = stringArray(answerObj.context_slice);
+  if (targets.length === 0 || question.trim() === "") {
+    return deckError(at + ": the answer has no targets or the session no question");
+  }
+
+  const tree: ScoutTree = { root, files: [...targets, ...slice] };
+  const cagedTargets: string[] = [];
+  let targetBytes = 0;
+  for (const target of targets) {
+    const caged = cagePath(tree, target, "file", NODE_FS);
+    if (!caged.ok) {
+      return refused("target refused: " + caged.error);
+    }
+    const info = statFile(join(root, caged.path));
+    if (info.kind === "missing") {
+      return refused("target refused: no such file: " + target);
+    }
+    if (info.kind === "other") {
+      return refused("target refused: not a file: " + target);
+    }
+    targetBytes += info.size;
+    cagedTargets.push(caged.path);
+  }
+
+  const kept: string[] = [];
+  const dropped: string[] = [];
+  for (const path of slice) {
+    const caged = cagePath(tree, path, "file", NODE_FS);
+    if (!caged.ok) {
+      dropped.push(path);
+      continue;
+    }
+    if (statFile(join(root, caged.path)).kind !== "file") {
+      dropped.push(path);
+      continue;
+    }
+    kept.push(caged.path);
+  }
+
+  const card = patchCard({
+    scoutId: id,
+    question,
+    targets: cagedTargets,
+    contextSlice: kept,
+    targetBytes,
+  });
+
+  if (args.out !== null) {
+    const outPath = resolve(root, args.out);
+    mkdirSync(dirname(outPath), { recursive: true });
+    writeFileSync(outPath, JSON.stringify([card], null, 2) + "\n", "utf8");
+  }
+
+  const ref = typeof parsed.ref === "string" ? parsed.ref : null;
+  return {
+    code: 0,
+    document: {
+      scoutId: id,
+      scout: at,
+      ref,
+      cards: [card],
+      dropped,
+      out: args.out,
+    },
+  };
+}
+
+const NODE_FS: ScoutFs = {
+  realpath: (path: string): string => realpathSync(path),
+  readFile: (path: string): string => readFileSync(path, "utf8"),
+};
+
+type PathStat = { kind: "missing" } | { kind: "other" } | { kind: "file"; size: number };
+
+function statFile(path: string): PathStat {
+  try {
+    const stat = statSync(path);
+    if (stat.isFile()) {
+      return { kind: "file", size: stat.size };
+    }
+    return { kind: "other" };
+  } catch {
+    return { kind: "missing" };
+  }
+}
+
+function isFile(path: string): boolean {
+  return statFile(path).kind === "file";
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const items: unknown[] = value;
+  const out: string[] = [];
+  for (const item of items) {
+    if (typeof item !== "string") {
+      return [];
+    }
+    out.push(item);
+  }
+  return out;
+}
+
+function latestSession(dir: string): string | null {
+  let entries: string[];
+  try {
+    entries = readdirSync(dir);
+  } catch {
+    return null;
+  }
+  const sessions: string[] = [];
+  for (const entry of entries) {
+    if (isFile(join(dir, entry, "scout.json"))) {
+      sessions.push(entry);
+    }
+  }
+  if (sessions.length === 0) {
+    return null;
+  }
+  sessions.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  return sessions[sessions.length - 1];
+}
+
+function usage(message: string): FromScoutResult {
+  return { code: 4, document: { error: { code: 4, kind: "UsageError", message } } };
+}
+
+function deckError(message: string): FromScoutResult {
+  return { code: 2, document: { error: { code: 2, kind: "DeckError", message } } };
+}
+
+function refused(message: string): FromScoutResult {
+  return { code: 2, document: { error: { code: 2, kind: "RefusalError", message } } };
+}
+```

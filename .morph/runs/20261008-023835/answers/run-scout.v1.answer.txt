@@ -1,0 +1,444 @@
+```
+/**
+ * Run Scout — one recon session: round 0, then one model turn per round through
+ * the processor, read as an action, an answer or a malformed turn, until the
+ * model answers, a budget closes or a call fails.
+ *
+ * The layer scout's first node-free file: the file system is the ScoutFs
+ * parameter, the clock is `deps.now`, the model is the processor's Send
+ * Generation. Nothing here reads the environment, the network or a file.
+ */
+
+import type { Message, Request } from "../compiler/types.js";
+import { sendGeneration } from "../processor/send.js";
+import type { ProcessorConfig, Transport } from "../processor/types.js";
+import { cagePath } from "./cagePath.js";
+import type { ScoutFs, ScoutTree } from "./cagePath.js";
+import { parseTurn } from "./parseTurn.js";
+import type { ScoutAction, ScoutAnswer } from "./parseTurn.js";
+import { runTool } from "./runTool.js";
+import type { ToolCaps } from "./runTool.js";
+import { FINAL_TURN, spendTurn, stopReason } from "./spendBudget.js";
+import type { BudgetName, ScoutBudgets, ScoutSpent } from "./spendBudget.js";
+
+/** The scout protocol: the system message of every session, byte for byte. */
+export const PROTOCOL: string = [
+  "You are the scout of a code repository: you find the files a task must change by reading the repository with tools, one tool per turn, and you answer with those files.",
+  "Each of your turns holds exactly ONE line that starts with a verb in upper case; prose before that line is allowed:",
+  "READ <path> [<from>-<to>]  the file's lines, 1-based and inclusive; a long file comes in pieces and the reply names the next range",
+  "GREP <pattern> [-- <dir>]  a JavaScript regular expression tested on every line of the tree, or of the files under <dir>; a|b works",
+  "LIST [<dir>]  the entries of a directory of the tree; no <dir> is the root",
+  'ANSWER {"targets": [...], "context_slice": [...], "reasoning": "..."}  your final answer, the JSON object last',
+  "targets: the files that must change; context_slice: the files whose definitions the change needs, read and not changed; reasoning: why, in a few sentences.",
+  'Every path is relative to the repository root, with "/", and names a file of the tree as LIST shows it: no directories, globs or line ranges in the answer.',
+  "Your calls, reads, characters and rounds are counted; when a budget closes you get one last turn: send ANSWER in it.",
+].join("\n");
+
+/** Appended to every malformed turn's reply. */
+export const REMINDER: string =
+  "One line per turn: READ <path> [<from>-<to>], GREP <pattern> [-- <dir>], LIST [<dir>] or ANSWER {json}.";
+
+/** What one session reads (Run Scout's first parameter). */
+export interface ScoutSession {
+  question: string;
+  tree: ScoutTree;
+  fs: ScoutFs;
+  seedText: string;
+  budgets: ScoutBudgets;
+  caps: ToolCaps;
+  maxTokens: number | null;
+}
+
+/** Run Scout's injected deps: the processor, its transport and the clock. */
+export interface ScoutDeps {
+  config: ProcessorConfig;
+  transport: Transport;
+  now: () => number;
+}
+
+export type ScoutStatus = "ok" | "no_answer" | "invalid_answer";
+
+/** One round of a session: its turn, what it delivered and what it cost. */
+export interface JournalEntry {
+  round: number;
+  turn: "action" | "answer" | "malformed" | "failed";
+  action: ScoutAction | null;
+  chars: number;
+  error: string | null;
+  inputTokens: number;
+  outputTokens: number;
+  cost: number | null;
+}
+
+/** What the whole session asked of the model. */
+export interface ScoutUsage {
+  requests: number;
+  inputTokens: number;
+  outputTokens: number;
+  cost: number | null;
+}
+
+/** What Run Scout resolves to. */
+export interface ScoutOutcome {
+  status: ScoutStatus;
+  answer: ScoutAnswer | null;
+  stopReason: string;
+  spent: ScoutSpent;
+  elapsedMs: number;
+  usage: ScoutUsage;
+  journal: JournalEntry[];
+  messages: Message[];
+}
+
+/** The answer after the cage: the caged paths, or the first refusal. */
+export type CheckedAnswer =
+  | { ok: true; answer: ScoutAnswer }
+  | { ok: false; error: string };
+
+/**
+ * Round 0: the protocol as the system message, then the seed (when any) and the
+ * root listing and the task as the user message. Not charged, not journaled.
+ */
+export function openingMessages(session: ScoutSession): Message[] {
+  const seed = session.seedText === "" ? "" : session.seedText + "\n";
+  const listing = runTool(
+    { kind: "list", path: "" },
+    session.tree,
+    session.fs,
+    session.caps,
+  ).text;
+  return [
+    { role: "system", content: PROTOCOL },
+    {
+      role: "user",
+      content: seed + listing + "\n\nTask:\n" + session.question,
+    },
+  ];
+}
+
+/**
+ * The answer's paths caged against the session's listing: each target, then each
+ * context_slice path through Cage Path (file). The first refusal names its list.
+ * Repeats are dropped, and a slice path that is a target is dropped too.
+ */
+export function checkAnswer(
+  answer: ScoutAnswer,
+  tree: ScoutTree,
+  fs: ScoutFs,
+): CheckedAnswer {
+  const targets: string[] = [];
+  for (const target of answer.targets) {
+    const caged = cagePath(tree, target, "file", fs);
+    if (!caged.ok) {
+      return { ok: false, error: "targets: " + caged.error };
+    }
+    if (!targets.includes(caged.path)) {
+      targets.push(caged.path);
+    }
+  }
+
+  const slice: string[] = [];
+  for (const context of answer.context_slice) {
+    const caged = cagePath(tree, context, "file", fs);
+    if (!caged.ok) {
+      return { ok: false, error: "context_slice: " + caged.error };
+    }
+    if (targets.includes(caged.path)) continue;
+    if (slice.includes(caged.path)) continue;
+    slice.push(caged.path);
+  }
+
+  return {
+    ok: true,
+    answer: { targets, context_slice: slice, reasoning: answer.reasoning },
+  };
+}
+
+/**
+ * The session's round loop. One model turn per round through Send Generation;
+ * the delivered text of Spend Budget is the next user message; one correction of
+ * a rejected answer; after a calls, reads or chars close the close sentence is
+ * appended to that same user message and the next turn is the final one;
+ * deadline and rounds end the session at once.
+ */
+export async function runScout(
+  session: ScoutSession,
+  deps: ScoutDeps,
+): Promise<ScoutOutcome> {
+  const messages: Message[] = openingMessages(session);
+  const start = deps.now();
+
+  let spent: ScoutSpent = { calls: 0, reads: 0, chars: 0, rounds: 0 };
+  const usage: ScoutUsage = {
+    requests: 0,
+    inputTokens: 0,
+    outputTokens: 0,
+    cost: null,
+  };
+  const journal: JournalEntry[] = [];
+
+  let closed: BudgetName | null = null;
+  let why: string | null = null;
+  let final = false;
+  let corrected = false;
+
+  let status: ScoutStatus = "no_answer";
+  let answer: ScoutAnswer | null = null;
+  let stopped = "";
+
+  for (;;) {
+    const round = spent.rounds + 1;
+    const request: Request = {
+      customId: "scout.t" + String(round),
+      model: null,
+      maxTokens: session.maxTokens,
+      reasoning: null,
+      messages: messages.slice(),
+    };
+
+    const generation = await sendGeneration(deps.config, [request], deps.transport);
+    const replied = generation.answers[0];
+    const used = generation.usage[0];
+
+    usage.requests += 1;
+    usage.inputTokens += used.inputTokens;
+    usage.outputTokens += used.outputTokens;
+    if (used.cost !== null) {
+      usage.cost = (usage.cost ?? 0) + used.cost;
+    }
+
+    if (replied.error !== null) {
+      journal.push({
+        round,
+        turn: "failed",
+        action: null,
+        chars: 0,
+        error: replied.error,
+        inputTokens: used.inputTokens,
+        outputTokens: used.outputTokens,
+        cost: used.cost,
+      });
+      status = "no_answer";
+      answer = null;
+      stopped =
+        "no answer: the model call failed in round " +
+        String(round) +
+        ": " +
+        replied.error;
+      break;
+    }
+
+    const text = replied.text ?? "";
+    messages.push({ role: "assistant", content: text });
+    const turn = parseTurn(text);
+    const elapsed = deps.now() - start;
+
+    let reply: string;
+
+    if (turn.kind === "answer") {
+      const checked = checkAnswer(turn.answer, session.tree, session.fs);
+
+      if (checked.ok) {
+        spent = spendTurn(
+          session.budgets,
+          spent,
+          { call: false, read: false, text: "" },
+          elapsed,
+        ).spent;
+        journal.push({
+          round,
+          turn: "answer",
+          action: null,
+          chars: 0,
+          error: null,
+          inputTokens: used.inputTokens,
+          outputTokens: used.outputTokens,
+          cost: used.cost,
+        });
+        status = "ok";
+        answer = checked.answer;
+        stopped = stopReason(true, closed, why);
+        break;
+      }
+
+      if (final) {
+        spent = spendTurn(
+          session.budgets,
+          spent,
+          { call: false, read: false, text: "" },
+          elapsed,
+        ).spent;
+        journal.push({
+          round,
+          turn: "answer",
+          action: null,
+          chars: 0,
+          error: checked.error,
+          inputTokens: used.inputTokens,
+          outputTokens: used.outputTokens,
+          cost: used.cost,
+        });
+        status = "invalid_answer";
+        answer = null;
+        stopped =
+          "no answer: the answer after the budget closed was rejected: " +
+          checked.error;
+        break;
+      }
+
+      if (corrected) {
+        spent = spendTurn(
+          session.budgets,
+          spent,
+          { call: false, read: false, text: "" },
+          elapsed,
+        ).spent;
+        journal.push({
+          round,
+          turn: "answer",
+          action: null,
+          chars: 0,
+          error: checked.error,
+          inputTokens: used.inputTokens,
+          outputTokens: used.outputTokens,
+          cost: used.cost,
+        });
+        status = "invalid_answer";
+        answer = null;
+        stopped =
+          "no answer: the corrected answer was rejected: " + checked.error;
+        break;
+      }
+
+      corrected = true;
+      const rejection =
+        "ANSWER rejected: " +
+        checked.error +
+        ". Name only files of the tree and send ANSWER again.";
+      const charged = spendTurn(
+        session.budgets,
+        spent,
+        { call: false, read: false, text: rejection },
+        elapsed,
+      );
+      spent = charged.spent;
+      journal.push({
+        round,
+        turn: "answer",
+        action: null,
+        chars: charged.text.length,
+        error: checked.error,
+        inputTokens: used.inputTokens,
+        outputTokens: used.outputTokens,
+        cost: used.cost,
+      });
+      if (charged.closed !== null) {
+        closed = charged.closed;
+        why = charged.why;
+      }
+      reply = charged.text;
+    } else if (final) {
+      spent = spendTurn(
+        session.budgets,
+        spent,
+        { call: false, read: false, text: "" },
+        elapsed,
+      ).spent;
+      journal.push({
+        round,
+        turn: turn.kind === "action" ? "action" : "malformed",
+        action: turn.kind === "action" ? turn.action : null,
+        chars: 0,
+        error: turn.kind === "action" ? null : turn.reason,
+        inputTokens: used.inputTokens,
+        outputTokens: used.outputTokens,
+        cost: used.cost,
+      });
+      status = "no_answer";
+      answer = null;
+      stopped =
+        "no answer: the model did not answer after the budget closed: " +
+        (why ?? "");
+      break;
+    } else if (turn.kind === "action") {
+      const tool = runTool(turn.action, session.tree, session.fs, session.caps);
+      const charged = spendTurn(
+        session.budgets,
+        spent,
+        { call: true, read: tool.read, text: tool.text },
+        elapsed,
+      );
+      spent = charged.spent;
+      journal.push({
+        round,
+        turn: "action",
+        action: turn.action,
+        chars: charged.text.length,
+        error: tool.error,
+        inputTokens: used.inputTokens,
+        outputTokens: used.outputTokens,
+        cost: used.cost,
+      });
+      if (charged.closed !== null) {
+        closed = charged.closed;
+        why = charged.why;
+      }
+      reply = charged.text;
+    } else {
+      const replyText =
+        "Turn not understood: " + turn.reason + ". " + REMINDER;
+      const charged = spendTurn(
+        session.budgets,
+        spent,
+        { call: false, read: false, text: replyText },
+        elapsed,
+      );
+      spent = charged.spent;
+      journal.push({
+        round,
+        turn: "malformed",
+        action: null,
+        chars: charged.text.length,
+        error: turn.reason,
+        inputTokens: used.inputTokens,
+        outputTokens: used.outputTokens,
+        cost: used.cost,
+      });
+      if (charged.closed !== null) {
+        closed = charged.closed;
+        why = charged.why;
+      }
+      reply = charged.text;
+    }
+
+    if (closed === "deadline" || closed === "rounds") {
+      status = "no_answer";
+      answer = null;
+      stopped = stopReason(false, closed, why);
+      break;
+    }
+
+    if (closed !== null && FINAL_TURN.includes(closed)) {
+      final = true;
+      reply =
+        reply +
+        "\n\nThe budget is closed: " +
+        (why ?? "") +
+        ". No more tools will run: send ANSWER now, the JSON object last.";
+    }
+
+    messages.push({ role: "user", content: reply });
+  }
+
+  return {
+    status,
+    answer,
+    stopReason: stopped,
+    spent,
+    elapsedMs: deps.now() - start,
+    usage,
+    journal,
+    messages,
+  };
+}
+```

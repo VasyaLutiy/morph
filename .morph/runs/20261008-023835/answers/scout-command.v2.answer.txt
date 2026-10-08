@@ -1,0 +1,386 @@
+```
+/**
+ * Scout Command — one scout session on the working tree: the task file, the
+ * tree's listing, the seed, then Run Scout, and the record written under
+ * .morph/scout/<id>/.
+ *
+ * The scout layer's node:fs file, with node:crypto: the listing and the ref
+ * come from git (spawned only through Run Git), the clock only from
+ * `deps.now`, the environment only from `deps.env`, the model only from the
+ * processor's Send Generation through Run Scout.
+ */
+
+import { createHash } from "node:crypto";
+import {
+  mkdirSync,
+  readFileSync,
+  realpathSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { join, posix, resolve } from "node:path";
+
+import { readMorphLog } from "../git/log.js";
+import { readOwnership } from "../git/ownership.js";
+import { gitOk, runGit } from "../git/run.js";
+import { PREFIX, readRegistry } from "../processor/registry.js";
+import { realTransport } from "../processor/send.js";
+import type { ProcessorConfig, Transport } from "../processor/types.js";
+import type { ScoutFs } from "./cagePath.js";
+import type { ScoutAnswer } from "./parseTurn.js";
+import { PROTOCOL, runScout } from "./runScout.js";
+import type { JournalEntry, ScoutStatus, ScoutUsage } from "./runScout.js";
+import { DEFAULT_TOOL_CAPS } from "./runTool.js";
+import type { ToolCaps } from "./runTool.js";
+import {
+  SEED_CHARS,
+  SEED_FILES,
+  renderSeed,
+  seedFromOwnership,
+} from "./seedFromOwnership.js";
+import { DEFAULT_BUDGETS } from "./spendBudget.js";
+import type { ScoutBudgets, ScoutSpent } from "./spendBudget.js";
+
+/** What `morph scout` was asked for. */
+export interface ScoutOptions {
+  processor: string;
+  issue: string;
+  seedFile: string | null;
+  deadlineSeconds: number;
+}
+
+/** What the command needs besides its arguments. */
+export interface ScoutCommandDeps {
+  env: Record<string, string>;
+  now: () => number;
+  cwd: string;
+  transport: Transport | null;
+}
+
+/** What the command resolves to: the exit code and the one JSON document. */
+export interface ScoutResult {
+  code: 0 | 1 | 2 | 3 | 4;
+  document: unknown;
+}
+
+/** Where the round-zero seed came from. */
+export interface SeedRecord {
+  source: "primer" | "file";
+  path: string | null;
+  files: string[];
+  chars: number;
+}
+
+/** The record of one session, written as scout.json beside its transcript. */
+export interface ScoutRecord {
+  schema: 1;
+  scoutId: string;
+  createdAt: string;
+  root: string;
+  ref: string | null;
+  question: string;
+  questionSha256: string;
+  protocolSha256: string;
+  processor: string;
+  model: string;
+  seed: SeedRecord;
+  budgets: ScoutBudgets;
+  caps: ToolCaps;
+  status: ScoutStatus;
+  answer: ScoutAnswer | null;
+  stopReason: string;
+  spent: ScoutSpent;
+  elapsedMs: number;
+  usage: ScoutUsage;
+  journal: JournalEntry[];
+}
+
+/** Where the sessions of a repository are written. */
+export const SCOUT_DIR = ".morph/scout";
+
+/** The header of a round-zero seed the operator named. */
+export const FILE_SEED_HEADER = "Seed: files the operator named (--seed-file):";
+
+/** The file system Run Scout reads the tree through, for this command. */
+export const NODE_SCOUT_FS: ScoutFs = {
+  realpath: (path: string): string => realpathSync(path),
+  readFile: (path: string): string => readFileSync(path, "utf8"),
+};
+
+/** The hex of the UTF-8 bytes of a text. */
+export function sha256(text: string): string {
+  return createHash("sha256").update(text, "utf8").digest("hex");
+}
+
+/** The session's id: the UTC stamp of its start and the question's head. */
+export function scoutId(ms: number, questionSha: string): string {
+  const at = new Date(ms);
+  const pad = (n: number): string => String(n).padStart(2, "0");
+  const date =
+    String(at.getUTCFullYear()).padStart(4, "0") +
+    pad(at.getUTCMonth() + 1) +
+    pad(at.getUTCDate());
+  const time =
+    pad(at.getUTCHours()) + pad(at.getUTCMinutes()) + pad(at.getUTCSeconds());
+  return date + "-" + time + "-" + questionSha.slice(0, 8);
+}
+
+/** The reading of a `--seed-file`: the files it names, or its first fault. */
+export type FileSeed =
+  | { ok: true; files: string[]; notes: string[] }
+  | { ok: false; error: string };
+
+function isNonEmptyStringList(value: unknown): value is string[] {
+  if (!Array.isArray(value)) return false;
+  const items: unknown[] = value;
+  return (
+    items.length > 0 &&
+    items.every((item) => typeof item === "string" && item !== "")
+  );
+}
+
+function isStringList(value: unknown): value is string[] {
+  if (!Array.isArray(value)) return false;
+  const items: unknown[] = value;
+  return items.every((item) => typeof item === "string");
+}
+
+/**
+ * Read a `--seed-file`: a JSON object of at least one non-empty path of the
+ * listing, and an optional list of notes. The first fault is the refusal.
+ */
+export function readSeedFile(text: string, files: string[]): FileSeed {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text) as unknown;
+  } catch {
+    return { ok: false, error: "the JSON does not parse" };
+  }
+
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return { ok: false, error: "files must be a non-empty list of paths" };
+  }
+  const object = parsed as Record<string, unknown>;
+
+  const rawFiles = object["files"];
+  if (!isNonEmptyStringList(rawFiles)) {
+    return { ok: false, error: "files must be a non-empty list of paths" };
+  }
+
+  let notes: string[] = [];
+  const rawNotes = object["notes"];
+  if (rawNotes !== undefined) {
+    if (!isStringList(rawNotes)) {
+      return { ok: false, error: "notes must be a list of strings" };
+    }
+    notes = rawNotes;
+  }
+
+  const listed = new Set(files);
+  for (const file of rawFiles) {
+    if (!listed.has(file)) {
+      return { ok: false, error: "not in the tree: " + file };
+    }
+  }
+
+  return { ok: true, files: rawFiles, notes };
+}
+
+/** Render a file seed as the round-zero text: the header, the files, the notes. */
+export function renderFileSeed(files: string[], notes: string[]): string {
+  let text = FILE_SEED_HEADER + "\n";
+  for (const file of files) {
+    text += "- " + file + "\n";
+  }
+  for (const note of notes) {
+    text += "Note: " + note + "\n";
+  }
+  return text;
+}
+
+function usageError(message: string): ScoutResult {
+  return { code: 4, document: { error: { code: 4, kind: "UsageError", message } } };
+}
+
+/**
+ * `morph scout`: one session on the working tree, its record written to
+ * .morph/scout/<id>/scout.json (+ transcript.json). Every refusal comes before
+ * any model call or write.
+ */
+export async function scoutCommand(
+  root: string,
+  args: ScoutOptions,
+  deps: ScoutCommandDeps
+): Promise<ScoutResult> {
+  const registry = readRegistry(deps.env);
+
+  let config: ProcessorConfig | null = null;
+  for (const candidate of registry.configs) {
+    if (candidate.id === args.processor) {
+      config = candidate;
+    }
+  }
+  if (config === null) {
+    let message = "processor " + args.processor + " is not configured";
+    const prefix = PREFIX + args.processor + "_";
+    const faults: string[] = [];
+    for (const fault of registry.faults) {
+      if (fault.key.startsWith(prefix)) {
+        faults.push(fault.message);
+      }
+    }
+    if (faults.length > 0) {
+      message += ": " + faults.join("; ");
+    }
+    return usageError(message);
+  }
+  const processor = config;
+
+  const issuePath = resolve(deps.cwd, args.issue);
+  let question: string;
+  try {
+    const stat = statSync(issuePath);
+    if (!stat.isFile()) {
+      return usageError("issue file not found: " + args.issue);
+    }
+    question = readFileSync(issuePath, "utf8");
+  } catch {
+    return usageError("issue file not found: " + args.issue);
+  }
+  if (question.trim() === "") {
+    return usageError("issue file is empty: " + args.issue);
+  }
+
+  const listing: string[] = [];
+  const listed = new Set<string>();
+  const lsFiles = gitOk(
+    root,
+    ["ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+    deps.env
+  );
+  for (const piece of lsFiles.split("\0")) {
+    if (piece === "" || listed.has(piece)) continue;
+    listed.add(piece);
+    listing.push(piece);
+  }
+
+  let seed: SeedRecord;
+  let seedText: string;
+  if (args.seedFile !== null) {
+    const seedPath = resolve(deps.cwd, args.seedFile);
+    let seedBody: string | null = null;
+    try {
+      const stat = statSync(seedPath);
+      if (stat.isFile()) {
+        seedBody = readFileSync(seedPath, "utf8");
+      }
+    } catch {
+      seedBody = null;
+    }
+    if (seedBody === null) {
+      return usageError("seed file not found: " + args.seedFile);
+    }
+    const parsed = readSeedFile(seedBody, listing);
+    if (!parsed.ok) {
+      return usageError("seed file " + args.seedFile + ": " + parsed.error);
+    }
+    seedText = renderFileSeed(parsed.files, parsed.notes);
+    seed = {
+      source: "file",
+      path: args.seedFile,
+      files: parsed.files,
+      chars: seedText.length,
+    };
+  } else {
+    const primer = seedFromOwnership(
+      readOwnership(readMorphLog(root, deps.env)),
+      listing,
+      SEED_FILES
+    );
+    seedText = renderSeed(primer, SEED_CHARS);
+    seed = {
+      source: "primer",
+      path: null,
+      files: primer.files,
+      chars: seedText.length,
+    };
+  }
+
+  const head = runGit(root, ["rev-parse", "--verify", "-q", "HEAD"], deps.env);
+  const ref = head.code === 0 ? head.stdout.trim() : null;
+
+  const start = deps.now();
+  const budgets: ScoutBudgets = {
+    ...DEFAULT_BUDGETS,
+    deadlineMs: args.deadlineSeconds * 1000,
+  };
+
+  const outcome = await runScout(
+    {
+      question,
+      tree: { root, files: listing },
+      fs: NODE_SCOUT_FS,
+      seedText,
+      budgets,
+      caps: DEFAULT_TOOL_CAPS,
+      maxTokens: null,
+    },
+    {
+      config: processor,
+      transport: deps.transport ?? realTransport(processor.timeoutMs),
+      now: deps.now,
+    }
+  );
+
+  const questionSha256 = sha256(question);
+  const id = scoutId(start, questionSha256);
+  const directory = join(root, SCOUT_DIR, id);
+  mkdirSync(directory, { recursive: true });
+
+  const record: ScoutRecord = {
+    schema: 1,
+    scoutId: id,
+    createdAt: new Date(start).toISOString(),
+    root,
+    ref,
+    question,
+    questionSha256,
+    protocolSha256: sha256(PROTOCOL),
+    processor: processor.id,
+    model: processor.model,
+    seed,
+    budgets,
+    caps: DEFAULT_TOOL_CAPS,
+    status: outcome.status,
+    answer: outcome.answer,
+    stopReason: outcome.stopReason,
+    spent: outcome.spent,
+    elapsedMs: outcome.elapsedMs,
+    usage: outcome.usage,
+    journal: outcome.journal,
+  };
+
+  writeFileSync(
+    join(directory, "scout.json"),
+    JSON.stringify(record, null, 2) + "\n"
+  );
+  writeFileSync(
+    join(directory, "transcript.json"),
+    JSON.stringify(outcome.messages, null, 2) + "\n"
+  );
+
+  return {
+    code: outcome.status === "ok" ? 0 : 1,
+    document: {
+      scoutId: id,
+      scout: posix.join(SCOUT_DIR, id, "scout.json"),
+      status: outcome.status,
+      answer: outcome.answer,
+      stopReason: outcome.stopReason,
+      spent: outcome.spent,
+      elapsedMs: outcome.elapsedMs,
+      usage: outcome.usage,
+    },
+  };
+}
+```

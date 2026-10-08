@@ -1,0 +1,323 @@
+{
+  "runId": "20261008-023835",
+  "completedAt": 1791428269361,
+  "branch": "morph/20261008-023835",
+  "processor": "ds",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "plan-from-scout",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-from-scout.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "70f52eee94a1754825c06502e1c12635b951d671",
+      "diffstat": {
+        "files": 1,
+        "insertions": 247,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "run-scout",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-scout.v2",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/run-scout/run-scout.probe.ts > Run Scout example 4: the round budget and the deadline end the session without a final turn\nAssertionError: expected { role: 'assistant', content: 'LIST src' } to strictly equal { role: 'user', content: 'LIST src/: 2 entries\\na.ts\\nb.ts' }\n\n- Expected\n+ Received\n\n  {\n-   \"content\": \"LIST src/: 2 entries\n- a.ts\n- b.ts\",\n-   \"role\": \"user\",\n+   \"content\": \"LIST src\",\n+   \"role\": \"assistant\",\n  }\n\n ❯ probe/run-scout/run-scout.probe.ts:142:51\n    140|     const got = await runScout(session(p, { budgets: { ...DEFAULT_BUDG…\n    141|     expect([got.status, got.stopReason, got.usage.requests]).toStrictE…\n    142|     expect(got.messages[got.messages.length - 1]).toStrictEqual({ role…\n       |                                                   ^\n    143|     expect(got.messages.length).toBe(6);\n    144|     let t = 0;\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯\n\n FAIL  probe/run-scout/run-scout.probe.ts > §2.2 rows: openingMessages and checkAnswer alone; a refused READ journaled with its error; the chars clip closes into the final turn; the two texts\nAssertionError: expected [ 'no_answer', 'no answer: the round budget is spent (1 of 1 rounds)', { role: 'assistant', content: '' }, undefined ] to strictly equal [ 'no_answer', 'no answer: the round budget is spent (1 of 1 rounds)', { role: 'assistant', content: '' }, { role: 'user', …(1) } ]\n\n- Expected\n+ Received\n\n@@ -3,10 +3,7 @@\n    \"no answer: the round budget is spent (1 of 1 rounds)\",\n    {\n      \"content\": \"\",\n      \"role\": \"assistant\",\n    },\n-   {\n-     \"content\": \"Turn not understood: empty turn. One line per turn: READ <path> [<from>-<to>], GREP <pattern> [-- <dir>], LIST [<dir>] or ANSWER {json}.\",\n-     \"role\": \"user\",\n-   },\n+   undefined,\n  ]\n\n ❯ probe/run-scout/run-scout.probe.ts:205:80\n    203|     const once = await runScout(session(p, { budgets: { ...DEFAULT_BUD…\n    204|     const empty = \"Turn not understood: empty turn. \" + REMINDER;\n    205|     expect([once.status, once.stopReason, once.messages[2], once.messa…\n       |                                                                                ^\n    206|       { role: \"assistant\", content: \"\" }, { role: \"user\", content: emp…\n    207|     expect(once.journal).toStrictEqual([j(1, \"malformed\", null, empty.…\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\n\n\n Test Files  1 failed (1)\n      Tests  2 failed | 4 passed (6)\n\nfirst difference at char 24 (line 2) of 68/51: expected \"{\\n  \\\"content\\\": \\\"LIST src/: 2 entries\\na.ts\\nb.ts\\\",\\n  \\\"role\\\": \\\"user\" received \"{\\n  \\\"content\\\": \\\"LIST src\\\",\\n  \\\"role\\\": \\\"assistant\\\",\\n}\"\nfirst difference at char 128 (line 7) of 311/140: expected \"...t\\\": \\\"\\\",\\n    \\\"role\\\": \\\"assistant\\\",\\n  },\\n  {\\n    \\\"content\\\": \\\"Turn not understood: e\" received \"...t\\\": \\\"\\\",\\n    \\\"role\\\": \\\"assistant\\\",\\n  },\\n  undefined,\\n]\"\n"
+      ],
+      "commit": "56a438787bb3eebf581bbf4d8524183ed5b64c0e",
+      "diffstat": {
+        "files": 1,
+        "insertions": 452,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-from-scout-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "plan-from-scout-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/scout/planFromScout.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/scout/planFromScout.examples.test.ts(226,5): error TS2322: Type 'number | null' is not assignable to type 'number'.\n  Type 'null' is not assignable to type 'number'.\n"
+      ],
+      "commit": "009833e27f984b34595cd5ff3930907ff58bf224",
+      "diffstat": {
+        "files": 1,
+        "insertions": 263,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "run-scout-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-scout-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/scout/runScout.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "da24a8d8b7754af5cf3824e2dd5f64896ea1f15f",
+      "diffstat": {
+        "files": 1,
+        "insertions": 461,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "scout-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "scout-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "d8c15198fc358d0526a2c5729614d04d65a1ca15",
+      "diffstat": {
+        "files": 1,
+        "insertions": 363,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "parse-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "bc928bbf360ccce6a8ff79f9d5ae28733106ef10",
+      "diffstat": {
+        "files": 3,
+        "insertions": 128,
+        "deletions": 25
+      }
+    },
+    {
+      "customId": "scout-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "scout-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/scout/scoutCommand.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "4d40ef39dd0f5bece9e89c5c511ddab9a7545890",
+      "diffstat": {
+        "files": 1,
+        "insertions": 463,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "main-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "main-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/main.p13b.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/cli/main.p13b.examples.test.ts(6,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/main.p13b.examples.test.ts(42,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(43,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(54,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(55,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(65,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(72,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(73,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(95,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(103,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(106,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(113,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/main.p13b.examples.test.ts(146,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(147,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(150,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(157,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(158,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(161,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(172,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(173,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(174,5): error TS2304: Cannot find name 'expect'.\ntests/cli/main.p13b.examples.test.ts(175,5): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": "5fb0e6ef382a8a8091ad0f9748bee23a34dd16ed",
+      "diffstat": {
+        "files": 1,
+        "insertions": 187,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "parse-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/parse.examples.test.ts\n== names tests/cli/parse.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "7915a85534adc7e49b3a7520c188c547f3784730",
+      "diffstat": {
+        "files": 1,
+        "insertions": 159,
+        "deletions": 5
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 447507,
+    "outputTokens": 248548,
+    "cost": 0.4121884199999999,
+    "requests": 15
+  },
+  "requests": [
+    {
+      "customId": "plan-from-scout.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791427116-85jj6YuVtyEE0Q5Q4UrT",
+      "inputTokens": 25062,
+      "outputTokens": 12311,
+      "cost": 0.0222918,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-from-scout.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791427116-lPesNPOueqnNllnH3iUc",
+      "inputTokens": 25062,
+      "outputTokens": 15655,
+      "cost": 0.0263046,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-scout.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791427116-AxUY8njpHF1iPEFzvaAH",
+      "inputTokens": 29275,
+      "outputTokens": 14846,
+      "cost": 0.0265977,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-scout.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791427162-8lIMyRq0bcE73Q3CwcDR",
+      "inputTokens": 29275,
+      "outputTokens": 20104,
+      "cost": 0.02516586,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-from-scout-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791427343-nsOUU6w3Zu6iQfHpWDPW",
+      "inputTokens": 25142,
+      "outputTokens": 22167,
+      "cost": 0.03386652,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-scout-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791427343-gm8Twe9pthRI93U1Yvz6",
+      "inputTokens": 27864,
+      "outputTokens": 50538,
+      "cost": 0.06872832,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "scout-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791427343-qEksAaquWKBbE8rnoJYl",
+      "inputTokens": 35564,
+      "outputTokens": 9020,
+      "cost": 0.01644744,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "scout-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791427378-Kj4eHoJW3BxU8c4g2wM3",
+      "inputTokens": 35564,
+      "outputTokens": 13795,
+      "cost": 0.02217744,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-from-scout-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791427683-qaHb8s4mvfb6RiGNqd3k",
+      "inputTokens": 33119,
+      "outputTokens": 7822,
+      "cost": 0.0193221,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791427774-V2ef2rLoOlM7KCnvMlkh",
+      "inputTokens": 31110,
+      "outputTokens": 9559,
+      "cost": 0.0208038,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791427774-psA6LLmlE5l6uu7r6gse",
+      "inputTokens": 31110,
+      "outputTokens": 13650,
+      "cost": 0.025713,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "scout-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791427774-FiAi9xntA8i9iulGIISz",
+      "inputTokens": 31930,
+      "outputTokens": 36091,
+      "cost": 0.05205876,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "main-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791428045-5ChhYJgfEteCoeowDMeU",
+      "inputTokens": 25634,
+      "outputTokens": 12374,
+      "cost": 0.022539,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791428045-a0bRJA0Mbl1ljrUkq4tM",
+      "inputTokens": 27596,
+      "outputTokens": 5451,
+      "cost": 0.01482,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "main-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791428171-gnyVoUDz7vS1ER9jGBFy",
+      "inputTokens": 34200,
+      "outputTokens": 5165,
+      "cost": 0.01535208,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}

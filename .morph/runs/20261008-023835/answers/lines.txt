@@ -1,0 +1,15 @@
+morph run: plan-from-scout.v1 accepted stage 6 frozen finish stop chars 6890
+morph run: plan-from-scout.v2 untried stage 0 finish stop chars 7255
+morph run: run-scout.v1 rejected stage 4 probe finish stop chars 13422
+morph run: run-scout.v2 accepted stage 6 frozen finish stop chars 13140
+morph run: plan-from-scout-judge.v1 rejected stage 1 tsc finish stop chars 7884
+morph run: run-scout-judge.v1 accepted stage 6 frozen finish stop chars 14368
+morph run: scout-command.v1 accepted stage 6 frozen finish stop chars 10357
+morph run: scout-command.v2 untried stage 0 finish stop chars 11029
+morph run: plan-from-scout-judge.r1.v1 accepted stage 6 frozen finish stop chars 8135
+morph run: parse-command.v1 accepted stage 6 frozen finish stop chars 17053
+morph run: parse-command.v2 untried stage 0 finish stop chars 16847
+morph run: scout-command-judge.v1 accepted stage 6 frozen finish stop chars 12879
+morph run: main-judge.v1 rejected stage 1 tsc finish stop chars 5607
+morph run: parse-command-judge.v1 accepted stage 7 frozen finish stop chars 15810
+morph run: main-judge.r1.v1 accepted stage 6 frozen finish stop chars 5565
