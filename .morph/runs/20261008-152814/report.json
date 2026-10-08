@@ -1,0 +1,295 @@
+{
+  "runId": "20261008-152814",
+  "completedAt": 1791474571926,
+  "branch": "morph/20261008-152814",
+  "processor": "ds",
+  "generations": 5,
+  "outcomes": [
+    {
+      "customId": "compose",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "compose.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "8252582381e783a0731c70c154c5777ce6c12d53",
+      "diffstat": {
+        "files": 2,
+        "insertions": 10,
+        "deletions": 2
+      }
+    },
+    {
+      "customId": "compose-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "compose-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/compose.p19.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "a1bac0d5993b28a3b268de80c19d3c7f19fbd8a6",
+      "diffstat": {
+        "files": 1,
+        "insertions": 55,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "go-acceptance",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "go-acceptance.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "556b6cb160fe2398b9eded354b2dcb333a2336bb",
+      "diffstat": {
+        "files": 1,
+        "insertions": 11,
+        "deletions": 4
+      }
+    },
+    {
+      "customId": "build-acceptances",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "build-acceptances.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "94d7e0b9982d617c2b4afdfb0f904a7de1dafbc8",
+      "diffstat": {
+        "files": 1,
+        "insertions": 6,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "go-acceptance-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "go-acceptance-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/goAcceptance.p19.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "7a01a05a907b892b68075909a892500aa5adb960",
+      "diffstat": {
+        "files": 1,
+        "insertions": 106,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "build-acceptances-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "build-acceptances-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/buildAcceptances.p19.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/builder/buildAcceptances.p19.examples.test.ts(58,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/builder/buildAcceptances.p19.examples.test.ts(100,3): error TS2304: Cannot find name 'expect'.\ntests/builder/buildAcceptances.p19.examples.test.ts(101,3): error TS2304: Cannot find name 'expect'.\ntests/builder/buildAcceptances.p19.examples.test.ts(102,3): error TS2304: Cannot find name 'expect'.\ntests/builder/buildAcceptances.p19.examples.test.ts(103,3): error TS2304: Cannot find name 'expect'.\ntests/builder/buildAcceptances.p19.examples.test.ts(108,3): error TS2304: Cannot find name 'expect'.\ntests/builder/buildAcceptances.p19.examples.test.ts(109,3): error TS2304: Cannot find name 'expect'.\ntests/builder/buildAcceptances.p19.examples.test.ts(110,3): error TS2304: Cannot find name 'expect'.\ntests/builder/buildAcceptances.p19.examples.test.ts(113,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/builder/buildAcceptances.p19.examples.test.ts(168,3): error TS2304: Cannot find name 'expect'.\ntests/builder/buildAcceptances.p19.examples.test.ts(169,3): error TS2304: Cannot find name 'expect'.\ntests/builder/buildAcceptances.p19.examples.test.ts(170,3): error TS2304: Cannot find name 'expect'.\ntests/builder/buildAcceptances.p19.examples.test.ts(171,3): error TS2304: Cannot find name 'expect'.\ntests/builder/buildAcceptances.p19.examples.test.ts(172,3): error TS2304: Cannot find name 'expect'.\ntests/builder/buildAcceptances.p19.examples.test.ts(173,3): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": "389de2d475e8920ab3c0477362fc8d7bce0d1bca",
+      "diffstat": {
+        "files": 1,
+        "insertions": 175,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "58a160d5d1b45d18abfe91dd818a591d825dc4df",
+      "diffstat": {
+        "files": 1,
+        "insertions": 2,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "plan-command-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/planCommand.p19.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard tests/cli/planCommand.p19.examples.test.ts\n== own\n FAIL  tests/cli/planCommand.p19.examples.test.ts > Plan Command example 10: a TypeScript deck whose checks name cards of Components with declared dependencies\nAssertionError: expected 'D=/tmp/morph/check-config; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\\ncp src/conf/checkConfig.ts $D/0-$S.ts 2>/dev/null\\ncp tests/conf/checkConfig.test.ts $D/1-$S.ts 2>/dev/null\\n(\\n set -e\\n …' to be null // Object.is equality\n\n- Expected: \nnull\n\n+ Received: \n\"D=/tmp/morph/check-config; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp src/conf/checkConfig.ts $D/0-$S.ts 2>/dev/null\ncp tests/conf/checkConfig.test.ts $D/1-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint src/conf/checkConfig.ts tests/conf/checkConfig.test.ts\n node_modules/.bin/vitest run tests/conf/checkConfig.test.ts --reporter=dot\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n\"\n\n ❯ tests/cli/planCommand.p19.examples.test.ts:97:36\n     95|     expect(pad.acceptance).toBe(expectedPadLeft);\n     96| \n     97|     expect(checkConfig.acceptance).toBe(null);\n       |                                    ^\n     98| \n     99|     r.write(\"vendor/modules.txt\", \"# github.com/google/go-cmp v0.7.0\\n…\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯\n\n FAIL  tests/cli/planCommand.p19.examples.test.ts > Plan Command example 11: a Go deck whose checks name a card of a Component with a declared dependency\nAssertionError: expected false to be true // Object.is equality\n\n- Expected\n+ Received\n\n- true\n+ false\n\n ❯ tests/cli/planCommand.p19.examples.test.ts:166:41\n    164|     };\n    165|     const expected = goCodeAcceptance(diffCtx, \"package diff\\n\", 4, nu…\n    166|     expect(expected.startsWith(GO_ENV)).toBe(true);\n       |                                         ^\n    167|     expect(expected).toContain(\n    168|       \"node $P/guard.mjs src diff/diff_values.go 'github.com/google/go…\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\n\n\n Test Files  1 failed (1)\n      Tests  2 failed (2)\n\nfirst difference at char 0 (line 1) of 4/5: expected \"true\" received \"false\"\n"
+      ],
+      "commit": "54b7bb70e7cd6bd55ce09bdb8dfd7bfff675716c",
+      "diffstat": {
+        "files": 1,
+        "insertions": 208,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 283942,
+    "outputTokens": 93858,
+    "cost": 0.09344562,
+    "requests": 14
+  },
+  "requests": [
+    {
+      "customId": "compose.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791473294-Y85DTt4Bo0uQ0NN3RAUH",
+      "inputTokens": 17239,
+      "outputTokens": 1267,
+      "cost": 0.00334605,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "compose.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791473294-gI7agDpKRx8NN9yNIjim",
+      "inputTokens": 17239,
+      "outputTokens": 1303,
+      "cost": 0.00336765,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "compose-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791473371-6dZVVDFdL6QUx8qArRVg",
+      "inputTokens": 18206,
+      "outputTokens": 4431,
+      "cost": 0.0053895,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "go-acceptance.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791473371-G1hnspK1AqNOKmgcsooQ",
+      "inputTokens": 20026,
+      "outputTokens": 2502,
+      "cost": 0.0045051,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "go-acceptance.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791473371-n3PkvfejwJ09S31nOmNX",
+      "inputTokens": 20026,
+      "outputTokens": 2366,
+      "cost": 0.0044235,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791473545-RrcTlcsgGycsp4hrxKwS",
+      "inputTokens": 20943,
+      "outputTokens": 2456,
+      "cost": 0.00461505,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791473545-Grn9HcHLKn3vGAeCVlHl",
+      "inputTokens": 20943,
+      "outputTokens": 2987,
+      "cost": 0.00216885,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "go-acceptance-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791473545-anjABB6NKZUKLVkawv2b",
+      "inputTokens": 18539,
+      "outputTokens": 5781,
+      "cost": 0.00583473,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791473735-eQFB2rof8dgZxM8vUl9F",
+      "inputTokens": 20740,
+      "outputTokens": 21893,
+      "cost": 0.0162468,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791473735-FKN8mS37Fk8kkTKaTxJB",
+      "inputTokens": 16938,
+      "outputTokens": 1543,
+      "cost": 0.00118554,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791473735-8GzZW7uhhaWlj8AvGKis",
+      "inputTokens": 16938,
+      "outputTokens": 1303,
+      "cost": 0.0033225,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791474013-C2gZSTgvIf9xPeTPcX5X",
+      "inputTokens": 29690,
+      "outputTokens": 2504,
+      "cost": 0.0059559,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791474101-WZBGQ9XhHpAtdF2pgk9X",
+      "inputTokens": 18655,
+      "outputTokens": 25502,
+      "cost": 0.01809945,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791474349-XqFK3e6amd2Vkba8WO2g",
+      "inputTokens": 27820,
+      "outputTokens": 18020,
+      "cost": 0.014985,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}

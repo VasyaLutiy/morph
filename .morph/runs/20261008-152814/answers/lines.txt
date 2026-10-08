@@ -1,0 +1,14 @@
+morph run: compose.v1 accepted stage 7 frozen finish stop chars 4138
+morph run: compose.v2 untried stage 0 finish stop chars 4158
+morph run: compose-judge.v1 accepted stage 7 frozen finish stop chars 2231
+morph run: go-acceptance.v1 accepted stage 7 frozen finish stop chars 6396
+morph run: go-acceptance.v2 untried stage 0 finish stop chars 6396
+morph run: build-acceptances.v1 accepted stage 7 frozen finish stop chars 5689
+morph run: build-acceptances.v2 untried stage 0 finish stop chars 5712
+morph run: go-acceptance-judge.v1 accepted stage 7 frozen finish stop chars 2976
+morph run: build-acceptances-judge.v1 rejected stage 1 tsc finish stop chars 5445
+morph run: plan-command.v1 accepted stage 7 frozen finish stop chars 4265
+morph run: plan-command.v2 untried stage 0 finish stop chars 4265
+morph run: build-acceptances-judge.r1.v1 accepted stage 7 frozen finish stop chars 5660
+morph run: plan-command-judge.v1 rejected stage 4 own finish stop chars 7612
+morph run: plan-command-judge.r1.v1 accepted stage 7 frozen finish stop chars 7900
