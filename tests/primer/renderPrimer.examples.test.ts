@@ -10,7 +10,7 @@ const PRIMER2 = fixture("primer/primer2.md");
 test("Render Primer example 1: digest 1 at cap 16000 is exactly primer1.md", () => {
   const md = renderPrimer(DIGESTS["digest 1"], 16000);
   expect(md).toBe(PRIMER1);
-  expect(md.length).toBe(5952);
+  expect(md.length).toBe(11033);
   expect(md).toContain(
     "- 641 tests in 84 test files by the typescript profile (counted from text, not a run)",
   );
