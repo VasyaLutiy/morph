@@ -1,0 +1,144 @@
+{
+  "version": 1,
+  "system": {
+    "name": "deps",
+    "description": "Declared dependencies and the Components that use them.",
+    "requirements": [],
+    "guardrails": [],
+    "groups": [
+      {
+        "name": "conf",
+        "description": "Config.",
+        "language": "typescript",
+        "requirements": [],
+        "guardrails": [],
+        "uses": [
+          "zod",
+          "yaml"
+        ],
+        "functions": [
+          {
+            "name": "Read Config",
+            "description": "Reads.",
+            "behavior": "Parses.",
+            "requirements": [],
+            "guardrails": [],
+            "preconditions": [],
+            "steps": [],
+            "examples": [
+              {
+                "given": "g",
+                "when": "w",
+                "then": "t",
+                "ref": null
+              }
+            ]
+          }
+        ],
+        "dataObjects": [],
+        "interfaces": []
+      },
+      {
+        "name": "diff",
+        "description": "Diff.",
+        "language": "go",
+        "requirements": [],
+        "guardrails": [],
+        "uses": [
+          "github.com/google/go-cmp"
+        ],
+        "functions": [
+          {
+            "name": "Diff Values",
+            "description": "Diffs.",
+            "behavior": "Compares.",
+            "requirements": [],
+            "guardrails": [],
+            "preconditions": [],
+            "steps": [],
+            "examples": [
+              {
+                "given": "g",
+                "when": "w",
+                "then": "t",
+                "ref": null
+              }
+            ]
+          }
+        ],
+        "dataObjects": [],
+        "interfaces": []
+      },
+      {
+        "name": "plain",
+        "description": "Plain.",
+        "language": null,
+        "requirements": [],
+        "guardrails": [],
+        "uses": [],
+        "functions": [
+          {
+            "name": "Pad Left",
+            "description": "Pads.",
+            "behavior": "Pads.",
+            "requirements": [],
+            "guardrails": [],
+            "preconditions": [],
+            "steps": [],
+            "examples": [
+              {
+                "given": "g",
+                "when": "w",
+                "then": "t",
+                "ref": null
+              }
+            ]
+          }
+        ],
+        "dataObjects": [],
+        "interfaces": []
+      }
+    ],
+    "dependencies": [
+      {
+        "name": "yaml",
+        "version": "2.8.1",
+        "language": "typescript",
+        "doc": "docs/deps/yaml.md"
+      },
+      {
+        "name": "zod",
+        "version": "3.23.8",
+        "language": "typescript",
+        "doc": null
+      },
+      {
+        "name": "github.com/google/go-cmp",
+        "version": "v0.7.0",
+        "language": "go",
+        "doc": "docs/deps/go-cmp.md"
+      },
+      {
+        "name": "golang.org/x/mod",
+        "version": "v0.0.0-20240521000000-abcdef123456",
+        "language": "go",
+        "doc": null
+      },
+      {
+        "name": "pyyaml",
+        "version": "6.0",
+        "language": "python",
+        "doc": null
+      },
+      {
+        "name": "rc",
+        "version": "1.0.0-rc.1+build.5",
+        "language": "typescript",
+        "doc": null
+      }
+    ]
+  },
+  "actors": [],
+  "requirements": [],
+  "guardrails": []
+}

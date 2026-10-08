@@ -1671,7 +1671,9 @@ System:
         profile, its card ids and targets, its judge instruction and acceptance) and later
         primer and scout (which file is a test). Nothing is wired into the cli or the run
         loop in this phase. No clock, no environment, no file system, no child process: the
-        only Node module used is node:path (posix).
+        only Node module used is node:path (posix). P19 (issue #10): the finale a code card ends
+        with is built from the libraries the record declares for its Component (Dependency
+        Finale); with none it is the profile's finale, byte for byte.
       language: typescript
       requirements: [Deterministic Core]
       functions:
@@ -1860,6 +1862,38 @@ System:
             - given: 'the python profile; test "tests/test_a_examples.py", module "pkg/a.py", docs []'
               when: "judgeInstruction"
               then: 'begins "Write ONLY the test file `tests/test_a_examples.py`: one test per example of `pkg/a.py` taken from this instruction, in example order"; holds "Do not write or modify `pkg/a.py`"'
+        - name: Dependency Finale
+          description: The finale of a code card from its profile and the dependencies its Component uses.
+          behavior: >
+            src/language/dependencyFinale.ts. dependencyDirective(deps) for deps {name, version,
+            doc: string | null}[] = "the standard library plus " + each "<name>@<version>" joined by
+            ", ", then "; their API is in " + the docs that are not null, distinct, first place
+            kept, joined by ", " (left out when there is none), then "; no other import".
+            dependencyFinale(profile, deps): deps empty → profile.finale itself, unchanged. Else the
+            finale with the first occurrence of its profile's clause replaced (STDLIB_CLAUSES, keyed
+            by profile id: python "standard library only, " → ""; go "the standard library only
+            (go.mod requires nothing; the build runs with GOPROXY=off)" → "the standard library and
+            the modules named at the end (go.mod requires them; the build runs with GOPROXY=off)";
+            typescript has none), the replacement taken literally, followed by " Imports: " +
+            dependencyDirective(deps) + ".". The deps are taken in the order given (the planner
+            passes record order); nothing is sorted.
+          steps:
+            - reads: Language Profile
+            - produces: string
+          examples:
+            - given: 'each of the profiles typescript, python, go; deps []'
+              when: "dependencyFinale"
+              then: 'the profile''s finale, exactly (toBe the same string)'
+            - given: 'the typescript profile; deps [{name: "zod", version: "3.23.8", doc: null}, {name: "ajv", version: "8.17.1", doc: "docs/deps/ajv.md"}, {name: "ajv-formats", version: "3.0.1", doc: "docs/deps/ajv.md"}]'
+              when: "dependencyFinale"
+              then: 'the typescript finale + " Imports: the standard library plus zod@3.23.8, ajv@8.17.1, ajv-formats@3.0.1; their API is in docs/deps/ajv.md; no other import." — given order, one doc listed once'
+            - given: 'the go profile; deps [{name: "github.com/google/go-cmp", version: "v0.7.0", doc: "docs/deps/go-cmp.md"}, {name: "golang.org/x/text", version: "v0.21.0", doc: null}]'
+              ref: "tests/fixtures/language/finale.go.txt (the whole text, no final newline)"
+              when: "dependencyFinale"
+              then: 'exactly the fixture text: begins "Go 1.22, the standard library and the modules named at the end (go.mod requires them; the build runs with GOPROXY=off). gofmt-formatted", holds no "requires nothing", ends "Imports: the standard library plus github.com/google/go-cmp@v0.7.0, golang.org/x/text@v0.21.0; their API is in docs/deps/go-cmp.md; no other import."'
+            - given: 'the python profile; deps [{name: "pyyaml", version: "6.0.2", doc: null}]; then dependencyDirective of [{name: "a", version: "1", doc: "d/a.md"}]'
+              when: "dependencyFinale; dependencyDirective"
+              then: '"Python 3.10 or later, type hints on every public function. Tests are pytest: plain `assert` on scalars and short values; fixtures and stubs come from `tests/conftest.py`, never your own. Imports: the standard library plus pyyaml@6.0.2; no other import."; then "the standard library plus a@1; their API is in d/a.md; no other import"'
       dataObjects:
         - name: Language Profile
           description: Everything the planner and the acceptance need to know about one language; templates hold {component}, {name}, {files}, {test}, {module}, {docs}.
@@ -1885,7 +1919,9 @@ System:
         "<path>: <message>" line each, in a pinned order. Unknown keys are rejected at every
         level. No file is read here (the caller passes the text), no clock, no environment;
         the package yaml is imported in Parse Document alone. Not wired into the cli: the
-        planner is the first consumer.
+        planner is the first consumer. Since P19 (issue #10) a record declares the libraries its
+        Components may import (System.dependencies, exact versions) and each Component names the
+        ones it uses (Component.uses); the planner turns them into the finale and the slice.
       language: typescript
       requirements: [Deterministic Core]
       functions:
@@ -1901,7 +1937,8 @@ System:
             requirements, guardrails, preconditions, steps, examples; example: given, when,
             then, ref; Data Object: name, description, schema; Interface: name, description,
             exposes; Actor: name, description, uses; Requirement and Guardrail: name,
-            description). Per object, in this order: each required key that is missing
+            description; P19: System gains dependencies after groups, Component gains uses after
+            guardrails, a dependency: name, version, language, doc). Per object, in this order: each required key that is missing
             ("<path>.<key>: required"), each key not in the table in the object's own order
             ("<path>: unknown key '<k>' (known: <the table joined by ', '>)"), then the
             present keys' values in the table's order, depth first. Required: the root's
@@ -1915,7 +1952,19 @@ System:
             JSON.stringify(mapping, null, 2). A Component name repeated in the record, a
             Function name repeated in its Component and a Data Object name repeated anywhere in
             the record is a problem at the repeat's name. Absent lists become [], absent
-            language, ref and schema become null. Any problem → {ok: false, problems} (all of
+            language, ref and schema become null. Dependencies (P19): System.dependencies is a
+            list of objects, each requiring name, version and language (texts, trimmed; doc an
+            optional text, null when absent); a name repeated → "<path>.name: duplicate dependency
+            name '<n>'"; a version (trimmed) not matching /^v?[0-9]+(\.[0-9]+)*([-+][0-9A-Za-z.+-]+)?$/
+            → "<path>.version: must be an exact version (got '<v>')" (no range, tag or wildcard).
+            Component.uses is a list; per item in order: not a non-empty string → "<path>[i]: must be
+            a non-empty string"; its trimmed text not among the declared names → "<path>[i]: unknown
+            dependency '<n>' (declared: <names joined by ', ', or none>)"; a name already listed
+            before it → "<path>[i]: dependency '<n>' repeated". The declared names are read from the
+            document before the groups are walked: the trimmed name of every item of
+            System.dependencies that is an object with a non-empty string name, distinct, in order.
+            Absent dependencies and uses become []. Whether a dependency's language fits the
+            Component is the planner's check (the Component's language may come from the map). Any problem → {ok: false, problems} (all of
             them, document order); none → {ok: true, record}. The paths read
             System.groups[0].functions[3].examples[0].then; the root is "(root)".
           steps:
@@ -1938,10 +1987,18 @@ System:
               then: '{ok: false, problems: ["System: required"]}'
             - given: 'the document {System: {name: " s ", description: "d", groups: []}}'
               when: "validated"
-              then: '{ok: true, record: {version: 1, system: {name: "s", description: "d", requirements: [], guardrails: [], groups: []}, actors: [], requirements: [], guardrails: []}} — no version means 1, texts trimmed, no Component is allowed'
+              then: '{ok: true, record: {version: 1, system: {name: "s", description: "d", requirements: [], guardrails: [], groups: [], dependencies: []}, actors: [], requirements: [], guardrails: []}} — no version means 1, texts trimmed, no Component is allowed, no dependency means []'
             - given: 'the document {version: "1", System: {name: "s", description: "d", groups: [{name: "c", description: "C.", functions: [{name: "f", description: "F.", behavior: "B."}]}]}}'
               when: "validated"
               then: '{ok: false, problems: ["version: must be 1", "System.groups[0].functions[0].examples: required"]}'
+            - given: 'the deps record: 3 Components (conf uses " zod " and yaml, diff uses github.com/google/go-cmp, plain uses []), 6 dependencies (names and texts padded with spaces, docs present and absent, versions 2.8.1, 3.23.8, v0.7.0, v0.0.0-20240521000000-abcdef123456, 6.0, 1.0.0-rc.1+build.5)'
+              ref: "tests/fixtures/contour/deps.json (the document), tests/fixtures/contour/deps.typed.json (the whole typed record)"
+              when: "validated"
+              then: '{ok: true, record} with record equal to deps.typed.json: uses ["zod", "yaml"], ["github.com/google/go-cmp"], []; zod''s doc null; every version exact'
+            - given: 'the bad deps record (a uses naming an undeclared, a repeated, an empty and a non-string item; uses not a list; dependencies with an unknown key, a range, a tag, a missing language, a repeated name, an empty doc, a non-object, a missing name, two ranges); then {System: {name: "s", description: "d", groups: [one valid Component c with uses ["yaml"]]}}; then {System: {name: "s", description: "d", groups: [], dependencies: {}}}'
+              ref: "tests/fixtures/contour/badDeps.json (the document), tests/fixtures/contour/badDeps.problems.json (the 15 problems in order)"
+              when: "validated"
+              then: "{ok: false, problems} equal to the 15 lines of badDeps.problems.json, first \"System.groups[0].uses[1]: unknown dependency 'zod' (declared: yaml, pyyaml, ok)\", last \"System.dependencies[5].version: must be an exact version (got '>=1.0.0 <2')\"; then [\"System.groups[0].uses[0]: unknown dependency 'yaml' (declared: none)\"]; then [\"System.dependencies: must be a list\"]"
         - name: Validate Map
           description: Turns a parsed map document into a typed Contour Map, or every problem it has.
           behavior: >
@@ -2086,7 +2143,7 @@ System:
       dataObjects:
         - name: Contour Record
           description: The typed record (src/contour/types.ts); every list present, every optional text null when absent, texts trimmed.
-          schema: "{ version: 1, system: { name, description, requirements: string[], guardrails: string[], groups: Component[] }, actors: { name, description, uses: string[] }[], requirements: { name, description }[], guardrails: { name, description }[] }; Component = { name, description, language: string | null, requirements, guardrails, functions: { name, description, behavior, requirements, guardrails, preconditions: string[], steps: { verb: 'calls'|'reads'|'modifies'|'produces'|'uses', target }[], examples: { given, when, then, ref: string | null }[] }[], dataObjects: { name, description, schema: string | null }[], interfaces: { name, description, exposes: string[] }[] }"
+          schema: "{ version: 1, system: { name, description, requirements: string[], guardrails: string[], groups: Component[], dependencies: Dependency[] }, actors: { name, description, uses: string[] }[], requirements: { name, description }[], guardrails: { name, description }[] }; Dependency = { name, version, language, doc: string | null }; Component = { name, description, language: string | null, requirements, guardrails, uses: string[], functions: { name, description, behavior, requirements, guardrails, preconditions: string[], steps: { verb: 'calls'|'reads'|'modifies'|'produces'|'uses', target }[], examples: { given, when, then, ref: string | null }[] }[], dataObjects: { name, description, schema: string | null }[], interfaces: { name, description, exposes: string[] }[] }"
         - name: Contour Map
           description: The typed map; snake_case keys of the document become camelCase fields, a key the map does not set is null.
           schema: "{ version: 1, package: string | null, language: string | null, docs: string[], groups: { name, functions: string[] }[], cards: ({ id } & CardFields)[], extraCards: ({ component: string | null } & CardFields)[] }; CardFields = { customId, intent: 'generate'|'patch', targets, contextSlice, dependsOn, instruction, acceptance, model, maxTokens, reasoningMaxTokens, variants }, each | null"
@@ -2119,6 +2176,8 @@ System:
         members and examples, judges by examples. The record itself never goes into a slice.
         Cards come back in generation order, by id inside a generation. No file is read here:
         the cli reads the record and the map and tells the planner which files exist.
+        tests/fixtures/planner/examples.json["<Function> <n>"] holds the given (with its ref) and
+        then of an example that names it.
       language: typescript
       requirements: [Deterministic Core]
       functions:
@@ -2131,12 +2190,8 @@ System:
           steps:
             - produces: string
           examples:
-            - given: 'the examples {given: "the line \"rent 1200\"", when: "parsed", then: "{name: \"rent\", cents: 1200}", ref: null} and {given: "a  b\n c", when: " w ", then: "t", ref: "R  1"}'
-              when: "rendered"
-              then: '"1. given the line \"rent 1200\"; when parsed; then {name: \"rent\", cents: 1200}\n2. given a b c; when w; then t (ref: R 1)"'
-            - given: 'no examples'
-              when: "rendered"
-              then: '""'
+            - {given: 'examples.json["Render Examples 1"].given', when: "rendered", then: 'examples.json["Render Examples 1"].then'}
+            - {given: 'examples.json["Render Examples 2"].given', when: "rendered", then: 'examples.json["Render Examples 2"].then'}
         - name: Render Function
           description: The instruction section of one Function, and the Data blocks of the Data Objects Functions touch.
           behavior: >
@@ -2159,17 +2214,9 @@ System:
             - reads: Contour Record
             - produces: string
           examples:
-            - given: 'the ledger record, Function Sum Entries (a precondition, three steps, one example with a ref, Data Object Entry)'
-              ref: "tests/fixtures/planner/ledger.yaml (the record), tests/fixtures/planner/sumEntries.section.txt (the whole section)"
-              when: "functionSection"
-              then: 'exactly the text of sumEntries.section.txt'
-            - given: 'the ledger record, Function Check Ledger (no Data step, requirements Exact Sums and Unknown Rule)'
-              ref: "tests/fixtures/planner/checkLedger.section.txt (the whole section)"
-              when: "functionSection"
-              then: 'exactly the text of checkLedger.section.txt; its last line "- Unknown Rule (definition not found in the record)"'
-            - given: 'the ledger record, Functions Save Ledger and Load Ledger of Component store'
-              when: "dataBlocks"
-              then: '["Data Ledger File: A text file of entries.\nSchema:\n{\n  \"path\": \"string\",\n  \"text\": \"string\"\n}", "Data Entry: One ledger entry.\nSchema:\n{ name: string, cents: number }"] — Ledger File once, Entry of Component ledger counts'
+            - {given: 'examples.json["Render Function 1"].given', when: "functionSection", then: 'examples.json["Render Function 1"].then'}
+            - {given: 'examples.json["Render Function 2"].given', when: "functionSection", then: 'examples.json["Render Function 2"].then'}
+            - {given: 'examples.json["Render Function 3"].given', when: "dataBlocks", then: 'examples.json["Render Function 3"].then'}
         - name: Render Context
           description: The preamble, the inherited requirements and guardrails, and an Interface section.
           behavior: >
@@ -2188,18 +2235,10 @@ System:
             - reads: Contour Record
             - produces: string
           examples:
-            - given: 'docs ["docs/A.md", "docs/B.md"], spec "c.yaml"; then docs [], spec "c.yaml"'
-              when: "preamble"
-              then: '"Read docs/A.md, docs/B.md FIRST (in your context). Every name you need is in them or below; do not invent names, keys or files."; then "Every name you need is below -- the record `c.yaml` is cut into this instruction; do not invent names, keys or files."'
-            - given: 'the ledger record, Component ledger (System: Exact Sums, No Network; Component: Exact Sums, Pure Core)'
-              when: "inheritedSection"
-              then: '"## Component requirements / guardrails\n\nRequirements:\n- Exact Sums: Sums are integers of cents, never floats.\n\nGuardrails:\n- No Network: Nothing opens a socket.\n- Pure Core: No clock and no file system in the core."'
-            - given: 'the ledger record with the System''s requirements and guardrails emptied, Component store (none of its own)'
-              when: "inheritedSection"
-              then: '""'
-            - given: 'the Interface ledger CLI (exposes Format Report, Check Ledger), modules ["src/a.ts", "src/b.ts"]'
-              when: "interfaceSection"
-              then: '"## Interface ledger CLI\n\nThe command line.\n\nExposes:\n- Format Report (`src/a.ts`)\n- Check Ledger (`src/b.ts`)"'
+            - {given: 'examples.json["Render Context 1"].given', when: "preamble", then: 'examples.json["Render Context 1"].then'}
+            - {given: 'examples.json["Render Context 2"].given', when: "inheritedSection", then: 'examples.json["Render Context 2"].then'}
+            - {given: 'examples.json["Render Context 3"].given', when: "inheritedSection", then: 'examples.json["Render Context 3"].then'}
+            - {given: 'examples.json["Render Context 4"].given', when: "interfaceSection", then: 'examples.json["Render Context 4"].then'}
         - name: Card Budget
           description: The output budget of a code card and of a judge card.
           behavior: >
@@ -2212,12 +2251,8 @@ System:
           steps:
             - produces: Budget
           examples:
-            - given: 'codeBudget(6, 2, true, 3); codeBudget(1, 1, false, 2); codeBudget(3, 1, false, 0)'
-              when: "budgeted"
-              then: '{maxTokens: 29500, reasoningMaxTokens: 2500, variants: 2}; {maxTokens: 15000, reasoningMaxTokens: 2500, variants: 1}; {maxTokens: 18000, reasoningMaxTokens: 2500, variants: 2}'
-            - given: 'codeBudget(20, 3, true, 10); judgeBudget(4); judgeBudget(12); judgeBudget(20)'
-              when: "budgeted"
-              then: 'maxTokens 32000 (capped); {maxTokens: 20000, reasoningMaxTokens: 2500, variants: 1}; maxTokens 28000; maxTokens 32000 (capped)'
+            - {given: 'examples.json["Card Budget 1"].given', when: "budgeted", then: 'examples.json["Card Budget 1"].then'}
+            - {given: 'examples.json["Card Budget 2"].given', when: "budgeted", then: 'examples.json["Card Budget 2"].then'}
         - name: Cut Units
           description: The Functions and map groups of one Component as card units, in record order.
           behavior: >
@@ -2234,21 +2269,20 @@ System:
             - reads: Contour Map
             - produces: Unit
           examples:
-            - given: 'Component ledger of the ledger record, groups [{name: "checks", functions: ["Sum Entries", "Check Ledger"]}]'
-              when: "cutUnits"
-              then: '{ok: true, units: [{id: "parse-entry", name: "Parse Entry", functions: [Parse Entry], isGroup: false}, {id: "checks", name: "checks", functions: [Sum Entries, Check Ledger], isGroup: true}, {id: "format-report", name: "Format Report", functions: [Format Report], isGroup: false}]} — the record''s own Function objects'
-            - given: 'Component ledger, groups [{name: "Other", functions: ["Count Words"]}, {name: "Mixed Up", functions: ["Check Ledger", "Sum Entries"]}]'
-              when: "cutUnits"
-              then: 'ids ["parse-entry", "mixed-up", "format-report"]; the group''s functions [Sum Entries, Check Ledger] in record order; the group of another Component skipped'
-            - given: 'Component ledger, groups [{name: "bad", functions: ["Parse Entry", "Nope"]}]'
-              when: "cutUnits"
-              then: "{ok: false, error: \"group 'bad' names unknown Function 'Nope' next to 'Parse Entry' of Component 'ledger': a group names the Functions of one Component\"}"
+            - {given: 'examples.json["Cut Units 1"].given', when: "cutUnits", then: 'examples.json["Cut Units 1"].then'}
+            - {given: 'examples.json["Cut Units 2"].given', when: "cutUnits", then: 'examples.json["Cut Units 2"].then'}
+            - {given: 'examples.json["Cut Units 3"].given', when: "cutUnits", then: 'examples.json["Cut Units 3"].then'}
         - name: Cut Component
           description: The code cards of one Component, overrides applied, with what its judges need.
           behavior: >
             cutComponent({record, component, map, docs, spec}). Faults, each the result as soon
             as found, in this order: the profile = Resolve Profile(component.language,
-            map.language), unknown → "Component '<name>': <its error>"; Function Links errors →
+            map.language), unknown → "Component '<name>': <its error>"; P19: the Component's
+            dependencies = componentDependencies(record, component), the entries of
+            record.system.dependencies whose name component.uses holds, in record order (exported
+            from src/planner/cut.ts); the first whose language is not the profile's id, exactly →
+            "Component '<name>' uses '<dep name>', a <dep language> dependency (the Component is
+            <profile id>)"; Function Links errors →
             the first one; Cut Units(component, map.groups) error; a unit name without words →
             Name Targets' error; an Interface exposing a name no Function of the Component has →
             "Interface '<i>' exposes unknown Function '<f>'"; two base cards with one id →
@@ -2269,8 +2303,9 @@ System:
             and when that is empty the card's first target. instruction = the blocks preamble(docs,
             spec), Function sections, Interface sections (modules = the first final target of the
             card owning each exposed Function), the inherited section unless "", "Write the files:
-            `<t1>`, `<t2>`." (each target in backticks, joined by ", "), the profile's finale,
-            joined by "\n\n"; an override's instruction replaces the first block. Card = {customId,
+            `<t1>`, `<t2>`." (each target in backticks, joined by ", "), Dependency
+            Finale(profile, the Component's dependencies) — the profile's finale itself when there
+            is none — joined by "\n\n"; an override's instruction replaces the first block. Card = {customId,
             intent: override or "patch", targets, contextSlice, instruction, acceptance: override
             or Acceptance Script(profile, customId, targets), model: override or null, maxTokens:
             override or the budget's, reasoning: {maxTokens: override reasoningMaxTokens or 2500},
@@ -2286,6 +2321,8 @@ System:
             - uses: contour
             - reads: Contour Map
             - produces: Cut Card
+          preconditions:
+            - Validate Record made the record, so every uses name is a declared dependency; a name no dependency carries is simply not found
           examples:
             - given: 'the ledger record and map, Component ledger, docs ["docs/TASK.md"], spec "ledger.yaml"'
               ref: "tests/fixtures/planner/ledger.yaml, tests/fixtures/planner/ledger.map.json, tests/fixtures/planner/ledger.cut.json (the four cards)"
@@ -2302,6 +2339,13 @@ System:
               ref: "tests/fixtures/contour/badCalls.json"
               when: "cutComponent"
               then: "errors \"Component 'ledger': unknown language 'rust' (known: typescript, python, go)\"; \"Function 'A' calls unknown Function 'B' of Component 'loop'\"; \"Interface 'x' exposes unknown Function 'Nope'\"; \"duplicate customId 'parse-entry'\""
+            - given: 'the deps record and map, docs ["docs/TASK.md"], spec "deps.yaml"; Components conf (uses zod, yaml), diff (go, uses github.com/google/go-cmp), plain (none)'
+              ref: "tests/fixtures/planner/deps.yaml, tests/fixtures/planner/deps.map.json"
+              when: "cutComponent"
+              then: 'conf: read-config and check-config, each instruction ending "\n\n" + the typescript finale + " Imports: the standard library plus yaml@2.8.1, zod@3.23.8; their API is in docs/deps/yaml.md; no other import." (record order, not uses order); diff: diff-values ending "never your own helper; no t.Skip, no network, no clock, no goroutine left running. Imports: the standard library plus github.com/google/go-cmp@v0.7.0; their API is in docs/deps/go-cmp.md; no other import." and holding "Go 1.22, the standard library and the modules named at the end (go.mod requires them;"; plain: pad-left ending "\n\n" + the typescript finale exactly; componentDependencies(record, plain) = []'
+            - given: 'the deps record and map, Component wrong (typescript, uses github.com/google/go-cmp, a go dependency)'
+              when: "cutComponent"
+              then: "{ok: false, error: \"Component 'wrong' uses 'github.com/google/go-cmp', a go dependency (the Component is typescript)\"}"
         - name: Cut Judges
           description: One judge card per card with a code target; examples, Data blocks, callee contracts and preconditions in its instruction.
           behavior: >
@@ -2340,20 +2384,10 @@ System:
             - uses: language
             - reads: Cut Card
           examples:
-            - given: 'the Cut Cards of Components ledger then store (the map, docs ["docs/TASK.md"]); defaultProfile typescript; hasFile true only for "tests/helpers.ts"'
-              ref: "tests/fixtures/planner/ledger.judges.json (the six judges)"
-              when: "cutJudges"
-              then: 'the cards equal ledger.judges.json: parse-judge, checks-judge, format-report-judge, ledger-cli-judge, save-ledger-judge, load-ledger-judge'
-            - given: 'the same; the judge checks-judge'
-              when: "cutJudges"
-              then: 'contextSlice ["docs/TASK.md", "src/ledger/checks.ts", "tests/helpers.ts"]; maxTokens 19000 (3 examples); its instruction holds "Callee Parse Entry: One line of text into an Entry.\nBehaviour: Splits \"<name> <cents>\" at the last space; the cents are digits." and ends "Preconditions a test''s setup depends on:\n- ledger · Sum Entries · every line is parsed first, else Parse Entry faults before the sum\n- store · Save Ledger · the directory exists, else the write faults"'
-            - given: 'the same; the judges parse-judge and ledger-cli-judge (both overridden) and save-ledger-judge (python)'
-              when: "cutJudges"
-              then: 'parse-judge dependsOn ["parse", "checks"], contextSlice ["docs/TASK.md"], maxTokens 30000, target "tests/ledger/parse.examples.test.ts"; ledger-cli-judge instruction exactly "Write the CLI tests." (an Interface card has no examples); save-ledger-judge target "tests/test_save_ledger_examples.py", contextSlice ["docs/TASK.md", "store/save_ledger.py"] (no tests/conftest.py)'
-            - given: 'the three extra cards of the map as Cut Cards (store-schema → store/schema.py, notes → docs/NOTES.md, ledger-types → src/ledger/types.ts); hasFile always false'
-              ref: "tests/fixtures/planner/extras.cards.json (the cards), tests/fixtures/planner/extras.judges.json (the two judges)"
-              when: "cutJudges"
-              then: 'the cards equal extras.judges.json: store-schema-judge (python by extension, target "tests/test_schema_examples.py", maxTokens 16000) and ledger-types-judge; notes has no code target and no judge'
+            - {given: 'examples.json["Cut Judges 1"].given', when: "cutJudges", then: 'examples.json["Cut Judges 1"].then'}
+            - {given: 'examples.json["Cut Judges 2"].given', when: "cutJudges", then: 'examples.json["Cut Judges 2"].then'}
+            - {given: 'examples.json["Cut Judges 3"].given', when: "cutJudges", then: 'examples.json["Cut Judges 3"].then'}
+            - {given: 'examples.json["Cut Judges 4"].given', when: "cutJudges", then: 'examples.json["Cut Judges 4"].then'}
         - name: Order Deck
           description: Kahn layers over dependsOn, the deck sorted by them, and the external dependencies.
           behavior: >
@@ -2368,23 +2402,19 @@ System:
             - reads: Card
             - produces: Card
           examples:
-            - given: 'the cards of the layered deck fixture in reverse order (d, c, b, a)'
-              ref: "tests/fixtures/decks/layered.json"
-              when: "orderDeck"
-              then: '{ok: true} with card ids ["a", "b", "c", "d"], generations [["a"], ["b", "c"], ["d"]], externalDependsOn {}'
-            - given: 'cards z (dependsOn ["y", "ext"]), y (none), x (dependsOn ["ext2", "y"])'
-              when: "orderDeck"
-              then: 'ids ["y", "x", "z"]; generations [["y"], ["x", "z"]]; externalDependsOn {x: ["ext2"], z: ["ext"]}, x first'
-            - given: 'cards a (dependsOn ["b"]), b (dependsOn ["a"]), c (none)'
-              when: "orderDeck"
-              then: '{ok: false, error: "dependency cycle among a, b"}'
+            - {given: 'examples.json["Order Deck 1"].given', when: "orderDeck", then: 'examples.json["Order Deck 1"].then'}
+            - {given: 'examples.json["Order Deck 2"].given', when: "orderDeck", then: 'examples.json["Order Deck 2"].then'}
+            - {given: 'examples.json["Order Deck 3"].given', when: "orderDeck", then: 'examples.json["Order Deck 3"].then'}
         - name: Plan Spec
           description: The whole plan of `morph plan --spec`, the old Morph's cut kept card for card.
           behavior: >
             planSpec({record, map, spec, components, judge, hasFile}). Faults in this order: the
             map's language → Resolve Profile(null, map.language), unknown → "the map: <its
             error>"; Select Components(record, components) error. docs = map.docs without the
-            spec path. Cut Component per selected Component in order (its error is the result).
+            spec path. Cut Component per selected Component in order (its error is the result),
+            then, P19, its dependencies (componentDependencies, record order): the first with a doc
+            that hasFile denies → "dependency '<name>' of Component '<component>': doc file not
+            found: <doc>".
             Across cuts: a card whose slice the map did not set gets the first target of every
             dependsOn entry naming a cut card of another Component appended (when absent). Extra
             cards in map order: component null → kept; a component no Component of the record has
@@ -2395,10 +2425,17 @@ System:
             unset), reasoning: {maxTokens: reasoningMaxTokens} or null, variants or 1, dependsOn
             or []}, Cut Card {component null, profile null, functions [], slicedByMap true}. When
             judge: Cut Judges over every Cut Card (defaultProfile = the map's profile, typescript
-            when unset), appended. Every card's contextSlice loses every entry equal to spec (the
-            record never rides in a slice). The first customId repeated in card order →
+            when unset), appended. P19: for every card Cut Component made whose Component has
+            dependencies, in card order: uses[<its customId>] = their names (record order); their
+            docs (not null, distinct, record order) are appended, each when absent, to its
+            contextSlice and to the slice of the card "<customId>-judge" when there is one — also
+            when the map set the slice, as a new list (the map's own list is never changed); extra
+            cards get none. Every card's contextSlice loses every
+            entry equal to spec (the record never rides in a slice). The first customId repeated in card order →
             "duplicate customId '<id>'". Order Deck (its error is the result). → {ok: true, plan:
-            {spec, components: the selected names, cards, generations, externalDependsOn}}. On the
+            {spec, components: the selected names, cards, generations, externalDependsOn}, uses}
+            (uses {} with no dependency; Plan keeps its five keys, so the plan document and the
+            deck of a dependency-free record are byte for byte what they were). On the
             same record and map the old `mrph plan --spec --judge` gives the same ids, dependsOn
             and generations (golden cross-check; texts and targets differ by design).
           steps:
@@ -2411,7 +2448,7 @@ System:
             - given: 'the ledger record and map, spec "ledger.yaml", components ["ledger", "store"], judge true, hasFile true only for "tests/helpers.ts"'
               ref: "tests/fixtures/planner/ledger.golden.json (the old mrph's ids, dependsOn, generations, external), tests/fixtures/planner/ledger.plan.json (the whole plan)"
               when: "planSpec"
-              then: 'ok; card ids with their dependsOn, generations and externalDependsOn equal ledger.golden.json''s (17 cards, 5 generations, {"format-report": ["outside"]}); the whole plan equals ledger.plan.json; no slice holds "ledger.yaml"'
+              then: 'ok; card ids with their dependsOn, generations and externalDependsOn equal ledger.golden.json''s (17 cards, 5 generations, {"format-report": ["outside"]}); the whole plan equals ledger.plan.json; no slice holds "ledger.yaml"; uses {}'
             - given: 'the same, components ["store"], judge false'
               when: "planSpec"
               then: 'card ids ["load-ledger", "notes", "save-ledger", "store-schema"], generations [["load-ledger", "notes", "save-ledger", "store-schema"]], externalDependsOn {notes: ["parse"], "save-ledger": ["format-report"]}; save-ledger''s slice ["docs/TASK.md"]; ledger-types (Component Ledger) skipped'
@@ -2423,7 +2460,15 @@ System:
               then: "errors \"the map: unknown language 'cobol' (known: typescript, python, go)\"; \"no Component 'nope' in the record (have: ledger, store)\"; \"extra card 'store-schema' names Component 'Nowhere' the record does not have (have: ledger, store)\"; \"duplicate customId 'parse'\"; \"dependency cycle among checks, format-report, ledger-cli, notes, parse\""
             - given: "this repository's own contour.yaml and morph-map.json, spec \"contour.yaml\", components [\"contour\"], judge true"
               when: "planSpec"
-              then: 'generations [["validate-record"], ["select-components", "validate-map", "validate-record-judge"], ["load-spec", "select-components-judge", "validate-map-judge"], ["load-spec-judge"]] — the P9 deck old mrph cut; each card''s acceptance is the map''s for its id'
+              then: 'generations [["validate-record"], ["select-components", "validate-map", "validate-record-judge"], ["load-spec", "select-components-judge", "validate-map-judge"], ["load-spec-judge"]] — the P9 deck old mrph cut; each card whose map entry sets an acceptance carries exactly that acceptance (P19: validate-record and its judge have none in the map, their acceptances are built by --checks)'
+            - given: 'the deps record and map, spec "deps.yaml", components ["conf", "diff", "plain"], judge true, hasFile always true'
+              ref: "tests/fixtures/planner/deps.yaml, tests/fixtures/planner/deps.map.json"
+              when: "planSpec"
+              then: 'ok; contextSlice of read-config ["docs/TASK.md", "docs/deps/yaml.md"], check-config ["docs/X.md", "docs/deps/yaml.md"] (the map''s slice, the doc appended), read-config-judge ["docs/TASK.md", "src/conf/readConfig.ts", "tests/helpers.ts", "docs/deps/yaml.md"], diff-values ["docs/TASK.md", "docs/deps/go-cmp.md"], diff-values-judge ["docs/TASK.md", "diff/diff_values.go", "internal/testhelp/testhelp.go", "docs/deps/go-cmp.md"], pad-left ["docs/TASK.md"], pad-left-judge ["docs/TASK.md", "src/plain/padLeft.ts", "tests/helpers.ts"]; uses {"read-config": ["yaml", "zod"], "check-config": ["yaml", "zod"], "diff-values": ["github.com/google/go-cmp"]} (no judge, no plain card); generations [["diff-values", "pad-left", "read-config"], ["check-config", "diff-values-judge", "pad-left-judge", "read-config-judge"], ["check-config-judge"]]'
+            - given: 'the deps record and map; components ["conf", "diff"], judge false, hasFile false only for "docs/deps/go-cmp.md"; then components ["conf"], hasFile always false; then components ["plain"], judge true, hasFile always false'
+              when: "planSpec"
+              then: "{ok: false, error: \"dependency 'github.com/google/go-cmp' of Component 'diff': doc file not found: docs/deps/go-cmp.md\"}; then {ok: false, error: \"dependency 'yaml' of Component 'conf': doc file not found: docs/deps/yaml.md\"} (zod has no doc); then ok with uses {}"
+
       dataObjects:
         - name: Budget
           description: The output budget of one card.

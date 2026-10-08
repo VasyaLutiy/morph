@@ -1,0 +1,55 @@
+version: 1
+System:
+  name: deps
+  description: A record whose Components import declared dependencies (P19).
+  dependencies:
+    - {name: yaml, version: "2.8.1", language: typescript, doc: docs/deps/yaml.md}
+    - {name: github.com/google/go-cmp, version: "v0.7.0", language: go, doc: docs/deps/go-cmp.md}
+    - {name: zod, version: "3.23.8", language: typescript}
+  groups:
+    - name: conf
+      description: Reads and checks a config file.
+      language: typescript
+      uses: [zod, yaml]
+      functions:
+        - name: Read Config
+          description: The text of a config file into an object.
+          behavior: Parses YAML text with the package yaml and checks its shape with zod.
+          examples:
+            - {given: 'the text "a: 1"', when: "read", then: "{a: 1}"}
+        - name: Check Config
+          description: A config object checked.
+          behavior: Reads the config and names the first missing key.
+          steps:
+            - calls: Read Config
+          examples:
+            - {given: 'the text "b: 2"', when: "checked", then: '"missing a"'}
+    - name: diff
+      description: Compares two values.
+      language: go
+      uses: [github.com/google/go-cmp]
+      functions:
+        - name: Diff Values
+          description: The difference of two values as text.
+          behavior: cmp.Diff of the two values; "" when equal.
+          examples:
+            - {given: "1 and 1", when: "diffed", then: '""'}
+    - name: plain
+      description: Pads a string.
+      language: typescript
+      functions:
+        - name: Pad Left
+          description: A string padded on the left.
+          behavior: Pads with spaces to the width.
+          examples:
+            - {given: '"a", 3', when: "padded", then: '"  a"'}
+    - name: wrong
+      description: A typescript Component that names a go dependency.
+      language: typescript
+      uses: [github.com/google/go-cmp]
+      functions:
+        - name: Mix
+          description: Never cut.
+          behavior: Never cut.
+          examples:
+            - {given: "x", when: "cut", then: "a fault"}

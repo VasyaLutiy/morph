@@ -16,6 +16,7 @@
         "language": "typescript",
         "requirements": [],
         "guardrails": [],
+        "uses": [],
         "functions": [
           {
             "name": "Count Words",
@@ -103,6 +104,7 @@
           "Tolerant Reader"
         ],
         "guardrails": [],
+        "uses": [],
         "functions": [
           {
             "name": "Save Count",
@@ -170,7 +172,8 @@
         ],
         "interfaces": []
       }
-    ]
+    ],
+    "dependencies": []
   },
   "actors": [
     {

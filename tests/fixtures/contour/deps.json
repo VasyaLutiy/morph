@@ -1,0 +1,22 @@
+{
+  "System": {
+    "name": "deps",
+    "description": "Declared dependencies and the Components that use them.",
+    "groups": [
+      {"name": "conf", "description": "Config.", "language": "typescript", "uses": [" zod ", "yaml"],
+       "functions": [{"name": "Read Config", "description": "Reads.", "behavior": "Parses.", "examples": [{"given": "g", "when": "w", "then": "t"}]}]},
+      {"name": "diff", "description": "Diff.", "language": "go", "uses": ["github.com/google/go-cmp"],
+       "functions": [{"name": "Diff Values", "description": "Diffs.", "behavior": "Compares.", "examples": [{"given": "g", "when": "w", "then": "t"}]}]},
+      {"name": "plain", "description": "Plain.", "uses": [],
+       "functions": [{"name": "Pad Left", "description": "Pads.", "behavior": "Pads.", "examples": [{"given": "g", "when": "w", "then": "t"}]}]}
+    ],
+    "dependencies": [
+      {"name": "yaml", "version": "2.8.1", "language": "typescript", "doc": "docs/deps/yaml.md"},
+      {"name": " zod", "version": "3.23.8 ", "language": "typescript"},
+      {"name": "github.com/google/go-cmp", "version": "v0.7.0", "language": "go", "doc": " docs/deps/go-cmp.md "},
+      {"name": "golang.org/x/mod", "version": "v0.0.0-20240521000000-abcdef123456", "language": "go"},
+      {"name": "pyyaml", "version": "6.0", "language": "python"},
+      {"name": "rc", "version": "1.0.0-rc.1+build.5", "language": "typescript"}
+    ]
+  }
+}

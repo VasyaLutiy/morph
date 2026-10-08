@@ -1,0 +1,103 @@
+{
+ "phase": "p19a",
+ "ownGit": true,
+ "fullExclude": [
+  "tests/contour/record.examples.test.ts",
+  "tests/contour/load.examples.test.ts",
+  "tests/planner/plan.examples.test.ts"
+ ],
+ "cards": [
+  {
+   "id": "validate-record"
+  },
+  {
+   "id": "dependency-finale"
+  },
+  {
+   "id": "cut-component"
+  },
+  {
+   "id": "plan-spec"
+  },
+  {
+   "id": "validate-record-judge",
+   "files": [
+    {
+     "file": "tests/contour/record.examples.test.ts",
+     "min": 16,
+     "max": 18,
+     "lits": [
+      "Validate Record example 7",
+      "Validate Record example 8",
+      "contour/deps.json",
+      "contour/deps.typed.json",
+      "contour/badDeps.json",
+      "contour/badDeps.problems.json",
+      "unknown dependency 'yaml' (declared: none)",
+      "System.dependencies: must be a list"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "dependency-finale-judge",
+   "files": [
+    {
+     "file": "tests/language/dependencyFinale.examples.test.ts",
+     "min": 4,
+     "max": 10,
+     "new": true,
+     "lits": [
+      "Dependency Finale example 1",
+      "Dependency Finale example 2",
+      "Dependency Finale example 3",
+      "Dependency Finale example 4",
+      "language/finale.go.txt",
+      "zod@3.23.8, ajv@8.17.1, ajv-formats@3.0.1; their API is in docs/deps/ajv.md; no other import.",
+      "Imports: the standard library plus pyyaml@6.0.2; no other import.",
+      "the standard library plus a@1; their API is in d/a.md; no other import"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "cut-component-judge",
+   "files": [
+    {
+     "file": "tests/planner/cut.p19.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Cut Component example 6",
+      "Cut Component example 7",
+      "planner/deps.yaml",
+      "planner/deps.map.json",
+      "Imports: the standard library plus yaml@2.8.1, zod@3.23.8; their API is in docs/deps/yaml.md; no other import.",
+      "github.com/google/go-cmp@v0.7.0; their API is in docs/deps/go-cmp.md; no other import.",
+      "Component 'wrong' uses 'github.com/google/go-cmp', a go dependency (the Component is typescript)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "plan-spec-judge",
+   "files": [
+    {
+     "file": "tests/planner/plan.examples.test.ts",
+     "min": 13,
+     "max": 15,
+     "lits": [
+      "Plan Spec example 6",
+      "Plan Spec example 7",
+      "planner/deps.yaml",
+      "planner/deps.map.json",
+      "internal/testhelp/testhelp.go",
+      "dependency 'github.com/google/go-cmp' of Component 'diff': doc file not found: docs/deps/go-cmp.md",
+      "dependency 'yaml' of Component 'conf': doc file not found: docs/deps/yaml.md"
+     ]
+    }
+   ]
+  }
+ ]
+}

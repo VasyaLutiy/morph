@@ -1,0 +1,6 @@
+{
+  "docs": ["docs/TASK.md"],
+  "cards": {
+    "check-config": {"context_slice": ["docs/X.md"]}
+  }
+}

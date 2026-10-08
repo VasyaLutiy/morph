@@ -1,0 +1,17 @@
+[
+  "System.groups[0].uses[1]: unknown dependency 'zod' (declared: yaml, pyyaml, ok)",
+  "System.groups[0].uses[2]: dependency 'yaml' repeated",
+  "System.groups[0].uses[3]: must be a non-empty string",
+  "System.groups[0].uses[4]: must be a non-empty string",
+  "System.groups[1].uses: must be a list",
+  "System.dependencies[0]: unknown key 'url' (known: name, version, language, doc)",
+  "System.dependencies[0].version: must be an exact version (got '^2.8.1')",
+  "System.dependencies[1].language: required",
+  "System.dependencies[1].version: must be an exact version (got 'latest')",
+  "System.dependencies[2].name: duplicate dependency name 'yaml'",
+  "System.dependencies[2].version: must be an exact version (got '1.x')",
+  "System.dependencies[2].doc: must be a non-empty string",
+  "System.dependencies[3]: must be an object",
+  "System.dependencies[4].name: required",
+  "System.dependencies[5].version: must be an exact version (got '>=1.0.0 <2')"
+]

@@ -2,7 +2,7 @@
   "(root): unknown key 'Extra' (known: version, System, Actor, Requirement, Guardrail)",
   "version: must be 1",
   "System.description: required",
-  "System.groups[0]: unknown key 'owner' (known: name, description, language, requirements, guardrails, functions, dataObjects, interfaces)",
+  "System.groups[0]: unknown key 'owner' (known: name, description, language, requirements, guardrails, uses, functions, dataObjects, interfaces)",
   "System.groups[0].functions[0].behavior: required",
   "System.groups[0].functions[0].examples: must hold at least one example",
   "System.groups[0].functions[1].name: duplicate Function name 'F'",
