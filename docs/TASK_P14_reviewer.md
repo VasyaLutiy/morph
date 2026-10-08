@@ -401,6 +401,9 @@ node /tmp/v2bin-p14/dist/cli.js run --root . --deck decks/p14/deck.json --proces
 Cross-check (dry): from `morph-lab`, `venv/bin/mrph plan --spec <repo>/contour.yaml --map <repo>/morph-map.json
 --component reviewer --judge --root <repo>`.
 
+**Superseded:** the final smoke recipe with the merged commands and flags is `docs/TASK_P14b_reviewer.md` §8 (08.10);
+the text below is the P14a draft.
+
 **The FINAL smoke (after the merge of P14b; the operator's smoke stop 3).** A tiny TypeScript repository T outside
 `~/MorphV2` (e.g. `/tmp/smoke-final/T`), the binary copy `/tmp/v2bin-smoke` (`dist/` + `node_modules` symlinked), the ds
 environment by indirection (`decks/p10b2/smoke/run.sh` recipe with `ds` for `glm53`, never printed), ceiling **$0.20** in all.

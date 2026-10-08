@@ -463,4 +463,60 @@ its `прогоны` cell, the vitest log of every verify run (a flake is named)
 
 ### Gate (preparation)
 
-(filled at the gate)
+08.10, on the VPS, by the preparing orchestrator (Opus 5.5); no paid run, no call to any model. Data commits c564365
+(spec, record, map, guard, fixtures, probes, checks, filter, deck, DECISIONS), 4b9ac3f (10 probe rows closing the first
+mutation pass's survivors; deck re-cut) and the gate commit (this section). Component sizes: cli 29 809 → 29 783 (compacted
+first), reviewer 20 871 → 20 898, review-session new 12 552. Issues labelled P14-reviewer / P14b-reviewer: none open. No
+split: 7 cards ≤ 12.
+
+The deck **cut by V2**: `node dist/cli.js plan --component review-session --component cli --judge --checks
+decks/p14b/checks.json --out decks/p14b/deck.json` exit 0, 18 cards, `decks/p14b/filter.py` keeps 7; generations
+`[run-mutants] [review-command, run-mutants-judge] [parse-command, review-command-judge] [main-judge, parse-command-judge]`;
+`node dist/cli.js deck check` **0 errors, 0 warnings**, no hazards. Cross-check: the old `mrph plan --spec … --component
+review-session --component cli --judge` (dry, exit 0) gives the same 18 ids in the same order and the same 5 generations;
+targets, slices, dependsOn, intent, variants, max_tokens and reasoning (2 500) equal on all 18; instructions differ on all
+18 (the P10a design), acceptances differ on 10 of 18 (the 7 phase cards from checks.json among them).
+
+Scratch worktree from 4b9ac3f (references of the 5 code files and 4 probe-shaped judge files, deleted afterwards), cards
+run in deck order with the deck's own acceptances, each accepted card committed before the next: **7 of 7 chains green,
+57.7–63.9 s each (425.9 s in all; limit 250 s per chain)**; the first pass from c564365 also 7 of 7 (57.2–62.4 s, 421.9 s).
+Ripple: 2 of 724 (parse.examples 4 and 8, excluded deck-wide). The final tree: `tsc`, `eslint src tests`, guard clean,
+`vitest run` **738 / 738** in 110 files in 3 of 3 full runs (724 + 14 tests of the reference judges; the real judges write
+≈ 12–30 → 736–754); logs kept: /tmp/p14b-prep-vt-{1,2,3}.log. Typed one-line throwing stubs (`Error: stub <fn> <args JSON,
+cut at 160>`; types and constants as specified): every code card red at the probe — run-mutants 5/5, review-command 6/6,
+parse-command 4/4 (**15/15**), each FAIL with its readable stub line; tsc clean on the stubs. Judges with the reference code
+and the file absent: red at the guard ("… missing", 3 of 3); the patched parse file at its old text red at the guard (24
+test calls, expected 25..27; examples 19's literals missing). Mutation check: **163 single-point mutations** of the
+references (V2's own Plan Mutants rules on runMutants.ts 12, reviewCommand.ts 98, the changed lines of parse.ts 23 and
+main.ts 1, plus 30 hand mutants: `--no-renames` dropped from either diff call, the range text from the shas, the
+ownership from the range only, the restore outside `finally`, a timeout counted as survived, the spread replaced by a
+slice, …), each under a 120 s subprocess timeout against its probe: first pass 144 killed, 19 survivors; 13 closed by the
+probe rows of 4b9ac3f; second pass **157 killed, 0 by timeout (max 4.9 s), 6 not killed by the probe**: 4 equivalent
+(`limit < 0` and `all.length < limit` in spreadMutants, `<=`/`>=` in a sort comparator over distinct names) and 2 on the
+literal types of an internal union (`ok: true`/`ok: false` swapped: rejected by the chain's `tsc`, not by vitest).
+
+**`morph review` on this repository** (the reference binary, a detached worktree at afc5d8e = the P14a run head, clean):
+`review 784e2fa afc5d8e --spec contour.yaml --map morph-map.json --mutants 8 --mutant-timeout 120 --test
+"node_modules/.bin/vitest run tests/reviewer --reporter=dot" --write` → exit 1 in 37.2 s (0.8 s without mutants): 11
+commits, 10 Morph commits, 29 changed files (19 under `.morph/`), 110 test files at head; obligations **5 Functions, 17
+examples, 0 missing**; envelope applies, **0 envelope findings**; guardrails Tests Kept 0, **No New Skips 1** (a false
+positive: `tests/reviewer/checkGuardrails.examples.test.ts` holds 5 `test.skip(`/`describe.only(` tokens inside its CG
+fixture strings — P14a's text rule, §7); mutants **8 planned, baseline green, 7 killed, 1 survivor** (`src/reviewer/
+planMutants.ts:24` `false → true`: the `word` flag of the `||` rule, which no `||` occurrence can tell apart — equivalent);
+`.morph/review/784e2fa4-afc5d8ed/review.{json,md}` written, the tree clean after.
+
+Max slice + targets: review-command 81 741 bytes + reviewCommand.ts ≈ 11 KB ≈ 93 KB (gate 200 KB). **Forecast** on `ds`
+with every maxTokens × 3: P13b ran 9 cards with the same three-file cli card for $0.4122, P14a 10 cards for $0.2110; here
+7 cards of 56–82 KB in, 10 first requests (3 code × 2 variants + 4 judges), answers 2.6–20 KB, ≈ 10–16 requests ≈
+**$0.20–0.40**, ≤ $0.60 with a re-cut; ≤ $1. **Gate holds.**
+
+**Run command** (from the repo root, the binary copied first; the session applies maxTokens × 3 first, as the operator
+ordered):
+
+```
+python3 decks/tools/scale_tokens.py decks/p14b/deck.json 3
+npm run build && rm -rf /tmp/v2bin-p14b && mkdir -p /tmp/v2bin-p14b && cp -r dist /tmp/v2bin-p14b/ && ln -s $PWD/node_modules /tmp/v2bin-p14b/node_modules
+node /tmp/v2bin-p14b/dist/cli.js run --root . --deck decks/p14b/deck.json --processor ds --deadline 2400 > /tmp/p14b-run.json
+```
+
+After the merge: the FINAL smoke of §8 (the operator's smoke stop 3), then stop.
