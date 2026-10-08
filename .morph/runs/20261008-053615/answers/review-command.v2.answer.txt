@@ -1,0 +1,437 @@
+```
+import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { loadContour, loadMap } from "../contour/load.js";
+import type { ContourMap, ContourRecord } from "../contour/types.js";
+import { readMorphLog } from "../git/log.js";
+import { readOwnership } from "../git/ownership.js";
+import { gitOk, runGit } from "../git/run.js";
+import { isTest, profileForPath } from "../language/paths.js";
+import type { LanguageProfile } from "../language/types.js";
+import { SCOUT_SESSIONS } from "../scout/planFromScout.js";
+import { checkEnvelope, MORPH_DIR, readDiff } from "./checkEnvelope.js";
+import type { RangeCommit, ScoutScope } from "./checkEnvelope.js";
+import { checkGuardrails, testTitles } from "./checkGuardrails.js";
+import type { TestText } from "./checkGuardrails.js";
+import { findObligations } from "./findObligations.js";
+import type { ObligationResult } from "./findObligations.js";
+import { planMutants } from "./planMutants.js";
+import type { Mutant } from "./planMutants.js";
+import { renderFindings } from "./renderFindings.js";
+import type { Finding, MutantRow, ReviewCounts } from "./renderFindings.js";
+import { runMutants } from "./runMutants.js";
+import type { Baseline } from "./runMutants.js";
+
+export interface ReviewOptions {
+  base: string;
+  head: string;
+  spec: string | null;
+  map: string | null;
+  scout: string | null;
+  mutants: number | null;
+  mutantTimeoutSeconds: number;
+  test: string | null;
+  write: boolean;
+}
+
+export interface ReviewDeps {
+  env: Record<string, string>;
+}
+
+export interface ReviewDocument {
+  range: string;
+  verdict: "clean" | "findings";
+  base: string;
+  head: string;
+  counts: ReviewCounts;
+  findings: (Finding & { id: string })[];
+  envelope: boolean;
+  scout: string | null;
+  commits: number;
+  morphCommits: number;
+  testFiles: number;
+  test: string | null;
+  baseline: Baseline | null;
+  written: string | null;
+  markdown: string;
+}
+
+export interface ReviewResult {
+  code: 0 | 1 | 4;
+  document: ReviewDocument | { error: { code: 4; kind: "UsageError"; message: string } };
+}
+
+export const REVIEW_DIR = ".morph/review";
+
+export const EMPTY_MAP: ContourMap = {
+  version: 1,
+  package: null,
+  language: null,
+  docs: [],
+  groups: [],
+  cards: [],
+  extraCards: [],
+};
+
+export function reviewId(baseSha: string, headSha: string): string {
+  return baseSha.slice(0, 8) + "-" + headSha.slice(0, 8);
+}
+
+export function spreadMutants(all: readonly Mutant[], limit: number): Mutant[] {
+  if (limit <= 0) return [];
+  if (all.length <= limit) return all.slice();
+  const out: Mutant[] = [];
+  for (let i = 0; i < limit; i += 1) {
+    out.push(all[Math.floor((i * all.length) / limit)]);
+  }
+  return out;
+}
+
+function usageError(message: string): ReviewResult {
+  return { code: 4, document: { error: { code: 4, kind: "UsageError", message } } };
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isRegularFile(path: string): boolean {
+  try {
+    return statSync(path).isFile();
+  } catch {
+    return false;
+  }
+}
+
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const out: string[] = [];
+  for (const item of value) {
+    if (typeof item === "string") out.push(item);
+  }
+  return out;
+}
+
+function resolveCommit(root: string, env: Record<string, string>, ref: string): string | null {
+  const result = runGit(root, ["rev-parse", "--verify", "-q", ref + "^{commit}"], env);
+  if (result.code !== 0) return null;
+  return result.stdout.trim();
+}
+
+function dirtyPaths(porcelain: string): string[] {
+  const out: string[] = [];
+  for (const line of porcelain.split("\n")) {
+    if (line === "") continue;
+    const rest = line.slice(3);
+    const arrow = rest.indexOf(" -> ");
+    const path = arrow === -1 ? rest : rest.slice(arrow + 4);
+    if (path === "") continue;
+    if (path.startsWith(MORPH_DIR)) continue;
+    out.push(path);
+  }
+  out.sort();
+  return out;
+}
+
+function scoutNames(root: string): string[] {
+  const dir = join(root, SCOUT_SESSIONS);
+  let entries: string[];
+  try {
+    entries = readdirSync(dir);
+  } catch {
+    return [];
+  }
+  const names: string[] = [];
+  for (const name of entries) {
+    if (isRegularFile(join(dir, name, "scout.json"))) names.push(name);
+  }
+  names.sort();
+  return names;
+}
+
+type ScoutRead = { scope: ScoutScope } | { error: string };
+
+function readScout(root: string, id: string): ScoutRead {
+  const at = SCOUT_SESSIONS + "/" + id + "/scout.json";
+  const text = readFileSync(join(root, at), "utf8");
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return { error: at + " does not parse" };
+  }
+  if (!isPlainObject(parsed)) {
+    return { error: at + " does not parse" };
+  }
+  const schema = parsed["schema"];
+  if (schema !== 1) {
+    const schemaText = schema === undefined ? "null" : JSON.stringify(schema);
+    return { error: at + ": schema " + schemaText + ", expected 1" };
+  }
+  const status = parsed["status"];
+  const answer = parsed["answer"];
+  if (status !== "ok" || !isPlainObject(answer)) {
+    const statusText = typeof status === "string" ? status : String(status);
+    const reason = parsed["stopReason"];
+    const reasonText = typeof reason === "string" ? reason : String(reason);
+    return {
+      error: "scout session " + id + " has no answer (" + statusText + "): " + reasonText,
+    };
+  }
+  return {
+    scope: {
+      scoutId: id,
+      targets: stringArray(answer["targets"]),
+      contextSlice: stringArray(answer["context_slice"]),
+    },
+  };
+}
+
+function resolveScout(root: string, wanted: string): ScoutRead {
+  const names = scoutNames(root);
+  if (wanted === "latest") {
+    if (names.length === 0) return { error: "no scout session under " + SCOUT_SESSIONS };
+    return readScout(root, names[names.length - 1]);
+  }
+  let found = false;
+  for (const name of names) {
+    if (name === wanted) found = true;
+  }
+  if (!found) return { error: "scout session not found: " + wanted };
+  return readScout(root, wanted);
+}
+
+export async function reviewCommand(
+  root: string,
+  args: ReviewOptions,
+  deps: ReviewDeps,
+): Promise<ReviewResult> {
+  const env = deps.env;
+
+  gitOk(root, ["rev-parse", "--git-dir"], env);
+
+  const baseSha = resolveCommit(root, env, args.base);
+  if (baseSha === null) return usageError("not a commit: " + args.base);
+  const headSha = resolveCommit(root, env, args.head);
+  if (headSha === null) return usageError("not a commit: " + args.head);
+
+  if (runGit(root, ["merge-base", "--is-ancestor", headSha, "HEAD"], env).code !== 0) {
+    return usageError("head " + args.head + " is not in the history of HEAD");
+  }
+
+  let record: ContourRecord | null = null;
+  let map: ContourMap = EMPTY_MAP;
+  if (args.spec !== null) {
+    const specPath = resolve(root, args.spec);
+    if (!isRegularFile(specPath)) return usageError("spec file not found: " + args.spec);
+    const loaded = loadContour(readFileSync(specPath, "utf8"), args.spec);
+    if (!loaded.ok) return usageError(loaded.error);
+    record = loaded.record;
+  }
+  if (args.map !== null) {
+    const mapPath = resolve(root, args.map);
+    if (!isRegularFile(mapPath)) return usageError("map file not found: " + args.map);
+    const loaded = loadMap(readFileSync(mapPath, "utf8"), args.map);
+    if (!loaded.ok) return usageError(loaded.error);
+    map = loaded.map;
+  }
+
+  let scout: ScoutScope | null = null;
+  if (args.scout !== null) {
+    const found = resolveScout(root, args.scout);
+    if ("error" in found) return usageError(found.error);
+    scout = found.scope;
+  }
+
+  if (args.mutants !== null) {
+    const headOut = gitOk(root, ["rev-parse", "HEAD"], env).trim();
+    if (headOut !== headSha) {
+      return usageError(
+        "--mutants needs the head to be the checkout HEAD (" + headOut.slice(0, 8) + ")",
+      );
+    }
+    const dirty = dirtyPaths(gitOk(root, ["status", "--porcelain", "--untracked-files=all"], env));
+    if (dirty.length > 0) {
+      return usageError(
+        "--mutants needs a clean tree: dirty outside .morph/: " + dirty.join(", "),
+      );
+    }
+  }
+
+  const range = new Set<string>();
+  for (const line of gitOk(root, ["rev-list", baseSha + ".." + headSha], env).split("\n")) {
+    if (line !== "") range.add(line);
+  }
+
+  const log = readMorphLog(root, env);
+  const commits: RangeCommit[] = [];
+  for (const entry of log) {
+    if (!range.has(entry.sha)) continue;
+    commits.push({ card: entry.card, model: entry.model, run: entry.run, paths: entry.paths });
+  }
+  const ownership = readOwnership(log);
+
+  const changed = readDiff(
+    gitOk(root, ["diff", "--name-status", "-z", "--no-renames", baseSha, headSha], env),
+    gitOk(root, ["diff", "--numstat", "-z", "--no-renames", baseSha, headSha], env),
+  );
+
+  const envelope = checkEnvelope({ changed, commits, ownership, scout });
+
+  const headFiles = gitOk(root, ["ls-tree", "-r", "-z", "--name-only", headSha], env)
+    .split("\0")
+    .filter((p) => p !== "");
+  const headTests: string[] = [];
+  const titles: string[] = [];
+  for (const path of headFiles) {
+    const profile = profileForPath(path);
+    if (profile === null || !isTest(profile, path)) continue;
+    headTests.push(path);
+    const text = gitOk(root, ["show", headSha + ":" + path], env);
+    for (const title of testTitles(text, profile.id)) titles.push(title);
+  }
+
+  const baseTestTexts: TestText[] = [];
+  const headTestTexts: TestText[] = [];
+  for (const file of changed) {
+    const profile = profileForPath(file.path);
+    if (profile === null || !isTest(profile, file.path)) continue;
+    if (file.status !== "added") {
+      baseTestTexts.push({
+        path: file.path,
+        text: gitOk(root, ["show", baseSha + ":" + file.path], env),
+      });
+    }
+    if (file.status !== "deleted") {
+      headTestTexts.push({
+        path: file.path,
+        text: gitOk(root, ["show", headSha + ":" + file.path], env),
+      });
+    }
+  }
+  const guardrails = checkGuardrails({ base: baseTestTexts, head: headTestTexts });
+
+  let obligations: ObligationResult = { obligations: [], findings: [] };
+  if (record !== null) {
+    obligations = findObligations({
+      record,
+      map,
+      changed: changed.map((file) => file.path),
+      cards: commits.map((commit) => commit.card),
+      titles,
+    });
+  }
+
+  let mutantRows: MutantRow[] | null = null;
+  let testCommand: string | null = null;
+  let baseline: Baseline | null = null;
+  let mutationFindings: Finding[] = [];
+
+  if (args.mutants !== null) {
+    const codeFiles = changed.filter((file) => {
+      if (file.status === "deleted") return false;
+      if (file.path.startsWith(MORPH_DIR)) return false;
+      const profile = profileForPath(file.path);
+      if (profile === null) return false;
+      return !isTest(profile, file.path);
+    });
+
+    const all: Mutant[] = [];
+    for (const file of codeFiles) {
+      const text = readFileSync(join(root, file.path), "utf8");
+      for (const mutant of planMutants(file.path, text, args.mutants)) all.push(mutant);
+    }
+    const planned = spreadMutants(all, args.mutants);
+
+    let defaultTest: string | null = null;
+    const firstCode = codeFiles[0];
+    if (firstCode !== undefined) {
+      const profile: LanguageProfile | null = profileForPath(firstCode.path);
+      defaultTest = profile === null ? null : profile.fullRunLine;
+    }
+    testCommand = args.test ?? defaultTest;
+
+    if (planned.length > 0 && testCommand !== null) {
+      const run = await runMutants({
+        root,
+        command: testCommand,
+        mutants: planned,
+        timeoutMs: args.mutantTimeoutSeconds * 1000,
+        env,
+      });
+      baseline = run.baseline;
+      mutationFindings = run.findings;
+      const rows: MutantRow[] = [];
+      for (const result of run.results) {
+        rows.push({
+          path: result.path,
+          line: result.line,
+          rule: result.rule,
+          killed: result.killed,
+        });
+      }
+      mutantRows = rows;
+    } else {
+      mutantRows = [];
+    }
+  }
+
+  const changedRows = envelope.rows.map((row) => ({
+    path: row.path,
+    status: row.status,
+    added: row.added,
+    deleted: row.deleted,
+    writers: row.writers,
+    scope: row.scope,
+  }));
+
+  const findings: Finding[] = [
+    ...obligations.findings,
+    ...envelope.findings,
+    ...guardrails.findings,
+    ...mutationFindings,
+  ];
+
+  const review = renderFindings({
+    base: args.base,
+    head: args.head,
+    changed: changedRows,
+    obligations: obligations.obligations,
+    guardrails: guardrails.rows,
+    mutants: mutantRows,
+    findings,
+  });
+
+  const written = args.write ? REVIEW_DIR + "/" + reviewId(baseSha, headSha) : null;
+
+  const document: ReviewDocument = {
+    range: review.range,
+    verdict: review.verdict,
+    base: baseSha,
+    head: headSha,
+    counts: review.counts,
+    findings: review.findings,
+    envelope: envelope.applies,
+    scout: scout === null ? null : scout.scoutId,
+    commits: range.size,
+    morphCommits: commits.length,
+    testFiles: headTests.length,
+    test: testCommand,
+    baseline,
+    written,
+    markdown: review.markdown,
+  };
+
+  if (written !== null) {
+    const dir = join(root, written);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "review.json"), JSON.stringify(document, null, 2) + "\n");
+    writeFileSync(join(dir, "review.md"), review.markdown);
+  }
+
+  return {
+    code: review.verdict === "clean" ? 0 : 1,
+    document,
+  };
+}
+```

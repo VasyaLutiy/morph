@@ -1,0 +1,128 @@
+```ts
+import { expect, test } from "vitest";
+import { main } from "../../src/cli/main.js";
+import type { CliDeps } from "../../src/cli/types.js";
+import { fixture, tmpRepo, tmpRoot } from "../helpers.js";
+
+const ADD_TAX =
+  "export function addTax(price: number): number {\n  return price > 0 ? price + price / 5 : price;\n}\n";
+
+function makeDeps(cwd: string): CliDeps {
+  return { env: { PATH: process.env.PATH ?? "" }, now: () => 0, cwd, transport: null };
+}
+
+interface Outcome {
+  code: number;
+  stdout: string[];
+  stderr: string[];
+}
+
+async function runMain(argv: string[], deps: CliDeps): Promise<Outcome> {
+  const stdout: string[] = [];
+  const stderr: string[] = [];
+  const code = await main(argv, deps, {
+    stdout: (text: string): void => {
+      stdout.push(text);
+    },
+    stderr: (text: string): void => {
+      stderr.push(text);
+    },
+  });
+  return { code, stdout, stderr };
+}
+
+function tinyRepo() {
+  const t = tmpRepo();
+  t.write("contour.yaml", fixture("reviewer/record.yaml"));
+  t.write("morph-map.json", fixture("reviewer/map.json"));
+  t.git(["add", "."]);
+  t.git(["commit", "-q", "-m", "base"]);
+  t.git(["tag", "b0"]);
+  t.write("src/shop/addTax.ts", ADD_TAX);
+  t.git(["add", "."]);
+  t.git([
+    "commit",
+    "-q",
+    "-m",
+    "morph add-tax: src/shop/addTax.ts\n\nMorph-Card: add-tax\nMorph-Model: m/x",
+  ]);
+  t.git(["tag", "h1"]);
+  return t;
+}
+
+test("Main example 12: review prints the findings of b0..h1 and then a clean document", async () => {
+  const t = tinyRepo();
+  try {
+    const first = await runMain(
+      ["review", "b0", "h1", "--spec", "contour.yaml", "--map", "morph-map.json"],
+      makeDeps(t.root),
+    );
+    expect(first.code).toBe(1);
+    expect(first.stdout).toHaveLength(1);
+    const document = JSON.parse(first.stdout[0]) as {
+      range: string;
+      verdict: string;
+      counts: { missing: number; findings: number };
+    };
+    expect(document.range).toBe("b0..h1");
+    expect(document.verdict).toBe("findings");
+    expect(document.counts.missing).toBe(3);
+    expect(document.counts.findings).toBe(3);
+    expect(first.stderr).toStrictEqual(["morph review: exit 1\n"]);
+
+    const second = await runMain(["review", "b0", "h1", "--root", t.root, "--pretty"], makeDeps("/"));
+    expect(second.code).toBe(0);
+    expect(second.stdout).toHaveLength(1);
+    expect(
+      second.stdout[0].startsWith('{\n  "range": "b0..h1",\n  "verdict": "clean",'),
+    ).toBe(true);
+    expect(second.stderr).toStrictEqual(["morph review: exit 0\n"]);
+  } finally {
+    t.rm();
+  }
+});
+
+test("Main example 13: review answers a usage error, a refusal and a runtime fault", async () => {
+  const t = tinyRepo();
+  const empty = tmpRoot();
+  try {
+    const missing = await runMain(["review", "HEAD", "--root", t.root], makeDeps(t.root));
+    expect(missing.code).toBe(4);
+    expect(missing.stdout).toHaveLength(1);
+    expect(missing.stdout[0]).toBe(
+      '{"error":{"code":4,"kind":"UsageError","message":"review needs two refs: <base> <head>"}}\n',
+    );
+    expect(missing.stderr).toStrictEqual(["morph: review needs two refs: <base> <head>\n"]);
+
+    const unknown = await runMain(["review", "nope", "HEAD", "--root", t.root], makeDeps(t.root));
+    expect(unknown.code).toBe(4);
+    expect(unknown.stdout).toHaveLength(1);
+    const refusal = JSON.parse(unknown.stdout[0]) as {
+      error: { code: number; kind: string; message: string };
+    };
+    expect(refusal.error).toStrictEqual({
+      code: 4,
+      kind: "UsageError",
+      message: "not a commit: nope",
+    });
+    expect(unknown.stderr).toStrictEqual(["morph review: exit 4\n"]);
+
+    const outside = await runMain(
+      ["review", "HEAD", "HEAD", "--root", empty.root],
+      makeDeps(t.root),
+    );
+    expect(outside.code).toBe(3);
+    expect(outside.stdout).toHaveLength(1);
+    const fault = JSON.parse(outside.stdout[0]) as {
+      error: { code: number; kind: string; message: string };
+    };
+    expect(fault.error.code).toBe(3);
+    expect(fault.error.kind).toBe("RuntimeError");
+    expect(fault.error.message.startsWith("git rev-parse failed (exit 128): ")).toBe(true);
+    expect(outside.stderr).toStrictEqual(["morph review: exit 3\n"]);
+  } finally {
+    t.rm();
+    empty.rm();
+  }
+});
+```

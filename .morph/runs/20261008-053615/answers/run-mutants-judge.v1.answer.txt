@@ -1,0 +1,257 @@
+```
+import { expect, test } from "vitest";
+import { runMutants } from "../../src/reviewer/runMutants.js";
+import { planMutants } from "../../src/reviewer/planMutants.js";
+import { tmpRoot } from "../helpers.js";
+
+const F =
+  "export function f(a: number, b: number): boolean {\n  return a === b && a > 0;\n}\n";
+
+test("Run Mutants example 1: the three mutants of one line, two survivors", async () => {
+  const p = tmpRoot();
+  try {
+    p.write("src/f.ts", F);
+    const result = await runMutants({
+      root: p.root,
+      command: 'grep -q "a === b" src/f.ts',
+      mutants: planMutants("src/f.ts", F, 10),
+      timeoutMs: 5000,
+      env: { PATH: process.env.PATH ?? "" },
+    });
+    expect(result).toStrictEqual({
+      baseline: { exit: 0, timedOut: false },
+      results: [
+        {
+          path: "src/f.ts",
+          line: 2,
+          column: 12,
+          rule: "=== → !==",
+          killed: true,
+          exit: 1,
+          timedOut: false,
+        },
+        {
+          path: "src/f.ts",
+          line: 2,
+          column: 18,
+          rule: "&& → ||",
+          killed: false,
+          exit: 0,
+          timedOut: false,
+        },
+        {
+          path: "src/f.ts",
+          line: 2,
+          column: 23,
+          rule: "> → >=",
+          killed: false,
+          exit: 0,
+          timedOut: false,
+        },
+      ],
+      findings: [
+        {
+          kind: "mutation",
+          source: "mutation src/f.ts:2",
+          path: "src/f.ts",
+          expected: "a test fails on && → || at line 2",
+          got: "every test passed",
+        },
+        {
+          kind: "mutation",
+          source: "mutation src/f.ts:2",
+          path: "src/f.ts",
+          expected: "a test fails on > → >= at line 2",
+          got: "every test passed",
+        },
+      ],
+    });
+    expect(p.read("src/f.ts")).toBe(F);
+  } finally {
+    p.rm();
+  }
+});
+
+test("Run Mutants example 2: a red baseline stops the mutants and is one finding", async () => {
+  const p = tmpRoot();
+  try {
+    p.write("src/f.ts", F);
+    const result = await runMutants({
+      root: p.root,
+      command: "echo run >> ran.txt; exit 3",
+      mutants: planMutants("src/f.ts", F, 10),
+      timeoutMs: 5000,
+      env: { PATH: process.env.PATH ?? "" },
+    });
+    expect(result).toStrictEqual({
+      baseline: { exit: 3, timedOut: false },
+      results: [],
+      findings: [
+        {
+          kind: "mutation",
+          source: "mutation baseline",
+          path: null,
+          expected: "the test command passes before any mutant: echo run >> ran.txt; exit 3",
+          got: "exit 3",
+        },
+      ],
+    });
+    expect(p.read("ran.txt")).toBe("run\n");
+    expect(p.read("src/f.ts")).toBe(F);
+  } finally {
+    p.rm();
+  }
+});
+
+test("Run Mutants example 3: a timeout kills, a hung baseline is the finding", async () => {
+  const p = tmpRoot();
+  try {
+    p.write("lib/g.ts", F);
+    const mutants = planMutants("lib/g.ts", F, 10);
+    const env = { PATH: process.env.PATH ?? "" };
+    const first = await runMutants({
+      root: p.root,
+      command: 'if grep -q "a !== b" lib/g.ts; then sleep 5; fi',
+      mutants,
+      timeoutMs: 400,
+      env,
+    });
+    expect(first.baseline).toStrictEqual({ exit: 0, timedOut: false });
+    expect(first.results).toStrictEqual([
+      {
+        path: "lib/g.ts",
+        line: 2,
+        column: 12,
+        rule: "=== → !==",
+        killed: true,
+        exit: null,
+        timedOut: true,
+      },
+      {
+        path: "lib/g.ts",
+        line: 2,
+        column: 18,
+        rule: "&& → ||",
+        killed: false,
+        exit: 0,
+        timedOut: false,
+      },
+      {
+        path: "lib/g.ts",
+        line: 2,
+        column: 23,
+        rule: "> → >=",
+        killed: false,
+        exit: 0,
+        timedOut: false,
+      },
+    ]);
+    expect(first.findings).toStrictEqual([
+      {
+        kind: "mutation",
+        source: "mutation lib/g.ts:2",
+        path: "lib/g.ts",
+        expected: "a test fails on && → || at line 2",
+        got: "every test passed",
+      },
+      {
+        kind: "mutation",
+        source: "mutation lib/g.ts:2",
+        path: "lib/g.ts",
+        expected: "a test fails on > → >= at line 2",
+        got: "every test passed",
+      },
+    ]);
+    expect(p.read("lib/g.ts")).toBe(F);
+    const second = await runMutants({
+      root: p.root,
+      command: "sleep 5",
+      mutants,
+      timeoutMs: 300,
+      env,
+    });
+    expect(second.baseline).toStrictEqual({ exit: null, timedOut: true });
+    expect(second.results).toStrictEqual([]);
+    expect(second.findings).toStrictEqual([
+      {
+        kind: "mutation",
+        source: "mutation baseline",
+        path: null,
+        expected: "the test command passes before any mutant: sleep 5",
+        got: "timed out after 300 ms",
+      },
+    ]);
+    expect(p.read("lib/g.ts")).toBe(F);
+  } finally {
+    p.rm();
+  }
+});
+
+test("Run Mutants example 4: the env decides the baseline and an absent file stays absent", async () => {
+  const p = tmpRoot();
+  try {
+    const env = { PATH: process.env.PATH ?? "" };
+    const command = 'test "$MARK" = m1 && test -z "$OPENAI_API_KEY"';
+    const first = await runMutants({
+      root: p.root,
+      command,
+      mutants: [],
+      timeoutMs: 5000,
+      env: { ...env, MARK: "m1", OPENAI_API_KEY: "k" },
+    });
+    expect(first.baseline).toStrictEqual({ exit: 0, timedOut: false });
+    expect(first.results).toStrictEqual([]);
+    expect(first.findings).toStrictEqual([]);
+    const second = await runMutants({
+      root: p.root,
+      command,
+      mutants: [],
+      timeoutMs: 5000,
+      env: { ...env, MARK: "m2", OPENAI_API_KEY: "k" },
+    });
+    expect(second.baseline).toStrictEqual({ exit: 1, timedOut: false });
+    expect(second.results).toStrictEqual([]);
+    expect(second.findings).toStrictEqual([
+      {
+        kind: "mutation",
+        source: "mutation baseline",
+        path: null,
+        expected:
+          'the test command passes before any mutant: test "$MARK" = m1 && test -z "$OPENAI_API_KEY"',
+        got: "exit 1",
+      },
+    ]);
+    const third = await runMutants({
+      root: p.root,
+      command: "true",
+      mutants: [{ path: "gen/new.ts", line: 1, column: 1, rule: "true → false", text: "x\n" }],
+      timeoutMs: 5000,
+      env,
+    });
+    expect(third.baseline).toStrictEqual({ exit: 0, timedOut: false });
+    expect(third.results).toStrictEqual([
+      {
+        path: "gen/new.ts",
+        line: 1,
+        column: 1,
+        rule: "true → false",
+        killed: false,
+        exit: 0,
+        timedOut: false,
+      },
+    ]);
+    expect(third.findings).toStrictEqual([
+      {
+        kind: "mutation",
+        source: "mutation gen/new.ts:1",
+        path: "gen/new.ts",
+        expected: "a test fails on true → false at line 1",
+        got: "every test passed",
+      },
+    ]);
+    expect(p.exists("gen/new.ts")).toBe(false);
+  } finally {
+    p.rm();
+  }
+});
+```

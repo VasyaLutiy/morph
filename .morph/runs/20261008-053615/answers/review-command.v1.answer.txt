@@ -1,0 +1,406 @@
+```ts
+import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+
+import { loadContour, loadMap } from "../contour/load.js";
+import type { ContourMap, ContourRecord } from "../contour/types.js";
+import { readMorphLog } from "../git/log.js";
+import { readOwnership } from "../git/ownership.js";
+import { gitOk, runGit } from "../git/run.js";
+import { isTest, profileForPath } from "../language/paths.js";
+import { SCOUT_SESSIONS } from "../scout/planFromScout.js";
+import { checkEnvelope, MORPH_DIR, readDiff } from "./checkEnvelope.js";
+import type { RangeCommit, ScoutScope } from "./checkEnvelope.js";
+import { checkGuardrails, testTitles } from "./checkGuardrails.js";
+import type { TestText } from "./checkGuardrails.js";
+import { findObligations } from "./findObligations.js";
+import type { Obligation } from "./findObligations.js";
+import { planMutants } from "./planMutants.js";
+import type { Mutant } from "./planMutants.js";
+import { renderFindings } from "./renderFindings.js";
+import type { MutantRow, ReviewCounts } from "./renderFindings.js";
+import { runMutants } from "./runMutants.js";
+import type { Baseline, Finding } from "./runMutants.js";
+
+export interface ReviewOptions {
+  base: string;
+  head: string;
+  spec: string | null;
+  map: string | null;
+  scout: string | null;
+  mutants: number | null;
+  mutantTimeoutSeconds: number;
+  test: string | null;
+  write: boolean;
+}
+
+export interface ReviewDeps {
+  env: Record<string, string>;
+}
+
+export interface ReviewDocument {
+  range: string;
+  verdict: "clean" | "findings";
+  base: string;
+  head: string;
+  counts: ReviewCounts;
+  findings: (Finding & { id: string })[];
+  envelope: boolean;
+  scout: string | null;
+  commits: number;
+  morphCommits: number;
+  testFiles: number;
+  test: string | null;
+  baseline: Baseline | null;
+  written: string | null;
+  markdown: string;
+}
+
+export interface ReviewResult {
+  code: 0 | 1 | 4;
+  document: ReviewDocument | { error: { code: 4; kind: "UsageError"; message: string } };
+}
+
+export const REVIEW_DIR = ".morph/review";
+
+export const EMPTY_MAP: ContourMap = {
+  version: 1,
+  package: null,
+  language: null,
+  docs: [],
+  groups: [],
+  cards: [],
+  extraCards: [],
+};
+
+export function reviewId(baseSha: string, headSha: string): string {
+  return baseSha.slice(0, 8) + "-" + headSha.slice(0, 8);
+}
+
+export function spreadMutants(all: readonly Mutant[], limit: number): Mutant[] {
+  if (limit <= 0) return [];
+  if (all.length <= limit) return all.slice();
+  const out: Mutant[] = [];
+  for (let i = 0; i < limit; i += 1) {
+    out.push(all[Math.floor((i * all.length) / limit)]);
+  }
+  return out;
+}
+
+function usageError(message: string): ReviewResult {
+  return { code: 4, document: { error: { code: 4, kind: "UsageError", message } } };
+}
+
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+function isRegularFile(path: string): boolean {
+  try {
+    return statSync(path).isFile();
+  } catch {
+    return false;
+  }
+}
+
+function stringList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const out: string[] = [];
+  for (const item of value) {
+    if (typeof item === "string") out.push(item);
+  }
+  return out;
+}
+
+function isTestPath(path: string): boolean {
+  const profile = profileForPath(path);
+  return profile !== null && isTest(profile, path);
+}
+
+function scoutSessionNames(root: string): string[] {
+  const dir = join(root, SCOUT_SESSIONS);
+  let entries: string[];
+  try {
+    entries = readdirSync(dir);
+  } catch {
+    return [];
+  }
+  const names: string[] = [];
+  for (const name of entries) {
+    if (isRegularFile(join(dir, name, "scout.json"))) names.push(name);
+  }
+  names.sort();
+  return names;
+}
+
+export async function reviewCommand(
+  root: string,
+  args: ReviewOptions,
+  deps: ReviewDeps,
+): Promise<ReviewResult> {
+  const env = deps.env;
+
+  // 1. Outside a repository this throws, and the promise rejects.
+  gitOk(root, ["rev-parse", "--git-dir"], env);
+
+  // 2. The refusals, in order, before any diff.
+  const baseRun = runGit(root, ["rev-parse", "--verify", "-q", args.base + "^{commit}"], env);
+  if (baseRun.code !== 0) return usageError("not a commit: " + args.base);
+  const baseSha = baseRun.stdout.trim();
+
+  const headRun = runGit(root, ["rev-parse", "--verify", "-q", args.head + "^{commit}"], env);
+  if (headRun.code !== 0) return usageError("not a commit: " + args.head);
+  const headSha = headRun.stdout.trim();
+
+  if (runGit(root, ["merge-base", "--is-ancestor", headSha, "HEAD"], env).code !== 0) {
+    return usageError("head " + args.head + " is not in the history of HEAD");
+  }
+
+  let record: ContourRecord | null = null;
+  if (args.spec !== null) {
+    const specPath = resolve(root, args.spec);
+    if (!isRegularFile(specPath)) {
+      return usageError("spec file not found: " + args.spec);
+    }
+    const loaded = loadContour(readFileSync(specPath, "utf8"), args.spec);
+    if (!loaded.ok) return usageError(loaded.error);
+    record = loaded.record;
+  }
+
+  let map: ContourMap = EMPTY_MAP;
+  if (args.map !== null) {
+    const mapPath = resolve(root, args.map);
+    if (!isRegularFile(mapPath)) {
+      return usageError("map file not found: " + args.map);
+    }
+    const loaded = loadMap(readFileSync(mapPath, "utf8"), args.map);
+    if (!loaded.ok) return usageError(loaded.error);
+    map = loaded.map;
+  }
+
+  let scout: ScoutScope | null = null;
+  if (args.scout !== null) {
+    const names = scoutSessionNames(root);
+    let id: string;
+    if (args.scout === "latest") {
+      if (names.length === 0) {
+        return usageError("no scout session under " + SCOUT_SESSIONS);
+      }
+      id = names[names.length - 1];
+    } else {
+      if (!names.includes(args.scout)) {
+        return usageError("scout session not found: " + args.scout);
+      }
+      id = args.scout;
+    }
+    const at = SCOUT_SESSIONS + "/" + id + "/scout.json";
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(readFileSync(join(root, SCOUT_SESSIONS, id, "scout.json"), "utf8"));
+    } catch {
+      return usageError(at + " does not parse");
+    }
+    const obj = isPlainObject(parsed) ? parsed : null;
+    const schema = obj === null ? undefined : obj.schema;
+    if (schema !== 1) {
+      const shown = schema === undefined ? "null" : JSON.stringify(schema);
+      return usageError(at + ": schema " + shown + ", expected 1");
+    }
+    const status = obj === null ? undefined : obj.status;
+    const answer = obj === null ? undefined : obj.answer;
+    if (status !== "ok" || !isPlainObject(answer)) {
+      const stop = obj === null ? undefined : obj.stopReason;
+      return usageError(
+        "scout session " + id + " has no answer (" + String(status) + "): " + String(stop),
+      );
+    }
+    scout = {
+      scoutId: id,
+      targets: stringList(answer.targets),
+      contextSlice: stringList(answer.context_slice),
+    };
+  }
+
+  if (args.mutants !== null) {
+    const headAtWork = gitOk(root, ["rev-parse", "HEAD"], env).trim();
+    if (headAtWork !== headSha) {
+      return usageError(
+        "--mutants needs the head to be the checkout HEAD (" + headAtWork.slice(0, 8) + ")",
+      );
+    }
+    const statusOut = gitOk(root, ["status", "--porcelain", "--untracked-files=all"], env);
+    const dirty: string[] = [];
+    for (const line of statusOut.split("\n")) {
+      if (line === "") continue;
+      let path = line.slice(3);
+      const arrow = path.indexOf(" -> ");
+      if (arrow !== -1) path = path.slice(arrow + 4);
+      if (path.startsWith(MORPH_DIR)) continue;
+      dirty.push(path);
+    }
+    dirty.sort();
+    if (dirty.length > 0) {
+      return usageError("--mutants needs a clean tree: dirty outside .morph/: " + dirty.join(", "));
+    }
+  }
+
+  // 3. The data.
+  const range = new Set<string>();
+  for (const line of gitOk(root, ["rev-list", baseSha + ".." + headSha], env).split("\n")) {
+    if (line !== "") range.add(line);
+  }
+
+  const log = readMorphLog(root, env);
+  const rangeCommits: RangeCommit[] = [];
+  for (const entry of log) {
+    if (!range.has(entry.sha)) continue;
+    rangeCommits.push({ card: entry.card, model: entry.model, run: entry.run, paths: entry.paths });
+  }
+  const ownership = readOwnership(log);
+
+  const changed = readDiff(
+    gitOk(root, ["diff", "--name-status", "-z", "--no-renames", baseSha, headSha], env),
+    gitOk(root, ["diff", "--numstat", "-z", "--no-renames", baseSha, headSha], env),
+  );
+
+  const envelope = checkEnvelope({ changed, commits: rangeCommits, ownership, scout });
+
+  const headTests: string[] = [];
+  for (const piece of gitOk(root, ["ls-tree", "-r", "-z", "--name-only", headSha], env).split("\0")) {
+    if (piece === "") continue;
+    if (isTestPath(piece)) headTests.push(piece);
+  }
+
+  const titles: string[] = [];
+  for (const path of headTests) {
+    const profile = profileForPath(path);
+    if (profile === null) continue;
+    for (const title of testTitles(gitOk(root, ["show", headSha + ":" + path], env), profile.id)) {
+      titles.push(title);
+    }
+  }
+
+  const baseTexts: TestText[] = [];
+  const headTexts: TestText[] = [];
+  for (const file of changed) {
+    if (!isTestPath(file.path)) continue;
+    if (file.status !== "added") {
+      baseTexts.push({ path: file.path, text: gitOk(root, ["show", baseSha + ":" + file.path], env) });
+    }
+    if (file.status !== "deleted") {
+      headTexts.push({ path: file.path, text: gitOk(root, ["show", headSha + ":" + file.path], env) });
+    }
+  }
+  const guardrails = checkGuardrails({ base: baseTexts, head: headTexts });
+
+  let obligationRows: Obligation[] = [];
+  let obligationFindings: Finding[] = [];
+  if (record !== null) {
+    const found = findObligations({
+      record,
+      map,
+      changed: changed.map((file) => file.path),
+      cards: rangeCommits.map((commit) => commit.card),
+      titles,
+    });
+    obligationRows = found.obligations;
+    obligationFindings = found.findings;
+  }
+
+  let mutantRows: MutantRow[] | null = null;
+  let testCommand: string | null = null;
+  let baseline: Baseline | null = null;
+  let mutationFindings: Finding[] = [];
+  if (args.mutants !== null) {
+    const codeFiles = changed.filter(
+      (file) =>
+        file.status !== "deleted" &&
+        !file.path.startsWith(MORPH_DIR) &&
+        profileForPath(file.path) !== null &&
+        !isTestPath(file.path),
+    );
+
+    const allMutants: Mutant[] = [];
+    for (const file of codeFiles) {
+      const text = readFileSync(join(root, file.path), "utf8");
+      for (const mutant of planMutants(file.path, text, args.mutants)) {
+        allMutants.push(mutant);
+      }
+    }
+    const planned = spreadMutants(allMutants, args.mutants);
+
+    let defaultTest: string | null = null;
+    if (codeFiles.length > 0) {
+      const profile = profileForPath(codeFiles[0].path);
+      defaultTest = profile === null ? null : profile.fullRunLine;
+    }
+    testCommand = args.test === null ? defaultTest : args.test;
+
+    const command = testCommand;
+    if (planned.length > 0 && command !== null) {
+      const run = await runMutants({
+        root,
+        command,
+        mutants: planned,
+        timeoutMs: args.mutantTimeoutSeconds * 1000,
+        env,
+      });
+      mutantRows = run.results.map((result) => ({
+        path: result.path,
+        line: result.line,
+        rule: result.rule,
+        killed: result.killed,
+      }));
+      baseline = run.baseline;
+      mutationFindings = run.findings;
+    } else {
+      mutantRows = [];
+    }
+  }
+
+  // 4. The document.
+  const review = renderFindings({
+    base: args.base,
+    head: args.head,
+    changed: envelope.rows,
+    obligations: obligationRows,
+    guardrails: guardrails.rows,
+    mutants: mutantRows,
+    findings: [
+      ...obligationFindings,
+      ...envelope.findings,
+      ...guardrails.findings,
+      ...mutationFindings,
+    ],
+  });
+
+  const written = args.write ? REVIEW_DIR + "/" + reviewId(baseSha, headSha) : null;
+
+  const document: ReviewDocument = {
+    range: review.range,
+    verdict: review.verdict,
+    base: baseSha,
+    head: headSha,
+    counts: review.counts,
+    findings: review.findings,
+    envelope: envelope.applies,
+    scout: scout === null ? null : scout.scoutId,
+    commits: range.size,
+    morphCommits: rangeCommits.length,
+    testFiles: headTests.length,
+    test: testCommand,
+    baseline,
+    written,
+    markdown: review.markdown,
+  };
+
+  if (written !== null) {
+    const dir = join(root, written);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "review.json"), JSON.stringify(document, null, 2) + "\n");
+    writeFileSync(join(dir, "review.md"), review.markdown);
+  }
+
+  return { code: review.verdict === "clean" ? 0 : 1, document };
+}
+```

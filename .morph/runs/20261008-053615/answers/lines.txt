@@ -1,0 +1,11 @@
+morph run: run-mutants.v1 accepted stage 7 frozen finish stop chars 3009
+morph run: run-mutants.v2 untried stage 0 finish stop chars 3618
+morph run: review-command.v1 accepted stage 7 frozen finish stop chars 12796
+morph run: review-command.v2 untried stage 0 finish stop chars 13553
+morph run: run-mutants-judge.v1 accepted stage 7 frozen finish stop chars 6957
+morph run: parse-command.v1 accepted stage 7 frozen finish stop chars 19671
+morph run: parse-command.v2 untried stage 0 finish stop chars 19652
+morph run: review-command-judge.v1 rejected stage 4 own finish stop chars 14748
+morph run: review-command-judge.r1.v1 accepted stage 7 frozen finish stop chars 14554
+morph run: main-judge.v1 accepted stage 7 frozen finish stop chars 4242
+morph run: parse-command-judge.v1 accepted stage 8 frozen finish stop chars 19278

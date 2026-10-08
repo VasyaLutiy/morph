@@ -1,0 +1,245 @@
+{
+  "runId": "20261008-053615",
+  "completedAt": 1791439312984,
+  "branch": "morph/20261008-053615",
+  "processor": "ds",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "run-mutants",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-mutants.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "d9c096bd6945a68d79011a5411da9de931c09089",
+      "diffstat": {
+        "files": 1,
+        "insertions": 111,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "review-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "review-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "7767ba8394625a1d14394f2f9f04db02a845a64b",
+      "diffstat": {
+        "files": 1,
+        "insertions": 404,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "run-mutants-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-mutants-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/reviewer/runMutants.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "8fccfe5ffd0469dee7a754dcbe06422a5100f7eb",
+      "diffstat": {
+        "files": 1,
+        "insertions": 255,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "parse-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "eeaeded270588d6f7a6a108d7d429faec32674a0",
+      "diffstat": {
+        "files": 3,
+        "insertions": 91,
+        "deletions": 4
+      }
+    },
+    {
+      "customId": "review-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "review-command-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/reviewer/reviewCommand.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard tests/reviewer/reviewCommand.examples.test.ts\n== own\n FAIL  tests/reviewer/reviewCommand.examples.test.ts > Review Command example 1: b0..h1 with the spec and map\nAssertionError: expected { files: 3, obligations: 1, examples: 3, missing: 1, mutants: null, killed: null, findings: 1, byKind: { obligation: 1, envelope: +0, scope: +0, guardrail: +0, mutation: +0 } } to strictly equal { files: 3, obligations: 1, examples: 3, missing: 1, mutants: null, killed: null, findings: 1, byKind: { obligation: 1 } }\n\n- Expected\n+ Received\n\n@@ -1,8 +1,12 @@\n  {\n    \"byKind\": {\n+     \"envelope\": 0,\n+     \"guardrail\": 0,\n+     \"mutation\": 0,\n      \"obligation\": 1,\n+     \"scope\": 0,\n    },\n    \"examples\": 3,\n    \"files\": 3,\n    \"findings\": 1,\n    \"killed\": null,\n\n ❯ tests/reviewer/reviewCommand.examples.test.ts:101:29\n     99|     expect(document.head).toBe(h1Sha);\n    100|     expect(document.verdict).toBe(\"findings\");\n    101|     expect(document.counts).toStrictEqual({\n       |                             ^\n    102|       files: 3,\n    103|       obligations: 1,\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 4 passed (5)\n\nfirst difference at char 36 (line 4) of 122/196: expected \" -1,8 +1,12 @@\\n{\\n  \\\"byKind\\\": {\\n    \\\"obligation\\\": 1,\\n  },\\n  \\\"examples\\\": 3,\\n  \" received \" -1,8 +1,12 @@\\n{\\n  \\\"byKind\\\": {\\n    \\\"envelope\\\": 0,\\n    \\\"guardrail\\\": 0,\\n    \\\"m\"\n"
+      ],
+      "commit": "f735502ff800134baffae53614ec035e4e6cc431",
+      "diffstat": {
+        "files": 1,
+        "insertions": 486,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "main-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "main-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/main.p14b.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "5a6debf22452f7dd1aeb260795c3f0d49fecf46f",
+      "diffstat": {
+        "files": 1,
+        "insertions": 126,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "parse-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/parse.examples.test.ts\n== names tests/cli/parse.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "c5c52c6f67522d3ead09de1b572af5e70e8fd822",
+      "diffstat": {
+        "files": 1,
+        "insertions": 143,
+        "deletions": 5
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 292697,
+    "outputTokens": 176807,
+    "cost": 0.28338870000000005,
+    "requests": 11
+  },
+  "requests": [
+    {
+      "customId": "run-mutants.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791437775-hsgol440VdwRhBnf1Fgw",
+      "inputTokens": 21786,
+      "outputTokens": 3078,
+      "cost": 0.00442332,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-mutants.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791437775-RxlqGxwwfLHmOGhYmqV6",
+      "inputTokens": 21786,
+      "outputTokens": 2422,
+      "cost": 0.0094422,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "review-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791437865-PLkO8QDRJmhyQGVvCfUa",
+      "inputTokens": 30286,
+      "outputTokens": 24103,
+      "cost": 0.0338622,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "review-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791437865-5zcVOE9Uz9JOz8KsRyjR",
+      "inputTokens": 30286,
+      "outputTokens": 24584,
+      "cost": 0.0344394,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-mutants-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791437865-ORk365NQZpRRQoytk7ie",
+      "inputTokens": 20863,
+      "outputTokens": 8542,
+      "cost": 0.01402098,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791438190-JnpJzFldzc0ydtKqtpoo",
+      "inputTokens": 28407,
+      "outputTokens": 10602,
+      "cost": 0.0212445,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791438190-0Knlef9jAgIbgCxf8vwj",
+      "inputTokens": 28407,
+      "outputTokens": 7030,
+      "cost": 0.0169581,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "review-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791438190-9Y0vc6mTTf9zAqv0qOk0",
+      "inputTokens": 25622,
+      "outputTokens": 39061,
+      "cost": 0.0545598,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "review-command-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791438613-oCMPoY70utOF2snvpodh",
+      "inputTokens": 34583,
+      "outputTokens": 20110,
+      "cost": 0.0345069,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "main-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791438871-NHaSuvYgGTEQkeq90QJO",
+      "inputTokens": 23745,
+      "outputTokens": 30763,
+      "cost": 0.0440391,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791438871-tZTJMA9UNIcCylqcgIBr",
+      "inputTokens": 26926,
+      "outputTokens": 6512,
+      "cost": 0.0158922,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}

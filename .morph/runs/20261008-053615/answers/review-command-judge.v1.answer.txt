@@ -1,0 +1,480 @@
+```ts
+import { expect, test } from "vitest";
+
+import {
+  EMPTY_MAP,
+  REVIEW_DIR,
+  reviewCommand,
+  reviewId,
+  spreadMutants,
+} from "../../src/reviewer/reviewCommand.js";
+import type { ReviewOptions } from "../../src/reviewer/reviewCommand.js";
+import type { Mutant } from "../../src/reviewer/planMutants.js";
+import { fixture, tmpRepo, tmpRoot } from "../helpers.js";
+
+const ADD_TAX =
+  "export function addTax(price: number): number {\n  return price > 0 ? price + price / 5 : price;\n}\n";
+
+const ENV = { PATH: process.env.PATH ?? "" };
+
+function baseArgs(over: Partial<ReviewOptions> = {}): ReviewOptions {
+  return {
+    base: "b0",
+    head: "h1",
+    spec: null,
+    map: null,
+    scout: null,
+    mutants: null,
+    mutantTimeoutSeconds: 120,
+    test: null,
+    write: false,
+    ...over,
+  };
+}
+
+function buildTinyRepo(): ReturnType<typeof tmpRepo> {
+  const t = tmpRepo();
+  t.write("contour.yaml", fixture("reviewer/record.yaml"));
+  t.write("morph-map.json", fixture("reviewer/map.json"));
+  t.write("README.md", "till\n");
+  t.write("tests/shop/old.test.ts", 'test("kept", () => {});\ntest("gone", () => {});\n');
+  t.git(["add", "."]);
+  t.git(["commit", "-q", "-m", "base"]);
+  t.git(["tag", "b0"]);
+
+  t.write("src/shop/addTax.ts", ADD_TAX);
+  t.git(["add", "."]);
+  t.git([
+    "commit",
+    "-q",
+    "-m",
+    "morph add-tax: src/shop/addTax.ts\n\nMorph-Card: add-tax\nMorph-Model: m/x",
+  ]);
+
+  t.write(
+    "tests/shop/addTax.examples.test.ts",
+    'test("Add Tax example 1: the tax", () => {});\ntest("Add Tax example 3: negative", () => {});\n',
+  );
+  t.git(["add", "."]);
+  t.git([
+    "commit",
+    "-q",
+    "-m",
+    "morph add-tax-judge.r1: tests/shop/addTax.examples.test.ts\n\nMorph-Card: add-tax-judge.r1\nMorph-Model: m/x",
+  ]);
+
+  t.write(".morph/runs/r7/report.json", "{}\n");
+  t.git(["add", "-f", "."]);
+  t.git(["commit", "-q", "-m", "morph run r7: deck and report\n\nMorph-Run: r7"]);
+  t.git(["tag", "h1"]);
+
+  t.write("README.md", "till v2\n");
+  t.write(
+    "tests/shop/old.test.ts",
+    'test("kept", () => {});\ntest.skip("new", () => {});\n',
+  );
+  t.git(["add", "."]);
+  t.git(["commit", "-q", "-m", "hand"]);
+
+  return t;
+}
+
+test("Review Command example 1: b0..h1 with the spec and map", async () => {
+  const t = buildTinyRepo();
+  try {
+    const b0Sha = t.git(["rev-parse", "b0"]);
+    const h1Sha = t.git(["rev-parse", "h1"]);
+
+    const result = await reviewCommand(
+      t.root,
+      baseArgs({ spec: "contour.yaml", map: "morph-map.json" }),
+      { env: ENV },
+    );
+
+    expect(result.code).toBe(1);
+    const document = result.document;
+    if (!("range" in document)) throw new Error("expected a review document");
+
+    expect(document.range).toBe("b0..h1");
+    expect(document.base).toBe(b0Sha);
+    expect(document.head).toBe(h1Sha);
+    expect(document.verdict).toBe("findings");
+    expect(document.counts).toStrictEqual({
+      files: 3,
+      obligations: 1,
+      examples: 3,
+      missing: 1,
+      mutants: null,
+      killed: null,
+      findings: 1,
+      byKind: { obligation: 1 },
+    });
+    expect(document.findings).toStrictEqual([
+      {
+        id: "F1",
+        kind: "obligation",
+        source: "record: shop · Add Tax · example 2",
+        path: "tests/shop/addTax.examples.test.ts",
+        expected: 'a test named "Add Tax example 2"',
+        got: "no test title at head starts with it",
+      },
+    ]);
+    expect(document.envelope).toBe(true);
+    expect(document.scout).toBe(null);
+    expect(document.commits).toBe(3);
+    expect(document.morphCommits).toBe(2);
+    expect(document.testFiles).toBe(2);
+    expect(document.test).toBe(null);
+    expect(document.baseline).toBe(null);
+    expect(document.written).toBe(null);
+
+    expect(document.markdown).toContain(
+      "| .morph/runs/r7/report.json | added | +1 -0 | — |",
+    );
+    expect(document.markdown).toContain(
+      "| src/shop/addTax.ts | added | +3 -0 | add-tax |",
+    );
+    expect(document.markdown).toContain(
+      "| tests/shop/addTax.examples.test.ts | added | +2 -0 | add-tax-judge.r1 |",
+    );
+    expect(document.markdown).toContain(
+      "card add-tax-judge, card add-tax, file src/shop/addTax.ts, file tests/shop/addTax.examples.test.ts",
+    );
+  } finally {
+    t.rm();
+  }
+});
+
+test("Review Command example 2: b0..HEAD with the scout, mutants and write", async () => {
+  const t = buildTinyRepo();
+  try {
+    t.write(
+      ".morph/scout/20261009-101500-0badc0de/scout.json",
+      JSON.stringify(
+        {
+          schema: 1,
+          status: "ok",
+          answer: {
+            targets: ["src/shop/addTax.ts"],
+            context_slice: ["README.md"],
+            reasoning: "r",
+          },
+          stopReason: "the model answered on its own",
+        },
+        null,
+        2,
+      ) + "\n",
+    );
+
+    const b0Sha = t.git(["rev-parse", "b0"]);
+    const headSha = t.git(["rev-parse", "HEAD"]);
+
+    const result = await reviewCommand(
+      t.root,
+      baseArgs({
+        head: "HEAD",
+        spec: "contour.yaml",
+        map: "morph-map.json",
+        scout: "latest",
+        mutants: 5,
+        mutantTimeoutSeconds: 30,
+        test: 'grep -q "price > 0" src/shop/addTax.ts',
+        write: true,
+      }),
+      { env: ENV },
+    );
+
+    expect(result.code).toBe(1);
+    const document = result.document;
+    if (!("range" in document)) throw new Error("expected a review document");
+
+    expect(document.range).toBe("b0..HEAD");
+    expect(document.base).toBe(b0Sha);
+    expect(document.head).toBe(headSha);
+    expect(document.verdict).toBe("findings");
+    expect(document.counts).toStrictEqual({
+      files: 5,
+      obligations: 1,
+      examples: 3,
+      missing: 1,
+      mutants: 2,
+      killed: 1,
+      findings: 9,
+      byKind: { obligation: 1, envelope: 2, scope: 3, guardrail: 2, mutation: 1 },
+    });
+    expect(document.envelope).toBe(true);
+    expect(document.scout).toBe("20261009-101500-0badc0de");
+    expect(document.commits).toBe(4);
+    expect(document.morphCommits).toBe(2);
+    expect(document.testFiles).toBe(2);
+    expect(document.test).toBe('grep -q "price > 0" src/shop/addTax.ts');
+    expect(document.baseline).toStrictEqual({ exit: 0, timedOut: false });
+    const written = ".morph/review/" + b0Sha.slice(0, 8) + "-" + headSha.slice(0, 8);
+    expect(document.written).toBe(written);
+
+    expect(document.findings).toStrictEqual([
+      {
+        id: "F1",
+        kind: "obligation",
+        source: "record: shop · Add Tax · example 2",
+        path: "tests/shop/addTax.examples.test.ts",
+        expected: 'a test named "Add Tax example 2"',
+        got: "no test title at head starts with it",
+      },
+      {
+        id: "F2",
+        kind: "envelope",
+        source: "primer: ownership",
+        path: "README.md",
+        expected: "written by a Morph card of the range",
+        got: "changed outside every card's targets; no Morph card ever wrote it",
+      },
+      {
+        id: "F3",
+        kind: "envelope",
+        source: "primer: ownership",
+        path: "tests/shop/old.test.ts",
+        expected: "written by a Morph card of the range",
+        got: "changed outside every card's targets; no Morph card ever wrote it",
+      },
+      {
+        id: "F4",
+        kind: "scope",
+        source: "scout 20261009-101500-0badc0de",
+        path: "README.md",
+        expected: "a target of the scout session (src/shop/addTax.ts)",
+        got: "changed, though the scout named it as context",
+      },
+      {
+        id: "F5",
+        kind: "scope",
+        source: "scout 20261009-101500-0badc0de",
+        path: "tests/shop/addTax.examples.test.ts",
+        expected: "a target of the scout session (src/shop/addTax.ts)",
+        got: "changed, though the scout did not name it",
+      },
+      {
+        id: "F6",
+        kind: "scope",
+        source: "scout 20261009-101500-0badc0de",
+        path: "tests/shop/old.test.ts",
+        expected: "a target of the scout session (src/shop/addTax.ts)",
+        got: "changed, though the scout did not name it",
+      },
+      {
+        id: "F7",
+        kind: "guardrail",
+        source: "guardrail Tests Kept",
+        path: "tests/shop/old.test.ts",
+        expected: 'the test "gone" kept',
+        got: "no test of that name at head",
+      },
+      {
+        id: "F8",
+        kind: "guardrail",
+        source: "guardrail No New Skips",
+        path: "tests/shop/old.test.ts",
+        expected: "at most 0 skipped or focused tests, as at base",
+        got: "1 at head",
+      },
+      {
+        id: "F9",
+        kind: "mutation",
+        source: "mutation src/shop/addTax.ts:2",
+        path: "src/shop/addTax.ts",
+        expected: "a test fails on + → - at line 2",
+        got: "every test passed",
+      },
+    ]);
+
+    expect(document.markdown).toBe(fixture("reviewer/review.tiny.md"));
+    expect(t.read(written + "/review.md")).toBe(fixture("reviewer/review.tiny.md"));
+    expect(t.read(written + "/review.json")).toBe(JSON.stringify(document, null, 2) + "\n");
+    expect(t.read("src/shop/addTax.ts")).toBe(ADD_TAX);
+  } finally {
+    t.rm();
+  }
+});
+
+test("Review Command example 3: the refusals", async () => {
+  const t = buildTinyRepo();
+  try {
+    t.write("notes.txt", "notes\n");
+
+    t.git(["checkout", "-q", "-b", "side", "b0"]);
+    t.write("side.txt", "side\n");
+    t.git(["add", "side.txt"]);
+    t.git(["commit", "-q", "-m", "side"]);
+    t.git(["checkout", "-q", "main"]);
+
+    const r1 = await reviewCommand(t.root, baseArgs({ base: "nope" }), { env: ENV });
+    expect(r1.code).toBe(4);
+    expect(r1.document).toStrictEqual({
+      error: { code: 4, kind: "UsageError", message: "not a commit: nope" },
+    });
+
+    const r2 = await reviewCommand(t.root, baseArgs({ head: "v9" }), { env: ENV });
+    expect(r2.code).toBe(4);
+    expect(r2.document).toStrictEqual({
+      error: { code: 4, kind: "UsageError", message: "not a commit: v9" },
+    });
+
+    const r3 = await reviewCommand(t.root, baseArgs({ spec: "none.yaml" }), { env: ENV });
+    expect(r3.code).toBe(4);
+    expect(r3.document).toStrictEqual({
+      error: { code: 4, kind: "UsageError", message: "spec file not found: none.yaml" },
+    });
+
+    const r4 = await reviewCommand(
+      t.root,
+      baseArgs({ spec: "contour.yaml", map: "none.json" }),
+      { env: ENV },
+    );
+    expect(r4.code).toBe(4);
+    expect(r4.document).toStrictEqual({
+      error: { code: 4, kind: "UsageError", message: "map file not found: none.json" },
+    });
+
+    const r5 = await reviewCommand(
+      t.root,
+      baseArgs({ spec: "contour.yaml", map: "morph-map.json", scout: "zz" }),
+      { env: ENV },
+    );
+    expect(r5.code).toBe(4);
+    expect(r5.document).toStrictEqual({
+      error: { code: 4, kind: "UsageError", message: "scout session not found: zz" },
+    });
+
+    const headSha = t.git(["rev-parse", "HEAD"]);
+
+    const r6 = await reviewCommand(
+      t.root,
+      baseArgs({ spec: "contour.yaml", map: "morph-map.json", mutants: 3 }),
+      { env: ENV },
+    );
+    expect(r6.code).toBe(4);
+    expect(r6.document).toStrictEqual({
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message:
+          "--mutants needs the head to be the checkout HEAD (" + headSha.slice(0, 8) + ")",
+      },
+    });
+
+    const r7 = await reviewCommand(
+      t.root,
+      baseArgs({
+        head: "HEAD",
+        spec: "contour.yaml",
+        map: "morph-map.json",
+        mutants: 3,
+      }),
+      { env: ENV },
+    );
+    expect(r7.code).toBe(4);
+    expect(r7.document).toStrictEqual({
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "--mutants needs a clean tree: dirty outside .morph/: notes.txt",
+      },
+    });
+
+    const r8 = await reviewCommand(
+      t.root,
+      baseArgs({ head: "side", spec: "contour.yaml", map: "morph-map.json" }),
+      { env: ENV },
+    );
+    expect(r8.code).toBe(4);
+    expect(r8.document).toStrictEqual({
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "head side is not in the history of HEAD",
+      },
+    });
+
+    const outside = tmpRoot();
+    try {
+      await expect(
+        reviewCommand(outside.root, baseArgs(), { env: ENV }),
+      ).rejects.toThrow(/git rev-parse failed \(exit 128\):/);
+    } finally {
+      outside.rm();
+    }
+  } finally {
+    t.rm();
+  }
+});
+
+test("Review Command example 4: clean, the red baseline, the off envelope", async () => {
+  const t = buildTinyRepo();
+  try {
+    const clean = await reviewCommand(t.root, baseArgs(), { env: ENV });
+    expect(clean.code).toBe(0);
+    const cleanDoc = clean.document;
+    if (!("range" in cleanDoc)) throw new Error("expected a review document");
+    expect(cleanDoc.verdict).toBe("clean");
+    expect(cleanDoc.markdown.startsWith("# Review b0..h1\n\nClean: no findings.\n")).toBe(true);
+
+    const red = await reviewCommand(t.root, baseArgs({ head: "HEAD", mutants: 2 }), {
+      env: ENV,
+    });
+    expect(red.code).toBe(1);
+    const redDoc = red.document;
+    if (!("range" in redDoc)) throw new Error("expected a review document");
+    expect(redDoc.test).toBe("node_modules/.bin/vitest run --reporter=dot");
+    expect(redDoc.baseline).toStrictEqual({ exit: 127, timedOut: false });
+    const baselineFinding = redDoc.findings.find((f) => f.source === "mutation baseline");
+    expect(baselineFinding?.got).toBe("exit 127");
+    expect(redDoc.markdown).toContain("## Mutants (0 of 0 killed)");
+
+    const off = await reviewCommand(
+      t.root,
+      baseArgs({ base: "h1", head: "HEAD", mutants: 3, test: "exit 9" }),
+      { env: ENV },
+    );
+    expect(off.code).toBe(1);
+    const offDoc = off.document;
+    if (!("range" in offDoc)) throw new Error("expected a review document");
+    expect(offDoc.envelope).toBe(false);
+    expect(offDoc.baseline).toBe(null);
+    expect(offDoc.counts.mutants).toBe(0);
+    expect(offDoc.test).toBe("exit 9");
+    expect(offDoc.counts.findings).toBe(2);
+  } finally {
+    t.rm();
+  }
+});
+
+test("Review Command example 5: reviewId, spreadMutants, the constants", () => {
+  expect(reviewId("4f2a9c1e0b", "8a663b37ff")).toBe("4f2a9c1e-8a663b37");
+
+  const mutants: Mutant[] = [];
+  for (let i = 0; i < 8; i += 1) {
+    mutants.push({
+      path: "src/f.ts",
+      line: i + 1,
+      column: 1,
+      rule: "r" + String(i),
+      text: "t" + String(i) + "\n",
+    });
+  }
+
+  expect(spreadMutants(mutants, 3)).toStrictEqual([mutants[0], mutants[2], mutants[5]]);
+  expect(spreadMutants(mutants, 0)).toStrictEqual([]);
+  expect(spreadMutants(mutants, 9)).toStrictEqual(mutants);
+
+  expect(REVIEW_DIR).toBe(".morph/review");
+  expect(EMPTY_MAP).toStrictEqual({
+    version: 1,
+    package: null,
+    language: null,
+    docs: [],
+    groups: [],
+    cards: [],
+    extraCards: [],
+  });
+});
+```
