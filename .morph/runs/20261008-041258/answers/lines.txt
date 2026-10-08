@@ -1,0 +1,16 @@
+morph run: check-envelope.v1 accepted stage 6 frozen finish stop chars 5467
+morph run: check-envelope.v2 untried stage 0 finish stop chars 5066
+morph run: check-guardrails.v1 accepted stage 6 frozen finish stop chars 3762
+morph run: check-guardrails.v2 untried stage 0 finish stop chars 4284
+morph run: find-obligations.v1 accepted stage 6 frozen finish stop chars 4185
+morph run: find-obligations.v2 untried stage 0 finish stop chars 4223
+morph run: plan-mutants.v1 accepted stage 6 frozen finish stop chars 3513
+morph run: plan-mutants.v2 untried stage 0 finish stop chars 3846
+morph run: render-findings.v1 accepted stage 6 frozen finish stop chars 6879
+morph run: render-findings.v2 untried stage 0 finish stop chars 7323
+morph run: check-envelope-judge.v1 accepted stage 6 frozen finish stop chars 6569
+morph run: check-guardrails-judge.v1 accepted stage 6 frozen finish stop chars 3939
+morph run: find-obligations-judge.v1 accepted stage 6 frozen finish stop chars 7035
+morph run: plan-mutants-judge.v1 rejected stage 4 own finish stop chars 2458
+morph run: render-findings-judge.v1 accepted stage 6 frozen finish stop chars 3532
+morph run: plan-mutants-judge.r1.v1 accepted stage 6 frozen finish stop chars 2548

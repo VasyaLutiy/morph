@@ -1,0 +1,195 @@
+```typescript
+import type { Ownership } from "../git/ownership.js";
+
+export type ChangeStatus = "added" | "modified" | "deleted";
+export interface ChangedFile {
+  path: string;
+  status: ChangeStatus;
+  added: number | null;
+  deleted: number | null;
+}
+export interface RangeCommit {
+  card: string;
+  model: string;
+  run: string | null;
+  paths: string[];
+}
+export interface ScoutScope {
+  scoutId: string;
+  targets: string[];
+  contextSlice: string[];
+}
+export type Scope = "target" | "context" | "outside";
+export interface EnvelopeRow {
+  path: string;
+  status: ChangeStatus;
+  added: number | null;
+  deleted: number | null;
+  writers: string[];
+  owner: string | null;
+  scope: Scope | null;
+}
+export interface EnvelopeInput {
+  changed: ChangedFile[];
+  commits: RangeCommit[];
+  ownership: Ownership;
+  scout: ScoutScope | null;
+}
+export interface Finding {
+  kind: string;
+  source: string;
+  path: string | null;
+  expected: string;
+  got: string;
+}
+export interface EnvelopeResult {
+  applies: boolean;
+  rows: EnvelopeRow[];
+  findings: Finding[];
+}
+
+export const MORPH_DIR = ".morph/";
+export const ENVELOPE_SOURCE = "primer: ownership";
+
+export function readDiff(nameStatus: string, numstat: string): ChangedFile[] {
+  const counts = new Map<string, { added: number | null; deleted: number | null }>();
+  for (const record of numstat.split("\0")) {
+    if (record === "") continue;
+    const firstTab = record.indexOf("\t");
+    if (firstTab === -1) continue;
+    const secondTab = record.indexOf("\t", firstTab + 1);
+    if (secondTab === -1) continue;
+    const addedText = record.slice(0, firstTab);
+    const deletedText = record.slice(firstTab + 1, secondTab);
+    const path = record.slice(secondTab + 1);
+    counts.set(path, {
+      added: addedText === "-" ? null : Number(addedText),
+      deleted: deletedText === "-" ? null : Number(deletedText),
+    });
+  }
+
+  const pieces = nameStatus.split("\0");
+  const files: ChangedFile[] = [];
+  for (let i = 0; i + 1 < pieces.length; i += 2) {
+    const letter = pieces[i];
+    const path = pieces[i + 1];
+    if (letter === "") continue;
+    const head = letter.charAt(0);
+    const status: ChangeStatus =
+      head === "A" ? "added" : head === "D" ? "deleted" : "modified";
+    const count = counts.get(path);
+    files.push({
+      path,
+      status,
+      added: count === undefined ? null : count.added,
+      deleted: count === undefined ? null : count.deleted,
+    });
+  }
+  return files;
+}
+
+function formatOwner(write: { card: string; model: string; run: string | null }): string {
+  const model = write.model === "" ? "—" : write.model;
+  const run = write.run === null ? "—" : write.run;
+  return write.card + " (" + model + ", run " + run + ")";
+}
+
+export function checkEnvelope(input: EnvelopeInput): EnvelopeResult {
+  const { changed, commits, ownership, scout } = input;
+  const applies = commits.length > 0;
+
+  const ownerByPath = new Map<string, string>();
+  for (const owned of ownership.paths) {
+    const newest = owned.writes[0];
+    if (newest === undefined) continue;
+    ownerByPath.set(owned.path, formatOwner(newest));
+  }
+
+  const rows: EnvelopeRow[] = [];
+  const findings: Finding[] = [];
+  const changedPaths = new Set<string>();
+
+  for (const file of changed) {
+    changedPaths.add(file.path);
+
+    const writers: string[] = [];
+    const seen = new Set<string>();
+    for (const commit of commits) {
+      if (!commit.paths.includes(file.path)) continue;
+      if (seen.has(commit.card)) continue;
+      seen.add(commit.card);
+      writers.push(commit.card);
+    }
+
+    const owner = ownerByPath.get(file.path) ?? null;
+
+    const underMorph = file.path.startsWith(MORPH_DIR);
+    let scope: Scope | null = null;
+    if (!underMorph && scout !== null) {
+      if (scout.targets.includes(file.path)) {
+        scope = "target";
+      } else if (scout.contextSlice.includes(file.path)) {
+        scope = "context";
+      } else {
+        scope = "outside";
+      }
+    }
+
+    rows.push({
+      path: file.path,
+      status: file.status,
+      added: file.added,
+      deleted: file.deleted,
+      writers,
+      owner,
+      scope,
+    });
+
+    if (underMorph) continue;
+
+    if (applies && writers.length === 0) {
+      const got =
+        owner === null
+          ? "changed outside every card's targets; no Morph card ever wrote it"
+          : "changed outside every card's targets; last Morph write " + owner;
+      findings.push({
+        kind: "envelope",
+        source: ENVELOPE_SOURCE,
+        path: file.path,
+        expected: "written by a Morph card of the range",
+        got,
+      });
+    }
+
+    if (scout !== null && scope !== "target") {
+      const expected = "a target of the scout session (" + scout.targets.join(", ") + ")";
+      const got =
+        scope === "context"
+          ? "changed, though the scout named it as context"
+          : "changed, though the scout did not name it";
+      findings.push({
+        kind: "scope",
+        source: "scout " + scout.scoutId,
+        path: file.path,
+        expected,
+        got,
+      });
+    }
+  }
+
+  if (scout !== null) {
+    for (const target of scout.targets) {
+      if (changedPaths.has(target)) continue;
+      findings.push({
+        kind: "scope",
+        source: "scout " + scout.scoutId,
+        path: target,
+        expected: "changed: the scout named it as a target",
+        got: "unchanged in the range",
+      });
+    }
+  }
+
+  return { applies, rows, findings };
+}
+```

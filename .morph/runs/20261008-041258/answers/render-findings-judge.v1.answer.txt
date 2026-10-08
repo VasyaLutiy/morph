@@ -1,0 +1,133 @@
+```
+import { expect, test } from "vitest";
+import { orderFindings, renderFindings } from "../../src/reviewer/renderFindings.js";
+import type { Finding, RenderInput } from "../../src/reviewer/renderFindings.js";
+import { fixture, fixtureJson } from "../helpers.js";
+
+test("Render Findings example 1: every list empty and mutants null", () => {
+  const review = renderFindings({
+    base: "v1",
+    head: "HEAD",
+    changed: [],
+    obligations: [],
+    guardrails: [],
+    mutants: null,
+    findings: [],
+  });
+
+  expect(review.range).toBe("v1..HEAD");
+  expect(review.verdict).toBe("clean");
+  expect(review.counts).toStrictEqual({
+    files: 0,
+    obligations: 0,
+    examples: 0,
+    missing: 0,
+    mutants: null,
+    killed: null,
+    findings: 0,
+    byKind: {
+      obligation: 0,
+      envelope: 0,
+      scope: 0,
+      guardrail: 0,
+      mutation: 0,
+    },
+  });
+  expect(review.findings).toStrictEqual([]);
+  expect(review.markdown).toBe(
+    "# Review v1..HEAD\n\nClean: no findings.\n\n## Changed files (0)\n\n| file | status | lines | written by | scope |\n|---|---|---|---|---|\n\n## Obligations (0 Functions, 0 examples, 0 missing)\n\n## Guardrails\n\n| guardrail | files | findings |\n|---|---|---|\n\n## Findings\n\nNone.\n",
+  );
+});
+
+test("Render Findings example 2: the fixture review", () => {
+  const input = fixtureJson("reviewer/review.input.json") as RenderInput;
+  const review = renderFindings(input);
+
+  expect(review.range).toBe("4f2a9c1..morph/20261009-101500");
+  expect(review.verdict).toBe("findings");
+  expect(review.counts).toStrictEqual({
+    files: 2,
+    obligations: 1,
+    examples: 3,
+    missing: 1,
+    mutants: 2,
+    killed: 1,
+    findings: 5,
+    byKind: {
+      obligation: 1,
+      envelope: 1,
+      scope: 1,
+      guardrail: 1,
+      mutation: 1,
+    },
+  });
+  expect(review.findings.map((f) => [f.id, f.kind])).toStrictEqual([
+    ["F1", "obligation"],
+    ["F2", "envelope"],
+    ["F3", "scope"],
+    ["F4", "guardrail"],
+    ["F5", "mutation"],
+  ]);
+  expect(review.markdown).toBe(fixture("reviewer/review.md"));
+});
+
+test("Render Findings example 3: an unknown kind ranks after the five", () => {
+  const other: Finding = {
+    kind: "other",
+    source: "s",
+    path: null,
+    expected: "e",
+    got: "g",
+  };
+  const mutation: Finding = {
+    kind: "mutation",
+    source: "mutation x.ts:3",
+    path: "x.ts",
+    expected: "e",
+    got: "g",
+  };
+
+  const ordered = orderFindings([other, mutation]);
+  expect(ordered.map((f) => [f.id, f.kind])).toStrictEqual([
+    ["F1", "mutation"],
+    ["F2", "other"],
+  ]);
+
+  const review = renderFindings({
+    base: "a",
+    head: "b",
+    changed: [],
+    obligations: [],
+    guardrails: [],
+    mutants: [],
+    findings: [other],
+  });
+
+  expect(review.counts).toStrictEqual({
+    files: 0,
+    obligations: 0,
+    examples: 0,
+    missing: 0,
+    mutants: 0,
+    killed: 0,
+    findings: 1,
+    byKind: {
+      obligation: 0,
+      envelope: 0,
+      scope: 0,
+      guardrail: 0,
+      mutation: 0,
+      other: 1,
+    },
+  });
+  expect(review.markdown).toContain(
+    "1 findings: obligation 0, envelope 0, scope 0, guardrail 0, mutation 0, other 1.",
+  );
+  const mutantsIndex = review.markdown.indexOf("## Mutants (0 of 0 killed)");
+  const findingsIndex = review.markdown.indexOf("## Findings");
+  expect(mutantsIndex).toBeGreaterThan(-1);
+  expect(findingsIndex).toBeGreaterThan(mutantsIndex);
+  expect(review.markdown).toContain("### F1 · other · s");
+  expect(review.markdown).toContain("- path: —");
+});
+```

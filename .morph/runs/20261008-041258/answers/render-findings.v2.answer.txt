@@ -1,0 +1,280 @@
+```typescript
+/**
+ * Render Findings — the review document.
+ *
+ * A pure function of the changed rows, the obligations, the guardrails, the
+ * mutant rows and the findings: it orders and numbers the findings, counts
+ * them, decides the verdict and lays out one markdown page. No clock, no
+ * environment, no file, no Node module.
+ */
+
+export interface Finding {
+  kind: string;
+  source: string;
+  path: string | null;
+  expected: string;
+  got: string;
+}
+
+export interface NumberedFinding extends Finding {
+  id: string;
+}
+
+export interface ChangedRow {
+  path: string;
+  status: string;
+  added: number | null;
+  deleted: number | null;
+  writers: string[];
+  scope: string | null;
+}
+
+export interface ObligationRow {
+  component: string;
+  function: string;
+  touchedBy: string[];
+  examples: number;
+  missing: number[];
+}
+
+export interface GuardrailRow {
+  name: string;
+  files: number;
+  findings: number;
+}
+
+export interface MutantRow {
+  path: string;
+  line: number;
+  rule: string;
+  killed: boolean;
+}
+
+export interface RenderInput {
+  base: string;
+  head: string;
+  changed: ChangedRow[];
+  obligations: ObligationRow[];
+  guardrails: GuardrailRow[];
+  mutants: MutantRow[] | null;
+  findings: Finding[];
+}
+
+export interface ReviewCounts {
+  files: number;
+  obligations: number;
+  examples: number;
+  missing: number;
+  mutants: number | null;
+  killed: number | null;
+  findings: number;
+  byKind: Record<string, number>;
+}
+
+export interface Review {
+  range: string;
+  verdict: "clean" | "findings";
+  counts: ReviewCounts;
+  findings: NumberedFinding[];
+  markdown: string;
+}
+
+export const KIND_ORDER = ["obligation", "envelope", "scope", "guardrail", "mutation"] as const;
+
+const EM_DASH = "—";
+const MIDDLE_DOT = "·";
+
+/** The rank of a kind: its index in KIND_ORDER, or one past the end when unknown. */
+function kindRank(kind: string): number {
+  const index = (KIND_ORDER as readonly string[]).indexOf(kind);
+  return index === -1 ? KIND_ORDER.length : index;
+}
+
+export function orderFindings(findings: readonly Finding[]): NumberedFinding[] {
+  const indexed = findings.map((finding, index) => ({ finding, index }));
+  indexed.sort((left, right) => {
+    const delta = kindRank(left.finding.kind) - kindRank(right.finding.kind);
+    if (delta !== 0) return delta;
+    return left.index - right.index;
+  });
+  return indexed.map((entry, position) => ({ id: "F" + (position + 1), ...entry.finding }));
+}
+
+function countReview(input: RenderInput): ReviewCounts {
+  const byKind: Record<string, number> = {};
+  for (const kind of KIND_ORDER) byKind[kind] = 0;
+  for (const finding of input.findings) {
+    byKind[finding.kind] = (byKind[finding.kind] ?? 0) + 1;
+  }
+  let examples = 0;
+  let missing = 0;
+  for (const obligation of input.obligations) {
+    examples += obligation.examples;
+    missing += obligation.missing.length;
+  }
+  let mutants: number | null = null;
+  let killed: number | null = null;
+  if (input.mutants !== null) {
+    mutants = input.mutants.length;
+    killed = input.mutants.filter((mutant) => mutant.killed).length;
+  }
+  return {
+    files: input.changed.length,
+    obligations: input.obligations.length,
+    examples,
+    missing,
+    mutants,
+    killed,
+    findings: input.findings.length,
+    byKind,
+  };
+}
+
+/** A table cell: every "|" of the value is written "\\|". */
+function cell(value: string): string {
+  return value.split("|").join("\\|");
+}
+
+function linesCell(row: ChangedRow): string {
+  if (row.added === null || row.deleted === null) return "binary";
+  return "+" + row.added + " -" + row.deleted;
+}
+
+function listCell(values: readonly (string | number)[]): string {
+  return values.length > 0 ? values.join(", ") : EM_DASH;
+}
+
+function renderMarkdown(
+  input: RenderInput,
+  range: string,
+  ordered: readonly NumberedFinding[],
+  counts: ReviewCounts,
+): string {
+  const lines: string[] = [];
+  lines.push("# Review " + range);
+  lines.push("");
+  if (input.findings.length === 0) {
+    lines.push("Clean: no findings.");
+  } else {
+    const parts: string[] = [];
+    for (const [kind, count] of Object.entries(counts.byKind)) {
+      parts.push(kind + " " + count);
+    }
+    lines.push(input.findings.length + " findings: " + parts.join(", ") + ".");
+  }
+  lines.push("");
+
+  lines.push("## Changed files (" + input.changed.length + ")");
+  lines.push("");
+  lines.push("| file | status | lines | written by | scope |");
+  lines.push("|---|---|---|---|---|");
+  for (const row of input.changed) {
+    lines.push(
+      "| " +
+        cell(row.path) +
+        " | " +
+        cell(row.status) +
+        " | " +
+        cell(linesCell(row)) +
+        " | " +
+        cell(listCell(row.writers)) +
+        " | " +
+        cell(row.scope ?? EM_DASH) +
+        " |",
+    );
+  }
+  lines.push("");
+
+  lines.push(
+    "## Obligations (" +
+      input.obligations.length +
+      " Functions, " +
+      counts.examples +
+      " examples, " +
+      counts.missing +
+      " missing)",
+  );
+  lines.push("");
+  if (input.obligations.length > 0) {
+    lines.push("| Function | touched by | examples | missing |");
+    lines.push("|---|---|---|---|");
+    for (const row of input.obligations) {
+      lines.push(
+        "| " +
+          cell(row.component + " " + MIDDLE_DOT + " " + row.function) +
+          " | " +
+          cell(listCell(row.touchedBy)) +
+          " | " +
+          row.examples +
+          " | " +
+          cell(listCell(row.missing)) +
+          " |",
+      );
+    }
+    lines.push("");
+  }
+
+  lines.push("## Guardrails");
+  lines.push("");
+  lines.push("| guardrail | files | findings |");
+  lines.push("|---|---|---|");
+  for (const row of input.guardrails) {
+    lines.push("| " + cell(row.name) + " | " + row.files + " | " + row.findings + " |");
+  }
+  lines.push("");
+
+  if (input.mutants !== null) {
+    const killed = counts.killed ?? 0;
+    lines.push("## Mutants (" + killed + " of " + input.mutants.length + " killed)");
+    lines.push("");
+    if (input.mutants.length > 0) {
+      lines.push("| at | rule | result |");
+      lines.push("|---|---|---|");
+      for (const mutant of input.mutants) {
+        lines.push(
+          "| " +
+            cell(mutant.path + ":" + mutant.line) +
+            " | " +
+            cell(mutant.rule) +
+            " | " +
+            (mutant.killed ? "killed" : "survived") +
+            " |",
+        );
+      }
+      lines.push("");
+    }
+  }
+
+  lines.push("## Findings");
+  lines.push("");
+  if (ordered.length === 0) {
+    lines.push("None.");
+    lines.push("");
+  } else {
+    for (const finding of ordered) {
+      lines.push("### " + finding.id + " " + MIDDLE_DOT + " " + finding.kind + " " + MIDDLE_DOT + " " + finding.source);
+      lines.push("");
+      lines.push("- path: " + (finding.path ?? EM_DASH));
+      lines.push("- EXPECTED: " + finding.expected);
+      lines.push("- GOT: " + finding.got);
+      lines.push("");
+    }
+  }
+
+  return lines.join("\n");
+}
+
+export function renderFindings(input: RenderInput): Review {
+  const range = input.base + ".." + input.head;
+  const ordered = orderFindings(input.findings);
+  const counts = countReview(input);
+  const markdown = renderMarkdown(input, range, ordered, counts);
+  return {
+    range,
+    verdict: input.findings.length === 0 ? "clean" : "findings",
+    counts,
+    findings: ordered,
+    markdown,
+  };
+}
+```

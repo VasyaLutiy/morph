@@ -1,0 +1,73 @@
+```
+import { expect, test } from "vitest";
+
+import { planMutants, quotedMask } from "../../src/reviewer/planMutants.js";
+
+const SRC =
+  'import { x } from "./x.js";\n' +
+  "// a < b in a comment\n" +
+  "export function f(a: number, b: number): boolean {\n" +
+  "  if (a === b && a > 0) return true;\n" +
+  '  return a + b >= 10 || s === "a < b"; // b - a\n' +
+  "}\n";
+
+const SRC_MUTATED_EQUALITY =
+  'import { x } from "./x.js";\n' +
+  "// a < b in a comment\n" +
+  "export function f(a: number, b: number): boolean {\n" +
+  "  if (a !== b && a > 0) return true;\n" +
+  '  return a + b >= 10 || s === "a < b"; // b - a\n' +
+  "}\n";
+
+const SRC_RULES: [number, number, string][] = [
+  [4, 9, "=== → !=="],
+  [4, 15, "&& → ||"],
+  [4, 20, "> → >="],
+  [4, 32, "true → false"],
+  [5, 12, "+ → -"],
+  [5, 16, ">= → >"],
+  [5, 22, "|| → &&"],
+  [5, 27, "=== → !=="],
+];
+
+const T_SRC = "const truey = trueish && untrue;\nconst t = true;\nconst u = !false;\n";
+
+test("Plan Mutants example 1: the eight mutants of src/f.ts in line, column, rule order", () => {
+  const mutants = planMutants("src/f.ts", SRC, 50);
+  expect(mutants.length).toBe(8);
+  expect(mutants[0].path).toBe("src/f.ts");
+  expect(mutants.map((m) => [m.line, m.column, m.rule])).toStrictEqual(SRC_RULES);
+  expect(mutants[0].text).toBe(SRC_MUTATED_EQUALITY);
+});
+
+test("Plan Mutants example 2: the limit picks the mutants 0, 2 and 5, none at zero, all at nine", () => {
+  const three = planMutants("src/f.ts", SRC, 3);
+  expect(three.map((m) => [m.line, m.column, m.rule])).toStrictEqual([
+    [4, 9, "=== → !=="],
+    [4, 20, "> → >="],
+    [5, 16, ">= → >"],
+  ]);
+  const none = planMutants("src/f.ts", SRC, 0);
+  expect(none).toStrictEqual([]);
+  const nine = planMutants("src/f.ts", SRC, 9);
+  expect(nine.map((m) => [m.line, m.column, m.rule])).toStrictEqual(SRC_RULES);
+});
+
+test("Plan Mutants example 3: the quoted mask and the mutants of src/t.ts", () => {
+  const mask = quotedMask("say(\"a\\\"b\", 'c') + 1");
+  expect(mask.length).toBe(20);
+  expect(mask.map((b) => (b ? "1" : "0")).join("")).toBe("00001111110011100000");
+  const mutants = planMutants("src/t.ts", T_SRC, 10);
+  expect(mutants.map((m) => [m.line, m.column, m.rule])).toStrictEqual([
+    [1, 23, "&& → ||"],
+    [2, 11, "true → false"],
+    [3, 12, "false → true"],
+  ]);
+  expect(mutants[0].text).toBe(
+    "const truey = trueish || untrue;\nconst t = true;\nconst u = !false;\n",
+  );
+  expect(mutants[2].text).toBe(
+    "const truey = trueish && untrue;\nconst t = true;\nconst u = !true;\n",
+  );
+});
+```

@@ -1,0 +1,141 @@
+```ts
+import { expect, test } from "vitest";
+
+import {
+  checkGuardrails,
+  skipCount,
+  testTitles,
+} from "../../src/reviewer/checkGuardrails.js";
+
+const TS =
+  'import { test, it } from "vitest";\n' +
+  'test("A: one", () => {});\n' +
+  "it('B', () => {});\n" +
+  "test(`C ${1}`, () => {});\n" +
+  'foo.test("no");\n' +
+  'mytest("no2");\n' +
+  'test.skip("D", () => {});\n' +
+  'describe.only("E", () => {});\n' +
+  '  test( "F" , () => {});\n';
+
+const PY =
+  "import pytest\n" +
+  "\n" +
+  "def test_a():\n" +
+  "    pass\n" +
+  "\n" +
+  "    async def test_b(x):\n" +
+  "        pass\n" +
+  "def helper():\n" +
+  "    pass\n" +
+  "def testing_c():\n" +
+  "    pass\n" +
+  "@pytest.mark.skip\n" +
+  "def test_d(): pass\n" +
+  '@pytest.mark.skipif(True, reason="x")\n' +
+  '@unittest.skip("y")\n' +
+  "@pytest.mark.xfail\n";
+
+test("Check Guardrails example 1: titles and skips of one TypeScript and one Python text", () => {
+  expect(testTitles(TS, "typescript")).toStrictEqual([
+    "A: one",
+    "B",
+    "C ${1}",
+    "F",
+  ]);
+  expect(testTitles(PY, "python")).toStrictEqual([
+    "test_a",
+    "test_b",
+    "testing_c",
+    "test_d",
+  ]);
+  expect(skipCount(TS, "typescript")).toBe(2);
+  expect(skipCount(PY, "python")).toBe(4);
+  expect(testTitles(TS, "go")).toStrictEqual([]);
+  expect(skipCount(TS, "go")).toBe(0);
+});
+
+test("Check Guardrails example 2: kept tests and new skips across base and head", () => {
+  const base = [
+    {
+      path: "tests/a.test.ts",
+      text: 'test("A", () => {});\ntest("B", () => {});\ntest("B", () => {});\n',
+    },
+    { path: "tests/gone.test.ts", text: 'it("G", () => {});\n' },
+    { path: "README.md", text: 'test("R")\n' },
+    { path: "tests/test_x.py", text: "def test_one():\n    pass\n" },
+  ];
+  const head = [
+    {
+      path: "tests/a.test.ts",
+      text: 'test("A", () => {});\ntest("C", () => {});\n',
+    },
+    {
+      path: "tests/test_x.py",
+      text: "@pytest.mark.skip\ndef test_one():\n    pass\n",
+    },
+    {
+      path: "tests/new.test.ts",
+      text: 'it.only("N", () => {});\ntest.skip("M", () => {});\n',
+    },
+  ];
+  expect(checkGuardrails({ base, head })).toStrictEqual({
+    rows: [
+      { name: "Tests Kept", files: 3, findings: 2 },
+      { name: "No New Skips", files: 3, findings: 2 },
+    ],
+    findings: [
+      {
+        kind: "guardrail",
+        source: "guardrail Tests Kept",
+        path: "tests/a.test.ts",
+        expected: 'the test "B" kept',
+        got: "no test of that name at head",
+      },
+      {
+        kind: "guardrail",
+        source: "guardrail Tests Kept",
+        path: "tests/gone.test.ts",
+        expected: 'the test "G" kept',
+        got: "the test file is gone at head",
+      },
+      {
+        kind: "guardrail",
+        source: "guardrail No New Skips",
+        path: "tests/test_x.py",
+        expected: "at most 0 skipped or focused tests, as at base",
+        got: "1 at head",
+      },
+      {
+        kind: "guardrail",
+        source: "guardrail No New Skips",
+        path: "tests/new.test.ts",
+        expected: "at most 0 skipped or focused tests, as at base",
+        got: "2 at head",
+      },
+    ],
+  });
+});
+
+test("Check Guardrails example 3: empty inputs, then the same three files at base and head", () => {
+  expect(checkGuardrails({ base: [], head: [] })).toStrictEqual({
+    rows: [
+      { name: "Tests Kept", files: 0, findings: 0 },
+      { name: "No New Skips", files: 0, findings: 0 },
+    ],
+    findings: [],
+  });
+  const files = [
+    { path: "tests/s.test.ts", text: 'test.skip("s", () => {});\n' },
+    { path: "tests/test_s.py", text: "@pytest.mark.xfail\ndef test_s(): pass\n" },
+    { path: "tests/u.spec.ts", text: 'it.todo("u");\n' },
+  ];
+  expect(checkGuardrails({ base: files, head: files })).toStrictEqual({
+    rows: [
+      { name: "Tests Kept", files: 3, findings: 0 },
+      { name: "No New Skips", files: 3, findings: 0 },
+    ],
+    findings: [],
+  });
+});
+```

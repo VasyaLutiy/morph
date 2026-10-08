@@ -1,0 +1,163 @@
+```ts
+import { profileForPath } from "../language/paths.js";
+
+export interface TestText {
+  path: string;
+  text: string;
+}
+
+export interface GuardrailInput {
+  base: TestText[];
+  head: TestText[];
+}
+
+export interface GuardrailRow {
+  name: string;
+  files: number;
+  findings: number;
+}
+
+export interface Finding {
+  kind: string;
+  source: string;
+  path: string | null;
+  expected: string;
+  got: string;
+}
+
+export interface GuardrailResult {
+  rows: GuardrailRow[];
+  findings: Finding[];
+}
+
+export const GUARDRAILS = ["Tests Kept", "No New Skips"] as const;
+
+export function testTitles(text: string, profile: string): string[] {
+  if (profile === "typescript") {
+    const re = /(?<![\w$.])(?:test|it)\(\s*(["'`])(.*?)\1/g;
+    const titles: string[] = [];
+    let m = re.exec(text);
+    while (m !== null) {
+      const title = m[2];
+      if (title !== undefined) {
+        titles.push(title);
+      }
+      m = re.exec(text);
+    }
+    return titles;
+  }
+  if (profile === "python") {
+    const re = /^[ \t]*(?:async[ \t]+)?def[ \t]+(test\w*)[ \t]*\(/gm;
+    const titles: string[] = [];
+    let m = re.exec(text);
+    while (m !== null) {
+      const title = m[1];
+      if (title !== undefined) {
+        titles.push(title);
+      }
+      m = re.exec(text);
+    }
+    return titles;
+  }
+  return [];
+}
+
+export function skipCount(text: string, profile: string): number {
+  if (profile === "typescript") {
+    const re = /(?<![\w$.])(?:test|it|describe)\.(?:only|skip|todo)\(/g;
+    const matches = text.match(re);
+    return matches === null ? 0 : matches.length;
+  }
+  if (profile === "python") {
+    const re = /@(?:pytest\.mark\.(?:skipif|skip|xfail)|unittest\.skip)\b/g;
+    const matches = text.match(re);
+    return matches === null ? 0 : matches.length;
+  }
+  return 0;
+}
+
+export function checkGuardrails(input: GuardrailInput): GuardrailResult {
+  const findings: Finding[] = [];
+  let testsKeptFiles = 0;
+  let testsKeptFindings = 0;
+
+  for (const baseFile of input.base) {
+    const profile = profileForPath(baseFile.path)?.id ?? null;
+    if (profile === null) {
+      continue;
+    }
+    testsKeptFiles += 1;
+
+    const headFile = input.head.find((h) => h.path === baseFile.path);
+    const baseTitles = testTitles(baseFile.text, profile);
+    const distinctBaseTitles: string[] = [];
+    const seen = new Set<string>();
+    for (const title of baseTitles) {
+      if (!seen.has(title)) {
+        seen.add(title);
+        distinctBaseTitles.push(title);
+      }
+    }
+
+    if (headFile === undefined) {
+      for (const title of distinctBaseTitles) {
+        findings.push({
+          kind: "guardrail",
+          source: "guardrail Tests Kept",
+          path: baseFile.path,
+          expected: `the test "${title}" kept`,
+          got: "the test file is gone at head",
+        });
+        testsKeptFindings += 1;
+      }
+    } else {
+      const headTitles = new Set(testTitles(headFile.text, profile));
+      for (const title of distinctBaseTitles) {
+        if (!headTitles.has(title)) {
+          findings.push({
+            kind: "guardrail",
+            source: "guardrail Tests Kept",
+            path: baseFile.path,
+            expected: `the test "${title}" kept`,
+            got: "no test of that name at head",
+          });
+          testsKeptFindings += 1;
+        }
+      }
+    }
+  }
+
+  let noNewSkipsFiles = 0;
+  let noNewSkipsFindings = 0;
+
+  for (const headFile of input.head) {
+    const profile = profileForPath(headFile.path)?.id ?? null;
+    if (profile === null) {
+      continue;
+    }
+    noNewSkipsFiles += 1;
+
+    const baseFile = input.base.find((b) => b.path === headFile.path);
+    const was = baseFile === undefined ? 0 : skipCount(baseFile.text, profile);
+    const now = skipCount(headFile.text, profile);
+    if (now > was) {
+      findings.push({
+        kind: "guardrail",
+        source: "guardrail No New Skips",
+        path: headFile.path,
+        expected: `at most ${was} skipped or focused tests, as at base`,
+        got: `${now} at head`,
+      });
+      noNewSkipsFindings += 1;
+    }
+  }
+
+  return {
+    rows: [
+      { name: "Tests Kept", files: testsKeptFiles, findings: testsKeptFindings },
+      { name: "No New Skips", files: noNewSkipsFiles, findings: noNewSkipsFindings },
+    ],
+    findings,
+  };
+}
+```
