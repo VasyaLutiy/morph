@@ -1,0 +1,106 @@
+import { expect, test } from "vitest";
+import {
+  GO_ENV,
+  GO_ENV_VENDOR,
+  goCodeAcceptance,
+  goEnv,
+  goJudgeAcceptance,
+} from "../../src/builder/goAcceptance.js";
+import { DEFAULT_FROZEN } from "../../src/builder/readChecks.js";
+import { GO } from "../../src/language/profiles.js";
+import { fixture } from "../helpers.js";
+import type { CardContext, JudgeFile } from "../../src/builder/types.js";
+
+const VENDOR_ENV_LINE =
+  'export GOFLAGS=-mod=vendor GOPROXY=off GOSUMDB=off GOTOOLCHAIN=local GOWORK=off GOCACHE="${GOCACHE:-/tmp/morph/go-build}" GOPATH="${GOPATH:-/tmp/morph/go}"\n';
+
+const goCtx = (over: Partial<CardContext>): CardContext => ({
+  id: "percent-of",
+  phase: "m1",
+  targets: ["calc/percent_of.go"],
+  siblings: ["calc/clamp_value_examples_test.go"],
+  frozen: ["go.mod", "internal"],
+  fullExclude: [],
+  ownGit: false,
+  profile: GO,
+  guard: "// guard\n",
+  firstdiff: "// firstdiff\n",
+  ...over,
+});
+
+test("Go Acceptance example 6: GO_ENV_VENDOR swaps -mod=mod for -mod=vendor, goEnv picks it", () => {
+  expect(GO_ENV_VENDOR).toBe(VENDOR_ENV_LINE);
+  expect(goEnv(false)).toBe(GO_ENV);
+  expect(goEnv(true)).toBe(GO_ENV_VENDOR);
+});
+
+test("Go Acceptance example 7: the allowed names reach the code guard line, vendor the env", () => {
+  const code1 = goCodeAcceptance(
+    goCtx({ allowed: ["github.com/dustin/go-humanize"], vendor: true }),
+    "package calc\n",
+    null,
+    null,
+  );
+  expect(code1).toBe(
+    fixture("builder/go/code1.txt")
+      .replace(GO_ENV, GO_ENV_VENDOR)
+      .replace(
+        "node $P/guard.mjs src calc/percent_of.go\n",
+        "node $P/guard.mjs src calc/percent_of.go 'github.com/dustin/go-humanize'\n",
+      ),
+  );
+
+  const files: JudgeFile[] = [
+    {
+      file: "calc/percent_of_examples_test.go",
+      min: 5,
+      max: 11,
+      lits: ["TestPercentOfExample1", "0% (0 of 0)"],
+      drop: [],
+      new: true,
+    },
+  ];
+  const judge = goJudgeAcceptance(
+    goCtx({
+      id: "percent-of-judge",
+      targets: ["calc/percent_of_examples_test.go"],
+      siblings: ["report/format_share.go"],
+      allowed: ["golang.org/x/text"],
+      vendor: true,
+    }),
+    files,
+  );
+  expect(judge).toBe(
+    fixture("builder/go/judge1.txt").replace(GO_ENV, GO_ENV_VENDOR),
+  );
+
+  const code2 = goCodeAcceptance(
+    goCtx({
+      id: "a",
+      phase: "p2",
+      targets: ["report/a.go", "report/a_test.go"],
+      siblings: [],
+      frozen: DEFAULT_FROZEN,
+      fullExclude: ["calc/old_test.go"],
+      ownGit: true,
+      allowed: ["golang.org/x/mod"],
+    }),
+    "package report\n",
+    5,
+    "echo '== bin'; true\n",
+  );
+  expect(code2).toBe(
+    fixture("builder/go/code2.txt").replace(
+      "guard.mjs src report/a.go; node",
+      "guard.mjs src report/a.go 'golang.org/x/mod'; node",
+    ),
+  );
+
+  const plain = goCodeAcceptance(
+    goCtx({ allowed: [], vendor: false }),
+    "package calc\n",
+    null,
+    null,
+  );
+  expect(plain).toBe(fixture("builder/go/code1.txt"));
+});
