@@ -128,7 +128,8 @@ test("Parse Command example 8: --root as the last token, then no command", () =>
       error: {
         code: 4,
         kind: "UsageError",
-        message: "no command (commands: deck check, plan, run, submit, collect, primer, scout, review)",
+        message:
+          "no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept)",
       },
     },
   });
@@ -721,5 +722,168 @@ test("Parse Command example 19: the word review, its refs and flags", () => {
     error: {
       error: { code: 4, kind: "UsageError", message: "flag --test does not apply to plan" },
     },
+  });
+});
+
+test("Parse Command example 20: card and accept, their flags and checks", () => {
+  const bare = parseCommand(["card", "--deck", "d.json", "--id", "fix-a"]);
+  const bareCommand: Command = {
+    name: "card",
+    root: ".",
+    pretty: false,
+    deck: "d.json",
+    id: "fix-a",
+    md: false,
+  };
+  expect(bare).toStrictEqual({ ok: true, command: bareCommand });
+
+  const cardFlags = parseCommand([
+    "--pretty",
+    "card",
+    "--md",
+    "--root",
+    "/r",
+    "--deck",
+    "decks/p9/deck.json",
+    "--id",
+    "x_2",
+  ]);
+  const cardFlagsCommand: Command = {
+    name: "card",
+    root: "/r",
+    pretty: true,
+    deck: "decks/p9/deck.json",
+    id: "x_2",
+    md: true,
+  };
+  expect(cardFlags).toStrictEqual({ ok: true, command: cardFlagsCommand });
+
+  const acceptBare = parseCommand([
+    "accept",
+    "--deck",
+    "d.json",
+    "--id",
+    "fix-a",
+    "--model",
+    "claude-fable-5-1",
+  ]);
+  const acceptBareCommand: Command = {
+    name: "accept",
+    root: ".",
+    pretty: false,
+    deck: "d.json",
+    id: "fix-a",
+    model: "claude-fable-5-1",
+    commit: false,
+  };
+  expect(acceptBare).toStrictEqual({ ok: true, command: acceptBareCommand });
+
+  const acceptFlags = parseCommand([
+    "accept",
+    "--commit",
+    "--deck",
+    "d",
+    "--id",
+    "b.v",
+    "--model",
+    "acme/m:free",
+    "--root",
+    "/q",
+  ]);
+  const acceptFlagsCommand: Command = {
+    name: "accept",
+    root: "/q",
+    pretty: false,
+    deck: "d",
+    id: "b.v",
+    model: "acme/m:free",
+    commit: true,
+  };
+  expect(acceptFlags).toStrictEqual({ ok: true, command: acceptFlagsCommand });
+
+  const cardMissingDeck = parseCommand(["card", "--id", "a"]);
+  expect(cardMissingDeck).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "missing --deck" } },
+  });
+
+  const cardMissingId = parseCommand(["card", "--deck", "d"]);
+  expect(cardMissingId).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "missing --id" } },
+  });
+
+  const acceptMissingModel = parseCommand(["accept", "--deck", "d", "--id", "a"]);
+  expect(acceptMissingModel).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "missing --model" } },
+  });
+
+  const badId = parseCommand(["card", "--deck", "d", "--id", "a b"]);
+  expect(badId).toStrictEqual({
+    ok: false,
+    error: {
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "--id must match ^[A-Za-z0-9._-]+$ (got 'a b')",
+      },
+    },
+  });
+
+  const badModel = parseCommand(["accept", "--deck", "d", "--id", "a", "--model", "m x"]);
+  expect(badModel).toStrictEqual({
+    ok: false,
+    error: {
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "--model must match ^[A-Za-z0-9._/:-]+$ (got 'm x')",
+      },
+    },
+  });
+
+  const commitOnCard = parseCommand(["card", "--deck", "d", "--id", "a", "--commit"]);
+  expect(commitOnCard).toStrictEqual({
+    ok: false,
+    error: {
+      error: { code: 4, kind: "UsageError", message: "flag --commit does not apply to card" },
+    },
+  });
+
+  const mdOnAccept = parseCommand(["accept", "--deck", "d", "--id", "a", "--model", "m", "--md"]);
+  expect(mdOnAccept).toStrictEqual({
+    ok: false,
+    error: {
+      error: { code: 4, kind: "UsageError", message: "flag --md does not apply to accept" },
+    },
+  });
+
+  const idOnRun = parseCommand(["run", "--deck", "d", "--processor", "s", "--id", "a"]);
+  expect(idOnRun).toStrictEqual({
+    ok: false,
+    error: {
+      error: { code: 4, kind: "UsageError", message: "flag --id does not apply to run" },
+    },
+  });
+
+  const extraWord = parseCommand(["card", "x", "--deck", "d", "--id", "a"]);
+  expect(extraWord).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "unexpected argument: x" } },
+  });
+
+  const modelOnReview = parseCommand(["review", "a", "b", "--model", "m"]);
+  expect(modelOnReview).toStrictEqual({
+    ok: false,
+    error: {
+      error: { code: 4, kind: "UsageError", message: "flag --model does not apply to review" },
+    },
+  });
+
+  const acceptBareWord = parseCommand(["accept"]);
+  expect(acceptBareWord).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "missing --deck" } },
   });
 });
