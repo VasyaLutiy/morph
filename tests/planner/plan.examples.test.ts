@@ -94,6 +94,7 @@ test("Plan Spec example 1: the ledger fixture equals the old mrph's golden cut",
   for (const c of r.plan.cards) {
     expect(c.contextSlice.includes("ledger.yaml")).toBe(false);
   }
+  expect(r.uses).toStrictEqual({});
 });
 
 test("Plan Spec example 2: store alone, no judges, extras filtered by Component", () => {
@@ -231,7 +232,9 @@ test("Plan Spec example 5: this repository's own record gives the P9 deck", () =
   }
   for (const c of r.plan.cards) {
     const m = entries.get(c.customId);
-    if (m !== undefined) expect(c.acceptance).toStrictEqual(m.acceptance);
+    if (m !== undefined && m.acceptance !== null) {
+      expect(c.acceptance).toStrictEqual(m.acceptance);
+    }
   }
 });
 
@@ -255,4 +258,106 @@ test("planSpec lists the selected Components in the order given", () => {
   expect(r.ok).toBe(true);
   if (!r.ok) return;
   expect(r.plan.components).toStrictEqual(["store", "ledger"]);
+});
+
+test("Plan Spec example 6: dependency docs ride in the slices of the Components that use them", () => {
+  const rec = loadContour(fixture("planner/deps.yaml"), "deps.yaml");
+  if (!rec.ok) throw new Error(rec.error);
+  const m = loadMap(fixture("planner/deps.map.json"), "deps.map.json");
+  if (!m.ok) throw new Error(m.error);
+  const r = planSpec({
+    record: rec.record,
+    map: m.map,
+    spec: "deps.yaml",
+    components: ["conf", "diff", "plain"],
+    judge: true,
+    hasFile: (): boolean => true,
+  });
+  expect(r.ok).toBe(true);
+  if (!r.ok) return;
+  const sliceOf = (id: string): string[] | undefined =>
+    r.plan.cards.find((c) => c.customId === id)?.contextSlice;
+  expect(sliceOf("read-config")).toStrictEqual(["docs/TASK.md", "docs/deps/yaml.md"]);
+  expect(sliceOf("check-config")).toStrictEqual(["docs/X.md", "docs/deps/yaml.md"]);
+  expect(sliceOf("read-config-judge")).toStrictEqual([
+    "docs/TASK.md",
+    "src/conf/readConfig.ts",
+    "tests/helpers.ts",
+    "docs/deps/yaml.md",
+  ]);
+  expect(sliceOf("check-config-judge")).toStrictEqual([
+    "docs/TASK.md",
+    "src/conf/checkConfig.ts",
+    "tests/helpers.ts",
+    "docs/deps/yaml.md",
+  ]);
+  expect(sliceOf("diff-values")).toStrictEqual(["docs/TASK.md", "docs/deps/go-cmp.md"]);
+  expect(sliceOf("diff-values-judge")).toStrictEqual([
+    "docs/TASK.md",
+    "diff/diff_values.go",
+    "internal/testhelp/testhelp.go",
+    "docs/deps/go-cmp.md",
+  ]);
+  expect(sliceOf("pad-left")).toStrictEqual(["docs/TASK.md"]);
+  expect(sliceOf("pad-left-judge")).toStrictEqual([
+    "docs/TASK.md",
+    "src/plain/padLeft.ts",
+    "tests/helpers.ts",
+  ]);
+  expect(r.uses).toStrictEqual({
+    "read-config": ["yaml", "zod"],
+    "check-config": ["yaml", "zod"],
+    "diff-values": ["github.com/google/go-cmp"],
+  });
+  expect(r.plan.generations).toStrictEqual([
+    ["diff-values", "pad-left", "read-config"],
+    ["check-config", "diff-values-judge", "pad-left-judge", "read-config-judge"],
+    ["check-config-judge"],
+  ]);
+});
+
+test("Plan Spec example 7: a missing dependency doc is a plan fault", () => {
+  const rec = loadContour(fixture("planner/deps.yaml"), "deps.yaml");
+  if (!rec.ok) throw new Error(rec.error);
+  const m = loadMap(fixture("planner/deps.map.json"), "deps.map.json");
+  if (!m.ok) throw new Error(m.error);
+
+  const first = planSpec({
+    record: rec.record,
+    map: m.map,
+    spec: "deps.yaml",
+    components: ["conf", "diff"],
+    judge: false,
+    hasFile: (p: string): boolean => p !== "docs/deps/go-cmp.md",
+  });
+  expect(first).toStrictEqual({
+    ok: false,
+    error:
+      "dependency 'github.com/google/go-cmp' of Component 'diff': doc file not found: docs/deps/go-cmp.md",
+  });
+
+  const second = planSpec({
+    record: rec.record,
+    map: m.map,
+    spec: "deps.yaml",
+    components: ["conf"],
+    judge: false,
+    hasFile: (): boolean => false,
+  });
+  expect(second).toStrictEqual({
+    ok: false,
+    error: "dependency 'yaml' of Component 'conf': doc file not found: docs/deps/yaml.md",
+  });
+
+  const third = planSpec({
+    record: rec.record,
+    map: m.map,
+    spec: "deps.yaml",
+    components: ["plain"],
+    judge: true,
+    hasFile: (): boolean => false,
+  });
+  expect(third.ok).toBe(true);
+  if (!third.ok) return;
+  expect(third.uses).toStrictEqual({});
 });
