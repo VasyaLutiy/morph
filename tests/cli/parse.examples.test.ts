@@ -129,7 +129,7 @@ test("Parse Command example 8: --root as the last token, then no command", () =>
         code: 4,
         kind: "UsageError",
         message:
-          "no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept)",
+          "no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept, init)",
       },
     },
   });
@@ -885,5 +885,178 @@ test("Parse Command example 20: card and accept, their flags and checks", () => 
   expect(acceptBareWord).toStrictEqual({
     ok: false,
     error: { error: { code: 4, kind: "UsageError", message: "missing --deck" } },
+  });
+});
+
+test("Parse Command example 21: init, its flags and checks", () => {
+  const bare = parseCommand(["init", "--name", "acme", "--language", "go"]);
+  const bareCommand: Command = {
+    name: "init",
+    root: ".",
+    pretty: false,
+    project: "acme",
+    language: "go",
+    module: null,
+    templates: null,
+  };
+  expect(bare).toStrictEqual({ ok: true, command: bareCommand });
+
+  const flags = parseCommand([
+    "--pretty",
+    "init",
+    "--root",
+    "/w/p",
+    "--name",
+    "beta_svc",
+    "--language",
+    "python",
+    "--module",
+    "example.com/x-y/beta",
+    "--templates",
+    "../tpl",
+  ]);
+  const flagsCommand: Command = {
+    name: "init",
+    root: "/w/p",
+    pretty: true,
+    project: "beta_svc",
+    language: "python",
+    module: "example.com/x-y/beta",
+    templates: "../tpl",
+  };
+  expect(flags).toStrictEqual({ ok: true, command: flagsCommand });
+
+  const moduleFlag = parseCommand([
+    "init",
+    "--name",
+    "a",
+    "--language",
+    "typescript",
+    "--module",
+    "github.com/acme/x_1.v2",
+  ]);
+  const moduleCommand: Command = {
+    name: "init",
+    root: ".",
+    pretty: false,
+    project: "a",
+    language: "typescript",
+    module: "github.com/acme/x_1.v2",
+    templates: null,
+  };
+  expect(moduleFlag).toStrictEqual({ ok: true, command: moduleCommand });
+
+  const missingName = parseCommand(["init", "--language", "go"]);
+  expect(missingName).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "missing --name" } },
+  });
+
+  const badName = parseCommand(["init", "--name", "a b", "--language", "go"]);
+  expect(badName).toStrictEqual({
+    ok: false,
+    error: {
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "--name must match ^[A-Za-z0-9._-]+$ (got 'a b')",
+      },
+    },
+  });
+
+  const badNameBeforeLanguage = parseCommand(["init", "--name", "a b"]);
+  expect(badNameBeforeLanguage).toStrictEqual({
+    ok: false,
+    error: {
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "--name must match ^[A-Za-z0-9._-]+$ (got 'a b')",
+      },
+    },
+  });
+
+  const missingLanguage = parseCommand(["init", "--name", "a"]);
+  expect(missingLanguage).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "missing --language" } },
+  });
+
+  const badLanguage = parseCommand(["init", "--name", "a", "--language", "rust"]);
+  expect(badLanguage).toStrictEqual({
+    ok: false,
+    error: {
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "--language must be one of typescript, python, go (got 'rust')",
+      },
+    },
+  });
+
+  const badLanguageCase = parseCommand(["init", "--name", "a", "--language", "TypeScript"]);
+  expect(badLanguageCase).toStrictEqual({
+    ok: false,
+    error: {
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "--language must be one of typescript, python, go (got 'TypeScript')",
+      },
+    },
+  });
+
+  const badModule = parseCommand(["init", "--name", "a", "--language", "go", "--module", "a b"]);
+  expect(badModule).toStrictEqual({
+    ok: false,
+    error: {
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "--module must match ^[A-Za-z0-9._/-]+$ (got 'a b')",
+      },
+    },
+  });
+
+  const deckOnInit = parseCommand(["init", "--name", "a", "--language", "go", "--deck", "d"]);
+  expect(deckOnInit).toStrictEqual({
+    ok: false,
+    error: {
+      error: { code: 4, kind: "UsageError", message: "flag --deck does not apply to init" },
+    },
+  });
+
+  const nameOnRun = parseCommand(["run", "--deck", "d", "--processor", "s", "--name", "a"]);
+  expect(nameOnRun).toStrictEqual({
+    ok: false,
+    error: {
+      error: { code: 4, kind: "UsageError", message: "flag --name does not apply to run" },
+    },
+  });
+
+  const templatesOnCard = parseCommand(["card", "--deck", "d", "--id", "a", "--templates", "t"]);
+  expect(templatesOnCard).toStrictEqual({
+    ok: false,
+    error: {
+      error: { code: 4, kind: "UsageError", message: "flag --templates does not apply to card" },
+    },
+  });
+
+  const extraWord = parseCommand(["init", "x", "--name", "a", "--language", "go"]);
+  expect(extraWord).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "unexpected argument: x" } },
+  });
+
+  const nameTwice = parseCommand(["init", "--name", "a", "--name", "b", "--language", "go"]);
+  expect(nameTwice).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "flag --name given twice" } },
+  });
+
+  const languageNeedsValue = parseCommand(["init", "--name", "a", "--language"]);
+  expect(languageNeedsValue).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "flag --language needs a value" } },
   });
 });
