@@ -921,4 +921,4 @@ Run Document и архиве `.morph/runs/<id>/`; P12–P13 (contour, planner) �
   `review` — reviewer. Запись `cli` (22 КБ) и `planner` (26 КБ) не растут к пределу 30 КБ.
 - **Issues с метками читаются до записи Component:** `P10c-runner` (#3, список C), `P12-primer`
   (#1: тесты TypeScript считаются по профилю языка, `it(`/`test(`).
-- **Долг на колоде V2** до доработки `/morph-agent-run` решает оператор (AUTONOMY «Paying a debt on a V2 deck»).
+- **Долг на колоде V2** с P17 (08.10) платит сама сессия: `morph card --md` → `morph-fable-debt` → `morph accept --commit` (AUTONOMY «Paying a debt on a V2 deck»).

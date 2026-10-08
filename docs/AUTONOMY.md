@@ -8,19 +8,18 @@ and can change any line; the session reads it at the start of every phase.
 
 ## State at handoff (08.10, operator: close P17 and P18, then stop)
 
-**Next: P17 debt** (PLAN row P17, issue #8, label `P17-debt`; read the issue in full before the record). After its
-merge **P18 is queued**: rewrite this section to name P18 (issue #9, label `P18-template`), post 🔀 and `touch
-~/.morph-phase-done` — the watchdog starts a fresh session for P18. After P18's merge: its smoke (issue #9
-Acceptance), 🧪, then **stop for the operator** (`~/.morph-wait-operator`); nothing is queued after P18. Either phase
-may split (P17a/P17b, P18a/P18b) by the cut rules; a split queues its second half the same way. No external review
-passes (operator 08.10). P16 closed (issue #7). Running total $4.7599 of $30.
+**Next: P18 template** (PLAN row P18, issue #9, label `P18-template`; read the issue in full before the record). After
+its merge: its smoke (issue #9 Acceptance), 🧪, then **stop for the operator** (`~/.morph-wait-operator`); nothing is
+queued after P18. P18 may split (P18a/P18b) by the cut rules; a split queues its second half (rewrite this section,
+🔀, `touch ~/.morph-phase-done`). No external review passes (operator 08.10). P17 closed (issue #8: `morph card`,
+`morph accept --commit`, the V2 debt rule below). Running total $4.9631 of $30.
 **Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). No mrph cross-check
 at the gate (operator 08.10). Own pre-merge code read: yes. External review passes: no (operator 08.10). Every new
 MEASURE row fills the `прогоны` column.
 Known limits carried: No New Skips counts skip tokens inside string literals; one unreproduced vitest flake in P13b (logs
 kept since); the ds batch slug is slow (~73 min); a `--checks` deck mixing languages builds by its first Component's
 language; gofmt can redden otherwise correct Go (the retry sees the diff); the primer's Go call rule misses a signature split
-across lines or a `testing` import under another name (P16).
+across lines or a `testing` import under another name (P16); `morph accept` compares `git status --porcelain` paths without `-z`, so a quoted path (spaces, non-ASCII) reads as outside the targets (P17).
 Lessons for the next preparations: default code targets add a test file (give a smoke cap or code-only targets); new
 files need `"intent": "generate"` in the map; a new `src/` folder needs its layer in `decks/tools/guard.mjs`; size a judge
 from its expected answer (≥ 28 000 for a ~20 KB answer, before the ×3); vary every constant the code must not hard-code
@@ -182,8 +181,18 @@ phase gets `max_tokens` ≥ 20000.
   converts it with `decks/tools/v2deck.py`, writes a DECISIONS line and opens an issue labelled
   for the next phase that touches the failing Component. If the V2 runner itself fails (exit 3,
   a crash, a wrong archive), emergency stop with class `environment`.
-- **Paying a debt on a V2 deck**: `/morph-agent-run` does not read V2 decks yet; on an emergency
-  stop the session stops and the operator decides the debt.
+- **Paying a debt on a V2 deck** (P17, issue #8): on an emergency stop of a V2 deck the session pays the debt
+  itself, once, before stopping:
+  1. `node dist/cli.js card --root . --deck <deck> --id <card> --md` — the debt brief (`.markdown` of the JSON: the
+     targets, the instruction, the acceptance, the context slice as it is now, the last run's reason, log and answers);
+  2. the agent `morph-fable-debt` (Claude Fable 5.1, effort xhigh) gets that brief and writes ONLY the card's targets;
+  3. `node dist/cli.js accept --root . --deck <deck> --id <card> --model claude-fable-5-1 --commit` — the card's own
+     acceptance on the current tree; green commits only the targets with `Morph-Card`, `Morph-Model`,
+     `Morph-Acceptance-Exit: 0`, `Morph-Debt: true`; a change outside the targets or a red acceptance refuses;
+  4. green → `tools/tg.sh debt` 💸, a "debt (fable)" row in `docs/MEASURE.md`, the data lesson in DECISIONS, the issue
+     closed by the commit, and the loop goes on (record, merge, next phase); red → the emergency stop stands and the
+     operator decides.
+  Cap: one Fable debt per phase, ≤ 30 min. `/morph-agent-run` is no longer required for V2 decks.
 - **Smoke stops**: a live glm53 smoke of the V2 binary after P7 (done), after P10b2 (the
   switch complete: V2 cuts with its own acceptances, `build.py` archived) and after P11. After
   each smoke the session stops for the operator, red or green. A red smoke is an emergency stop.
