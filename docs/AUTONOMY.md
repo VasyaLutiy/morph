@@ -6,16 +6,14 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (08.10, operator: run P15L gocrud on a fresh session)
+## State at handoff (08.10, after P15L gocrud: 🧪 stop for the operator's e2e)
 
-**Next: P15L gocrud by `docs/TASK_P15L_gocrud.md`** (issue #6 §3, label `P15-golang`): a stdlib Go CRUD API skeleton
-(packages project, store, auth, api) in the scratch repository **`/tmp/gocrud`**, NOT in MorphV2: the scaffold, record,
-map, checks, probes and deck live there; MorphV2 gets only the MEASURE row, DECISIONS lines, TASK §11 and the tarball
-of §8. The cycle is AUTONOMY's as for a phase (fresh preparation agent, gate, ×3, run on ds, verify, record), with the
-**mutation cap** (≤ 30 mutants, ≤ 20 min; first capped gate). After the run and the records: `tools/tg.sh smoke` 🧪 and
-STOP — the operator side does the e2e check of TASK §3 (a throwaway main + curl). The session started fresh by the
-operator's order; record the fresh-orchestrator numbers as in P15. P15 and its smoke are merged (`main` fd8f03a+);
-issue #7 (primer counts Go probe files) is open and is not in P15L. Running total $4.6532 of $30.
+**P15L gocrud done, waiting for the operator side's e2e check** (TASK_P15L §3: a throwaway main wiring `NewRouter` to
+`OpenFile`, curl create → list → get → update → delete, one 401, one 422, one 409) on `/tmp/gocrud` branch
+`morph/20261008-083312` (+ primer commit 08eaf58): 14/14 from one run, no fix, $0.0852, 7.1 min; go vet/gofmt/go test
+green. After the e2e: tarball to `decks/p15l/gocrud.tgz` (no `.morph/runs/*/requests/`) and close issue #6 if the
+operator agrees. Gate waiver (operator 08.10): a Go deck's mrph cross-check is structural only. Issue #7 still open.
+Running total $4.7384 of $30. The session does not resume itself.
 **Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). Own pre-merge code read: yes. External review
 passes: no (operator 08.10). Every new MEASURE row fills the `прогоны` column.
 Known limits carried: No New Skips counts skip tokens inside string literals; one unreproduced vitest flake in P13b (logs

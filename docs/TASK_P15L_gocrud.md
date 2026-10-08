@@ -238,4 +238,18 @@ the baseline), main-session and agent tokens as in P15. §11 below.
 
 ## 11. Actual
 
-(filled after the run)
+- Preparation 08:14–08:29 UTC (15 min) by one fresh morph-orch-opus55 (199k tokens, 60 tool calls): record, map, checks,
+  7 probes, deck c1 cut by V2 (`plan` exit 0, `deck check` 0 errors), 14 cards in 5 generations (`Input`/`Project` in
+  `project/validate.go`, gen 0). Probes 42/42 red per example on stubs; chain max 16.1 s cold. Mutants **30 / 29 killed /
+  0.36 min** (cap ≤ 30, ≤ 20 min kept); the survivor (temp file outside the store's directory) in DECISIONS.
+- Gate: one condition failed, the mrph cross-check (`unknown language 'go'`; structure equal on the 7 code cards, no
+  judges, no acceptances) → stopped, 🛑 posted; operator waived it for Go decks (DECISIONS, AUTONOMY gate line).
+- Run `20261008-083312` on ds, 08:33–08:40 (7.1 min): **14/14 written from one run, no fix**, 12 at the first attempt,
+  validate-input-judge and build-project-judge won r1 (guard: the `Test<Function>Example<N>` literals missing); 16
+  requests, 47k in / 60k out, **$0.0852** (forecast ≈ $0.30–0.45; pre-registration ≤ $0.30). The expected first reds
+  of §9 (handler JSON bytes, temp-file rename, base64 header) did not happen.
+- Verify on `morph/20261008-083312` in /tmp/gocrud: tree clean; `go vet ./...` clean, `gofmt -l` empty (code),
+  `go test -count=1 ./...` green (api, auth, project, store). Own read of the code against §2.2: no defect; notes — the
+  store file inherits `os.CreateTemp`'s mode 0600 and has no fsync; an unknown `/v1/` path gets the mux's plain-text 404
+  (not pinned by §2.2). `primer --write` exit 0: 87 tests in 14 files (the 7 `_*_probe_test.go` counted, issue #7).
+- Left for the operator side: the e2e check of §3 (main + curl); then the tarball `decks/p15l/gocrud.tgz`.
