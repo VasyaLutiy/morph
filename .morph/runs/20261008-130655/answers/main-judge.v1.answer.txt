@@ -1,0 +1,71 @@
+```
+import { describe, expect, test } from "vitest";
+import { main } from "../../src/cli/main.js";
+import { fixturePath, tmpRoot } from "../helpers.js";
+
+describe("Main", () => {
+  test("Main example 16: init writes a project, refuses a non-empty target and resolves --templates against cwd", async () => {
+    const t = tmpRoot("morph-main-");
+    const tpl = fixturePath("scaffold/tpl");
+    const deps = {
+      env: { PATH: process.env.PATH ?? "" },
+      now: () => 0,
+      cwd: t.root,
+      transport: null,
+    };
+    const run = async (argv: string[]): Promise<{ code: number; doc: unknown; text: string; err: string[] }> => {
+      const out: string[] = [];
+      const err: string[] = [];
+      const code = await main(argv, deps, {
+        stdout: (text) => out.push(text),
+        stderr: (text) => err.push(text),
+      });
+      const text = out.join("");
+      return { code, doc: JSON.parse(text) as unknown, text, err };
+    };
+    try {
+      const goArgv = [
+        "init", "--root", "p", "--name", "acme", "--language", "go", "--module", "example.com/acme",
+        "--templates", tpl,
+      ];
+      const first = await run(goArgv);
+      expect(first.code).toBe(0);
+      expect(first.err).toStrictEqual(["morph init: exit 0\n"]);
+      expect(first.doc).toStrictEqual({
+        name: "acme",
+        language: "go",
+        module: "example.com/acme",
+        files: [".gitignore", "README.md", "docs/notes.md", "go.mod", "internal/keep.txt", "tools/hello.sh"],
+      });
+      expect(t.read("p/go.mod")).toBe("module example.com/acme\n\ngo 1.22\n");
+
+      const second = await run(goArgv);
+      expect(second.code).toBe(2);
+      expect(second.text).toBe(
+        "{\"error\":{\"code\":2,\"kind\":\"RefusalError\",\"message\":\"target directory is not empty (first entry: .gitignore)\"}}\n",
+      );
+      expect(second.err).toStrictEqual(["morph init: exit 2\n"]);
+
+      const third = await run(["init", "--name", "acme", "--language", "rust"]);
+      expect(third.code).toBe(4);
+      expect(third.err).toStrictEqual(["morph: --language must be one of typescript, python, go (got 'rust')\n"]);
+
+      t.write("t2/common/a.txt", "{{name}}\n");
+      t.write("t2/python/b.txt", "{{language}}\n");
+      const fourth = await run(["init", "--root", "q", "--name", "b", "--language", "python", "--templates", "t2"]);
+      expect(fourth.code).toBe(0);
+      expect(fourth.err).toStrictEqual(["morph init: exit 0\n"]);
+      expect(fourth.doc).toStrictEqual({
+        name: "b",
+        language: "python",
+        module: "b",
+        files: ["a.txt", "b.txt"],
+      });
+      expect(t.read("q/a.txt")).toBe("b\n");
+      expect(t.read("q/b.txt")).toBe("python\n");
+    } finally {
+      t.rm();
+    }
+  });
+});
+```

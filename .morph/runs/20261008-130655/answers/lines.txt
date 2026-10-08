@@ -1,0 +1,7 @@
+morph run: init-project.v1 accepted stage 7 frozen finish stop chars 3799
+morph run: init-project.v2 untried stage 0 finish stop chars 4270
+morph run: init-project-judge.v1 accepted stage 7 frozen finish stop chars 7165
+morph run: parse-command.v1 accepted stage 7 frozen finish stop chars 24657
+morph run: parse-command.v2 untried stage 0 finish stop chars 24720
+morph run: main-judge.v1 accepted stage 7 frozen finish stop chars 2744
+morph run: parse-command-judge.v1 accepted stage 8 frozen finish stop chars 28444

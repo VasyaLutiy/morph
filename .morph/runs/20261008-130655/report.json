@@ -1,0 +1,169 @@
+{
+  "runId": "20261008-130655",
+  "completedAt": 1791465254717,
+  "branch": "morph/20261008-130655",
+  "processor": "ds",
+  "generations": 3,
+  "outcomes": [
+    {
+      "customId": "init-project",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "init-project.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "b70b7efc194a5b8b98087d7b78df32c645733cbe",
+      "diffstat": {
+        "files": 1,
+        "insertions": 129,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "init-project-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "init-project-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/scaffold/initProject.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "ee4cdda7fffd40eaa2c6430f650e3a9c52dacffc",
+      "diffstat": {
+        "files": 1,
+        "insertions": 222,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "parse-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "1cfdf9821f6652eb6677bda468c2238e3df27ff8",
+      "diffstat": {
+        "files": 3,
+        "insertions": 82,
+        "deletions": 3
+      }
+    },
+    {
+      "customId": "main-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "main-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/main.p18.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "58804470a7e24a38be202886af48e5a32b2aa390",
+      "diffstat": {
+        "files": 1,
+        "insertions": 69,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "parse-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/parse.examples.test.ts\n== names tests/cli/parse.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "5fde716f07335b846a198bc8c0aa93e0fce716e9",
+      "diffstat": {
+        "files": 1,
+        "insertions": 174,
+        "deletions": 1
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 137390,
+    "outputTokens": 57151,
+    "cost": 0.10537452,
+    "requests": 7
+  },
+  "requests": [
+    {
+      "customId": "init-project.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791464815-bB9FoN583QfzpLHgzw3H",
+      "inputTokens": 14622,
+      "outputTokens": 7476,
+      "cost": 0.0133578,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "init-project.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791464815-tTh9BJPOsnu8teleZrsD",
+      "inputTokens": 14622,
+      "outputTokens": 7102,
+      "cost": 0.00903828,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "init-project-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791464920-ClWRez3mLEaqxaarN38C",
+      "inputTokens": 16133,
+      "outputTokens": 6120,
+      "cost": 0.01163094,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791464920-iHk4VtwCjgY9jDOpQEyZ",
+      "inputTokens": 23335,
+      "outputTokens": 7679,
+      "cost": 0.0162153,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791464920-gjr52Ctub2IatGdVcYS4",
+      "inputTokens": 23335,
+      "outputTokens": 9120,
+      "cost": 0.0179445,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "main-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791465081-zOAaGIcDjiNtILUGaqwA",
+      "inputTokens": 19252,
+      "outputTokens": 8136,
+      "cost": 0.0155388,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791465081-8tyPfR4kY9E9wvoeBrUb",
+      "inputTokens": 26091,
+      "outputTokens": 11518,
+      "cost": 0.0216489,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}
