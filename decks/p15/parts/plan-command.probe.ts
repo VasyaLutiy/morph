@@ -57,6 +57,15 @@ test("rows: one Component alone, a missing Go probe, the probe read by profile, 
     const share = (one.document as PlanDocument).cards.find((c) => c.customId === "format-share");
     expect(share?.acceptance?.includes("echo '== probe'; cat > report/format-share_probe_test.go <<'" + PROBE + "'\n" +
       fixture("go-mini/decks/m1/parts/_format-share_probe_test.go"))).toBe(true);
+    const record = r.read("contour.yaml");
+    r.write("contour.yaml", record.replace("One text line over calc, package report in report/; imports mini/calc, no I/O.\n      language: go\n",
+      "One text line over calc, package report in report/; imports mini/calc, no I/O.\n"));
+    r.write("decks/m1/c.json", JSON.stringify({ phase: "m1", cards: [{ id: "clamp-value" }] }) + "\n");
+    const first = planCommand(r.root, args({ judge: false, out: null, checks: "decks/m1/c.json" }));
+    if (first.code !== 0) throw new Error("the first Component's language (go) builds clamp-value: " + JSON.stringify(first.document).slice(0, 300));
+    const clamp = (first.document as PlanDocument).cards.find((c) => c.customId === "clamp-value");
+    expect(clamp?.acceptance?.includes("echo '== build'; go build -overlay $P/overlay.json ./calc\n")).toBe(true);
+    r.write("contour.yaml", record);
     fs.rmSync(path.join(r.root, "decks/m1/parts/_percent-of_probe_test.go"));
     r.write("decks/m1/parts/percent-of.probe.ts", "// a typescript probe is not the go card's\n");
     const gone = planCommand(r.root, args({ out: "decks/m1/x.json" }));

@@ -52,13 +52,13 @@ test("Build Acceptances example 6: a card with no target of the profile; probeFi
 });
 
 test("rows: a go smoke card, the typescript path untouched, the error order, a typescript card under go", () => {
-  const smoke = buildAcceptances({ cards: [card("w", ["web/w.go", "web/w_test.go"]), card("v", ["web/v.go"], ["w"])],
+  const smoke = buildAcceptances({ cards: [card("w", ["web/w.go", "web/w_test.go"]), card("v", ["web/v.go", "docs/v.md"], ["w"])],
     checks: { ...checks("q2", ["go.mod"], [code("w", 3), code("v")]), ownGit: true, fullExclude: ["web/old_test.go"] },
     profile: GO, texts: texts({ w: "package web\n", v: "package web\n// v\n" }) });
   if (!smoke.ok) throw new Error("expected ok: " + smoke.errors.join("; "));
   expect(smoke.cards[0].acceptance).toBe(goCodeAcceptance(ctx({ id: "w", phase: "q2", targets: ["web/w.go", "web/w_test.go"],
     frozen: ["go.mod"], fullExclude: ["web/old_test.go"], ownGit: true }), "package web\n", 3, null));
-  expect(smoke.cards[1].acceptance).toBe(goCodeAcceptance(ctx({ id: "v", phase: "q2", targets: ["web/v.go"], frozen: ["go.mod"],
+  expect(smoke.cards[1].acceptance).toBe(goCodeAcceptance(ctx({ id: "v", phase: "q2", targets: ["web/v.go", "docs/v.md"], frozen: ["go.mod"],
     fullExclude: ["web/old_test.go"], ownGit: true }), "package web\n// v\n", null, null));
   const ts = buildAcceptances({ cards: [card("a", ["src/x/a.ts"])], checks: checks("p1", DEFAULT_FROZEN, [code("a")]), profile: TYPESCRIPT,
     texts: texts({ a: "// probe\n" }) });

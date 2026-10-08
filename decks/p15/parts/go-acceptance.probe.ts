@@ -69,4 +69,7 @@ test("rows: the constants, the probe dir, the lint steps, an empty overlay, a ro
   expect(root.startsWith("D=/tmp/morph/m7-q4; ")).toBe(true);
   expect(root).not.toContain("== own");
   expect(root).not.toContain("== own git");
+  const nested = goCodeAcceptance(ctx({ id: "w", targets: ["web/w.go", "web/x/w_test.go"], siblings: [] }), "package web\n", 2, null);
+  expect(nested).toContain("; node $P/guard.mjs tests web/x/w_test.go 1 2\n");
+  expect(nested).toContain("echo '== own'; go test -count=1 -overlay $P/overlay.json ./web/x > $P/gt.log");
 });
