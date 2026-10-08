@@ -82,7 +82,7 @@ test("Plan Command example 11: a go card, -mod=vendor exactly when vendor/module
   }
 });
 
-test("row: a directory named vendor/modules.txt is not a vendored tree; the other card of a using Component; no checks no change", () => {
+test("row: a directory named vendor/modules.txt is not a vendored tree; the other card of a using Component; no checks no change; the record's order reaches the guard", () => {
   const r = depsRoot();
   try {
     r.write("vendor/modules.txt/x", "");
@@ -95,6 +95,12 @@ test("row: a directory named vendor/modules.txt is not a vendored tree; the othe
       allowed: ["yaml", "zod"] }), "// probe\n", 5, null));
     const bare = cardsOf(planCommand(r.root, { ...args({ components: ["conf"], out: null }), checks: undefined }));
     expect(bare.every((c) => !(c.acceptance ?? "").includes("guard.mjs"))).toBe(true);
+    const swapped = fixture("planner/deps.yaml").replace(
+      '    - {name: zod, version: "3.23.8", language: typescript}\n', "").replace(
+      "  dependencies:\n", '  dependencies:\n    - {name: zod, version: "3.23.8", language: typescript}\n');
+    r.write("contour.yaml", swapped);
+    const rz = accOf(cardsOf(planCommand(r.root, args({ components: ["conf"] }))), "check-config") ?? "";
+    expect(rz.includes("node $P/guard.mjs src src/conf/checkConfig.ts 'zod,yaml'; node")).toBe(true);
   } finally {
     r.rm();
   }
