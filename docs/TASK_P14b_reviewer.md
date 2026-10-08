@@ -418,7 +418,7 @@ the binary copy `/tmp/v2bin-smoke` (`dist/` + `node_modules` symlinked), the ds 
    `decks/s14/checks.json` = the P10b2 checks plus the two judges (`files` with `Clamp Value example 1`…`3` / `Clamp
    Percent example 1`…`3` as lits, min 3, max 9) and the two probes in `decks/s14/parts/`; commit, `git tag b0` → **B0**.
 2. **plan --checks.** `plan --root T --spec contour.yaml --map morph-map.json --component calc --judge --checks
-   decks/s14/checks.json --out decks/s14/deck.json` exit 0, 4 cards in 2 generations; `deck check --root T --deck
+   decks/s14/checks.json --out decks/s14/deck.json` exit 0, 4 cards in 3 generations (clamp-percent depends on clamp-value; corrected after the final smoke); `deck check --root T --deck
    decks/s14/deck.json` errors 0; `scale_tokens.py … 3`; commit the deck, `git tag b1` → **B1**.
 3. **run on ds.** `run --root T --deck decks/s14/deck.json --processor ds --deadline 1200`: exit 0, 4 / 4 written, the branch
    `morph/<runId>` checked out with 4 card commits (Morph-Card trailers) + the archive commit; ≤ $0.10.

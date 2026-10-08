@@ -6,15 +6,16 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (08.10, after P14a)
+## State at handoff (08.10, after the final smoke — the stretch is closed)
 
-P0–P13b merged (P13a+b: `morph scout` — protocol, cage, budgets, seed, round loop, `.morph/scout/<id>/scout.json` — and `plan --from-scout`); P14a merged (reviewer's five pure Functions: obligations, envelope, guardrails, mutant plan, findings); `main` = origin = VPS. Issues #1, #3, #4, #5 closed. **Processor `ds`** (maxTokens ×3; glm53 the
-fallback; batch route glm53b). No external review passes (operator 08.10); the session's own pre-merge code read stays.
-Every new MEASURE row fills the `прогоны` column. `morph primer` gives the story, the totals (debt rows out, running total
-vs archive total) and file ownership by trailers (208 Morph commits, 173 paths) — the seed of the scout. Running total
-$4.1597 of $30.
-Next: **P14b** (Run Mutants, Review Command `morph review`, cli routing; Component review-session) — the last part of **P14** reviewer → **final smoke stop**
-(plan --checks, run on ds, primer, scout, review on a tiny repo): 🧪, then stop; the operator resumes.
+**All phases through P14 are merged** (P0–P14b; `main` = origin = VPS) and the final smoke of the whole V2 is green
+(tiny repo: `plan --checks` → `deck check` → `run` on ds 4/4 → `primer --write` → `scout` ok → `plan --from-scout` →
+`review` with mutants; a seeded README commit gives exactly one envelope finding; $0.0106). Issues #1, #3, #4, #5 closed;
+#6 (P15 golang) is outside this stretch. **Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). No
+external review passes (operator 08.10). Every new MEASURE row fills the `прогоны` column. Running total $4.4537 of $30.
+**Stopped at the operator's final smoke stop; the operator resumes and decides what comes next** (no phase is queued).
+Known limits carried: No New Skips counts skip tokens inside string literals; one unreproduced vitest flake in P13b (logs
+kept since); the ds batch slug is slow (~73 min).
 Lessons for the next preparations: default code targets add a test file (give a smoke cap or code-only targets); new
 files need `"intent": "generate"` in the map; a new `src/` folder needs its layer in `decks/tools/guard.mjs`; size a judge
 from its expected answer (≥ 28 000 for a ~20 KB answer, before the ×3); vary every constant the code must not hard-code
