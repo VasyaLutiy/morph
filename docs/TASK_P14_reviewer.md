@@ -330,7 +330,7 @@ Judge cards: `probe/<card>/` → `tsc` → `eslint <target>` → `guard.mjs test
 |---|---|---|---|
 | `tests/reviewer/findObligations.examples.test.ts` | 4 | 10 | `Find Obligations example 1` … `4`, `reviewer/record.yaml`, `reviewer/map.json`, `no test title at head starts with it`, `tests/shop/priceText.examples.test.ts`, `test_sum_rows_example_2`, `add-tax-judge.r11`, `Parse Price example 2x` |
 | `tests/reviewer/checkEnvelope.examples.test.ts` | 4 | 10 | `Check Envelope example 1` … `4`, `src/sp ace.ts`, `b (—, run —)`, `no Morph card ever wrote it`, `changed, though the scout named it as context`, `unchanged in the range`, `20261008-225320-74e423b1` |
-| `tests/reviewer/checkGuardrails.examples.test.ts` | 3 | 9 | `Check Guardrails example 1` … `3`, `testing_c`, `the test file is gone at head`, `2 at head`, `tests/gone.test.ts`, `@pytest.mark.skipif` |
+| `tests/reviewer/checkGuardrails.examples.test.ts` | 3 | 9 | `Check Guardrails example 1` … `3`, `testing_c`, `the test file is gone at head`, `tests/new.test.ts`, `tests/gone.test.ts`, `@pytest.mark.skipif` |
 | `tests/reviewer/planMutants.examples.test.ts` | 3 | 9 | `Plan Mutants example 1` … `3`, `00001111110011100000`, `true → false`, `&& → ||`, `// a < b in a comment`, `trueish` |
 | `tests/reviewer/renderFindings.examples.test.ts` | 3 | 9 | `Render Findings example 1` … `3`, `reviewer/review.input.json`, `reviewer/review.md`, `4f2a9c1..morph/20261009-101500`, `Clean: no findings.`, `## Mutants (0 of 0 killed)` |
 

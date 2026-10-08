@@ -79,7 +79,7 @@
       "Check Guardrails example 3",
       "testing_c",
       "the test file is gone at head",
-      "2 at head",
+      "tests/new.test.ts",
       "tests/gone.test.ts",
       "@pytest.mark.skipif"
      ]
