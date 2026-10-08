@@ -1,5 +1,7 @@
 import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
+import { readMorphLog } from "../git/log.js";
+import { readOwnership } from "../git/ownership.js";
 import { gitOk } from "../git/run.js";
 import { hasExtension, normalizePath, profileForPath } from "../language/paths.js";
 import { PROFILES } from "../language/profiles.js";
@@ -32,6 +34,8 @@ export interface PrimerDocument {
   next: string | null;
   missing: string[];
   issues: "read" | "absent" | "unreadable";
+  ownership: { commits: number; paths: number };
+  running: string | null;
   chars: number;
   written: string | null;
   markdown: string;
@@ -98,11 +102,14 @@ export function primerCommand(root: string, write: boolean, deps: PrimerDeps): P
 
   const archives = readArchives(root);
   const runs = readRuns(archives);
-  const story = readStory(readStoryTexts(root), runs.runs);
+  const texts = readStoryTexts(root);
+  const story = readStory(texts, runs.runs);
+  const ownership = readOwnership(readMorphLog(root, deps.env));
+  const running = runningLine(texts.measure);
 
   const generatedAt = new Date(deps.now()).toISOString();
   const markdown = renderPrimer(
-    { name: basename(root), generatedAt, files: files.length, tests, runs, story },
+    { name: basename(root), generatedAt, files: files.length, tests, runs, story, ownership, running },
     PRIMER_CAP,
   );
 
@@ -126,11 +133,28 @@ export function primerCommand(root: string, write: boolean, deps: PrimerDeps): P
       next: story.next.phase,
       missing: story.missing,
       issues: story.issues.state,
+      ownership: { commits: ownership.commits, paths: ownership.paths.length },
+      running,
       chars: markdown.length,
       written,
       markdown,
     },
   };
+}
+
+export function runningLine(measure: string | null): string | null {
+  if (measure === null) return null;
+  for (const raw of measure.split("\n")) {
+    const trimmed = raw.trim();
+    if (!trimmed.startsWith("Running total")) continue;
+    const cut = trimmed.indexOf(" (");
+    let line = cut >= 0 ? trimmed.slice(0, cut) : trimmed;
+    if (line.length > 200) {
+      line = line.slice(0, 199) + "…";
+    }
+    return line;
+  }
+  return null;
 }
 
 function testCallPattern(id: string): RegExp | null {

@@ -42,6 +42,12 @@ export interface DigestStory {
   missing: string[];
 }
 
+export interface DigestOwnership {
+  commits: number;
+  models: { model: string; commits: number }[];
+  paths: { path: string; writes: { card: string; model: string; run: string | null }[] }[];
+}
+
 export interface PrimerDigest {
   name: string;
   generatedAt: string;
@@ -49,7 +55,12 @@ export interface PrimerDigest {
   tests: { language: string; files: number; tests: number };
   runs: { skipped: { dir: string; reason: string }[]; totals: DigestTotals };
   story: DigestStory;
+  ownership: DigestOwnership;
+  running: string | null;
 }
+
+export const OWNERSHIP_PATHS = 30;
+export const OWNERSHIP_WRITES = 3;
 
 export function renderPrimer(digest: PrimerDigest, cap: number): string {
   const md = buildPrimer(digest);
@@ -106,11 +117,17 @@ function buildPrimer(digest: PrimerDigest): string {
   lines.push("## Runs");
   lines.push("");
   lines.push(...runsLines(digest.runs.totals, digest.runs.skipped));
+  lines.push(...noteLines(digest));
   lines.push("");
 
   lines.push("## Chronology (docs/MEASURE.md)");
   lines.push("");
   lines.push(...chronologyLines(digest.story.chronology));
+  lines.push("");
+
+  lines.push("## File ownership (git, Morph-Card trailers)");
+  lines.push("");
+  lines.push(...ownershipLines(digest.ownership));
   lines.push("");
 
   lines.push("## What is next");
@@ -162,6 +179,32 @@ function runsLines(
   return lines;
 }
 
+function noteLines(digest: PrimerDigest): string[] {
+  const lines: string[] = [];
+  const debts = digest.story.chronology.filter((line) => /\bdebt\b/i.test(line.phase));
+  if (debts.length === 0) {
+    lines.push("- debt rows (docs/MEASURE.md): none");
+  } else {
+    lines.push(
+      "- debt rows (docs/MEASURE.md), not in these totals: " +
+        debts.map((d) => `${d.phase} $${d.cost === "" ? DASH : d.cost}`).join(", "),
+    );
+  }
+  if (digest.running === null) {
+    lines.push("- running total (docs/MEASURE.md): none");
+  } else {
+    let text = `- running total (docs/MEASURE.md): "${digest.running}" vs $${digest.runs.totals.cost.toFixed(4)} archived here`;
+    const match = /\$(\d+(?:\.\d+)?)/.exec(digest.running);
+    if (match !== null) {
+      text += `, difference ${(Number(match[1]) - digest.runs.totals.cost).toFixed(4)}`;
+    }
+    text +=
+      " — the two differ by runs made outside this repository (in MEASURE, no archive here) and archived runs MEASURE's total leaves out; debt rows are in neither";
+    lines.push(text);
+  }
+  return lines;
+}
+
 function chronologyLines(chronology: DigestLine[]): string[] {
   if (chronology.length === 0) {
     return ["- no rows"];
@@ -185,6 +228,39 @@ function chronologyLines(chronology: DigestLine[]): string[] {
       text += ` ← switch: ${line.switches.join("; ")}`;
     }
     lines.push(text);
+  }
+  return lines;
+}
+
+function ownershipLines(ownership: DigestOwnership): string[] {
+  if (ownership.commits === 0) {
+    return ["- git carries 0 Morph commits"];
+  }
+  const commitWord = ownership.commits === 1 ? "commit" : "commits";
+  const models = ownership.models
+    .map((m) => `${m.model === "" ? DASH : m.model} ${m.commits}`)
+    .join(", ");
+  const pathWord = ownership.paths.length === 1 ? "path" : "paths";
+  const lines: string[] = [
+    `- git carries ${ownership.commits} Morph ${commitWord}: ${models}`,
+    `- ${ownership.paths.length} ${pathWord} written by cards, most recent first; per path its cards, newest first:`,
+  ];
+  for (const entry of ownership.paths.slice(0, OWNERSHIP_PATHS)) {
+    const shown = entry.writes
+      .slice(0, OWNERSHIP_WRITES)
+      .map(
+        (w) =>
+          `${w.card} (${w.model === "" ? DASH : w.model}, run ${w.run === null ? DASH : w.run})`,
+      )
+      .join("; ");
+    let text = `- ${entry.path} ← ${shown}`;
+    if (entry.writes.length > OWNERSHIP_WRITES) {
+      text += `; … ${entry.writes.length - OWNERSHIP_WRITES} more`;
+    }
+    lines.push(text);
+  }
+  if (ownership.paths.length > OWNERSHIP_PATHS) {
+    lines.push(`- … ${ownership.paths.length - OWNERSHIP_PATHS} more paths`);
   }
   return lines;
 }
