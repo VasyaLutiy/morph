@@ -29,10 +29,17 @@ test("Resolve Profile example 3: empty component value falls through to the map"
   expect(got.ok ? got.profile.id : got.error).toBe("python");
 });
 
-test("Resolve Profile example 4: unknown component language 'go' is an error naming the known languages", () => {
-  expect(resolveProfile("go", "python")).toStrictEqual({
+test("Resolve Profile example 4: unknown component language 'rust' is an error naming the known languages", () => {
+  expect(resolveProfile("rust", "python")).toStrictEqual({
     ok: false,
-    error: "unknown language 'go' (known: typescript, python)",
+    error: "unknown language 'rust' (known: typescript, python, go)",
+  });
+});
+
+test("Resolve Profile example 5: component 'Go' gives the go profile (the fixture)", () => {
+  expect(resolveProfile("Go", null)).toStrictEqual({
+    ok: true,
+    profile: fixtureJson("language/go.json"),
   });
 });
 
@@ -63,7 +70,7 @@ test("resolveProfile: component value wins even when the map's value is unknown"
 test("resolveProfile: a whitespace-only component value is reported untrimmed", () => {
   expect(resolveProfile("  ", "typescript")).toStrictEqual({
     ok: false,
-    error: "unknown language '  ' (known: typescript, python)",
+    error: "unknown language '  ' (known: typescript, python, go)",
   });
 });
 
