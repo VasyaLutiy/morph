@@ -81,13 +81,14 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
 
   let cards: Card[] = plan.cards;
   if (args.checks !== undefined) {
-    const read = readPlanChecks(root, args.checks);
-    if (!read.ok) {
-      return read.result;
-    }
-    const profiled = resolveProfile(null, map.language);
+    const first = record.system.groups.find((g) => g.name === plan.components[0]);
+    const profiled = resolveProfile(first?.language ?? null, map.language);
     if (!profiled.ok) {
       return { code: 2, document: errorDocument(2, "DeckError", "the map: " + profiled.error) };
+    }
+    const read = readPlanChecks(root, args.checks, profiled.profile);
+    if (!read.ok) {
+      return read.result;
     }
     const built = buildAcceptances({
       cards: plan.cards,

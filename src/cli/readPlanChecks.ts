@@ -2,8 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { parseDocument } from "../contour/load.js";
 import { validateChecks } from "../builder/readChecks.js";
+import { probeFile } from "../builder/buildAcceptances.js";
+import { TYPESCRIPT } from "../language/profiles.js";
 import { errorDocument } from "./document.js";
 import type { BuildTexts, Checks } from "../builder/types.js";
+import type { LanguageProfile } from "../language/types.js";
 import type { CommandResult } from "./types.js";
 
 export const GUARD_PATH = "decks/tools/guard.mjs";
@@ -21,7 +24,11 @@ function isRegularFile(abs: string): boolean {
   }
 }
 
-export function readPlanChecks(root: string, checksPath: string): PlanChecksResult {
+export function readPlanChecks(
+  root: string,
+  checksPath: string,
+  profile: LanguageProfile = TYPESCRIPT,
+): PlanChecksResult {
   const abs = path.resolve(root, checksPath);
   if (!isRegularFile(abs)) {
     return {
@@ -74,7 +81,7 @@ export function readPlanChecks(root: string, checksPath: string): PlanChecksResu
   const probes: Record<string, string> = {};
   for (const card of validated.checks.cards) {
     if (card.files !== null) continue;
-    const probeAbs = path.resolve(root, validated.checks.parts, card.id + ".probe.ts");
+    const probeAbs = path.resolve(root, validated.checks.parts, probeFile(profile, card.id));
     if (isRegularFile(probeAbs)) {
       probes[card.id] = fs.readFileSync(probeAbs, "utf8");
     }
