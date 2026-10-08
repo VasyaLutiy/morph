@@ -6,14 +6,13 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (08.10, after P15L gocrud: 🧪 stop for the operator's e2e)
+## State at handoff (08.10, P15L gocrud closed; no next phase named)
 
-**P15L gocrud done, waiting for the operator side's e2e check** (TASK_P15L §3: a throwaway main wiring `NewRouter` to
-`OpenFile`, curl create → list → get → update → delete, one 401, one 422, one 409) on `/tmp/gocrud` branch
-`morph/20261008-083312` (+ primer commit 08eaf58): 14/14 from one run, no fix, $0.0852, 7.1 min; go vet/gofmt/go test
-green. After the e2e: tarball to `decks/p15l/gocrud.tgz` (no `.morph/runs/*/requests/`) and close issue #6 if the
-operator agrees. Gate waiver (operator 08.10): a Go deck's mrph cross-check is structural only. Issue #7 still open.
-Running total $4.7384 of $30. The session does not resume itself.
+**P15L gocrud closed**: run `20261008-083312` 14/14 from one run, no fix, $0.0852; the operator side's e2e green (TASK_P15L
+§11, 08:42 UTC); the history pushed as `main` of VasyaLutiy/MorphStudio instead of the tarball; issue #6 closed. Gate
+waiver (operator 08.10): a Go deck's mrph cross-check is structural only. **No next phase is named** in this file or in
+PLAN (P0–P15 and P15L done); issue #7 (primer counts Go probe files, label `P15-golang`) is open and unassigned to a
+phase. The session waits for the operator's next order. Running total $4.7384 of $30.
 **Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). Own pre-merge code read: yes. External review
 passes: no (operator 08.10). Every new MEASURE row fills the `прогоны` column.
 Known limits carried: No New Skips counts skip tokens inside string literals; one unreproduced vitest flake in P13b (logs
