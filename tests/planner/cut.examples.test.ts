@@ -149,10 +149,10 @@ test("Cut Component example 3: the empty map cuts every Function on its own", ()
 });
 
 test("Cut Component example 4: every way the cut refuses", () => {
-  const badLanguage = cutComponent(cutIn({ component: { ...LEDGER, language: "go" } }));
+  const badLanguage = cutComponent(cutIn({ component: { ...LEDGER, language: "rust" } }));
   expect(badLanguage).toStrictEqual({
     ok: false,
-    error: "Component 'ledger': unknown language 'go' (known: typescript, python)",
+    error: "Component 'ledger': unknown language 'rust' (known: typescript, python, go)",
   });
 
   const BAD = record("contour/badCalls.json");
