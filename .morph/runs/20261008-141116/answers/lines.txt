@@ -1,0 +1,13 @@
+morph run: dependency-finale.v1 accepted stage 7 frozen finish stop chars 1593
+morph run: dependency-finale.v2 untried stage 0 finish stop chars 1529
+morph run: validate-record.v1 accepted stage 7 frozen finish stop chars 19607
+morph run: validate-record.v2 untried stage 0 finish stop chars 19535
+morph run: cut-component.v1 accepted stage 7 frozen finish stop chars 8979
+morph run: cut-component.v2 untried stage 0 finish stop chars 9037
+morph run: dependency-finale-judge.v1 rejected stage 1 tsc finish stop chars 2526
+morph run: validate-record-judge.v1 accepted stage 8 frozen finish stop chars 7961
+morph run: dependency-finale-judge.r1.v1 accepted stage 7 frozen finish stop chars 2565
+morph run: cut-component-judge.v1 accepted stage 7 frozen finish stop chars 3854
+morph run: plan-spec.v1 accepted stage 7 frozen finish stop chars 8646
+morph run: plan-spec.v2 untried stage 0 finish stop chars 8613
+morph run: plan-spec-judge.v1 accepted stage 8 frozen finish stop chars 12106

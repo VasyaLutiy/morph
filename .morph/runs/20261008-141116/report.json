@@ -1,0 +1,282 @@
+{
+  "runId": "20261008-141116",
+  "completedAt": 1791469758765,
+  "branch": "morph/20261008-141116",
+  "processor": "ds",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "dependency-finale",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "dependency-finale.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "670ea8613c3cdc8b98706a2a790ce9e44f14be73",
+      "diffstat": {
+        "files": 1,
+        "insertions": 50,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "validate-record",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "validate-record.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "007df8600978f0c8a6b8754391b4716f76d05a2b",
+      "diffstat": {
+        "files": 2,
+        "insertions": 113,
+        "deletions": 6
+      }
+    },
+    {
+      "customId": "cut-component",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "cut-component.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "af90d8f6b1ae7aa196eb900d5e1760750fd2b4a9",
+      "diffstat": {
+        "files": 1,
+        "insertions": 19,
+        "deletions": 1
+      }
+    },
+    {
+      "customId": "dependency-finale-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "dependency-finale-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/language/dependencyFinale.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/language/dependencyFinale.examples.test.ts(5,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/language/dependencyFinale.examples.test.ts(6,3): error TS2304: Cannot find name 'expect'.\ntests/language/dependencyFinale.examples.test.ts(7,3): error TS2304: Cannot find name 'expect'.\ntests/language/dependencyFinale.examples.test.ts(8,3): error TS2304: Cannot find name 'expect'.\ntests/language/dependencyFinale.examples.test.ts(11,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/language/dependencyFinale.examples.test.ts(17,3): error TS2304: Cannot find name 'expect'.\ntests/language/dependencyFinale.examples.test.ts(23,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/language/dependencyFinale.examples.test.ts(29,3): error TS2304: Cannot find name 'expect'.\ntests/language/dependencyFinale.examples.test.ts(30,3): error TS2304: Cannot find name 'expect'.\ntests/language/dependencyFinale.examples.test.ts(35,3): error TS2304: Cannot find name 'expect'.\ntests/language/dependencyFinale.examples.test.ts(36,3): error TS2304: Cannot find name 'expect'.\ntests/language/dependencyFinale.examples.test.ts(43,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/language/dependencyFinale.examples.test.ts(44,3): error TS2304: Cannot find name 'expect'.\ntests/language/dependencyFinale.examples.test.ts(47,3): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": "6d8e345bca3d41fb4dfd1ca0b685fc0071f04e20",
+      "diffstat": {
+        "files": 1,
+        "insertions": 51,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "validate-record-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "validate-record-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/contour/record.examples.test.ts\n== names tests/contour/record.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "654f2f728a576669eb3725099d0673c57128f0cf",
+      "diffstat": {
+        "files": 1,
+        "insertions": 47,
+        "deletions": 1
+      }
+    },
+    {
+      "customId": "cut-component-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "cut-component-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/planner/cut.p19.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "e30d74bb116430ae39570ddb676d5dd468b46251",
+      "diffstat": {
+        "files": 1,
+        "insertions": 95,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-spec",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-spec.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "7a2cf83758e287c41b560e2b4a9d3d384f769937",
+      "diffstat": {
+        "files": 2,
+        "insertions": 36,
+        "deletions": 2
+      }
+    },
+    {
+      "customId": "plan-spec-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-spec-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/planner/plan.examples.test.ts\n== names tests/planner/plan.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "faea30f7e847442d1a4cca0425ac1ea4931ece46",
+      "diffstat": {
+        "files": 1,
+        "insertions": 106,
+        "deletions": 1
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 267753,
+    "outputTokens": 98673,
+    "cost": 0.09350883,
+    "requests": 13
+  },
+  "requests": [
+    {
+      "customId": "dependency-finale.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791468676-NIOwcoW3FBMJV7aV9KrL",
+      "inputTokens": 16700,
+      "outputTokens": 658,
+      "cost": 0.0028998,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "dependency-finale.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791468676-CxLXcOVlj8BpZJ50ESII",
+      "inputTokens": 16700,
+      "outputTokens": 713,
+      "cost": 0.0029328,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "validate-record.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791468676-A7OEUS299LHTjwIAWtMp",
+      "inputTokens": 20410,
+      "outputTokens": 17787,
+      "cost": 0.0137337,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "validate-record.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791468683-B0jbyHH5YgIdfqvhg4KM",
+      "inputTokens": 20410,
+      "outputTokens": 15021,
+      "cost": 0.00932658,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-component.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791469020-Ynun9dJSqBNslbjQ6uN1",
+      "inputTokens": 20090,
+      "outputTokens": 3870,
+      "cost": 0.0053355,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-component.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791469020-cy9cQXAjTBGCRz29C27e",
+      "inputTokens": 20090,
+      "outputTokens": 2939,
+      "cost": 0.00208122,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "dependency-finale-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791469020-oIBITRwYjBPGheznaH4r",
+      "inputTokens": 17615,
+      "outputTokens": 3567,
+      "cost": 0.00478245,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "validate-record-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791469047-sgvRHuU5DjWSYbFxXXff",
+      "inputTokens": 23010,
+      "outputTokens": 2964,
+      "cost": 0.0052299,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "dependency-finale-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791469201-sHjrLqDrDiigYmDgIuPO",
+      "inputTokens": 25804,
+      "outputTokens": 929,
+      "cost": 0.004428,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-component-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791469273-zv7FuwSUlPompP9189D9",
+      "inputTokens": 20367,
+      "outputTokens": 15534,
+      "cost": 0.01196073,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791469273-bDuSAL3E3g6AB54eMmNP",
+      "inputTokens": 21750,
+      "outputTokens": 14910,
+      "cost": 0.0122085,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791469273-B9dYZ9zHA4HehaJNNEu2",
+      "inputTokens": 21750,
+      "outputTokens": 5755,
+      "cost": 0.0067155,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791469582-SAfgm9xAMnfRAngFFqvr",
+      "inputTokens": 23057,
+      "outputTokens": 14026,
+      "cost": 0.01187415,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}
