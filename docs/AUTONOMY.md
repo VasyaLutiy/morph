@@ -6,14 +6,21 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (08.10, after the final smoke — the stretch is closed)
+## State at handoff (08.10, operator: start P15)
 
-**All phases through P14 are merged** (P0–P14b; `main` = origin = VPS) and the final smoke of the whole V2 is green
-(tiny repo: `plan --checks` → `deck check` → `run` on ds 4/4 → `primer --write` → `scout` ok → `plan --from-scout` →
-`review` with mutants; a seeded README commit gives exactly one envelope finding; $0.0106). Issues #1, #3, #4, #5 closed;
-#6 (P15 golang) is outside this stretch. **Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). No
-external review passes (operator 08.10). Every new MEASURE row fills the `прогоны` column. Running total $4.4537 of $30.
-**Stopped at the operator's final smoke stop; the operator resumes and decides what comes next** (no phase is queued).
+**Next: P15 golang** (PLAN row P15, issue #6, label `P15-golang`; read the issue in full before the record). The stretch
+through P14 is closed (all merged, final smoke green, $4.4537 of $30). The Go toolchain is installed on the VPS
+(`go1.22.2`, apt `golang-go`, same as the laptop); the acceptances must not reach the network (`GOPROXY=off`,
+`GOFLAGS=-mod=mod`, a local `go.sum`). Scope of P15: the profile, the builder's Go branch, the `go test` output in the
+locator and log trimming, Go tests in the primer, and the go-mini validation at the gate. **The small real Go project of
+issue #6 §3 is NOT in P15**: the operator will name that task later. Split into P15a/P15b if one deck exceeds the usual size.
+**This session started fresh (08.10 06:19 UTC) with no memory of P3–P14**: the operator measures a fresh orchestrator
+against the long one. In P15's MEASURE row, notes record: the preparation minutes, the number of preparation agents,
+and the main session's and the agents' tokens (cache read / output, from `~/.claude/projects/*MorphV2*/**/*.jsonl`).
+Compare with the P11c–P14 rows (one run, no fix in each). After P15 is merged: 🧪 smoke stop (go-mini end to end:
+`plan` with `language: go` → `deck check` → `run` on ds → `primer`), then STOP for the operator side.
+**Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). Own pre-merge code read: yes. External review
+passes: no (operator 08.10). Every new MEASURE row fills the `прогоны` column.
 Known limits carried: No New Skips counts skip tokens inside string literals; one unreproduced vitest flake in P13b (logs
 kept since); the ds batch slug is slow (~73 min).
 Lessons for the next preparations: default code targets add a test file (give a smoke cap or code-only targets); new
