@@ -6,27 +6,25 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (08.10, operator: start P15)
+## State at handoff (08.10, after the P15 smoke — stopped at the smoke stop)
 
-**Next: P15 golang** (PLAN row P15, issue #6, label `P15-golang`; read the issue in full before the record). The stretch
-through P14 is closed (all merged, final smoke green, $4.4537 of $30). The Go toolchain is installed on the VPS
-(`go1.22.2`, apt `golang-go`, same as the laptop); the acceptances must not reach the network (`GOPROXY=off`,
-`GOFLAGS=-mod=mod`, a local `go.sum`). Scope of P15: the profile, the builder's Go branch, the `go test` output in the
-locator and log trimming, Go tests in the primer, and the go-mini validation at the gate. **The small real Go project of
-issue #6 §3 is NOT in P15**: the operator will name that task later. Split into P15a/P15b if one deck exceeds the usual size.
-**This session started fresh (08.10 06:19 UTC) with no memory of P3–P14**: the operator measures a fresh orchestrator
-against the long one. In P15's MEASURE row, notes record: the preparation minutes, the number of preparation agents,
-and the main session's and the agents' tokens (cache read / output, from `~/.claude/projects/*MorphV2*/**/*.jsonl`).
-Compare with the P11c–P14 rows (one run, no fix in each). After P15 is merged: 🧪 smoke stop (go-mini end to end:
-`plan` with `language: go` → `deck check` → `run` on ds → `primer`), then STOP for the operator side.
-**Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). Own pre-merge code read: yes. External review
-passes: no (operator 08.10). Every new MEASURE row fills the `прогоны` column.
+**P15 golang is merged** (run 20261008-074231: 12/12 in one run, no fix, $0.1929, 18.5 min; vitest 746/746) and the P15
+smoke is green (go-mini end to end on ds: `plan --checks` with `language: go` 6 cards/4 generations → `deck check` 0 →
+`run` 6/6 first attempt, $0.0066, 51 s, `go vet`/`gofmt -l`/`go test ./...` green → `primer --write`). Running total
+$4.6532 of $30. One deviation: the primer counts Go tests in the `_*_probe_test.go` files under `decks/**/parts/` and
+`TestMain` — issue #7 (label `P15-golang`). Issue #6 stays open: its §3 small real Go project is the operator's next task.
+**Stopped at the P15 smoke stop; the operator side resumes the session — the session never resumes itself.** Processor
+`ds` (maxTokens ×3; glm53 the fallback; batch route glm53b). Own pre-merge code read: yes. External review passes: no
+(operator 08.10). Every new MEASURE row fills the `прогоны` column. The fresh-orchestrator measurement is in MEASURE's
+notes under the P15 rows.
 Known limits carried: No New Skips counts skip tokens inside string literals; one unreproduced vitest flake in P13b (logs
-kept since); the ds batch slug is slow (~73 min).
+kept since); the ds batch slug is slow (~73 min); a `--checks` deck mixing languages builds by its first Component's
+language; gofmt can redden otherwise correct Go (the retry sees the diff).
 Lessons for the next preparations: default code targets add a test file (give a smoke cap or code-only targets); new
 files need `"intent": "generate"` in the map; a new `src/` folder needs its layer in `decks/tools/guard.mjs`; size a judge
 from its expected answer (≥ 28 000 for a ~20 KB answer, before the ×3); vary every constant the code must not hard-code
-across the examples; every mutant run under a 120 s timeout; kill leftover watchers/workers of the scratch tree.
+across the examples; every mutant run under a 120 s timeout; kill leftover watchers/workers of the scratch tree; a Go repo
+installs `decks/tools/goguard.mjs` and `gofirstdiff.mjs` as its guard.mjs/firstdiff.mjs.
 
 ## Machine
 

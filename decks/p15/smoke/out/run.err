@@ -1,0 +1,7 @@
+morph run: clamp-value.v1 accepted stage 7 frozen finish stop chars 163
+morph run: clamp-value-judge.v1 accepted stage 6 frozen finish stop chars 577
+morph run: percent-of.v1 accepted stage 7 frozen finish stop chars 171
+morph run: format-share.v1 accepted stage 7 frozen finish stop chars 248
+morph run: percent-of-judge.v1 accepted stage 6 frozen finish stop chars 729
+morph run: format-share-judge.v1 accepted stage 6 frozen finish stop chars 570
+morph run: exit 0
