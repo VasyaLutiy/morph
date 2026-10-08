@@ -1,0 +1,7 @@
+{
+  "groups": { "price-text": ["Format Price", "Parse Price"] },
+  "cards": {
+    "round-price": { "targets": ["src/shop/round.ts"] },
+    "round-price-judge": { "targets": ["tests/shop/round.examples.test.ts"] }
+  }
+}

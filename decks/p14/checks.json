@@ -1,0 +1,132 @@
+{
+ "phase": "p14",
+ "ownGit": false,
+ "fullExclude": [],
+ "cards": [
+  {
+   "id": "find-obligations"
+  },
+  {
+   "id": "check-envelope"
+  },
+  {
+   "id": "check-guardrails"
+  },
+  {
+   "id": "plan-mutants"
+  },
+  {
+   "id": "render-findings"
+  },
+  {
+   "id": "find-obligations-judge",
+   "files": [
+    {
+     "file": "tests/reviewer/findObligations.examples.test.ts",
+     "min": 4,
+     "max": 10,
+     "new": true,
+     "lits": [
+      "Find Obligations example 1",
+      "Find Obligations example 2",
+      "Find Obligations example 3",
+      "Find Obligations example 4",
+      "reviewer/record.yaml",
+      "reviewer/map.json",
+      "no test title at head starts with it",
+      "tests/shop/priceText.examples.test.ts",
+      "test_sum_rows_example_2",
+      "add-tax-judge.r11",
+      "Parse Price example 2x"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "check-envelope-judge",
+   "files": [
+    {
+     "file": "tests/reviewer/checkEnvelope.examples.test.ts",
+     "min": 4,
+     "max": 10,
+     "new": true,
+     "lits": [
+      "Check Envelope example 1",
+      "Check Envelope example 2",
+      "Check Envelope example 3",
+      "Check Envelope example 4",
+      "src/sp ace.ts",
+      "b (—, run —)",
+      "no Morph card ever wrote it",
+      "changed, though the scout named it as context",
+      "unchanged in the range",
+      "20261008-225320-74e423b1"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "check-guardrails-judge",
+   "files": [
+    {
+     "file": "tests/reviewer/checkGuardrails.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": [
+      "Check Guardrails example 1",
+      "Check Guardrails example 2",
+      "Check Guardrails example 3",
+      "testing_c",
+      "the test file is gone at head",
+      "2 at head",
+      "tests/gone.test.ts",
+      "@pytest.mark.skipif"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "plan-mutants-judge",
+   "files": [
+    {
+     "file": "tests/reviewer/planMutants.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": [
+      "Plan Mutants example 1",
+      "Plan Mutants example 2",
+      "Plan Mutants example 3",
+      "00001111110011100000",
+      "true → false",
+      "&& → ||",
+      "// a < b in a comment",
+      "trueish"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "render-findings-judge",
+   "files": [
+    {
+     "file": "tests/reviewer/renderFindings.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": [
+      "Render Findings example 1",
+      "Render Findings example 2",
+      "Render Findings example 3",
+      "reviewer/review.input.json",
+      "reviewer/review.md",
+      "4f2a9c1..morph/20261009-101500",
+      "Clean: no findings.",
+      "## Mutants (0 of 0 killed)"
+     ]
+    }
+   ]
+  }
+ ]
+}

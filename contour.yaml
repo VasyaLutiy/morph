@@ -3195,11 +3195,153 @@ System:
           description: The document of plan --from-scout.
           schema: "{ scoutId, scout, ref: string | null, cards: Card[], dropped: string[], out: string | null }"
 
-    # ---------------------------------------------------------------- later epics (skeleton)
+    # ---------------------------------------------------------------- P14a
     - name: reviewer
       description: >
-        `morph review <base> <head>`: obligations from the record, scope table from a scout report, ownership and envelope from the primer, mutation of new tests, a findings document with EXPECTED/GOT and a source tag.
+        `morph review <base> <head>` checks a diff against the record, git's ownership (the primer's table), a scout report
+        and the new tests; deterministic, no model call. P14a (src/reviewer/*.ts): the pure pieces — the obligations of the
+        Functions the range touches (their examples named by tests at head), the envelope (files no Morph card of the range
+        wrote) and the scope (a scout session's targets), the guardrails Tests Kept and No New Skips, the mutants of a code
+        file, and the findings document (EXPECTED/GOT, a source tag, numbers, markdown). No file, no clock, no environment,
+        no child process, no Node module in P14a; the git reads, the scout.json read, the mutant runs and `morph review` are
+        P14b.
       language: typescript
+      requirements: [Deterministic Core]
+      functions:
+        - name: Find Obligations
+          description: The Functions of the record a range touches, each with the examples its tests at head must name.
+          behavior: >
+            findObligations({record, map, changed: paths changed in the range, cards: the Morph-Card values of the range's
+            commits, titles: the test titles at head}) → {obligations, findings}. Components in record order, Functions in
+            Component order; profile = language Resolve Profile(component.language, map.language), a failure skips the
+            Component. unitName = the name of the first map group (map order) naming the Function, else the Function's
+            name; unit = slugName(unitName); cut = language cutTargets(profile, component.name, unitName). codePaths = the
+            targets of the map card whose id is unit when they are not null, else [cut code, cut test]; judgePaths = those of
+            the map card unit + "-judge", else [cut judge]. touchedBy: first "card <id>" for each card (in the given order)
+            whose id without a final ".r<digits>" (cardUnit) is unit or unit + "-judge", then "file <path>" for each changed
+            path (given order) in codePaths or judgePaths; each once. Not touched → no obligation. exampleTitle(profile, name,
+            n) = "<name> example <n>" (typescript; any profile but python) or "test_<snake name>_example_<n>" (python);
+            hasTitle(titles, wanted, profile): a title equal to wanted or starting with wanted + ":" (python: "_"). Each
+            example n (1-based) without a title → missing n and the finding {kind "obligation", source "record: <Component> ·
+            <Function> · example <n>", path judgePaths[0] or null, expected 'a test named "<wanted>"', got "no test title at
+            head starts with it"}. Obligation = {component, function, unit, touchedBy, examples (the count), judge
+            (judgePaths[0] or null), missing}; findings in obligation order.
+          steps: [{uses: language}, {reads: Contour Record}, {reads: Contour Map}, {produces: Obligation}]
+          examples:
+            - {given: 'tests/fixtures/reviewer/record.yaml and map.json (Load Spec); changed ["src/shop/addTax.ts", "README.md"], cards [], titles ["Add Tax example 1: the tax", "Add Tax example 3: negative", "Add Tax example 10: other"]', ref: "tests/fixtures/reviewer/record.yaml (Components shop typescript, Ledger Tools python, legacy cobol), tests/fixtures/reviewer/map.json (group price-text, round-price targets)", when: findObligations, then: 'one obligation {shop, "Add Tax", "add-tax", ["file src/shop/addTax.ts"], 3, "tests/shop/addTax.examples.test.ts", [2]}; one finding {obligation, "record: shop · Add Tax · example 2", "tests/shop/addTax.examples.test.ts", "a test named \"Add Tax example 2\"", "no test title at head starts with it"}'}
+            - {given: 'changed ["tests/shop/round.examples.test.ts"], cards ["round-price.r2", "price-text-judge", "round-price-judge"], titles ["Round Price example 1: half up", "Round Price example 2", "Format Price example 1: dollars", "Parse Price example 1: dollars", "Parse Price example 2x"]', when: findObligations, then: 'Round Price {unit "round-price", touchedBy ["card round-price", "card round-price-judge", "file tests/shop/round.examples.test.ts"], judge "tests/shop/round.examples.test.ts", missing []}; Format Price and Parse Price {unit "price-text", ["card price-text-judge"], judge "tests/shop/priceText.examples.test.ts"}, missing [] and [2]; one finding, Parse Price example 2'}
+            - {given: 'changed ["ledger_tools/sum_rows.py"], titles ["test_sum_rows_example_1", "test_sum_rows_example_2_empty", "Sum Rows example 1: no"]; then titles ["test_sum_rows_example_12"]', when: findObligations, then: '{"Ledger Tools", "Sum Rows", "sum-rows", ["file ledger_tools/sum_rows.py"], 2, "tests/test_sum_rows_examples.py", []}, no finding; then missing [1, 2] and two findings expecting "test_sum_rows_example_1" and "…_2"'}
+            - {given: 'cards ["old-total", "add-tax-judge.r11"], changed ["legacy/oldTotal.ts", "tests/shop/addTax.test.ts"]; then changed [] and cards []; exampleTitle, hasTitle, cardUnit called alone', when: findObligations, then: 'legacy (cobol) skipped; Add Tax touched by ["card add-tax-judge", "file tests/shop/addTax.test.ts"]; then {[], []}; "Add Tax example 1", "test_add_tax_example_3"; hasTitle(["Add Tax example 1"], "Add Tax example 1") true, (["Add Tax example 12"], …) false; cardUnit("a.r3") "a", ("a.rx") "a.rx"'}
+        - name: Check Envelope
+          description: The range's changed files against the cards that wrote them (the envelope) and a scout session's targets (the scope).
+          behavior: >
+            readDiff(nameStatus, numstat) reads `git diff --name-status -z --no-renames` and `git diff --numstat -z
+            --no-renames` of one range: nameStatus split on "\0" into (letter, path) pairs, an empty letter ends; A → "added",
+            D → "deleted", any other → "modified"; numstat records "<added>\t<deleted>\t<path>" ("-" → null, a binary file);
+            → [{path, status, added, deleted}] in nameStatus order, null counts for a path numstat lacks. MORPH_DIR =
+            ".morph/". checkEnvelope({changed, commits: the range's Morph commits {card, model, run, paths} newest first,
+            ownership: git's Read Ownership of the whole history, scout: {scoutId, targets, contextSlice} | null}) →
+            {applies: commits not empty, rows, findings}. Row per changed file, in order: {path, status, added, deleted,
+            writers: the cards (as given) of the commits whose paths hold it, distinct, commit order; owner: ownership's
+            newest write of the path "<card> (<model or — when "">, run <run or —>)" or null; scope: null without a scout or
+            under MORPH_DIR, else "target" | "context" | "outside" by the scout's lists}. A path under MORPH_DIR gives no
+            finding. Per row: applies and no writer → {kind "envelope", source "primer: ownership", path, expected "written
+            by a Morph card of the range", got "changed outside every card's targets; " + ("last Morph write <owner>" or "no
+            Morph card ever wrote it")}; then, with a scout, scope not "target" → {kind "scope", source "scout <scoutId>",
+            path, expected "a target of the scout session (<targets ", "-joined>)", got "changed, though the scout named it as
+            context" | "changed, though the scout did not name it"}. Last, each scout target no changed path equals →
+            {scope, same source, the target, expected "changed: the scout named it as a target", got "unchanged in the
+            range"}.
+          steps: [{uses: git}, {reads: Ownership}, {reads: Scout Record}, {produces: Envelope Row}]
+          examples:
+            - {given: 'nameStatus "M\0a.ts\0M\0bin.dat\0D\0old.ts\0A\0src/sp ace.ts\0", numstat "2\t1\ta.ts\0-\t-\tbin.dat\0" + "0\t1\told.ts\0" + "1\t0\tsrc/sp ace.ts\0" (a real git 2.x pair); then "T\0link\0A\0new.ts\0" with "12\t0\tnew.ts\0"; then "", ""', when: readDiff, then: '[{a.ts, modified, 2, 1}, {bin.dat, modified, null, null}, {old.ts, deleted, 0, 1}, {"src/sp ace.ts", added, 1, 0}]; [{link, modified, null, null}, {new.ts, added, 12, 0}]; []'}
+            - {given: 'history (newest first) a-judge (m/x, run r2: tests/a.examples.test.ts), a.r1 (m/x, r2: src/a.ts), b (model "", run null: src/b.ts, src/a.ts); ownership = Read Ownership(history); commits = its first two; changed src/a.ts M +3 -1, src/b.ts M +1 -1, README.md A +2 -0, .morph/runs/r2/report.json A +40 -0, tests/a.examples.test.ts A +30 -0; scout null', when: checkEnvelope, then: 'applies true; writers ["a.r1"], [], [], [], ["a-judge"]; owners "a.r1 (m/x, run r2)", "b (—, run —)", null, null, "a-judge (m/x, run r2)"; scope null; findings envelope src/b.ts "changed outside every card''s targets; last Morph write b (—, run —)", README.md "…; no Morph card ever wrote it"'}
+            - {given: 'the same with commits []', when: checkEnvelope, then: 'applies false; every writers []; the same owners; no finding'}
+            - {given: 'the first four changed files, commits as in 2, scout {scoutId "20261008-225320-74e423b1", targets ["src/a.ts", "src/c.ts"], contextSlice ["src/b.ts"]}', when: checkEnvelope, then: 'scopes target, context, outside, null; findings in order: envelope src/b.ts, scope src/b.ts "changed, though the scout named it as context", envelope README.md, scope README.md "changed, though the scout did not name it", scope src/c.ts "unchanged in the range", each scope expected "a target of the scout session (src/a.ts, src/c.ts)" but the last "changed: the scout named it as a target"'}
+        - name: Check Guardrails
+          description: The reviewer's two guardrails on the test files of a range — no test title lost, no new skipped or focused test.
+          behavior: >
+            The profile of a file is language profileForPath(path)'s id; a file without one is skipped. testTitles(text,
+            profile): typescript (and nothing for other ids but python) — every match of /(?<![\w$.])(?:test|it)\(\s*(["'`])(.*?)\1/g,
+            group 2 (a test.skip or it.only call is no title); python — every /^[ \t]*(?:async[ \t]+)?def[ \t]+(test\w*)[ \t]*\(/gm,
+            group 1; in text order. skipCount(text, profile): typescript /(?<![\w$.])(?:test|it|describe)\.(?:only|skip|todo)\(/g,
+            python /@(?:pytest\.mark\.(?:skipif|skip|xfail)|unittest\.skip)\b/g, else 0. GUARDRAILS = ["Tests Kept", "No New
+            Skips"]. checkGuardrails({base: test files at base, head: test files at head, each {path, text}}) → {rows,
+            findings}. Tests Kept: each base file (base order) with a profile; its distinct titles in order; a title the head
+            file of the same path lacks (or no head file) → {kind "guardrail", source "guardrail Tests Kept", path, expected
+            'the test "<title>" kept', got "no test of that name at head" | "the test file is gone at head"}. No New Skips: each
+            head file with a profile; was = skipCount of the base file of that path (0 without one), now = of the head file;
+            now > was → {guardrail, "guardrail No New Skips", path, expected "at most <was> skipped or focused tests, as at
+            base", got "<now> at head"}. rows = [{name "Tests Kept", files: base files with a profile, findings}, {name "No
+            New Skips", files: head files with a profile, findings}]; findings Tests Kept's first.
+          steps: [{uses: language}, {produces: Guardrail Row}]
+          examples:
+            - {given: 'a TypeScript text with test("A: one"), it(''B''), test(`C ${1}`), foo.test("no"), mytest("no2"), test.skip("D"), describe.only("E"), "  test( \"F\" , …"; a Python text with def test_a, an indented async def test_b, def helper, def testing_c, @pytest.mark.skip, def test_d, @pytest.mark.skipif(…), @unittest.skip(…), @pytest.mark.xfail', ref: "docs/TASK_P14_reviewer.md §2.1 (the two texts, verbatim)", when: 'testTitles and skipCount; then with profile "go"', then: '["A: one", "B", "C ${1}", "F"]; ["test_a", "test_b", "testing_c", "test_d"]; 2 and 4; 0 and []'}
+            - {given: 'base tests/a.test.ts (A, B, B), tests/gone.test.ts (G), README.md, tests/test_x.py (def test_one); head tests/a.test.ts (A, C), tests/test_x.py (@pytest.mark.skip over def test_one), tests/new.test.ts (it.only N, test.skip M)', when: checkGuardrails, then: 'rows [{Tests Kept, 3, 2}, {No New Skips, 3, 2}]; findings: tests/a.test.ts ''the test "B" kept'' "no test of that name at head"; tests/gone.test.ts "the test file is gone at head"; tests/test_x.py "at most 0 skipped or focused tests, as at base" "1 at head"; tests/new.test.ts "… 0 …" "2 at head"'}
+            - {given: 'base and head []; then base and head the same three files with one skip each', when: checkGuardrails, then: 'rows [{Tests Kept, 0, 0}, {No New Skips, 0, 0}], no finding; then files 3 and 3, no finding'}
+        - name: Plan Mutants
+          description: Single-point mutants of one code file, spread over it when they exceed the limit.
+          behavior: >
+            MUTATION_RULES, in this order (from → to; the operators with their spaces): "===" → "!==", "!==" → "===", " <= "
+            → " < ", " >= " → " > ", " < " → " <= ", " > " → " >= ", " + " → " - ", " - " → " + ", "&&" → "||", "||" → "&&",
+            "true" → "false" and "false" → "true" (these two as whole words: no [A-Za-z0-9_$] on either side). quotedMask(line)
+            → one boolean per char, true inside a "…", '…' or `…` string (the quotes included, a backslash escapes the next
+            char). planMutants(path, text, limit) → Mutant[]: lines = text split on "\n"; a line whose start matches
+            /^\s*(?:\/\/|\/\*|\*|#|import\b|export\s+(?:type\s+)?\{)/ is skipped; on the others the code ends at the first
+            "//" outside a string. Every occurrence of every rule wholly before that end and starting outside a string is a
+            mutant, sorted by the occurrence's index, then rule order; mutant {path, line (1-based), column (1-based, of the
+            operator's first non-space char), rule "<from trimmed> → <to trimmed>", text: the whole text with that one
+            occurrence replaced}. Lines in order. limit ≤ 0 → []; total ≤ limit → all; else the mutants at indices floor(i ×
+            total / limit) for i = 0 … limit − 1.
+          steps: [{produces: Mutant}]
+          examples:
+            - {given: 'src/f.ts = an import line, a comment "// a < b in a comment", "export function f(a: number, b: number): boolean {", "  if (a === b && a > 0) return true;", ''  return a + b >= 10 || s === "a < b"; // b - a'', "}" and a final newline; limit 50', ref: "docs/TASK_P14_reviewer.md §2.1 (the text verbatim)", when: planMutants, then: '8 mutants [line, column, rule]: [4, 9, "=== → !=="], [4, 15, "&& → ||"], [4, 20, "> → >="], [4, 32, "true → false"], [5, 12, "+ → -"], [5, 16, ">= → >"], [5, 22, "|| → &&"], [5, 27, "=== → !=="]; the first text has "a !== b" and is otherwise the source'}
+            - {given: 'the same with limit 3, 0 and 9', when: planMutants, then: 'the mutants 0, 2, 5: [4, 9], [4, 20], [5, 16]; []; all 8'}
+            - {given: 'quotedMask of say("a\"b", ''c'') + 1 (20 chars); src/t.ts "const truey = trueish && untrue;\nconst t = true;\nconst u = !false;\n", limit 10', when: 'quotedMask; planMutants', then: '"00001111110011100000"; [1, 23, "&& → ||"], [2, 11, "true → false"], [3, 12, "false → true"]'}
+        - name: Render Findings
+          description: The review document — numbered findings with EXPECTED/GOT and a source tag, the counts, the verdict and a markdown page.
+          behavior: >
+            KIND_ORDER = ["obligation", "envelope", "scope", "guardrail", "mutation"]. orderFindings(findings): stable sort by
+            the kind's index (a kind not in KIND_ORDER after them all), then numbered {id "F<n>" from 1, kind, source, path,
+            expected, got}. renderFindings({base, head, changed: {path, status, added, deleted, writers, scope}[],
+            obligations: {component, function, touchedBy, examples, missing}[], guardrails: {name, files, findings}[], mutants:
+            {path, line, rule, killed}[] | null, findings}) → {range "<base>..<head>", verdict "clean" when no finding else
+            "findings", counts {files, obligations, examples (sum), missing (sum of lengths), mutants (count or null), killed
+            (count or null), findings, byKind: the five kinds at 0 then the counts, an unknown kind added after them},
+            findings (ordered), markdown}. markdown = these lines "\n"-joined: "# Review <range>", "", "Clean: no findings." or
+            "<n> findings: <kind> <count>, … (byKind order)."; "", "## Changed files (<n>)", "", "| file | status | lines |
+            written by | scope |", "|---|---|---|---|---|", a row per file "| <path> | <status> | +<added> -<deleted> (binary
+            when either is null) | <writers ", "> or — | <scope or —> |"; "", "## Obligations (<n> Functions, <e> examples,
+            <m> missing)", "", and when any: "| Function | touched by | examples | missing |", "|---|---|---|---|", "|
+            <component> · <function> | <touchedBy ", "> | <examples> | <missing ", "> or — |", ""; "## Guardrails", "", "|
+            guardrail | files | findings |", "|---|---|---|", a row each, ""; with mutants: "## Mutants (<killed> of <n>
+            killed)", "", and when any "| at | rule | result |", "|---|---|---|", "| <path>:<line> | <rule> | killed or survived
+            |", ""; "## Findings", "", ("None.", "" when none); per finding "### <id> · <kind> · <source>", "", "- path:
+            <path or —>", "- EXPECTED: <expected>", "- GOT: <got>", "". Every "|" inside a table cell is written "\|".
+          steps: [{reads: Finding}, {produces: Review}]
+          examples:
+            - {given: 'base "v1", head "HEAD", every list empty, mutants null', when: renderFindings, then: 'range "v1..HEAD", clean, counts {0, 0, 0, 0, null, null, 0, byKind all five 0}, findings [], markdown "# Review v1..HEAD\n\nClean: no findings.\n\n## Changed files (0)\n\n| file | status | lines | written by | scope |\n|---|---|---|---|---|\n\n## Obligations (0 Functions, 0 examples, 0 missing)\n\n## Guardrails\n\n| guardrail | files | findings |\n|---|---|---|\n\n## Findings\n\nNone.\n"'}
+            - {given: 'tests/fixtures/reviewer/review.input.json', ref: "tests/fixtures/reviewer/review.input.json (one RenderInput: 2 files, one a|b path, 1 obligation, 2 guardrails, 2 mutants, 5 findings in the order mutation, scope, obligation, guardrail, envelope), tests/fixtures/reviewer/review.md (its markdown)", when: renderFindings, then: 'range "4f2a9c1..morph/20261009-101500", findings, counts {2, 1, 3, 1, 2, 1, 5, byKind 1 each}, ids F1…F5 for obligation, envelope, scope, guardrail, mutation; markdown = review.md exactly'}
+            - {given: 'findings [{kind "other", …}, {kind "mutation", …}]; then renderFindings with base "a", head "b", mutants [] and the one "other" finding', when: 'orderFindings; renderFindings', then: 'F1 the mutation, F2 the other; byKind the five at 0 then other 1, mutants 0, killed 0, "1 findings: obligation 0, envelope 0, scope 0, guardrail 0, mutation 0, other 1.", "## Mutants (0 of 0 killed)" followed by "## Findings", "### F1 · other · s" with "- path: —"'}
+      dataObjects:
+        - name: Obligation
+          description: One touched Function and what its tests at head miss.
+          schema: "{ component, function, unit, touchedBy: string[], examples: number, judge: string | null, missing: number[] }"
+        - name: Envelope Row
+          description: One changed file of the range with its writers, last owner and scope.
+          schema: "{ path, status: 'added' | 'modified' | 'deleted', added: number | null, deleted: number | null, writers: string[], owner: string | null, scope: 'target' | 'context' | 'outside' | null }"
+        - name: Guardrail Row
+          description: One guardrail's files checked and findings.
+          schema: "{ name, files: number, findings: number }"
+        - name: Mutant
+          description: One single-point mutant of a code file.
+          schema: "{ path, line, column, rule, text }"
+        - name: Finding
+          description: One finding of the review.
+          schema: "{ kind: 'obligation' | 'envelope' | 'scope' | 'guardrail' | 'mutation', source, path: string | null, expected, got }"
+        - name: Review
+          description: What Render Findings returns.
+          schema: "{ range, verdict: 'clean' | 'findings', counts: { files, obligations, examples, missing, mutants: number | null, killed: number | null, findings, byKind }, findings: (Finding & { id })[], markdown }"
 
 Actor:
   - name: Operator
@@ -3244,6 +3386,9 @@ Requirement:
       Run Scout reads the tree through the ScoutFs parameter; Scout Command and Plan From Scout are the scout layer's two
       node:fs files (git through gitOk and runGit, node:crypto for the sha256 in Scout Command), the environment a
       parameter (P13b).
+      reviewer's checks (Find Obligations, Check Envelope, Check Guardrails, Plan Mutants, Render Findings) are pure
+      functions of the record, git's outputs and the texts they are given: no file, no clock, no environment, no child
+      process, no Node module (P14a).
   - name: Node Only
     description: >
       Runtime dependencies: Node 20 built-ins and the package `yaml` (the record reader), nothing
