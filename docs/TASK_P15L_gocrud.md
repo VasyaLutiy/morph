@@ -222,7 +222,8 @@ GOFLAGS=-mod=mod GOPROXY=off go vet ./... && test -z "$(gofmt -l .)" && GOFLAGS=
 ```
 
 `<v2>` is a copy of MorphV2's `dist/` as in `decks/p15/smoke/recipe.sh`. The scratch repo is kept until the operator
-side's e2e check; then a tarball of it goes to `decks/p15l/gocrud.tgz` in MorphV2 (no `.morph/runs/*/requests/`).
+side's e2e check; then its history (every card a commit with the Morph trailers) is pushed as `main` of
+https://github.com/VasyaLutiy/MorphStudio (operator 08.10), with a README on top.
 
 ## 9. Pre-registration
 
@@ -253,3 +254,16 @@ the baseline), main-session and agent tokens as in P15. §11 below.
   store file inherits `os.CreateTemp`'s mode 0600 and has no fsync; an unknown `/v1/` path gets the mux's plain-text 404
   (not pinned by §2.2). `primer --write` exit 0: 87 tests in 14 files (the 7 `_*_probe_test.go` counted, issue #7).
 - Left for the operator side: the e2e check of §3 (main + curl); then the tarball `decks/p15l/gocrud.tgz`.
+
+### E2E (operator side, 08.10 08:42 UTC, VPS)
+
+A scratch copy `/tmp/gocrud-e2e` got a throwaway `cmd/e2e/main.go` (21 lines, not committed). It wires
+`store.OpenFile` + `api.NewRouter` with the user `alice` (`HashPassword("secret","s1")`) on 127.0.0.1:18080, and curl
+ran the whole contract, every answer as §2.2 pins it:
+healthz 200 · no auth 401 · wrong password 401 · empty list 200 `{"items":[]}` · create 201 + `Location: /v1/projects/p1`,
+name trimmed, status `draft` · 422 `{"name":"required","slug":"invalid","status":"invalid"}` · duplicate slug 409 ·
+text/plain 415 · unknown key 400 `bad_json` · get 200 · update 200 (own slug allowed, createdAt kept, updatedAt moved) ·
+list 200 · the data file holds the updated project · delete 204 · get after delete 404 · PATCH 405.
+**Green.** 618 lines of code in 7 files and 1 107 lines of judge tests (42 tests), none by hand. Pushed to
+https://github.com/VasyaLutiy/MorphStudio `main` (history from the bundle of `morph/20261008-083312` + README 06041ae).
+Issue #6 is complete.
