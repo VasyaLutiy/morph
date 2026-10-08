@@ -440,3 +440,68 @@ preparation agents and the tokens (cache read / output) of the session and the a
 run; DECISIONS lines "P15 golang".
 
 ## 11. Actual
+
+### Gate (preparation)
+
+08.10, on the VPS, by the preparing orchestrator (Opus 5.5, a fresh session with no memory of P3–P14, no sub-agents); no
+paid run, no call to any model. Data commits 35386fc (spec, record, map, fixtures, go-mini, decks/tools/{goguard,
+gofirstdiff}.mjs, checks, probes, filter, deck, DECISIONS), 6f315b9 (plan-command-judge's literal by the §2.1 skeleton),
+8f59b1e (3 probe rows closing the first mutation pass's survivors; deck re-cut) and the gate commit (this section).
+Component sizes: cli 29 861 → 28 934 (compacted first), primer 29 880 → 29 161 (compacted first), language 15 622,
+builder 25 821, builder-go new 8 588, planner 29 509. Issues labelled P15-golang: #6 only. No split: 12 cards ≤ 12.
+
+The deck **cut by V2**: `plan --component language --component builder-go --component builder --component cli
+--component primer --component planner --judge --checks decks/p15/checks.json` exit 0, 50 cards, `decks/p15/filter.py`
+keeps 12; generations `[go-acceptance, profiles] [build-acceptances, go-acceptance-judge, primer-command, profiles-judge,
+cut-component-judge, plan-spec-judge] [build-acceptances-judge, plan-command, primer-command-judge] [plan-command-judge]`;
+`deck check` **0 errors, 0 warnings**, no hazards; max slice + targets 60 258 bytes (build-acceptances-judge). Cross-check:
+the old `mrph plan --spec` on the same six Components (dry, exit 0) gives the same 50 ids in the same order and the same 4
+generations; targets, slices, dependsOn, intent, max_tokens and reasoning (2 500) equal on all 50, variants equal (mrph
+omits 1); instructions differ on all 50 (the P10a design), acceptances on 24 (the 12 phase cards from checks.json among
+them).
+
+Scratch worktree from 8f59b1e (references of the 7 code files and 7 probe-shaped judge files, deleted afterwards), cards
+run in deck order with the deck's own acceptances, each accepted card committed before the next: **12 of 12 chains green,
+58.0–67.2 s each (728.5 s in all; limit 250 s per chain)**; the first pass from 6f315b9 also 12 of 12 (59.0–63.4 s, 726.4 s).
+Ripple: 5 of 736 in 4 files (excluded deck-wide). Baseline of the data commit: vitest 736 / 736 in 110 files. The final
+tree: `tsc`, `eslint src tests`, guard clean, `vitest run` **749 / 749** in 113 files in 3 of 3 full runs (736 + 13 of the
+reference judges); logs kept: /tmp/p15-prep-vt-{0,1,2,3}.log. Typed one-line throwing stubs (`Error: stub <fn> <args JSON,
+cut at 160>`; types and constants as specified; GO a wrong copy, PROFILES without it): every code card red at the probe —
+profiles 4/4, go-acceptance 4/4, build-acceptances 4/4, plan-command 2/2, primer-command 2/2 (**16/16**), each FAIL with
+its stub line or an expected/received pair. Judges before their card: the new files red at the guard ("… missing", 3 of 3),
+the patched files at their old text red at the guard (count 14 vs 15..17, 6 vs 8..10, the new literals missing; 4 of 4).
+Mutation check: **113 mutations** of the references (V2's own Plan Mutants rules on the new file and the changed lines,
+plus 47 hand mutants of the shell text: GOPROXY, -count=1, the overlay of the full step, `-run '^TestProbe'`, the probe
+removal, the gofmt `|| true`, the names grep, the probe file's "_", the profile order, testDirs, the go rule's anchor, …),
+each under a 120 s subprocess timeout against its probe: first pass 109 killed, 4 survivors, 3 closed by the probe rows of
+8f59b1e; second pass **112 killed, 0 by timeout (max 1.6 s), 1 not killed by the probe**: `"the map: " + error` → `-` on
+the unreachable branch of planCommand (rejected by the chain's `tsc`).
+
+**The go-mini validation of issue #6 §3** (the reference binary on a copy of `tests/fixtures/go-mini` with
+`decks/tools/goguard.mjs` and `gofirstdiff.mjs` as its tools, go1.22.2, GOPROXY=off; no paid call): `plan --component calc
+--component report --judge --checks decks/m1/checks.json` exit 0, **6 cards in 4 generations** `[clamp-value]
+[clamp-value-judge, percent-of] [format-share, percent-of-judge] [format-share-judge]`, `deck check` 0 errors; the Go
+reference green in deck order, **6 of 6 chains, 0.5–0.7 s each (3.5 s)**, tree clean after; Go stubs (a sentinel return)
+red at the probe per example: clamp-value 5/5, percent-of 6/6, format-share 4/4 FAIL functions, each with got/want and a
+`first difference` line; judges with the file absent red at the guard (3/3); reference judges on stubbed code red at own
+per example (4, 5, 3); deliberately broken percent-of attempts red at their stage — **build** (a syntax error, `== build`),
+**vet** (a self-assignment, the held vet verdict after the probe), **test** (rounding down: `--- FAIL:
+TestProbePercentOfExample2`, `got: 66`/`want: 67`), plus gofmt (verdict, with the diff), guard (`imports time in a pure
+package`) and a printf misuse (go test's own vet at the probe); **29 Go mutants, 26 killed, 3 equivalent** (`>`/`>=`,
+`<`/`<=` at ClampValue's bounds, where both branches return the same value), one survivor of the first pass
+(`whole <= 0` → `<= 1`) closed by the probe row PercentOf(1, 1) = 100. Cold build cache 14.7 s, warm 0.3 s.
+
+**Forecast** on `ds` with every maxTokens × 3: 12 cards of 48–60 KB in, 17 first requests (5 code × 2 variants + 7
+judges), answers 3–9 KB; P14b ran 7 cards for $0.2834 (11 requests), P13b 9 for $0.4122: ≈ 17–25 requests ≈
+**$0.35–0.60**, ≤ $0.80 with a re-cut; ≤ $1. **Gate holds.**
+
+**Run command** (from the repo root, the binary copied first; the session applies maxTokens × 3 first, as the operator
+ordered):
+
+```
+python3 decks/tools/scale_tokens.py decks/p15/deck.json 3
+npm run build && rm -rf /tmp/v2bin-p15 && mkdir -p /tmp/v2bin-p15 && cp -r dist /tmp/v2bin-p15/ && ln -s $PWD/node_modules /tmp/v2bin-p15/node_modules
+node /tmp/v2bin-p15/dist/cli.js run --root . --deck decks/p15/deck.json --processor ds --deadline 2400 > /tmp/p15-run.json
+```
+
+After the merge: the P15 smoke of §8 (go-mini end to end), then stop.
