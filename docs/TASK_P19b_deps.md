@@ -311,7 +311,7 @@ rm -rf /tmp/v2bin-p19b && mkdir -p /tmp/v2bin-p19b && cp -r dist /tmp/v2bin-p19b
 node /tmp/v2bin-p19b/dist/cli.js run --root . --deck decks/p19b/deck.json --processor ds --deadline 2400
 ```
 
-After the merge, the smokes (`decks/p19b/smoke/README.md`): `npm run build`, a fresh binary copy
+After the merge, the smokes (the header of `decks/p19b/smoke/run.sh`): `npm run build`, a fresh binary copy
 `/tmp/v2bin-p19b-smoke` (dist + node_modules + templates linked), then `BIN=/tmp/v2bin-p19b-smoke OUT=/tmp/p19b-smoke
 decks/p19b/smoke/run.sh go typescript` (dry: init, P0 with the network once, plan --checks, deck check, the planted
 imports, the TypeScript stub run) and `S1_RUN=1 … run.sh go` (the live Go run on ds, cap $0.02, then the offline
@@ -341,4 +341,65 @@ merge (go-mini and P15 against main's binary a4e53ef); the two smokes' numbers (
 
 ### Gate (preparation)
 
-(filled below by the preparing orchestrator)
+08.10, on the VPS, by the preparing orchestrator (Opus 5.5, fresh context, no sub-agents); no paid run, no model call.
+Data commits 68db41f (spec, record, map, examples, checks, probes, filter, deck, digest, guards), b5139ad (a probe row
+typed), 8646a82 (templates/common regulation, smoke recipes), f8738b4 (a probe row on the record's order) and the gate
+commit (this section, DECISIONS). Component sizes: builder 25 820 → **29 240**, builder-go 8 587 → **10 315**, cli 28 035 →
+**28 554**, contour 23 606 → **23 625**. Issues: #10 only (`P19-deps`). No split (8 cards ≤ 12).
+
+The deck **cut by V2** (main's binary, a4e53ef): `plan --component builder --component builder-go --component cli --judge
+--checks decks/p19b/checks.json` **exit 0**, 26 cards, `decks/p19b/filter.py` keeps 8; `scale_tokens.py … 3` (maxTokens:
+compose 36 000, go-acceptance 48 000, build-acceptances 42 000, plan-command 36 000, compose-judge 48 000,
+go-acceptance-judge 48 000, build-acceptances-judge 48 000, plan-command-judge 60 000); `deck check` **0 errors, 0
+warnings**, no hazards; generations `[compose] [compose-judge, go-acceptance] [build-acceptances, go-acceptance-judge]
+[build-acceptances-judge, plan-command] [plan-command-judge]`. Slices (deck check, slice + existing targets, this spec at
+its final size): 45.8–60.1 KB, the largest build-acceptances-judge **60 067 B**. No mrph cross-check (operator 08.10).
+
+Scratch worktree from 68db41f + the later data commits (removed afterwards; no watcher or worker left), the deck's own
+acceptances run as Morph runs them (`/bin/sh -c`, 300 s cap), cards in generation order, each accepted reference
+committed before the next:
+- **Stubs, red per example at the probe (15/15):** typed throwing stubs (`Error: stub codeAcceptance ["a",null,null,…]`,
+  `stub allowArg [[]]`, `stub judgeAcceptance ["a-judge",["zod"],true,1]`, `stub goCodeAcceptance ["percent-of",
+  ["github.com/dustin/go-humanize"],true,…]`, `GO_ENV_VENDOR` stubbed to `"stub\n"`: `expected 'stub\n' to be 'export
+  GOFLAGS=-mod=vendor GOPROXY=off …'`, `stub buildAcceptances [["a","b"],{"a":["zod","yaml"],…},true]`, `stub planCommand
+  [["conf","plain"],"decks/d1/checks.json",…]`): compose 4/4, go-acceptance 4/4, build-acceptances 4/4, plan-command 3/3.
+- **Judges before their file:** red at the guard (4 new files, `guard: tests/…p19.examples.test.ts missing`).
+- **References green, chain seconds** (limit 250): compose 72.9, compose-judge 72.9, go-acceptance 83.9,
+  build-acceptances 75.0, go-acceptance-judge 68.0, build-acceptances-judge 69.9, plan-command 69.1, plan-command-judge
+  71.7 — **max 83.9 s**. One environment red on the way (go-acceptance's full suite: run.p11c example 5 met a tmp dir
+  `/tmp/morph-czk2n3` holding "k2"; green on the plain re-run; DECISIONS, known risk). Final tree: `tsc`, `eslint src
+  tests` clean, `vitest run` **784 / 784 in 125 files** (776 + the reference judges' 2 + 2 + 2 + 2); `git status` clean.
+  Ripple 0 of 776 with the data.
+- **Mutants** (the changed contracts only: allowArg and the guard line, the Go env lines, the ctx fields of Build
+  Acceptances, the Plan Command wiring), each under a 120 s subprocess timeout against its probe: **27 mutants, 0.6 min,
+  max 2.0 s, 0 timeouts, 27 killed**; two of them (planCommand's uses sorted or reversed) only after a probe row declared
+  zod before yaml (the fixture's record order is also alphabetical). No known risk left.
+- **Byte identity of dependency-free decks** (main's binary a4e53ef vs the P19b reference binary, same trees): go-mini
+  cut with `--checks decks/m1/checks.json` (the current goguard/gofirstdiff installed) **identical** (6 cards, 68 012 B;
+  plan documents identical); the P15 deck re-cut from its own tree 0365336 (plan, filter, ×3) **identical** (12 cards,
+  398 622 B) and identical to the deck committed there; the plan documents equal but for `out`.
+- **Smokes, dry, with the reference binary** (`BIN=/tmp/p19b/bin-ref`, templates linked; the live Go run left for the
+  main session after the merge): Go 13/13 checks (scaffold with the network: go-humanize v1.0.1 vendored, 84 KB; plan
+  --checks exit 0, all 4 acceptances `GOFLAGS=-mod=vendor GOPROXY=off`, format-size's guard line names the module,
+  plural-word's nothing; deck check 0 errors; the probe tree builds offline from vendor/; the guard passes the declared
+  import and rejects `golang.org/x/text/language` "(the standard library and github.com/dustin/go-humanize only)" and
+  go-humanize in package word "(the standard library only)"); TypeScript 10/10 (change-case 5.4.4 by `npm install
+  --save-exact` then `npm ci`; plan --checks exit 0; kebab-title's guard line names change-case, its slice the digest,
+  its instruction `change-case@5.4.4`; word-count's nothing; deck check 0 errors; stub run 4/4 written; planted stub run
+  0/2 written: `package import "typescript" (allowed: node:*, change-case)`, `package import "change-case" (allowed:
+  node:*)`). The smoke map's `docs` is `["package.json"]`: with no doc and no dependency the planner's default slice is
+  the card's own target, which a generate card's run refuses (`contextSlice … does not exist`) — the P18 TypeScript smoke
+  never ran far enough to meet it.
+
+**Forecast** on `ds` with every maxTokens × 3: P19a ran 8 cards (two-file patches, whole-file judges) for $0.0935, P18 5
+cards for $0.1054; here 12 first requests (4 code × 2 variants + 4 judges), 40–54 KB in, answers 4–7 KB: **≈ $0.06–0.15**,
+≤ $0.30 with a re-cut; ≤ $1. **Gate holds.**
+
+**Run command** (from the repo root, the binary copied first; the deck is already scaled ×3):
+
+```
+npm run build && rm -rf /tmp/v2bin-p19b && mkdir -p /tmp/v2bin-p19b && cp -r dist /tmp/v2bin-p19b/ && ln -s $PWD/node_modules /tmp/v2bin-p19b/node_modules && ln -s $PWD/templates /tmp/v2bin-p19b/templates
+node /tmp/v2bin-p19b/dist/cli.js run --root . --deck decks/p19b/deck.json --processor ds --deadline 2400 > /tmp/p19b-run.json
+```
+
+After the merge: the smokes (§8; Go live on ds with `S1_RUN=1`, cap $0.02), 🧪, then the stop for the operator.
