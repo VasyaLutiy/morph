@@ -6,14 +6,27 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (08.10, after P19: stopped for the operator)
+## State at handoff (08.10 evening, operator: next P20, then a stop)
 
-**Nothing queued. P19 is closed** (issue #10, label `P19-deps`): P19a (record half, run 20261008-141116, 8/8, $0.0935) and
+**Next: P20, issue #11 (label `P20-rerun`), then 🧪 and a stop for the operator.** Found by MorphStudio (a Go project on V2
+decks) in its P6, runs 20261008-200807 and 20261008-201843: (1) a hand-filtered re-cut of one card kept its
+generation's overlay blanking an already accepted file (`mount.go:49: undefined: SessionServer` in all three tries) →
+a subset cut in Morph (`morph plan … --only <cards>` and/or `morph run --only`) whose overlay is computed against the
+current tree, accepted files never blanked; (2) `templates/go/decks/tools/guard.mjs` test mode refuses go.mod's direct
+requirements in test files → allow them (check the TS/Python guards for the same gap); (3) the gate's stub check
+counted guard lines and missed the vet/build line → a vet/build failure outside the card's target fails the stub check.
+Why first: that failure cost a Fable debt of $2.40 against $0.0986 for MorphStudio's whole P6 executor (×25). Cap $5.
+P20 may be split (P20a/P20b), but **every P20 session ends with `~/.morph-wait-operator`, never `~/.morph-phase-done`**:
+the flag files are shared with MorphStudio's session on this VPS, and the cron watchdog is MorphStudio's
+(`/home/morph/MorphStudio/tools/vps-watchdog.sh`): a phase-done flag would kill and restart MorphStudio's session.
+Never touch `/home/morph/MorphStudio` or its tmux session `MorphStudio` (read-only at most).
+
+**P19 is closed** (issue #10, label `P19-deps`): P19a (record half, run 20261008-141116, 8/8, $0.0935) and
 P19b (builder half: per-card allowed packages in the TS/Go guard, `GOFLAGS=-mod=vendor` exactly when
 `vendor/modules.txt` exists, `GOPROXY=off` always, Plan Command wiring, MorphV2's own `yaml` declared in `contour.yaml` +
 `docs/deps/yaml.md`, templates/common docs; run 20261008-152814, 8/8, $0.0934) are merged. Issue #10's smokes are green
 (Go live on ds with vendored go-humanize v1.0.1 offline, TypeScript with change-case up to stub runs; `decks/p19b/smoke/`,
-TASK_P19b §11). The session stopped after 🧪 (`~/.morph-wait-operator`); the next phase is the operator's to name.
+TASK_P19b §11).
 Running total $5.2609 of $30.
 **Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). No mrph cross-check
 at the gate (operator 08.10). Own pre-merge code read: yes. External review passes: no (operator 08.10). Every new
