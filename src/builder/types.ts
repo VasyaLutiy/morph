@@ -11,7 +11,11 @@ export type ChecksResult = { ok: true; checks: Checks } | { ok: false; problems:
 export interface CardContext {
   id: string; phase: string; targets: string[]; siblings: string[]; frozen: string[];
   fullExclude: string[]; ownGit: boolean; profile: LanguageProfile; guard: string; firstdiff: string;
+  allowed?: string[]; vendor?: boolean;
 }
 export interface BuildTexts { guard: string; firstdiff: string; probes: Record<string, string> }
-export interface BuildInput { cards: Card[]; checks: Checks; profile: LanguageProfile; texts: BuildTexts }
+export interface BuildInput {
+  cards: Card[]; checks: Checks; profile: LanguageProfile; texts: BuildTexts;
+  uses?: Record<string, string[]>; vendor?: boolean;
+}
 export type BuildResult = { ok: true; cards: Card[] } | { ok: false; errors: string[] };

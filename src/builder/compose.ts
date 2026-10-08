@@ -7,6 +7,10 @@ export function litsJson(lits: readonly string[]): string {
   return "[" + lits.map((lit) => JSON.stringify(lit)).join(", ") + "]";
 }
 
+export function allowArg(allowed: readonly string[]): string {
+  return allowed.length === 0 ? "" : " '" + allowed.join(",") + "'";
+}
+
 export function codeAcceptance(
   ctx: CardContext,
   probe: string,
@@ -21,7 +25,7 @@ export function codeAcceptance(
   }
   body += tscStep(ctx.profile);
   body += eslintStep(ctx.profile, ctx.targets);
-  body += "echo '== guard'; node $P/guard.mjs src " + code.join(",");
+  body += "echo '== guard'; node $P/guard.mjs src " + code.join(",") + allowArg(ctx.allowed ?? []);
   if (test !== null) {
     body += "; node $P/guard.mjs tests " + test + " 1 " + smoke;
   }
