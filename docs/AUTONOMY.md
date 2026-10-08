@@ -6,17 +6,18 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (08.10, after the P15 smoke — stopped at the smoke stop)
+## State at handoff (08.10, operator: run P15L gocrud on a fresh session)
 
-**P15 golang is merged** (run 20261008-074231: 12/12 in one run, no fix, $0.1929, 18.5 min; vitest 746/746) and the P15
-smoke is green (go-mini end to end on ds: `plan --checks` with `language: go` 6 cards/4 generations → `deck check` 0 →
-`run` 6/6 first attempt, $0.0066, 51 s, `go vet`/`gofmt -l`/`go test ./...` green → `primer --write`). Running total
-$4.6532 of $30. One deviation: the primer counts Go tests in the `_*_probe_test.go` files under `decks/**/parts/` and
-`TestMain` — issue #7 (label `P15-golang`). Issue #6 stays open: its §3 small real Go project is the operator's next task.
-**Stopped at the P15 smoke stop; the operator side resumes the session — the session never resumes itself.** Processor
-`ds` (maxTokens ×3; glm53 the fallback; batch route glm53b). Own pre-merge code read: yes. External review passes: no
-(operator 08.10). Every new MEASURE row fills the `прогоны` column. The fresh-orchestrator measurement is in MEASURE's
-notes under the P15 rows.
+**Next: P15L gocrud by `docs/TASK_P15L_gocrud.md`** (issue #6 §3, label `P15-golang`): a stdlib Go CRUD API skeleton
+(packages project, store, auth, api) in the scratch repository **`/tmp/gocrud`**, NOT in MorphV2: the scaffold, record,
+map, checks, probes and deck live there; MorphV2 gets only the MEASURE row, DECISIONS lines, TASK §11 and the tarball
+of §8. The cycle is AUTONOMY's as for a phase (fresh preparation agent, gate, ×3, run on ds, verify, record), with the
+**mutation cap** (≤ 30 mutants, ≤ 20 min; first capped gate). After the run and the records: `tools/tg.sh smoke` 🧪 and
+STOP — the operator side does the e2e check of TASK §3 (a throwaway main + curl). The session started fresh by the
+operator's order; record the fresh-orchestrator numbers as in P15. P15 and its smoke are merged (`main` fd8f03a+);
+issue #7 (primer counts Go probe files) is open and is not in P15L. Running total $4.6532 of $30.
+**Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). Own pre-merge code read: yes. External review
+passes: no (operator 08.10). Every new MEASURE row fills the `прогоны` column.
 Known limits carried: No New Skips counts skip tokens inside string literals; one unreproduced vitest flake in P13b (logs
 kept since); the ds batch slug is slow (~73 min); a `--checks` deck mixing languages builds by its first Component's
 language; gofmt can redden otherwise correct Go (the retry sees the diff).
