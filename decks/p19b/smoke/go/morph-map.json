@@ -1,0 +1,9 @@
+{
+  "docs": ["go.mod"],
+  "cards": {
+    "format-size": { "intent": "generate", "targets": ["size/format_size.go"], "max_tokens": 6000 },
+    "plural-word": { "intent": "generate", "targets": ["word/plural_word.go"], "max_tokens": 6000 },
+    "format-size-judge": { "intent": "generate", "max_tokens": 8000 },
+    "plural-word-judge": { "intent": "generate", "max_tokens": 8000 }
+  }
+}

@@ -25,6 +25,14 @@ that module is in the slice of every card that builds it.
 - Text an environment can change (a runtime's error message, a locale, a path separator, a file mode under a umask) is
   pinned by prefix or by rule, never verbatim.
 
+**Declared dependencies:**
+
+- A Function whose code imports a library names it through its Component's `uses`; the library is declared in the
+  record with an exact version and an API digest (`docs/PLAN.md` "Dependencies"). §2.1 lists the calls the code makes
+  into it, as in the digest, and every example's literal is measured on the declared version.
+- The guard allows exactly the declared names in the code files of the Components that use them; tests keep the test
+  framework and the shared helpers only. Acceptances run offline (Go: `-mod=vendor`, `GOPROXY=off`).
+
 **A judge's setup across Components:**
 
 - **Preconditions of the callees.** When the judged Function calls Functions of other Components, list every fact a
@@ -108,5 +116,7 @@ before/after.
 - Every judge that calls other Components: their preconditions listed and cited, markers distinct, a harness skeleton
   when the setup is more than a literal, `max_tokens` sized from the expected answer.
 - Every slice path exists on disk at plan time; `contour.yaml` is in no slice.
+- Every library the code imports is declared (exact version, `uses`, a 2–5 KB digest) and installed by the scaffold
+  phase; nothing is fetched by an acceptance.
 - `morph plan` exit 0; `morph deck check` errors 0; every acceptance red per example on stubs in a scratch worktree;
   mutants within the cap killed or recorded; chain under 250 s.

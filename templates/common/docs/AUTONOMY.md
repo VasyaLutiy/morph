@@ -69,6 +69,18 @@ merges it, rewrites "State at handoff" for the next phase and pushes. Then it en
 6. **Merge and push**: `git checkout main && git merge --ff-only morph/<run-id> && git push origin main`. Fast-forward
    only; a non-ff state stops the session with a report.
 
+## Dependencies
+
+- Only the libraries `docs/PLAN.md` "Dependencies" lists, approved by the operator with the plan, are declared in
+  `contour.yaml` (`System.dependencies`, exact versions) and named by a Component's `uses`. The session never adds,
+  upgrades or removes one on its own: a card that needs another library is a stop for the operator.
+- The scaffold phase installs them once with the network (Go: vendored and committed; TypeScript: `package-lock.json`
+  committed, `npm ci`; Python: a venv from a pinned requirements file). Every later acceptance is offline: Go builds with
+  `GOFLAGS=-mod=vendor GOPROXY=off` (chosen by `morph plan` when `vendor/modules.txt` exists), TypeScript from the
+  installed `node_modules`, Python from the venv. A deck cut before the vendoring is re-cut after it.
+- Each dependency's API digest `docs/deps/<name>.md` (2–5 KB, signatures + one example, from the library's own docs and
+  types, values measured) is data; it rides in the slice of every card of a Component that uses it.
+
 ## Decisions the session makes alone
 
 - **Gaps in the record** (a shape, an order, a message the record does not pin): decided in §2.2 of the phase's spec AND

@@ -1,0 +1,18 @@
+{
+  "phase": "s1",
+  "frozen": ["contour.yaml", "morph-map.json", "decks", "go.mod", "go.sum", "vendor", "internal", "docs", "tools"],
+  "cards": [
+    { "id": "format-size" },
+    { "id": "plural-word" },
+    {
+      "id": "format-size-judge",
+      "files": [{ "file": "size/format_size_examples_test.go", "min": 4, "max": 10, "new": true,
+        "lits": ["TestFormatSizeExample1", "TestFormatSizeExample2", "TestFormatSizeExample3", "TestFormatSizeExample4", "83 MB"] }]
+    },
+    {
+      "id": "plural-word-judge",
+      "files": [{ "file": "word/plural_word_examples_test.go", "min": 4, "max": 10, "new": true,
+        "lits": ["TestPluralWordExample1", "TestPluralWordExample2", "TestPluralWordExample3", "TestPluralWordExample4"] }]
+    }
+  ]
+}

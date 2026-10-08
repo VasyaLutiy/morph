@@ -1,0 +1,43 @@
+version: 1
+System:
+  name: cases
+  description: >
+    Turns titles into kebab-case slugs with the declared package change-case and counts words with the standard library
+    only. Two Components: text (src/text/, uses change-case) and count (src/count/, nothing declared).
+  requirements: []
+  guardrails: []
+  groups:
+    - name: text
+      description: Title helpers in src/text/; no I/O, no clock, no environment.
+      language: typescript
+      uses: [change-case]
+      functions:
+        - name: Kebab Title
+          description: A title in kebab case.
+          behavior: >
+            Exported as `kebabTitle(title: string): string` from src/text/kebabTitle.ts: kebabCase(title) of the package
+            change-case (see docs/deps/change-case.md): words split on case changes, spaces and punctuation, lower-cased,
+            joined by "-".
+          steps:
+            - produces: string
+          examples:
+            - {given: '"Hello World"', when: converted, then: '"hello-world"'}
+            - {given: '"XMLHttpRequest"', when: converted, then: '"xml-http-request"'}
+            - {given: '"  Morph -- Cards 2 "', when: converted, then: '"morph-cards-2"'}
+    - name: count
+      description: Counting helpers in src/count/; the standard library only.
+      language: typescript
+      functions:
+        - name: Word Count
+          description: The number of words of a text.
+          behavior: >
+            Exported as `wordCount(text: string): number` from src/count/wordCount.ts. A word is a maximal run of
+            non-white-space characters; an empty or white-space-only text has 0 words.
+          steps:
+            - produces: number
+          examples:
+            - {given: '"one two  three"', when: counted, then: "3"}
+            - {given: '"   "', when: counted, then: "0"}
+            - {given: '"a\tb\nc"', when: counted, then: "3"}
+  dependencies:
+    - {name: change-case, version: "5.4.4", language: typescript, doc: docs/deps/change-case.md}

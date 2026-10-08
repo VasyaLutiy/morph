@@ -1,0 +1,43 @@
+version: 1
+System:
+  name: hsize
+  description: >
+    A tiny Go module (module path "hsize", Go 1.22) that writes file sizes for people. Two packages: size (directory
+    size/) formats a byte count with the declared module github.com/dustin/go-humanize; word (directory word/) puts a
+    count before a noun with the standard library only. The tests compare with Equal of hsize/internal/testhelp.
+  groups:
+    - name: size
+      description: A byte count as text, package size in size/; no I/O, no clock, no randomness.
+      language: go
+      uses: [github.com/dustin/go-humanize]
+      functions:
+        - name: Format Size
+          description: A byte count in SI units, or "empty" for zero.
+          behavior: >
+            Exported as `func FormatSize(n uint64) string` in package size. n == 0 → "empty". Else humanize.Bytes(n) of
+            github.com/dustin/go-humanize (SI units, base 1000: "999 B", "1.5 kB", "83 MB"; see docs/deps/go-humanize.md).
+          steps:
+            - produces: string
+          examples:
+            - {given: "n 0", when: formatted, then: '"empty"'}
+            - {given: "n 999", when: formatted, then: '"999 B"'}
+            - {given: "n 1536", when: formatted, then: '"1.5 kB"'}
+            - {given: "n 82854982", when: formatted, then: '"83 MB"'}
+    - name: word
+      description: A count and a noun, package word in word/; the standard library only.
+      language: go
+      functions:
+        - name: Plural Word
+          description: A count before a noun, the noun plural unless the count is 1.
+          behavior: >
+            Exported as `func PluralWord(n int, noun string) string` in package word. n == 1 or n == -1 → "<n> <noun>";
+            else "<n> <noun>s" (fmt.Sprintf("%d %ss", n, noun)).
+          steps:
+            - produces: string
+          examples:
+            - {given: 'n 1, noun "file"', when: written, then: '"1 file"'}
+            - {given: 'n 0, noun "dir"', when: written, then: '"0 dirs"'}
+            - {given: 'n 12, noun "byte"', when: written, then: '"12 bytes"'}
+            - {given: 'n -1, noun "step"', when: written, then: '"-1 step"'}
+  dependencies:
+    - {name: github.com/dustin/go-humanize, version: "v1.0.1", language: go, doc: docs/deps/go-humanize.md}

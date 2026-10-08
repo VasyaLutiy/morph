@@ -1,0 +1,12 @@
+{
+  "phase": "s1",
+  "frozen": ["contour.yaml", "morph-map.json", "decks", "docs", "tools", "package.json", "package-lock.json"],
+  "cards": [
+    { "id": "kebab-title" },
+    { "id": "word-count" },
+    { "id": "kebab-title-judge", "files": [{ "file": "tests/text/kebabTitle.examples.test.ts", "min": 3, "max": 9, "new": true,
+      "lits": ["Kebab Title example 1", "Kebab Title example 2", "Kebab Title example 3", "xml-http-request"] }] },
+    { "id": "word-count-judge", "files": [{ "file": "tests/count/wordCount.examples.test.ts", "min": 3, "max": 9, "new": true,
+      "lits": ["Word Count example 1", "Word Count example 2", "Word Count example 3"] }] }
+  ]
+}

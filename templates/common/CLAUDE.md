@@ -14,8 +14,9 @@ Function. The plan by epics and phases: `docs/PLAN.md`; measurements: `docs/MEAS
   the operator writes). Never print them.
 - The autonomous mode: `docs/AUTONOMY.md`. A phase's spec: `docs/TASK_TEMPLATE.md` → `docs/TASK_<phase>_<component>.md`.
 - Written by hand (the agent) are only data: the record, the map, the phase's TASK, fixtures under `tests/fixtures/`,
-  `decks/<phase>/checks.json`, probes `decks/<phase>/parts/*`, the lock file after the scaffold. A hand edit of code
-  breaks the experiment.
+  `decks/<phase>/checks.json`, probes `decks/<phase>/parts/*`, the lock file after the scaffold, the API digests
+  `docs/deps/*.md` of the declared dependencies and what the scaffold installs for them (`vendor/`, the lock file, the
+  pinned requirements; `docs/PLAN.md` "Dependencies"). A hand edit of code breaks the experiment.
 - Paid runs: only on the operator's word or by the gate of `docs/AUTONOMY.md`; the cap per phase is in its section
   "Money".
 - Before every run: `morph plan` exit 0, `morph deck check` with 0 errors, every acceptance red per example on stubs in a

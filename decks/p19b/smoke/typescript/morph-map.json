@@ -1,0 +1,11 @@
+{
+  "package": "src",
+  "language": "typescript",
+  "docs": ["package.json"],
+  "cards": {
+    "kebab-title": { "intent": "generate", "targets": ["src/text/kebabTitle.ts"], "max_tokens": 6000 },
+    "word-count": { "intent": "generate", "targets": ["src/count/wordCount.ts"], "max_tokens": 6000 },
+    "kebab-title-judge": { "intent": "generate", "max_tokens": 8000 },
+    "word-count-judge": { "intent": "generate", "max_tokens": 8000 }
+  }
+}

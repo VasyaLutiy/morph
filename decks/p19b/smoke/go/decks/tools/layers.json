@@ -1,0 +1,4 @@
+{
+  "layers": {"size": [], "word": [], "internal/testhelp": []},
+  "pure": ["size", "word"]
+}
