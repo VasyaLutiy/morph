@@ -129,6 +129,10 @@ export function buildAcceptances(input: BuildInput): BuildResult {
     if (card === undefined) {
       continue;
     }
+    const allowed: string[] =
+      input.uses !== undefined && Object.prototype.hasOwnProperty.call(input.uses, card.customId)
+        ? input.uses[card.customId]
+        : [];
     const ctx: CardContext = {
       id: card.customId,
       phase: checks.phase,
@@ -140,6 +144,8 @@ export function buildAcceptances(input: BuildInput): BuildResult {
       profile: input.profile,
       guard: input.texts.guard,
       firstdiff: input.texts.firstdiff,
+      allowed,
+      vendor: input.vendor === true,
     };
     if (check.files !== null) {
       acceptanceOf.set(
