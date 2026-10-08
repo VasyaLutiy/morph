@@ -6,20 +6,23 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (08.10 evening, operator: next P20, then a stop)
+## State at handoff (08.10 night, after P20: a stop for the operator)
 
-**Next: P20, issue #11 (label `P20-rerun`), then 🧪 and a stop for the operator.** Found by MorphStudio (a Go project on V2
-decks) in its P6, runs 20261008-200807 and 20261008-201843: (1) a hand-filtered re-cut of one card kept its
-generation's overlay blanking an already accepted file (`mount.go:49: undefined: SessionServer` in all three tries) →
-a subset cut in Morph (`morph plan … --only <cards>` and/or `morph run --only`) whose overlay is computed against the
-current tree, accepted files never blanked; (2) `templates/go/decks/tools/guard.mjs` test mode refuses go.mod's direct
-requirements in test files → allow them (check the TS/Python guards for the same gap); (3) the gate's stub check
-counted guard lines and missed the vet/build line → a vet/build failure outside the card's target fails the stub check.
-Why first: that failure cost a Fable debt of $2.40 against $0.0986 for MorphStudio's whole P6 executor (×25). Cap $5.
-P20 may be split (P20a/P20b), but **every P20 session ends with `~/.morph-wait-operator`, never `~/.morph-phase-done`**:
-the flag files are shared with MorphStudio's session on this VPS, and the cron watchdog is MorphStudio's
-(`/home/morph/MorphStudio/tools/vps-watchdog.sh`): a phase-done flag would kill and restart MorphStudio's session.
-Never touch `/home/morph/MorphStudio` or its tmux session `MorphStudio` (read-only at most).
+**Next: none queued — the session stopped for the operator after P20** (operator 08.10: "P20, then a stop"). The flag
+files are shared with MorphStudio's session on this VPS and the cron watchdog is MorphStudio's
+(`/home/morph/MorphStudio/tools/vps-watchdog.sh`): a MorphV2 session ends with `~/.morph-wait-operator` until the operator
+says otherwise, never `~/.morph-phase-done`. Never touch `/home/morph/MorphStudio` or its tmux session `MorphStudio`
+(read-only at most).
+
+**P20 is closed** (issue #11, label `P20-rerun`; `docs/TASK_P20_rerun.md`): run 20261008-221549 on ds, 6/6 on the first
+attempt, $0.0629, 16 min, no fix. (1) `morph plan … --only <id>,<id>,…` (Parse Command, NEW Select Cards in Component
+planner-subset, Plan Command narrows the checks to the subset): the acceptances are built over the subset, so a card
+outside it is never a sibling and its accepted file never blanked; a re-run of failed cards re-cuts with `--only`, never
+a hand-filtered deck (step 3 above); a cut without `--only` is byte for byte (go-mini, P15). (2) Go guards
+(`templates/go/decks/tools/guard.mjs`, `decks/tools/goguard.mjs`) let tests import go.mod's direct requires; the TS
+template guard lets tests import package.json `dependencies`; Python ships no guard. (3) `decks/tools/stubcheck.mjs`
+(also in `templates/common/decks/tools/`) is a gate item: every stub log red at the expected stage and no build/vet/tsc
+line naming a file outside the card's targets. Reproduced on go-mini by `decks/p20/demo.sh`.
 
 **P19 is closed** (issue #10, label `P19-deps`): P19a (record half, run 20261008-141116, 8/8, $0.0935) and
 P19b (builder half: per-card allowed packages in the TS/Go guard, `GOFLAGS=-mod=vendor` exactly when
@@ -27,14 +30,14 @@ P19b (builder half: per-card allowed packages in the TS/Go guard, `GOFLAGS=-mod=
 `docs/deps/yaml.md`, templates/common docs; run 20261008-152814, 8/8, $0.0934) are merged. Issue #10's smokes are green
 (Go live on ds with vendored go-humanize v1.0.1 offline, TypeScript with change-case up to stub runs; `decks/p19b/smoke/`,
 TASK_P19b §11).
-Running total $5.2609 of $30.
+Running total $5.3238 of $30.
 **Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). No mrph cross-check
 at the gate (operator 08.10). Own pre-merge code read: yes. External review passes: no (operator 08.10). Every new
 MEASURE row fills the `прогоны` column.
 Known limits carried: a generate card of a Component with no `docs` and no dependency gets its own (missing) target as its only slice file and the run refuses it (`contextSlice … does not exist`; P19b smoke map uses `docs: ["package.json"]`); a random tmp name can contain a forbidden substring in `run.p11c` example 5 (≈1 in 770, P19b); `morph plan --checks` has no python acceptance builder (a python project cuts with map acceptances, P18); `morph init` finds `templates/` two levels above its module, so a binary copy needs `templates` linked beside its `dist/` (P18); No New Skips counts skip tokens inside string literals; one unreproduced vitest flake in P13b (logs
 kept since); the ds batch slug is slow (~73 min); a `--checks` deck mixing languages builds by its first Component's
 language; gofmt can redden otherwise correct Go (the retry sees the diff); the primer's Go call rule misses a signature split
-across lines or a `testing` import under another name (P16); `morph accept` compares `git status --porcelain` paths without `-z`, so a quoted path (spaces, non-ASCII) reads as outside the targets (P17).
+across lines or a `testing` import under another name (P16); `morph accept` compares `git status --porcelain` paths without `-z`, so a quoted path (spaces, non-ASCII) reads as outside the targets (P17); `--only` keeps the cards in plan order, never the order given (Order Deck sorts each layer; an equivalent mutant, P20); the template leak scan finds `templates/common/tools/vps-start.sh:20` "(operator 08.10)" (bc311aa, P20).
 Lessons for the next preparations: default code targets add a test file (give a smoke cap or code-only targets); new
 files need `"intent": "generate"` in the map; a new `src/` folder needs its layer in `decks/tools/guard.mjs`; size a judge
 from its expected answer (≥ 28 000 for a ~20 KB answer, before the ×3); vary every constant the code must not hard-code

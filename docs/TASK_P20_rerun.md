@@ -388,4 +388,26 @@ node /tmp/v2bin-p20/dist/cli.js run --root . --deck decks/p20/deck.json --proces
 
 ### Run
 
-(left for the run)
+08.10, main session on the VPS. The gate re-checked by the main session: `morph plan` exit 0, the re-cut (filter, ×3)
+byte-identical to the committed deck, `deck check` 0 errors / 0 warnings, the largest slice 63 644 B. Binary copy
+`/tmp/v2bin-p20` (`node_modules` and `templates` linked beside its dist/), processor `ds`, run **20261008-221549**, exit 0,
+**981 s**: 6 / 6 written, 9 requests, 158 495 in / 73 446 out tokens, **$0.0629** (usageTotals.cost 0.06286521). Every
+card accepted on its first attempt (v1 of each; parse-command, select-cards and plan-command v2 answered, untried). No
+retry, no fix, no truncation (every finish `stop`; the largest answer plan-command-judge 36 396 output tokens of 60 000).
+
+Verify on `morph/20261008-221549`: `git status --short` empty; `tsc --noEmit`, `eslint src tests` clean; `vitest run`
+**793 / 793 in 128 files**; `npm run build` green. Own read against §2.2: `types.ts` adds `only?: string[]` after
+`checks`; `parse.ts` adds `--only` to the value flags and plan's flags, and after `missing --spec` splits the value on ","
+and refuses a malformed or repeated id with the message of §2.2, adding `only` to the Command only when given;
+`selectCards.ts` lists the missing ids in `only`'s order, else runs `orderDeck` over the plan's own kept cards (plan
+order) and returns a new Plan with Order Deck's cards, generations and externalDependsOn; `planCommand.ts` applies
+Select Cards after Plan Spec and narrows `checks.cards` to the kept ids before Build Acceptances, so siblings and overlays
+are computed among the subset. No defect found.
+
+After the run, with the binary built from the run branch: (1) byte identity of a cut without `--only` against main's
+binary b70c5eb — go-mini (`--checks decks/m1/checks.json`, this phase's goguard/gofirstdiff installed: 6 cards, 75 416 B)
+**identical**; the P15 deck re-cut from its own tree 0365336 (plan, filter, ×3: 12 cards, 398 622 B) **identical**, and
+identical to the deck committed there. (2) `decks/p20/demo.sh` on go-mini: the full cut's percent-of acceptance on correct
+code exit 1 (`calc/percent_of.go:8:9: undefined: ClampValue`, the 201843 failure), the `--only percent-of` cut exit 0;
+stubcheck on the full cut's clamp-value-judge stub log exit 1 (`vet names calc/half.go, outside the targets`), on the
+`--only clamp-value-judge` cut's log exit 0 (`red at guard; build, vet and tsc lines name only the targets`).
