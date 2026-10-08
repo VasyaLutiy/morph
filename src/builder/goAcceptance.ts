@@ -1,11 +1,18 @@
 import { posix } from "node:path";
 import { codeTargets, hasExtension, testTarget } from "../language/paths.js";
-import { litsJson } from "./compose.js";
+import { allowArg, litsJson } from "./compose.js";
 import { frozenStep, heredoc, OWN_GIT_AFTER, OWN_GIT_BEFORE, untrackedStep, wrapScript } from "./steps.js";
 import type { CardContext, JudgeFile } from "./types.js";
 
 export const GO_ENV: string =
   'export GOFLAGS=-mod=mod GOPROXY=off GOSUMDB=off GOTOOLCHAIN=local GOWORK=off GOCACHE="${GOCACHE:-/tmp/morph/go-build}" GOPATH="${GOPATH:-/tmp/morph/go}"\n';
+
+export const GO_ENV_VENDOR: string =
+  'export GOFLAGS=-mod=vendor GOPROXY=off GOSUMDB=off GOTOOLCHAIN=local GOWORK=off GOCACHE="${GOCACHE:-/tmp/morph/go-build}" GOPATH="${GOPATH:-/tmp/morph/go}"\n';
+
+export function goEnv(vendor: boolean): string {
+  return vendor ? GO_ENV_VENDOR : GO_ENV;
+}
 
 export const GO_LINT_VERDICT: string =
   '[ "$E" = 0 ] || { echo "== vet or gofmt failed (see above); every step between it and here passed"; exit 1; }\n';
@@ -106,14 +113,14 @@ export function goCodeAcceptance(
   const code = codeTargets(ctx.profile, ctx.targets);
   const test = smoke !== null ? testTarget(ctx.profile, ctx.targets) : null;
   const probePath = goProbePath(ctx.id, code[0]);
-  let body = GO_ENV;
+  let body = goEnv(ctx.vendor === true);
   body += goDir(ctx.id, ctx.guard, ctx.firstdiff, ctx.siblings, ctx.fullExclude, probePath);
   if (ctx.ownGit) {
     body += OWN_GIT_BEFORE;
   }
   body += "echo '== build'; go build -overlay $P/overlay.json " + goPackages(code).join(" ") + "\n";
   body += goLintSteps(ctx.targets.filter((t) => hasExtension(ctx.profile, t)));
-  body += "echo '== guard'; node $P/guard.mjs src " + code.join(",");
+  body += "echo '== guard'; node $P/guard.mjs src " + code.join(",") + allowArg(ctx.allowed ?? []);
   if (test !== null && smoke !== null) {
     body += "; node $P/guard.mjs tests " + test + " 1 " + smoke;
   }
@@ -138,7 +145,7 @@ export function goCodeAcceptance(
 }
 
 export function goJudgeAcceptance(ctx: CardContext, files: readonly JudgeFile[]): string {
-  let body = GO_ENV;
+  let body = goEnv(ctx.vendor === true);
   body += goDir(ctx.id, ctx.guard, ctx.firstdiff, ctx.siblings, ctx.fullExclude, null);
   if (ctx.ownGit) {
     body += OWN_GIT_BEFORE;
