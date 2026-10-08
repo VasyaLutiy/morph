@@ -1326,6 +1326,7 @@ System:
         The `morph` binary: src/cli/*.ts and the entry src/cli.ts (bin dist/cli.js): argv parsed, routed to a command, one JSON document on stdout, log lines on
         stderr, an exit code per outcome. Only the entry touches the process. Commands: `deck check`, `run`, `plan`; `submit`, `collect` (routed to batches);
         `primer` (routed to primer); `scout`, `plan --from-scout` (routed to scout-session); `review` (routed to review-session); the rest NotYetError.
+        tests/fixtures/cli/examples.json["<Function> <n>"] holds the given and then of an example that names it.
       language: typescript
       requirements: [One Document Out]
       functions:
@@ -1419,7 +1420,7 @@ System:
           steps: [{calls: Read Deck File}, {uses: cards}, {produces: Deck Check Document}]
           examples:
             - {given: 'a tmp root holding only d.json = the write-write fixture (a and b both write src/x.ts)', ref: "tests/fixtures/decks/hazardsWriteWrite.json, tests/fixtures/cli/deckCheck.writeWrite.json", when: 'deckCheckCommand(root, "d.json", 500000)', then: 'code 2; document equal to tests/fixtures/cli/deckCheck.writeWrite.json'}
-            - {given: 'examples.json["Deck Check 2"].given', ref: "tests/fixtures/cli/examples.json (\"<Function> <n>\" → the example's given and then), tests/fixtures/decks/tiny.json", when: 'deckCheckCommand(root, "d.json", 500000)', then: 'examples.json["Deck Check 2"].then'}
+            - {given: 'examples.json["Deck Check 2"].given', ref: "tests/fixtures/cli/examples.json, tests/fixtures/decks/tiny.json", when: 'deckCheckCommand(root, "d.json", 500000)', then: 'examples.json["Deck Check 2"].then'}
             - {given: 'the same tree, sliceCapBytes 10', when: checked, then: 'code 0; warnings 2; hazards [the implicit-read, then {kind: "oversized-slice", severity: "warning", cards: ["a"], path: null, repair: null, bytes: 20, cap: 10}]'}
         - name: Run Command
           description: "`morph run`: processor, deck, hazards, run branch, Run Deck, archive; one Run Document."
@@ -1439,18 +1440,18 @@ System:
             on the run branch.
           steps: [{uses: processor}, {calls: Read Deck File}, {uses: git}, {uses: runloop}, {produces: Run Document}]
           examples:
-            - {given: 'examples.json["Run Command 1"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'run', then: 'examples.json["Run Command 1"].then'}
-            - {given: 'examples.json["Run Command 2"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'run', then: 'examples.json["Run Command 2"].then'}
+            - {given: 'examples.json["Run Command 1"].given', ref: "tests/fixtures/cli/examples.json", when: 'run', then: 'examples.json["Run Command 1"].then'}
+            - {given: 'examples.json["Run Command 2"].given', ref: "tests/fixtures/cli/examples.json", when: 'run', then: 'examples.json["Run Command 2"].then'}
             - {given: 'processor "nope"; then "bad" with MORPH_PROCESSOR_bad_TYPE "x" in env', when: run, then: 'code 4 UsageError "processor nope is not configured"; then "processor bad is not configured: MORPH_PROCESSOR_bad_TYPE must be one of openrouter, stub (got ''x'')"; no morph/* branch'}
-            - {given: 'the same setup with an untracked notes.txt in the repo', when: run, then: 'code 2 RefusalError "dirty tree outside .morph/: notes.txt"; the checkout still main; no archive'}
+            - {given: 'examples.json["Run Command 4"].given', ref: "tests/fixtures/cli/examples.json", when: run, then: 'examples.json["Run Command 4"].then'}
             - {given: 'a deck of a and b both targeting out/x.ts', when: run, then: 'code 2 RefusalError "deck has 1 hazard error(s): write-write a,b out/x.ts"; no morph/* branch'}
-            - {given: 'one card a; runId null; deps.now always 1791310149000', when: run, then: 'mintRunId(1791310149000) is "20261006-180909"; code 0; runId, report.runId "20261006-180909", branch "morph/20261006-180909"; .morph/runs/20261006-180909/report.json exists'}
-            - {given: 'records {request.customId "a.v1", verdict "rejected", stages 4, lastStage "probe", finishReason "stop", text 30 chars}, {request.customId "b.r1.v2", verdict "corrupt", stages 0, lastStage null, finishReason null, text null}', when: variantLine, then: '"morph run: a.v1 rejected stage 4 probe finish stop chars 30\n"; "morph run: b.r1.v2 corrupt stage 0 finish none chars none\n"'}
-            - {given: 'examples.json["Run Command 8"].given', ref: "tests/fixtures/cli/examples.json (\"<Function> <n>\" → the example's given and then), tests/fixtures/cli/literals.json (\"<Function> <n>\" → the literal)", when: 'run', then: 'examples.json["Run Command 8"].then'}
-            - {given: 'examples.json["Run Command 9"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then), tests/fixtures/processor/batchSubmittedLive.json, batchCompletedLive.json, tests/fixtures/cli/batch.r9.json (the record file''s text), tests/fixtures/cli/literals.json', when: 'run', then: 'examples.json["Run Command 9"].then'}
-            - {given: 'examples.json["Run Command 10"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'run', then: 'examples.json["Run Command 10"].then'}
+            - {given: 'examples.json["Run Command 6"].given', ref: "tests/fixtures/cli/examples.json", when: run, then: 'examples.json["Run Command 6"].then'}
+            - {given: 'examples.json["Run Command 7"].given', ref: "tests/fixtures/cli/examples.json", when: variantLine, then: 'examples.json["Run Command 7"].then'}
+            - {given: 'examples.json["Run Command 8"].given', ref: "tests/fixtures/cli/examples.json, tests/fixtures/cli/literals.json (\"<Function> <n>\" → the literal)", when: 'run', then: 'examples.json["Run Command 8"].then'}
+            - {given: 'examples.json["Run Command 9"].given', ref: 'tests/fixtures/cli/examples.json, tests/fixtures/processor/batchSubmittedLive.json, batchCompletedLive.json, tests/fixtures/cli/batch.r9.json (the record file''s text), tests/fixtures/cli/literals.json', when: 'run', then: 'examples.json["Run Command 9"].then'}
+            - {given: 'examples.json["Run Command 10"].given', ref: "tests/fixtures/cli/examples.json", when: 'run', then: 'examples.json["Run Command 10"].then'}
             - {given: 'a deck file "[]"', when: run, then: 'code 2 RefusalError "deck has no cards"; no morph/* branch; no .morph'}
-            - {given: 'examples.json["Run Command 12"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'run', then: 'examples.json["Run Command 12"].then'}
+            - {given: 'examples.json["Run Command 12"].given', ref: "tests/fixtures/cli/examples.json", when: 'run', then: 'examples.json["Run Command 12"].then'}
         - name: Plan Command
           description: "`morph plan --spec`: record and map cut by Plan Spec, the deck to --out; one Plan Document."
           behavior: >
@@ -1458,28 +1459,30 @@ System:
             given>"; a given map not a regular file → 4 UsageError "map file not found: <map as given>". loadContour(the spec's UTF-8 text, args.spec), then
             loadMap(the map's text, args.map) when given (else the empty map {version: 1, package: null, language: null, docs: [], groups: [], cards: [],
             extraCards: []}); an error → 2 DeckError, it. Plan Spec({record, map, spec: args.spec, components: args.components, judge: args.judge, hasFile: a
-            path is a regular file under root}); an error → 2 DeckError, it. With args.checks: Read Plan Checks (a failure is the result); Build
-            Acceptances({cards, checks, profile: resolveProfile(null, map.language), texts}), errors → 2 DeckError "acceptances not built (<n> error|errors):\n"
+            path is a regular file under root}); an error → 2 DeckError, it. With args.checks: profile = Resolve Profile(the first selected Component's
+            language, map.language) — the Component's wins, as in the cut (P15) — an error → 2 DeckError "the map: " + it; Read Plan Checks(root, args.checks,
+            profile) (a failure is the result); Build Acceptances({cards, checks, profile, texts}), errors → 2 DeckError "acceptances not built (<n> error|errors):\n"
             + them "\n"-joined; its cards replace the plan's, except a card the map gives an acceptance (map card by customId ?? id, extra card by customId).
             args.out not null → the cards written to path.resolve(root, args.out) as JSON.stringify(cards, null, 2) + "\n", parents created. → {code: 0,
             document: {spec, components, cards, generations, externalDependsOn, out: args.out}}. Nothing else written; nothing on an error.
           steps: [{uses: contour}, {uses: planner}, {calls: Read Plan Checks}, {uses: builder}, {produces: Plan Document}]
           examples:
-            - {given: 'examples.json["Plan Command 1"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then), tests/fixtures/planner/ledger.yaml, tests/fixtures/planner/ledger.map.json, tests/fixtures/planner/ledger.plan.json', when: 'planCommand', then: 'examples.json["Plan Command 1"].then'}
+            - {given: 'examples.json["Plan Command 1"].given', ref: 'tests/fixtures/cli/examples.json, tests/fixtures/planner/ledger.yaml, tests/fixtures/planner/ledger.map.json, tests/fixtures/planner/ledger.plan.json', when: 'planCommand', then: 'examples.json["Plan Command 1"].then'}
             - {given: 'the same root; spec "nope.yaml"; then spec "ledger.yaml" with map "m.json"', when: planCommand, then: '{code: 4, document: {error: {code: 4, kind: "UsageError", message: "spec file not found: nope.yaml"}}}; then the same with "map file not found: m.json"'}
             - {given: 'bad.yaml = "System: {}\n" as the spec; then spec ledger.yaml with m.json = "{\"docs\": \"x\"}" as the map', when: planCommand, ref: "tests/fixtures/cli/literals.json", then: 'code 2 DeckError, then code 2 DeckError: the messages literals.json["Plan Command 3"]'}
             - {given: 'the same root, components ["nope"], out "decks/q.json"', when: planCommand, then: "code 2 DeckError \"no Component 'nope' in the record (have: ledger, store)\"; decks/q.json not written"}
-            - {given: 'main(["plan", "--root", <the root>, "--spec", "ledger.yaml", "--component", "store", "--map", "ledger.map.json"]) in process, deps {env: {}, now: () => 0, cwd: "/", transport: null}', when: main, then: '0; one stdout chunk, a document with components ["store"], 4 cards, out null; stderr ["morph plan: exit 0\n"]; nothing written under the root'}
-            - {given: 'examples.json["Plan Command 6"].given', ref: "tests/fixtures/cli/examples.json (\"<Function> <n>\" → the example's given and then), tests/fixtures/cli/l1.checks.json", when: 'planCommand', then: 'examples.json["Plan Command 6"].then'}
+            - {given: 'examples.json["Plan Command 5"].given', ref: "tests/fixtures/cli/examples.json", when: main, then: 'examples.json["Plan Command 5"].then'}
+            - {given: 'examples.json["Plan Command 6"].given', ref: "tests/fixtures/cli/examples.json, tests/fixtures/cli/l1.checks.json", when: 'planCommand', then: 'examples.json["Plan Command 6"].then'}
             - {given: 'example 6, checks decks/l2/checks.json = {"phase": "l2", "cards": [{"id": "zz"}]}', when: planCommand, then: '2 DeckError "acceptances not built (1 error):\nchecks card ''zz'' is not in the deck"'}
             - {given: 'the repository; contour.yaml, planner, cli, judge, map tests/fixtures/cli/p10.map.json, checks decks/p10/checks.json', ref: "decks/p10/v2deck.json, tests/fixtures/builder/guard.p10.txt", when: planCommand, then: 'code 0; v2deck.json''s 12 acceptances byte for byte, guard.p10.txt (trimEnd) replaced by decks/tools/guard.mjs'}
+            - {given: 'examples.json["Plan Command 9"].given', ref: 'tests/fixtures/cli/examples.json, tests/fixtures/go-mini/ (the Go module of P15), tests/fixtures/cli/goMini.deck.json', when: planCommand, then: 'examples.json["Plan Command 9"].then'}
         - name: Read Plan Checks
           description: Files of `plan --checks`.
           behavior: >
-            readPlanChecks(root, checksPath), in order, a failure {ok: false, result}: the file not regular under root → 4 UsageError "checks file not found:
+            readPlanChecks(root, checksPath, profile = the typescript profile), in order, a failure {ok: false, result}: the file not regular under root → 4 UsageError "checks file not found:
             <checksPath>"; Parse Document(text, checksPath) error → 2 DeckError, it; Read Checks' problems → 2 DeckError "<checksPath> is not a valid checks
             document (<n> problem|problems):\n" + them "\n"-joined; GUARD_PATH "decks/tools/guard.mjs", LOCATOR_PATH "decks/tools/firstdiff.mjs" not regular → 4
-            UsageError "guard|locator file not found: <path>". Probes: per card with files null, <parts>/<id>.probe.ts if regular. → {ok: true, checks, texts:
+            UsageError "guard|locator file not found: <path>". Probes: per card with files null, <parts>/<builder's probeFile(profile, id)> if regular (go: _<id>_probe_test.go). → {ok: true, checks, texts:
             {guard, firstdiff, probes}}.
           steps: [{reads: Checks}, {uses: contour}, {uses: builder}, {produces: Plan Checks}]
           examples:
@@ -1502,17 +1505,17 @@ System:
           examples:
             - {given: 'argv ["frobnicate"], in process', when: main, then: '4; stdout exactly ["{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"unknown command: frobnicate\"}}\n"]; stderr ["morph: unknown command: frobnicate\n"]'}
             - {given: 'a tmp root with d.json = the write-write fixture; argv ["deck", "check", "--deck", "d.json", "--root", <root>, "--pretty"]', ref: "tests/fixtures/decks/hazardsWriteWrite.json", when: main, then: '2; one stdout chunk beginning "{\n  \"deck\": \"d.json\",\n  \"cards\": 2,"; stderr ["morph deck check: exit 2\n"]'}
-            - {given: 'examples.json["Main 3"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'main', then: 'examples.json["Main 3"].then'}
-            - {given: 'examples.json["Main 4"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then), tests/fixtures/cli/literals.json', when: 'spawned', then: 'examples.json["Main 4"].then'}
+            - {given: 'examples.json["Main 3"].given', ref: "tests/fixtures/cli/examples.json", when: 'main', then: 'examples.json["Main 3"].then'}
+            - {given: 'examples.json["Main 4"].given', ref: 'tests/fixtures/cli/examples.json, tests/fixtures/cli/literals.json', when: 'spawned', then: 'examples.json["Main 4"].then'}
             - {given: 'the built binary, argv ["frobnicate"]', when: spawned, then: 'exit 4; stdout exactly example 1''s one stdout chunk'}
-            - {given: 'examples.json["Main 6"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'spawned (spawnSync, timeout 30000 ms)', then: 'examples.json["Main 6"].then'}
+            - {given: 'examples.json["Main 6"].given', ref: "tests/fixtures/cli/examples.json", when: 'spawned (spawnSync, timeout 30000 ms)', then: 'examples.json["Main 6"].then'}
             - {given: 'in process, deps {env: {}, now: () => 0, cwd: "/", transport: null}; argv ["collect", "--batch", "batch-none", "--root", <a tmp root>]', when: main, then: '4; one stdout document {error: {code: 4, kind: "UsageError", message: "batch state not found: .morph/batches/batch-none.json"}}; stderr ["morph collect: exit 4\n"]'}
-            - {given: 'examples.json["Main 8"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'main, twice', then: 'examples.json["Main 8"].then'}
-            - {given: 'examples.json["Main 9"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'main', then: 'examples.json["Main 9"].then'}
-            - {given: 'examples.json["Main 10"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'main', then: 'examples.json["Main 10"].then'}
-            - {given: 'examples.json["Main 11"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'main', then: 'examples.json["Main 11"].then'}
-            - {given: 'examples.json["Main 12"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'main', then: 'examples.json["Main 12"].then'}
-            - {given: 'examples.json["Main 13"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'main', then: 'examples.json["Main 13"].then'}
+            - {given: 'examples.json["Main 8"].given', ref: "tests/fixtures/cli/examples.json", when: 'main, twice', then: 'examples.json["Main 8"].then'}
+            - {given: 'examples.json["Main 9"].given', ref: "tests/fixtures/cli/examples.json", when: 'main', then: 'examples.json["Main 9"].then'}
+            - {given: 'examples.json["Main 10"].given', ref: "tests/fixtures/cli/examples.json", when: 'main', then: 'examples.json["Main 10"].then'}
+            - {given: 'examples.json["Main 11"].given', ref: "tests/fixtures/cli/examples.json", when: 'main', then: 'examples.json["Main 11"].then'}
+            - {given: 'examples.json["Main 12"].given', ref: "tests/fixtures/cli/examples.json", when: 'main', then: 'examples.json["Main 12"].then'}
+            - {given: 'examples.json["Main 13"].given', ref: "tests/fixtures/cli/examples.json", when: 'main', then: 'examples.json["Main 13"].then'}
       dataObjects:
         - name: Command
           description: One parsed invocation.
@@ -1649,9 +1652,9 @@ System:
         Language profiles: src/language/*.ts, pure data and pure functions. A profile says
         what counts as code and as a test in one language, how a Function's name becomes the
         card's file names, and which shell lines check a card (parse, lint, own test, full
-        run) — as text, never run here. Two profiles, typescript (the default) and python;
-        the python lines (py_compile, ruff, pytest) are data only and nothing in this
-        Component needs python installed. The consumers are the planner (P10: a Component's
+        run) — as text, never run here. Three profiles, typescript (the default), python
+        and go (P15, issue #6); the python and go lines are data only and nothing in this
+        Component needs python or go installed. The consumers are the planner (P10: a Component's
         profile, its card ids and targets, its judge instruction and acceptance) and later
         primer and scout (which file is a test). Nothing is wired into the cli or the run
         loop in this phase. No clock, no environment, no file system, no child process: the
@@ -1667,9 +1670,9 @@ System:
             then "typescript". The key is the choice trimmed and lower-cased; the profile is
             the PROFILES entry whose id equals the key → {ok: true, profile} (the registry
             object itself). No entry → {ok: false, error: "unknown language '<the choice as
-            given>' (known: typescript, python)"}, the known ids in PROFILES order. PROFILES
-            is the registry, typescript first then python, each profile exactly the content of
-            its fixture.
+            given>' (known: typescript, python, go)"}, the known ids in PROFILES order. PROFILES
+            is the registry, typescript, python, then go, each profile exactly the content of
+            its fixture tests/fixtures/language/<id>.json.
           steps:
             - produces: Profile Result
           examples:
@@ -1684,9 +1687,13 @@ System:
             - given: 'componentLanguage "", mapLanguage "python"'
               when: "resolved"
               then: '{ok: true, profile} with profile.id "python" — an empty component value falls through to the map'
-            - given: 'componentLanguage "go", mapLanguage "python"'
+            - given: 'componentLanguage "rust", mapLanguage "python"'
               when: "resolved"
-              then: "{ok: false, error: \"unknown language 'go' (known: typescript, python)\"}"
+              then: "{ok: false, error: \"unknown language 'rust' (known: typescript, python, go)\"}"
+            - given: 'componentLanguage "Go", mapLanguage null'
+              ref: "tests/fixtures/language/go.json (the whole go profile)"
+              when: "resolved"
+              then: '{ok: true, profile: the go profile, equal to the fixture} — targets {component}/{name}.go next to the code, tests *_test.go in the same package, go build / go vet / go test lines'
         - name: Fill Template
           description: Replaces every {key} of a profile template with its value, literally, in one pass.
           behavior: >
@@ -1843,7 +1850,7 @@ System:
       dataObjects:
         - name: Language Profile
           description: Everything the planner and the acceptance need to know about one language; templates hold {component}, {name}, {files}, {test}, {module}, {docs}.
-          schema: "{ id: \"typescript\" | \"python\", extensions: string[], testDirs: string[], testFilePattern: string, nameCase: \"camel\" | \"snake\", codeTarget: string, testTarget: string, judgeTarget: string, parseLine: string, parseTakesFiles: boolean, lintLine: string, ownTestLine: string, fullRunLine: string, finale: string, judgeInstruction: string, helpersModule: string }"
+          schema: "{ id: \"typescript\" | \"python\" | \"go\", extensions: string[], testDirs: string[], testFilePattern: string, nameCase: \"camel\" | \"snake\", codeTarget: string, testTarget: string, judgeTarget: string, parseLine: string, parseTakesFiles: boolean, lintLine: string, ownTestLine: string, fullRunLine: string, finale: string, judgeInstruction: string, helpersModule: string }"
         - name: Profile Result
           description: A resolved profile, or the unknown language.
           schema: "{ ok: true, profile: LanguageProfile } | { ok: false, error: string }"
@@ -2278,10 +2285,10 @@ System:
             - given: 'the ledger record, Component ledger, the empty map, docs [], spec "ledger.yaml"'
               when: "cutComponent"
               then: 'ids ["parse-entry", "sum-entries", "check-ledger", "format-report", "ledger-cli"]; dependsOn [], ["parse-entry"], ["parse-entry", "sum-entries"], ["sum-entries"], ["format-report", "check-ledger"]; parse-entry''s slice ["src/ledger/parseEntry.ts"] (its own first target), sum-entries'' ["src/ledger/parseEntry.ts"]; every instruction begins "Every name you need is below -- the record `ledger.yaml` is cut"; check-ledger''s holds "## Interface check API"; maxTokens 15000, 18500, 19000, 16500, 12000'
-            - given: 'Component ledger with language "go"; Component loop of badCalls.json; Component ledger with interfaces [{name: "x", description: "d", exposes: ["Nope"]}]; Component ledger with the empty map whose groups are [{name: "parse-entry", functions: ["Sum Entries"]}]'
+            - given: 'Component ledger with language "rust"; Component loop of badCalls.json; Component ledger with interfaces [{name: "x", description: "d", exposes: ["Nope"]}]; Component ledger with the empty map whose groups are [{name: "parse-entry", functions: ["Sum Entries"]}]'
               ref: "tests/fixtures/contour/badCalls.json"
               when: "cutComponent"
-              then: "errors \"Component 'ledger': unknown language 'go' (known: typescript, python)\"; \"Function 'A' calls unknown Function 'B' of Component 'loop'\"; \"Interface 'x' exposes unknown Function 'Nope'\"; \"duplicate customId 'parse-entry'\""
+              then: "errors \"Component 'ledger': unknown language 'rust' (known: typescript, python, go)\"; \"Function 'A' calls unknown Function 'B' of Component 'loop'\"; \"Interface 'x' exposes unknown Function 'Nope'\"; \"duplicate customId 'parse-entry'\""
         - name: Cut Judges
           description: One judge card per card with a code target; examples, Data blocks, callee contracts and preconditions in its instruction.
           behavior: >
@@ -2400,7 +2407,7 @@ System:
               then: 'the card parse has contextSlice ["docs/A.md"]'
             - given: 'the map with language "cobol"; components ["nope"]; an extra card store-schema with component "Nowhere"; an extra card ledger-types renamed "parse"; the parse-entry override with dependsOn ["checks"] (components ["ledger"], judge false)'
               when: "planSpec"
-              then: "errors \"the map: unknown language 'cobol' (known: typescript, python)\"; \"no Component 'nope' in the record (have: ledger, store)\"; \"extra card 'store-schema' names Component 'Nowhere' the record does not have (have: ledger, store)\"; \"duplicate customId 'parse'\"; \"dependency cycle among checks, format-report, ledger-cli, notes, parse\""
+              then: "errors \"the map: unknown language 'cobol' (known: typescript, python, go)\"; \"no Component 'nope' in the record (have: ledger, store)\"; \"extra card 'store-schema' names Component 'Nowhere' the record does not have (have: ledger, store)\"; \"duplicate customId 'parse'\"; \"dependency cycle among checks, format-report, ledger-cli, notes, parse\""
             - given: "this repository's own contour.yaml and morph-map.json, spec \"contour.yaml\", components [\"contour\"], judge true"
               when: "planSpec"
               then: 'generations [["validate-record"], ["select-components", "validate-map", "validate-record-judge"], ["load-spec", "select-components-judge", "validate-map-judge"], ["load-spec-judge"]] — the P9 deck old mrph cut; each card''s acceptance is the map''s for its id'
@@ -2433,9 +2440,10 @@ System:
         the stages in a fixed order, each announced by an "== <stage>" line: tsc, eslint (verdict held
         until after the probe and the own test), guard, probe or the judge's files, own test, full
         suite, own git, frozen, untracked; every failed vitest step prints its whole failure section
-        and the first difference. The scripts equal build.py's P10a form byte for byte. Only the
-        typescript profile has a builder. No file read, no clock, no environment; node:path is the
-        only Node module. `morph plan --checks` (cli) reads the files and calls it.
+        and the first difference. The scripts equal build.py's P10a form byte for byte. The
+        typescript profile builds here, the go profile by builder-go (P15); no other profile has a
+        builder. No file read, no clock, no environment; node:path is the only Node module. `morph
+        plan --checks` (cli) reads the files and calls it.
       language: typescript
       requirements: [Deterministic Core]
       functions:
@@ -2641,13 +2649,15 @@ System:
         - name: Build Acceptances
           description: Sets the acceptance of every card the checks name, from its generation's siblings and the texts read.
           behavior: >
-            buildAcceptances({cards, checks, profile, texts}). A profile other than typescript →
-            {ok: false, errors: ["no acceptance builder for language '<id>' (only typescript)"]}.
+            buildAcceptances({cards, checks, profile, texts}). A profile other than typescript and go →
+            {ok: false, errors: ["no acceptance builder for language '<id>' (only typescript, go)"]}.
             Else the errors, in this order: the guard, then the locator, holding any of the six heredoc
             tags (HEREDOC_TAGS: MORPH_GUARD_EOF, MORPH_CONF_EOF, MORPH_TSCONF_EOF, MORPH_FIRSTDIFF_EOF,
             MORPH_PROBE_EOF, MORPH_LITS_EOF) → "the guard holds the heredoc tag <tag>" / "the
             first-difference locator holds …", one per tag; then per checks card in order: no card of
-            that id → "checks card '<id>' is not in the deck"; a judge (files not null) whose file paths
+            that id → "checks card '<id>' is not in the deck" (nothing more on it); no target with an
+            extension of the profile → "card '<id>' has no <profile id> target" (a wrong profile is
+            refused, never built); a judge (files not null) whose file paths
             are not exactly its targets → "judge '<id>': files <JSON of the paths> are not its targets
             <JSON of the targets>"; a code card without texts.probes[id] → "code card '<id>' has no
             probe", a probe holding a tag → "the probe of <id> holds the heredoc tag <tag>"; smoke null
@@ -2656,15 +2666,19 @@ System:
             {ok: false, errors}. The members are the named cards in the checks' order; their generations
             are Layer Generations of the members alone (a dependency outside them is ignored); a
             member's siblings are the targets of the other members of its generation, in the checks'
-            order. Each member gets Code Acceptance or Judge Acceptance with ctx {id, phase, targets,
+            order. Each member gets Code Acceptance or Judge Acceptance — with the go profile builder-go's
+            goCodeAcceptance or goJudgeAcceptance, same arguments — with ctx {id, phase, targets,
             siblings, frozen, fullExclude, ownGit, profile, guard, firstdiff}. → {ok: true, cards}: the
             input cards in their order, each member a copy with its acceptance, every other card as
-            given.
+            given. probeFile(profile, id) (exported; cli reads the probe by it) = "_<id>_probe_test.go"
+            for the go profile (the leading "_" makes the go tool ignore the file where it is kept,
+            decks/<phase>/parts), else "<id>.probe.ts".
           steps:
             - calls: Code Acceptance
             - calls: Judge Acceptance
             - reads: Checks
             - uses: cards
+            - uses: builder-go
             - produces: Build Result
           examples:
             - given: 'the P10a deck file decks/p10/v2deck.json (12 cards) with every acceptance set to null; checks p10.checks.typed.json; the typescript profile; texts guard.p10.txt, firstdiff.p10.txt and probes {<id>: decks/p10/parts/<id>.probe.ts} for the six code cards'
@@ -2679,7 +2693,14 @@ System:
               then: "{ok: false, errors: [\"the guard holds the heredoc tag MORPH_PROBE_EOF\", \"code card 'a' has no probe\", \"code card 'a' targets the test tests/x/a.test.ts but has no smoke cap\", \"judge 'j': files [\\\"tests/x/k.examples.test.ts\\\"] are not its targets [\\\"tests/x/j.examples.test.ts\\\"]\", \"checks card 'z' is not in the deck\"]}"
             - given: 'any input with the python profile'
               when: "buildAcceptances"
-              then: "{ok: false, errors: [\"no acceptance builder for language 'python' (only typescript)\"]}"
+              then: "{ok: false, errors: [\"no acceptance builder for language 'python' (only typescript, go)\"]}"
+            - given: 'the go profile; cards percent-of (["calc/percent_of.go"]) and clamp-value-judge (["calc/clamp_value_examples_test.go"]), one generation, acceptances null; checks phase "m1", frozen ["go.mod", "internal"], cards percent-of and clamp-value-judge (files [{calc/clamp_value_examples_test.go, min 4, max 10, lits ["TestClampValueExample1"], new true}]); probes {percent-of: "package calc\n"}; guard "// guard\n", firstdiff "// firstdiff\n"'
+              ref: "tests/fixtures/builder/go/code1.txt (percent-of's whole script)"
+              when: "buildAcceptances"
+              then: 'ok; percent-of''s acceptance = code1.txt (goCodeAcceptance, siblings ["calc/clamp_value_examples_test.go"]); the judge''s = goJudgeAcceptance with siblings ["calc/percent_of.go"]'
+            - given: 'the go profile; cards a (["src/x/a.ts"]) and b (["calc/b.go"]); checks cards a, b; probes {a: "// probe\n"}; then probeFile(go, "percent-of") and probeFile(typescript, "a")'
+              when: "buildAcceptances; probeFile"
+              then: "{ok: false, errors: [\"card 'a' has no go target\", \"code card 'b' has no probe\"]}; \"_percent-of_probe_test.go\"; \"a.probe.ts\""
       dataObjects:
         - name: Checks
           description: A phase's acceptance knobs, read from its checks document (decks/<phase>/checks.json).
@@ -2696,6 +2717,84 @@ System:
         - name: Build Result
           description: The cards with their acceptances, or every error.
           schema: "{ ok: true, cards: Card[] } | { ok: false, errors: string[] }"
+
+    # ---------------------------------------------------------------- P15
+    - name: builder-go
+      description: >
+        The Go branch of the acceptance builder (P15, issue #6): src/builder/goAcceptance.ts, layer builder, pure
+        like it (node:path only, no file read, no clock, no environment). Build Acceptances calls it for a card of the
+        go profile. The script has the frame and tree steps of builder (Wrap Script, Tree Steps); its stages are Go's:
+        the card's own packages only (go build, go vet and gofmt, the probe, the own test) under an overlay that
+        hides the same generation's other targets — Go builds a package whole, so a sibling's file would otherwise
+        redden the card, as a whole-project tsc did in P1 — then the whole module (go test ./...). The go command
+        never reaches the network: GOPROXY=off, GOFLAGS=-mod=mod, GOSUMDB=off, GOTOOLCHAIN=local, GOWORK=off, and the
+        build cache outside the tree. The guard and the locator are the repository's own decks/tools/guard.mjs and
+        firstdiff.mjs (a Go module keeps V2's decks/tools/goguard.mjs and gofirstdiff.mjs under those names).
+      language: typescript
+      requirements: [Deterministic Core]
+      functions:
+        - name: Go Acceptance
+          description: The acceptance scripts of a Go code card and a Go judge card, stage by stage.
+          behavior: >
+            Constants: GO_ENV = 'export GOFLAGS=-mod=mod GOPROXY=off GOSUMDB=off GOTOOLCHAIN=local GOWORK=off
+            GOCACHE="${GOCACHE:-/tmp/morph/go-build}" GOPATH="${GOPATH:-/tmp/morph/go}"' + "\n" (one line);
+            GO_LINT_VERDICT = '[ "$E" = 0 ] || { echo "== vet or gofmt failed (see above); every step between it and here
+            passed"; exit 1; }' + "\n". goPackages(paths) = per path "./" + path.posix.dirname (dirname "." → "."),
+            distinct, first seen first. overlayJson(hidden) = JSON.stringify({Replace: {<each path ending ".go">: ""}}) +
+            "\n" (go's -overlay: an empty replacement deletes the file for that command). goProbePath(id, code) =
+            dirname(code) + "/<id>_probe_test.go" (no dir when dirname is "."). goDir(id, guard, firstdiff, siblings,
+            fullExclude, probePath) = "P=$PWD/probe/<id>; rm -rf $P; mkdir -p $P; trap 'rm -rf $P[ <probePath>]' EXIT\n",
+            then Wrap Script's heredocs: $P/guard.mjs (MORPH_GUARD_EOF), $P/firstdiff.mjs (MORPH_FIRSTDIFF_EOF),
+            $P/overlay.json = overlayJson(siblings) and $P/full.json = overlayJson(fullExclude) (both MORPH_CONF_EOF).
+            goTestStep(args) = "go test -count=1 " + args + " > $P/gt.log 2>&1 || { if grep -q '^--- FAIL' $P/gt.log;
+            then awk '/^--- FAIL/{p=1} p' $P/gt.log | grep -vE '^(ok[[:space:]]|PASS$|FAIL$)' | head -200; else tail -60
+            $P/gt.log; fi; node $P/firstdiff.mjs $P/gt.log; exit 1; }\n" — the failure from its first "--- FAIL" with the
+            got/want lines, else the build error's tail, then the first difference. goLintSteps(files) (the .go ones) =
+            "echo '== vet'; E=0; go vet -overlay $P/overlay.json <goPackages joined by ' '> || E=1\n" + "echo '== gofmt';
+            F=$(gofmt -l <files> 2>&1) || true; [ -z \"$F\" ] || { echo \"gofmt -l lists: $F\"; gofmt -d <files> 2>&1 |
+            head -60; E=1; }\n". goNamesKept(file, drop) = "echo '== names <file>'; git show HEAD:<file> | grep -oE '^func
+            Test[A-Za-z0-9_]*' | sed -E 's/^func //'" + " | grep -vxF <JSON.stringify(name)>" per dropped name + " >
+            $P/names || true; while IFS= read -r n; do grep -qE \"^func $n\\(\" <file> || { echo \"test removed: $n\";
+            exit 1; }; done < $P/names\n". goCodeAcceptance(ctx, probe, smoke, extra): code = codeTargets, test =
+            testTarget when smoke is not null, probePath = goProbePath(ctx.id, code[0]); body = GO_ENV, goDir, OWN_GIT_BEFORE
+            when ownGit, "echo '== build'; go build -overlay $P/overlay.json <goPackages(code)>\n", goLintSteps(the targets
+            of the profile), "echo '== guard'; node $P/guard.mjs src <code joined by ','>" [+ "; node $P/guard.mjs tests
+            <test> 1 <smoke>"] + "\n", "echo '== probe'; " + heredoc(probePath, probe, MORPH_PROBE_EOF), goTestStep("-overlay
+            $P/overlay.json -run '^TestProbe' <goPackages([probePath])>"), "rm -f <probePath>\n", [with a test "echo '==
+            own'; " + goTestStep("-overlay $P/overlay.json <goPackages([test])>")], GO_LINT_VERDICT, extra, "echo '== full';
+            " + goTestStep("-overlay $P/full.json ./..."), OWN_GIT_AFTER when ownGit, frozenStep, untrackedStep; the result
+            wrapScript(ctx.id, ctx.phase, ctx.targets, body). goJudgeAcceptance(ctx, files): body = GO_ENV, goDir without a
+            probe, OWN_GIT_BEFORE when ownGit, goLintSteps(ctx.targets), per file n its lits heredoc $P/lits<n>.json and
+            "echo '== guard <file>'; node $P/guard.mjs tests <file> <min> <max> $P/lits<n>.json\n" (as Judge Acceptance),
+            goNamesKept per file that is not new, "echo '== own'; " + goTestStep("-overlay $P/overlay.json <goPackages(the
+            targets)>"), GO_LINT_VERDICT, the full step, OWN_GIT_AFTER, frozen and untracked as the code card; wrapScript.
+          steps:
+            - uses: builder
+            - uses: language
+            - reads: Card Context
+            - reads: Judge File
+            - produces: string
+          examples:
+            - given: 'ctx {id "percent-of", phase "m1", targets ["calc/percent_of.go"], siblings ["calc/clamp_value_examples_test.go"], frozen ["go.mod", "internal"], fullExclude [], ownGit false, the go profile, guard "// guard\n", firstdiff "// firstdiff\n"}; probe "package calc\n", smoke null, extra null'
+              ref: "tests/fixtures/builder/go/code1.txt (the whole script, no final newline)"
+              when: "goCodeAcceptance"
+              then: 'exactly the fixture text: stages build, vet, gofmt, guard, probe (written to calc/percent-of_probe_test.go, removed after), the verdict, full, frozen, untracked; overlay {"Replace":{"calc/clamp_value_examples_test.go":""}}'
+            - given: 'ctx {id "a", phase "p2", targets ["report/a.go", "report/a_test.go"], siblings [], frozen DEFAULT_FROZEN, fullExclude ["calc/old_test.go"], ownGit true, the same profile and texts}; probe "package report\n", smoke 5, extra "echo ''== bin''; true\n"'
+              ref: "tests/fixtures/builder/go/code2.txt (the whole script)"
+              when: "goCodeAcceptance"
+              then: 'exactly the fixture text: own git around the stages, "node $P/guard.mjs tests report/a_test.go 1 5", an own step on ./report, the extra line after the verdict, full.json {"Replace":{"calc/old_test.go":""}}'
+            - given: 'ctx of example 1 with id "percent-of-judge", targets ["calc/percent_of_examples_test.go"], siblings ["report/format_share.go"]; files [{file "calc/percent_of_examples_test.go", min 5, max 11, lits ["TestPercentOfExample1", "0% (0 of 0)"], drop [], new true}]'
+              ref: "tests/fixtures/builder/go/judge1.txt (the whole script)"
+              when: "goJudgeAcceptance"
+              then: 'exactly the fixture text: no build and no probe; vet, gofmt, the lits file, the guard line with 5 11, own on ./calc, the verdict, full, frozen, untracked'
+            - given: 'ctx {id "ab-judge", phase "p3", targets ["calc/a_examples_test.go", "report/b_examples_test.go"], siblings [], frozen DEFAULT_FROZEN, fullExclude ["report/b_examples_test.go"], ownGit true, the go profile and texts}; files [{a, min 3, max 11, lits ["TestAExample1"], drop [], new true}, {b, min 4, max 4, lits [], drop ["TestBExample2"], new false}]'
+              ref: "tests/fixtures/builder/go/judge2.txt (the whole script)"
+              when: "goJudgeAcceptance"
+              then: 'exactly the fixture text: vet and own on "./calc ./report", lits0 and lits1 ("[]"), a names step for the b file only'
+            - given: 'goTestStep("-overlay $P/overlay.json ./calc") + goNamesKept("calc/a_examples_test.go", ["TestAExample4", "TestA_old"]) + goNamesKept("report/b_test.go", []); goPackages(["calc/a.go", "calc/a_test.go", "main.go", "x/y/z.go"]); overlayJson(["calc/b.go", "README.md", "x/c_test.go"]); goProbePath("a", "calc/a.go"), goProbePath("m", "main.go")'
+              ref: "tests/fixtures/builder/go/steps.txt (the three lines)"
+              when: "written"
+              then: 'exactly the fixture text; ["./calc", ".", "./x/y"]; "{\"Replace\":{\"calc/b.go\":\"\",\"x/c_test.go\":\"\"}}\n"; "calc/a_probe_test.go", "m_probe_test.go"'
 
     # ---------------------------------------------------------------- P12a
     - name: primer
@@ -2857,7 +2956,10 @@ System:
             files {path, text}[]) (exported) → {language: profile.id, files: the test files among
             them, tests: the sum over them of the matches of the profile's call rule}: typescript
             /(?<![\w.$])(?:test|it)\s*\(/g (test( and it( — test.skip(, it.todo(, x.test( and
-            split( do not match), python /^[ \t]*(?:async[ \t]+)?def[ \t]+test_\w+/gm. The command
+            split( do not match), python /^[ \t]*(?:async[ \t]+)?def[ \t]+test_\w+/gm, go
+            /^func Test(?:[A-Z0-9_]\w*)?\s*\(/gm (P15: go test's rule, Test then nothing or a
+            character that is not a lower-case letter; an indented or commented func does not count).
+            The command
             reads every test file of the listing (UTF-8; an unreadable one is left out) and calls
             countTests. 4. Archives: each directory under <root>/.morph/runs (none → []), sorted:
             {dir: its name, report: the text of its report.json or null, answers: the names in its
@@ -2883,7 +2985,8 @@ System:
             - {given: 'a tmpRepo t: docs/MEASURE.md, PLAN.md, AUTONOMY.md, DECISIONS.md and .morph/issues.json = the story fixtures; .morph/runs/<dir>/report.json for the five runs fixtures; .morph/runs/20261007-204822/answers/a.v1.answer.txt "A" and lines.txt "L"; .morph/runs/broken/deck.json "[]" (no report); tests/a.test.ts, tests/b.spec.ts, src/c.ts of example 1; now 1791400000000', ref: "tests/fixtures/primer/command.json, primer3.md", when: 'primerCommand(t, true, deps)', then: 'code 0; the document without root and markdown exactly command.json["Primer Command 3"] (files 16, tests 2 files 3 tests, runs 5: V2 3 and mrph 2, unpriced 1, answers 1, skipped 1, chronology 16, next "P12a", issues "read", ownership {commits 0, paths 0}, running null, written ".morph/primer.md"); root t; markdown = primer3.md with "{name}" replaced by the base name of t; .morph/primer.md holds the same text'}
             - {given: 'example 1''s repo with write false; then a tmp root that is not a git repository', when: primerCommand, then: 'written null and no .morph/primer.md; then a thrown Error whose message begins "git ls-files failed (exit 128): "'}
             - {given: 'a tmpRepo with only its first empty commit; now () => 0', ref: "tests/fixtures/primer/primer5.md", when: 'primerCommand(t, false, deps)', then: 'code 0; files 0, tests {language: "typescript", files: 0, tests: 0}, runs.runs 0, skipped 0, chronology 0, next null, missing ["measure", "plan", "autonomy", "decisions"], issues "absent", generatedAt "1970-01-01T00:00:00.000Z"; markdown = primer5.md with "{name}" replaced'}
-            - {given: 'a tmpRepo with docs/MEASURE.md "# M\n\nRunning total of the stretch: $1.5000 of $9 (A $1 + B $0.5).\n\n| фаза | строитель | карт план/принято | $ исп. | прогоны |\n|---|---|---|---|---|\n| P1 | night | 1 / 1 | 0.5 | |\n| P1 debt (agent) | claude -p | 1 / 1 | 2.25 | |\n" (untracked) and three commits, oldest first: q writes src/q.ts and src/r.ts, trailers "Morph-Card: q\nMorph-Model: m/q"; an empty commit "Morph-Run: 20261110-101010"; q-judge writes tests/q.test.ts "test(\"q\", () => {});\n", "Morph-Card: q-judge\nMorph-Model: m/r"; then runningLine of null, of "x\n  Running total: $1 (a (b)\n" and of "Running total " + 250 × "y"', when: 'primerCommand(t, false, deps); runningLine', then: 'document.ownership {commits: 2, paths: 3}, running "Running total of the stretch: $1.5000 of $9"; the markdown holds "- debt rows (docs/MEASURE.md), not in these totals: P1 debt (agent) $2.25", "- running total (docs/MEASURE.md): \"Running total of the stretch: $1.5000 of $9\" vs $0.0000 archived here, difference 1.5000 — ", "- git carries 2 Morph commits: m/r 1, m/q 1", "- tests/q.test.ts ← q-judge (m/r, run —)", "- src/q.ts ← q (m/q, run 20261110-101010)", "- src/r.ts ← q (m/q, run 20261110-101010)"; runningLine null, "Running total: $1", the first 199 chars + "…"'}
+            - {given: 'examples.json["Primer Command 6"].given', ref: "tests/fixtures/primer/examples.json", when: 'primerCommand(t, false, deps); runningLine', then: 'examples.json["Primer Command 6"].then'}
+            - {given: 'examples.json["Primer Command 7"].given', ref: "tests/fixtures/primer/examples.json", when: 'primerCommand(t, false, deps); countTests', then: 'examples.json["Primer Command 7"].then'}
       dataObjects:
         - name: Run Archive
           description: One directory of .morph/runs as the command read it.

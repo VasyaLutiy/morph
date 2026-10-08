@@ -1,0 +1,11 @@
+{
+  "docs": ["go.mod"],
+  "cards": {
+    "clamp-value": { "intent": "generate", "targets": ["calc/clamp_value.go"], "max_tokens": 6000 },
+    "percent-of": { "intent": "generate", "targets": ["calc/percent_of.go"], "max_tokens": 6000 },
+    "format-share": { "intent": "generate", "targets": ["report/format_share.go"], "context_slice": ["go.mod", "calc/percent_of.go"], "depends_on": ["percent-of"], "max_tokens": 6000 },
+    "clamp-value-judge": { "intent": "generate", "max_tokens": 8000 },
+    "percent-of-judge": { "intent": "generate", "max_tokens": 8000 },
+    "format-share-judge": { "intent": "generate", "max_tokens": 8000 }
+  }
+}

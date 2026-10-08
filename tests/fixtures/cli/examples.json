@@ -70,5 +70,25 @@
   "Run Command 2": {
     "given": "the same setup, one card a with acceptance \"exit 1\", maxRetryBatches 0",
     "then": "code 1; outcome a \"failed\", reason \"acceptance failed\"; archive ok with the trailer Morph-Failed: 1; out/a.ts absent"
+  },
+  "Plan Command 9": {
+    "given": "a tmp root holding the go-mini files (tests/fixtures/go-mini/: contour.yaml with Components calc and report, both language go; morph-map.json without a language; go.mod; internal/testhelp/testhelp.go; decks/m1/checks.json; decks/m1/parts/_clamp-value_probe_test.go, _percent-of_probe_test.go, _format-share_probe_test.go), decks/tools/guard.mjs \"// guard\\n\" and decks/tools/firstdiff.mjs \"// firstdiff\\n\"; args {spec \"contour.yaml\", map \"morph-map.json\", components [\"calc\", \"report\"], judge true, checks \"decks/m1/checks.json\", out \"decks/m1/deck.json\"}; then the same root with the two \"      language: go\\n\" lines removed from contour.yaml and \"language\": \"go\" added to the map, out \"decks/m1/deck2.json\"",
+    "then": "code 0; components [\"calc\", \"report\"]; generations [[\"clamp-value\"], [\"clamp-value-judge\", \"percent-of\"], [\"format-share\", \"percent-of-judge\"], [\"format-share-judge\"]]; the cards equal goMini.deck.json (6 cards: Go targets, the go profile's finale and judge instruction, the Go acceptances with the probe of each code card read from its _<id>_probe_test.go); decks/m1/deck.json equals the fixture's text; then code 0 and decks/m1/deck2.json equal to it too — the Component's language and the map's give one deck"
+  },
+  "Run Command 7": {
+    "given": "records {request.customId \"a.v1\", verdict \"rejected\", stages 4, lastStage \"probe\", finishReason \"stop\", text 30 chars}, {request.customId \"b.r1.v2\", verdict \"corrupt\", stages 0, lastStage null, finishReason null, text null}",
+    "then": "\"morph run: a.v1 rejected stage 4 probe finish stop chars 30\\n\"; \"morph run: b.r1.v2 corrupt stage 0 finish none chars none\\n\""
+  },
+  "Run Command 6": {
+    "given": "one card a; runId null; deps.now always 1791310149000",
+    "then": "mintRunId(1791310149000) is \"20261006-180909\"; code 0; runId, report.runId \"20261006-180909\", branch \"morph/20261006-180909\"; .morph/runs/20261006-180909/report.json exists"
+  },
+  "Plan Command 5": {
+    "given": "main([\"plan\", \"--root\", <the root>, \"--spec\", \"ledger.yaml\", \"--component\", \"store\", \"--map\", \"ledger.map.json\"]) in process, deps {env: {}, now: () => 0, cwd: \"/\", transport: null}",
+    "then": "0; one stdout chunk, a document with components [\"store\"], 4 cards, out null; stderr [\"morph plan: exit 0\\n\"]; nothing written under the root"
+  },
+  "Run Command 4": {
+    "given": "the same setup with an untracked notes.txt in the repo",
+    "then": "code 2 RefusalError \"dirty tree outside .morph/: notes.txt\"; the checkout still main; no archive"
   }
 }

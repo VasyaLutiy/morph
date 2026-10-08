@@ -1,0 +1,150 @@
+{
+ "phase": "p15",
+ "ownGit": true,
+ "fullExclude": [
+  "tests/language/profiles.examples.test.ts",
+  "tests/planner/cut.examples.test.ts",
+  "tests/planner/plan.examples.test.ts",
+  "tests/builder/buildAcceptances.examples.test.ts"
+ ],
+ "cards": [
+  {
+   "id": "profiles"
+  },
+  {
+   "id": "go-acceptance"
+  },
+  {
+   "id": "build-acceptances"
+  },
+  {
+   "id": "plan-command"
+  },
+  {
+   "id": "primer-command"
+  },
+  {
+   "id": "profiles-judge",
+   "files": [
+    {
+     "file": "tests/language/profiles.examples.test.ts",
+     "min": 15,
+     "max": 17,
+     "drop": [
+      "Resolve Profile example 4: unknown component language 'go' is an error naming the known languages"
+     ],
+     "lits": [
+      "Resolve Profile example 4",
+      "Resolve Profile example 5",
+      "unknown language 'rust' (known: typescript, python, go)",
+      "language/go.json"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "go-acceptance-judge",
+   "files": [
+    {
+     "file": "tests/builder/goAcceptance.examples.test.ts",
+     "min": 5,
+     "max": 11,
+     "new": true,
+     "lits": [
+      "Go Acceptance example 1",
+      "Go Acceptance example 2",
+      "Go Acceptance example 3",
+      "Go Acceptance example 4",
+      "Go Acceptance example 5",
+      "builder/go/code1.txt",
+      "builder/go/code2.txt",
+      "builder/go/judge1.txt",
+      "builder/go/judge2.txt",
+      "builder/go/steps.txt",
+      "m_probe_test.go",
+      "./x/y",
+      "TestA_old"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "build-acceptances-judge",
+   "files": [
+    {
+     "file": "tests/builder/buildAcceptances.examples.test.ts",
+     "min": 8,
+     "max": 10,
+     "lits": [
+      "Build Acceptances example 5",
+      "Build Acceptances example 6",
+      "(only typescript, go)",
+      "builder/go/code1.txt",
+      "card 'a' has no go target",
+      "_percent-of_probe_test.go"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "cut-component-judge",
+   "files": [
+    {
+     "file": "tests/planner/cut.examples.test.ts",
+     "min": 12,
+     "max": 13,
+     "lits": [
+      "Component 'ledger': unknown language 'rust' (known: typescript, python, go)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "plan-spec-judge",
+   "files": [
+    {
+     "file": "tests/planner/plan.examples.test.ts",
+     "min": 11,
+     "max": 12,
+     "lits": [
+      "the map: unknown language 'cobol' (known: typescript, python, go)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "plan-command-judge",
+   "files": [
+    {
+     "file": "tests/cli/planCommand.p15.examples.test.ts",
+     "min": 1,
+     "max": 5,
+     "new": true,
+     "lits": [
+      "Plan Command example 9",
+      "cli/goMini.deck.json",
+      "go-mini/decks/m1/parts/_percent-of_probe_test.go",
+      "decks/m1/deck2.json"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "primer-command-judge",
+   "files": [
+    {
+     "file": "tests/primer/primerCommand.p15.examples.test.ts",
+     "min": 1,
+     "max": 5,
+     "new": true,
+     "lits": [
+      "Primer Command example 7",
+      "func TestB_2(t *testing.T) {}",
+      "func Testable(t *testing.T) {}",
+      "report/r_test.go"
+     ]
+    }
+   ]
+  }
+ ]
+}
