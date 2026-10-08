@@ -1,0 +1,263 @@
+import fs from "node:fs";
+import { expect, test } from "vitest";
+import { loadDeck } from "../../src/cards/model.js";
+import type { Card } from "../../src/cards/types.js";
+import {
+  PATCH_CONTRACT,
+  patchAcceptance,
+  patchCard,
+  planFromScout,
+} from "../../src/scout/planFromScout.js";
+import { fixture, tmpRoot } from "../helpers.js";
+import type { TmpRoot } from "../helpers.js";
+
+const SESSION_ID = "20261008-225320-74e423b1";
+const SESSION_AT = ".morph/scout/20261008-225320-74e423b1/scout.json";
+const SESSION_REF = "2e7116d687d05d6d6d18c5dad347cdcf78de3c0b";
+const TS_ACCEPTANCE =
+  "node_modules/.bin/tsc --noEmit && node_modules/.bin/vitest run --reporter=dot";
+
+function writeTree(p: TmpRoot): void {
+  p.write("README.md", "tiny\n");
+  p.write("src/a.ts", "export const a = 1;\n");
+  p.write("src/b.ts", 'import { a } from "./a.js";\nexport const b = a + 1;\n');
+}
+
+function fixtureCard(): Card {
+  return {
+    customId: "scout-" + SESSION_ID,
+    intent: "patch",
+    targets: ["src/b.ts"],
+    contextSlice: ["src/a.ts", "README.md"],
+    instruction: "Make b twice a.\n\n" + PATCH_CONTRACT,
+    acceptance: TS_ACCEPTANCE,
+    model: null,
+    maxTokens: 16000,
+    reasoning: null,
+    variants: 1,
+    dependsOn: [],
+  };
+}
+
+test("Plan From Scout example 1: latest writes one patch card", () => {
+  const p = tmpRoot();
+  try {
+    writeTree(p);
+    p.write(SESSION_AT, fixture("scout/session.json"));
+    const card = fixtureCard();
+    const result = planFromScout(p.root, { fromScout: "latest", out: "decks/s.json" });
+    expect(result.code).toBe(0);
+    expect(result.document).toStrictEqual({
+      scoutId: SESSION_ID,
+      scout: SESSION_AT,
+      ref: SESSION_REF,
+      cards: [card],
+      dropped: [],
+      out: "decks/s.json",
+    });
+    expect(p.read("decks/s.json")).toBe(JSON.stringify([card], null, 2) + "\n");
+    expect(loadDeck(p.read("decks/s.json")).ok).toBe(true);
+  } finally {
+    p.rm();
+  }
+});
+
+test("Plan From Scout example 2: latest, the named id, and the refusals", () => {
+  const p = tmpRoot();
+  const e = tmpRoot();
+  try {
+    writeTree(p);
+    p.write(SESSION_AT, fixture("scout/session.json"));
+    p.write(
+      ".morph/scout/20200101-000000-00000000/scout.json",
+      fixture("scout/noAnswer.json"),
+    );
+    p.write(".morph/scout/20991231-000000-ffffffff/notes.txt", "no scout.json here\n");
+
+    const card = fixtureCard();
+
+    const latest = planFromScout(p.root, { fromScout: "latest", out: null });
+    expect(latest.code).toBe(0);
+    expect(latest.document).toStrictEqual({
+      scoutId: SESSION_ID,
+      scout: SESSION_AT,
+      ref: SESSION_REF,
+      cards: [card],
+      dropped: [],
+      out: null,
+    });
+
+    const named = planFromScout(p.root, { fromScout: SESSION_ID, out: null });
+    expect(named.code).toBe(0);
+    expect(named.document).toStrictEqual({
+      scoutId: SESSION_ID,
+      scout: SESSION_AT,
+      ref: SESSION_REF,
+      cards: [card],
+      dropped: [],
+      out: null,
+    });
+
+    const failed = planFromScout(p.root, {
+      fromScout: "20200101-000000-00000000",
+      out: null,
+    });
+    expect(failed.code).toBe(2);
+    expect(failed.document).toStrictEqual({
+      error: {
+        code: 2,
+        kind: "RefusalError",
+        message:
+          "scout session 20200101-000000-00000000 has no answer (no_answer): no answer: the model call failed in round 1: stub has no answer: /tmp/morph-side-l5V4h4/ans/scout.t1.md",
+      },
+    });
+
+    const missing = planFromScout(p.root, { fromScout: "zz", out: null });
+    expect(missing.code).toBe(4);
+    expect(missing.document).toStrictEqual({
+      error: { code: 4, kind: "UsageError", message: "scout session not found: zz" },
+    });
+
+    const empty = planFromScout(e.root, { fromScout: "latest", out: "d.json" });
+    expect(empty.code).toBe(4);
+    expect(empty.document).toStrictEqual({
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "no scout session under .morph/scout",
+      },
+    });
+    expect(p.exists("decks")).toBe(false);
+    expect(e.exists("decks")).toBe(false);
+    expect(e.exists("d.json")).toBe(false);
+  } finally {
+    p.rm();
+    e.rm();
+  }
+});
+
+test("Plan From Scout example 3: the record and the tree refuse", () => {
+  const p = tmpRoot();
+  try {
+    writeTree(p);
+    const parsed = JSON.parse(fixture("scout/session.json")) as Record<string, unknown>;
+    const answer = parsed.answer as Record<string, unknown>;
+
+    p.write(SESSION_AT, JSON.stringify({ ...parsed, schema: 2 }));
+    const schema = planFromScout(p.root, { fromScout: "latest", out: null });
+    expect(schema.code).toBe(2);
+    expect(schema.document).toStrictEqual({
+      error: { code: 2, kind: "DeckError", message: SESSION_AT + ": schema 2, expected 1" },
+    });
+
+    p.write(SESSION_AT, "{");
+    const broken = planFromScout(p.root, { fromScout: "latest", out: null });
+    expect(broken.code).toBe(2);
+    expect(broken.document).toStrictEqual({
+      error: { code: 2, kind: "DeckError", message: SESSION_AT + " does not parse" },
+    });
+
+    p.write(
+      SESSION_AT,
+      JSON.stringify({ ...parsed, answer: { ...answer, targets: ["../x.ts"] } }),
+    );
+    const outside = planFromScout(p.root, { fromScout: "latest", out: null });
+    expect(outside.code).toBe(2);
+    expect(outside.document).toStrictEqual({
+      error: {
+        code: 2,
+        kind: "RefusalError",
+        message: "target refused: path leaves the root: ../x.ts",
+      },
+    });
+
+    p.write(SESSION_AT, JSON.stringify({ ...parsed, answer: { ...answer, targets: ["src"] } }));
+    const dir = planFromScout(p.root, { fromScout: "latest", out: null });
+    expect(dir.code).toBe(2);
+    expect(dir.document).toStrictEqual({
+      error: { code: 2, kind: "RefusalError", message: "target refused: not a file: src" },
+    });
+
+    p.write(SESSION_AT, fixture("scout/session.json"));
+    fs.rmSync(p.path("README.md"));
+    const dropped = planFromScout(p.root, { fromScout: "latest", out: null });
+    expect(dropped.code).toBe(0);
+    expect(dropped.document).toStrictEqual({
+      scoutId: SESSION_ID,
+      scout: SESSION_AT,
+      ref: SESSION_REF,
+      cards: [
+        {
+          customId: "scout-" + SESSION_ID,
+          intent: "patch",
+          targets: ["src/b.ts"],
+          contextSlice: ["src/a.ts"],
+          instruction: "Make b twice a.\n\n" + PATCH_CONTRACT,
+          acceptance: TS_ACCEPTANCE,
+          model: null,
+          maxTokens: 16000,
+          reasoning: null,
+          variants: 1,
+          dependsOn: [],
+        },
+      ],
+      dropped: ["README.md"],
+      out: null,
+    });
+
+    fs.rmSync(p.path("src/b.ts"));
+    const gone = planFromScout(p.root, { fromScout: "latest", out: null });
+    expect(gone.code).toBe(2);
+    expect(gone.document).toStrictEqual({
+      error: {
+        code: 2,
+        kind: "RefusalError",
+        message: "target refused: no such file: src/b.ts",
+      },
+    });
+  } finally {
+    p.rm();
+  }
+});
+
+test("Plan From Scout example 4: patchAcceptance and patchCard", () => {
+  expect(patchAcceptance(["a.py", "b.md", "c.py"])).toBe(
+    "python3 -m py_compile a.py c.py && python3 -m pytest -q --tb=short",
+  );
+  expect(patchAcceptance(["notes.md", "x.ts", "y.py"])).toBe(TS_ACCEPTANCE);
+  expect(patchAcceptance(["notes.md"])).toBe(null);
+
+  const card = patchCard({
+    scoutId: "s1",
+    question: "  Do it.\n\n",
+    targets: ["n.md"],
+    contextSlice: [],
+    targetBytes: 30000,
+  });
+  expect(card).toStrictEqual({
+    customId: "scout-s1",
+    intent: "patch",
+    targets: ["n.md"],
+    contextSlice: [],
+    instruction: "Do it.\n\n" + PATCH_CONTRACT,
+    acceptance: null,
+    model: null,
+    maxTokens: 20000,
+    reasoning: null,
+    variants: 1,
+    dependsOn: [],
+  });
+
+  const maxTokensOf = (targetBytes: number) =>
+    patchCard({
+      scoutId: "s1",
+      question: "  Do it.\n\n",
+      targets: ["n.md"],
+      contextSlice: [],
+      targetBytes,
+    }).maxTokens;
+  expect(maxTokensOf(100)).toBe(16000);
+  expect(maxTokensOf(24000)).toBe(16000);
+  expect(maxTokensOf(24001)).toBe(16002);
+  expect(maxTokensOf(24002)).toBe(16002);
+});
