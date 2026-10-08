@@ -1,0 +1,105 @@
+```
+import type {} from "node:path";
+```
+No — I should not write that. Let me produce the actual file.
+
+```ts
+export interface ScoutBudgets {
+  calls: number;
+  reads: number;
+  chars: number;
+  rounds: number;
+  deadlineMs: number;
+}
+
+export const DEFAULT_BUDGETS: ScoutBudgets = {
+  calls: 30,
+  reads: 12,
+  chars: 120000,
+  rounds: 40,
+  deadlineMs: 1800000,
+};
+
+export interface ScoutSpent {
+  calls: number;
+  reads: number;
+  chars: number;
+  rounds: number;
+}
+
+export type BudgetName = "deadline" | "rounds" | "calls" | "reads" | "chars";
+
+export interface Charge {
+  call: boolean;
+  read: boolean;
+  text: string;
+}
+
+export interface Charged {
+  spent: ScoutSpent;
+  text: string;
+  closed: BudgetName | null;
+  why: string | null;
+}
+
+export const CLIP_MARKER = "\n[… clipped: the character budget is spent]";
+
+export const FINAL_TURN: readonly BudgetName[] = ["calls", "reads", "chars"];
+
+export function spendTurn(
+  budgets: ScoutBudgets,
+  spent: ScoutSpent,
+  charge: Charge,
+  elapsedMs: number,
+): Charged {
+  const remaining = budgets.chars - spent.chars;
+  const text =
+    charge.text.length <= remaining
+      ? charge.text
+      : charge.text.slice(0, Math.max(remaining, 0)) + CLIP_MARKER;
+
+  const next: ScoutSpent = {
+    calls: spent.calls + (charge.call ? 1 : 0),
+    reads: spent.reads + (charge.read ? 1 : 0),
+    chars: spent.chars + text.length,
+    rounds: spent.rounds + 1,
+  };
+
+  let closed: BudgetName | null = null;
+  let why: string | null = null;
+
+  if (elapsedMs >= budgets.deadlineMs) {
+    closed = "deadline";
+    why = `the deadline (${budgets.deadlineMs / 1000} s) passed`;
+  } else if (next.rounds >= budgets.rounds) {
+    closed = "rounds";
+    why = `the round budget is spent (${next.rounds} of ${budgets.rounds} rounds)`;
+  } else if (next.calls >= budgets.calls) {
+    closed = "calls";
+    why = `the call budget is spent (${next.calls} of ${budgets.calls} calls)`;
+  } else if (next.reads >= budgets.reads) {
+    closed = "reads";
+    why = `the read budget is spent (${next.reads} of ${budgets.reads} reads)`;
+  } else if (next.chars >= budgets.chars) {
+    closed = "chars";
+    why = `the character budget is spent (${next.chars} of ${budgets.chars} chars)`;
+  }
+
+  return { spent: next, text, closed, why };
+}
+
+export function stopReason(
+  answered: boolean,
+  closed: BudgetName | null,
+  why: string | null,
+): string {
+  if (answered) {
+    return closed === null
+      ? "the model answered on its own"
+      : `the model answered after the budget closed: ${why}`;
+  }
+  return closed === null
+    ? "no answer: the session ended with every budget open"
+    : `no answer: ${why}`;
+}
+```

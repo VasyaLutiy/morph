@@ -1,0 +1,172 @@
+```ts
+export type ScoutAction =
+  | { kind: "read"; path: string; from: number | null; to: number | null }
+  | { kind: "grep"; pattern: string; path: string }
+  | { kind: "list"; path: string };
+
+export interface ScoutAnswer {
+  targets: string[];
+  context_slice: string[];
+  reasoning: string;
+}
+
+export type Turn =
+  | { kind: "action"; action: ScoutAction }
+  | { kind: "answer"; answer: ScoutAnswer }
+  | { kind: "malformed"; reason: string };
+
+export const VERBS: readonly string[] = ["READ", "GREP", "LIST", "ANSWER"];
+
+const ACTION_LINE = /^(READ|GREP|LIST|ANSWER)(?=\s|$)/;
+const READ_RANGE = /^(.*\S)\s+(\d+)-(\d+)$/;
+
+export function parseTurn(text: string | null): Turn {
+  if (text === null || text.trim() === "") {
+    return { kind: "malformed", reason: "empty turn" };
+  }
+  const rawLines = text.split("\n");
+  const lines = rawLines.map((line) =>
+    line.endsWith("\r") ? line.slice(0, -1) : line,
+  );
+  const found: { index: number; verb: string }[] = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    const match = ACTION_LINE.exec(lines[i].trimStart());
+    if (match !== null) {
+      found.push({ index: i, verb: match[1] });
+    }
+  }
+  if (found.length === 0) {
+    return {
+      kind: "malformed",
+      reason: "no action: one line must start with READ, GREP, LIST or ANSWER",
+    };
+  }
+  if (found.length > 1) {
+    const verbs = found.map((entry) => entry.verb).join(", ");
+    return {
+      kind: "malformed",
+      reason: `${found.length} actions in one turn (${verbs}): send one per turn`,
+    };
+  }
+  const { index, verb } = found[0];
+  const args = lines[index].trim().slice(verb.length).trim();
+  if (verb === "READ") {
+    return parseRead(args);
+  }
+  if (verb === "GREP") {
+    return parseGrep(args);
+  }
+  if (verb === "LIST") {
+    return { kind: "action", action: { kind: "list", path: args } };
+  }
+  return parseAnswer(lines, index);
+}
+
+function parseRead(args: string): Turn {
+  if (args === "") {
+    return { kind: "malformed", reason: "READ needs a path" };
+  }
+  const match = READ_RANGE.exec(args);
+  if (match !== null) {
+    const path = match[1];
+    const from = Number(match[2]);
+    const to = Number(match[3]);
+    if (from < 1 || to < from) {
+      return { kind: "malformed", reason: `READ: bad line range ${from}-${to}` };
+    }
+    return { kind: "action", action: { kind: "read", path, from, to } };
+  }
+  return {
+    kind: "action",
+    action: { kind: "read", path: args, from: null, to: null },
+  };
+}
+
+function parseGrep(args: string): Turn {
+  const cut = args.lastIndexOf(" -- ");
+  const pattern = cut >= 0 ? args.slice(0, cut).trim() : args;
+  const path = cut >= 0 ? args.slice(cut + 4).trim() : "";
+  if (pattern === "") {
+    return { kind: "malformed", reason: "GREP needs a pattern" };
+  }
+  try {
+    new RegExp(pattern);
+  } catch {
+    return { kind: "malformed", reason: `GREP: invalid pattern /${pattern}/` };
+  }
+  return { kind: "action", action: { kind: "grep", pattern, path } };
+}
+
+function parseAnswer(lines: string[], index: number): Turn {
+  const actionLine = lines[index];
+  const rest = [actionLine.trimStart().slice(6), ...lines.slice(index + 1)].join(
+    "\n",
+  );
+  const open = rest.indexOf("{");
+  const close = rest.lastIndexOf("}");
+  if (open < 0 || close < open) {
+    return { kind: "malformed", reason: "ANSWER: no JSON object" };
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rest.slice(open, close + 1));
+  } catch {
+    return { kind: "malformed", reason: "ANSWER: the JSON does not parse" };
+  }
+  const obj = asRecord(parsed);
+  const targets = obj === null ? undefined : obj["targets"];
+  if (!isStringList(targets) || targets.length < 1) {
+    return {
+      kind: "malformed",
+      reason: "ANSWER: targets must be a non-empty list of paths",
+    };
+  }
+  const rawSlice = obj === null ? undefined : obj["context_slice"];
+  let context_slice: string[];
+  if (rawSlice === undefined) {
+    context_slice = [];
+  } else if (isStringList(rawSlice)) {
+    context_slice = rawSlice;
+  } else {
+    return {
+      kind: "malformed",
+      reason: "ANSWER: context_slice must be a list of paths",
+    };
+  }
+  const rawReasoning = obj === null ? undefined : obj["reasoning"];
+  let reasoning: string;
+  if (rawReasoning === undefined) {
+    reasoning = "";
+  } else if (typeof rawReasoning === "string") {
+    reasoning = rawReasoning;
+  } else {
+    return {
+      kind: "malformed",
+      reason: "ANSWER: reasoning must be a string",
+    };
+  }
+  return {
+    kind: "answer",
+    answer: { targets, context_slice, reasoning },
+  };
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+}
+
+function isStringList(value: unknown): value is string[] {
+  if (!Array.isArray(value)) {
+    return false;
+  }
+  for (const item of value) {
+    if (typeof item !== "string" || item === "") {
+      return false;
+    }
+  }
+  return true;
+}
+```

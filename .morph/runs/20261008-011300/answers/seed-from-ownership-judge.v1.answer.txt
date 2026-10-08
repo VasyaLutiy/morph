@@ -1,0 +1,113 @@
+```ts
+import { describe, expect, test } from "vitest";
+import {
+  SEED_HEADER,
+  renderSeed,
+  seedFromOwnership,
+} from "../../src/scout/seedFromOwnership.js";
+import type { ScoutSeed, SeedOwnership } from "../../src/scout/seedFromOwnership.js";
+
+/** The ownership literal of example 1, built once and shared by the three examples. */
+const OWNERSHIP: SeedOwnership = {
+  paths: [
+    {
+      path: "tests/q.test.ts",
+      writes: [{ card: "q-judge", model: "m/r", run: null }],
+    },
+    {
+      path: "src/q.ts",
+      writes: [
+        { card: "q", model: "m/q", run: "20261110-101010" },
+        { card: "q1", model: "m/q", run: "R1" },
+        { card: "q0", model: "", run: null },
+        { card: "qq", model: "m/x", run: "R0" },
+      ],
+    },
+    {
+      path: "docs/n.md",
+      writes: [{ card: "d", model: "m/p", run: "R2" }],
+    },
+    {
+      path: "src/gone.ts",
+      writes: [{ card: "g", model: "m/x", run: "R1" }],
+    },
+    {
+      path: "tools/x.py",
+      writes: [{ card: "x", model: "m/p", run: "R2" }],
+    },
+    {
+      path: "src/p.spec.ts",
+      writes: [{ card: "p", model: "m/c", run: "R1" }],
+    },
+    {
+      path: "lib/c.ts",
+      writes: [{ card: "c", model: "m/c", run: null }],
+    },
+    {
+      path: "web/app.tsx",
+      writes: [{ card: "w", model: "m/w", run: "R3" }],
+    },
+  ],
+};
+
+/** The listing of example 1: every ownership path but src/gone.ts. */
+const FILES: string[] = [
+  "tests/q.test.ts",
+  "src/q.ts",
+  "docs/n.md",
+  "tools/x.py",
+  "src/p.spec.ts",
+  "lib/c.ts",
+  "web/app.tsx",
+];
+
+const NOTE_Q =
+  "src/q.ts: written by q (m/q, run 20261110-101010); q1 (m/q, run R1); q0 (—, run —); … 1 more";
+const NOTE_X = "tools/x.py: written by x (m/p, run R2)";
+const NOTE_C = "lib/c.ts: written by c (m/c, run —)";
+const NOTE_W = "web/app.tsx: written by w (m/w, run R3)";
+
+describe("Seed From Ownership", () => {
+  test("Seed From Ownership example 1: code files still in the listing, limit 3", () => {
+    const seed: ScoutSeed = seedFromOwnership(OWNERSHIP, FILES, 3);
+    expect(seed).toStrictEqual({
+      source: "primer",
+      files: ["src/q.ts", "tools/x.py", "lib/c.ts"],
+      notes: [NOTE_Q, NOTE_X, NOTE_C],
+    });
+  });
+
+  test("Seed From Ownership example 2: limit 10, limit 0 and no paths", () => {
+    const wide: ScoutSeed = seedFromOwnership(OWNERSHIP, FILES, 10);
+    expect(wide).toStrictEqual({
+      source: "primer",
+      files: ["src/q.ts", "tools/x.py", "lib/c.ts", "web/app.tsx"],
+      notes: [NOTE_Q, NOTE_X, NOTE_C, NOTE_W],
+    });
+
+    const zero: ScoutSeed = seedFromOwnership(OWNERSHIP, FILES, 0);
+    expect(zero).toStrictEqual({ source: "primer", files: [], notes: [] });
+
+    const none: ScoutSeed = seedFromOwnership({ paths: [] }, FILES, 6);
+    expect(none).toStrictEqual({ source: "primer", files: [], notes: [] });
+  });
+
+  test("Seed From Ownership example 3: renderSeed by whole note lines", () => {
+    const seed: ScoutSeed = seedFromOwnership(OWNERSHIP, FILES, 3);
+
+    expect(renderSeed(seed, 8000)).toBe(
+      SEED_HEADER + "\n" + "- " + NOTE_Q + "\n" + "- " + NOTE_X + "\n" + "- " + NOTE_C + "\n",
+    );
+
+    const exact = SEED_HEADER.length + 1 + ("- " + NOTE_Q + "\n").length;
+    expect(renderSeed(seed, exact)).toBe(
+      SEED_HEADER + "\n" + "- " + NOTE_Q + "\n" + "- … 2 more seeded files not shown\n",
+    );
+
+    expect(renderSeed(seed, 10)).toBe(SEED_HEADER + "\n" + "- … 3 more seeded files not shown\n");
+
+    const empty: ScoutSeed = { source: "primer", files: [], notes: [] };
+    expect(renderSeed(empty, 8000)).toBe("");
+  });
+});
+```

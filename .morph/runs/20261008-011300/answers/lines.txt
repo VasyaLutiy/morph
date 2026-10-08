@@ -1,0 +1,16 @@
+morph run: cage-path.v1 accepted stage 6 frozen finish stop chars 2167
+morph run: cage-path.v2 untried stage 0 finish stop chars 1972
+morph run: parse-turn.v1 accepted stage 6 frozen finish stop chars 4871
+morph run: parse-turn.v2 untried stage 0 finish stop chars 5024
+morph run: seed-from-ownership.v1 accepted stage 6 frozen finish stop chars 2868
+morph run: seed-from-ownership.v2 untried stage 0 finish stop chars 2164
+morph run: spend-budget.v1 rejected stage 1 tsc finish stop chars 2648
+morph run: spend-budget.v2 accepted stage 6 frozen finish stop chars 3964
+morph run: cage-path-judge.v1 rejected stage 1 tsc finish stop chars 4042
+morph run: parse-turn-judge.v1 accepted stage 6 frozen finish stop chars 4868
+morph run: run-tool.v1 accepted stage 6 frozen finish stop chars 7169
+morph run: run-tool.v2 untried stage 0 finish stop chars 7047
+morph run: seed-from-ownership-judge.v1 accepted stage 6 frozen finish stop chars 3566
+morph run: spend-budget-judge.v1 accepted stage 6 frozen finish stop chars 4988
+morph run: cage-path-judge.r1.v1 accepted stage 6 frozen finish stop chars 4081
+morph run: run-tool-judge.v1 accepted stage 6 frozen finish stop chars 9379

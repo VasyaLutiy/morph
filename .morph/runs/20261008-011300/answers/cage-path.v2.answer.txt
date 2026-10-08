@@ -1,0 +1,81 @@
+```ts
+import { posix } from "node:path";
+
+export interface ScoutFs {
+  realpath(path: string): string;
+  readFile(path: string): string;
+}
+
+export interface ScoutTree {
+  root: string;
+  files: string[];
+}
+
+export type Caged = { ok: true; path: string } | { ok: false; error: string };
+
+export function cagePath(
+  tree: ScoutTree,
+  path: string,
+  kind: "file" | "dir",
+  fs: ScoutFs,
+): Caged {
+  const given = path;
+  const s = path.replace(/\\/g, "/");
+
+  if (s.startsWith("/") || /^[A-Za-z]:\//.test(s)) {
+    return { ok: false, error: `absolute path refused: ${given}` };
+  }
+
+  const segments = s.split("/");
+  if (segments.includes("..")) {
+    return { ok: false, error: `path leaves the root: ${given}` };
+  }
+
+  const segs = segments.filter((seg) => seg !== "" && seg !== ".");
+  if (segs.includes(".git")) {
+    return { ok: false, error: `inside .git: ${given}` };
+  }
+
+  const rel = segs.join("/");
+
+  if (rel === "") {
+    if (kind === "dir") return { ok: true, path: "" };
+    return { ok: false, error: "empty path" };
+  }
+
+  if (kind === "dir") {
+    const prefix = rel + "/";
+    if (tree.files.some((file) => file.startsWith(prefix))) {
+      return { ok: true, path: rel };
+    }
+    return { ok: false, error: `no such directory in the tree: ${given}` };
+  }
+
+  if (!tree.files.includes(rel)) {
+    return {
+      ok: false,
+      error: `not in the tree (missing, ignored or a directory): ${given}`,
+    };
+  }
+
+  let real: string;
+  try {
+    real = fs.realpath(posix.join(tree.root, rel));
+  } catch {
+    return { ok: false, error: `no such file: ${given}` };
+  }
+
+  const rootReal = fs.realpath(tree.root);
+  const prefix = rootReal + "/";
+  if (!real.startsWith(prefix)) {
+    return { ok: false, error: `symlink out of the root refused: ${given}` };
+  }
+
+  const rest = real.slice(prefix.length);
+  if (rest.split("/").includes(".git")) {
+    return { ok: false, error: `inside .git: ${given}` };
+  }
+
+  return { ok: true, path: rel };
+}
+```

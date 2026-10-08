@@ -1,0 +1,121 @@
+```
+import fs from "node:fs";
+import {
+  cagePath,
+  type Caged,
+  type ScoutFs,
+  type ScoutTree,
+} from "../../src/scout/cagePath.js";
+import { tmpRoot } from "../helpers.js";
+
+const MEM: ScoutFs = {
+  realpath: (p) => p,
+  readFile: (p) => {
+    throw new Error("no read: " + p);
+  },
+};
+
+const NODE_FS: ScoutFs = {
+  realpath: (p) => fs.realpathSync(p),
+  readFile: (p) => fs.readFileSync(p, "utf8"),
+};
+
+const TREE: ScoutTree = {
+  root: "/r",
+  files: ["src/a.ts", "lib/b one.ts", "docs/n.md"],
+};
+
+test("Cage Path example 1: the tree decides what exists", () => {
+  const ok = (path: string): Caged => ({ ok: true, path });
+
+  expect(cagePath(TREE, "src/a.ts", "file", MEM)).toStrictEqual(ok("src/a.ts"));
+  expect(cagePath(TREE, "./lib/b one.ts", "file", MEM)).toStrictEqual(
+    ok("lib/b one.ts"),
+  );
+  expect(cagePath(TREE, "src\\a.ts", "file", MEM)).toStrictEqual(ok("src/a.ts"));
+  expect(cagePath(TREE, "src//./a.ts", "file", MEM)).toStrictEqual(ok("src/a.ts"));
+
+  expect(cagePath(TREE, "src/", "dir", MEM)).toStrictEqual(ok("src"));
+  expect(cagePath(TREE, "", "dir", MEM)).toStrictEqual(ok(""));
+  expect(cagePath(TREE, ".", "dir", MEM)).toStrictEqual(ok(""));
+});
+
+test("Cage Path example 2: the ten refusals", () => {
+  const no = (error: string): Caged => ({ ok: false, error });
+
+  expect(cagePath(TREE, "", "file", MEM)).toStrictEqual(no("empty path"));
+  expect(cagePath(TREE, "/etc/passwd", "file", MEM)).toStrictEqual(
+    no("absolute path refused: /etc/passwd"),
+  );
+  expect(cagePath(TREE, "C:\\x.ts", "file", MEM)).toStrictEqual(
+    no("absolute path refused: C:\\x.ts"),
+  );
+  expect(cagePath(TREE, "../etc/passwd", "file", MEM)).toStrictEqual(
+    no("path leaves the root: ../etc/passwd"),
+  );
+  expect(cagePath(TREE, "src/../../x", "dir", MEM)).toStrictEqual(
+    no("path leaves the root: src/../../x"),
+  );
+  expect(cagePath(TREE, ".git/config", "file", MEM)).toStrictEqual(
+    no("inside .git: .git/config"),
+  );
+  expect(cagePath(TREE, "src/b.ts", "file", MEM)).toStrictEqual(
+    no("not in the tree (missing, ignored or a directory): src/b.ts"),
+  );
+  expect(cagePath(TREE, "src", "file", MEM)).toStrictEqual(
+    no("not in the tree (missing, ignored or a directory): src"),
+  );
+  expect(cagePath(TREE, "docs/n.md", "dir", MEM)).toStrictEqual(
+    no("no such directory in the tree: docs/n.md"),
+  );
+  expect(cagePath(TREE, "lib/b", "dir", MEM)).toStrictEqual(
+    no("no such directory in the tree: lib/b"),
+  );
+});
+
+test("Cage Path example 3: realpath against the root, root p/t then p/link", () => {
+  const p = tmpRoot("morph-cage-");
+  try {
+    p.write("t/src/a.ts", "a\n");
+    p.write("t/.git/config", "[core]\n");
+    p.write("t-out/secret.txt", "s\n");
+    fs.symlinkSync(p.path("t-out/secret.txt"), p.path("t/out.txt"));
+    fs.symlinkSync("src/a.ts", p.path("t/in.txt"));
+    fs.symlinkSync(".git/config", p.path("t/gitcfg"));
+    fs.symlinkSync("nowhere.ts", p.path("t/gone.ts"));
+    fs.symlinkSync(p.path("t"), p.path("link"));
+
+    const files = ["src/a.ts", "out.txt", "in.txt", "gitcfg", "gone.ts"];
+    const tree: ScoutTree = { root: p.path("t"), files };
+
+    expect(cagePath(tree, "out.txt", "file", NODE_FS)).toStrictEqual({
+      ok: false,
+      error: "symlink out of the root refused: out.txt",
+    });
+    expect(cagePath(tree, "in.txt", "file", NODE_FS)).toStrictEqual({
+      ok: true,
+      path: "in.txt",
+    });
+    expect(cagePath(tree, "gitcfg", "file", NODE_FS)).toStrictEqual({
+      ok: false,
+      error: "inside .git: gitcfg",
+    });
+    expect(cagePath(tree, "gone.ts", "file", NODE_FS)).toStrictEqual({
+      ok: false,
+      error: "no such file: gone.ts",
+    });
+
+    const linked: ScoutTree = { root: p.path("link"), files };
+    expect(cagePath(linked, "src/a.ts", "file", NODE_FS)).toStrictEqual({
+      ok: true,
+      path: "src/a.ts",
+    });
+    expect(cagePath(linked, "out.txt", "file", NODE_FS)).toStrictEqual({
+      ok: false,
+      error: "symlink out of the root refused: out.txt",
+    });
+  } finally {
+    p.rm();
+  }
+});
+```

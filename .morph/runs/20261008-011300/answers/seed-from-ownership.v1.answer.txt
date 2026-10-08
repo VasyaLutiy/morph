@@ -1,0 +1,100 @@
+```typescript
+import { isTest, profileForPath } from "../language/paths.js";
+
+/** The part of git's Ownership the seed reads (structurally Read Ownership's result). */
+export interface SeedOwnership {
+  paths: {
+    path: string;
+    writes: { card: string; model: string; run: string | null }[];
+  }[];
+}
+
+/** What Seed From Ownership returns. */
+export interface ScoutSeed {
+  source: "primer";
+  files: string[];
+  notes: string[];
+}
+
+/** Defaults of the seed (P13b: limit and maxChars). */
+export const SEED_FILES = 6;
+export const SEED_CHARS = 8000;
+
+/** How many writes of a path a note names. */
+export const SEED_WRITES = 3;
+
+export const SEED_HEADER =
+  "Seed: code the project's cards wrote, most recently written first (git Morph-Card trailers):";
+
+function noteFor(entry: SeedOwnership["paths"][number]): string {
+  const shown = entry.writes.slice(0, SEED_WRITES);
+  const parts = shown.map((w) => {
+    const model = w.model === "" ? "—" : w.model;
+    const run = w.run === null ? "—" : w.run;
+    return `${w.card} (${model}, run ${run})`;
+  });
+  let note = `${entry.path}: written by ${parts.join("; ")}`;
+  const extra = entry.writes.length - shown.length;
+  if (extra > 0) {
+    note += `; … ${extra} more`;
+  }
+  return note;
+}
+
+/**
+ * The head of git's ownership as the scout's seed: code the project's cards
+ * wrote, most recently written first, still in the tree's listing.
+ */
+export function seedFromOwnership(ownership: SeedOwnership, files: string[], limit: number): ScoutSeed {
+  const listing = new Set(files);
+  const kept: string[] = [];
+  const notes: string[] = [];
+  for (const entry of ownership.paths) {
+    if (kept.length >= limit) {
+      break;
+    }
+    const path = entry.path;
+    if (!listing.has(path)) {
+      continue;
+    }
+    const profile = profileForPath(path);
+    if (profile === null) {
+      continue;
+    }
+    if (isTest(profile, path)) {
+      continue;
+    }
+    kept.push(path);
+    notes.push(noteFor(entry));
+  }
+  return { source: "primer", files: kept, notes };
+}
+
+/**
+ * The round-zero text of a seed, cut by whole note lines: notes are added while
+ * the text stays within maxChars; the first that does not fit and every later
+ * one are left out, replaced by a tail naming how many were not shown.
+ */
+export function renderSeed(seed: ScoutSeed, maxChars: number): string {
+  if (seed.files.length === 0) {
+    return "";
+  }
+  let text = SEED_HEADER + "\n";
+  let shown = 0;
+  for (const note of seed.notes) {
+    const line = "- " + note + "\n";
+    if (text.length + line.length <= maxChars) {
+      text += line;
+      shown += 1;
+    } else {
+      break;
+    }
+  }
+  const hidden = seed.notes.length - shown;
+  if (hidden > 0) {
+    const noun = hidden === 1 ? " more seeded file not shown" : " more seeded files not shown";
+    text += "- … " + hidden + noun + "\n";
+  }
+  return text;
+}
+```

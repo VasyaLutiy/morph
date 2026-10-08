@@ -1,0 +1,83 @@
+```typescript
+import { isTest, profileForPath } from "../language/paths.js";
+
+export interface SeedOwnership {
+  paths: {
+    path: string;
+    writes: { card: string; model: string; run: string | null }[];
+  }[];
+}
+
+export interface ScoutSeed {
+  source: "primer";
+  files: string[];
+  notes: string[];
+}
+
+export const SEED_FILES = 6;
+export const SEED_CHARS = 8000;
+export const SEED_WRITES = 3;
+export const SEED_HEADER =
+  "Seed: code the project's cards wrote, most recently written first (git Morph-Card trailers):";
+
+function writeText(write: { card: string; model: string; run: string | null }): string {
+  const model = write.model === "" ? "—" : write.model;
+  const run = write.run === null ? "—" : write.run;
+  return `${write.card} (${model}, run ${run})`;
+}
+
+export function seedFromOwnership(
+  ownership: SeedOwnership,
+  files: string[],
+  limit: number,
+): ScoutSeed {
+  const seeded: string[] = [];
+  const notes: string[] = [];
+  for (const entry of ownership.paths) {
+    if (seeded.length >= limit) {
+      break;
+    }
+    if (!files.includes(entry.path)) {
+      continue;
+    }
+    const profile = profileForPath(entry.path);
+    if (profile === null) {
+      continue;
+    }
+    if (isTest(profile, entry.path)) {
+      continue;
+    }
+    const shown = entry.writes.slice(0, SEED_WRITES);
+    const rest = entry.writes.length - shown.length;
+    let note = `${entry.path}: written by ${shown.map(writeText).join("; ")}`;
+    if (rest > 0) {
+      note += `; … ${rest} more`;
+    }
+    seeded.push(entry.path);
+    notes.push(note);
+  }
+  return { source: "primer", files: seeded, notes };
+}
+
+export function renderSeed(seed: ScoutSeed, maxChars: number): string {
+  if (seed.files.length === 0) {
+    return "";
+  }
+  let text = SEED_HEADER + "\n";
+  let shown = 0;
+  for (const note of seed.notes) {
+    const line = `- ${note}\n`;
+    if (text.length + line.length > maxChars) {
+      break;
+    }
+    text += line;
+    shown += 1;
+  }
+  const hidden = seed.notes.length - shown;
+  if (hidden > 0) {
+    const noun = hidden === 1 ? "file" : "files";
+    text += `- … ${hidden} more seeded ${noun} not shown\n`;
+  }
+  return text;
+}
+```

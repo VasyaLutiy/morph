@@ -1,0 +1,96 @@
+```ts
+import { posix } from "node:path";
+
+export interface ScoutFs {
+  realpath(path: string): string;
+  readFile(path: string): string;
+}
+
+export interface ScoutTree {
+  root: string;
+  files: string[];
+}
+
+export type Caged = { ok: true; path: string } | { ok: false; error: string };
+
+export function cagePath(
+  tree: ScoutTree,
+  path: string,
+  kind: "file" | "dir",
+  fs: ScoutFs,
+): Caged {
+  const p = path;
+  const s = path.replace(/\\/g, "/");
+
+  if (s.startsWith("/") || /^[A-Za-z]:\//.test(s)) {
+    return { ok: false, error: `absolute path refused: ${p}` };
+  }
+
+  const rawSegs = s.split("/");
+  for (const seg of rawSegs) {
+    if (seg === "..") {
+      return { ok: false, error: `path leaves the root: ${p}` };
+    }
+  }
+
+  const segs: string[] = [];
+  for (const seg of rawSegs) {
+    if (seg === "" || seg === ".") continue;
+    if (seg === ".git") {
+      return { ok: false, error: `inside .git: ${p}` };
+    }
+    segs.push(seg);
+  }
+
+  const rel = segs.join("/");
+
+  if (rel === "") {
+    if (kind === "dir") return { ok: true, path: "" };
+    return { ok: false, error: "empty path" };
+  }
+
+  if (kind === "dir") {
+    const prefix = rel + "/";
+    for (const file of tree.files) {
+      if (file.startsWith(prefix)) return { ok: true, path: rel };
+    }
+    return { ok: false, error: `no such directory in the tree: ${p}` };
+  }
+
+  let listed = false;
+  for (const file of tree.files) {
+    if (file === rel) {
+      listed = true;
+      break;
+    }
+  }
+  if (!listed) {
+    return {
+      ok: false,
+      error: `not in the tree (missing, ignored or a directory): ${p}`,
+    };
+  }
+
+  let real: string;
+  try {
+    real = fs.realpath(posix.join(tree.root, rel));
+  } catch {
+    return { ok: false, error: `no such file: ${p}` };
+  }
+
+  const rootReal = fs.realpath(tree.root);
+  const prefix = rootReal + "/";
+  if (!real.startsWith(prefix)) {
+    return { ok: false, error: `symlink out of the root refused: ${p}` };
+  }
+
+  const rest = real.slice(prefix.length);
+  for (const seg of rest.split("/")) {
+    if (seg === ".git") {
+      return { ok: false, error: `inside .git: ${p}` };
+    }
+  }
+
+  return { ok: true, path: rel };
+}
+```

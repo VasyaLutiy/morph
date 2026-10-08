@@ -1,0 +1,347 @@
+{
+  "runId": "20261008-011300",
+  "completedAt": 1791422642895,
+  "branch": "morph/20261008-011300",
+  "processor": "ds",
+  "generations": 3,
+  "outcomes": [
+    {
+      "customId": "cage-path",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "cage-path.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "2855bf3054552c7b20255b3d4cf5705bfbbe397b",
+      "diffstat": {
+        "files": 1,
+        "insertions": 94,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "parse-turn",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-turn.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "da4ff1c31a4edffa96c0e58e9b5fd653cf3bff25",
+      "diffstat": {
+        "files": 1,
+        "insertions": 172,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "seed-from-ownership",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "seed-from-ownership.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "371706266de8b4d2579ea684ea20595f8ca56014",
+      "diffstat": {
+        "files": 1,
+        "insertions": 98,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "spend-budget",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "spend-budget.v2",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\nprobe/spend-budget/spend-budget.probe.ts(6,10): error TS2305: Module '\"../../src/scout/spendBudget.js\"' has no exported member 'CLIP_MARKER'.\nprobe/spend-budget/spend-budget.probe.ts(6,23): error TS2305: Module '\"../../src/scout/spendBudget.js\"' has no exported member 'DEFAULT_BUDGETS'.\nprobe/spend-budget/spend-budget.probe.ts(6,40): error TS2305: Module '\"../../src/scout/spendBudget.js\"' has no exported member 'FINAL_TURN'.\nprobe/spend-budget/spend-budget.probe.ts(6,52): error TS2305: Module '\"../../src/scout/spendBudget.js\"' has no exported member 'spendTurn'.\nprobe/spend-budget/spend-budget.probe.ts(6,63): error TS2305: Module '\"../../src/scout/spendBudget.js\"' has no exported member 'stopReason'.\nprobe/spend-budget/spend-budget.probe.ts(7,15): error TS2305: Module '\"../../src/scout/spendBudget.js\"' has no exported member 'Charged'.\nprobe/spend-budget/spend-budget.probe.ts(7,24): error TS2305: Module '\"../../src/scout/spendBudget.js\"' has no exported member 'ScoutBudgets'.\nprobe/spend-budget/spend-budget.probe.ts(7,38): error TS2305: Module '\"../../src/scout/spendBudget.js\"' has no exported member 'ScoutSpent'.\n"
+      ],
+      "commit": "c3aa908c6b23f16956b605b8575f23b3dd68fdc3",
+      "diffstat": {
+        "files": 1,
+        "insertions": 129,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "cage-path-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "cage-path-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/scout/cagePath.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/scout/cagePath.examples.test.ts(27,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/scout/cagePath.examples.test.ts(30,3): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(31,3): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(34,3): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(35,3): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(37,3): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(38,3): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(42,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/scout/cagePath.examples.test.ts(45,3): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(46,3): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(49,3): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(52,3): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(55,3): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(58,3): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(61,3): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(64,3): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(67,3): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(70,3): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(75,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/scout/cagePath.examples.test.ts(90,5): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(94,5): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(98,5): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(102,5): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(108,5): error TS2304: Cannot find name 'expect'.\ntests/scout/cagePath.examples.test.ts(112,5): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": "7e4b7c009f1a6703edbdf60f736e45d520ee6e5f",
+      "diffstat": {
+        "files": 1,
+        "insertions": 120,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "parse-turn-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-turn-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/scout/parseTurn.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "f30b91d295a252054001754124feb85dff8629fe",
+      "diffstat": {
+        "files": 1,
+        "insertions": 140,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "run-tool",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-tool.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "b4f8f8e4593db96fa3e5f796a8fd34721ccba385",
+      "diffstat": {
+        "files": 1,
+        "insertions": 280,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "seed-from-ownership-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "seed-from-ownership-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/scout/seedFromOwnership.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "edabb26334db25fb91f7f61a2014b08782b6e1b5",
+      "diffstat": {
+        "files": 1,
+        "insertions": 111,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "spend-budget-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "spend-budget-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/scout/spendBudget.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "abb5dc2f6e8b5b68ab758e56baeaddd2c1bea744",
+      "diffstat": {
+        "files": 1,
+        "insertions": 189,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "run-tool-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-tool-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/scout/runTool.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "63bb4b1b1e64f389c1f9d35081265051202e57e4",
+      "diffstat": {
+        "files": 1,
+        "insertions": 388,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 291526,
+    "outputTokens": 87829,
+    "cost": 0.15445644,
+    "requests": 16
+  },
+  "requests": [
+    {
+      "customId": "cage-path.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791421980-YmXYWdABinzyC0yhlcgm",
+      "inputTokens": 16514,
+      "outputTokens": 1722,
+      "cost": 0.0070206,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cage-path.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791421981-g5zb4aWdTlrLFg10hV4M",
+      "inputTokens": 16514,
+      "outputTokens": 2249,
+      "cost": 0.007653,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-turn.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791421980-dzGZyfINENlyHSF5rL76",
+      "inputTokens": 16928,
+      "outputTokens": 8428,
+      "cost": 0.015192,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-turn.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791421987-OAmQtNOXAnnbBtK6LURP",
+      "inputTokens": 16928,
+      "outputTokens": 7669,
+      "cost": 0.00985752,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "seed-from-ownership.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791421990-qJANpGWYbTte13OAdE7O",
+      "inputTokens": 16789,
+      "outputTokens": 2357,
+      "cost": 0.00399438,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "seed-from-ownership.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791422000-sPjvYlFhjyD3fD2ELm51",
+      "inputTokens": 16789,
+      "outputTokens": 4457,
+      "cost": 0.00596142,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "spend-budget.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791422012-GQyA26mxGbkID4vfQGmt",
+      "inputTokens": 16717,
+      "outputTokens": 4824,
+      "cost": 0.00693318,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "spend-budget.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791422017-95WHvsd0pu2R7W6p8So7",
+      "inputTokens": 16717,
+      "outputTokens": 1841,
+      "cost": 0.00280062,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cage-path-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791422232-f6O0ZXAxlZMmPo0NviNA",
+      "inputTokens": 17714,
+      "outputTokens": 2532,
+      "cost": 0.0083526,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-turn-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791422232-ePWXLzxwSk0MyfR08ERn",
+      "inputTokens": 18585,
+      "outputTokens": 3229,
+      "cost": 0.0094503,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-tool.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791422232-iOF1w2YkX30S9yebGLQM",
+      "inputTokens": 19433,
+      "outputTokens": 16017,
+      "cost": 0.02117958,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-tool.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791422243-HKRPZtyAPIY5yGKEHVXR",
+      "inputTokens": 19433,
+      "outputTokens": 10814,
+      "cost": 0.01358814,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "seed-from-ownership-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791422247-dI0mnFn5XcrPRJUlOYmq",
+      "inputTokens": 17691,
+      "outputTokens": 3092,
+      "cost": 0.00514698,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "spend-budget-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791422261-zo24g87uIE1G8ptsfTY4",
+      "inputTokens": 18243,
+      "outputTokens": 8846,
+      "cost": 0.01221738,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cage-path-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791422502-osA2bqu39etpUSHFwmDD",
+      "inputTokens": 25780,
+      "outputTokens": 1434,
+      "cost": 0.0094548,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-tool-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791422561-GS6lgd1ftzVJL9XtBCUA",
+      "inputTokens": 20751,
+      "outputTokens": 8318,
+      "cost": 0.01565394,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}
