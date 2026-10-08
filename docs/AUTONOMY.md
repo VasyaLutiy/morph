@@ -63,12 +63,17 @@ installs `decks/tools/goguard.mjs` and `gofirstdiff.mjs` as its guard.mjs/firstd
    targets, slices, acceptances, max_tokens; instructions differ by the P10a design); every
    acceptance red per example on stubs in a scratch worktree; mutations killed (**every mutant run
    under a timeout**, `subprocess.run(..., timeout=120)`, a timeout counted as killed — operator
-   07.10, after a mutant made a batch-wait loop infinite and hung the P11b mutation run 28 min); the data and the
+   07.10, after a mutant made a batch-wait loop infinite and hung the P11b mutation run 28 min).
+   **Mutation cap (operator 08.10):** mutants target only the record's examples and the contracts the
+   phase changes, **at most 30 per phase and at most 20 min of mutation runs in total**; survivors
+   beyond the cap (untried or unkilled) go to `docs/DECISIONS.md` as a known risk naming the file and
+   the mutation, and do not block the gate. The P15 preparation (full campaign, 72 min) is the
+   baseline; record the mutant count and minutes in the MEASURE notes of every phase; the data and the
    deck committed on `main`.
 2. **Gate without the operator.** The run starts by itself only when ALL hold:
    `morph plan` exit 0; `morph deck check` errors 0; the mrph cross-check shows no difference
    but the instructions; every probe red per example with a readable line on the stubs; chain
-   under 250 s each; every mutant run under a timeout; forecast ≤ $1 for the phase; no slice over 200 KB. Otherwise the phase stops with a report in `docs/MEASURE.md` (row with
+   under 250 s each; every mutant run under a timeout and the mutation cap kept (≤ 30 mutants, ≤ 20 min); forecast ≤ $1 for the phase; no slice over 200 KB. Otherwise the phase stops with a report in `docs/MEASURE.md` (row with
    "stopped at gate: <reason>") and the session moves to the next phase whose dependencies
    are met.
 3. **Run** (the session itself or a run agent): from the repo root, the binary copy
