@@ -332,7 +332,7 @@ kept for a patched file) → `vitest run <targets>` → eslint's verdict → ful
 | `tests/builder/buildAcceptances.examples.test.ts` | no | 8 | 10 | `Build Acceptances example 5`, `… 6`, `(only typescript, go)`, `builder/go/code1.txt`, `card 'a' has no go target`, `_percent-of_probe_test.go` |
 | `tests/planner/cut.examples.test.ts` | no | 12 | 13 | `Component 'ledger': unknown language 'rust' (known: typescript, python, go)` |
 | `tests/planner/plan.examples.test.ts` | no | 11 | 12 | `the map: unknown language 'cobol' (known: typescript, python, go)` |
-| `tests/cli/planCommand.p15.examples.test.ts` | yes | 1 | 5 | `Plan Command example 9`, `cli/goMini.deck.json`, `go-mini/decks/m1/parts/_percent-of_probe_test.go`, `decks/m1/deck2.json` |
+| `tests/cli/planCommand.p15.examples.test.ts` | yes | 1 | 5 | `Plan Command example 9`, `cli/goMini.deck.json`, `decks/m1/parts/_percent-of_probe_test.go`, `decks/m1/deck2.json` |
 | `tests/primer/primerCommand.p15.examples.test.ts` | yes | 1 | 5 | `Primer Command example 7`, `func TestB_2(t *testing.T) {}`, `func Testable(t *testing.T) {}`, `report/r_test.go` |
 
 min = the file's tests now + the new examples; max = min + 2 (patched) or + 6 (new).

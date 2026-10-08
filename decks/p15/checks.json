@@ -123,7 +123,7 @@
      "lits": [
       "Plan Command example 9",
       "cli/goMini.deck.json",
-      "go-mini/decks/m1/parts/_percent-of_probe_test.go",
+      "decks/m1/parts/_percent-of_probe_test.go",
       "decks/m1/deck2.json"
      ]
     }
