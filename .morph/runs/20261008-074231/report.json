@@ -1,0 +1,409 @@
+{
+  "runId": "20261008-074231",
+  "completedAt": 1791446462000,
+  "branch": "morph/20261008-074231",
+  "processor": "ds",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "go-acceptance",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "go-acceptance.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "a7c29b72dc18e67077e989cd54198a3ccd7b6a9a",
+      "diffstat": {
+        "files": 1,
+        "insertions": 177,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "profiles",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "profiles.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "37b14056368667dd15744afeffb57075beec5191",
+      "diffstat": {
+        "files": 2,
+        "insertions": 21,
+        "deletions": 2
+      }
+    },
+    {
+      "customId": "build-acceptances",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "build-acceptances.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "337db04d76728b5f74d9691dbe3a6933abc80949",
+      "diffstat": {
+        "files": 1,
+        "insertions": 27,
+        "deletions": 5
+      }
+    },
+    {
+      "customId": "go-acceptance-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "go-acceptance-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/goAcceptance.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "b4d7f3479493e67c1fce92ae97cc2885e9a6d0d4",
+      "diffstat": {
+        "files": 1,
+        "insertions": 125,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "primer-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "primer-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "8390e2b8a497469b4ba755e2532331349b7fe5ac",
+      "diffstat": {
+        "files": 1,
+        "insertions": 1,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "profiles-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "profiles-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/language/profiles.examples.test.ts\n== names tests/language/profiles.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "bf999072ebc6a174a39447f81765b9f18a1258f9",
+      "diffstat": {
+        "files": 1,
+        "insertions": 11,
+        "deletions": 4
+      }
+    },
+    {
+      "customId": "build-acceptances-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "build-acceptances-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/buildAcceptances.examples.test.ts\n== names tests/builder/buildAcceptances.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "1d6d10e62dd0ec17957d797c2b07921b192a3733",
+      "diffstat": {
+        "files": 1,
+        "insertions": 47,
+        "deletions": 3
+      }
+    },
+    {
+      "customId": "cut-component-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "cut-component-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/planner/cut.examples.test.ts\n== names tests/planner/cut.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "a07d171050958b21fb395c6b917fb873e52f0f35",
+      "diffstat": {
+        "files": 1,
+        "insertions": 2,
+        "deletions": 2
+      }
+    },
+    {
+      "customId": "plan-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "6210f5ca7a469157dcd542104d2ae42830ffe7ed",
+      "diffstat": {
+        "files": 2,
+        "insertions": 15,
+        "deletions": 7
+      }
+    },
+    {
+      "customId": "primer-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "primer-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/primer/primerCommand.p15.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "42ab136d9123a6b18d545cb462ac67875cb176f9",
+      "diffstat": {
+        "files": 1,
+        "insertions": 39,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 3,
+      "winningVariant": "plan-command-judge.r2.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/planCommand.p15.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/cli/planCommand.p15.examples.test.ts(18,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/planCommand.p15.examples.test.ts(38,5): error TS2304: Cannot find name 'expect'.\ntests/cli/planCommand.p15.examples.test.ts(40,5): error TS2304: Cannot find name 'expect'.\ntests/cli/planCommand.p15.examples.test.ts(41,5): error TS2304: Cannot find name 'expect'.\ntests/cli/planCommand.p15.examples.test.ts(47,5): error TS2304: Cannot find name 'expect'.\ntests/cli/planCommand.p15.examples.test.ts(48,5): error TS2304: Cannot find name 'expect'.\ntests/cli/planCommand.p15.examples.test.ts(54,5): error TS2304: Cannot find name 'expect'.\ntests/cli/planCommand.p15.examples.test.ts(55,5): error TS2304: Cannot find name 'expect'.\n",
+        "== tsc\n== eslint\n\n/home/morph/MorphV2/tests/cli/planCommand.p15.examples.test.ts\n  50:69  error  Spaces are hard to count. Use {6}  no-regex-spaces\n\n✖ 1 problem (1 error, 0 warnings)\n  1 error and 0 warnings potentially fixable with the `--fix` option.\n\n== guard tests/cli/planCommand.p15.examples.test.ts\n== own\n== eslint failed (see above); every step between it and here passed\n"
+      ],
+      "commit": "4eed88a2c85ab33b23bafa54c54114039aa4301c",
+      "diffstat": {
+        "files": 1,
+        "insertions": 59,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-spec-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-spec-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/planner/plan.examples.test.ts\n== names tests/planner/plan.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "9500d128d54f7797d3c842efff29e7670df13df7",
+      "diffstat": {
+        "files": 1,
+        "insertions": 1,
+        "deletions": 1
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 420822,
+    "outputTokens": 71553,
+    "cost": 0.19286028000000002,
+    "requests": 19
+  },
+  "requests": [
+    {
+      "customId": "go-acceptance.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791445351-bk2mrOU39cmrXYWoJ0DD",
+      "inputTokens": 23432,
+      "outputTokens": 10510,
+      "cost": 0.0196416,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "go-acceptance.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791445351-W8dG4JxvWExcRY0cnqfk",
+      "inputTokens": 23432,
+      "outputTokens": 7085,
+      "cost": 0.0155316,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "profiles.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791445351-k1TaaDfKtqPxTas2dpiV",
+      "inputTokens": 18970,
+      "outputTokens": 1684,
+      "cost": 0.0077118,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "profiles.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791445363-bycQmZdrbyzNJCxMjt5w",
+      "inputTokens": 18970,
+      "outputTokens": 2725,
+      "cost": 0.00398436,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791445567-mTmZ44uNudMMnXoeaxwe",
+      "inputTokens": 22251,
+      "outputTokens": 2493,
+      "cost": 0.00368802,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791445567-8AzqGPRWuGofn2r5WNqw",
+      "inputTokens": 22251,
+      "outputTokens": 2043,
+      "cost": 0.0091269,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "go-acceptance-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791445567-YDeyAW6HSBQn7RivPbyS",
+      "inputTokens": 20485,
+      "outputTokens": 2703,
+      "cost": 0.0093891,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "primer-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791445581-jv1FYpVFk9QeX1ecwJ4D",
+      "inputTokens": 20338,
+      "outputTokens": 2134,
+      "cost": 0.0086622,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "primer-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791445585-0iIAKaa55Crn6llw0fCB",
+      "inputTokens": 20338,
+      "outputTokens": 2092,
+      "cost": 0.00335868,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "profiles-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791445588-WPe7CTSTdHmJXbAK2bUc",
+      "inputTokens": 20262,
+      "outputTokens": 1327,
+      "cost": 0.007671,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-component-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791445594-vU7xrYiAYZxjMfOuH0FC",
+      "inputTokens": 21587,
+      "outputTokens": 2773,
+      "cost": 0.0098037,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791445597-vaXPfrEf9JDxRc56NyzT",
+      "inputTokens": 21963,
+      "outputTokens": 2789,
+      "cost": 0.0099357,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791445989-eu2WQnHallRnHYQPv6qm",
+      "inputTokens": 24317,
+      "outputTokens": 4823,
+      "cost": 0.0130827,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791445989-2tPkU5QPIIY7O8uda8ds",
+      "inputTokens": 22031,
+      "outputTokens": 3178,
+      "cost": 0.0104229,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791445989-h7m6s0S9b47hMaw9ZaVJ",
+      "inputTokens": 22031,
+      "outputTokens": 5371,
+      "cost": 0.0130545,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "primer-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791446011-sB4AJ7xGgkmQ7MVrFaWE",
+      "inputTokens": 23486,
+      "outputTokens": 2613,
+      "cost": 0.0101814,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791446227-CN9w3Gaw6oi2NBHR8aS3",
+      "inputTokens": 20040,
+      "outputTokens": 8394,
+      "cost": 0.0160848,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791446308-wRqklyUJt0adnuxJof13",
+      "inputTokens": 27397,
+      "outputTokens": 5985,
+      "cost": 0.01429518,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command-judge.r2.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791446379-NzKVFrzU0ye9ewnM3aDS",
+      "inputTokens": 27241,
+      "outputTokens": 831,
+      "cost": 0.00723414,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}

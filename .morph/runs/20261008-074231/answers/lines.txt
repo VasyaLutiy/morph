@@ -1,0 +1,19 @@
+morph run: go-acceptance.v1 accepted stage 7 frozen finish stop chars 6021
+morph run: go-acceptance.v2 untried stage 0 finish stop chars 6028
+morph run: profiles.v1 accepted stage 7 frozen finish stop chars 6092
+morph run: profiles.v2 untried stage 0 finish stop chars 6092
+morph run: build-acceptances.v1 accepted stage 7 frozen finish stop chars 5449
+morph run: build-acceptances.v2 untried stage 0 finish stop chars 5605
+morph run: go-acceptance-judge.v1 accepted stage 7 frozen finish stop chars 3628
+morph run: primer-command.v1 accepted stage 7 frozen finish stop chars 6849
+morph run: primer-command.v2 untried stage 0 finish stop chars 6851
+morph run: profiles-judge.v1 accepted stage 8 frozen finish stop chars 3434
+morph run: cut-component-judge.v1 accepted stage 8 frozen finish stop chars 8656
+morph run: plan-spec-judge.v1 accepted stage 8 frozen finish stop chars 8739
+morph run: build-acceptances-judge.v1 accepted stage 8 frozen finish stop chars 7914
+morph run: plan-command.v1 accepted stage 7 frozen finish stop chars 7189
+morph run: plan-command.v2 untried stage 0 finish stop chars 7335
+morph run: primer-command-judge.v1 accepted stage 7 frozen finish stop chars 1509
+morph run: plan-command-judge.v1 rejected stage 1 tsc finish stop chars 2164
+morph run: plan-command-judge.r1.v1 rejected stage 5 eslint failed (see above); every step between it and here passed finish stop chars 2206
+morph run: plan-command-judge.r2.v1 accepted stage 7 frozen finish stop chars 2196

@@ -1,0 +1,61 @@
+```
+import { expect, test } from "vitest";
+import { planCommand } from "../../src/cli/planCommand.js";
+import { fixture, tmpRoot } from "../helpers.js";
+import type { CommandResult, PlanArgs, PlanDocument } from "../../src/cli/types.js";
+
+const MINI = [
+  "contour.yaml",
+  "morph-map.json",
+  "go.mod",
+  "internal/testhelp/testhelp.go",
+  "decks/m1/checks.json",
+  "decks/m1/parts/_clamp-value_probe_test.go",
+  "decks/m1/parts/_percent-of_probe_test.go",
+  "decks/m1/parts/_format-share_probe_test.go",
+];
+
+test("Plan Command example 9: go-mini, the language on the Components and on the map", () => {
+  const r = tmpRoot();
+  try {
+    for (const f of MINI) {
+      r.write(f, fixture("go-mini/" + f));
+    }
+    r.write("decks/tools/guard.mjs", "// guard\n");
+    r.write("decks/tools/firstdiff.mjs", "// firstdiff\n");
+    const args: PlanArgs = {
+      name: "plan",
+      root: ".",
+      pretty: false,
+      spec: "contour.yaml",
+      components: ["calc", "report"],
+      map: "morph-map.json",
+      judge: true,
+      out: "decks/m1/deck.json",
+      checks: "decks/m1/checks.json",
+    };
+    const goMiniDeck = fixture("cli/goMini.deck.json");
+    const result: CommandResult = planCommand(r.root, args);
+    expect(result.code).toBe(0);
+    const document = result.document as PlanDocument;
+    expect(document.components).toStrictEqual(["calc", "report"]);
+    expect(document.generations).toStrictEqual([
+      ["clamp-value"],
+      ["clamp-value-judge", "percent-of"],
+      ["format-share", "percent-of-judge"],
+      ["format-share-judge"],
+    ]);
+    expect(document.cards).toStrictEqual(JSON.parse(goMiniDeck) as unknown);
+    expect(r.read("decks/m1/deck.json")).toBe(goMiniDeck);
+
+    r.write("contour.yaml", fixture("go-mini/contour.yaml").replace(/ {6}language: go\n/g, ""));
+    const map = JSON.parse(fixture("go-mini/morph-map.json")) as Record<string, unknown>;
+    r.write("morph-map.json", JSON.stringify({ language: "go", ...map }, null, 2) + "\n");
+    const again = planCommand(r.root, { ...args, out: "decks/m1/deck2.json" });
+    expect(again.code).toBe(0);
+    expect(r.read("decks/m1/deck2.json")).toBe(goMiniDeck);
+  } finally {
+    r.rm();
+  }
+});
+```
