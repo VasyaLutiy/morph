@@ -1336,14 +1336,14 @@ System:
           behavior: >
             parseCommand(argv) scans argv left to right. A token starting with "--" is a flag: --pretty, --judge, --write, --md and --commit take no value; --root, --deck,
             --processor, --run-id, --deadline, --max-cards, --max-retry-batches, --slice-cap-bytes, --spec, --component, --map, --out, --checks, --batch,
-            --issue, --seed-file, --from-scout, --scout, --mutants, --mutant-timeout, --test, --id, --model, --name, --language, --module, --templates take the next token whatever it is; any other flag (--x=y too) → "unknown flag: <t>"; a value flag last → "flag <t> needs a value"; a flag twice → "flag
+            --issue, --seed-file, --from-scout, --scout, --mutants, --mutant-timeout, --test, --id, --model, --name, --language, --module, --templates, --only take the next token whatever it is; any other flag (--x=y too) → "unknown flag: <t>"; a value flag last → "flag <t> needs a value"; a flag twice → "flag
             <t> given twice", but --component repeats, its values in argv order (the first error by argv wins). Other tokens are words, giving the command: none
             → "no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept, init)"; "run"; "plan" ("plan --from-scout" when --from-scout is given);
             "submit"; "collect"; "primer"; "scout"; "review" with two words after it (<base> <head>); "card"; "accept"; "init"; "deck" "check"; a first word report → NotYetError "command report is not available yet"; "deck" add|status|reset|clear → NotYetError "command deck <w> is
             not available yet"; else "unknown command: <words, space-joined>". An extra word → "unexpected argument: <first extra>". Then in order: a flag the
             command does not take → "flag <f> does not apply to <command>", in argv order (deck check: --root, --pretty, --deck, --slice-cap-bytes; run: --root,
             --pretty, --deck, --processor, --run-id, --deadline, --max-cards, --max-retry-batches; plan: --root, --pretty, --spec, --component, --map, --judge,
-            --out, --checks; review: --root, --pretty, --spec, --map, --scout, --mutants, --mutant-timeout, --test, --write; submit: --root, --pretty, --deck, --processor; collect: --root, --pretty, --batch; primer: --root, --pretty, --write; scout: --root, --pretty,
+            --out, --checks, --only; review: --root, --pretty, --spec, --map, --scout, --mutants, --mutant-timeout, --test, --write; submit: --root, --pretty, --deck, --processor; collect: --root, --pretty, --batch; primer: --root, --pretty, --write; scout: --root, --pretty,
             --processor, --issue, --seed-file, --deadline; plan --from-scout: --root, --pretty, --from-scout, --out; card: --root, --pretty, --deck, --id, --md;
             accept: --root, --pretty, --deck, --id, --model, --commit; init: --root, --pretty, --name, --language, --module, --templates); card and accept: no --deck → "missing --deck", no --id → "missing --id", an --id not
             matching ^[A-Za-z0-9._-]+$ → "--id must match ^[A-Za-z0-9._-]+$ (got '<v>')", card done {name, root, pretty, deck, id, md}; accept: no --model →
@@ -1356,7 +1356,8 @@ System:
             --mutant-timeout not a positive integer, else done {name, root, pretty, base, head, spec, map, scout, mutants (null), mutantTimeoutSeconds (120),
             test (null), write}; plan --from-scout: a value not matching
             ^[A-Za-z0-9._-]+$ → "--from-scout must match ^[A-Za-z0-9._-]+$ (got '<v>')", else done {name, root, pretty, fromScout, out: null when not given};
-            plan without --spec → "missing --spec", else plan is done: the plan Command (components [] and map, out null when not given; checks a key only when given);
+            plan without --spec → "missing --spec"; a given --only split on "," must be distinct ids each matching ^[A-Za-z0-9._-]+$, else "--only must be distinct card
+            ids joined by \",\" (got '<v>')" (P20); else plan is done: the plan Command (components [] and map, out null when not given; checks, then only (the ids in order), a key only when given);
             collect without --batch → "missing --batch", a --batch not matching ^[A-Za-z0-9._-]+$ → "--batch must match ^[A-Za-z0-9._-]+$ (got '<v>')", else
             collect is done; primer is done: {name, root, pretty, write: --write given}; scout without --processor → "missing --processor", without
             --issue → "missing --issue", a --deadline not a positive integer → "--deadline must be a positive integer (got '<v>')", else done {name, root, pretty,
@@ -1389,6 +1390,7 @@ System:
             - {given: 'parseArgv.json["19"]', when: parsed, then: 'parse.json["19"]'}
             - {given: 'parseArgv.json["20"]', when: parsed, then: 'parse.json["20"]'}
             - {given: 'parseArgv.json["21"]', when: parsed, then: 'parse.json["21"]'}
+            - {given: 'parseArgv.json["22"]', when: parsed, then: 'parse.json["22"]'}
         - name: Emit Document
           description: One JSON document + newline on stdout; --pretty indents by 2.
           behavior: >
@@ -1469,7 +1471,9 @@ System:
             given>"; a given map not a regular file → 4 UsageError "map file not found: <map as given>". loadContour(the spec's UTF-8 text, args.spec), then
             loadMap(the map's text, args.map) when given (else the empty map {version: 1, package: null, language: null, docs: [], groups: [], cards: [],
             extraCards: []}); an error → 2 DeckError, it. Plan Spec({record, map, spec: args.spec, components: args.components, judge: args.judge, hasFile: a
-            path is a regular file under root}); an error → 2 DeckError, it. With args.checks: profile = Resolve Profile(the first selected Component's
+            path is a regular file under root}); an error → 2 DeckError, it. P20: with args.only, Select Cards(plan, args.only), an error → 2 DeckError, it; its plan
+            replaces Plan Spec's from here on, and the checks given to Build Acceptances keep only its cards, so a card outside the subset is never a
+            sibling and its file never blanked. With args.checks: profile = Resolve Profile(the first selected Component's
             language, map.language) — the Component's wins, as in the cut (P15) — an error → 2 DeckError "the map: " + it; Read Plan Checks(root, args.checks,
             profile) (a failure is the result); Build Acceptances({cards, checks, profile, texts, uses: Plan Spec's uses, vendor: "vendor/modules.txt" is a
             regular file under root} (P19)), errors → 2 DeckError "acceptances not built (<n> error|errors):\n"
@@ -1489,6 +1493,8 @@ System:
             - {given: 'examples.json["Plan Command 9"].given', ref: 'tests/fixtures/go-mini/ (the Go module of P15), tests/fixtures/cli/goMini.deck.json', when: planCommand, then: 'examples.json["Plan Command 9"].then'}
             - {given: 'examples.json["Plan Command 10"].given', ref: 'tests/fixtures/planner/deps.yaml, tests/fixtures/planner/deps.map.json', when: planCommand, then: 'examples.json["Plan Command 10"].then'}
             - {given: 'examples.json["Plan Command 11"].given', ref: 'tests/fixtures/planner/deps.yaml, tests/fixtures/planner/deps.map.json', when: planCommand, then: 'examples.json["Plan Command 11"].then'}
+            - {given: 'examples.json["Plan Command 12"].given', ref: 'tests/fixtures/go-mini/, tests/fixtures/cli/goMini.sameGen.map.json', when: planCommand, then: 'examples.json["Plan Command 12"].then'}
+            - {given: 'examples.json["Plan Command 13"].given', ref: 'tests/fixtures/go-mini/, tests/fixtures/cli/goMini.deck.json', when: planCommand, then: 'examples.json["Plan Command 13"].then'}
         - name: Read Plan Checks
           description: Files of `plan --checks`.
           behavior: >
@@ -1535,7 +1541,7 @@ System:
       dataObjects:
         - name: Command
           description: One parsed invocation.
-          schema: "{ name: 'deck check', root, pretty, deck, sliceCapBytes } | { name: 'run', root, pretty, deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches } | { name: 'plan', root, pretty, spec, components: string[], map: string | null, judge: boolean, out: string | null, checks?: string } | { name: 'submit', root, pretty, deck, processor } | { name: 'collect', root, pretty, batch } | { name: 'primer', root, pretty, write: boolean } | { name: 'scout', root, pretty, processor, issue, seedFile: string | null, deadlineSeconds } | { name: 'plan --from-scout', root, pretty, fromScout, out: string | null } | { name: 'review', root, pretty, base, head, spec: string | null, map: string | null, scout: string | null, mutants: number | null, mutantTimeoutSeconds, test: string | null, write: boolean } | { name: 'card', root, pretty, deck, id, md: boolean } | { name: 'accept', root, pretty, deck, id, model, commit: boolean } | { name: 'init', root, pretty, project, language: 'typescript' | 'python' | 'go', module: string | null, templates: string | null }"
+          schema: "{ name: 'deck check', root, pretty, deck, sliceCapBytes } | { name: 'run', root, pretty, deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches } | { name: 'plan', root, pretty, spec, components: string[], map: string | null, judge: boolean, out: string | null, checks?: string, only?: string[] } | { name: 'submit', root, pretty, deck, processor } | { name: 'collect', root, pretty, batch } | { name: 'primer', root, pretty, write: boolean } | { name: 'scout', root, pretty, processor, issue, seedFile: string | null, deadlineSeconds } | { name: 'plan --from-scout', root, pretty, fromScout, out: string | null } | { name: 'review', root, pretty, base, head, spec: string | null, map: string | null, scout: string | null, mutants: number | null, mutantTimeoutSeconds, test: string | null, write: boolean } | { name: 'card', root, pretty, deck, id, md: boolean } | { name: 'accept', root, pretty, deck, id, model, commit: boolean } | { name: 'init', root, pretty, project, language: 'typescript' | 'python' | 'go', module: string | null, templates: string | null }"
         - name: Error Document
           description: The document of every non-result exit.
           schema: "{ error: { code: 0|1|2|3|4, kind: 'UsageError'|'NotYetError'|'DeckError'|'RefusalError'|'RuntimeError', message: string } }"
@@ -2486,6 +2492,46 @@ System:
         - name: Plan
           description: The result of planSpec and the body of the plan document.
           schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]> }"
+
+    - name: planner-subset
+      description: >
+        `morph plan --only <ids>` (P20, issue #11): a plan cut down to the cards a re-run needs, src/planner/selectCards.ts,
+        layer planner, pure (no file read, no clock, no environment, no node: module). The subset is ordered again from
+        scratch, so a kept card's dependency on a dropped card becomes external (done, on main) and its generation is
+        computed among the kept cards only. The cli builds the acceptances over the subset alone: a generation sibling
+        that is not re-run is never hidden by a card's overlay (a hand-filtered deck kept them hidden: MorphStudio run
+        20261008-201843, "mount.go:49: undefined: SessionServer" in all three tries).
+        tests/fixtures/planner/subset.plan.json is the Plan of the examples: spec "s.yaml", components ["k"], cards a [],
+        e ["outside"], b ["a"], c ["a"], d ["b", "c"] (dependsOn), generations [["a", "e"], ["b", "c"], ["d"]],
+        externalDependsOn {"e": ["outside"]}.
+      language: typescript
+      requirements: [Deterministic Core]
+      functions:
+        - name: Select Cards
+          description: The plan's cards named by --only, ordered again as a deck of their own.
+          behavior: >
+            selectCards(plan, only), only non-empty and distinct (Parse Command). The ids of only that no card of plan.cards
+            carries, in only's order → {ok: false, error: "--only names cards the plan does not have: <them joined by ', '>"}.
+            Else Order Deck over plan.cards kept when only holds their id (in plan.cards order; the plan's own card objects,
+            never copied or changed) — no cycle can appear in a subset of an ordered plan — → {ok: true, plan: {spec and
+            components: the plan's, cards, generations and externalDependsOn: Order Deck's}}. The order of only never
+            matters.
+          steps:
+            - uses: planner
+            - produces: Plan
+          examples:
+            - given: 'subset.plan.json, only ["d", "c"]'
+              when: selectCards
+              then: 'ok; cards c, d (the plan''s own objects); generations [["c"], ["d"]]; externalDependsOn {"c": ["a"], "d": ["b"]}; spec "s.yaml", components ["k"]'
+            - given: 'subset.plan.json, only ["e", "b", "a"]'
+              when: selectCards
+              then: 'ok; cards a, e, b; generations [["a", "e"], ["b"]]; externalDependsOn {"e": ["outside"]}'
+            - given: 'subset.plan.json, only ["zz", "c", "y.1"]'
+              when: selectCards
+              then: '{ok: false, error: "--only names cards the plan does not have: zz, y.1"}'
+            - given: 'subset.plan.json, only ["d", "c", "b", "e", "a"]'
+              when: selectCards
+              then: '{ok: true, plan} with plan equal to subset.plan.json whole'
 
     # ---------------------------------------------------------------- P10b
     - name: builder

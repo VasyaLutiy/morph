@@ -1,0 +1,83 @@
+{
+ "phase": "p20",
+ "ownGit": true,
+ "frozen": [
+  "contour.yaml",
+  "morph-map.json",
+  "docs",
+  "decks",
+  "tests/fixtures",
+  "templates"
+ ],
+ "cards": [
+  {
+   "id": "parse-command"
+  },
+  {
+   "id": "select-cards"
+  },
+  {
+   "id": "plan-command"
+  },
+  {
+   "id": "parse-command-judge",
+   "files": [
+    {
+     "file": "tests/cli/parse.p20.examples.test.ts",
+     "min": 1,
+     "max": 7,
+     "new": true,
+     "lits": [
+      "Parse Command example 22",
+      "--only must be distinct card ids joined by",
+      "b.v_2",
+      "a,,b",
+      "p,q,p",
+      "flag --only does not apply to run",
+      "x-9"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "select-cards-judge",
+   "files": [
+    {
+     "file": "tests/planner/selectCards.examples.test.ts",
+     "min": 4,
+     "max": 10,
+     "new": true,
+     "lits": [
+      "Select Cards example 1",
+      "Select Cards example 2",
+      "Select Cards example 3",
+      "Select Cards example 4",
+      "planner/subset.plan.json",
+      "--only names cards the plan does not have: zz, y.1",
+      "outside"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "plan-command-judge",
+   "files": [
+    {
+     "file": "tests/cli/planCommand.p20.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Plan Command example 12",
+      "Plan Command example 13",
+      "cli/goMini.sameGen.map.json",
+      "cli/goMini.deck.json",
+      "calc/clamp_value.go",
+      "--only names cards the plan does not have: nope, x.2",
+      "percent-of-judge"
+     ]
+    }
+   ]
+  }
+ ]
+}

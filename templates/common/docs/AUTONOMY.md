@@ -54,22 +54,25 @@ preparation agent repeats this line.
    `decks/<phase>/parts/<card>.probe.*`; the cut:
    `morph plan --root . --spec contour.yaml --map morph-map.json --component <C>… --judge --checks
    decks/<phase>/checks.json --out decks/<phase>/deck.json`. When the cut holds cards outside the phase, keep the phase's
-   cards with a short filter script over the deck file, committed beside the deck. For a processor that thinks before it
+   cards with `--only <id>,<id>,…` on the same `plan` command (the acceptances are built over the subset alone). For a processor that thinks before it
    writes, every card's maxTokens ×3 after the cut: `python3 decks/tools/scale_tokens.py decks/<phase>/deck.json 3`. Then
    `morph deck check --root . --deck decks/<phase>/deck.json`.
-   Every acceptance is run red **per example** on stubs in a scratch worktree, with a readable line. Mutants: only on
+   Every acceptance is run red **per example** on stubs in a scratch worktree, with a readable line, and every stub log
+   passes `node decks/tools/stubcheck.mjs <log> <probe|guard> <targets>` (the red at the expected stage, and no
+   build/vet/tsc line naming a file outside the card's targets: a guard count alone misses a vet line). Mutants: only on
    the record's examples and the contracts the phase changes, **at most 30 per phase and at most 20 min in total**,
    every mutant run under a 120 s timeout (a timeout counts as killed); survivors beyond the cap go to
    `docs/DECISIONS.md` as a known risk naming the file and the mutation. The data and the deck are committed on `main`.
 2. **Gate without the operator.** The run starts by itself only when ALL hold: `morph plan` exit 0; `morph deck check`
-   errors 0; every probe red per example with a readable line on the stubs; every acceptance chain under 250 s; the
+   errors 0; every probe red per example with a readable line on the stubs and stubcheck.mjs exit 0 on each stub log; every acceptance chain under 250 s; the
    mutation cap kept; forecast ≤ $1 for the phase; no slice over 200 KB. Otherwise the phase stops with a report in
    `docs/MEASURE.md` (a row "stopped at gate: <reason>"), touches `~/.morph-wait-operator` and stops.
 3. **Run**: from the repository root, the binary copy:
    `node /tmp/morph-bin-<phase>/dist/cli.js run --root . --deck decks/<phase>/deck.json --processor <processor> --deadline
    2400`, its stdout (the Run Document) to a file under /tmp. The run opens `morph/<runId>`, commits each accepted card
    with its trailers and archives `.morph/runs/<runId>/`. The tree is not touched while the run is in flight. A re-run of
-   failed cards uses a deck file of those cards only. A failed run's archive commit is cherry-picked onto `main`.
+   failed cards is re-cut with `morph plan … --checks decks/<phase>/checks.json --only <ids>`, never a hand-filtered copy
+   of the deck (its acceptances keep the full generation's overlay and blank files already accepted). A failed run's archive commit is cherry-picked onto `main`.
 4. **Verify** on the run branch: `git status --short` empty; the project's parse, lint, full test suite and build green;
    the written code and tests read once against §2.2 and the record; defects recorded, never fixed by hand.
 5. **Record**: §11 of the TASK and the row of `docs/MEASURE.md`, one commit on the run branch.

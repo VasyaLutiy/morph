@@ -1,7 +1,7 @@
 {
   "package": "src",
   "docs": [
-    "docs/TASK_P19b_deps.md"
+    "docs/TASK_P20_rerun.md"
   ],
   "groups": {
     "card-model": [
@@ -1069,21 +1069,17 @@
       "intent": "patch",
       "targets": [
         "src/cli/types.ts",
-        "src/cli/parse.ts",
-        "src/cli/main.ts"
+        "src/cli/parse.ts"
       ],
       "context_slice": [
-        "docs/TASK_P18_template.md",
+        "docs/TASK_P20_rerun.md",
         "docs/CONVENTIONS.md",
-        "src/cli/document.ts",
-        "src/scaffold/initProject.ts"
+        "src/cli/document.ts"
       ],
-      "depends_on": [
-        "init-project"
-      ],
+      "depends_on": [],
       "variants": 2,
-      "max_tokens": 28000,
-      "instruction": "Read docs/TASK_P18_template.md sections 2.2 (src/cli/types.ts, Parse Command, Main: the routing of init and their tables) and 4. Patch three files (their current texts follow) and return each WHOLE; change nothing else in them. src/cli/types.ts: add InitArgs exactly as section 2.2 shows and widen Command with it. src/cli/parse.ts: --name, --language, --module and --templates are value flags; init is a one-word command with its flag set; its checks and result as section 2.2 says, done right after the checks of card and accept; the no-command message lists the eleven commands; every other check, message, default and key stays exactly as it is. src/cli/main.ts: route init to initProject(root, command, deps.cwd) (from \"../scaffold/initProject.js\") before the run branch, which stays the last else. Write no test file: a probe tests you and a judge writes the example tests."
+      "max_tokens": 24000,
+      "instruction": "Read docs/TASK_P20_rerun.md sections 2.2 (src/cli/types.ts and Parse Command: --only and its table) and 4. Patch two files (their current texts follow) and return each WHOLE; change nothing else in them. src/cli/types.ts: PlanArgs gains `only?: string[]` after checks, exactly as section 2.2 shows. src/cli/parse.ts: --only is a value flag and a flag of plan only; plan's --only check comes right after its missing --spec check, with the message of section 2.2; the plan Command gains only (the ids in the given order) as a key after checks, only when --only is given. Every other check, message, default and key stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "deck-check": {
       "intent": "generate",
@@ -1172,21 +1168,22 @@
       "acceptance": "D=/tmp/morph/document-judge-p7; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp tests/cli/document.examples.test.ts $D/0-$S.ts 2>/dev/null\n(\n set -e\n export NO_COLOR=1 CI=1\nP=$PWD/probe/document-judge; rm -rf $P; mkdir -p $P; trap 'rm -rf $P' EXIT\ncat > $P/guard.mjs <<'MORPH_GUARD_EOF'\n// MorphV2 guard: the layer rules of docs/CONVENTIONS.md and the test-file rules, checked on\n// the TypeScript syntax tree. Inlined into every acceptance by decks/tools/build.py.\n//   node guard.mjs src [file,file,...]                   every .ts under src/, or only these\n//   node guard.mjs helpers <file> <name,name,...>        the stub module: node:* only, exports\n//   node guard.mjs tests <file> <min> <max> [lits.json]  one test file; lits = strings it must hold\nimport ts from \"typescript\";\nimport fs from \"node:fs\";\nimport path from \"node:path\";\n\nconst bad = [];\n\n// which internal layers a layer may import; \"*\" = any; unknown dirs are reported\nconst LAYERS = {\n  cards: [], wait: [],\n  response: [\"cards\"], store: [\"cards\"], compiler: [\"cards\"], language: [\"cards\"],\n  contour: [\"cards\"], git: [\"cards\"], acceptance: [\"cards\", \"wait\", \"compiler\"],\n  processor: [\"cards\", \"wait\", \"compiler\"], planner: [\"cards\", \"contour\", \"language\"],\n  primer: [\"cards\", \"git\", \"store\", \"language\"],\n  scout: [\"cards\", \"processor\", \"wait\", \"primer\"],\n  reviewer: [\"cards\", \"contour\", \"primer\", \"scout\", \"git\"],\n  runloop: [\"cards\", \"wait\", \"store\", \"compiler\", \"response\", \"acceptance\", \"language\",\n    \"git\", \"processor\"],\n  cli: \"*\",\n};\nconst ROOT_FILES = new Set([\"src/index.ts\"]);\nconst SHELL = new Set([\"acceptance\", \"git\"]);          // node:child_process\nconst NET = new Set([\"processor\"]);                    // fetch, WebSocket, XMLHttpRequest\nconst CONSOLE = new Set([\"cli\"]);                      // console, process.exit\nconst PROCESS = new Set([\"cli\", \"processor\", \"acceptance\"]);\nconst NO_CLOCK = new Set([\"cards\", \"compiler\", \"response\", \"language\", \"contour\", \"planner\"]);\nconst YAML = new Set([\"contour\"]);\n// P3: the acceptance gets the child's environment as a parameter (docs/TASK_P3_acceptance.md §4)\nconst NO_ENV = new Set([\"acceptance\", \"processor\", \"git\"]);\n// P4: the one file of a NO_ENV layer that may read process.env (Read Registry, docs/TASK_P4_processor.md §4)\nconst ENV_READERS = new Set([\"src/processor/registry.ts\"]);\n// P6: the one file of src/git that spawns (Run Git, docs/TASK_P6_git.md §4); git takes the env whole\nconst GIT_SPAWNER = \"src/git/run.ts\";\n// P7: the binary's entry is src/cli.ts (package.json bin dist/cli.js), layer cli; it alone touches\n// process (env, argv, cwd, stdout, exitCode) and the wall clock: src/cli/* gets them as parameters\n// (docs/TASK_P7_cli.md §4)\nconst CLI_ENTRY = \"src/cli.ts\";\n\nfunction parse(file) {\n  return ts.createSourceFile(file, fs.readFileSync(file, \"utf8\"), ts.ScriptTarget.Latest, true,\n    ts.ScriptKind.TS);\n}\nfunction line(sf, node) {\n  return sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1;\n}\nfunction report(sf, node, rule) {\n  bad.push(`guard: ${sf.fileName}:${line(sf, node)} ${rule}`);\n}\nfunction walk(node, fn) {\n  fn(node);\n  ts.forEachChild(node, (child) => walk(child, fn));\n}\n// an identifier that refers to a value binding (not a property name, a type, a declared name)\nfunction isValueRef(node) {\n  const p = node.parent;\n  if (!p) return false;\n  if (ts.isPropertyAccessExpression(p) && p.name === node) return false;\n  if ((ts.isPropertyAssignment(p) || ts.isPropertyDeclaration(p) || ts.isPropertySignature(p) ||\n       ts.isMethodDeclaration(p) || ts.isMethodSignature(p) || ts.isGetAccessor(p) ||\n       ts.isSetAccessor(p) || ts.isEnumMember(p)) && p.name === node) return false;\n  if (ts.isTypeReferenceNode(p) || ts.isQualifiedName(p) || ts.isTypeQueryNode(p)) return false;\n  if ((ts.isParameter(p) || ts.isVariableDeclaration(p) || ts.isFunctionDeclaration(p) ||\n       ts.isBindingElement(p)) && p.name === node) return false;\n  if (ts.isImportSpecifier(p) || ts.isExportSpecifier(p) || ts.isImportClause(p)) return false;\n  if (ts.isLabeledStatement(p) || ts.isBreakOrContinueStatement(p)) return false;\n  return true;\n}\nfunction tsFiles(dir) {\n  const out = [];\n  if (!fs.existsSync(dir)) return out;\n  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {\n    const f = path.join(dir, e.name);\n    if (e.isDirectory()) out.push(...tsFiles(f));\n    else if (f.endsWith(\".ts\")) out.push(f);\n  }\n  return out.sort();\n}\nfunction moduleSpecifiers(sf) {\n  const out = [];\n  walk(sf, (node) => {\n    if ((ts.isImportDeclaration(node) || (ts.isExportDeclaration(node) && node.moduleSpecifier)) &&\n        ts.isStringLiteralLike(node.moduleSpecifier)) out.push([node, node.moduleSpecifier.text]);\n    if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword)\n      report(sf, node, \"dynamic import\");\n  });\n  return out;\n}\nfunction layerOf(rel) {\n  if (rel === CLI_ENTRY) return \"cli\";\n  const parts = rel.split(\"/\");\n  return parts.length >= 3 && parts[0] === \"src\" ? parts[1] : null;\n}\n\nfunction checkSrc(files) {\n  for (const file of files ?? tsFiles(\"src\")) {\n    const sf = parse(file);\n    const rel = file.split(path.sep).join(\"/\");\n    const layer = layerOf(rel);\n    if (layer === null && !ROOT_FILES.has(rel)) { bad.push(`guard: ${rel} is not under a layer directory`); continue; }\n    if (layer !== null && !(layer in LAYERS)) { bad.push(`guard: ${rel} is in an unknown layer \"${layer}\"`); continue; }\n    const allowed = layer === null ? [] : LAYERS[layer];\n    for (const [node, spec] of moduleSpecifiers(sf)) {\n      if (spec.startsWith(\"node:\")) {\n        if (spec === \"node:child_process\" && !SHELL.has(layer))\n          report(sf, node, `node:child_process outside src/acceptance and src/git`);\n        if (spec === \"node:child_process\" && layer === \"git\" && rel !== GIT_SPAWNER)\n          report(sf, node, `node:child_process in ${rel} (only ${GIT_SPAWNER} spawns git)`);\n        continue;\n      }\n      if (spec === \"yaml\") { if (!YAML.has(layer)) report(sf, node, `\"yaml\" outside src/contour`); continue; }\n      if (!spec.startsWith(\"./\") && !spec.startsWith(\"../\")) { report(sf, node, `package import \"${spec}\" (node:* only)`); continue; }\n      const target = path.posix.normalize(path.posix.join(path.posix.dirname(rel), spec));\n      const tl = layerOf(target);\n      if (tl === null) { if (!ROOT_FILES.has(target)) report(sf, node, `import of \"${spec}\" outside src/<layer>/`); continue; }\n      if (tl !== layer && allowed !== \"*\" && !allowed.includes(tl))\n        report(sf, node, `layer ${layer ?? \"src\"} imports layer ${tl} (allowed: ${allowed.join(\", \") || \"none\"})`);\n    }\n    walk(sf, (node) => {\n      if (node.kind === ts.SyntaxKind.AnyKeyword) report(sf, node, \"explicit any\");\n      if (ts.isIdentifier(node) && isValueRef(node)) {\n        const n = node.text;\n        if ([\"fetch\", \"WebSocket\", \"XMLHttpRequest\"].includes(n) && !NET.has(layer))\n          report(sf, node, `global ${n} outside src/processor`);\n        if (n === \"console\" && !CONSOLE.has(layer)) report(sf, node, \"console outside src/cli\");\n        if (n === \"process\" && !PROCESS.has(layer)) report(sf, node, \"process outside src/cli, src/processor, src/acceptance\");\n        if ((n === \"process\" || n === \"console\") && layer === \"cli\" && rel !== CLI_ENTRY)\n          report(sf, node, `${n} in ${rel} (only ${CLI_ENTRY} touches it; env, cwd, clock and io are parameters)`);\n        if (n === \"Date\" && NO_CLOCK.has(layer)) report(sf, node, `Date in the deterministic layer ${layer}`);\n        if (n === \"Math\" && node.parent && ts.isPropertyAccessExpression(node.parent) &&\n            node.parent.name.text === \"random\") report(sf, node, \"Math.random\");\n      }\n      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&\n          node.expression.text === \"process\" && node.name.text === \"exit\" && !CONSOLE.has(layer))\n        report(sf, node, \"process.exit outside src/cli\");\n      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&\n          node.expression.text === \"process\" && node.name.text === \"exit\" && rel === CLI_ENTRY)\n        report(sf, node, `process.exit in ${CLI_ENTRY} (set process.exitCode: exit cuts a piped stdout)`);\n      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&\n          node.expression.text === \"Date\" && node.name.text === \"now\" && layer === \"cli\" && rel !== CLI_ENTRY)\n        report(sf, node, `Date.now in ${rel} (the clock is the parameter now)`);\n      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&\n          node.expression.text === \"process\" && node.name.text === \"env\" && NO_ENV.has(layer) &&\n          !ENV_READERS.has(rel))\n        report(sf, node, `process.env in src/${layer} (the environment is a parameter)`);\n    });\n  }\n}\n\nfunction checkHelpers(file, names) {\n  if (!fs.existsSync(file)) { bad.push(`guard: ${file} missing`); return; }\n  const sf = parse(file);\n  for (const [node, spec] of moduleSpecifiers(sf))\n    if (!spec.startsWith(\"node:\")) report(sf, node, `helpers import \"${spec}\" (node:* only)`);\n  const exported = new Set();\n  walk(sf, (node) => {\n    if (node.kind === ts.SyntaxKind.AnyKeyword) report(sf, node, \"explicit any\");\n    const mods = ts.canHaveModifiers(node) ? ts.getModifiers(node) ?? [] : [];\n    if (!mods.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) return;\n    if ((ts.isFunctionDeclaration(node) || ts.isInterfaceDeclaration(node) ||\n         ts.isTypeAliasDeclaration(node) || ts.isClassDeclaration(node)) && node.name)\n      exported.add(node.name.text);\n    if (ts.isVariableStatement(node))\n      for (const d of node.declarationList.declarations) if (ts.isIdentifier(d.name)) exported.add(d.name.text);\n  });\n  for (const n of names) if (!exported.has(n)) bad.push(`guard: ${file} does not export ${n}`);\n}\n\nfunction checkTest(file, min, max, lits) {\n  if (!fs.existsSync(file)) { bad.push(`guard: ${file} missing`); return; }\n  const sf = parse(file);\n  const text = sf.getFullText();\n  let count = 0;\n  for (const [node, spec] of moduleSpecifiers(sf))\n    if (spec !== \"vitest\" && !spec.startsWith(\"node:\") && !spec.startsWith(\"./\") && !spec.startsWith(\"../\"))\n      report(sf, node, `import of a package \"${spec}\" (vitest, node:* and relative paths only)`);\n  walk(sf, (node) => {\n    if (node.kind === ts.SyntaxKind.AnyKeyword) report(sf, node, \"explicit any\");\n    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) &&\n        (node.expression.text === \"test\" || node.expression.text === \"it\")) count += 1;\n    if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression)) {\n      const o = node.expression.text, p = node.name.text;\n      if ([\"test\", \"it\", \"describe\"].includes(o) && [\"skip\", \"only\", \"todo\", \"fails\"].includes(p))\n        report(sf, node, `${o}.${p}`);\n      if (o === \"vi\" && [\"stubGlobal\", \"useFakeTimers\", \"mock\", \"doMock\"].includes(p))\n        report(sf, node, `vi.${p} (stubs come from tests/helpers.ts)`);\n    }\n    if (ts.isIdentifier(node) && isValueRef(node) &&\n        [\"setTimeout\", \"setInterval\", \"setImmediate\"].includes(node.text))\n      report(sf, node, `${node.text} (real timers are not used under tests/; use fakeClock)`);\n    const declared = (ts.isFunctionDeclaration(node) || ts.isVariableDeclaration(node) ||\n      ts.isClassDeclaration(node)) && node.name && ts.isIdentifier(node.name) ? node.name.text : null;\n    if (declared && (declared === \"fetch\" || /^[Ff]ake/.test(declared)))\n      report(sf, node, `own stub \"${declared}\" (stubs come from tests/helpers.ts)`);\n  });\n  if (count < min || count > max)\n    bad.push(`guard: ${file} has ${count} test/it calls, expected ${min}..${max}`);\n  for (const lit of lits) if (!text.includes(lit)) bad.push(`guard: ${file} does not mention the example literal ${JSON.stringify(lit)}`);\n}\n\nconst [mode, a, b, c, d] = process.argv.slice(2);\nif (mode === \"src\") checkSrc(a ? a.split(\",\").filter(Boolean) : null);\nelse if (mode === \"helpers\") checkHelpers(a, (b ?? \"\").split(\",\").filter(Boolean));\nelse if (mode === \"tests\") checkTest(a, Number(b), Number(c), d ? JSON.parse(fs.readFileSync(d, \"utf8\")) : []);\nelse bad.push(`guard: unknown mode ${mode}`);\nfor (const x of bad) console.log(x);\nprocess.exit(bad.length ? 1 : 0);\nMORPH_GUARD_EOF\ncat > $P/probe.config.mts <<'MORPH_CONF_EOF'\nimport { defineConfig } from \"vitest/config\";\nimport { fileURLToPath } from \"node:url\";\nexport default defineConfig({\n  root: fileURLToPath(new URL(\"../..\", import.meta.url)),\n  test: { environment: \"node\", include: [\"probe/document-judge/**/*.probe.ts\"],\n    setupFiles: [\"tests/setup.ts\"], chaiConfig: { truncateThreshold: 200 } },\n});\nMORPH_CONF_EOF\ncat > $P/tsconfig.card.json <<'MORPH_TSCONF_EOF'\n{\n  \"extends\": \"../../tsconfig.json\",\n  \"include\": [\n    \"../../src\",\n    \"../../tests\",\n    \"./*.probe.ts\"\n  ],\n  \"exclude\": [\n    \"../../src/cli/parse.ts\",\n    \"../../src/cli/deckCheck.ts\",\n    \"../../src/cli/runCommand.ts\"\n  ]\n}\nMORPH_TSCONF_EOF\nG0=$( (git symbolic-ref -q HEAD || true; git rev-parse HEAD; git for-each-ref --format='%(refname) %(objectname)') 2>&1)\necho '== tsc'; node_modules/.bin/tsc --noEmit -p $P/tsconfig.card.json\necho '== eslint'; node_modules/.bin/eslint tests/cli/document.examples.test.ts\ncat > $P/lits.json <<'MORPH_LITS_EOF'\n[\"{\\\"a\\\":1,\\\"b\\\":[true,null]}\", \"RuntimeError\", \"deck file not found: nope.json\", \"invalid deck: dependsOn: dependsOn cycle a -> b -> a\"]\nMORPH_LITS_EOF\necho '== guard'; node $P/guard.mjs tests tests/cli/document.examples.test.ts 9 17 $P/lits.json\necho '== own'; node_modules/.bin/vitest run tests/cli/document.examples.test.ts --reporter=dot > $P/vt.log 2>&1 || { grep -E '^ FAIL |Error|AssertionError|^ +Tests |^ +Test Files |expected|received' $P/vt.log | head -80; exit 1; }\necho '== full'; node_modules/.bin/vitest run --passWithNoTests --reporter=dot > $P/vt.log 2>&1 || { grep -E '^ FAIL |Error|AssertionError|^ +Tests |^ +Test Files |expected|received' $P/vt.log | head -80; exit 1; }\necho '== own git'; G1=$( (git symbolic-ref -q HEAD || true; git rev-parse HEAD; git for-each-ref --format='%(refname) %(objectname)') 2>&1); [ \"$G0\" = \"$G1\" ] || { echo \"tests changed this repository's HEAD or refs:\"; echo \"before: $G0\" | head -5; echo \"after: $G1\" | head -5; exit 1; }\necho '== frozen'; git diff --quiet HEAD -- contour.yaml morph-map.json docs decks tests/fixtures || { echo \"changed outside the targets: $(git diff --name-only HEAD -- contour.yaml morph-map.json docs decks tests/fixtures | tr \"\\n\" \" \")\"; exit 1; }\nX=$(git ls-files --others --exclude-standard | grep -vxF -e tests/cli/document.examples.test.ts || true); [ -z \"$X\" ] || { echo \"files left in the tree: $X\"; exit 1; }\n) > $L 2>&1; rc=$?; cat $L; exit $rc"
     },
     "parse-command-judge": {
-      "intent": "patch",
+      "intent": "generate",
       "targets": [
-        "tests/cli/parse.examples.test.ts"
+        "tests/cli/parse.p20.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P18_template.md",
+        "docs/TASK_P20_rerun.md",
         "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
         "src/cli/types.ts",
         "src/cli/parse.ts"
       ],
       "depends_on": [
         "parse-command"
       ],
-      "max_tokens": 28000,
-      "instruction": "You patch tests/cli/parse.examples.test.ts and return it WHOLE (its current text follows). Read docs/TASK_P18_template.md sections 2.2 (Parse Command and its table) and 2.3 (the parse.examples bullet). Two changes only: in \"Parse Command example 8\" the no-command message becomes \"no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept, init)\"; after the last test add \"Parse Command example 21: init, its flags and checks\" with the sixteen argv of section 2.2's table, each result written out as a literal and compared whole with toStrictEqual, as example 20 does. Keep every other test, its name and every other line exactly as it is. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "max_tokens": 16000,
+      "instruction": "You write tests/cli/parse.p20.examples.test.ts only, a NEW file with the test of Parse Command example 22 (examples 1-21 are already tested). Read docs/TASK_P20_rerun.md sections 2.2 (Parse Command and its table of thirteen argv) and 2.3 (the parse.p20 bullet). Import parseCommand from \"../../src/cli/parse.js\" and `import type { Command } from \"../../src/cli/types.js\"`; every argv and every result written out as a literal (no fixture read), each result compared whole with toStrictEqual. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "deck-check-judge": {
       "intent": "generate",
@@ -1727,17 +1724,20 @@
         "src/cli/planCommand.ts"
       ],
       "context_slice": [
-        "docs/TASK_P19b_deps.md",
+        "docs/TASK_P20_rerun.md",
         "docs/CONVENTIONS.md",
-        "src/builder/types.ts",
-        "src/planner/types.ts"
+        "src/cli/types.ts",
+        "src/planner/types.ts",
+        "src/planner/selectCards.ts",
+        "src/builder/types.ts"
       ],
       "depends_on": [
-        "build-acceptances"
+        "parse-command",
+        "select-cards"
       ],
       "variants": 2,
       "max_tokens": 12000,
-      "instruction": "Read docs/TASK_P19b_deps.md sections 2.2 (src/cli/planCommand.ts: uses and vendor to Build Acceptances) and 4. Patch src/cli/planCommand.ts (its current text follows) and return it WHOLE; change nothing else in it. The buildAcceptances call gains uses: planned.uses and vendor: hasFile(\"vendor/modules.txt\") (the function already defined there: a regular file under root); without --checks nothing changes. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P20_rerun.md sections 2.2 (src/cli/planCommand.ts: --only) and 4. Patch src/cli/planCommand.ts (its current text follows) and return it WHOLE; change nothing else in it. After Plan Spec, when args.only is given: selectCards(plan, args.only) from \"../planner/selectCards.js\", its error → code 2 DeckError with that message, else its plan replaces Plan Spec's for every later step; with --checks, the checks given to buildAcceptances keep only the cards of that plan. Without --only nothing changes. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "render-judge": {
       "intent": "generate",
@@ -1827,23 +1827,22 @@
     "plan-command-judge": {
       "intent": "generate",
       "targets": [
-        "tests/cli/planCommand.p19.examples.test.ts"
+        "tests/cli/planCommand.p20.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P19b_deps.md",
+        "docs/TASK_P20_rerun.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/cli/types.ts",
         "src/cli/planCommand.ts",
-        "src/builder/types.ts",
-        "tests/fixtures/planner/deps.yaml",
-        "tests/fixtures/planner/deps.map.json"
+        "src/cards/types.ts",
+        "tests/fixtures/cli/goMini.sameGen.map.json"
       ],
       "depends_on": [
         "plan-command"
       ],
       "max_tokens": 20000,
-      "instruction": "You write tests/cli/planCommand.p19.examples.test.ts only, a NEW file with the tests of Plan Command examples 10 and 11 (examples 1-9 are already tested). Read docs/TASK_P19b_deps.md sections 2.1 (the deps root, its skeleton verbatim) and 2.2 (Plan Command and its table) and 2.3 (the planCommand.p19 bullet). Import planCommand from \"../../src/cli/planCommand.js\", codeAcceptance from \"../../src/builder/compose.js\", GO_ENV and goCodeAcceptance from \"../../src/builder/goAcceptance.js\", DEFAULT_FROZEN from \"../../src/builder/readChecks.js\", TYPESCRIPT and GO from \"../../src/language/profiles.js\", tmpRoot and fixture from \"../helpers.js\", types with `import type`. Every tmp root is removed in finally. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/cli/planCommand.p20.examples.test.ts only, a NEW file with the tests of Plan Command examples 12 and 13 (examples 1-11 are already tested). Read docs/TASK_P20_rerun.md sections 2.1 (the go-mini root, its skeleton verbatim) and 2.2 (Plan Command and its table) and 2.3 (the planCommand.p20 bullet). Import planCommand from \"../../src/cli/planCommand.js\", tmpRoot and fixture from \"../helpers.js\", types with `import type`. Every tmp root is removed in finally. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "read-checks": {
       "intent": "generate",
@@ -3105,6 +3104,43 @@
       ],
       "max_tokens": 16000,
       "instruction": "You write tests/language/dependencyFinale.examples.test.ts only, a NEW file with the tests of Dependency Finale examples 1-4. Read docs/TASK_P19a_deps.md sections 2.1 (the fixture) and 2.2 (Dependency Finale and its table) and 2.3 (the dependencyFinale.examples bullet). Import dependencyFinale and dependencyDirective from \"../../src/language/dependencyFinale.js\", TYPESCRIPT, PYTHON and GO from \"../../src/language/profiles.js\", fixture from \"../helpers.js\"; the Go text is fixture(\"language/finale.go.txt\"). Write each expected text out as a literal except the profiles' own finales, which you take from the profile objects. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+    },
+    "select-cards": {
+      "intent": "generate",
+      "targets": [
+        "src/planner/selectCards.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P20_rerun.md",
+        "docs/CONVENTIONS.md",
+        "src/cards/types.ts",
+        "src/planner/types.ts",
+        "src/planner/plan.ts"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 8000,
+      "instruction": "Read docs/TASK_P20_rerun.md sections 2.2 (src/planner/selectCards.ts) and 4. Write one file src/planner/selectCards.ts: `export type SelectResult` and `export function selectCards(plan: Plan, only: readonly string[]): SelectResult` exactly as section 2.2 shows, importing orderDeck from \"./plan.js\" and `import type { Plan } from \"./types.js\"`. Pure: no process, no console, no Date, no Math.random, no file read, no node: module. Write no test file: a probe tests you and the judge writes the example tests."
+    },
+    "select-cards-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/planner/selectCards.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P20_rerun.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/cards/types.ts",
+        "src/planner/types.ts",
+        "src/planner/selectCards.ts",
+        "tests/fixtures/planner/subset.plan.json"
+      ],
+      "depends_on": [
+        "select-cards"
+      ],
+      "max_tokens": 16000,
+      "instruction": "You write tests/planner/selectCards.examples.test.ts only. Read docs/TASK_P20_rerun.md sections 2.1 (subset.plan.json and the skeleton) and 2.2 (Select Cards and its table) and 2.3 (the selectCards bullet). Import selectCards from \"../../src/planner/selectCards.js\", fixtureJson from \"../helpers.js\", types with `import type`. One test per example of Select Cards (1-4), in record order, named \"Select Cards example <n>: <what>\"; then at most 6 of your own on section 2.2 rows. Every result is a union: compare it whole with toStrictEqual or narrow it (`r.ok ? … : …`) before a field. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     }
   }
 }

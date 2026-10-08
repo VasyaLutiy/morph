@@ -4,7 +4,8 @@
 //   node guard.mjs src [file,file,...] [pkg,pkg,...]     every .ts under src/, or only these; the packages the card's
 //                                                        Component declares (`uses`), allowed in these files only
 //   node guard.mjs helpers <file> <name,name,...>        the stub module: node:* only, these exports
-//   node guard.mjs tests <file> <min> <max> [lits.json]  one test file; lits = strings it must hold
+//   node guard.mjs tests <file> <min> <max> [lits.json]  one test file; lits = strings it must hold; it may import
+//                                                        vitest, node:*, relative paths and package.json's dependencies
 // decks/tools/layers.json:
 //   "layers":   {"<dir under src/>": ["<dir it may import>", ...] or "*"}; null → every folder may import every other
 //   "pure":     folders with no clock, randomness, environment, network, console or process; of node:* only node:path
@@ -147,9 +148,13 @@ function checkTest(file, min, max, lits) {
   const sf = parse(file);
   const text = sf.getFullText();
   let count = 0;
+  // package.json's "dependencies": the packages the scaffold installed for the declared dependencies; a
+  // test may import them (a judge building a declared library's value). devDependencies stay out, vitest excepted.
+  const deps = fs.existsSync("package.json") ? Object.keys(JSON.parse(fs.readFileSync("package.json", "utf8")).dependencies ?? {}) : [];
   for (const [node, spec] of moduleSpecifiers(sf))
-    if (spec !== "vitest" && !spec.startsWith("node:") && !spec.startsWith("./") && !spec.startsWith("../"))
-      report(sf, node, `import of a package "${spec}" (vitest, node:* and relative paths only)`);
+    if (spec !== "vitest" && !spec.startsWith("node:") && !spec.startsWith("./") && !spec.startsWith("../") &&
+        !deps.some((p) => spec === p || spec.startsWith(p + "/")))
+      report(sf, node, `import of a package "${spec}" (vitest, node:*${deps.length ? ", relative paths, " + deps.join(", ") : " and relative paths"} only)`);
   walk(sf, (node) => {
     if (node.kind === ts.SyntaxKind.AnyKeyword) report(sf, node, "explicit any");
     if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) &&

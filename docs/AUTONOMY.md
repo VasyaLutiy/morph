@@ -87,15 +87,18 @@ preparation agent repeats this line.
    (`build.py p<N>` with `"locate": True, "full_report": True` until P10b2 landed; since 07.10 it is in `decks/tools/archive/`: the
    phase's `checks.json` and `morph plan --checks`, as P10b2 defines). **The cut is V2's**:
    `node dist/cli.js plan --root . --spec contour.yaml --map morph-map.json --component <C>…
-   --judge --out decks/<phase>/deck.json`. `morph plan` has no card filter yet: when the cut holds
-   cards outside the phase, keep the phase's cards with a short filter over the deck file and
-   commit the filtered deck. **For processor `ds`, every card's maxTokens ×3** after the cut and the
+   --judge --out decks/<phase>/deck.json`. When the cut holds cards outside the phase, keep the phase's cards: once
+   P20 is merged with `--only <id>,<id>,…` on the same `plan` command (the acceptances are built over the subset, so no
+   card outside it is a sibling; issue #11); before that, and for a deck cut by a binary without `--only`, a short filter
+   over the deck file, committed with the filtered deck. **For processor `ds`, every card's maxTokens ×3** after the cut and the
    filter: `python3 decks/tools/scale_tokens.py decks/<phase>/deck.json 3`, committed with the deck
    (DeepSeek thinks 15–20k tokens before the code and no provider honours the reasoning budget; with
    the plain budget its answers come back empty). Then `node dist/cli.js deck check --root . --deck <deck>`. **No mrph cross-check** since
    08.10 (operator): V2 has cut ten phases itself and frozen mrph knows no Go; mrph stays only as the
    named fallback below. Every
-   acceptance red per example on stubs in a scratch worktree; mutations killed (**every mutant run
+   acceptance red per example on stubs in a scratch worktree, and `node decks/tools/stubcheck.mjs <log> <probe|guard>
+   <targets>` exit 0 on every stub log (the red at the expected stage, and no build/vet/tsc line naming a file outside
+   the card's targets — a guard count alone missed MorphStudio's vet line, issue #11); mutations killed (**every mutant run
    under a timeout**, `subprocess.run(..., timeout=120)`, a timeout counted as killed — operator
    07.10, after a mutant made a batch-wait loop infinite and hung the P11b mutation run 28 min).
    **Mutation cap (operator 08.10):** mutants target only the record's examples and the contracts the
@@ -105,7 +108,7 @@ preparation agent repeats this line.
    baseline; record the mutant count and minutes in the MEASURE notes of every phase; the data and the
    deck committed on `main`.
 2. **Gate without the operator.** The run starts by itself only when ALL hold:
-   `morph plan` exit 0; `morph deck check` errors 0; every probe red per example with a readable line on the stubs; chain
+   `morph plan` exit 0; `morph deck check` errors 0; every probe red per example with a readable line on the stubs and stubcheck.mjs exit 0 on each stub log; chain
    under 250 s each; every mutant run under a timeout and the mutation cap kept (≤ 30 mutants, ≤ 20 min); forecast ≤ $1 for the phase; no slice over 200 KB. Otherwise the phase stops with a report in `docs/MEASURE.md` (row with
    "stopped at gate: <reason>"), touches `~/.morph-wait-operator` and stops.
 3. **Run** (the session itself or a run agent): from the repo root, the binary copy
@@ -113,8 +116,11 @@ preparation agent repeats this line.
    ds --deadline 2400` (the retry cap is per generation since P10c1; `--processor glm53` with the
    plain maxTokens is the fallback when ds is down — an environment red); stdout (the Run Document) to a file under /tmp. The run opens
    `morph/<runId>`, commits each accepted card with trailers and archives `.morph/runs/<runId>/`.
-   The tree is not touched while the run is in flight. A re-run of failed cards uses a deck file of
-   those cards only (their dependencies are already on `main`). A failed run's archive commit is
+   The tree is not touched while the run is in flight. A re-run of failed cards uses a deck of
+   those cards only (their dependencies are already on `main`), once P20 is merged re-cut by `morph plan … --checks
+   decks/<phase>/checks.json --only <ids> --out decks/<phase>/deck-rerun.json` — never a hand-filtered copy of the deck:
+   its acceptances keep the full generation's overlay and blank files already accepted (MorphStudio run 20261008-201843,
+   issue #11); the same re-cut deck is the one `morph card`/`morph accept` get. A failed run's archive commit is
    cherry-picked onto `main` so every run is on record.
 4. **Verify** on the run branch: `git status --short` empty; `tsc --noEmit`, `eslint src
    tests`, `vitest run`, `npm run build` green; the written code and tests read once

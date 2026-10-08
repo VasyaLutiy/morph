@@ -956,5 +956,161 @@
         }
       }
     }
+  ],
+  "22": [
+    {
+      "ok": true,
+      "command": {
+        "name": "plan",
+        "root": ".",
+        "pretty": false,
+        "spec": "c.yaml",
+        "components": [],
+        "map": null,
+        "judge": false,
+        "out": null,
+        "only": [
+          "a",
+          "b.v_2"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "plan",
+        "root": "/r",
+        "pretty": true,
+        "spec": "s",
+        "components": [
+          "q"
+        ],
+        "map": null,
+        "judge": true,
+        "out": null,
+        "checks": "k.json",
+        "only": [
+          "x-9"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "plan",
+        "root": ".",
+        "pretty": false,
+        "spec": "s",
+        "components": [],
+        "map": null,
+        "judge": false,
+        "out": null,
+        "only": [
+          "b",
+          "a",
+          "c"
+        ]
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--only must be distinct card ids joined by \",\" (got 'a,,b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--only must be distinct card ids joined by \",\" (got 'p,q,p')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--only must be distinct card ids joined by \",\" (got 'a b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--only must be distinct card ids joined by \",\" (got '')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--only must be distinct card ids joined by \",\" (got 'a/b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --spec"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --only needs a value"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --only given twice"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --only does not apply to run"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --only does not apply to plan --from-scout"
+        }
+      }
+    }
   ]
 }
