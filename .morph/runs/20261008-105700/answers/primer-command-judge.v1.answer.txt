@@ -1,0 +1,67 @@
+```
+import { expect, test } from "vitest";
+import { GO, TYPESCRIPT } from "../../src/language/profiles.js";
+import { countTests, primerCommand } from "../../src/primer/primerCommand.js";
+import { fixture, fixtureJson, tmpRepo } from "../helpers.js";
+
+type Pair = [string, string];
+
+interface Fixture {
+  files?: Pair[];
+  ts?: Pair[];
+  mini?: string[];
+  smoke?: string[];
+}
+
+const EX = fixtureJson("primer/examples.json") as Record<string, Fixture>;
+
+const deps = { env: { PATH: process.env.PATH ?? "" }, now: () => 1791400000000 };
+
+test("Primer Command example 8", () => {
+  const t = tmpRepo();
+  try {
+    const files = EX["Primer Command 8"].files ?? [];
+    const ts = EX["Primer Command 8"].ts ?? [];
+    for (const [path, text] of files) t.write(path, text);
+
+    const result = primerCommand(t.root, false, deps);
+    expect(result.code).toBe(0);
+    expect(result.document.files).toBe(11);
+    expect(result.document.tests).toStrictEqual({ language: "go", files: 2, tests: 5 });
+
+    const goPairs = files.map(([path, text]) => ({ path, text }));
+    expect(countTests(GO, goPairs)).toStrictEqual({ language: "go", files: 2, tests: 5 });
+
+    const tsPairs = ts.map(([path, text]) => ({ path, text }));
+    expect(countTests(TYPESCRIPT, tsPairs)).toStrictEqual({
+      language: "typescript",
+      files: 1,
+      tests: 1,
+    });
+  } finally {
+    t.rm();
+  }
+});
+
+test("Primer Command example 9", () => {
+  const t = tmpRepo();
+  try {
+    const mini = EX["Primer Command 9"].mini ?? [];
+    const smoke = EX["Primer Command 9"].smoke ?? [];
+    const pairs: Pair[] = [];
+    for (const path of mini) pairs.push([path, fixture("go-mini/" + path)]);
+    for (const path of smoke) pairs.push([path, fixture("primer/go-smoke/" + path)]);
+    for (const [path, text] of pairs) t.write(path, text);
+
+    const result = primerCommand(t.root, false, deps);
+    expect(result.code).toBe(0);
+    expect(result.document.files).toBe(13);
+    expect(result.document.tests).toStrictEqual({ language: "go", files: 3, tests: 12 });
+
+    const goPairs = pairs.map(([path, text]) => ({ path, text }));
+    expect(countTests(GO, goPairs)).toStrictEqual({ language: "go", files: 3, tests: 12 });
+  } finally {
+    t.rm();
+  }
+});
+```

@@ -1,0 +1,3 @@
+morph run: primer-command.v1 accepted stage 7 frozen finish stop chars 7225
+morph run: primer-command.v2 untried stage 0 finish stop chars 7245
+morph run: primer-command-judge.v1 accepted stage 7 frozen finish stop chars 2230
