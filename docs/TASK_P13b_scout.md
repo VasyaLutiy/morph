@@ -410,8 +410,8 @@ Built by `morph plan --checks decks/p13b/checks.json`, narrow to broad, every st
 
 Code cards (no test file; code-only targets): `probe/<card>/` → `tsc` (per-card tsconfig excluding the generation's other
 targets) → `eslint <targets>` → `guard.mjs src <targets>` → `decks/p13b/parts/<card>.probe.ts` (run-scout RS 1–5 + 1 row
-= 6; scout-command SC 1–5 = 5; plan-from-scout PF 1–4 + 1 = 5; parse-command PC 4/8, 17, 18, Main 10/11 + 1 = 5; **21
-tests**) → eslint's verdict → full `vitest run` → frozen → untracked.
+= 6; scout-command SC 1–5 + 1 = 6; plan-from-scout PF 1–4 + 1 = 5; parse-command PC 4/8, 17, 18, Main 10/11 + 1 = 5;
+**22 tests**) → eslint's verdict → full `vitest run` → frozen → untracked.
 
 Judge cards: `probe/<card>/` → `tsc` → `eslint <targets>` → `guard.mjs tests <file> <min> <max> lits<n>.json` (+ the names
 kept for a patched file) → `vitest run <targets>` → eslint's verdict → full run → frozen → untracked.
@@ -518,3 +518,45 @@ Attempts and first red per variant, minutes per generation, $ (provider), trunca
 its `прогоны` cell; DECISIONS lines "P13b scout".
 
 ## 11. Actual
+
+### Gate (preparation)
+
+08.10, on the VPS, by the preparing orchestrator (Opus 5.5); no paid run, no call to the live service. Data commits 8bc4f9f
+(spec, record, map, guard, fixtures, probes, checks, filter, deck, DECISIONS), c1d425a (6 probe rows closing the first
+pass's mutation survivors; deck re-cut) and the gate commit (this section). Component sizes: cli 29 997 → 29 887, scout
+23 318 → 23 344, scout-session new 19 438. Issues labelled P13b-scout / P13-scout: none open. No split: 9 cards ≤ 12.
+
+The deck **cut by V2**: `node dist/cli.js plan --component scout-session --component cli --judge --checks
+decks/p13b/checks.json --out decks/p13b/deck.json` exit 0, 20 cards, `decks/p13b/filter.py` keeps 9; generations
+`[plan-from-scout, run-scout] [plan-from-scout-judge, run-scout-judge, scout-command] [parse-command, scout-command-judge]
+[main-judge, parse-command-judge]`; `node dist/cli.js deck check` **0 errors, 0 warnings**, no hazards. Cross-check: the
+old `mrph plan --spec … --component scout-session --component cli --judge` (dry, exit 0) gives the same 20 ids in the same
+order and the same 5 generations; on the 9 phase cards targets, slices, dependsOn, intent, variants, max_tokens and
+reasoning (2 500) equal; instructions and acceptances differ on all 9 (the P10a design; V2's chain from checks.json).
+
+Scratch worktree from c1d425a (references of the 6 code files and 5 judge files, deleted afterwards), cards run in deck
+order with the deck's own acceptances, each accepted card committed before the next: **9 of 9 chains green, 51.9–55.6 s
+each (480.9 s in all; limit 250 s per chain)**; the first pass from 8bc4f9f also 9 of 9 (52.7–97.5 s under a parallel
+mutation run). Ripple: 2 of 689 (parse.examples 4 and 8, excluded deck-wide). The final tree: `tsc`, `eslint src tests`,
+guard clean, `vitest run` **710 / 710** in 102 files (689 + 17 tests of the probe-shaped reference judges + 2 + 2; the real
+judges write ≈ 18 → 707). Typed one-line throwing stubs (`Error: stub <fn> <args JSON>`; types and constants as
+specified): every code card red at the probe — run-scout 6/6, scout-command 6/6, plan-from-scout 5/5, parse-command 5/5
+(**22/22**), each FAIL with its readable stub line; tsc clean on the stubs. Judges with the reference code and the file
+absent: red at the guard ("… missing"), the patched parse file at its old text red at the guard (22 test calls, examples
+17 and 18 missing). Mutation check: **121 single-rule mutations** of the references (runScout 47, scoutCommand 30,
+planFromScout 29, parse 12, main 3), each under a 120 s subprocess timeout: first pass 116 killed, 5 survivors (one a
+malformed mutant); 3 closed by probe rows (c1d425a), the malformed one rewritten; second pass **120 killed, 0 by timeout**
+(max 6.0 s), 1 equivalent: "scout" re-added to NOT_YET_WORDS (the word is matched before the not-yet set is read).
+
+Max slice + targets: scout-command 91 937 bytes + scoutCommand.ts ≈ 8.1 KB ≈ 100 KB (gate 200 KB). **Forecast** on `ds`
+with every maxTokens × 3: P13a ran 10 cards, 16 requests, $0.1545 at 41–54 KB in; here 9 cards of 66–92 KB in, 13 first
+requests (4 code × 2 variants + 5 judges), ≈ 13–20 requests ≈ **$0.15–0.30**, ≤ $0.50 with a re-cut; ≤ $1. **Gate holds.**
+
+**Run command** (from the repo root, the binary copied first; the session applies maxTokens × 3 first, as the operator
+ordered):
+
+```
+python3 decks/tools/scale_tokens.py decks/p13b/deck.json 3
+npm run build && rm -rf /tmp/v2bin-p13b && mkdir -p /tmp/v2bin-p13b && cp -r dist /tmp/v2bin-p13b/ && ln -s $PWD/node_modules /tmp/v2bin-p13b/node_modules
+node /tmp/v2bin-p13b/dist/cli.js run --root . --deck decks/p13b/deck.json --processor ds --deadline 2400 > /tmp/p13b-run.json
+```
