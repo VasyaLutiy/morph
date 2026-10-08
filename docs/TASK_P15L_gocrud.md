@@ -121,6 +121,23 @@ otherwise `next`.
 A wrong method on a known path is 405 by Go 1.22's `http.ServeMux` (only the status is pinned). Any other store
 error → 500 `internal`.
 
+**Gaps decided at the preparation (08.10, the record `contour.yaml` of /tmp/gocrud pins each by an example):**
+`Input` and `Project` live in `project/validate.go` (gen 0), so Memory Store is in gen 1; `project.go` holds only `New`
+and `Apply`. `Validate` always returns the normalised input, errors or not; trimming is `strings.TrimSpace` (tabs and
+newlines too); Status is never trimmed (`" active "` → `invalid`); "too long" is checked before the slug pattern. `New`
+copies the input verbatim (no validation, no normalisation). `ErrNotFound`, `ErrSlugTaken` and the `Store` interface
+live in `store/mem.go`; errors come back unwrapped; `List` of an empty store is a non-nil `[]project.Project{}`;
+`Update` checks the ID before the slug. `OpenFile` does not create a missing file; on invalid JSON it returns
+`(nil, err)`; a failed write leaves the in-memory state unchanged too; the file format is pinned by decoding (any
+`encoding/json` layout), the empty store by `[]` after trimming. `Verify` compares the whole hash string (upper-case hex
+never verifies); `Require` reads credentials with `(*http.Request).BasicAuth` (scheme case-insensitive, the password
+after the first colon). Handlers: the `{id}` is `r.PathValue("id")`; a body of exactly 1 MiB is read whole, 1 MiB + 1 is
+`bad_json`; the empty body is `bad_json`; PUT order 415 → 400 → 404 → 422 → 409; 204 carries no Content-Type; any
+other store error (`errors.Is`) → 500. The guard: `pure` is empty in `layers.json` (goguard's pure list forbids `time`,
+which `Project` needs); the stdlib rules of §3 are each code card's `extra` step in `decks/c1/checks.json` (`go list`
+imports: project allow-list strings, regexp, time, unicode/utf8; every package denies os/exec, net, math/rand(/v2),
+crypto/rand, syscall, unsafe; auth and api also deny os; `gofmt -l -r 'time.Now -> time.Time'` refuses the clock).
+
 ### 2.3. Names
 
 ```go

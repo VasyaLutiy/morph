@@ -73,7 +73,7 @@ installs `decks/tools/goguard.mjs` and `gofirstdiff.mjs` as its guard.mjs/firstd
    deck committed on `main`.
 2. **Gate without the operator.** The run starts by itself only when ALL hold:
    `morph plan` exit 0; `morph deck check` errors 0; the mrph cross-check shows no difference
-   but the instructions; every probe red per example with a readable line on the stubs; chain
+   but the instructions (a Go deck: on the code cards' structure only — mrph has no Go profile, operator 08.10); every probe red per example with a readable line on the stubs; chain
    under 250 s each; every mutant run under a timeout and the mutation cap kept (≤ 30 mutants, ≤ 20 min); forecast ≤ $1 for the phase; no slice over 200 KB. Otherwise the phase stops with a report in `docs/MEASURE.md` (row with
    "stopped at gate: <reason>") and the session moves to the next phase whose dependencies
    are met.
