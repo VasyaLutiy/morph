@@ -20,7 +20,11 @@ export interface PlanArgs {
 export interface SubmitArgs { name: "submit"; root: string; pretty: boolean; deck: string; processor: string }
 export interface CollectArgs { name: "collect"; root: string; pretty: boolean; batch: string }
 export interface PrimerArgs { name: "primer"; root: string; pretty: boolean; write: boolean }
-export type Command = DeckCheckArgs | RunArgs | PlanArgs | SubmitArgs | CollectArgs | PrimerArgs;
+export interface ScoutArgs {
+  name: "scout"; root: string; pretty: boolean; processor: string; issue: string; seedFile: string | null; deadlineSeconds: number;
+}
+export interface FromScoutArgs { name: "plan --from-scout"; root: string; pretty: boolean; fromScout: string; out: string | null }
+export type Command = DeckCheckArgs | RunArgs | PlanArgs | SubmitArgs | CollectArgs | PrimerArgs | ScoutArgs | FromScoutArgs;
 export type ParseResult = { ok: true; command: Command } | { ok: false; error: ErrorDocument };
 export type DeckFileResult = { ok: true; deck: Deck } | { ok: false; result: CommandResult };
 export interface DeckCheckDocument {

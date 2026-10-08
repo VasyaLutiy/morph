@@ -9,6 +9,8 @@ import { submitDeck } from "../batches/submit.js";
 import type { DetachedDeps } from "../batches/submit.js";
 import { saveBatchAnswers, saveBatchRecord } from "../git/archive.js";
 import { primerCommand } from "../primer/primerCommand.js";
+import { scoutCommand } from "../scout/scoutCommand.js";
+import { planFromScout } from "../scout/planFromScout.js";
 import type { CliDeps, CliIo, CommandResult, ExitCode } from "./types.js";
 
 export async function main(argv: string[], deps: CliDeps, io: CliIo): Promise<ExitCode> {
@@ -41,6 +43,10 @@ export async function main(argv: string[], deps: CliDeps, io: CliIo): Promise<Ex
       result = await collectBatch(root, command.batch, detached);
     } else if (command.name === "primer") {
       result = primerCommand(root, command.write, { env: deps.env, now: deps.now });
+    } else if (command.name === "scout") {
+      result = await scoutCommand(root, command, deps);
+    } else if (command.name === "plan --from-scout") {
+      result = planFromScout(root, command);
     } else {
       result = await runCommand(root, command, deps, io.stderr);
     }

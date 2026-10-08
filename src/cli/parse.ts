@@ -16,10 +16,12 @@ const VALUE_FLAGS: ReadonlySet<string> = new Set([
   "--out",
   "--checks",
   "--batch",
+  "--issue",
+  "--seed-file",
+  "--from-scout",
 ]);
 
 const NOT_YET_WORDS: ReadonlySet<string> = new Set([
-  "scout",
   "review",
   "report",
 ]);
@@ -79,6 +81,22 @@ const PRIMER_FLAGS: ReadonlySet<string> = new Set([
   "--write",
 ]);
 
+const SCOUT_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--processor",
+  "--issue",
+  "--seed-file",
+  "--deadline",
+]);
+
+const FROM_SCOUT_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--from-scout",
+  "--out",
+]);
+
 function isPositiveInteger(v: string): boolean {
   return /^[0-9]+$/.test(v) && Number(v) >= 1;
 }
@@ -122,7 +140,15 @@ export function parseCommand(argv: string[]): ParseResult {
   }
 
   // Check 2: the command from the words.
-  let name: "deck check" | "run" | "plan" | "submit" | "collect" | "primer";
+  let name:
+    | "deck check"
+    | "run"
+    | "plan"
+    | "plan --from-scout"
+    | "submit"
+    | "collect"
+    | "primer"
+    | "scout";
   let arity: number;
   if (words.length === 0) {
     return {
@@ -130,7 +156,7 @@ export function parseCommand(argv: string[]): ParseResult {
       error: errorDocument(
         4,
         "UsageError",
-        "no command (commands: deck check, plan, run, submit, collect, primer)",
+        "no command (commands: deck check, plan, run, submit, collect, primer, scout)",
       ),
     };
   }
@@ -139,7 +165,11 @@ export function parseCommand(argv: string[]): ParseResult {
     name = "run";
     arity = 1;
   } else if (first === "plan") {
-    name = "plan";
+    if (seen.has("--from-scout")) {
+      name = "plan --from-scout";
+    } else {
+      name = "plan";
+    }
     arity = 1;
   } else if (first === "submit") {
     name = "submit";
@@ -149,6 +179,9 @@ export function parseCommand(argv: string[]): ParseResult {
     arity = 1;
   } else if (first === "primer") {
     name = "primer";
+    arity = 1;
+  } else if (first === "scout") {
+    name = "scout";
     arity = 1;
   } else if (first === "deck") {
     if (words.length >= 2 && words[1] === "check") {
@@ -190,18 +223,24 @@ export function parseCommand(argv: string[]): ParseResult {
   }
 
   // Check 4: a flag the command does not take, in argv order.
-  const allowed =
-    name === "deck check"
-      ? DECK_CHECK_FLAGS
-      : name === "run"
-        ? RUN_FLAGS
-        : name === "plan"
-          ? PLAN_FLAGS
-          : name === "submit"
-            ? SUBMIT_FLAGS
-            : name === "collect"
-              ? COLLECT_FLAGS
-              : PRIMER_FLAGS;
+  let allowed: ReadonlySet<string>;
+  if (name === "deck check") {
+    allowed = DECK_CHECK_FLAGS;
+  } else if (name === "run") {
+    allowed = RUN_FLAGS;
+  } else if (name === "plan") {
+    allowed = PLAN_FLAGS;
+  } else if (name === "submit") {
+    allowed = SUBMIT_FLAGS;
+  } else if (name === "collect") {
+    allowed = COLLECT_FLAGS;
+  } else if (name === "primer") {
+    allowed = PRIMER_FLAGS;
+  } else if (name === "scout") {
+    allowed = SCOUT_FLAGS;
+  } else {
+    allowed = FROM_SCOUT_FLAGS;
+  }
   for (const f of order) {
     if (!allowed.has(f)) {
       return {
@@ -215,7 +254,30 @@ export function parseCommand(argv: string[]): ParseResult {
   const pretty = seen.has("--pretty");
   const deck = values.get("--deck") ?? "";
 
-  // Check 5: plan needs --spec.
+  // Check 5: plan --from-scout is done here, before plan's missing --spec.
+  if (name === "plan --from-scout") {
+    const fromScout = values.get("--from-scout") ?? "";
+    if (!/^[A-Za-z0-9._-]+$/.test(fromScout)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--from-scout must match ^[A-Za-z0-9._-]+$ (got '" + fromScout + "')",
+        ),
+      };
+    }
+    const command: Command = {
+      name: "plan --from-scout",
+      root,
+      pretty,
+      fromScout,
+      out: values.get("--out") ?? null,
+    };
+    return { ok: true, command };
+  }
+
+  // Check 6: plan needs --spec.
   if (name === "plan") {
     if (!values.has("--spec")) {
       return { ok: false, error: errorDocument(4, "UsageError", "missing --spec") };
@@ -234,7 +296,7 @@ export function parseCommand(argv: string[]): ParseResult {
     return { ok: true, command };
   }
 
-  // Check 6: collect needs --batch.
+  // Check 7: collect needs --batch.
   if (name === "collect") {
     if (!values.has("--batch")) {
       return { ok: false, error: errorDocument(4, "UsageError", "missing --batch") };
@@ -259,7 +321,7 @@ export function parseCommand(argv: string[]): ParseResult {
     return { ok: true, command };
   }
 
-  // Check 7: primer is done.
+  // Check 8: primer is done.
   if (name === "primer") {
     const command: Command = {
       name: "primer",
@@ -270,17 +332,48 @@ export function parseCommand(argv: string[]): ParseResult {
     return { ok: true, command };
   }
 
-  // Check 8: missing --deck.
+  // Check 9: scout is done after primer and before missing --deck.
+  if (name === "scout") {
+    if (!values.has("--processor")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --processor") };
+    }
+    if (!values.has("--issue")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --issue") };
+    }
+    const deadline = values.get("--deadline");
+    if (deadline !== undefined && !isPositiveInteger(deadline)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--deadline must be a positive integer (got '" + deadline + "')",
+        ),
+      };
+    }
+    const command: Command = {
+      name: "scout",
+      root,
+      pretty,
+      processor: values.get("--processor") ?? "",
+      issue: values.get("--issue") ?? "",
+      seedFile: values.has("--seed-file") ? values.get("--seed-file") ?? "" : null,
+      deadlineSeconds: deadline !== undefined ? Number(deadline) : 1800,
+    };
+    return { ok: true, command };
+  }
+
+  // Check 10: missing --deck.
   if (!values.has("--deck")) {
     return { ok: false, error: errorDocument(4, "UsageError", "missing --deck") };
   }
 
-  // Check 9: run or submit without --processor.
+  // Check 11: run or submit without --processor.
   if ((name === "run" || name === "submit") && !values.has("--processor")) {
     return { ok: false, error: errorDocument(4, "UsageError", "missing --processor") };
   }
 
-  // Check 10: submit is done.
+  // Check 12: submit is done.
   if (name === "submit") {
     const command: Command = {
       name: "submit",
@@ -292,7 +385,7 @@ export function parseCommand(argv: string[]): ParseResult {
     return { ok: true, command };
   }
 
-  // Check 11: the value validations, in the fixed order.
+  // Check 13: the value validations, in the fixed order.
   if (name === "deck check") {
     const cap = values.get("--slice-cap-bytes");
     if (cap !== undefined && !isPositiveInteger(cap)) {
@@ -359,7 +452,7 @@ export function parseCommand(argv: string[]): ParseResult {
     };
   }
 
-  // Check 12: success, the keys in the type's order, with the defaults.
+  // Check 14: success, the keys in the type's order, with the defaults.
   const command: Command = {
     name: "run",
     root,
