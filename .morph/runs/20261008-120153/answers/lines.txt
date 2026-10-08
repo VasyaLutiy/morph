@@ -1,0 +1,11 @@
+morph run: card-brief.v1 rejected stage 4 probe finish stop chars 8507
+morph run: card-brief.v2 accepted stage 7 frozen finish stop chars 8209
+morph run: accept-card.v1 accepted stage 7 frozen finish stop chars 3438
+morph run: accept-card.v2 untried stage 0 finish stop chars 3929
+morph run: card-brief-judge.v1 accepted stage 7 frozen finish stop chars 7044
+morph run: accept-card-judge.v1 rejected stage 3 guard tests/debt/acceptCard.examples.test.ts finish stop chars 9764
+morph run: parse-command.v1 accepted stage 7 frozen finish stop chars 22370
+morph run: parse-command.v2 untried stage 0 finish stop chars 22396
+morph run: accept-card-judge.r1.v1 accepted stage 7 frozen finish stop chars 10025
+morph run: main-judge.v1 accepted stage 7 frozen finish stop chars 5059
+morph run: parse-command-judge.v1 accepted stage 8 frozen finish stop chars 23616

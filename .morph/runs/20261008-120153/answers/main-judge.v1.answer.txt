@@ -1,0 +1,145 @@
+```ts
+import { expect, test } from "vitest";
+import { main } from "../../src/cli/main.js";
+import { fixture, tmpRepo, tmpRoot } from "../helpers.js";
+
+test("Main example 14: card brief, a missing card, and a missing flag", async () => {
+  const t = tmpRoot();
+  try {
+    t.write("d.json", fixture("debt/deck.json"));
+    t.write("src/x.ts", "export const x = 1;\n");
+    t.write("docs/a.md", "# A\n");
+    t.write("docs/b.md", "B");
+
+    const deps = {
+      env: { PATH: process.env.PATH ?? "" },
+      now: () => 0,
+      cwd: "/",
+      transport: null,
+    };
+
+    const stdout1: string[] = [];
+    const stderr1: string[] = [];
+    const code1 = await main(
+      ["card", "--deck", "d.json", "--id", "fmt.x", "--md", "--root", t.root, "--pretty"],
+      deps,
+      { stdout: (s) => stdout1.push(s), stderr: (s) => stderr1.push(s) },
+    );
+    expect(code1).toBe(0);
+    expect(stderr1).toStrictEqual(["morph card: exit 0\n"]);
+    expect(stdout1.length).toBe(1);
+    const chunk1 = stdout1[0] ?? "";
+    expect(chunk1.startsWith('{\n  "deck": "d.json",\n  "card": "fmt.x",\n')).toBe(true);
+    const doc1 = JSON.parse(chunk1) as { deck: string; card: string; lastRun: unknown; markdown: string };
+    expect(doc1.deck).toBe("d.json");
+    expect(doc1.card).toBe("fmt.x");
+    expect(doc1.lastRun).toBe(null);
+    expect(doc1.markdown.startsWith("# Debt brief: fmt.x\n\nWrite only: ")).toBe(true);
+
+    const stdout2: string[] = [];
+    const stderr2: string[] = [];
+    const code2 = await main(
+      ["card", "--deck", "d.json", "--id", "zz", "--root", t.root],
+      deps,
+      { stdout: (s) => stdout2.push(s), stderr: (s) => stderr2.push(s) },
+    );
+    expect(code2).toBe(4);
+    expect(stderr2).toStrictEqual(["morph card: exit 4\n"]);
+    expect(stdout2[0]).toBe(
+      "{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"no card 'zz' in d.json (have: base, fmt.x, solo)\"}}\n",
+    );
+
+    const stdout3: string[] = [];
+    const stderr3: string[] = [];
+    const code3 = await main(
+      ["card", "--root", t.root, "--deck", "d.json"],
+      deps,
+      { stdout: (s) => stdout3.push(s), stderr: (s) => stderr3.push(s) },
+    );
+    expect(code3).toBe(4);
+    expect(stderr3).toStrictEqual(["morph: missing --id\n"]);
+    expect(JSON.parse(stdout3[0] ?? "")).toStrictEqual({
+      error: { code: 4, kind: "UsageError", message: "missing --id" },
+    });
+  } finally {
+    t.rm();
+  }
+});
+
+test("Main example 15: the debt commit, a second call, and a bad --model", async () => {
+  const t = tmpRepo();
+  try {
+    t.write("d.json", fixture("debt/accept.deck.json"));
+    t.write("src/a.ts", "broken\n");
+    t.git(["add", "-A"]);
+    t.git(["commit", "-q", "-m", "base"]);
+    t.write("src/a.ts", "fixed\n");
+
+    const deps = {
+      env: { PATH: process.env.PATH ?? "" },
+      now: () => 0,
+      cwd: t.root,
+      transport: null,
+    };
+    const argv = ["accept", "--deck", "d.json", "--id", "fix-a", "--model", "claude-fable-5-1", "--commit"];
+
+    const stdout1: string[] = [];
+    const stderr1: string[] = [];
+    const code1 = await main(argv, deps, { stdout: (s) => stdout1.push(s), stderr: (s) => stderr1.push(s) });
+    expect(code1).toBe(0);
+    expect(stderr1).toStrictEqual(["morph accept: exit 0\n"]);
+    expect(stdout1.length).toBe(1);
+    const head = t.git(["rev-parse", "HEAD"]);
+    expect(JSON.parse(stdout1[0] ?? "")).toStrictEqual({
+      deck: "d.json",
+      card: "fix-a",
+      model: "claude-fable-5-1",
+      exit: 0,
+      timedOut: false,
+      green: true,
+      log: "",
+      outside: [],
+      commit: head,
+      diffstat: { files: 1, insertions: 1, deletions: 1 },
+      reason: null,
+    });
+    expect(t.git(["log", "-1", "--format=%B"])).toBe(
+      "morph fix-a: src/a.ts\n\nMorph-Card: fix-a\nMorph-Model: claude-fable-5-1\nMorph-Acceptance-Exit: 0\nMorph-Debt: true",
+    );
+
+    const stdout2: string[] = [];
+    const stderr2: string[] = [];
+    const code2 = await main(argv, deps, { stdout: (s) => stdout2.push(s), stderr: (s) => stderr2.push(s) });
+    expect(code2).toBe(1);
+    expect(stderr2).toStrictEqual(["morph accept: exit 1\n"]);
+    expect(JSON.parse(stdout2[0] ?? "")).toStrictEqual({
+      deck: "d.json",
+      card: "fix-a",
+      model: "claude-fable-5-1",
+      exit: 0,
+      timedOut: false,
+      green: true,
+      log: "",
+      outside: [],
+      commit: null,
+      diffstat: null,
+      reason: "nothing to commit: the targets equal HEAD",
+    });
+
+    const stdout3: string[] = [];
+    const stderr3: string[] = [];
+    const code3 = await main(
+      ["accept", "--deck", "d.json", "--id", "fix-a", "--model", "m x"],
+      deps,
+      { stdout: (s) => stdout3.push(s), stderr: (s) => stderr3.push(s) },
+    );
+    expect(code3).toBe(4);
+    expect(stderr3).toStrictEqual(["morph: --model must match ^[A-Za-z0-9._/:-]+$ (got 'm x')\n"]);
+    expect(JSON.parse(stdout3[0] ?? "")).toStrictEqual({
+      error: { code: 4, kind: "UsageError", message: "--model must match ^[A-Za-z0-9._/:-]+$ (got 'm x')" },
+    });
+  } finally {
+    t.rm();
+  }
+});
+```

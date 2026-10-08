@@ -1,0 +1,335 @@
+```
+import { expect, test } from "vitest";
+import { acceptCard } from "../../src/debt/acceptCard.js";
+import { fixture, tmpRepo, tmpRoot } from "../helpers.js";
+
+test("Accept Card example 1: a green target is committed, then nothing is left to commit", async () => {
+  const t = tmpRepo();
+  try {
+    t.write("d.json", fixture("debt/accept.deck.json"));
+    t.write("src/a.ts", "broken\n");
+    t.write("README.md", "r\n");
+    t.git(["add", "."]);
+    t.git(["commit", "-q", "-m", "base"]);
+    t.write("src/a.ts", "fixed\n");
+    t.write(".morph/runs/x/report.json", "{}\n");
+    const env = { PATH: process.env.PATH ?? "" };
+
+    const first = await acceptCard(
+      t.root,
+      { deck: "d.json", id: "fix-a", model: "claude-fable-5-1", commit: true },
+      { env },
+    );
+    const head = t.git(["rev-parse", "HEAD"]);
+    expect(first.code).toBe(0);
+    expect(first.document).toStrictEqual({
+      deck: "d.json",
+      card: "fix-a",
+      model: "claude-fable-5-1",
+      exit: 0,
+      timedOut: false,
+      green: true,
+      log: "",
+      outside: [],
+      commit: head,
+      diffstat: { files: 1, insertions: 1, deletions: 1 },
+      reason: null,
+    });
+    expect(t.git(["log", "-1", "--format=%B"])).toBe(
+      "morph fix-a: src/a.ts\n\nMorph-Card: fix-a\nMorph-Model: claude-fable-5-1\n" +
+        "Morph-Acceptance-Exit: 0\nMorph-Debt: true",
+    );
+    expect(t.git(["show", "--name-only", "--format=", "HEAD"])).toBe("src/a.ts");
+
+    const second = await acceptCard(
+      t.root,
+      { deck: "d.json", id: "fix-a", model: "claude-fable-5-1", commit: true },
+      { env },
+    );
+    expect(second.code).toBe(1);
+    expect(second.document).toStrictEqual({
+      deck: "d.json",
+      card: "fix-a",
+      model: "claude-fable-5-1",
+      exit: 0,
+      timedOut: false,
+      green: true,
+      log: "",
+      outside: [],
+      commit: null,
+      diffstat: null,
+      reason: "nothing to commit: the targets equal HEAD",
+    });
+    expect(t.git(["rev-parse", "HEAD"])).toBe(head);
+  } finally {
+    t.rm();
+  }
+});
+
+test("Accept Card example 2: a red acceptance fails and the tree is not rolled back", async () => {
+  const t = tmpRepo();
+  try {
+    t.write("d.json", fixture("debt/accept.deck.json"));
+    t.write("src/a.ts", "broken\n");
+    t.write("README.md", "r\n");
+    t.git(["add", "."]);
+    t.git(["commit", "-q", "-m", "base"]);
+    t.write("src/a.ts", "still broken\n");
+    const env = { PATH: process.env.PATH ?? "" };
+
+    const result = await acceptCard(
+      t.root,
+      { deck: "d.json", id: "fix-a", model: "claude-fable-5-1", commit: true },
+      { env },
+    );
+    expect(result.code).toBe(1);
+    expect(result.document).toStrictEqual({
+      deck: "d.json",
+      card: "fix-a",
+      model: "claude-fable-5-1",
+      exit: 1,
+      timedOut: false,
+      green: false,
+      log: "FAIL: src/a.ts not fixed\n",
+      outside: [],
+      commit: null,
+      diffstat: null,
+      reason: "acceptance failed (exit 1)",
+    });
+    expect(t.git(["log", "-1", "--format=%B"])).toBe("base");
+    expect(t.read("src/a.ts")).toBe("still broken\n");
+  } finally {
+    t.rm();
+  }
+});
+
+test("Accept Card example 3: a change outside the targets is named, a red one too", async () => {
+  const t = tmpRepo();
+  try {
+    t.write("d.json", fixture("debt/accept.deck.json"));
+    t.write("src/a.ts", "broken\n");
+    t.write("README.md", "r\n");
+    t.git(["add", "."]);
+    t.git(["commit", "-q", "-m", "base"]);
+    const base = t.git(["rev-parse", "HEAD"]);
+    t.write("src/a.ts", "fixed again\n");
+    t.write("README.md", "r2\n");
+    t.write("notes/n.txt", "n\n");
+    const env = { PATH: process.env.PATH ?? "" };
+
+    const first = await acceptCard(
+      t.root,
+      { deck: "d.json", id: "fix-a", model: "claude-fable-5-1", commit: true },
+      { env },
+    );
+    expect(first.code).toBe(1);
+    expect(first.document).toStrictEqual({
+      deck: "d.json",
+      card: "fix-a",
+      model: "claude-fable-5-1",
+      exit: 0,
+      timedOut: false,
+      green: true,
+      log: "",
+      outside: ["README.md", "notes/n.txt"],
+      commit: null,
+      diffstat: null,
+      reason: "changed outside the targets: README.md, notes/n.txt",
+    });
+
+    t.write("src/a.ts", "broken!\n");
+    const second = await acceptCard(
+      t.root,
+      { deck: "d.json", id: "fix-a", model: "claude-fable-5-1", commit: true },
+      { env },
+    );
+    expect(second.code).toBe(1);
+    expect(second.document).toStrictEqual({
+      deck: "d.json",
+      card: "fix-a",
+      model: "claude-fable-5-1",
+      exit: 1,
+      timedOut: false,
+      green: false,
+      log: "FAIL: src/a.ts not fixed\n",
+      outside: ["README.md", "notes/n.txt"],
+      commit: null,
+      diffstat: null,
+      reason: "acceptance failed (exit 1); changed outside the targets: README.md, notes/n.txt",
+    });
+    expect(t.git(["rev-parse", "HEAD"])).toBe(base);
+  } finally {
+    t.rm();
+  }
+});
+
+test("Accept Card example 4: no commit asked means no git, a timeout is a red exit", async () => {
+  const r = tmpRoot();
+  try {
+    r.write("d.json", fixture("debt/accept.deck.json"));
+    r.write("src/b.ts", "b\n");
+    r.write("out/g.ts", "g\n");
+
+    const ok = await acceptCard(
+      r.root,
+      { deck: "d.json", id: "fix-two", model: "claude-fable-5-1", commit: false },
+      { env: { PATH: process.env.PATH ?? "", MARK: "k7", GH_TOKEN: "t" } },
+    );
+    expect(ok.code).toBe(0);
+    expect(ok.document).toStrictEqual({
+      deck: "d.json",
+      card: "fix-two",
+      model: "claude-fable-5-1",
+      exit: 0,
+      timedOut: false,
+      green: true,
+      log: "",
+      outside: null,
+      commit: null,
+      diffstat: null,
+      reason: null,
+    });
+
+    const wrongMark = await acceptCard(
+      r.root,
+      { deck: "d.json", id: "fix-two", model: "claude-fable-5-1", commit: false },
+      { env: { PATH: process.env.PATH ?? "", MARK: "k8", GH_TOKEN: "t" } },
+    );
+    expect(wrongMark.code).toBe(1);
+    expect(wrongMark.document).toStrictEqual({
+      deck: "d.json",
+      card: "fix-two",
+      model: "claude-fable-5-1",
+      exit: 1,
+      timedOut: false,
+      green: false,
+      log: "",
+      outside: null,
+      commit: null,
+      diffstat: null,
+      reason: "acceptance failed (exit 1)",
+    });
+
+    const slow = await acceptCard(
+      r.root,
+      { deck: "d.json", id: "slow", model: "claude-fable-5-1", commit: false },
+      { env: { PATH: process.env.PATH ?? "" }, timeoutMs: 300 },
+    );
+    expect(slow.code).toBe(1);
+    expect(slow.document).toStrictEqual({
+      deck: "d.json",
+      card: "slow",
+      model: "claude-fable-5-1",
+      exit: null,
+      timedOut: true,
+      green: false,
+      log: "started\nacceptance timed out after 300 ms\n",
+      outside: null,
+      commit: null,
+      diffstat: null,
+      reason: "acceptance failed (exit null)",
+    });
+  } finally {
+    r.rm();
+  }
+});
+
+test("Accept Card example 5: an ignored target is committed, refusals, and a git fault", async () => {
+  const g = tmpRepo();
+  const r = tmpRoot();
+  try {
+    g.write("d.json", fixture("debt/accept.deck.json"));
+    g.write(".gitignore", "out/\n");
+    g.git(["add", "."]);
+    g.git(["commit", "-q", "-m", "base"]);
+    g.write("src/b.ts", "b\n");
+    g.write("out/g.ts", "g\n");
+    const env = { PATH: process.env.PATH ?? "", MARK: "k7" };
+
+    const committed = await acceptCard(
+      g.root,
+      { deck: "d.json", id: "fix-two", model: "acme/m:free", commit: true },
+      { env },
+    );
+    expect(committed.code).toBe(0);
+    expect(committed.document).toStrictEqual({
+      deck: "d.json",
+      card: "fix-two",
+      model: "acme/m:free",
+      exit: 0,
+      timedOut: false,
+      green: true,
+      log: "",
+      outside: [],
+      commit: g.git(["rev-parse", "HEAD"]),
+      diffstat: { files: 2, insertions: 2, deletions: 0 },
+      reason: null,
+    });
+    expect(g.git(["log", "-1", "--format=%B"])).toBe(
+      "morph fix-two: src/b.ts, out/g.ts\n\nMorph-Card: fix-two\nMorph-Model: acme/m:free\n" +
+        "Morph-Acceptance-Exit: 0\nMorph-Debt: true",
+    );
+    expect(g.git(["show", "--name-only", "--format=", "HEAD"])).toBe("out/g.ts\nsrc/b.ts");
+
+    const none = await acceptCard(
+      g.root,
+      { deck: "d.json", id: "none", model: "claude-fable-5-1", commit: false },
+      { env },
+    );
+    expect(none.code).toBe(2);
+    expect(none.document).toStrictEqual({
+      error: { code: 2, kind: "RefusalError", message: "card none has no acceptance" },
+    });
+
+    const blank = await acceptCard(
+      g.root,
+      { deck: "d.json", id: "blank", model: "claude-fable-5-1", commit: false },
+      { env },
+    );
+    expect(blank.code).toBe(2);
+    expect(blank.document).toStrictEqual({
+      error: { code: 2, kind: "RefusalError", message: "card blank has no acceptance" },
+    });
+
+    const zz = await acceptCard(
+      g.root,
+      { deck: "d.json", id: "zz", model: "claude-fable-5-1", commit: false },
+      { env },
+    );
+    expect(zz.code).toBe(4);
+    expect(zz.document).toStrictEqual({
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "no card 'zz' in d.json (have: fix-a, fix-two, slow, none, blank)",
+      },
+    });
+
+    const missing = await acceptCard(
+      g.root,
+      { deck: "x.json", id: "fix-a", model: "claude-fable-5-1", commit: false },
+      { env },
+    );
+    expect(missing.code).toBe(4);
+    expect(missing.document).toStrictEqual({
+      error: { code: 4, kind: "UsageError", message: "deck file not found: x.json" },
+    });
+
+    r.write("d.json", fixture("debt/accept.deck.json"));
+    let message = "";
+    try {
+      await acceptCard(
+        r.root,
+        { deck: "d.json", id: "fix-a", model: "claude-fable-5-1", commit: true },
+        { env: { PATH: process.env.PATH ?? "" } },
+      );
+    } catch (e) {
+      message = e instanceof Error ? e.message : String(e);
+    }
+    expect(message.startsWith("git status failed (exit 128): ")).toBe(true);
+  } finally {
+    g.rm();
+    r.rm();
+  }
+});
+```

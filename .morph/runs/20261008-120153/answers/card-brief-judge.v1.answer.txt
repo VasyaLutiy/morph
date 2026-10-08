@@ -1,0 +1,244 @@
+```
+import { expect, test } from "vitest";
+import { cardBrief, type BriefDocument } from "../../src/debt/cardBrief.js";
+import { fixture, fixtureJson, tmpRoot, type TmpRoot } from "../helpers.js";
+
+function writeTree(root: TmpRoot): void {
+  root.write("d.json", fixture("debt/deck.json"));
+  root.write("src/x.ts", "export const x = 1;\n");
+  root.write("docs/a.md", "# A\n");
+  root.write("docs/b.md", "B");
+}
+
+function writeArchive(root: TmpRoot): void {
+  const archive = fixtureJson("debt/archive.json") as {
+    reports: Record<string, unknown>;
+    answers: Record<string, string[]>;
+  };
+  for (const [runId, report] of Object.entries(archive.reports)) {
+    root.write(
+      `.morph/runs/${runId}/report.json`,
+      typeof report === "string" ? report : `${JSON.stringify(report, null, 2)}\n`,
+    );
+  }
+  for (const [runId, names] of Object.entries(archive.answers)) {
+    for (const name of names) {
+      root.write(`.morph/runs/${runId}/answers/${name}`, "A\n");
+    }
+  }
+}
+
+test("Card Brief example 1: fmt.x and the newest run that holds it", () => {
+  const t = tmpRoot();
+  try {
+    writeTree(t);
+    writeArchive(t);
+
+    const result = cardBrief(t.root, { deck: "d.json", id: "fmt.x", md: false });
+
+    expect(result.code).toBe(0);
+    expect(result.document).toStrictEqual({
+      deck: "d.json",
+      card: "fmt.x",
+      intent: "patch",
+      targets: [
+        { path: "src/x.ts", text: "export const x = 1;\n" },
+        { path: "src/y.ts", text: null },
+      ],
+      slice: [
+        { path: "docs/a.md", text: "# A\n" },
+        { path: "docs/b.md", text: "B" },
+        { path: "docs/gone.md", text: null },
+      ],
+      instruction: "Fix x and write y.\n",
+      acceptance: "grep -q fixed src/x.ts",
+      maxTokens: 9000,
+      model: null,
+      dependsOn: ["base"],
+      lastRun: {
+        runId: "20261102-100000",
+        processor: "glm53",
+        status: "failed",
+        reason: "acceptance failed",
+        attempts: 2,
+        earlierFailures: 1,
+        acceptanceLog: "== probe\nAssertionError: expected 2 to be 1\n",
+        answers: [
+          ".morph/runs/20261102-100000/answers/fmt.x.r1.v1.answer.txt",
+          ".morph/runs/20261102-100000/answers/fmt.x.v1.answer.txt",
+        ],
+      },
+    });
+  } finally {
+    t.rm();
+  }
+});
+
+test("Card Brief example 2: markdown of fmt.x and solo, base without markdown", () => {
+  const t = tmpRoot();
+  try {
+    writeTree(t);
+    writeArchive(t);
+
+    const fmt = cardBrief(t.root, { deck: "d.json", id: "fmt.x", md: true });
+    expect(fmt.code).toBe(0);
+    const fmtDocument = fmt.document as BriefDocument;
+    const { markdown: fmtMarkdown, ...fmtRest } = fmtDocument;
+    expect(fmtRest).toStrictEqual({
+      deck: "d.json",
+      card: "fmt.x",
+      intent: "patch",
+      targets: [
+        { path: "src/x.ts", text: "export const x = 1;\n" },
+        { path: "src/y.ts", text: null },
+      ],
+      slice: [
+        { path: "docs/a.md", text: "# A\n" },
+        { path: "docs/b.md", text: "B" },
+        { path: "docs/gone.md", text: null },
+      ],
+      instruction: "Fix x and write y.\n",
+      acceptance: "grep -q fixed src/x.ts",
+      maxTokens: 9000,
+      model: null,
+      dependsOn: ["base"],
+      lastRun: {
+        runId: "20261102-100000",
+        processor: "glm53",
+        status: "failed",
+        reason: "acceptance failed",
+        attempts: 2,
+        earlierFailures: 1,
+        acceptanceLog: "== probe\nAssertionError: expected 2 to be 1\n",
+        answers: [
+          ".morph/runs/20261102-100000/answers/fmt.x.r1.v1.answer.txt",
+          ".morph/runs/20261102-100000/answers/fmt.x.v1.answer.txt",
+        ],
+      },
+    });
+    expect(fmtMarkdown).toBe(fixture("debt/brief.fmt.x.md"));
+
+    const solo = cardBrief(t.root, { deck: "d.json", id: "solo", md: true });
+    expect(solo.code).toBe(0);
+    const soloDocument = solo.document as BriefDocument;
+    const { markdown: soloMarkdown, ...soloRest } = soloDocument;
+    expect(soloRest).toStrictEqual({
+      deck: "d.json",
+      card: "solo",
+      intent: "generate",
+      targets: [{ path: "lib/solo.ts", text: null }],
+      slice: [],
+      instruction: "Write solo.",
+      acceptance: null,
+      maxTokens: null,
+      model: "m/x",
+      dependsOn: [],
+      lastRun: null,
+    });
+    expect(soloMarkdown).toBe(fixture("debt/brief.solo.md"));
+
+    const base = cardBrief(t.root, { deck: "d.json", id: "base", md: false });
+    expect(base.code).toBe(0);
+    expect(base.document).toStrictEqual({
+      deck: "d.json",
+      card: "base",
+      intent: "generate",
+      targets: [{ path: "src/base.ts", text: null }],
+      slice: [],
+      instruction: "Write base.",
+      acceptance: "true",
+      maxTokens: null,
+      model: null,
+      dependsOn: [],
+      lastRun: {
+        runId: "20261103-110000",
+        processor: "ds",
+        status: "written",
+        reason: null,
+        attempts: 1,
+        earlierFailures: 0,
+        acceptanceLog: "== tsc\n== probe\n",
+        answers: [],
+      },
+    });
+  } finally {
+    t.rm();
+  }
+});
+
+test("Card Brief example 3: the refusals and a root with no archive", () => {
+  const t = tmpRoot();
+  try {
+    writeTree(t);
+    writeArchive(t);
+    t.write("c.json", fixture("decks/cycle.json"));
+
+    const missingDeck = cardBrief(t.root, { deck: "nope.json", id: "fmt.x", md: false });
+    expect(missingDeck).toStrictEqual({
+      code: 4,
+      document: {
+        error: {
+          code: 4,
+          kind: "UsageError",
+          message: "deck file not found: nope.json",
+        },
+      },
+    });
+
+    const cycle = cardBrief(t.root, { deck: "c.json", id: "fmt.x", md: false });
+    expect(cycle).toStrictEqual({
+      code: 2,
+      document: {
+        error: {
+          code: 2,
+          kind: "DeckError",
+          message: "invalid deck: dependsOn: dependsOn cycle a -> b -> a",
+        },
+      },
+    });
+
+    const absentCard = cardBrief(t.root, { deck: "d.json", id: "zz", md: false });
+    expect(absentCard).toStrictEqual({
+      code: 4,
+      document: {
+        error: {
+          code: 4,
+          kind: "UsageError",
+          message: "no card 'zz' in d.json (have: base, fmt.x, solo)",
+        },
+      },
+    });
+  } finally {
+    t.rm();
+  }
+
+  const bare = tmpRoot();
+  try {
+    writeTree(bare);
+    const result = cardBrief(bare.root, { deck: "d.json", id: "fmt.x", md: false });
+    expect(result.code).toBe(0);
+    expect(result.document).toStrictEqual({
+      deck: "d.json",
+      card: "fmt.x",
+      intent: "patch",
+      targets: [
+        { path: "src/x.ts", text: "export const x = 1;\n" },
+        { path: "src/y.ts", text: null },
+      ],
+      slice: [
+        { path: "docs/a.md", text: "# A\n" },
+        { path: "docs/b.md", text: "B" },
+        { path: "docs/gone.md", text: null },
+      ],
+      instruction: "Fix x and write y.\n",
+      acceptance: "grep -q fixed src/x.ts",
+      maxTokens: 9000,
+      model: null,
+      dependsOn: ["base"],
+      lastRun: null,
+    });
+  } finally {
+    bare.rm();
+  }
+});
+```

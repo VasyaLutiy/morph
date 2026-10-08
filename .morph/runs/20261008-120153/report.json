@@ -1,0 +1,247 @@
+{
+  "runId": "20261008-120153",
+  "completedAt": 1791462052035,
+  "branch": "morph/20261008-120153",
+  "processor": "ds",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "card-brief",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "card-brief.v2",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/card-brief/card-brief.probe.ts > Card Brief example 1: the card as its executor saw it, the newest run that holds it\nAssertionError: expected { code: +0, document: { deck: 'd.json', card: 'fmt.x', intent: 'patch', targets: [ { path: 'src/x.ts', text: 'export const x = 1;\\n' }, { path: 'src/y.ts', text: null } ], …(7) } } to strictly equal { code: +0, document: { deck: 'd.json', card: 'fmt.x', intent: 'patch', targets: [ { path: 'src/x.ts', text: 'export const x = 1;\\n' }, { path: 'src/y.ts', text: null } ], …(7) } }\n\n- Expected\n+ Received\n\n@@ -18,11 +18,11 @@\n          \".morph/runs/20261102-100000/answers/fmt.x.r1.v1.answer.txt\",\n          \".morph/runs/20261102-100000/answers/fmt.x.v1.answer.txt\",\n        ],\n        \"attempts\": 2,\n        \"earlierFailures\": 1,\n-       \"processor\": \"glm53\",\n+       \"processor\": null,\n        \"reason\": \"acceptance failed\",\n        \"runId\": \"20261102-100000\",\n        \"status\": \"failed\",\n      },\n      \"maxTokens\": 9000,\n\n ❯ probe/card-brief/card-brief.probe.ts:35:75\n     33|   const t = tree(true);\n     34|   try {\n     35|     expect(cardBrief(t.root, { deck: \"d.json\", id: \"fmt.x\", md: false …\n       |                                                                           ^\n     36|       code: 0,\n     37|       document: {\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯\n\n FAIL  probe/card-brief/card-brief.probe.ts > Card Brief example 2: the markdown byte for byte; base's run is the newest\nAssertionError: exp\n[... 1715 chars clipped; diagnosis lines kept:]\n FAIL  probe/card-brief/card-brief.probe.ts > rows: readLastRun's order and skips, findCard, RUNS_DIR\nAssertionError: expected { runId: 'a0', processor: null, status: '', reason: null, attempts: +0, earlierFailures: +0, acceptanceLog: '', answers: [] } to strictly equal { runId: 'a0', processor: 'p', \n[...]\npts\": 0,\n    \"earlierFailures\": 0,\n-   \"processor\": \"p\",\n+   \"processor\": null,\n    \"reason\": null,\n    \"runId\": \"a0\",\n    \"status\": \"\",\n  }\n\n ❯ probe/card-brief/card-brief.probe.ts:111:39\n    109|       earlierFailures: 3, acceptanceLog: \"L\", answers: [\".morph/runs/b…\n    110|     t.write(\".morph/runs/a0/report.json\", JSON.stringify({ processor: …\n    111|     expect(readLastRun(t.root, \"q2\")).toStrictEqual({ runId: \"a0\", pro…\n       |                                       ^\n    112|       earlierFailures: 0, acceptanceLog: \"\", answers: [] });\n    113|     t.write(\"d.json\", JSON.stringify([{ customId: \"k\", intent: \"genera…\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯\n\n\n Test Files  1 failed (1)\n      Tests  3 failed | 2 passed (5)\n\nfirst difference at char 232 (line 7) of 367/364: expected \"...earlierFailures\\\": 1,\\n      \\\"processor\\\": \\\"glm53\\\",\\n      \\\"reason\\\": \\\"acceptance fai\" received \"...earlierFailures\\\": 1,\\n      \\\"processor\\\": null,\\n      \\\"reason\\\": \\\"acceptance failed\"\nfirst difference at char 136 (line 7) of 223/222: expected \"...\\n- last run: 20261102-100000, processor glm53, failed, attempts 2, reason accept\" received \"...\\n- last run: 20261102-100000, processor none, failed, attempts 2, reason accepta\"\nfirst difference at char 98 (line 6) of 155/156: expected \"...\\n  \\\"earlierFailures\\\": 0,\\n  \\\"processor\\\": \\\"p\\\",\\n  \\\"reason\\\": null,\\n  \\\"runId\\\": \\\"a0\\\",\\n\" received \"...\\n  \\\"earlierFailures\\\": 0,\\n  \\\"processor\\\": null,\\n  \\\"reason\\\": null,\\n  \\\"runId\\\": \\\"a0\\\",\"\n"
+      ],
+      "commit": "dc56062e182ee4b8166196ddf9b024b1aaf9fa86",
+      "diffstat": {
+        "files": 1,
+        "insertions": 294,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "accept-card",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "accept-card.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "ee129a6b7fe50fa0ef24b6da71a5e34152150fe7",
+      "diffstat": {
+        "files": 1,
+        "insertions": 131,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "card-brief-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "card-brief-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/debt/cardBrief.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "d0fdf87ddf477e02e8bf42e2ee79fb6987af8c21",
+      "diffstat": {
+        "files": 1,
+        "insertions": 242,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "accept-card-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "accept-card-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/debt/acceptCard.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard tests/debt/acceptCard.examples.test.ts\nguard: tests/debt/acceptCard.examples.test.ts does not mention the example literal \"git status failed (exit 128): \"\n"
+      ],
+      "commit": "c2fc38d3cfcf7ca4846e8549ac07b8420bb32c31",
+      "diffstat": {
+        "files": 1,
+        "insertions": 333,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "parse-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "61df8c2739533e365081aa166d54d8f42977956e",
+      "diffstat": {
+        "files": 3,
+        "insertions": 109,
+        "deletions": 4
+      }
+    },
+    {
+      "customId": "main-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "main-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/main.p17.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "3cbe5ec8e0201e07e5ee78fb46ff46748d00583f",
+      "diffstat": {
+        "files": 1,
+        "insertions": 143,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "parse-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/parse.examples.test.ts\n== names tests/cli/parse.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "e624e0e6c0788e4078eba574232f0c61d364e5d0",
+      "diffstat": {
+        "files": 1,
+        "insertions": 165,
+        "deletions": 1
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 265439,
+    "outputTokens": 110780,
+    "cost": 0.20316738,
+    "requests": 11
+  },
+  "requests": [
+    {
+      "customId": "card-brief.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791460914-dAtCfisuJZHhvgwVHBZd",
+      "inputTokens": 18777,
+      "outputTokens": 17308,
+      "cost": 0.0264027,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "card-brief.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791460913-HZZ7rZ5w7jhFqTr9U7Gg",
+      "inputTokens": 18777,
+      "outputTokens": 8409,
+      "cost": 0.0157239,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "accept-card.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791461112-xMvqjSadqnJ9drf6Aw2F",
+      "inputTokens": 23318,
+      "outputTokens": 2708,
+      "cost": 0.00969204,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "accept-card.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791461112-aaHzcTF92W8wUDeyQnnE",
+      "inputTokens": 23318,
+      "outputTokens": 1655,
+      "cost": 0.00842844,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "card-brief-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791461112-f9AXmiqTT7Nt5Sf0pMnV",
+      "inputTokens": 21948,
+      "outputTokens": 9425,
+      "cost": 0.01734144,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "accept-card-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791461340-FTa1Ddn8agYD2eijxJqi",
+      "inputTokens": 22603,
+      "outputTokens": 11328,
+      "cost": 0.0203745,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791461340-NozQQy33jel9zBtrfq3N",
+      "inputTokens": 27877,
+      "outputTokens": 9577,
+      "cost": 0.01239054,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791461340-JTbfwKx9Th3LloHznG35",
+      "inputTokens": 27877,
+      "outputTokens": 7772,
+      "cost": 0.0176895,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "accept-card-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791461504-UeMVIL9Q8KhLOpI1bfcn",
+      "inputTokens": 31151,
+      "outputTokens": 8257,
+      "cost": 0.0192537,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "main-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791461653-AYpH9f6022wELtbfBpq7",
+      "inputTokens": 22439,
+      "outputTokens": 26267,
+      "cost": 0.03797562,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791461653-k8X1PC71kBojIHr5HpIg",
+      "inputTokens": 27354,
+      "outputTokens": 8074,
+      "cost": 0.017895,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}

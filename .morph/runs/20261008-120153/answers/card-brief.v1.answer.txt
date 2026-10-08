@@ -1,0 +1,230 @@
+```ts
+// Card Brief: `morph card` reads one card of a deck as it is on the tree, its
+// targets, its slice, and the last run's outcome of it; with --md, the payer's brief.
+// Layer debt: cards, node:fs, node:path. No clock, no environment, no child process.
+
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { loadDeck } from "../cards/model.js";
+import type { Card } from "../cards/types.js";
+
+export interface DebtResult { code: 0 | 1 | 2 | 3 | 4; document: unknown }
+export type FoundCard = { ok: true; card: Card } | { ok: false; result: DebtResult };
+export interface BriefFile { path: string; text: string | null }
+export interface LastRun {
+  runId: string; processor: string | null; status: string; reason: string | null; attempts: number;
+  earlierFailures: number; acceptanceLog: string; answers: string[];
+}
+export interface BriefDocument {
+  deck: string; card: string; intent: string; targets: BriefFile[]; slice: BriefFile[]; instruction: string;
+  acceptance: string | null; maxTokens: number | null; model: string | null; dependsOn: string[];
+  lastRun: LastRun | null; markdown?: string;
+}
+export interface BriefOptions { deck: string; id: string; md: boolean }
+
+export const RUNS_DIR = ".morph/runs";
+
+function isFile(file: string): boolean {
+  try {
+    return fs.statSync(file).isFile();
+  } catch {
+    return false;
+  }
+}
+
+function readText(root: string, relative: string): string | null {
+  const abs = path.resolve(root, relative);
+  if (!isFile(abs)) return null;
+  try {
+    return fs.readFileSync(abs, "utf8");
+  } catch {
+    return null;
+  }
+}
+
+function usageError(message: string): DebtResult {
+  return { code: 4, document: { error: { code: 4, kind: "UsageError", message } } };
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export function findCard(root: string, deckPath: string, id: string): FoundCard {
+  const abs = path.resolve(root, deckPath);
+  if (!isFile(abs)) return { ok: false, result: usageError(`deck file not found: ${deckPath}`) };
+  let text: string;
+  try {
+    text = fs.readFileSync(abs, "utf8");
+  } catch {
+    return { ok: false, result: usageError(`deck file not found: ${deckPath}`) };
+  }
+  const loaded = loadDeck(text);
+  if (!loaded.ok) {
+    const message = "invalid deck: " + loaded.faults.map((f) => `${f.key}: ${f.message}`).join("; ");
+    return { ok: false, result: { code: 2, document: { error: { code: 2, kind: "DeckError", message } } } };
+  }
+  const card = loaded.deck.cards.find((candidate) => candidate.customId === id);
+  if (card === undefined) {
+    const have = loaded.deck.cards.map((candidate) => candidate.customId).join(", ");
+    return { ok: false, result: usageError(`no card '${id}' in ${deckPath} (have: ${have})`) };
+  }
+  return { ok: true, card };
+}
+
+function listAnswers(runDir: string, runId: string, id: string): string[] {
+  let names: string[];
+  try {
+    names = fs.readdirSync(path.join(runDir, "answers"));
+  } catch {
+    return [];
+  }
+  const pattern = new RegExp("^" + escapeRegExp(id) + "(?:\\.r[0-9]+)?\\.v[0-9]+\\.answer\\.txt$");
+  return names
+    .filter((name) => pattern.test(name))
+    .sort()
+    .map((name) => `${RUNS_DIR}/${runId}/answers/${name}`);
+}
+
+export function readLastRun(root: string, id: string): LastRun | null {
+  const runsDir = path.join(root, RUNS_DIR);
+  let names: string[];
+  try {
+    names = fs.readdirSync(runsDir);
+  } catch {
+    return null;
+  }
+  names.sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
+  for (const runId of names) {
+    const runDir = path.join(runsDir, runId);
+    const reportPath = path.join(runDir, "report.json");
+    if (!isFile(reportPath)) continue;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(fs.readFileSync(reportPath, "utf8")) as unknown;
+    } catch {
+      continue;
+    }
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) continue;
+    const outcomes = (parsed as Record<string, unknown>)["outcomes"];
+    if (!Array.isArray(outcomes)) continue;
+    const outcome = outcomes.find(
+      (entry): entry is Record<string, unknown> =>
+        typeof entry === "object" && entry !== null && !Array.isArray(entry) &&
+        (entry as Record<string, unknown>)["customId"] === id,
+    );
+    if (outcome === undefined) continue;
+    const processor = outcome["processor"];
+    const status = outcome["status"];
+    const reason = outcome["reason"];
+    const attempts = outcome["attempts"];
+    const earlierFailures = outcome["earlierFailures"];
+    const acceptanceLog = outcome["acceptanceLog"];
+    return {
+      runId,
+      processor: typeof processor === "string" ? processor : null,
+      status: typeof status === "string" ? status : "",
+      reason: typeof reason === "string" ? reason : null,
+      attempts: typeof attempts === "number" ? attempts : 0,
+      earlierFailures: Array.isArray(earlierFailures) ? earlierFailures.length : 0,
+      acceptanceLog: typeof acceptanceLog === "string" ? acceptanceLog : "",
+      answers: listAnswers(runDir, runId, id),
+    };
+  }
+  return null;
+}
+
+function ensureNewline(text: string): string {
+  if (text.length === 0 || text.endsWith("\n")) return text;
+  return text + "\n";
+}
+
+function fileBlock(file: BriefFile, missing: string): string {
+  if (file.text === null) return missing;
+  return `<file path="${file.path}">\n${ensureNewline(file.text)}</file>`;
+}
+
+function acceptanceBlock(acceptance: string | null): string {
+  if (acceptance === null) return "none";
+  return `<acceptance>\n${ensureNewline(acceptance)}</acceptance>`;
+}
+
+function lastRunLine(lastRun: LastRun | null): string {
+  if (lastRun === null) return "- last run: none";
+  const processor = lastRun.processor === null ? "none" : lastRun.processor;
+  const reason = lastRun.reason === null ? "none" : lastRun.reason;
+  return `- last run: ${lastRun.runId}, processor ${processor}, ${lastRun.status}, ` +
+    `attempts ${lastRun.attempts}, reason ${reason}`;
+}
+
+function lastRunBlock(lastRun: LastRun): string {
+  const answers = lastRun.answers.length === 0
+    ? "none"
+    : lastRun.answers.map((answer) => "`" + answer + "`").join(", ");
+  return `## Last run\n\n<acceptance_log>\n${ensureNewline(lastRun.acceptanceLog)}` +
+    `</acceptance_log>\n\nAnswers: ${answers}`;
+}
+
+export function renderBrief(doc: BriefDocument): string {
+  const blocks: string[] = [];
+  blocks.push(`# Debt brief: ${doc.card}`);
+
+  const writeOnly = doc.targets.map((target) => "`" + target.path + "`").join(", ");
+  blocks.push(
+    `Write only: ${writeOnly}. Change no other file.\n` +
+    `Then: \`morph accept --deck ${doc.deck} --id ${doc.card} --model <your model> --commit\`.`,
+  );
+
+  blocks.push([
+    `- deck: ${doc.deck}`,
+    `- intent: ${doc.intent}`,
+    `- maxTokens: ${doc.maxTokens === null ? "none" : String(doc.maxTokens)}`,
+    `- model: ${doc.model === null ? "none" : doc.model}`,
+    `- dependsOn: ${doc.dependsOn.length === 0 ? "none" : doc.dependsOn.join(", ")}`,
+    lastRunLine(doc.lastRun),
+  ].join("\n"));
+
+  blocks.push(`## Instruction\n\n${doc.instruction.trimEnd()}`);
+  blocks.push(`## Acceptance\n\n${acceptanceBlock(doc.acceptance)}`);
+  if (doc.lastRun !== null) blocks.push(lastRunBlock(doc.lastRun));
+  blocks.push(
+    `## Targets now\n\n` +
+    doc.targets.map((target) => fileBlock(target, `Target ${target.path} does not exist yet.`)).join("\n\n"),
+  );
+  blocks.push(
+    `## Context slice\n\n` +
+    (doc.slice.length === 0
+      ? "none"
+      : doc.slice.map((entry) => fileBlock(entry, `File ${entry.path} is missing.`)).join("\n\n")),
+  );
+
+  return blocks.join("\n\n") + "\n";
+}
+
+export function cardBrief(root: string, args: BriefOptions): DebtResult {
+  const found = findCard(root, args.deck, args.id);
+  if (!found.ok) return found.result;
+  const card = found.card;
+
+  const targets: BriefFile[] = card.targets.map((target) => ({ path: target, text: readText(root, target) }));
+  const slice: BriefFile[] = [...card.contextSlice]
+    .sort()
+    .map((entry) => ({ path: entry, text: readText(root, entry) }));
+
+  const document: BriefDocument = {
+    deck: args.deck,
+    card: card.customId,
+    intent: card.intent,
+    targets,
+    slice,
+    instruction: card.instruction,
+    acceptance: card.acceptance,
+    maxTokens: card.maxTokens,
+    model: card.model,
+    dependsOn: card.dependsOn,
+    lastRun: readLastRun(root, card.customId),
+  };
+  if (args.md) document.markdown = renderBrief(document);
+  return { code: 0, document };
+}
+```
