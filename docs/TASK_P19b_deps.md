@@ -403,3 +403,24 @@ node /tmp/v2bin-p19b/dist/cli.js run --root . --deck decks/p19b/deck.json --proc
 ```
 
 After the merge: the smokes (§8; Go live on ds with `S1_RUN=1`, cap $0.02), 🧪, then the stop for the operator.
+
+### Run
+
+08.10, main session on the VPS. The gate re-checked by the main session: `morph plan` exit 0, the re-cut (filter, ×3)
+byte-identical to the committed deck, `deck check` 0 errors / 0 warnings. Binary copy `/tmp/v2bin-p19b` (`node_modules`
+and `templates` linked beside its dist/), processor `ds`, run **20261008-152814**, exit 0, **1279 s**: 8 / 8 written,
+14 requests, 283 942 in / 93 858 out tokens, **$0.0934** (usageTotals.cost 0.09344562). First attempts: compose,
+go-acceptance, build-acceptances, plan-command v1 accepted (their v2 answered, not needed), compose-judge,
+go-acceptance-judge v1. Two retries won: build-acceptances-judge v1 red at `tsc` (no vitest import: TS2593), r1.v1
+accepted; plan-command-judge v1 red at its own tests (Plan Command example 10 compared an acceptance line wrongly), r1.v1
+accepted. No fix, no truncation (every finish `stop`).
+
+Verify on `morph/20261008-152814`: `git status --short` empty; `tsc --noEmit`, `eslint src tests` clean; `vitest run`
+**784 / 784 in 125 files**; `npm run build` green. Own read against §2.2 and the record: `compose.ts` gains `allowArg`
+(empty list → empty string, so a dependency-free guard line is byte for byte today's; else ` '<a>,<b>'`), appended to the
+TypeScript code acceptance's `src` guard call; `goAcceptance.ts` gains `GO_ENV_VENDOR` (`GOFLAGS=-mod=vendor`, the rest
+of `GO_ENV` unchanged, `GOPROXY=off` kept) chosen by `goEnv(ctx.vendor)` in both the code and the judge acceptance, and the
+same `allowArg` on the Go `src` guard; `buildAcceptances.ts` reads the card's allowed names from `input.uses` by customId
+(own property only, else `[]`) and `vendor` as `input.vendor === true`; `types.ts` adds the optional fields;
+`planCommand.ts` passes `planned.uses` and `hasFile("vendor/modules.txt")`. Judges keep no allow list (§2.2). No defect
+found.
