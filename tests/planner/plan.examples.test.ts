@@ -146,7 +146,7 @@ test("Plan Spec example 4: every failure names its cause", () => {
   );
   expect(cobol).toStrictEqual({
     ok: false,
-    error: "the map: unknown language 'cobol' (known: typescript, python)",
+    error: "the map: unknown language 'cobol' (known: typescript, python, go)",
   });
 
   const nope = planSpec(input({ components: ["nope"], judge: false }));
