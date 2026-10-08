@@ -38,7 +38,26 @@ export const PYTHON: LanguageProfile = {
   helpersModule: "tests/conftest.py",
 };
 
-export const PROFILES: readonly LanguageProfile[] = [TYPESCRIPT, PYTHON];
+export const GO: LanguageProfile = {
+  id: "go",
+  extensions: [".go"],
+  testDirs: [],
+  testFilePattern: "^.*_test\\.go$",
+  nameCase: "snake",
+  codeTarget: "{component}/{name}.go",
+  testTarget: "{component}/{name}_test.go",
+  judgeTarget: "{component}/{name}_examples_test.go",
+  parseLine: "go build ./...",
+  parseTakesFiles: false,
+  lintLine: "go vet ./...",
+  ownTestLine: "go test -count=1 ./$(dirname {test})/",
+  fullRunLine: "go test -count=1 ./...",
+  finale: "Go 1.22, the standard library only (go.mod requires nothing; the build runs with GOPROXY=off). gofmt-formatted (gofmt -l prints nothing) and go vet clean. A file's package is its directory's base name; exported names in MixedCaps; a package imports another of the module by the module path of go.mod + \"/\" + its directory. Tests are `func TestXxx(t *testing.T)` in the package's own `_test.go` files, table tests allowed; compare with `testhelp.Equal(t, what, got, want)` of the module's `internal/testhelp`, never your own helper; no t.Skip, no network, no clock, no goroutine left running.",
+  judgeInstruction: "Write ONLY the test file `{test}`: one `func Test<Function>Example<n>(t *testing.T)` per example of `{module}` taken from {docs}, in example order, <Function> the Function's name in MixedCaps without spaces. Do not write or modify `{module}`: the author of the criterion is not the author of the code. The test file is in the package of its directory; it imports the standard library and the module's `internal/testhelp` only and compares with `testhelp.Equal`; Go 1.22, gofmt-formatted.",
+  helpersModule: "internal/testhelp/testhelp.go",
+};
+
+export const PROFILES: readonly LanguageProfile[] = [TYPESCRIPT, PYTHON, GO];
 
 export const DEFAULT_LANGUAGE = "typescript";
 

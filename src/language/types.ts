@@ -1,4 +1,4 @@
-export type ProfileId = "typescript" | "python";
+export type ProfileId = "typescript" | "python" | "go";
 export type NameCase = "camel" | "snake";
 export interface LanguageProfile {
   id: ProfileId; extensions: string[]; testDirs: string[]; testFilePattern: string; nameCase: NameCase;
