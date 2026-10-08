@@ -560,3 +560,19 @@ python3 decks/tools/scale_tokens.py decks/p13b/deck.json 3
 npm run build && rm -rf /tmp/v2bin-p13b && mkdir -p /tmp/v2bin-p13b && cp -r dist /tmp/v2bin-p13b/ && ln -s $PWD/node_modules /tmp/v2bin-p13b/node_modules
 node /tmp/v2bin-p13b/dist/cli.js run --root . --deck decks/p13b/deck.json --processor ds --deadline 2400 > /tmp/p13b-run.json
 ```
+
+### Run (08.10, VPS, autonomous) — cut by V2, run by the V2 binary on processor ds
+
+Deck `decks/p13b/deck.json` (V2 cut filtered to 9 cards by `decks/p13b/filter.py`, maxTokens ×3), run by the V2 binary copy
+in `/tmp/v2bin-p13b` with `--processor ds --deadline 2400`, default retry cap: run 20261008-023835, **9 / 9 written in one
+run, no fix**, 7 at the first attempt (retries won `plan-from-scout-judge` r1 and `main-judge` r1, both v1 red at tsc;
+`run-scout` won on v2, v1 red at the probe), **$0.4122** (over the $0.15–0.30 forecast, under the $1 gate forecast cap and
+the $5 phase cap: 248 548 out tokens, the largest answers 13–17 KB), 19.2 min (1154 s), 15 requests, 447 507 in tokens.
+On the run branch: `git status` clean; tsc, eslint, `npm run build` clean; vitest **707 / 707** in 102 files on 12 of 13
+full runs — the first run had **1 failed test that did not reproduce** (12 re-runs green, 3 of them under a parallel tsc);
+the failing name was not captured (a timing-sensitive test, likely one of the signal or deadline examples; watch for it).
+Read once against §2.2: Run Scout's one turn per round through `sendGeneration`, the answer-only turn after calls/reads/
+chars close, rounds and deadline end at once; `scout.json` + `transcript.json` under `.morph/scout/<id>/` (ignored); Plan
+From Scout reads only the caged answer of a session with status ok, re-cages every target (refusal) and slice path (drop)
+for realpath/symlink/`..`, sizes maxTokens from the targets (≥ 16 000), acceptance from the first target's profile; only
+scoutCommand.ts and planFromScout.ts import node:fs. 0 defects.
