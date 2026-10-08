@@ -1,0 +1,111 @@
+{
+  "reports": {
+    "20261101-090000": {
+      "runId": "20261101-090000",
+      "completedAt": 1793799999000,
+      "branch": "morph/20261101-090000",
+      "processor": "ds",
+      "generations": 1,
+      "outcomes": [
+        {
+          "customId": "fmt.x",
+          "status": "failed",
+          "reason": "acceptance failed",
+          "attempts": 3,
+          "winningVariant": null,
+          "acceptanceLog": "== tsc\nsrc/x.ts(1,1): error TS1005: ';' expected.\n",
+          "earlierFailures": [
+            "== tsc\nfirst\n",
+            "== tsc\nsecond\n"
+          ],
+          "commit": null,
+          "diffstat": null
+        }
+      ],
+      "usageTotals": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0,
+        "requests": 0
+      }
+    },
+    "20261102-100000": {
+      "runId": "20261102-100000",
+      "completedAt": 1793613600000,
+      "branch": "morph/20261102-100000",
+      "processor": "glm53",
+      "generations": 1,
+      "outcomes": [
+        {
+          "customId": "base",
+          "status": "written",
+          "reason": null,
+          "attempts": 1,
+          "winningVariant": "base.v1",
+          "acceptanceLog": "== probe\n",
+          "earlierFailures": [],
+          "commit": null,
+          "diffstat": null
+        },
+        {
+          "customId": "fmt.x",
+          "status": "failed",
+          "reason": "acceptance failed",
+          "attempts": 2,
+          "winningVariant": null,
+          "acceptanceLog": "== probe\nAssertionError: expected 2 to be 1\n",
+          "earlierFailures": [
+            "== probe\nfirst\n"
+          ],
+          "commit": null,
+          "diffstat": null
+        }
+      ],
+      "usageTotals": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0,
+        "requests": 0
+      }
+    },
+    "20261103-110000": {
+      "runId": "20261103-110000",
+      "completedAt": 1793703600000,
+      "branch": "morph/20261103-110000",
+      "processor": "ds",
+      "generations": 1,
+      "outcomes": [
+        {
+          "customId": "base",
+          "status": "written",
+          "reason": null,
+          "attempts": 1,
+          "winningVariant": "base.v1",
+          "acceptanceLog": "== tsc\n== probe\n",
+          "earlierFailures": [],
+          "commit": null,
+          "diffstat": null
+        }
+      ],
+      "usageTotals": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0,
+        "requests": 0
+      }
+    },
+    "junk": "{\n"
+  },
+  "answers": {
+    "20261101-090000": [
+      "fmt.x.v2.answer.txt"
+    ],
+    "20261102-100000": [
+      "base.v1.answer.txt",
+      "fmt.x.r1.v1.answer.txt",
+      "fmt.x-judge.v1.answer.txt",
+      "fmt.x.v1.answer.txt",
+      "fmtzx.v1.answer.txt"
+    ]
+  }
+}

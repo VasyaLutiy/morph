@@ -90,5 +90,65 @@
   "Run Command 4": {
     "given": "the same setup with an untracked notes.txt in the repo",
     "then": "code 2 RefusalError \"dirty tree outside .morph/: notes.txt\"; the checkout still main; no archive"
+  },
+  "Read Deck File 1": {
+    "given": "a tmp root with d.json = the deck of the tiny fixture",
+    "then": "{ok: true, deck: {cards: [card a with every default filled], externalDependsOn: []}}"
+  },
+  "Read Deck File 2": {
+    "given": "a tmp root without nope.json",
+    "then": "{ok: false, result: {code: 4, document: {error: {code: 4, kind: \"UsageError\", message: \"deck file not found: nope.json\"}}}}"
+  },
+  "Read Deck File 3": {
+    "given": "c.json = the cycle fixture; dup.json = the duplicate fixture",
+    "then": "code 2, kind \"DeckError\", message \"invalid deck: dependsOn: dependsOn cycle a -> b -> a\"; then \"invalid deck: cards[2].customId: duplicate customId b\""
+  },
+  "Plan Command 2": {
+    "given": "the same root; spec \"nope.yaml\"; then spec \"ledger.yaml\" with map \"m.json\"",
+    "then": "{code: 4, document: {error: {code: 4, kind: \"UsageError\", message: \"spec file not found: nope.yaml\"}}}; then the same with \"map file not found: m.json\""
+  },
+  "Plan Command 3": {
+    "given": "bad.yaml = \"System: {}\\n\" as the spec; then spec ledger.yaml with m.json = \"{\\\"docs\\\": \\\"x\\\"}\" as the map",
+    "then": "code 2 DeckError, then code 2 DeckError: the messages literals.json[\"Plan Command 3\"]"
+  },
+  "Plan Command 4": {
+    "given": "the same root, components [\"nope\"], out \"decks/q.json\"",
+    "then": "code 2 DeckError \"no Component 'nope' in the record (have: ledger, store)\"; decks/q.json not written"
+  },
+  "Read Plan Checks 1": {
+    "given": "decks/p1/checks.json, decks/tools/guard.mjs \"// guard\\n\", firstdiff.mjs \"// firstdiff\\n\", decks/p1/parts/a.probe.ts \"// probe a\\n\", a-judge.probe.ts \"// no\\n\"",
+    "then": "equal to p1.planChecks.json"
+  },
+  "Read Plan Checks 2": {
+    "given": "that root; then no guard.mjs; then no firstdiff.mjs",
+    "then": "4 UsageError \"checks file not found: nope.json\"; \"guard file not found: decks/tools/guard.mjs\"; \"locator file not found: decks/tools/firstdiff.mjs\""
+  },
+  "Read Plan Checks 3": {
+    "given": "c.json = \"{\"; then {\"cards\": []}",
+    "then": "2 DeckError beginning \"cannot parse c.json: \"; then \"c.json is not a valid checks document (2 problems):\\nphase: required\\ncards: must be a non-empty list\""
+  },
+  "Main 1": {
+    "given": "argv [\"frobnicate\"], in process",
+    "then": "4; stdout exactly [\"{\\\"error\\\":{\\\"code\\\":4,\\\"kind\\\":\\\"UsageError\\\",\\\"message\\\":\\\"unknown command: frobnicate\\\"}}\\n\"]; stderr [\"morph: unknown command: frobnicate\\n\"]"
+  },
+  "Main 2": {
+    "given": "a tmp root with d.json = the write-write fixture; argv [\"deck\", \"check\", \"--deck\", \"d.json\", \"--root\", <root>, \"--pretty\"]",
+    "then": "2; one stdout chunk beginning \"{\\n  \\\"deck\\\": \\\"d.json\\\",\\n  \\\"cards\\\": 2,\"; stderr [\"morph deck check: exit 2\\n\"]"
+  },
+  "Main 5": {
+    "given": "the built binary, argv [\"frobnicate\"]",
+    "then": "exit 4; stdout exactly example 1's one stdout chunk"
+  },
+  "Main 7": {
+    "given": "in process, deps {env: {}, now: () => 0, cwd: \"/\", transport: null}; argv [\"collect\", \"--batch\", \"batch-none\", \"--root\", <a tmp root>]",
+    "then": "4; one stdout document {error: {code: 4, kind: \"UsageError\", message: \"batch state not found: .morph/batches/batch-none.json\"}}; stderr [\"morph collect: exit 4\\n\"]"
+  },
+  "Main 14": {
+    "given": "a tmpRoot t (no git, no .morph) holding d.json = debt/deck.json, src/x.ts \"export const x = 1;\\n\", docs/a.md \"# A\\n\", docs/b.md \"B\"; deps {env {PATH}, now () => 0, cwd \"/\", transport null}; argv [card, --deck, d.json, --id, fmt.x, --md, --root, t, --pretty]; then [card, --deck, d.json, --id, zz, --root, t]; then [card, --root, t, --deck, d.json]",
+    "then": "0, one stdout chunk beginning \"{\\n  \\\"deck\\\": \\\"d.json\\\",\\n  \\\"card\\\": \\\"fmt.x\\\",\\n\" whose JSON has lastRun null and markdown beginning \"# Debt brief: fmt.x\\n\\nWrite only: `src/x.ts`, `src/y.ts`. Change no other file.\\n\", stderr [\"morph card: exit 0\\n\"]; then 4, stdout exactly \"{\\\"error\\\":{\\\"code\\\":4,\\\"kind\\\":\\\"UsageError\\\",\\\"message\\\":\\\"no card 'zz' in d.json (have: base, fmt.x, solo)\\\"}}\\n\", stderr [\"morph card: exit 4\\n\"]; then 4 UsageError \"missing --id\", stderr [\"morph: missing --id\\n\"]"
+  },
+  "Main 15": {
+    "given": "a tmpRepo t, one commit \"base\" of d.json = debt/accept.deck.json and src/a.ts \"broken\\n\", then src/a.ts written \"fixed\\n\"; deps {env {PATH}, now () => 0, cwd t, transport null}; argv [accept, --deck, d.json, --id, fix-a, --model, claude-fable-5-1, --commit]; then the same argv again; then [accept, --deck, d.json, --id, fix-a, --model, m x]",
+    "then": "0, one stdout document {deck \"d.json\", card \"fix-a\", model \"claude-fable-5-1\", exit 0, timedOut false, green true, log \"\", outside [], commit HEAD's sha, diffstat {1, 1, 1}, reason null}, the HEAD message \"morph fix-a: src/a.ts\\n\\nMorph-Card: fix-a\\nMorph-Model: claude-fable-5-1\\nMorph-Acceptance-Exit: 0\\nMorph-Debt: true\", stderr [\"morph accept: exit 0\\n\"]; then 1, commit null, reason \"nothing to commit: the targets equal HEAD\", stderr [\"morph accept: exit 1\\n\"]; then 4 UsageError \"--model must match ^[A-Za-z0-9._/:-]+$ (got 'm x')\", stderr [\"morph: --model must match ^[A-Za-z0-9._/:-]+$ (got 'm x')\\n\"]"
   }
 }

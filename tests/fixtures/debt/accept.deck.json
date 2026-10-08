@@ -1,0 +1,7 @@
+[
+  {"customId": "fix-a", "intent": "patch", "targets": ["src/a.ts"], "instruction": "Fix a.", "acceptance": "grep -q fixed src/a.ts || { echo \"FAIL: src/a.ts not fixed\"; exit 1; }"},
+  {"customId": "fix-two", "intent": "generate", "targets": ["src/b.ts", "out/g.ts"], "instruction": "Write b and g.", "acceptance": "test -f src/b.ts && test -f out/g.ts && test \"$MARK\" = k7 && test -z \"$GH_TOKEN\""},
+  {"customId": "slow", "intent": "generate", "targets": ["src/s.ts"], "instruction": "Slow.", "acceptance": "echo started; sleep 5"},
+  {"customId": "none", "intent": "generate", "targets": ["src/n.ts"], "instruction": "No acceptance."},
+  {"customId": "blank", "intent": "generate", "targets": ["src/k.ts"], "instruction": "Blank.", "acceptance": "  "}
+]

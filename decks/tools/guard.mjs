@@ -27,6 +27,9 @@ const LAYERS = {
     "git", "processor"],
   // P11b2: the detached batch commands (morph submit / morph collect), the processor layer's second Component
   batches: ["cards", "wait", "compiler", "processor"],
+  // P17: the debt commands (morph card / morph accept, issue #8) read the deck through cards, run the card's acceptance
+  // through acceptance and commit through git (docs/TASK_P17_debt.md §4)
+  debt: ["cards", "acceptance", "git"],
   cli: "*",
 };
 const ROOT_FILES = new Set(["src/index.ts"]);
@@ -35,13 +38,13 @@ const NET = new Set(["processor"]);                    // fetch, WebSocket, XMLH
 const CONSOLE = new Set(["cli"]);                      // console, process.exit
 const PROCESS = new Set(["cli", "processor", "acceptance"]);
 const NO_CLOCK = new Set(["cards", "compiler", "response", "language", "contour", "planner", "builder", "batches", "primer",
-  "scout", "reviewer"]);
+  "scout", "reviewer", "debt"]);
 // P12a: the one file of src/primer that turns the clock parameter deps.now() into an ISO string (docs/TASK_P12_primer.md §4)
 // P13b: the one file of src/scout that turns deps.now() into the session id and createdAt (docs/TASK_P13b_scout.md §4)
 const CLOCK_FORMATTERS = new Set(["src/primer/primerCommand.ts", "src/scout/scoutCommand.ts"]);
 const YAML = new Set(["contour"]);
 // P3: the acceptance gets the child's environment as a parameter (docs/TASK_P3_acceptance.md §4)
-const NO_ENV = new Set(["acceptance", "processor", "git", "batches", "primer", "scout", "reviewer"]);
+const NO_ENV = new Set(["acceptance", "processor", "git", "batches", "primer", "scout", "reviewer", "debt"]);
 // P4: the one file of a NO_ENV layer that may read process.env (Read Registry, docs/TASK_P4_processor.md §4)
 const ENV_READERS = new Set(["src/processor/registry.ts"]);
 // P6: the one file of src/git that spawns (Run Git, docs/TASK_P6_git.md §4); git takes the env whole
@@ -59,7 +62,10 @@ const CLI_ENTRY = "src/cli.ts";
 // P13a: scout reaches the file system only through its ScoutFs parameter: of the Node modules only node:path
 // (docs/TASK_P13a_scout.md §4; P13b adds the one node:fs adapter file)
 const NODE_ONLY = { language: new Set(["node:path"]), contour: new Set(), planner: new Set(["node:path"]),
-  builder: new Set(["node:path"]), scout: new Set(["node:path"]), reviewer: new Set() };
+  builder: new Set(["node:path"]), scout: new Set(["node:path"]), reviewer: new Set(),
+  debt: new Set(["node:fs", "node:path"]) };
+// P17: debt reads the deck file, the card's files and the run archive (node:fs, node:path); it spawns only through
+// acceptance's runAcceptance and git's gitOk (docs/TASK_P17_debt.md §4)
 // P14a: the reviewer's checks are pure functions of git's outputs, the record and the texts they are given: no Node
 // module at all (docs/TASK_P14_reviewer.md §4; P14b adds the review command's I/O file)
 // P13b: the two I/O files of src/scout, the commands `morph scout` (the node:fs ScoutFs adapter, git ls-files, the

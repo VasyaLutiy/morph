@@ -1,0 +1,100 @@
+{
+ "phase": "p17",
+ "ownGit": true,
+ "fullExclude": [
+  "tests/cli/parse.examples.test.ts"
+ ],
+ "cards": [
+  {
+   "id": "card-brief"
+  },
+  {
+   "id": "accept-card"
+  },
+  {
+   "id": "parse-command"
+  },
+  {
+   "id": "card-brief-judge",
+   "files": [
+    {
+     "file": "tests/debt/cardBrief.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": [
+      "Card Brief example 1",
+      "Card Brief example 2",
+      "Card Brief example 3",
+      "debt/brief.fmt.x.md",
+      "debt/brief.solo.md",
+      "debt/archive.json",
+      "20261102-100000",
+      "fmt.x.r1.v1.answer.txt",
+      "no card 'zz' in d.json (have: base, fmt.x, solo)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "accept-card-judge",
+   "files": [
+    {
+     "file": "tests/debt/acceptCard.examples.test.ts",
+     "min": 5,
+     "max": 11,
+     "new": true,
+     "lits": [
+      "Accept Card example 1",
+      "Accept Card example 2",
+      "Accept Card example 3",
+      "Accept Card example 4",
+      "Accept Card example 5",
+      "debt/accept.deck.json",
+      "Morph-Debt: true",
+      "nothing to commit: the targets equal HEAD",
+      "changed outside the targets: README.md, notes/n.txt",
+      "acceptance timed out after 300 ms",
+      "card blank has no acceptance",
+      "git status failed (exit 128): "
+     ]
+    }
+   ]
+  },
+  {
+   "id": "parse-command-judge",
+   "files": [
+    {
+     "file": "tests/cli/parse.examples.test.ts",
+     "min": 26,
+     "max": 28,
+     "lits": [
+      "Parse Command example 20",
+      "review, card, accept)",
+      "--model must match ^[A-Za-z0-9._/:-]+$ (got 'm x')",
+      "flag --md does not apply to accept",
+      "flag --model does not apply to review"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "main-judge",
+   "files": [
+    {
+     "file": "tests/cli/main.p17.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Main example 14",
+      "Main example 15",
+      "morph card: exit 0",
+      "morph accept: exit 1",
+      "morph: missing --id"
+     ]
+    }
+   ]
+  }
+ ]
+}

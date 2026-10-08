@@ -1,0 +1,5 @@
+[
+  {"customId": "base", "intent": "generate", "targets": ["src/base.ts"], "instruction": "Write base.", "acceptance": "true"},
+  {"customId": "fmt.x", "intent": "patch", "targets": ["src/x.ts", "src/y.ts"], "contextSlice": ["docs/b.md", "docs/a.md", "docs/gone.md"], "instruction": "Fix x and write y.\n", "acceptance": "grep -q fixed src/x.ts", "maxTokens": 9000, "dependsOn": ["base"]},
+  {"customId": "solo", "intent": "generate", "targets": ["lib/solo.ts"], "instruction": "Write solo.", "model": "m/x"}
+]

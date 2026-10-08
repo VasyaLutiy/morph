@@ -102,7 +102,7 @@
         "error": {
           "code": 4,
           "kind": "UsageError",
-          "message": "no command (commands: deck check, plan, run, submit, collect, primer, scout, review)"
+          "message": "no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept)"
         }
       }
     }
@@ -627,6 +627,164 @@
           "code": 4,
           "kind": "UsageError",
           "message": "flag --test does not apply to plan"
+        }
+      }
+    }
+  ],
+  "20": [
+    {
+      "ok": true,
+      "command": {
+        "name": "card",
+        "root": ".",
+        "pretty": false,
+        "deck": "d.json",
+        "id": "fix-a",
+        "md": false
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "card",
+        "root": "/r",
+        "pretty": true,
+        "deck": "decks/p9/deck.json",
+        "id": "x_2",
+        "md": true
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "accept",
+        "root": ".",
+        "pretty": false,
+        "deck": "d.json",
+        "id": "fix-a",
+        "model": "claude-fable-5-1",
+        "commit": false
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "accept",
+        "root": "/q",
+        "pretty": false,
+        "deck": "d",
+        "id": "b.v",
+        "model": "acme/m:free",
+        "commit": true
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --deck"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --id"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --model"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--id must match ^[A-Za-z0-9._-]+$ (got 'a b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--model must match ^[A-Za-z0-9._/:-]+$ (got 'm x')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --commit does not apply to card"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --md does not apply to accept"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --id does not apply to run"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "unexpected argument: x"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --model does not apply to review"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --deck"
         }
       }
     }
