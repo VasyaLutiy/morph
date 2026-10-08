@@ -23,6 +23,8 @@ const VALUE_FLAGS: ReadonlySet<string> = new Set([
   "--mutants",
   "--mutant-timeout",
   "--test",
+  "--id",
+  "--model",
 ]);
 
 const NOT_YET_WORDS: ReadonlySet<string> = new Set([
@@ -112,6 +114,23 @@ const REVIEW_FLAGS: ReadonlySet<string> = new Set([
   "--write",
 ]);
 
+const CARD_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--deck",
+  "--id",
+  "--md",
+]);
+
+const ACCEPT_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--deck",
+  "--id",
+  "--model",
+  "--commit",
+]);
+
 function isPositiveInteger(v: string): boolean {
   return /^[0-9]+$/.test(v) && Number(v) >= 1;
 }
@@ -130,7 +149,14 @@ export function parseCommand(argv: string[]): ParseResult {
   for (let i = 0; i < argv.length; i++) {
     const t = argv[i];
     if (t.startsWith("--")) {
-      if (!VALUE_FLAGS.has(t) && t !== "--pretty" && t !== "--judge" && t !== "--write") {
+      if (
+        !VALUE_FLAGS.has(t) &&
+        t !== "--pretty" &&
+        t !== "--judge" &&
+        t !== "--write" &&
+        t !== "--md" &&
+        t !== "--commit"
+      ) {
         return { ok: false, error: errorDocument(4, "UsageError", "unknown flag: " + t) };
       }
       if (t !== "--component" && seen.has(t)) {
@@ -164,7 +190,9 @@ export function parseCommand(argv: string[]): ParseResult {
     | "collect"
     | "primer"
     | "scout"
-    | "review";
+    | "review"
+    | "card"
+    | "accept";
   let arity: number;
   if (words.length === 0) {
     return {
@@ -172,7 +200,7 @@ export function parseCommand(argv: string[]): ParseResult {
       error: errorDocument(
         4,
         "UsageError",
-        "no command (commands: deck check, plan, run, submit, collect, primer, scout, review)",
+        "no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept)",
       ),
     };
   }
@@ -202,6 +230,12 @@ export function parseCommand(argv: string[]): ParseResult {
   } else if (first === "review") {
     name = "review";
     arity = 3;
+  } else if (first === "card") {
+    name = "card";
+    arity = 1;
+  } else if (first === "accept") {
+    name = "accept";
+    arity = 1;
   } else if (first === "deck") {
     if (words.length >= 2 && words[1] === "check") {
       name = "deck check";
@@ -259,6 +293,10 @@ export function parseCommand(argv: string[]): ParseResult {
     allowed = SCOUT_FLAGS;
   } else if (name === "review") {
     allowed = REVIEW_FLAGS;
+  } else if (name === "card") {
+    allowed = CARD_FLAGS;
+  } else if (name === "accept") {
+    allowed = ACCEPT_FLAGS;
   } else {
     allowed = FROM_SCOUT_FLAGS;
   }
@@ -274,6 +312,62 @@ export function parseCommand(argv: string[]): ParseResult {
   const root = values.get("--root") ?? ".";
   const pretty = seen.has("--pretty");
   const deck = values.get("--deck") ?? "";
+
+  // Check 4b: card and accept, right after the flag check and before review.
+  if (name === "card" || name === "accept") {
+    if (!values.has("--deck")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --deck") };
+    }
+    if (!values.has("--id")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --id") };
+    }
+    const id = values.get("--id") ?? "";
+    if (!/^[A-Za-z0-9._-]+$/.test(id)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--id must match ^[A-Za-z0-9._-]+$ (got '" + id + "')",
+        ),
+      };
+    }
+    if (name === "card") {
+      const command: Command = {
+        name: "card",
+        root,
+        pretty,
+        deck,
+        id,
+        md: seen.has("--md"),
+      };
+      return { ok: true, command };
+    }
+    if (!values.has("--model")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --model") };
+    }
+    const model = values.get("--model") ?? "";
+    if (!/^[A-Za-z0-9._/:-]+$/.test(model)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--model must match ^[A-Za-z0-9._/:-]+$ (got '" + model + "')",
+        ),
+      };
+    }
+    const command: Command = {
+      name: "accept",
+      root,
+      pretty,
+      deck,
+      id,
+      model,
+      commit: seen.has("--commit"),
+    };
+    return { ok: true, command };
+  }
 
   // Review is done right after the flag check, before plan --from-scout.
   if (name === "review") {

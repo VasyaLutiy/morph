@@ -28,8 +28,13 @@ export interface ReviewArgs {
   name: "review"; root: string; pretty: boolean; base: string; head: string; spec: string | null; map: string | null;
   scout: string | null; mutants: number | null; mutantTimeoutSeconds: number; test: string | null; write: boolean;
 }
+export interface CardArgs { name: "card"; root: string; pretty: boolean; deck: string; id: string; md: boolean }
+export interface AcceptArgs {
+  name: "accept"; root: string; pretty: boolean; deck: string; id: string; model: string; commit: boolean;
+}
 export type Command =
-  | DeckCheckArgs | RunArgs | PlanArgs | SubmitArgs | CollectArgs | PrimerArgs | ScoutArgs | FromScoutArgs | ReviewArgs;
+  | DeckCheckArgs | RunArgs | PlanArgs | SubmitArgs | CollectArgs | PrimerArgs | ScoutArgs | FromScoutArgs | ReviewArgs
+  | CardArgs | AcceptArgs;
 export type ParseResult = { ok: true; command: Command } | { ok: false; error: ErrorDocument };
 export type DeckFileResult = { ok: true; deck: Deck } | { ok: false; result: CommandResult };
 export interface DeckCheckDocument {
