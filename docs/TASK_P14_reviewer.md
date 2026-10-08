@@ -345,11 +345,11 @@ min = the record's examples; max = min + 6.
 | check-guardrails | checkGuardrails.ts ≈ 3.2 KB | 10 000 |
 | plan-mutants | planMutants.ts ≈ 3.4 KB | 10 000 |
 | render-findings | renderFindings.ts ≈ 4.8 KB | 14 000 |
-| find-obligations-judge | ≈ 5.5 KB new file (the probe-shaped reference: 5.1 KB) | 16 000 |
-| check-envelope-judge | ≈ 5.5 KB (reference 4.9 KB) | 16 000 |
-| check-guardrails-judge | ≈ 4.5 KB, two verbatim texts (reference 4.0 KB) | 16 000 |
-| plan-mutants-judge | ≈ 3 KB (reference 2.4 KB) | 14 000 |
-| render-findings-judge | ≈ 4.5 KB, one long markdown literal (reference 3.9 KB) | 16 000 |
+| find-obligations-judge | ≈ 5.5 KB new file (the probe-shaped reference: 5.3 KB) | 16 000 |
+| check-envelope-judge | ≈ 5.5 KB (reference 4.2 KB) | 16 000 |
+| check-guardrails-judge | ≈ 4.5 KB, two verbatim texts (reference 3.6 KB) | 16 000 |
+| plan-mutants-judge | ≈ 3 KB (reference 1.9 KB) | 14 000 |
+| render-findings-judge | ≈ 4.5 KB, one long markdown literal (reference 3.3 KB) | 16 000 |
 
 ## 4. Constraints
 
@@ -450,3 +450,50 @@ Attempts and first red per variant, minutes per generation, $ (provider), trunca
 its `прогоны` cell, the vitest log of every verify run (a flake is named); DECISIONS lines "P14 reviewer".
 
 ## 11. Actual
+
+### Gate (preparation)
+
+08.10, on the VPS, by the preparing orchestrator (Opus 5.5); no paid run, no call to any model. Data commits fda1e44
+(spec, record, map, guard, fixtures, probes, checks, filter, deck, DECISIONS), 8035f52 (one judge literal made atomic:
+`tests/new.test.ts` for the built `2 at head`), 6501bac (5 probe rows closing the first mutation pass's survivors; deck
+re-cut) and the gate commit (this section). Component sizes: reviewer 229 → 20 872 bytes; cli untouched. Issues labelled
+P14-reviewer: none open. **Split**: P14a here (10 cards), P14b next (7 cards, §7) — 17 > 12.
+
+The deck **cut by V2**: `node dist/cli.js plan --component reviewer --judge --checks decks/p14/checks.json --out
+decks/p14/deck.json` exit 0, 10 cards, `decks/p14/filter.py` keeps 10 (asserts the set); generations `[check-envelope,
+check-guardrails, find-obligations, plan-mutants, render-findings] [the five judges]`; `node dist/cli.js deck check`
+**0 errors, 0 warnings**, no hazards. Cross-check: the old `mrph plan --spec … --component reviewer --judge` (dry, exit 0)
+gives the same 10 ids in the same order and the same 2 generations; targets, slices, dependsOn, intent, variants (judges:
+absent = 1), max_tokens and reasoning (2 500) equal on all 10; instructions and acceptances differ on all 10 (the P10a
+design; V2's chain from checks.json).
+
+Scratch worktree from 6501bac (references of the 5 code files and 5 probe-shaped judge files, deleted afterwards), cards
+run in deck order with the deck's own acceptances, each accepted card committed before the next: **10 of 10 chains
+green, 53.8–58.4 s each (553.1 s in all; limit 250 s per chain)**; the passes from fda1e44 (9 of 10: one judge literal
+built by a template, fixed in 8035f52) and 8035f52 (10 of 10, 54.2–56.9 s) before it. Ripple: 0 of 707. The final tree:
+`tsc`, `eslint src tests`, guard clean, `vitest run` **724 / 724** in 107 files (707 + 17 tests of the reference judges;
+the real judges write 17–47 → 724–754); the vitest logs of every full run kept. Typed one-line throwing stubs (`Error:
+stub <fn> <args JSON, cut at 160>`; types and constants as specified): every code card red at the probe — find-obligations
+6/6, check-envelope 6/6, check-guardrails 5/5, plan-mutants 5/5, render-findings 5/5 (**27/27**), each FAIL with its
+readable stub line; tsc clean on the stubs. Judges with the reference code and the file absent: red at the guard ("…
+missing"), 5 of 5. Mutation check: **119 single-rule mutations** of the references (findObligations 27, checkEnvelope 23,
+checkGuardrails 22, planMutants 23, renderFindings 24), each under a 120 s subprocess timeout against its probe: first pass
+94 killed, 25 survivors; 19 closed by the 5 probe rows (6501bac); second pass **113 killed, 0 by timeout (max 1.5 s),
+6 equivalent**: `profile.id !== "typescript"` for `=== "python"` (two profiles only), a map card's null targets (`??`
+falls through either way), `at < end` for the whole occurrence before the code end (a spaced operator cannot straddle
+`//`), `limit < 0` and `all.length < limit` (the spread gives the same mutants), and the stable-sort tiebreak (V8's sort is
+stable).
+
+Max slice + targets: find-obligations-judge 50 825 bytes + its module ≈ 3.6 KB ≈ 55 KB (gate 200 KB). **Forecast** on
+`ds` with every maxTokens × 3: P13a ran 10 pure cards, 16 requests, $0.1545 at 41–54 KB in; here 10 cards of 40–51 KB
+in, 15 first requests (5 code × 2 variants + 5 judges), answers 2–5 KB, ≈ 15–22 requests ≈ **$0.12–0.25**, ≤ $0.40 with a
+re-cut; ≤ $1. **Gate holds.**
+
+**Run command** (from the repo root, the binary copied first; the session applies maxTokens × 3 first, as the operator
+ordered):
+
+```
+python3 decks/tools/scale_tokens.py decks/p14/deck.json 3
+npm run build && rm -rf /tmp/v2bin-p14 && mkdir -p /tmp/v2bin-p14 && cp -r dist /tmp/v2bin-p14/ && ln -s $PWD/node_modules /tmp/v2bin-p14/node_modules
+node /tmp/v2bin-p14/dist/cli.js run --root . --deck decks/p14/deck.json --processor ds --deadline 2400 > /tmp/p14-run.json
+```
