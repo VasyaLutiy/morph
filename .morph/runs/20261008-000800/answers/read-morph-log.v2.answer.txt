@@ -1,0 +1,57 @@
+```
+import { gitOk, runGit } from "./run.js";
+
+export interface MorphCommit {
+  sha: string;
+  card: string;
+  model: string;
+  run: string | null;
+  paths: string[];
+}
+
+export const MORPH_LOG_FORMAT =
+  "%x1e%H%x1f%(trailers:key=Morph-Card,valueonly,separator=%x1d)%x1f%(trailers:key=Morph-Model,valueonly,separator=%x1d)%x1f%(trailers:key=Morph-Run,valueonly,separator=%x1d)%x1f";
+
+function trailerValue(field: string | undefined): string {
+  const [first] = (field ?? "").split("\x1d");
+  return (first ?? "").trim();
+}
+
+function readPaths(text: string): string[] {
+  const paths: string[] = [];
+  for (const piece of text.split("\0")) {
+    const path = piece.startsWith("\n") ? piece.slice(1) : piece;
+    if (path !== "") {
+      paths.push(path);
+    }
+  }
+  return paths;
+}
+
+export function readMorphLog(root: string, env: Record<string, string>): MorphCommit[] {
+  if (runGit(root, ["rev-parse", "--verify", "-q", "HEAD"], env).code === 1) {
+    return [];
+  }
+  const out = gitOk(root, ["log", "-z", "--name-only", "--no-renames", "--format=" + MORPH_LOG_FORMAT], env);
+  const commits: MorphCommit[] = [];
+  let current: string | null = null;
+  for (const record of out.split("\x1e").slice(1)) {
+    const cut = record.lastIndexOf("\x1f");
+    const fields = record.slice(0, cut).split("\x1f");
+    const card = trailerValue(fields[1]);
+    if (card !== "") {
+      commits.push({
+        sha: trailerValue(fields[0]),
+        card,
+        model: trailerValue(fields[2]),
+        run: current,
+        paths: readPaths(record.slice(cut + 1)),
+      });
+      continue;
+    }
+    const run = trailerValue(fields[3]);
+    current = run !== "" ? run : null;
+  }
+  return commits;
+}
+```

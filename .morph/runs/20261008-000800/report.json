@@ -1,0 +1,234 @@
+{
+  "runId": "20261008-000800",
+  "completedAt": 1791418559609,
+  "branch": "morph/20261008-000800",
+  "processor": "ds",
+  "generations": 3,
+  "outcomes": [
+    {
+      "customId": "read-morph-log",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "read-morph-log.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "948d2a81c80703cf3771457dff475558327f4833",
+      "diffstat": {
+        "files": 1,
+        "insertions": 43,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "read-ownership",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "read-ownership.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "23acb75a9469ce38308053291dbaea714dab98be",
+      "diffstat": {
+        "files": 1,
+        "insertions": 53,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "primer-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "primer-command.v2",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== old examples\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/primer-command/primer-command.probe.ts > Render Primer example 1: digest 1 is exactly primer1.md (11 033 chars)\nAssertionError: expected '# Primer: MorphV2\\n\\ngenerated 2026-10-07T22:00:00.000Z · 701 files in the tree · no model call, no network\\n\\n## Tests\\n\\n- 641 tests in 84 test files by the typescript profile (counted from text,…' to be '# Primer: MorphV2\\n\\ngenerated 2026-10-07T22:00:00.000Z · 701 files in the tree · no model call, no network\\n\\n## Tests\\n\\n- 641 tests in 84 test files by the typescript profile (counted from text,…' // Object.is equality\n\n- Expected\n+ Received\n\n@@ -36,11 +36,11 @@\n  - P11b2 · 2026-10-07 · V2/ds · deepseek/deepseek-v4.1-flash · 9/9 written · 1 run · $0.1183 · 1 run, no fix; 7 first attempt, retries won archive-run-judge r1, parse-command-judge r1; 4 untried…\n  - P11b2 smoke · 2026-10-07 · V2 detached batch route · — · 2/2 written · 1 run · $0.0006 · submit exit 0, process exited, state with cards+inputs; collect in a second process: 12 × exit 1 pe…\n\n  ## File ownership (git, Morph-Card trailers)\n\n- - git carries 201 Morph commits: deepseek/deepseek-v4.1-flash 56, z-ai/glm-5.3 53, glm53 91, claude-fable-5-1 1\n+ - git carries 201 commits: deepseek/deepseek-v4.1-flash 56, z-ai/glm-5.3 53, glm53 91, claude-fable-5-1 1\n  - 33 paths written by cards, most recent first; per path its cards, newest first:\n  - tests/cli/parse.examples.test.ts ← parse-command-judge (deepseek/deepseek-v4.1-flash, run 2\n[... 4403 chars clipped; diagnosis lines kept:]\n FAIL  probe/primer-command/primer-command.probe.ts > Render Primer example 3: the cut at 600 is unchanged (511 chars); cap = the length keeps it whole\nAssertionError: expected '# Primer: MorphV2\\n\\ngenerated 2026-10-07T22:00:00.000Z · 701 files in the tree · no model call, no network\\n\\n## Tests\\n\\n- 641 tests in 84 test files by the typescript prof\n FAIL  probe/primer-command/primer-command.probe.ts > Render Primer example 5: one commit with no model and no run, a debt with no cost, a running line without $\nAssertionError: expected [ '# Primer: empty', '', 'generated 1970-01-01T00:00:00.000Z · 0 files in the tree · no model call, no network', 'missing: docs/MEASURE.md, docs/PLAN.md, docs/AUTONOMY.md, doc\n[...]\n   const at = (o: DigestOwnership): string[] => lines(renderPrimer({ ..…\n     77|   const a = at(own(30, 3));\n     78|   expect(a).toContain(\"- git carries 2 Morph commits: m/a 1, m/b 1\");\n       |             ^\n     79|   expect(a).toContain(\"- 30 paths written by cards, most recent first;…\n     80|   expect(a).toContain(\"- p/29.ts ← c0 (m/a, run r0); c1 (m/a, run r1);…\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯\n\n FAIL  probe/primer-command/primer-command.probe.ts > Primer Command example 6: two card commits and a run, a MEASURE with its running total and a debt row\nAssertionError: commits: expected [ '# Primer: morph-repo-BXV06a', '', 'generated 2026-10-07T19:06:40.000Z · 4 files in the tree · no model call, no network', 'missing: docs/PLAN.md, docs/AUTONOMY.md, docs/DECISIONS.md', '', …(37) ] to include '- git carries 2 Morph commits: m/r 1, m/q 1'\n ❯ probe/primer-command/primer-command.probe.ts:167:27\n\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯\n\n\n Test Files  1 failed (1)\n      Tests  5 failed | 5 passed (10)\n\nfirst difference at char 470 (line 7) of 1329/1323: expected \"...Morph-Card trailers)\\n\\n- git carries 201 Morph commits: deepseek/deepseek-v4.1-fl\" received \"...Morph-Card trailers)\\n\\n- git carries 201 commits: deepseek/deepseek-v4.1-flash 56\"\nfirst difference at char 470 (line 7) of 1329/1323: expected \"...Morph-Card trailers)\\n\\n- git carries 201 Morph commits: deepseek/deepseek-v4.1-fl\" received \"...Morph-Card trailers)\\n\\n- git carries 201 commits: deepseek/deepseek-v4.1-flash 56\"\n"
+      ],
+      "commit": "00504333bfe6b9601734421f4ee4e4e83d9072f5",
+      "diffstat": {
+        "files": 2,
+        "insertions": 102,
+        "deletions": 2
+      }
+    },
+    {
+      "customId": "read-morph-log-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "read-morph-log-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/git/log.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "64db8e98b1ad9eaf27ec510d2366750f32790566",
+      "diffstat": {
+        "files": 1,
+        "insertions": 77,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "read-ownership-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "read-ownership-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/git/ownership.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "052d08c59f26a43da2b1dc6c3c0d266a74851ceb",
+      "diffstat": {
+        "files": 1,
+        "insertions": 53,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "primer-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "primer-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/primer/primerCommand.p12b.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "e1a2f9a1388df3b1d18e5970af3da7f3094ac5dd",
+      "diffstat": {
+        "files": 1,
+        "insertions": 69,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "render-primer-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "render-primer-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/primer/renderPrimer.examples.test.ts\n== guard tests/primer/renderPrimer.p12b.examples.test.ts\n== names tests/primer/renderPrimer.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "8feb113ddaf2e4cab89b925063f1854991ead76c",
+      "diffstat": {
+        "files": 2,
+        "insertions": 59,
+        "deletions": 1
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 164661,
+    "outputTokens": 66401,
+    "cost": 0.11615405999999999,
+    "requests": 10
+  },
+  "requests": [
+    {
+      "customId": "read-morph-log.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791418080-l8a92fGhYNPYtmirrTbL",
+      "inputTokens": 13552,
+      "outputTokens": 2378,
+      "cost": 0.0032904,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-morph-log.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791418080-C2ExhKmBZyiIr2azmWXJ",
+      "inputTokens": 13552,
+      "outputTokens": 3692,
+      "cost": 0.008496,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-ownership.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791418080-rLLLMZFXDG3pyLQ1PWd0",
+      "inputTokens": 12573,
+      "outputTokens": 1156,
+      "cost": 0.0023943,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-ownership.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791418086-Ua5IPSKboHKJhkcr32mT",
+      "inputTokens": 12573,
+      "outputTokens": 2133,
+      "cost": 0.00301374,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "primer-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791418194-jZZMICwRbq6rSi8L2SUd",
+      "inputTokens": 23528,
+      "outputTokens": 20194,
+      "cost": 0.0312912,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "primer-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791418194-NJTT0CC9z7LeTWSSgS96",
+      "inputTokens": 23528,
+      "outputTokens": 13901,
+      "cost": 0.0237396,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-morph-log-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791418194-STil7CXvYZLvRIMEhiYH",
+      "inputTokens": 14592,
+      "outputTokens": 4745,
+      "cost": 0.0100716,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-ownership-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791418213-FYqmNtwcFwOdRwF9r8K8",
+      "inputTokens": 13759,
+      "outputTokens": 1663,
+      "cost": 0.0031857,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "primer-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791418418-b3E4ejDJLFtz0PdqIYxo",
+      "inputTokens": 18816,
+      "outputTokens": 10556,
+      "cost": 0.01803552,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "render-primer-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791418418-3kPFRD4EQrAhoa8xBr9C",
+      "inputTokens": 18188,
+      "outputTokens": 5983,
+      "cost": 0.012636,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}

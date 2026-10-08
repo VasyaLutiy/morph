@@ -1,0 +1,65 @@
+```ts
+export interface OwnershipCommit {
+  card: string;
+  model: string;
+  run: string | null;
+  paths: string[];
+}
+
+export interface OwnershipWrite {
+  card: string;
+  model: string;
+  run: string | null;
+}
+
+export interface OwnedPath {
+  path: string;
+  writes: OwnershipWrite[];
+}
+
+export interface Ownership {
+  commits: number;
+  models: { model: string; commits: number }[];
+  paths: OwnedPath[];
+}
+
+/**
+ * Fold a Morph log into ownership: the commits counted per model, the paths in
+ * order of first appearance, and per path one write per commit naming it — the
+ * most recent commit first. Pure: the input is not changed.
+ */
+export function readOwnership(commits: OwnershipCommit[]): Ownership {
+  const models: { model: string; commits: number }[] = [];
+  const byModel = new Map<string, { model: string; commits: number }>();
+
+  const paths: OwnedPath[] = [];
+  const byPath = new Map<string, OwnedPath>();
+
+  for (const commit of commits) {
+    const knownModel = byModel.get(commit.model);
+    if (knownModel === undefined) {
+      const entry = { model: commit.model, commits: 1 };
+      byModel.set(commit.model, entry);
+      models.push(entry);
+    } else {
+      knownModel.commits += 1;
+    }
+
+    const namedHere = new Set<string>();
+    for (const path of commit.paths) {
+      if (namedHere.has(path)) continue;
+      namedHere.add(path);
+
+      let owned = byPath.get(path);
+      if (owned === undefined) {
+        owned = { path, writes: [] };
+        byPath.set(path, owned);
+        paths.push(owned);
+      }
+      owned.writes.push({ card: commit.card, model: commit.model, run: commit.run });
+    }
+  }
+
+  return { commits: commits.length, models, paths };
+}
+```

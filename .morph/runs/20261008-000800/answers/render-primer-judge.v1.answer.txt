@@ -1,0 +1,144 @@
+FILE: tests/primer/renderPrimer.examples.test.ts
+```
+import { expect, test } from "vitest";
+import { renderPrimer } from "../../src/primer/renderPrimer.js";
+import type { PrimerDigest } from "../../src/primer/renderPrimer.js";
+import { fixture, fixtureJson } from "../helpers.js";
+
+const DIGESTS = fixtureJson("primer/render.json") as Record<string, PrimerDigest>;
+const PRIMER1 = fixture("primer/primer1.md");
+const PRIMER2 = fixture("primer/primer2.md");
+
+test("Render Primer example 1: digest 1 at cap 16000 is exactly primer1.md", () => {
+  const md = renderPrimer(DIGESTS["digest 1"], 16000);
+  expect(md).toBe(PRIMER1);
+  expect(md.length).toBe(11033);
+  expect(md).toContain(
+    "- 641 tests in 84 test files by the typescript profile (counted from text, not a run)",
+  );
+  expect(md).toContain("- cost: $0.2651 over 4 priced runs (0 unpriced)");
+  expect(md).toContain(
+    "← switch: builder V2 cut + V2 run → V2/ds; model z-ai/glm-5.3 → deepseek/deepseek-v4.1-flash",
+  );
+});
+
+test("Render Primer example 2: digest 2 at cap 16000 is exactly primer2.md", () => {
+  const md = renderPrimer(DIGESTS["digest 2"], 16000);
+  expect(md).toBe(PRIMER2);
+  expect(md).toContain(
+    "missing: docs/MEASURE.md, docs/PLAN.md, docs/AUTONOMY.md, docs/DECISIONS.md",
+  );
+  expect(md).toContain("- archived runs: 0");
+  expect(md).toContain("- skipped: x (no report.json)");
+  expect(md).toContain("- no rows");
+  expect(md).toContain("- next phase: none open (docs/PLAN.md)");
+  expect(md).toContain("- none");
+  expect(md).toContain("- not read: no .morph/issues.json");
+});
+
+test("Render Primer example 3: cap 600 cuts, cap 5952 keeps primer1.md whole", () => {
+  const digest = DIGESTS["digest 1"];
+  const head = PRIMER1.slice(0, 540);
+  const expected = head.slice(0, head.lastIndexOf("\n") + 1) + "_… truncated to fit 600 chars_\n";
+  const cut = renderPrimer(digest, 600);
+  expect(cut).toBe(expected);
+  expect(cut.length).toBe(511);
+  expect(renderPrimer(digest, PRIMER1.length)).toBe(PRIMER1);
+});
+
+test("Render Primer example 4: issues read, issues unreadable, next and decisions set", () => {
+  const digest = DIGESTS["digest 2"];
+
+  const read = renderPrimer(
+    { ...digest, story: { ...digest.story, issues: { state: "read", items: [] } } },
+    16000,
+  );
+  const readLines = read.trimEnd().split("\n");
+  expect(readLines[readLines.length - 1]).toBe("- none open");
+
+  const unreadable = renderPrimer(
+    { ...digest, story: { ...digest.story, issues: { state: "unreadable", items: [] } } },
+    16000,
+  );
+  expect(unreadable).toContain("- not read: .morph/issues.json is not a JSON array");
+
+  const set = renderPrimer(
+    {
+      ...digest,
+      story: {
+        ...digest.story,
+        next: { phase: "P7", row: "P7 · cli · x", handoff: ["H", "Next: P8"] },
+        decisions: ["a · b"],
+      },
+    },
+    16000,
+  );
+  expect(set).toContain("- next phase (docs/PLAN.md): P7 · cli · x");
+  expect(set).toContain("- handoff (docs/AUTONOMY.md):");
+  expect(set).toContain("  > H");
+  expect(set).toContain("  > Next: P8");
+  expect(set).toContain("- a · b");
+});
+```
+
+FILE: tests/primer/renderPrimer.p12b.examples.test.ts
+```
+import { expect, test } from "vitest";
+import { renderPrimer } from "../../src/primer/renderPrimer.js";
+import type { DigestLine, PrimerDigest } from "../../src/primer/renderPrimer.js";
+import { fixtureJson } from "../helpers.js";
+
+const DIGESTS = fixtureJson("primer/render.json") as Record<string, PrimerDigest>;
+const DIGEST1 = DIGESTS["digest 1"];
+const DIGEST2 = DIGESTS["digest 2"];
+
+const LINE: DigestLine = {
+  phase: "",
+  date: "",
+  builder: "",
+  models: [],
+  written: null,
+  planned: null,
+  runs: 0,
+  notes: "",
+  cost: "",
+  switches: [],
+};
+
+test("Render Primer example 5: debt rows, running total and ownership of one commit", () => {
+  const one = renderPrimer(
+    {
+      ...DIGEST2,
+      ownership: {
+        commits: 1,
+        models: [{ model: "", commits: 1 }],
+        paths: [{ path: "a b.ts", writes: [{ card: "k", model: "", run: null }] }],
+      },
+      running: "Running total: 12 runs",
+      story: {
+        ...DIGEST2.story,
+        chronology: [
+          { ...LINE, phase: "P3 Debt (x)", cost: "" },
+          { ...LINE, phase: "P4 debts", cost: "1.5" },
+        ],
+      },
+    },
+    16000,
+  );
+  const lines = one.split("\n");
+  expect(lines).toContain(
+    "- debt rows (docs/MEASURE.md), not in these totals: P3 Debt (x) $—",
+  );
+  expect(lines).toContain(
+    '- running total (docs/MEASURE.md): "Running total: 12 runs" vs $0.0000 archived here — the two differ by runs made outside this repository (in MEASURE, no archive here) and archived runs MEASURE\'s total leaves out; debt rows are in neither',
+  );
+  expect(lines).toContain("- git carries 1 Morph commit: — 1");
+  expect(lines).toContain(
+    "- 1 path written by cards, most recent first; per path its cards, newest first:",
+  );
+  expect(lines).toContain("- a b.ts ← k (—, run —)");
+
+  const priced = renderPrimer({ ...DIGEST1, running: "Running total: $0.2000" }, 16000);
+  expect(priced).toContain("vs $0.2651 archived here, difference -0.0651 — ");
+});
+```
