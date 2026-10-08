@@ -30,5 +30,45 @@
   "Main 8": {
     "given": "the setup of Submit Deck 1, argv [\"submit\", \"--deck\", \"d.json\", \"--processor\", \"b\", \"--root\", t]; then the transport and now of Collect Batch 1 in new deps, argv [\"collect\", \"--batch\", <its id>, \"--root\", t]",
     "then": "0 and 0; the two documents of those examples on stdout; stderr \"morph submit: exit 0\\n\", \"morph collect: exit 0\\n\"; the state file and answer files as Collect Batch 1"
+  },
+  "Main 10": {
+    "given": "a tmpRepo t, src/a.ts committed; a side root s: task.txt \"Double a.\\n\", ans/scout.t1.md ANSWER {\"targets\": [\"src/a.ts\"]}; deps {env {PATH, MORPH_PROCESSOR_s_TYPE stub, MORPH_PROCESSOR_s_ANSWERS_DIR s/ans}, now 1791500000000, cwd s}; argv [scout, --processor, s, --issue, task.txt, --root, t], then [plan, --from-scout, latest, --root, t, --out, decks/s.json]",
+    "then": "0, 0; the documents of Scout Command (status ok) and Plan From Scout (one patch card scout-<scoutId> on src/a.ts), decks/s.json its cards; stderr \"morph scout: exit 0\\n\", \"morph plan --from-scout: exit 0\\n\""
+  },
+  "Main 11": {
+    "given": "those deps; argv [scout, --processor, nope, --issue, task.txt, --root, t]; [plan, --from-scout, latest, --root, an empty tmp root e]; [scout, --processor, s, --issue, task.txt, --root, e]",
+    "then": "4 \"processor nope is not configured\" (stderr \"morph scout: exit 4\\n\"); 4 \"no scout session under .morph/scout\" (\"morph plan --from-scout: exit 4\\n\"); 3 RuntimeError beginning \"git ls-files failed (exit 128): \""
+  },
+  "Main 12": {
+    "given": "a tmpRepo t: contour.yaml and morph-map.json = tests/fixtures/reviewer/record.yaml and map.json committed at tag b0; src/shop/addTax.ts in a commit with the trailers Morph-Card: add-tax, Morph-Model: m/x at tag h1; deps {env {PATH}, now () => 0, cwd t, transport null}, in process; argv [review, b0, h1, --spec, contour.yaml, --map, morph-map.json]; then [review, b0, h1, --root, t, --pretty] with cwd \"/\"",
+    "then": "1; one stdout chunk, the Review Document: range \"b0..h1\", verdict findings, counts.missing 3 and counts.findings 3 (Add Tax's three examples named by no test); stderr [\"morph review: exit 1\\n\"]; then 0, one chunk beginning \"{\\n  \\\"range\\\": \\\"b0..h1\\\",\\n  \\\"verdict\\\": \\\"clean\\\",\"; stderr [\"morph review: exit 0\\n\"]"
+  },
+  "Main 13": {
+    "given": "the same deps; argv [review, HEAD, --root, t]; [review, nope, HEAD, --root, t]; [review, HEAD, HEAD, --root, e] (e an empty tmpRoot outside git)",
+    "then": "4 {error {4, UsageError, \"review needs two refs: <base> <head>\"}}, stderr [\"morph: review needs two refs: <base> <head>\\n\"]; 4 \"not a commit: nope\", stderr [\"morph review: exit 4\\n\"]; 3 RuntimeError beginning \"git rev-parse failed (exit 128): \", stderr [\"morph review: exit 3\\n\"]"
+  },
+  "Run Command 8": {
+    "given": "example 2 with maxRetryBatches 1, answers a.md and a.r1.md (each a 30-char fenced ts block); a log pushing its texts",
+    "then": "code 1; the log literals.json[\"Run Command 8\"]; the archive commit adds exactly deck.json, report.json, answers/a.v1.answer.txt, a.r1.v1.answer.txt and answers/lines.txt (the two log lines) under .morph/runs/r1; the a.r1.v1 request (gunzipSync of requests/a.r1.v1.request.json.gz) has a last message holding \"<acceptance_output>\"; status clean"
+  },
+  "Plan Command 6": {
+    "given": "example 1 plus checks decks/l1/checks.json, decks/tools/guard.mjs \"// guard\\n\", firstdiff.mjs \"// firstdiff\\n\", decks/l1/parts/parse.probe.ts, ledger-types.probe.ts \"// probe\\n\"",
+    "then": "code 0; example 1 but parse's acceptance codeAcceptance(ctx {phase \"l1\", siblings [\"src/ledger/types.ts\"]}, \"// probe\\n\", null, null), parse-judge's judgeAcceptance(ctx, files); ledger-types keeps the map's \"exit 0\\n\""
+  },
+  "Run Command 12": {
+    "given": "example 1, deck [x → out/x.ts \"true\", q → out/q.ts no acceptance, d → out/d.ts \" \\n\"]",
+    "then": "code 2 RefusalError \"deck has 2 card(s) with no acceptance: q,d\"; no morph/* branch"
+  },
+  "Main 3": {
+    "given": "a run with a valid stub env and deck, --run-id r1, --root and cwd both a tmp root that is not a git repository",
+    "then": "3; one document {error: {code: 3, kind: \"RuntimeError\", message beginning \"git status failed (exit 128): \"}}; stderr [\"morph run: exit 3\\n\"]"
+  },
+  "Deck Check 2": {
+    "given": "d.json = the tiny fixture and src/a.ts = \"export const a = 1;\\n\" (20 bytes)",
+    "then": "code 0; errors 0, warnings 1, hazards [{kind: \"implicit-read\", severity: \"warning\", cards: [\"a\"], path: null, repair: null}], weights [{card: \"a\", bytes: 20, missing: []}]"
+  },
+  "Run Command 2": {
+    "given": "the same setup, one card a with acceptance \"exit 1\", maxRetryBatches 0",
+    "then": "code 1; outcome a \"failed\", reason \"acceptance failed\"; archive ok with the trailer Morph-Failed: 1; out/a.ts absent"
   }
 }

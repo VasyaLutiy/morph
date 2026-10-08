@@ -34,7 +34,7 @@
   ],
   "4": [
     [
-      "review"
+      "report"
     ],
     [
       "deck",
@@ -345,6 +345,91 @@
       "--from-scout",
       "x",
       "--judge"
+    ]
+  ],
+  "19": [
+    [
+      "review",
+      "v1",
+      "HEAD"
+    ],
+    [
+      "--pretty",
+      "review",
+      "4f2a9c1",
+      "morph/20261009-101500",
+      "--root",
+      "/r",
+      "--spec",
+      "c.yaml",
+      "--map",
+      "m.json",
+      "--scout",
+      "latest",
+      "--mutants",
+      "8",
+      "--mutant-timeout",
+      "30",
+      "--test",
+      "npm test",
+      "--write"
+    ],
+    [
+      "review"
+    ],
+    [
+      "review",
+      "a"
+    ],
+    [
+      "review",
+      "a",
+      "b",
+      "c"
+    ],
+    [
+      "review",
+      "a",
+      "b",
+      "--mutants",
+      "0"
+    ],
+    [
+      "review",
+      "a",
+      "b",
+      "--mutant-timeout",
+      "x"
+    ],
+    [
+      "review",
+      "a",
+      "b",
+      "--scout",
+      "a/b"
+    ],
+    [
+      "review",
+      "a",
+      "b",
+      "--deck",
+      "d"
+    ],
+    [
+      "run",
+      "--deck",
+      "d",
+      "--processor",
+      "s",
+      "--mutants",
+      "3"
+    ],
+    [
+      "plan",
+      "--spec",
+      "c.yaml",
+      "--test",
+      "x"
     ]
   ]
 }

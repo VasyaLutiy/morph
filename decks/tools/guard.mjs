@@ -21,7 +21,8 @@ const LAYERS = {
   // P13b: the round loop builds the processor's Request and Message (compiler's types) (docs/TASK_P13b_scout.md §4)
   scout: ["cards", "processor", "wait", "primer", "language", "git", "compiler"],
   // P14a: obligations from the record need language's naming and profiles (docs/TASK_P14_reviewer.md §4)
-  reviewer: ["cards", "contour", "primer", "scout", "git", "language"],
+  // P14b: the mutant runs go through acceptance's runner and snapshot (docs/TASK_P14b_reviewer.md §4)
+  reviewer: ["cards", "contour", "primer", "scout", "git", "language", "acceptance"],
   runloop: ["cards", "wait", "store", "compiler", "response", "acceptance", "language",
     "git", "processor"],
   // P11b2: the detached batch commands (morph submit / morph collect), the processor layer's second Component
@@ -64,8 +65,11 @@ const NODE_ONLY = { language: new Set(["node:path"]), contour: new Set(), planne
 // P13b: the two I/O files of src/scout, the commands `morph scout` (the node:fs ScoutFs adapter, git ls-files, the
 // scout.json write, the question's sha256) and `morph plan --from-scout` (reads scout.json, writes the deck); every other
 // scout file stays pure (docs/TASK_P13b_scout.md §4)
+// P14b: the one I/O file of src/reviewer, `morph review` (the record, the map and scout.json read, the review written);
+// Run Mutants writes and restores through acceptance's snapshot, so it imports no Node module (docs/TASK_P14b_reviewer.md §4)
 const NODE_FILES = { "src/scout/scoutCommand.ts": new Set(["node:fs", "node:crypto"]),
-  "src/scout/planFromScout.ts": new Set(["node:fs"]) };
+  "src/scout/planFromScout.ts": new Set(["node:fs"]),
+  "src/reviewer/reviewCommand.ts": new Set(["node:fs", "node:path"]) };
 const YAML_FILE = "src/contour/load.ts";
 
 function parse(file) {

@@ -1,0 +1,106 @@
+{
+ "phase": "p14b",
+ "ownGit": true,
+ "fullExclude": [
+  "tests/cli/parse.examples.test.ts"
+ ],
+ "cards": [
+  {
+   "id": "run-mutants"
+  },
+  {
+   "id": "review-command"
+  },
+  {
+   "id": "parse-command"
+  },
+  {
+   "id": "run-mutants-judge",
+   "files": [
+    {
+     "file": "tests/reviewer/runMutants.examples.test.ts",
+     "min": 4,
+     "max": 10,
+     "new": true,
+     "lits": [
+      "Run Mutants example 1",
+      "Run Mutants example 2",
+      "Run Mutants example 3",
+      "Run Mutants example 4",
+      "mutation baseline",
+      "every test passed",
+      "timed out after 300 ms",
+      "a test fails on && → || at line 2",
+      "gen/new.ts",
+      "OPENAI_API_KEY"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "review-command-judge",
+   "files": [
+    {
+     "file": "tests/reviewer/reviewCommand.examples.test.ts",
+     "min": 5,
+     "max": 11,
+     "new": true,
+     "lits": [
+      "Review Command example 1",
+      "Review Command example 2",
+      "Review Command example 3",
+      "Review Command example 4",
+      "Review Command example 5",
+      "reviewer/review.tiny.md",
+      "record: shop · Add Tax · example 2",
+      "Morph-Card: add-tax-judge.r1",
+      "Morph-Run: r7",
+      "20261009-101500-0badc0de",
+      "head side is not in the history of HEAD",
+      "--mutants needs a clean tree: dirty outside .morph/: notes.txt",
+      "4f2a9c1e-8a663b37"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "parse-command-judge",
+   "files": [
+    {
+     "file": "tests/cli/parse.examples.test.ts",
+     "min": 25,
+     "max": 27,
+     "drop": [
+      "Parse Command example 4: review and deck status answer NotYetError"
+     ],
+     "lits": [
+      "Parse Command example 19",
+      "command report is not available yet",
+      "primer, scout, review)",
+      "review needs two refs: <base> <head>",
+      "flag --test does not apply to plan",
+      "--mutant-timeout must be a positive integer (got 'x')"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "main-judge",
+   "files": [
+    {
+     "file": "tests/cli/main.p14b.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Main example 12",
+      "Main example 13",
+      "morph review: exit 1",
+      "review needs two refs: <base> <head>",
+      "git rev-parse failed (exit 128): "
+     ]
+    }
+   ]
+  }
+ ]
+}

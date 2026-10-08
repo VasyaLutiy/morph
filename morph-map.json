@@ -1,7 +1,7 @@
 {
   "package": "src",
   "docs": [
-    "docs/TASK_P14_reviewer.md"
+    "docs/TASK_P14b_reviewer.md"
   ],
   "groups": {
     "card-model": [
@@ -1073,19 +1073,17 @@
         "src/cli/main.ts"
       ],
       "context_slice": [
-        "docs/TASK_P13b_scout.md",
+        "docs/TASK_P14b_reviewer.md",
         "docs/CONVENTIONS.md",
         "src/cli/document.ts",
-        "src/scout/scoutCommand.ts",
-        "src/scout/planFromScout.ts"
+        "src/reviewer/reviewCommand.ts"
       ],
       "depends_on": [
-        "scout-command",
-        "plan-from-scout"
+        "review-command"
       ],
       "variants": 2,
-      "max_tokens": 24000,
-      "instruction": "Read docs/TASK_P13b_scout.md sections 2.2 (src/cli/types.ts, Parse Command, Main: the routing of scout and plan --from-scout and their tables) and 4. Patch three files (their current texts follow) and return each WHOLE; change nothing else in them. src/cli/types.ts: add ScoutArgs and FromScoutArgs exactly as section 2.2 shows and widen Command with them. src/cli/parse.ts: --issue, --seed-file and --from-scout are value flags; scout is a command word and no longer a not-yet word; plan with --from-scout is the command \"plan --from-scout\"; their flag sets, checks and results as section 2.2 says, plan --from-scout done before plan's missing --spec, scout done after primer and before missing --deck; the no-command message lists the seven commands; every other check, message, default and key stays exactly as it is. src/cli/main.ts: route scout to await scoutCommand(root, command, deps) and plan --from-scout to planFromScout(root, command) before the run branch, which stays the last else. Write no test file: a probe tests you and a judge writes the example tests."
+      "max_tokens": 28000,
+      "instruction": "Read docs/TASK_P14b_reviewer.md sections 2.2 (src/cli/types.ts, Parse Command, Main: the routing of review and their tables) and 4. Patch three files (their current texts follow) and return each WHOLE; change nothing else in them. src/cli/types.ts: add ReviewArgs exactly as section 2.2 shows and widen Command with it. src/cli/parse.ts: --scout, --mutants, --mutant-timeout and --test are value flags; review is a command word with two refs after it and no longer a not-yet word (report stays one); its flag set, checks and result as section 2.2 says, review done right after the flag check; the no-command message lists the eight commands; every other check, message, default and key stays exactly as it is. src/cli/main.ts: route review to await reviewCommand(root, command, deps) before the run branch, which stays the last else. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "deck-check": {
       "intent": "generate",
@@ -1179,7 +1177,7 @@
         "tests/cli/parse.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P13b_scout.md",
+        "docs/TASK_P14b_reviewer.md",
         "docs/CONVENTIONS.md",
         "src/cli/types.ts",
         "src/cli/parse.ts"
@@ -1187,8 +1185,8 @@
       "depends_on": [
         "parse-command"
       ],
-      "max_tokens": 24000,
-      "instruction": "You patch tests/cli/parse.examples.test.ts and return it WHOLE (its current text follows). Read docs/TASK_P13b_scout.md sections 2.2 (Parse Command and its table) and 2.3 (the parse.examples bullet). Three changes only: the test \"Parse Command example 4: scout and deck status answer NotYetError\" becomes \"Parse Command example 4: review and deck status answer NotYetError\", its first argv [\"review\"] and its message \"command review is not available yet\"; in \"Parse Command example 8\" the no-command message becomes \"no command (commands: deck check, plan, run, submit, collect, primer, scout)\"; after the last test add \"Parse Command example 17: the word scout and its flags\" with the seven argv and \"Parse Command example 18: plan --from-scout\" with the six argv of section 2.2's table, each result written out as a literal and compared whole with toStrictEqual, as examples 14 and 15 do. Keep every other test, its name and every other line exactly as it is. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "max_tokens": 28000,
+      "instruction": "You patch tests/cli/parse.examples.test.ts and return it WHOLE (its current text follows). Read docs/TASK_P14b_reviewer.md sections 2.2 (Parse Command and its table) and 2.3 (the parse.examples bullet). Three changes only: the test \"Parse Command example 4: review and deck status answer NotYetError\" becomes \"Parse Command example 4: report and deck status answer NotYetError\", its first argv [\"report\"] and its message \"command report is not available yet\"; in \"Parse Command example 8\" the no-command message becomes \"no command (commands: deck check, plan, run, submit, collect, primer, scout, review)\"; after the last test add \"Parse Command example 19: the word review, its refs and flags\" with the eleven argv of section 2.2's table, each result written out as a literal and compared whole with toStrictEqual, as examples 17 and 18 do. Keep every other test, its name and every other line exactly as it is. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "deck-check-judge": {
       "intent": "generate",
@@ -1235,20 +1233,22 @@
     "main-judge": {
       "intent": "generate",
       "targets": [
-        "tests/cli/main.p13b.examples.test.ts"
+        "tests/cli/main.p14b.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P13b_scout.md",
+        "docs/TASK_P14b_reviewer.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/cli/types.ts",
-        "src/cli/main.ts"
+        "src/cli/main.ts",
+        "tests/fixtures/reviewer/record.yaml",
+        "tests/fixtures/reviewer/map.json"
       ],
       "depends_on": [
         "parse-command"
       ],
-      "max_tokens": 12000,
-      "instruction": "You write tests/cli/main.p13b.examples.test.ts only, a NEW file with the tests of Main examples 10 and 11; examples 1-9 are already tested and you do not repeat them. Read docs/TASK_P13b_scout.md sections 2.1 (the stub processor) and 2.2 (Main and its table). Call main(argv, deps, io) in process from \"../../src/cli/main.js\" with deps {env: {PATH: process.env.PATH ?? \"\", MORPH_PROCESSOR_s_TYPE: \"stub\", MORPH_PROCESSOR_s_ANSWERS_DIR: <side root>/ans}, now: () => 1791500000000, cwd: <side root>, transport: null} and an io that pushes stdout and stderr chunks; parse each stdout chunk with JSON.parse; tmpRepo and tmpRoot from \"../helpers.js\". The model's one turn is the file ans/scout.t1.md of the side root. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "max_tokens": 16000,
+      "instruction": "You write tests/cli/main.p14b.examples.test.ts only, a NEW file with the tests of Main examples 12 and 13; examples 1-11 are already tested and you do not repeat them. Read docs/TASK_P14b_reviewer.md sections 2.1 (the Review Command harness: the tmpRepo with tags b0 and h1) and 2.2 (Main and its table). Call main(argv, deps, io) in process from \"../../src/cli/main.js\" with deps {env: {PATH: process.env.PATH ?? \"\"}, now: () => 0, cwd: <the repo's root>, transport: null} and an io that pushes stdout and stderr chunks; parse each stdout chunk with JSON.parse; tmpRepo, tmpRoot and fixture from \"../helpers.js\". Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "profiles": {
       "intent": "generate",
@@ -2875,6 +2875,92 @@
       ],
       "max_tokens": 16000,
       "instruction": "You write tests/reviewer/renderFindings.examples.test.ts only, a NEW file with the tests of Render Findings examples 1-3. Read docs/TASK_P14_reviewer.md sections 2.1 (the fixtures and texts of Render Findings, verbatim) and 2.2 (Render Findings and its table) and 2.3 (the renderFindings.examples bullet). Import from \"../../src/reviewer/renderFindings.js\", fixture and fixtureJson from \"../helpers.js\"; example 2 reads fixtureJson(\"reviewer/review.input.json\") and compares the markdown with fixture(\"reviewer/review.md\") by toBe. Strings with toBe, a whole result with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no file written, no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+    },
+    "run-mutants": {
+      "intent": "generate",
+      "targets": [
+        "src/reviewer/runMutants.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P14b_reviewer.md",
+        "docs/CONVENTIONS.md",
+        "src/reviewer/planMutants.ts",
+        "src/acceptance/run.ts",
+        "src/acceptance/snapshot.ts",
+        "src/acceptance/types.ts"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 12000,
+      "instruction": "Read docs/TASK_P14b_reviewer.md sections 2.1 (the functions you call), 2.2 (src/reviewer/runMutants.ts, Run Mutants and its table) and 4. src/reviewer/planMutants.ts (the Mutant type) and the acceptance files follow (import runAcceptance, snapshotTargets, restoreSnapshot and the types; do not change them). Write src/reviewer/runMutants.ts, a NEW file of the layer reviewer that imports no Node module, no clock and no environment: the exports of section 2.2 in that order. Every run of the test command is runAcceptance with the given env and timeoutMs; the mutant's text reaches the file only through restoreSnapshot, and the file is restored in finally. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "review-command": {
+      "intent": "generate",
+      "targets": [
+        "src/reviewer/reviewCommand.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P14b_reviewer.md",
+        "docs/CONVENTIONS.md",
+        "src/reviewer/runMutants.ts",
+        "src/reviewer/findObligations.ts",
+        "src/reviewer/checkEnvelope.ts",
+        "src/reviewer/checkGuardrails.ts",
+        "src/reviewer/planMutants.ts",
+        "src/reviewer/renderFindings.ts",
+        "src/git/run.ts",
+        "src/git/log.ts",
+        "src/git/ownership.ts",
+        "src/contour/load.ts",
+        "src/contour/types.ts",
+        "src/language/paths.ts",
+        "src/language/types.ts"
+      ],
+      "depends_on": [
+        "run-mutants"
+      ],
+      "variants": 2,
+      "max_tokens": 24000,
+      "instruction": "Read docs/TASK_P14b_reviewer.md sections 2.1 (the functions you call), 2.2 (src/reviewer/reviewCommand.ts, Review Command steps 1-4 and its table, the ReviewDocument keys) and 4; src/reviewer/runMutants.ts, the five P14a reviewer files, the git, contour and language files follow (import from them, do not change them; SCOUT_SESSIONS comes from \"../scout/planFromScout.js\"). Write src/reviewer/reviewCommand.ts, a NEW file of the layer reviewer and its one node:fs file (node:fs, node:path): the exports of section 2.2 in that order. Every refusal in section 2.2's order before any diff; git only through gitOk and runGit with deps.env; no clock, no process, no console; the mutants only through runMutants. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "run-mutants-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/reviewer/runMutants.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P14b_reviewer.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/reviewer/runMutants.ts",
+        "src/reviewer/planMutants.ts"
+      ],
+      "depends_on": [
+        "run-mutants"
+      ],
+      "max_tokens": 16000,
+      "instruction": "You write tests/reviewer/runMutants.examples.test.ts only, a NEW file with the tests of Run Mutants examples 1-4. Read docs/TASK_P14b_reviewer.md sections 2.1 (the Run Mutants harness and the text F, verbatim) and 2.2 (Run Mutants and its table) and 2.3 (the runMutants.examples bullet). Import from \"../../src/reviewer/runMutants.js\", planMutants from \"../../src/reviewer/planMutants.js\", tmpRoot from \"../helpers.js\"; await runMutants. The test commands are the shell lines of the record, written exactly; env {PATH: process.env.PATH ?? \"\"} plus the keys an example names. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+    },
+    "review-command-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/reviewer/reviewCommand.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P14b_reviewer.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/reviewer/reviewCommand.ts",
+        "src/reviewer/runMutants.ts",
+        "tests/fixtures/reviewer/record.yaml",
+        "tests/fixtures/reviewer/map.json",
+        "tests/fixtures/reviewer/review.tiny.md"
+      ],
+      "depends_on": [
+        "review-command"
+      ],
+      "max_tokens": 24000,
+      "instruction": "You write tests/reviewer/reviewCommand.examples.test.ts only, a NEW file with the tests of Review Command examples 1-5. Read docs/TASK_P14b_reviewer.md sections 2.1 (the Review Command harness: the tmpRepo with tags b0 and h1, its Morph-Card and Morph-Run commits, the scout.json, the args) and 2.2 (Review Command and its table, the ReviewDocument keys) and 2.3 (the reviewCommand.examples bullet). Import from \"../../src/reviewer/reviewCommand.js\", tmpRepo, tmpRoot and fixture from \"../helpers.js\"; await reviewCommand; a root outside git makes its promise reject. Example 2 compares the markdown with fixture(\"reviewer/review.tiny.md\") by toBe. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     }
   }
 }

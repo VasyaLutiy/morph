@@ -1325,7 +1325,7 @@ System:
       description: >
         The `morph` binary: src/cli/*.ts and the entry src/cli.ts (bin dist/cli.js): argv parsed, routed to a command, one JSON document on stdout, log lines on
         stderr, an exit code per outcome. Only the entry touches the process. Commands: `deck check`, `run`, `plan`; `submit`, `collect` (routed to batches);
-        `primer` (routed to primer); `scout`, `plan --from-scout` (routed to scout-session); the rest NotYetError.
+        `primer` (routed to primer); `scout`, `plan --from-scout` (routed to scout-session); `review` (routed to review-session); the rest NotYetError.
       language: typescript
       requirements: [One Document Out]
       functions:
@@ -1334,15 +1334,18 @@ System:
           behavior: >
             parseCommand(argv) scans argv left to right. A token starting with "--" is a flag: --pretty, --judge and --write take no value; --root, --deck,
             --processor, --run-id, --deadline, --max-cards, --max-retry-batches, --slice-cap-bytes, --spec, --component, --map, --out, --checks, --batch,
-            --issue, --seed-file, --from-scout take the next token whatever it is; any other flag (--x=y too) → "unknown flag: <t>"; a value flag last → "flag <t> needs a value"; a flag twice → "flag
+            --issue, --seed-file, --from-scout, --scout, --mutants, --mutant-timeout, --test take the next token whatever it is; any other flag (--x=y too) → "unknown flag: <t>"; a value flag last → "flag <t> needs a value"; a flag twice → "flag
             <t> given twice", but --component repeats, its values in argv order (the first error by argv wins). Other tokens are words, giving the command: none
-            → "no command (commands: deck check, plan, run, submit, collect, primer, scout)"; "run"; "plan" ("plan --from-scout" when --from-scout is given);
-            "submit"; "collect"; "primer"; "scout"; "deck" "check"; a first word review or report → NotYetError "command <word> is not available yet"; "deck" add|status|reset|clear → NotYetError "command deck <w> is
+            → "no command (commands: deck check, plan, run, submit, collect, primer, scout, review)"; "run"; "plan" ("plan --from-scout" when --from-scout is given);
+            "submit"; "collect"; "primer"; "scout"; "review" with two words after it (<base> <head>); "deck" "check"; a first word report → NotYetError "command report is not available yet"; "deck" add|status|reset|clear → NotYetError "command deck <w> is
             not available yet"; else "unknown command: <words, space-joined>". An extra word → "unexpected argument: <first extra>". Then in order: a flag the
             command does not take → "flag <f> does not apply to <command>", in argv order (deck check: --root, --pretty, --deck, --slice-cap-bytes; run: --root,
             --pretty, --deck, --processor, --run-id, --deadline, --max-cards, --max-retry-batches; plan: --root, --pretty, --spec, --component, --map, --judge,
-            --out, --checks; submit: --root, --pretty, --deck, --processor; collect: --root, --pretty, --batch; primer: --root, --pretty, --write; scout: --root, --pretty,
-            --processor, --issue, --seed-file, --deadline; plan --from-scout: --root, --pretty, --from-scout, --out); plan --from-scout: a value not matching
+            --out, --checks; review: --root, --pretty, --spec, --map, --scout, --mutants, --mutant-timeout, --test, --write; submit: --root, --pretty, --deck, --processor; collect: --root, --pretty, --batch; primer: --root, --pretty, --write; scout: --root, --pretty,
+            --processor, --issue, --seed-file, --deadline; plan --from-scout: --root, --pretty, --from-scout, --out); review: fewer than two refs → "review
+            needs two refs: <base> <head>", a --scout not matching ^[A-Za-z0-9._-]+$ → "--scout must match ^[A-Za-z0-9._-]+$ (got '<v>')", --mutants then
+            --mutant-timeout not a positive integer, else done {name, root, pretty, base, head, spec, map, scout, mutants (null), mutantTimeoutSeconds (120),
+            test (null), write}; plan --from-scout: a value not matching
             ^[A-Za-z0-9._-]+$ → "--from-scout must match ^[A-Za-z0-9._-]+$ (got '<v>')", else done {name, root, pretty, fromScout, out: null when not given};
             plan without --spec → "missing --spec", else plan is done: the plan Command (components [] and map, out null when not given; checks a key only when given);
             collect without --batch → "missing --batch", a --batch not matching ^[A-Za-z0-9._-]+$ → "--batch must match ^[A-Za-z0-9._-]+$ (got '<v>')", else
@@ -1374,6 +1377,7 @@ System:
             - {given: 'parseArgv.json["16"]', when: parsed, then: 'parse.json["16"]'}
             - {given: 'parseArgv.json["17"]', when: parsed, then: 'parse.json["17"]'}
             - {given: 'parseArgv.json["18"]', when: parsed, then: 'parse.json["18"]'}
+            - {given: 'parseArgv.json["19"]', when: parsed, then: 'parse.json["19"]'}
         - name: Emit Document
           description: One JSON document + newline on stdout; --pretty indents by 2.
           behavior: >
@@ -1415,7 +1419,7 @@ System:
           steps: [{calls: Read Deck File}, {uses: cards}, {produces: Deck Check Document}]
           examples:
             - {given: 'a tmp root holding only d.json = the write-write fixture (a and b both write src/x.ts)', ref: "tests/fixtures/decks/hazardsWriteWrite.json, tests/fixtures/cli/deckCheck.writeWrite.json", when: 'deckCheckCommand(root, "d.json", 500000)', then: 'code 2; document equal to tests/fixtures/cli/deckCheck.writeWrite.json'}
-            - {given: 'd.json = the tiny fixture and src/a.ts = "export const a = 1;\n" (20 bytes)', ref: "tests/fixtures/decks/tiny.json", when: 'deckCheckCommand(root, "d.json", 500000)', then: 'code 0; errors 0, warnings 1, hazards [{kind: "implicit-read", severity: "warning", cards: ["a"], path: null, repair: null}], weights [{card: "a", bytes: 20, missing: []}]'}
+            - {given: 'examples.json["Deck Check 2"].given', ref: "tests/fixtures/cli/examples.json (\"<Function> <n>\" → the example's given and then), tests/fixtures/decks/tiny.json", when: 'deckCheckCommand(root, "d.json", 500000)', then: 'examples.json["Deck Check 2"].then'}
             - {given: 'the same tree, sliceCapBytes 10', when: checked, then: 'code 0; warnings 2; hazards [the implicit-read, then {kind: "oversized-slice", severity: "warning", cards: ["a"], path: null, repair: null, bytes: 20, cap: 10}]'}
         - name: Run Command
           description: "`morph run`: processor, deck, hazards, run branch, Run Deck, archive; one Run Document."
@@ -1436,17 +1440,17 @@ System:
           steps: [{uses: processor}, {calls: Read Deck File}, {uses: git}, {uses: runloop}, {produces: Run Document}]
           examples:
             - {given: 'examples.json["Run Command 1"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'run', then: 'examples.json["Run Command 1"].then'}
-            - {given: 'the same setup, one card a with acceptance "exit 1", maxRetryBatches 0', when: run, then: 'code 1; outcome a "failed", reason "acceptance failed"; archive ok with the trailer Morph-Failed: 1; out/a.ts absent'}
+            - {given: 'examples.json["Run Command 2"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'run', then: 'examples.json["Run Command 2"].then'}
             - {given: 'processor "nope"; then "bad" with MORPH_PROCESSOR_bad_TYPE "x" in env', when: run, then: 'code 4 UsageError "processor nope is not configured"; then "processor bad is not configured: MORPH_PROCESSOR_bad_TYPE must be one of openrouter, stub (got ''x'')"; no morph/* branch'}
             - {given: 'the same setup with an untracked notes.txt in the repo', when: run, then: 'code 2 RefusalError "dirty tree outside .morph/: notes.txt"; the checkout still main; no archive'}
             - {given: 'a deck of a and b both targeting out/x.ts', when: run, then: 'code 2 RefusalError "deck has 1 hazard error(s): write-write a,b out/x.ts"; no morph/* branch'}
             - {given: 'one card a; runId null; deps.now always 1791310149000', when: run, then: 'mintRunId(1791310149000) is "20261006-180909"; code 0; runId, report.runId "20261006-180909", branch "morph/20261006-180909"; .morph/runs/20261006-180909/report.json exists'}
             - {given: 'records {request.customId "a.v1", verdict "rejected", stages 4, lastStage "probe", finishReason "stop", text 30 chars}, {request.customId "b.r1.v2", verdict "corrupt", stages 0, lastStage null, finishReason null, text null}', when: variantLine, then: '"morph run: a.v1 rejected stage 4 probe finish stop chars 30\n"; "morph run: b.r1.v2 corrupt stage 0 finish none chars none\n"'}
-            - {given: 'example 2 with maxRetryBatches 1, answers a.md and a.r1.md (each a 30-char fenced ts block); a log pushing its texts', when: run, ref: "tests/fixtures/cli/literals.json (\"<Function> <n>\" → the literal)", then: 'code 1; the log literals.json["Run Command 8"]; the archive commit adds exactly deck.json, report.json, answers/a.v1.answer.txt, a.r1.v1.answer.txt and answers/lines.txt (the two log lines) under .morph/runs/r1; the a.r1.v1 request (gunzipSync of requests/a.r1.v1.request.json.gz) has a last message holding "<acceptance_output>"; status clean'}
+            - {given: 'examples.json["Run Command 8"].given', ref: "tests/fixtures/cli/examples.json (\"<Function> <n>\" → the example's given and then), tests/fixtures/cli/literals.json (\"<Function> <n>\" → the literal)", when: 'run', then: 'examples.json["Run Command 8"].then'}
             - {given: 'examples.json["Run Command 9"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then), tests/fixtures/processor/batchSubmittedLive.json, batchCompletedLive.json, tests/fixtures/cli/batch.r9.json (the record file''s text), tests/fixtures/cli/literals.json', when: 'run', then: 'examples.json["Run Command 9"].then'}
             - {given: 'examples.json["Run Command 10"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'run', then: 'examples.json["Run Command 10"].then'}
             - {given: 'a deck file "[]"', when: run, then: 'code 2 RefusalError "deck has no cards"; no morph/* branch; no .morph'}
-            - {given: 'example 1, deck [x → out/x.ts "true", q → out/q.ts no acceptance, d → out/d.ts " \n"]', when: run, then: 'code 2 RefusalError "deck has 2 card(s) with no acceptance: q,d"; no morph/* branch'}
+            - {given: 'examples.json["Run Command 12"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'run', then: 'examples.json["Run Command 12"].then'}
         - name: Plan Command
           description: "`morph plan --spec`: record and map cut by Plan Spec, the deck to --out; one Plan Document."
           behavior: >
@@ -1466,7 +1470,7 @@ System:
             - {given: 'bad.yaml = "System: {}\n" as the spec; then spec ledger.yaml with m.json = "{\"docs\": \"x\"}" as the map', when: planCommand, ref: "tests/fixtures/cli/literals.json", then: 'code 2 DeckError, then code 2 DeckError: the messages literals.json["Plan Command 3"]'}
             - {given: 'the same root, components ["nope"], out "decks/q.json"', when: planCommand, then: "code 2 DeckError \"no Component 'nope' in the record (have: ledger, store)\"; decks/q.json not written"}
             - {given: 'main(["plan", "--root", <the root>, "--spec", "ledger.yaml", "--component", "store", "--map", "ledger.map.json"]) in process, deps {env: {}, now: () => 0, cwd: "/", transport: null}', when: main, then: '0; one stdout chunk, a document with components ["store"], 4 cards, out null; stderr ["morph plan: exit 0\n"]; nothing written under the root'}
-            - {given: 'example 1 plus checks decks/l1/checks.json, decks/tools/guard.mjs "// guard\n", firstdiff.mjs "// firstdiff\n", decks/l1/parts/parse.probe.ts, ledger-types.probe.ts "// probe\n"', ref: "tests/fixtures/cli/l1.checks.json", when: planCommand, then: 'code 0; example 1 but parse''s acceptance codeAcceptance(ctx {phase "l1", siblings ["src/ledger/types.ts"]}, "// probe\n", null, null), parse-judge''s judgeAcceptance(ctx, files); ledger-types keeps the map''s "exit 0\n"'}
+            - {given: 'examples.json["Plan Command 6"].given', ref: "tests/fixtures/cli/examples.json (\"<Function> <n>\" → the example's given and then), tests/fixtures/cli/l1.checks.json", when: 'planCommand', then: 'examples.json["Plan Command 6"].then'}
             - {given: 'example 6, checks decks/l2/checks.json = {"phase": "l2", "cards": [{"id": "zz"}]}', when: planCommand, then: '2 DeckError "acceptances not built (1 error):\nchecks card ''zz'' is not in the deck"'}
             - {given: 'the repository; contour.yaml, planner, cli, judge, map tests/fixtures/cli/p10.map.json, checks decks/p10/checks.json', ref: "decks/p10/v2deck.json, tests/fixtures/builder/guard.p10.txt", when: planCommand, then: 'code 0; v2deck.json''s 12 acceptances byte for byte, guard.p10.txt (trimEnd) replaced by decks/tools/guard.mjs'}
         - name: Read Plan Checks
@@ -1488,29 +1492,31 @@ System:
             main(argv, deps, io) → Promise<ExitCode>. Parse Command; a failure → io.stdout(renderDocument(its error document, pretty = argv holds "--pretty")),
             io.stderr("morph: <message>\n"), 4. Else root = path.resolve(deps.cwd, command.root); result = Deck Check, Plan Command, await Submit Deck(root,
             deck, processor, D), await Collect Batch(root, batch, D), Primer Command(root, write, {env, now of deps}), await Scout Command(root, command, deps), Plan From Scout(root,
-            command) (D = {env, now, transport of deps,
+            command), await Review Command(root, command, deps) (D = {env, now, transport of deps,
             saveState: git's saveBatchRecord(root, ·), saveAnswers: git's saveBatchAnswers(root, ·, ·)}) or await Run Command (io.stderr its log) by command, in
             try/catch, a thrown value → classifyThrown. Then one io.stdout(renderDocument(result.document, command.pretty)), one io.stderr("morph <command
             name>: exit <code>\n"), return result.code. The entry src/cli.ts (`#!/usr/bin/env node`) calls main(process.argv.slice(2), {env: process.env without
             undefined values, now: Date.now, cwd: process.cwd(), transport: null, interrupted: () => the first SIGINT or SIGTERM its own listeners caught, or
             null}, {stdout, stderr: the process streams' write}), sets process.exitCode to the result, never calls process.exit.
-          steps: [{calls: Parse Command}, {calls: Deck Check}, {calls: Plan Command}, {calls: Run Command}, {uses: batches}, {uses: primer}, {uses: scout-session}, {calls: Emit Document}, {calls: Classify Error}]
+          steps: [{calls: Parse Command}, {calls: Deck Check}, {calls: Plan Command}, {calls: Run Command}, {uses: batches}, {uses: primer}, {uses: scout-session}, {uses: review-session}, {calls: Emit Document}, {calls: Classify Error}]
           examples:
             - {given: 'argv ["frobnicate"], in process', when: main, then: '4; stdout exactly ["{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"unknown command: frobnicate\"}}\n"]; stderr ["morph: unknown command: frobnicate\n"]'}
             - {given: 'a tmp root with d.json = the write-write fixture; argv ["deck", "check", "--deck", "d.json", "--root", <root>, "--pretty"]', ref: "tests/fixtures/decks/hazardsWriteWrite.json", when: main, then: '2; one stdout chunk beginning "{\n  \"deck\": \"d.json\",\n  \"cards\": 2,"; stderr ["morph deck check: exit 2\n"]'}
-            - {given: 'a run with a valid stub env and deck, --run-id r1, --root and cwd both a tmp root that is not a git repository', when: main, then: '3; one document {error: {code: 3, kind: "RuntimeError", message beginning "git status failed (exit 128): "}}; stderr ["morph run: exit 3\n"]'}
+            - {given: 'examples.json["Main 3"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'main', then: 'examples.json["Main 3"].then'}
             - {given: 'examples.json["Main 4"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then), tests/fixtures/cli/literals.json', when: 'spawned', then: 'examples.json["Main 4"].then'}
             - {given: 'the built binary, argv ["frobnicate"]', when: spawned, then: 'exit 4; stdout exactly example 1''s one stdout chunk'}
             - {given: 'examples.json["Main 6"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'spawned (spawnSync, timeout 30000 ms)', then: 'examples.json["Main 6"].then'}
             - {given: 'in process, deps {env: {}, now: () => 0, cwd: "/", transport: null}; argv ["collect", "--batch", "batch-none", "--root", <a tmp root>]', when: main, then: '4; one stdout document {error: {code: 4, kind: "UsageError", message: "batch state not found: .morph/batches/batch-none.json"}}; stderr ["morph collect: exit 4\n"]'}
             - {given: 'examples.json["Main 8"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'main, twice', then: 'examples.json["Main 8"].then'}
             - {given: 'examples.json["Main 9"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'main', then: 'examples.json["Main 9"].then'}
-            - {given: 'a tmpRepo t, src/a.ts committed; a side root s: task.txt "Double a.\n", ans/scout.t1.md ANSWER {"targets": ["src/a.ts"]}; deps {env {PATH, MORPH_PROCESSOR_s_TYPE stub, MORPH_PROCESSOR_s_ANSWERS_DIR s/ans}, now 1791500000000, cwd s}; argv [scout, --processor, s, --issue, task.txt, --root, t], then [plan, --from-scout, latest, --root, t, --out, decks/s.json]', when: main, then: '0, 0; the documents of Scout Command (status ok) and Plan From Scout (one patch card scout-<scoutId> on src/a.ts), decks/s.json its cards; stderr "morph scout: exit 0\n", "morph plan --from-scout: exit 0\n"'}
-            - {given: 'those deps; argv [scout, --processor, nope, --issue, task.txt, --root, t]; [plan, --from-scout, latest, --root, an empty tmp root e]; [scout, --processor, s, --issue, task.txt, --root, e]', when: main, then: '4 "processor nope is not configured" (stderr "morph scout: exit 4\n"); 4 "no scout session under .morph/scout" ("morph plan --from-scout: exit 4\n"); 3 RuntimeError beginning "git ls-files failed (exit 128): "'}
+            - {given: 'examples.json["Main 10"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'main', then: 'examples.json["Main 10"].then'}
+            - {given: 'examples.json["Main 11"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'main', then: 'examples.json["Main 11"].then'}
+            - {given: 'examples.json["Main 12"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'main', then: 'examples.json["Main 12"].then'}
+            - {given: 'examples.json["Main 13"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'main', then: 'examples.json["Main 13"].then'}
       dataObjects:
         - name: Command
           description: One parsed invocation.
-          schema: "{ name: 'deck check', root, pretty, deck, sliceCapBytes } | { name: 'run', root, pretty, deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches } | { name: 'plan', root, pretty, spec, components: string[], map: string | null, judge: boolean, out: string | null, checks?: string } | { name: 'submit', root, pretty, deck, processor } | { name: 'collect', root, pretty, batch } | { name: 'primer', root, pretty, write: boolean } | { name: 'scout', root, pretty, processor, issue, seedFile: string | null, deadlineSeconds } | { name: 'plan --from-scout', root, pretty, fromScout, out: string | null }"
+          schema: "{ name: 'deck check', root, pretty, deck, sliceCapBytes } | { name: 'run', root, pretty, deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches } | { name: 'plan', root, pretty, spec, components: string[], map: string | null, judge: boolean, out: string | null, checks?: string } | { name: 'submit', root, pretty, deck, processor } | { name: 'collect', root, pretty, batch } | { name: 'primer', root, pretty, write: boolean } | { name: 'scout', root, pretty, processor, issue, seedFile: string | null, deadlineSeconds } | { name: 'plan --from-scout', root, pretty, fromScout, out: string | null } | { name: 'review', root, pretty, base, head, spec: string | null, map: string | null, scout: string | null, mutants: number | null, mutantTimeoutSeconds, test: string | null, write: boolean }"
         - name: Error Document
           description: The document of every non-result exit.
           schema: "{ error: { code: 0|1|2|3|4, kind: 'UsageError'|'NotYetError'|'DeckError'|'RefusalError'|'RuntimeError', message: string } }"
@@ -3204,7 +3210,7 @@ System:
         wrote) and the scope (a scout session's targets), the guardrails Tests Kept and No New Skips, the mutants of a code
         file, and the findings document (EXPECTED/GOT, a source tag, numbers, markdown). No file, no clock, no environment,
         no child process, no Node module in P14a; the git reads, the scout.json read, the mutant runs and `morph review` are
-        P14b.
+        Component review-session (P14b).
       language: typescript
       requirements: [Deterministic Core]
       functions:
@@ -3343,6 +3349,90 @@ System:
           description: What Render Findings returns.
           schema: "{ range, verdict: 'clean' | 'findings', counts: { files, obligations, examples, missing, mutants: number | null, killed: number | null, findings, byKind }, findings: (Finding & { id })[], markdown }"
 
+    # ---------------------------------------------------------------- P14b
+    - name: review-session
+      description: >
+        The reviewer's second Component (src/reviewer/, layer reviewer; the 30 000-byte rule): the mutant runs of P14a's
+        planned mutants through acceptance's runner and snapshot, and `morph review <base> <head>` — git's refs, diff, log
+        and file texts, the record and the map, a scout session's scope and the five P14a checks joined into one Review
+        document. No model call. reviewCommand.ts is the layer's one node:fs file; runMutants.ts spawns only through Run
+        Acceptance and writes only through Restore Snapshot.
+      language: typescript
+      requirements: [Deterministic Core, One Document Out]
+      functions:
+        - name: Run Mutants
+          description: Each planned mutant written over its file, the test command run under a timeout, the file restored; a green baseline first.
+          behavior: >
+            runMutants({root, command, mutants: Plan Mutants' Mutant[], timeoutMs, env}) → Promise of {baseline {exit,
+            timedOut}, results, findings}. Every run is acceptance's runAcceptance(command, root, {env, timeoutMs}) (its
+            env rule: the processor's and secret keys never reach the command). The baseline runs first, on the tree as it
+            is; exit not 0 (a timeout is exit null) → results [], findings [baselineFinding(command, baseline, timeoutMs)]
+            = {kind "mutation", source BASELINE_SOURCE "mutation baseline", path null, expected "the test command passes
+            before any mutant: <command>", got "timed out after <timeoutMs> ms" when timedOut, else "exit <exit>"}, and no
+            mutant runs. Else per mutant in order: snapshot = acceptance's snapshotTargets(root, [path]); the mutant's text
+            written over the path by restoreSnapshot({root, entries [{path, bytes: its UTF-8 bytes}]}); the run; in
+            finally restoreSnapshot(snapshot) (an absent file is absent again). result {path, line, column, rule, killed:
+            exit !== 0 (a timeout kills), exit, timedOut}; a survivor gives survivorFinding(result) = {kind "mutation",
+            source "mutation <path>:<line>", path, expected "a test fails on <rule> at line <line>", got "every test
+            passed"}. DEFAULT_MUTANT_TIMEOUT_MS = 120000 (the operator's 120 s rule).
+          steps: [{uses: acceptance}, {reads: Mutant}, {produces: Mutant Run}]
+          examples:
+            - {given: 'a tmpRoot holding src/f.ts = F = "export function f(a: number, b: number): boolean {\n  return a === b && a > 0;\n}\n"; mutants = planMutants("src/f.ts", F, 10); command grep -q "a === b" src/f.ts, timeoutMs 5000, env {PATH}', when: runMutants, then: 'baseline {0, false}; results [src/f.ts 2 12 "=== → !==" killed exit 1], [2 18 "&& → ||" survived exit 0], [2 23 "> → >=" survived exit 0], timedOut false each; findings the two survivors, "mutation src/f.ts:2" expecting "a test fails on && → || at line 2" and "… > → >= …", got "every test passed"; src/f.ts is F again'}
+            - {given: 'the same root and mutants; command echo run >> ran.txt; exit 3', when: runMutants, then: 'baseline {3, false}; results []; findings [{mutation, "mutation baseline", null, "the test command passes before any mutant: echo run >> ran.txt; exit 3", "exit 3"}]; ran.txt "run\n" (only the baseline ran); src/f.ts is F'}
+            - {given: 'lib/g.ts = F, mutants planMutants("lib/g.ts", F, 10); command if grep -q "a !== b" lib/g.ts; then sleep 5; fi with timeoutMs 400; then command sleep 5 with timeoutMs 300', when: runMutants, then: 'results [=== → !== killed, exit null, timedOut true], [&& → || survived], [> → >= survived], two findings "mutation lib/g.ts:2"; lib/g.ts is F; then baseline {null, true}, results [], the finding got "timed out after 300 ms"'}
+            - {given: 'command test "$MARK" = m1 && test -z "$OPENAI_API_KEY", env {PATH, MARK m1, OPENAI_API_KEY k}, mutants []; then MARK m2; then command true with one mutant {gen/new.ts, 1, 1, "true → false", "x\n"} on a root without gen/new.ts', when: runMutants, then: 'baseline {0, false}, results [], findings []; then baseline {1, false} and the finding got "exit 1"; then one survivor and gen/new.ts absent after the run'}
+        - name: Review Command
+          description: "`morph review <base> <head>`: the range's diff, Morph commits, test titles and texts, the record, a scout scope and the mutants, checked into one Review document."
+          behavior: >
+            reviewCommand(root, args {base, head, spec, map, scout, mutants, mutantTimeoutSeconds, test, write}, deps {env})
+            → Promise of {code, document}. git through git's gitOk/runGit with deps.env. 1. gitOk rev-parse --git-dir (a
+            throw propagates: exit 3 by main). 2. Each refusal is {code 4, document {error {code 4, kind "UsageError",
+            message}}}, in order, before any diff: a ref whose runGit rev-parse --verify -q <ref>^{commit} is not exit 0 →
+            "not a commit: <ref>" (base, then head); merge-base --is-ancestor <head sha> HEAD not exit 0 → "head <head> is
+            not in the history of HEAD"; spec given: path.resolve(root, spec) not a regular file → "spec file not found:
+            <spec>", contour's loadContour error → that error; map likewise ("map file not found: <map>", loadMap's
+            error; no map → EMPTY_MAP {version 1, package null, language null, docs [], groups [], cards [], extraCards
+            []}); scout given: the session under SCOUT_SESSIONS as Plan From Scout picks it ("latest" = the last name in
+            code-unit order holding a regular scout.json) — "no scout session under .morph/scout", "scout session not
+            found: <id>", "<at> does not parse", "<at>: schema <JSON or null>, expected 1", "scout session <id> has no
+            answer (<status>): <stopReason>" — scope {scoutId id, targets answer.targets, contextSlice
+            answer.context_slice}; mutants given: rev-parse HEAD not the head sha → "--mutants needs the head to be the
+            checkout HEAD (<HEAD sha's first 8>)"; git status --porcelain --untracked-files=all paths (" -> " takes the new
+            name) outside MORPH_DIR → "--mutants needs a clean tree: dirty outside .morph/: <sorted, ", "-joined>". 3. range
+            = the shas of rev-list <base sha>..<head sha>; log = git's readMorphLog(root, env); commits = its entries in
+            range, {card, model, run, paths}, log order; ownership = readOwnership(log); changed = readDiff(diff
+            --name-status -z --no-renames <b> <h>, diff --numstat -z --no-renames <b> <h>); Check Envelope({changed,
+            commits, ownership, scout}). A test file is a path with profileForPath(p) and language's isTest(profile, p);
+            headTests = the test files of ls-tree -r -z --name-only <h>, titles = Check Guardrails' testTitles(git show
+            <h>:<p>, profile id) of each, in order. Check Guardrails({base: changed test files not added, text at <b>;
+            head: those not deleted, at <h>}). With a record: Find Obligations({record, map, changed paths, cards of
+            commits, titles}), else none. With mutants n: code = changed files not deleted, not under MORPH_DIR, with a
+            profile, not a test; planned = spreadMutants(each file's Plan Mutants(path, its working-tree text, n) joined,
+            n) (all when ≤ n, else index floor(i × total / n)); test = args.test, else the first code file's profile
+            fullRunLine; planned not empty and test not null → Run Mutants({root, command test, mutants planned, timeoutMs
+            mutantTimeoutSeconds × 1000, env}), rows {path, line, rule, killed}; else rows []. 4. Render Findings({base:
+            args.base, head: args.head, changed: the envelope rows, obligations, guardrails rows, mutants: null without
+            mutants, findings: obligation, envelope and scope, guardrail, mutation}). document = {range, verdict, base: the
+            base sha, head: the head sha, counts, findings, envelope: applies, scout: scoutId or null, commits: range size,
+            morphCommits, testFiles: headTests' count, test (null without mutants), baseline (Run Mutants' or null),
+            written, markdown}. write → written = REVIEW_DIR ".morph/review" + "/" + reviewId(b, h) (the two shas' first 8,
+            "-"-joined), review.json = JSON.stringify(document, null, 2) + "\n" and review.md = markdown in it; else null.
+            → {code 0 when verdict clean, else 1, document}.
+          steps: [{calls: Run Mutants}, {uses: reviewer}, {uses: git}, {uses: contour}, {uses: language}, {uses: scout-session}, {produces: Review Document}]
+          examples:
+            - {given: 'the §2.1 tmpRepo of docs/TASK_P14b_reviewer.md (contour.yaml and morph-map.json = the reviewer fixtures, README.md, tests/shop/old.test.ts at tag b0; commits Morph-Card add-tax (src/shop/addTax.ts) and add-tax-judge.r1 (tests/shop/addTax.examples.test.ts naming examples 1 and 3), the archive commit Morph-Run r7 (.morph/runs/r7/report.json) at tag h1; a hand commit of README.md and tests/shop/old.test.ts at HEAD); args b0, h1, spec contour.yaml, map morph-map.json', ref: "tests/fixtures/reviewer/record.yaml, tests/fixtures/reviewer/map.json", when: reviewCommand, then: 'code 1; range "b0..h1", the two shas, counts {3, 1, 3, 1, null, null, 1, obligation 1}, F1 obligation "record: shop · Add Tax · example 2"; envelope true, scout null, commits 3, morphCommits 2, testFiles 2, test null, baseline null, written null; the rows in diff order with writers [] (.morph/runs/r7/report.json), ["add-tax"], ["add-tax-judge.r1"]'}
+            - {given: 'b0, HEAD, the spec and map, scout latest = .morph/scout/20261009-101500-0badc0de/scout.json (targets [src/shop/addTax.ts], context_slice [README.md]), mutants 5, mutantTimeoutSeconds 30, test grep -q "price > 0" src/shop/addTax.ts, write', ref: "tests/fixtures/reviewer/review.tiny.md (its markdown)", when: reviewCommand, then: 'code 1; 9 findings F1…F9: obligation; envelope README.md, tests/shop/old.test.ts "…; no Morph card ever wrote it"; scope README.md (context), tests/shop/addTax.examples.test.ts and tests/shop/old.test.ts (not named); Tests Kept "gone"; No New Skips "1 at head"; mutation "mutation src/shop/addTax.ts:2" on "+ → -"; mutants 2, killed 1; baseline {0, false}; written ".morph/review/<b8>-<h8>" holding review.json (the document) and review.md = review.tiny.md exactly'}
+            - {given: 'base nope; head v9; spec none.yaml; map none.json; scout zz; mutants 3 with head h1; mutants 3 with an untracked notes.txt; head side (a branch off b0, not merged); then a root outside git', when: reviewCommand, then: '4 "not a commit: nope"; "not a commit: v9"; "spec file not found: none.yaml"; "map file not found: none.json"; "scout session not found: zz"; "--mutants needs the head to be the checkout HEAD (<HEAD8>)"; "--mutants needs a clean tree: dirty outside .morph/: notes.txt"; "head side is not in the history of HEAD"; then a rejection "git rev-parse failed (exit 128): …"'}
+            - {given: 'b0, h1 without spec; then b0, HEAD with mutants 2 and no test; then h1, HEAD with mutants 3 and test exit 9', when: reviewCommand, then: 'code 0, clean, markdown beginning "# Review b0..h1\n\nClean: no findings.\n"; then code 1, test "node_modules/.bin/vitest run --reporter=dot", baseline {127, false}, the finding "mutation baseline" got "exit 127", "## Mutants (0 of 0 killed)"; then envelope false, no code file changed: baseline null, mutants 0, test "exit 9", 2 guardrail findings'}
+            - {given: 'reviewId("4f2a9c1e0b", "8a663b37ff"); spreadMutants of 8 mutants with limits 3, 0 and 9; REVIEW_DIR; EMPTY_MAP', when: called, then: '"4f2a9c1e-8a663b37"; the mutants 0, 2, 5; []; all 8; ".morph/review"; the empty map'}
+      dataObjects:
+        - name: Mutant Run
+          description: What Run Mutants resolves to.
+          schema: "{ baseline: { exit: number | null, timedOut: boolean }, results: { path, line, column, rule, killed: boolean, exit: number | null, timedOut: boolean }[], findings: Finding[] }"
+        - name: Review Document
+          description: stdout of morph review, and review.json with --write.
+          schema: "{ range, verdict: 'clean' | 'findings', base, head, counts, findings: (Finding & { id })[], envelope: boolean, scout: string | null, commits, morphCommits, testFiles, test: string | null, baseline: { exit, timedOut } | null, written: string | null, markdown }"
+
 Actor:
   - name: Operator
     description: A human or an agent session driving Morph from a shell.
@@ -3389,6 +3479,10 @@ Requirement:
       reviewer's checks (Find Obligations, Check Envelope, Check Guardrails, Plan Mutants, Render Findings) are pure
       functions of the record, git's outputs and the texts they are given: no file, no clock, no environment, no child
       process, no Node module (P14a).
+      review-session spawns only through acceptance's Run Acceptance (the mutant runs, each under its timeout) and git's
+      Run Git; Run Mutants writes only through acceptance's Restore Snapshot; Review Command is the reviewer layer's one
+      node:fs file (the record, the map and scout.json read, the review written), the environment a parameter, no clock
+      and no model call (P14b).
   - name: Node Only
     description: >
       Runtime dependencies: Node 20 built-ins and the package `yaml` (the record reader), nothing

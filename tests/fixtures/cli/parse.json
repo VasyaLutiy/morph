@@ -40,7 +40,7 @@
         "error": {
           "code": 4,
           "kind": "NotYetError",
-          "message": "command review is not available yet"
+          "message": "command report is not available yet"
         }
       }
     },
@@ -102,7 +102,7 @@
         "error": {
           "code": 4,
           "kind": "UsageError",
-          "message": "no command (commands: deck check, plan, run, submit, collect, primer, scout)"
+          "message": "no command (commands: deck check, plan, run, submit, collect, primer, scout, review)"
         }
       }
     }
@@ -501,6 +501,132 @@
           "code": 4,
           "kind": "UsageError",
           "message": "flag --judge does not apply to plan --from-scout"
+        }
+      }
+    }
+  ],
+  "19": [
+    {
+      "ok": true,
+      "command": {
+        "name": "review",
+        "root": ".",
+        "pretty": false,
+        "base": "v1",
+        "head": "HEAD",
+        "spec": null,
+        "map": null,
+        "scout": null,
+        "mutants": null,
+        "mutantTimeoutSeconds": 120,
+        "test": null,
+        "write": false
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "review",
+        "root": "/r",
+        "pretty": true,
+        "base": "4f2a9c1",
+        "head": "morph/20261009-101500",
+        "spec": "c.yaml",
+        "map": "m.json",
+        "scout": "latest",
+        "mutants": 8,
+        "mutantTimeoutSeconds": 30,
+        "test": "npm test",
+        "write": true
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "review needs two refs: <base> <head>"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "review needs two refs: <base> <head>"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "unexpected argument: c"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--mutants must be a positive integer (got '0')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--mutant-timeout must be a positive integer (got 'x')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--scout must match ^[A-Za-z0-9._-]+$ (got 'a/b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --deck does not apply to review"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --mutants does not apply to run"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --test does not apply to plan"
         }
       }
     }
