@@ -56,11 +56,11 @@ test("Parse Command example 3: unknown command frobnicate", () => {
   });
 });
 
-test("Parse Command example 4: scout and deck status answer NotYetError", () => {
-  const scout = parseCommand(["scout"]);
-  expect(scout).toStrictEqual({
+test("Parse Command example 4: review and deck status answer NotYetError", () => {
+  const review = parseCommand(["review"]);
+  expect(review).toStrictEqual({
     ok: false,
-    error: { error: { code: 4, kind: "NotYetError", message: "command scout is not available yet" } },
+    error: { error: { code: 4, kind: "NotYetError", message: "command review is not available yet" } },
   });
   const status = parseCommand(["deck", "status"]);
   expect(status).toStrictEqual({
@@ -128,7 +128,7 @@ test("Parse Command example 8: --root as the last token, then no command", () =>
       error: {
         code: 4,
         kind: "UsageError",
-        message: "no command (commands: deck check, plan, run, submit, collect, primer)",
+        message: "no command (commands: deck check, plan, run, submit, collect, primer, scout)",
       },
     },
   });
@@ -429,5 +429,159 @@ test("Parse Command example 16: the word primer and --write", () => {
   expect(writeTwice).toStrictEqual({
     ok: false,
     error: { error: { code: 4, kind: "UsageError", message: "flag --write given twice" } },
+  });
+});
+
+test("Parse Command example 17: the word scout and its flags", () => {
+  const bare = parseCommand(["scout", "--processor", "ds", "--issue", "task.txt"]);
+  const bareCommand: Command = {
+    name: "scout",
+    root: ".",
+    pretty: false,
+    processor: "ds",
+    issue: "task.txt",
+    seedFile: null,
+    deadlineSeconds: 1800,
+  };
+  expect(bare).toStrictEqual({ ok: true, command: bareCommand });
+
+  const flags = parseCommand([
+    "--pretty",
+    "scout",
+    "--root",
+    "/r",
+    "--processor",
+    "s",
+    "--issue",
+    "/tmp/q.md",
+    "--seed-file",
+    "seed.json",
+    "--deadline",
+    "90",
+  ]);
+  const flagsCommand: Command = {
+    name: "scout",
+    root: "/r",
+    pretty: true,
+    processor: "s",
+    issue: "/tmp/q.md",
+    seedFile: "seed.json",
+    deadlineSeconds: 90,
+  };
+  expect(flags).toStrictEqual({ ok: true, command: flagsCommand });
+
+  const missingProcessor = parseCommand(["scout", "--issue", "t"]);
+  expect(missingProcessor).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "missing --processor" } },
+  });
+
+  const missingIssue = parseCommand(["scout", "--processor", "s"]);
+  expect(missingIssue).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "missing --issue" } },
+  });
+
+  const badDeadline = parseCommand(["scout", "--processor", "s", "--issue", "t", "--deadline", "0"]);
+  expect(badDeadline).toStrictEqual({
+    ok: false,
+    error: {
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "--deadline must be a positive integer (got '0')",
+      },
+    },
+  });
+
+  const deckOnScout = parseCommand(["scout", "--processor", "s", "--issue", "t", "--deck", "d"]);
+  expect(deckOnScout).toStrictEqual({
+    ok: false,
+    error: {
+      error: { code: 4, kind: "UsageError", message: "flag --deck does not apply to scout" },
+    },
+  });
+
+  const issueOnRun = parseCommand(["run", "--deck", "d", "--processor", "s", "--issue", "t"]);
+  expect(issueOnRun).toStrictEqual({
+    ok: false,
+    error: {
+      error: { code: 4, kind: "UsageError", message: "flag --issue does not apply to run" },
+    },
+  });
+});
+
+test("Parse Command example 18: plan --from-scout", () => {
+  const bare = parseCommand(["plan", "--from-scout", "latest"]);
+  const bareCommand: Command = {
+    name: "plan --from-scout",
+    root: ".",
+    pretty: false,
+    fromScout: "latest",
+    out: null,
+  };
+  expect(bare).toStrictEqual({ ok: true, command: bareCommand });
+
+  const flags = parseCommand([
+    "plan",
+    "--root",
+    "/r",
+    "--from-scout",
+    "20261008-225320-74e423b1",
+    "--out",
+    "decks/s.json",
+    "--pretty",
+  ]);
+  const flagsCommand: Command = {
+    name: "plan --from-scout",
+    root: "/r",
+    pretty: true,
+    fromScout: "20261008-225320-74e423b1",
+    out: "decks/s.json",
+  };
+  expect(flags).toStrictEqual({ ok: true, command: flagsCommand });
+
+  const specOnFromScout = parseCommand(["plan", "--from-scout", "x", "--spec", "c.yaml"]);
+  expect(specOnFromScout).toStrictEqual({
+    ok: false,
+    error: {
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "flag --spec does not apply to plan --from-scout",
+      },
+    },
+  });
+
+  const badId = parseCommand(["plan", "--from-scout", "a/b"]);
+  expect(badId).toStrictEqual({
+    ok: false,
+    error: {
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "--from-scout must match ^[A-Za-z0-9._-]+$ (got 'a/b')",
+      },
+    },
+  });
+
+  const needsValue = parseCommand(["plan", "--spec", "c.yaml", "--from-scout"]);
+  expect(needsValue).toStrictEqual({
+    ok: false,
+    error: {
+      error: { code: 4, kind: "UsageError", message: "flag --from-scout needs a value" },
+    },
+  });
+
+  const judgeOnFromScout = parseCommand(["plan", "--from-scout", "x", "--judge"]);
+  expect(judgeOnFromScout).toStrictEqual({
+    ok: false,
+    error: {
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "flag --judge does not apply to plan --from-scout",
+      },
+    },
   });
 });
