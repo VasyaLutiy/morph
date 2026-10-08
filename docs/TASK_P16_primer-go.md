@@ -246,3 +246,17 @@ removed), the deck's own acceptances:
 npm run build && rm -rf /tmp/v2bin-p16 && mkdir -p /tmp/v2bin-p16 && cp -r dist /tmp/v2bin-p16/ && ln -s $PWD/node_modules /tmp/v2bin-p16/node_modules
 node /tmp/v2bin-p16/dist/cli.js run --root . --deck decks/p16/deck.json --processor ds --deadline 2400 > /tmp/p16-run.json
 ```
+
+### Run
+
+08.10, main session on the VPS. Binary copy `/tmp/v2bin-p16`, processor `ds`, run **20261008-105700**, exit 0, **170 s**:
+2 / 2 written, both first attempt (primer-command v1 accepted, v2 untried; primer-command-judge v1), 3 requests,
+40 895 in / 7 711 out tokens, **$0.0215** (usageTotals.cost 0.0215217). No fix.
+
+Verify on `morph/20261008-105700`: `git status --short` empty; `tsc --noEmit`, `eslint src tests` clean; `vitest run`
+**748 / 748 in 114 files**; `npm run build` green. Own read of the written code against §2.2 and the record:
+`isTestFile` leaves out the top-level `decks/` for every profile, and for go every `_`/`.` path part and a
+`testdata`/`vendor` directory; the go call rule requires one `*testing.T` parameter (named or not), so `TestMain`,
+`*testing.B`/`*testing.F` drop out. The judge's examples 8 and 9 assert `{go, 2, 5}` and `{go, 3, 12}` (issue #7's
+smoke tree). No defect found. Known limit (not pinned by the record): a signature split across lines or a
+`testing` import under another name is not counted.
