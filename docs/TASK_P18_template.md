@@ -385,3 +385,16 @@ After the merge: issue #9's smoke (§8, `decks/p18/smoke/run.sh`; the Go run wit
 stop for the operator.
 
 ### Run
+
+08.10, main session on the VPS. Binary copy `/tmp/v2bin-p18` (`templates` linked beside its dist/), processor `ds`, run
+**20261008-130655**, exit 0, **439 s**: 5 / 5 written, 7 requests, 137 390 in / 57 151 out tokens, **$0.1054**
+(usageTotals.cost 0.10537452). Every card won at its first attempt: init-project v1 accepted (v2 rejected-free, its
+answer unused), parse-command v1 accepted (v2 untried), init-project-judge, main-judge, parse-command-judge v1. No fix.
+
+Verify on `morph/20261008-130655`: `git status --short` empty; `tsc --noEmit`, `eslint src tests` clean; `vitest run`
+**766 / 766 in 119 files**; `npm run build` green. Own read against §2.2 and the record: `initProject` resolves the
+templates (null → `defaultTemplatesDir()` two levels above its module, else against cwd), refuses a non-directory root and
+a non-empty one naming the smallest entry by code unit, refuses a missing `common`/language folder before writing,
+overlays the language's files on common's, writes sorted by code unit with one left-to-right `{{name|module|language}}`
+pass and the source's mode; module defaults to the name. cli only parses (`--name`, `--language`, `--module`,
+`--templates`, the three checks in the record's order) and routes. No defect found.
