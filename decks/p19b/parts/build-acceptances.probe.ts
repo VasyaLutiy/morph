@@ -72,7 +72,8 @@ test("Build Acceptances example 8: uses and vendor on a go deck", () => {
 test("row: own keys only, the list as given, vendor false or absent the same, a go deck without uses byte for byte", () => {
   const proto = acc(buildAcceptances({ ...TS_INPUT, cards: [card("constructor", ["src/x/a.ts"]), card("b", ["src/x/b.ts"])],
     checks: checks("p7", [code("constructor"), code("b")]), texts: { ...TEXTS, probes: { constructor: "// probe\n", b: "// probe\n" } }, uses: {} }));
-  expect(proto.constructor?.includes("node $P/guard.mjs src src/x/a.ts\n")).toBe(true);
+  const ctor = Object.entries(proto).find(([k]) => k === "constructor")?.[1] ?? "";
+  expect(ctor.includes("node $P/guard.mjs src src/x/a.ts\n")).toBe(true);
   const kept = acc(buildAcceptances({ ...TS_INPUT, uses: { b: ["z", "a", "z"] }, vendor: false }));
   expect([kept.a?.includes("guard.mjs src src/x/a.ts\n"), kept.b?.includes("guard.mjs src src/x/b.ts 'z,a,z'\n")]).toStrictEqual([true, true]);
   const go = acc(buildAcceptances(GO_INPUT));
