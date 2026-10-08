@@ -14,6 +14,17 @@ if ! tmux has-session -t morph 2>/dev/null; then
   exit 0
 fi
 rm -f "$STATE/dead"
+# One phase, one session (operator 08.10): the session ends a phase by touching ~/.morph-phase-done
+# (a next phase is queued in AUTONOMY "State at handoff") → restart it fresh, no memory carried over.
+if [ -f "$HOME/.morph-phase-done" ]; then
+  rm -f "$HOME/.morph-phase-done" "$STATE/sum" "$STATE/same" "$STATE/stalled"
+  tmux kill-session -t morph; sleep 2
+  "$HOME/MorphV2/tools/vps-start.sh" start >/dev/null
+  "$TG" start "Fresh session for the next phase" "one phase, one session"
+  exit 0
+fi
+# The session waits for the operator (~/.morph-wait-operator): never nudge it.
+[ -f "$HOME/.morph-wait-operator" ] && exit 0
 PANE="$(tmux capture-pane -pt morph -S -40 2>/dev/null)"
 SUM="$(printf '%s' "$PANE" | md5sum | cut -c1-12)"
 PREV="$(cat "$STATE/sum" 2>/dev/null || true)"; printf '%s' "$SUM" > "$STATE/sum"

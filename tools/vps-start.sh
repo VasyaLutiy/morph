@@ -15,6 +15,7 @@ case "${1:-start}" in
   log) exec tail -n 200 -f "$(ls -t $LOGDIR/session-*.log | head -1)" ;;
   start)
     if tmux has-session -t morph 2>/dev/null; then echo "session 'morph' already runs: tools/vps-start.sh attach"; exit 0; fi
+    rm -f "$HOME/.morph-wait-operator" "$HOME/.morph-phase-done"
     tmux new-session -d -s morph -c "$REPO" "$REPO/tools/vps-session.sh"
     tmux pipe-pane -t morph -o "cat >> '$LOG'"
     "$REPO/tools/tg.sh" start "MorphV2 session started on $(hostname)" "log $LOG"

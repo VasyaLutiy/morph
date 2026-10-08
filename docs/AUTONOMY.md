@@ -6,13 +6,13 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (08.10, P15L gocrud closed; no next phase named)
+## State at handoff (08.10, operator: the new flow — one phase, one session)
 
-**P15L gocrud closed**: run `20261008-083312` 14/14 from one run, no fix, $0.0852; the operator side's e2e green (TASK_P15L
-§11, 08:42 UTC); the history pushed as `main` of VasyaLutiy/MorphStudio instead of the tarball; issue #6 closed. Gate
-waiver (operator 08.10): a Go deck's mrph cross-check is structural only. **No next phase is named** in this file or in
-PLAN (P0–P15 and P15L done); issue #7 (primer counts Go probe files, label `P15-golang`) is open and unassigned to a
-phase. The session waits for the operator's next order. Running total $4.7384 of $30.
+**Next: P16 primer-go** (PLAN row P16, issue #7, label `P15-golang`): the primer's Go test count by the language profile
+counts only `func TestXxx(t *testing.T)` in `*_test.go` files that `go test ./...` runs — not the `_`-prefixed probe
+files, not anything under `decks/` or `testdata/`, not `TestMain`; one record example each (go-mini gives the exact
+counts). After its merge: **stop for the operator** (no next phase queued; `~/.morph-wait-operator`). The P15L gate
+waiver is superseded: the mrph cross-check is gone from the gate (operator 08.10). Running total $4.7384 of $30.
 **Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). Own pre-merge code read: yes. External review
 passes: no (operator 08.10). Every new MEASURE row fills the `прогоны` column.
 Known limits carried: No New Skips counts skip tokens inside string literals; one unreproduced vitest flake in P13b (logs
@@ -43,6 +43,19 @@ installs `decks/tools/goguard.mjs` and `gofirstdiff.mjs` as its guard.mjs/firstd
 - Node 22, npm, git (auth through `gh`), tmux. Anything longer than a minute runs under
   `nohup`/`tmux` with a log file; the session must survive an SSH drop.
 
+## One phase, one session (operator 08.10)
+
+Every phase gets a fresh session: the memory of a phase is in the repo (record, TASK §11, MEASURE, DECISIONS, this
+file, the primer), never in the session's context. P15 and P15L proved it (a fresh session, one run, no fix). The
+session works exactly the phase "State at handoff" names, records it, merges it, rewrites "State at handoff" for the
+next phase and pushes. Then it ends in one of two ways:
+- **the next phase is queued** (named in "State at handoff" with no stop before it): post 🔀, `touch
+  ~/.morph-phase-done` and stop. The watchdog (cron, 10 min) kills the session and starts a fresh one, which reads
+  this file and works that phase;
+- **a stop** (a smoke stop, an emergency stop, a gate stop, no next phase): post the stop, `touch
+  ~/.morph-wait-operator` and stop. The watchdog never nudges it; the operator side restarts it with
+  `tools/vps-start.sh` after its check.
+
 ## The cycle of one phase
 
 1. **Prepare** (an orchestrator agent, fresh context, the brief in the form of P10a/P10b1):
@@ -55,10 +68,9 @@ installs `decks/tools/goguard.mjs` and `gofirstdiff.mjs` as its guard.mjs/firstd
    commit the filtered deck. **For processor `ds`, every card's maxTokens ×3** after the cut and the
    filter: `python3 decks/tools/scale_tokens.py decks/<phase>/deck.json 3`, committed with the deck
    (DeepSeek thinks 15–20k tokens before the code and no provider honours the reasoning budget; with
-   the plain budget its answers come back empty). The mrph cross-check compares max_tokens before
-   the ×3. Then `node dist/cli.js deck check --root . --deck <deck>`; a dry
-   `mrph plan --spec` on the same Components as a cross-check (same ids, dependsOn, generations,
-   targets, slices, acceptances, max_tokens; instructions differ by the P10a design); every
+   the plain budget its answers come back empty). Then `node dist/cli.js deck check --root . --deck <deck>`. **No mrph cross-check** since
+   08.10 (operator): V2 has cut ten phases itself and frozen mrph knows no Go; mrph stays only as the
+   named fallback below. Every
    acceptance red per example on stubs in a scratch worktree; mutations killed (**every mutant run
    under a timeout**, `subprocess.run(..., timeout=120)`, a timeout counted as killed — operator
    07.10, after a mutant made a batch-wait loop infinite and hung the P11b mutation run 28 min).
@@ -69,11 +81,9 @@ installs `decks/tools/goguard.mjs` and `gofirstdiff.mjs` as its guard.mjs/firstd
    baseline; record the mutant count and minutes in the MEASURE notes of every phase; the data and the
    deck committed on `main`.
 2. **Gate without the operator.** The run starts by itself only when ALL hold:
-   `morph plan` exit 0; `morph deck check` errors 0; the mrph cross-check shows no difference
-   but the instructions (a Go deck: on the code cards' structure only — mrph has no Go profile, operator 08.10); every probe red per example with a readable line on the stubs; chain
+   `morph plan` exit 0; `morph deck check` errors 0; every probe red per example with a readable line on the stubs; chain
    under 250 s each; every mutant run under a timeout and the mutation cap kept (≤ 30 mutants, ≤ 20 min); forecast ≤ $1 for the phase; no slice over 200 KB. Otherwise the phase stops with a report in `docs/MEASURE.md` (row with
-   "stopped at gate: <reason>") and the session moves to the next phase whose dependencies
-   are met.
+   "stopped at gate: <reason>"), touches `~/.morph-wait-operator` and stops.
 3. **Run** (the session itself or a run agent): from the repo root, the binary copy
    `node /tmp/v2bin-<phase>/dist/cli.js run --root . --deck decks/<phase>/deck.json --processor
    ds --deadline 2400` (the retry cap is per generation since P10c1; `--processor glm53` with the
