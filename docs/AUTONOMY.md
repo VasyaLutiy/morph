@@ -6,11 +6,15 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (08.10, operator: the new flow — one phase, one session)
+## State at handoff (08.10, operator: close P17 and P18, then stop)
 
-**P16 primer-go closed** (run 20261008-105700 on ds, 2/2 first attempt, no fix, $0.0215; issue #7 closed). **No next
-phase is named: stop for the operator** (`~/.morph-wait-operator`); the operator names the next phase here. Running
-total $4.7599 of $30. **Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). No mrph cross-check
+**Next: P17 debt** (PLAN row P17, issue #8, label `P17-debt`; read the issue in full before the record). After its
+merge **P18 is queued**: rewrite this section to name P18 (issue #9, label `P18-template`), post 🔀 and `touch
+~/.morph-phase-done` — the watchdog starts a fresh session for P18. After P18's merge: its smoke (issue #9
+Acceptance), 🧪, then **stop for the operator** (`~/.morph-wait-operator`); nothing is queued after P18. Either phase
+may split (P17a/P17b, P18a/P18b) by the cut rules; a split queues its second half the same way. No external review
+passes (operator 08.10). P16 closed (issue #7). Running total $4.7599 of $30.
+**Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). No mrph cross-check
 at the gate (operator 08.10). Own pre-merge code read: yes. External review passes: no (operator 08.10). Every new
 MEASURE row fills the `прогоны` column.
 Known limits carried: No New Skips counts skip tokens inside string literals; one unreproduced vitest flake in P13b (logs
