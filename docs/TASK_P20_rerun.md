@@ -333,7 +333,7 @@ decks/p20/checks.json` **exit 0**, 16 cards, `decks/p20/filter.py` keeps 6; `sca
 parse-command 72 000, select-cards 24 000, plan-command 36 000, parse-command-judge 48 000, select-cards-judge 48 000,
 plan-command-judge 60 000); `deck check` **0 errors, 0 warnings**, no hazards; generations `[parse-command, select-cards]
 [parse-command-judge, plan-command, select-cards-judge] [plan-command-judge]`. Slices (deck check, slice + existing
-targets, this spec at its final size): 46.0–63.6 KB, the largest parse-command-judge **63 615 B**. No mrph cross-check (operator 08.10).
+targets, this spec at its final size): 46.0–63.6 KB, the largest parse-command-judge **63 644 B**. No mrph cross-check (operator 08.10).
 
 Scratch worktree `/tmp/p20-scratch` from 29c8aba (removed afterwards; no watcher or worker left), the deck's own
 acceptances run as Morph runs them (`/bin/sh -c`, 300 s cap), cards in generation order, each accepted reference
