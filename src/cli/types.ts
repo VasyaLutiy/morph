@@ -24,7 +24,12 @@ export interface ScoutArgs {
   name: "scout"; root: string; pretty: boolean; processor: string; issue: string; seedFile: string | null; deadlineSeconds: number;
 }
 export interface FromScoutArgs { name: "plan --from-scout"; root: string; pretty: boolean; fromScout: string; out: string | null }
-export type Command = DeckCheckArgs | RunArgs | PlanArgs | SubmitArgs | CollectArgs | PrimerArgs | ScoutArgs | FromScoutArgs;
+export interface ReviewArgs {
+  name: "review"; root: string; pretty: boolean; base: string; head: string; spec: string | null; map: string | null;
+  scout: string | null; mutants: number | null; mutantTimeoutSeconds: number; test: string | null; write: boolean;
+}
+export type Command =
+  | DeckCheckArgs | RunArgs | PlanArgs | SubmitArgs | CollectArgs | PrimerArgs | ScoutArgs | FromScoutArgs | ReviewArgs;
 export type ParseResult = { ok: true; command: Command } | { ok: false; error: ErrorDocument };
 export type DeckFileResult = { ok: true; deck: Deck } | { ok: false; result: CommandResult };
 export interface DeckCheckDocument {

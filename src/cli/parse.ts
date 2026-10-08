@@ -19,10 +19,13 @@ const VALUE_FLAGS: ReadonlySet<string> = new Set([
   "--issue",
   "--seed-file",
   "--from-scout",
+  "--scout",
+  "--mutants",
+  "--mutant-timeout",
+  "--test",
 ]);
 
 const NOT_YET_WORDS: ReadonlySet<string> = new Set([
-  "review",
   "report",
 ]);
 
@@ -97,6 +100,18 @@ const FROM_SCOUT_FLAGS: ReadonlySet<string> = new Set([
   "--out",
 ]);
 
+const REVIEW_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--spec",
+  "--map",
+  "--scout",
+  "--mutants",
+  "--mutant-timeout",
+  "--test",
+  "--write",
+]);
+
 function isPositiveInteger(v: string): boolean {
   return /^[0-9]+$/.test(v) && Number(v) >= 1;
 }
@@ -148,7 +163,8 @@ export function parseCommand(argv: string[]): ParseResult {
     | "submit"
     | "collect"
     | "primer"
-    | "scout";
+    | "scout"
+    | "review";
   let arity: number;
   if (words.length === 0) {
     return {
@@ -156,7 +172,7 @@ export function parseCommand(argv: string[]): ParseResult {
       error: errorDocument(
         4,
         "UsageError",
-        "no command (commands: deck check, plan, run, submit, collect, primer, scout)",
+        "no command (commands: deck check, plan, run, submit, collect, primer, scout, review)",
       ),
     };
   }
@@ -183,6 +199,9 @@ export function parseCommand(argv: string[]): ParseResult {
   } else if (first === "scout") {
     name = "scout";
     arity = 1;
+  } else if (first === "review") {
+    name = "review";
+    arity = 3;
   } else if (first === "deck") {
     if (words.length >= 2 && words[1] === "check") {
       name = "deck check";
@@ -238,6 +257,8 @@ export function parseCommand(argv: string[]): ParseResult {
     allowed = PRIMER_FLAGS;
   } else if (name === "scout") {
     allowed = SCOUT_FLAGS;
+  } else if (name === "review") {
+    allowed = REVIEW_FLAGS;
   } else {
     allowed = FROM_SCOUT_FLAGS;
   }
@@ -253,6 +274,64 @@ export function parseCommand(argv: string[]): ParseResult {
   const root = values.get("--root") ?? ".";
   const pretty = seen.has("--pretty");
   const deck = values.get("--deck") ?? "";
+
+  // Review is done right after the flag check, before plan --from-scout.
+  if (name === "review") {
+    if (words.length < 3) {
+      return {
+        ok: false,
+        error: errorDocument(4, "UsageError", "review needs two refs: <base> <head>"),
+      };
+    }
+    const scoutRaw = values.get("--scout");
+    if (scoutRaw !== undefined && !/^[A-Za-z0-9._-]+$/.test(scoutRaw)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--scout must match ^[A-Za-z0-9._-]+$ (got '" + scoutRaw + "')",
+        ),
+      };
+    }
+    const mutantsRaw = values.get("--mutants");
+    if (mutantsRaw !== undefined && !isPositiveInteger(mutantsRaw)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--mutants must be a positive integer (got '" + mutantsRaw + "')",
+        ),
+      };
+    }
+    const mutantTimeoutRaw = values.get("--mutant-timeout");
+    if (mutantTimeoutRaw !== undefined && !isPositiveInteger(mutantTimeoutRaw)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--mutant-timeout must be a positive integer (got '" + mutantTimeoutRaw + "')",
+        ),
+      };
+    }
+    const command: Command = {
+      name: "review",
+      root,
+      pretty,
+      base: words[1],
+      head: words[2],
+      spec: values.get("--spec") ?? null,
+      map: values.get("--map") ?? null,
+      scout: scoutRaw ?? null,
+      mutants: mutantsRaw !== undefined ? Number(mutantsRaw) : null,
+      mutantTimeoutSeconds: mutantTimeoutRaw !== undefined ? Number(mutantTimeoutRaw) : 120,
+      test: values.get("--test") ?? null,
+      write: seen.has("--write"),
+    };
+    return { ok: true, command };
+  }
 
   // Check 5: plan --from-scout is done here, before plan's missing --spec.
   if (name === "plan --from-scout") {

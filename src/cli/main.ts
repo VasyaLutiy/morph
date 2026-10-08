@@ -11,6 +11,7 @@ import { saveBatchAnswers, saveBatchRecord } from "../git/archive.js";
 import { primerCommand } from "../primer/primerCommand.js";
 import { scoutCommand } from "../scout/scoutCommand.js";
 import { planFromScout } from "../scout/planFromScout.js";
+import { reviewCommand } from "../reviewer/reviewCommand.js";
 import type { CliDeps, CliIo, CommandResult, ExitCode } from "./types.js";
 
 export async function main(argv: string[], deps: CliDeps, io: CliIo): Promise<ExitCode> {
@@ -47,6 +48,8 @@ export async function main(argv: string[], deps: CliDeps, io: CliIo): Promise<Ex
       result = await scoutCommand(root, command, deps);
     } else if (command.name === "plan --from-scout") {
       result = planFromScout(root, command);
+    } else if (command.name === "review") {
+      result = await reviewCommand(root, command, deps);
     } else {
       result = await runCommand(root, command, deps, io.stderr);
     }
