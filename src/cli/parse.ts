@@ -29,6 +29,7 @@ const VALUE_FLAGS: ReadonlySet<string> = new Set([
   "--language",
   "--module",
   "--templates",
+  "--only",
 ]);
 
 const NOT_YET_WORDS: ReadonlySet<string> = new Set([
@@ -69,6 +70,7 @@ const PLAN_FLAGS: ReadonlySet<string> = new Set([
   "--judge",
   "--out",
   "--checks",
+  "--only",
 ]);
 
 const SUBMIT_FLAGS: ReadonlySet<string> = new Set([
@@ -527,6 +529,23 @@ export function parseCommand(argv: string[]): ParseResult {
     if (!values.has("--spec")) {
       return { ok: false, error: errorDocument(4, "UsageError", "missing --spec") };
     }
+    const onlyRaw = values.get("--only");
+    let only: string[] | undefined;
+    if (onlyRaw !== undefined) {
+      only = onlyRaw.split(",");
+      const wellFormed = only.every((id) => /^[A-Za-z0-9._-]+$/.test(id));
+      const distinct = new Set(only).size === only.length;
+      if (!wellFormed || !distinct) {
+        return {
+          ok: false,
+          error: errorDocument(
+            4,
+            "UsageError",
+            "--only must be distinct card ids joined by \",\" (got '" + onlyRaw + "')",
+          ),
+        };
+      }
+    }
     const command: Command = {
       name: "plan",
       root,
@@ -537,6 +556,7 @@ export function parseCommand(argv: string[]): ParseResult {
       judge: seen.has("--judge"),
       out: values.get("--out") ?? null,
       ...(values.has("--checks") ? { checks: values.get("--checks") ?? "" } : {}),
+      ...(only !== undefined ? { only } : {}),
     };
     return { ok: true, command };
   }

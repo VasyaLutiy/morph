@@ -15,7 +15,7 @@ export interface RunArgs {
 }
 export interface PlanArgs {
   name: "plan"; root: string; pretty: boolean; spec: string; components: string[]; map: string | null;
-  judge: boolean; out: string | null; checks?: string;
+  judge: boolean; out: string | null; checks?: string; only?: string[];
 }
 export interface SubmitArgs { name: "submit"; root: string; pretty: boolean; deck: string; processor: string }
 export interface CollectArgs { name: "collect"; root: string; pretty: boolean; batch: string }
