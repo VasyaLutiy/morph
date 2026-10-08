@@ -26,4 +26,4 @@ export interface Plan {
   spec: string; components: string[]; cards: Card[]; generations: string[][];
   externalDependsOn: Record<string, string[]>;
 }
-export type PlanResult = { ok: true; plan: Plan } | { ok: false; error: string };
+export type PlanResult = { ok: true; plan: Plan; uses: Record<string, string[]> } | { ok: false; error: string };

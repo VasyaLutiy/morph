@@ -1,6 +1,6 @@
 import { componentSlug, selectComponents } from "../contour/select.js";
 import { resolveProfile } from "../language/profiles.js";
-import { cutComponent } from "./cut.js";
+import { componentDependencies, cutComponent } from "./cut.js";
 import { cutJudges } from "./judges.js";
 import type { Card } from "../cards/types.js";
 import type { CutCard, OrderResult, PlanInput, PlanResult } from "./types.js";
@@ -85,6 +85,16 @@ export function planSpec(input: PlanInput): PlanResult {
   for (const component of selected) {
     const cut = cutComponent({ record, component, map, docs, spec });
     if (!cut.ok) return { ok: false, error: cut.error };
+    for (const dep of componentDependencies(record, component)) {
+      if (dep.doc !== null && !hasFile(dep.doc)) {
+        return {
+          ok: false,
+          error:
+            `dependency '${dep.name}' of Component '${component.name}': ` +
+            `doc file not found: ${dep.doc}`,
+        };
+      }
+    }
     cuts.push(...cut.cuts);
   }
 
@@ -143,6 +153,29 @@ export function planSpec(input: PlanInput): PlanResult {
     }
   }
 
+  const uses: Record<string, string[]> = {};
+  for (const cut of cuts) {
+    if (cut.component === null) continue;
+    const deps = componentDependencies(record, cut.component);
+    if (deps.length === 0) continue;
+    uses[cut.card.customId] = deps.map((dep) => dep.name);
+    const depDocs: string[] = [];
+    for (const dep of deps) {
+      if (dep.doc !== null && !depDocs.includes(dep.doc)) depDocs.push(dep.doc);
+    }
+    if (depDocs.length === 0) continue;
+    const missing = depDocs.filter((doc) => !cut.card.contextSlice.includes(doc));
+    if (missing.length > 0) cut.card.contextSlice = [...cut.card.contextSlice, ...missing];
+    const judgeCard = all.find((c) => c.card.customId === cut.card.customId + "-judge");
+    if (judgeCard === undefined) continue;
+    const judgeMissing = depDocs.filter(
+      (doc) => !judgeCard.card.contextSlice.includes(doc),
+    );
+    if (judgeMissing.length > 0) {
+      judgeCard.card.contextSlice = [...judgeCard.card.contextSlice, ...judgeMissing];
+    }
+  }
+
   for (const cut of all) {
     cut.card.contextSlice = cut.card.contextSlice.filter((p) => p !== spec);
   }
@@ -166,5 +199,6 @@ export function planSpec(input: PlanInput): PlanResult {
       generations: order.generations,
       externalDependsOn: order.externalDependsOn,
     },
+    uses,
   };
 }
