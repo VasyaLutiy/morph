@@ -56,11 +56,11 @@ test("Parse Command example 3: unknown command frobnicate", () => {
   });
 });
 
-test("Parse Command example 4: review and deck status answer NotYetError", () => {
-  const review = parseCommand(["review"]);
-  expect(review).toStrictEqual({
+test("Parse Command example 4: report and deck status answer NotYetError", () => {
+  const report = parseCommand(["report"]);
+  expect(report).toStrictEqual({
     ok: false,
-    error: { error: { code: 4, kind: "NotYetError", message: "command review is not available yet" } },
+    error: { error: { code: 4, kind: "NotYetError", message: "command report is not available yet" } },
   });
   const status = parseCommand(["deck", "status"]);
   expect(status).toStrictEqual({
@@ -128,7 +128,7 @@ test("Parse Command example 8: --root as the last token, then no command", () =>
       error: {
         code: 4,
         kind: "UsageError",
-        message: "no command (commands: deck check, plan, run, submit, collect, primer, scout)",
+        message: "no command (commands: deck check, plan, run, submit, collect, primer, scout, review)",
       },
     },
   });
@@ -582,6 +582,144 @@ test("Parse Command example 18: plan --from-scout", () => {
         kind: "UsageError",
         message: "flag --judge does not apply to plan --from-scout",
       },
+    },
+  });
+});
+
+test("Parse Command example 19: the word review, its refs and flags", () => {
+  const bare = parseCommand(["review", "v1", "HEAD"]);
+  const bareCommand: Command = {
+    name: "review",
+    root: ".",
+    pretty: false,
+    base: "v1",
+    head: "HEAD",
+    spec: null,
+    map: null,
+    scout: null,
+    mutants: null,
+    mutantTimeoutSeconds: 120,
+    test: null,
+    write: false,
+  };
+  expect(bare).toStrictEqual({ ok: true, command: bareCommand });
+
+  const flags = parseCommand([
+    "--pretty",
+    "review",
+    "4f2a9c1",
+    "morph/20261009-101500",
+    "--root",
+    "/r",
+    "--spec",
+    "c.yaml",
+    "--map",
+    "m.json",
+    "--scout",
+    "latest",
+    "--mutants",
+    "8",
+    "--mutant-timeout",
+    "30",
+    "--test",
+    "npm test",
+    "--write",
+  ]);
+  const flagsCommand: Command = {
+    name: "review",
+    root: "/r",
+    pretty: true,
+    base: "4f2a9c1",
+    head: "morph/20261009-101500",
+    spec: "c.yaml",
+    map: "m.json",
+    scout: "latest",
+    mutants: 8,
+    mutantTimeoutSeconds: 30,
+    test: "npm test",
+    write: true,
+  };
+  expect(flags).toStrictEqual({ ok: true, command: flagsCommand });
+
+  const noRefs = parseCommand(["review"]);
+  expect(noRefs).toStrictEqual({
+    ok: false,
+    error: {
+      error: { code: 4, kind: "UsageError", message: "review needs two refs: <base> <head>" },
+    },
+  });
+
+  const oneRef = parseCommand(["review", "a"]);
+  expect(oneRef).toStrictEqual({
+    ok: false,
+    error: {
+      error: { code: 4, kind: "UsageError", message: "review needs two refs: <base> <head>" },
+    },
+  });
+
+  const threeRefs = parseCommand(["review", "a", "b", "c"]);
+  expect(threeRefs).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "unexpected argument: c" } },
+  });
+
+  const zeroMutants = parseCommand(["review", "a", "b", "--mutants", "0"]);
+  expect(zeroMutants).toStrictEqual({
+    ok: false,
+    error: {
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "--mutants must be a positive integer (got '0')",
+      },
+    },
+  });
+
+  const badTimeout = parseCommand(["review", "a", "b", "--mutant-timeout", "x"]);
+  expect(badTimeout).toStrictEqual({
+    ok: false,
+    error: {
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "--mutant-timeout must be a positive integer (got 'x')",
+      },
+    },
+  });
+
+  const badScout = parseCommand(["review", "a", "b", "--scout", "a/b"]);
+  expect(badScout).toStrictEqual({
+    ok: false,
+    error: {
+      error: {
+        code: 4,
+        kind: "UsageError",
+        message: "--scout must match ^[A-Za-z0-9._-]+$ (got 'a/b')",
+      },
+    },
+  });
+
+  const deckOnReview = parseCommand(["review", "a", "b", "--deck", "d"]);
+  expect(deckOnReview).toStrictEqual({
+    ok: false,
+    error: {
+      error: { code: 4, kind: "UsageError", message: "flag --deck does not apply to review" },
+    },
+  });
+
+  const mutantsOnRun = parseCommand(["run", "--deck", "d", "--processor", "s", "--mutants", "3"]);
+  expect(mutantsOnRun).toStrictEqual({
+    ok: false,
+    error: {
+      error: { code: 4, kind: "UsageError", message: "flag --mutants does not apply to run" },
+    },
+  });
+
+  const testOnPlan = parseCommand(["plan", "--spec", "c.yaml", "--test", "x"]);
+  expect(testOnPlan).toStrictEqual({
+    ok: false,
+    error: {
+      error: { code: 4, kind: "UsageError", message: "flag --test does not apply to plan" },
     },
   });
 });
