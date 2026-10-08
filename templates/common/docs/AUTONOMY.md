@@ -40,6 +40,13 @@ merges it, rewrites "State at handoff" for the next phase and pushes. Then it en
 - **a stop** (a smoke stop, an emergency stop, a gate stop, no next phase): post the stop, `touch ~/.morph-wait-operator`
   and stop. The watchdog never nudges it; the operator restarts it with `tools/vps-start.sh` after a check.
 
+## Shell hygiene
+
+Never chain `cd` with a write or a delete in one command (`cd X && rm …`, `cd X && go mod vendor`): Claude Code stops
+such a command for a manual approval even with permissions bypassed, and an autonomous session waits on it. Use
+absolute paths or the tool's own directory flag (`git -C`, `go -C`, `npm --prefix`, `make -C`). Every brief to a
+preparation agent repeats this line.
+
 ## The cycle of one phase
 
 1. **Prepare** (an orchestrator agent with a fresh context): the spec by `docs/TASK_TEMPLATE.md`; the record and the map

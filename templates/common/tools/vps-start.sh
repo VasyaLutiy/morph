@@ -17,6 +17,11 @@ case "${1:-start}" in
   start)
     if tmux has-session -t "$SESSION" 2>/dev/null; then echo "session '$SESSION' already runs: tools/vps-start.sh attach"; exit 0; fi
     rm -f "$HOME/.morph-wait-operator" "$HOME/.morph-phase-done"
+    # The session reads "State at handoff" from main: start only on the latest origin/main (operator 08.10).
+    if ! git -C "$REPO" pull -q --ff-only; then
+      "$REPO/tools/tg.sh" stop "Session not started: git pull --ff-only failed" "$REPO: fix main by hand, then start again"
+      echo "git pull --ff-only failed in $REPO; not started" >&2; exit 1
+    fi
     tmux new-session -d -s "$SESSION" -c "$REPO" "$REPO/tools/vps-session.sh"
     tmux pipe-pane -t "$SESSION" -o "cat >> '$LOG'"
     "$REPO/tools/tg.sh" start "{{name}} session started on $(hostname)" "log $LOG"

@@ -60,6 +60,13 @@ next phase and pushes. Then it ends in one of two ways:
   ~/.morph-wait-operator` and stop. The watchdog never nudges it; the operator side restarts it with
   `tools/vps-start.sh` after its check.
 
+## Shell hygiene (operator 08.10)
+
+Never chain `cd` with a write or a delete in one command (`cd X && rm …`, `cd X && go mod vendor`): Claude Code stops
+such a command for a manual approval even with permissions bypassed (P19b's preparation agent waited on it). Use
+absolute paths or the tool's own directory flag (`git -C`, `go -C`, `npm --prefix`, `make -C`). Every brief to a
+preparation agent repeats this line.
+
 ## The cycle of one phase
 
 1. **Prepare** (an orchestrator agent, fresh context, the brief in the form of P10a/P10b1):
@@ -102,7 +109,8 @@ next phase and pushes. Then it ends in one of two ways:
    **Operator 08.10 (correcting 07.10): no EXTERNAL review passes (Fable) until further notice** — the session's
    own read of the written code above stays; the goal is to close all phases through P14.
 5. **Record**: §11 of the TASK and the row of `docs/MEASURE.md` (builder column "V2"), one
-   commit on the run branch with the trailer `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`.
+   commit on the run branch with the trailer `Co-Authored-By: <the model that writes it> <noreply@anthropic.com>` (today
+   `Claude Opus 5.5`; operator 08.10 — the old Fable trailer was a leftover).
 6. **Merge and push**: `git checkout main && git merge --ff-only morph/<run-id> && git
    push origin main`. Fast-forward only; force-push is forbidden; a non-ff state stops the
    session with a report.
