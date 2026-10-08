@@ -497,3 +497,7 @@ the index the operator reads in one pass. Format: `P<N> · <Function> · <decisi
 - P18 · acceptance · `decks/p18/checks.json`: ownGit true, frozen the defaults + templates, fullExclude tests/cli/parse.examples.test.ts (ripple 1 of 759); code-only targets, intent generate for the new file; 10 probe tests in decks/p18/parts/*.probe.ts; the parse judge patches with names kept (27..29), the other two judges are NEW files.
 - P18 · budget · before ×3: init-project 12 000 (≈ 3.4 KB), parse-command 28 000 (three whole files ≈ 24 KB), init-project-judge 16 000 (≈ 6 KB), parse-command-judge 28 000 (≈ 26 KB whole file), main-judge 16 000 (≈ 3 KB); variants 2 on the code cards, 1 on the judges.
 - P18 · mutation cap · 30 mutants (21 on initProject.ts, 9 on parse.ts/main.ts), 31 runs, 0.8 min, max 2.9 s, 0 timeouts; 29 killed at once, 1 closed by data (listTemplateFiles without its sort survived: readdirSync's sorted DFS order equals code-unit order unless a name like `x.md` sits beside a directory `x/`; a probe row with exactly that kills it); no known risk left.
+
+## Operator 08.10 — dependencies (P19)
+
+- P19 · profiles · "standard library only" stops being a fixed rule of the Go and Python profiles and of the TypeScript guard: a dependency is declared in the record (`System.dependencies`, `Component.uses`), approved with the plan, installed once at P0 with the network, enforced by the guard, and every acceptance stays offline · Morph Studio's MCP server needs the official SDK; MorphV2's own `yaml` already proves the mechanism (issue #10).

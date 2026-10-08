@@ -6,12 +6,14 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (08.10, P18 closed — stopped for the operator)
+## State at handoff (08.10, operator: P19 dependencies, then stop)
 
-**Next: nothing queued — waiting for the operator** (`~/.morph-wait-operator`). P18 template (issue #9) merged
-(run 20261008-130655, 5/5, $0.1054) and its 🧪 smoke green on typescript, go and python (Go deck on ds 4/4, $0.0037).
-The first plan P0–P18 is closed; MorphV2 is ready for packaging. A fresh session starts only after the operator names
-the next phase here. Running total $5.0722 of $30.
+**Next: P19 dependencies** (PLAN row P19, issue #10, label `P19-deps`; read the issue in full before the record). A split
+(P19a/P19b) queues its second half by `~/.morph-phase-done` as usual. After the last half's merge: the issue's two smokes
+(Go live on ds with a vendored module and no network; TypeScript up to a stub run), 🧪, then **stop for the operator**
+(`~/.morph-wait-operator`); nothing is queued after P19. Dependency-free decks must stay byte-identical (go-mini, P15).
+P0–P18 closed (main 1ce0dc0+), 0 open issues besides #10. No external review passes (operator 08.10). Running total
+$5.0722 of $30.
 **Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). No mrph cross-check
 at the gate (operator 08.10). Own pre-merge code read: yes. External review passes: no (operator 08.10). Every new
 MEASURE row fills the `прогоны` column.
