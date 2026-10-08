@@ -520,3 +520,16 @@ node /tmp/v2bin-p14b/dist/cli.js run --root . --deck decks/p14b/deck.json --proc
 ```
 
 After the merge: the FINAL smoke of §8 (the operator's smoke stop 3), then stop.
+
+### Run (08.10, VPS, autonomous) — cut by V2, run by the V2 binary on processor ds
+
+Deck `decks/p14b/deck.json` (V2 cut filtered to 7 cards by `decks/p14b/filter.py`, maxTokens ×3), run by the V2 binary copy
+in `/tmp/v2bin-p14b` with `--processor ds --deadline 2400`, default retry cap: run 20261008-053615, **7 / 7 written in one
+run, no fix**, 6 at the first attempt (retry won `review-command-judge` r1, v1 red at its own test), $0.2834, 25.6 min (1538
+s), 11 requests, 292 697 in / 176 807 out tokens. On the run branch: `git status` clean; tsc, eslint, `npm run build` clean;
+vitest **736 / 736** in 2 of 2 full runs (logs /tmp/p14b-vt-{1,2}.log; the reference had 738: the judges' own counts).
+Read once against §2.2: Run Mutants spawns nothing itself (acceptance's `runAcceptance` under the timeout, `snapshotTargets`
+/ `restoreSnapshot` in `finally`), a red baseline is one finding and no mutant runs; Review Command resolves base/head,
+requires head reachable from HEAD and a clean tree before mutating, reads `git diff --name-status -z --no-renames` and
+`--numstat -z --no-renames`, test titles from `git show <head>:<path>`. 0 defects. Known limit kept (TASK §7): No New Skips
+counts skip tokens inside string literals (one false positive on this repository's range at the gate).
