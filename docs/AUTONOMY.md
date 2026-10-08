@@ -6,17 +6,16 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (08.10, operator: close P17 and P18, then stop)
+## State at handoff (08.10, P18 closed — stopped for the operator)
 
-**Next: P18 template** (PLAN row P18, issue #9, label `P18-template`; read the issue in full before the record). After
-its merge: its smoke (issue #9 Acceptance), 🧪, then **stop for the operator** (`~/.morph-wait-operator`); nothing is
-queued after P18. P18 may split (P18a/P18b) by the cut rules; a split queues its second half (rewrite this section,
-🔀, `touch ~/.morph-phase-done`). No external review passes (operator 08.10). P17 closed (issue #8: `morph card`,
-`morph accept --commit`, the V2 debt rule below). Running total $4.9631 of $30.
+**Next: nothing queued — waiting for the operator** (`~/.morph-wait-operator`). P18 template (issue #9) merged
+(run 20261008-130655, 5/5, $0.1054) and its 🧪 smoke green on typescript, go and python (Go deck on ds 4/4, $0.0037).
+The first plan P0–P18 is closed; MorphV2 is ready for packaging. A fresh session starts only after the operator names
+the next phase here. Running total $5.0722 of $30.
 **Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). No mrph cross-check
 at the gate (operator 08.10). Own pre-merge code read: yes. External review passes: no (operator 08.10). Every new
 MEASURE row fills the `прогоны` column.
-Known limits carried: No New Skips counts skip tokens inside string literals; one unreproduced vitest flake in P13b (logs
+Known limits carried: `morph plan --checks` has no python acceptance builder (a python project cuts with map acceptances, P18); `morph init` finds `templates/` two levels above its module, so a binary copy needs `templates` linked beside its `dist/` (P18); No New Skips counts skip tokens inside string literals; one unreproduced vitest flake in P13b (logs
 kept since); the ds batch slug is slow (~73 min); a `--checks` deck mixing languages builds by its first Component's
 language; gofmt can redden otherwise correct Go (the retry sees the diff); the primer's Go call rule misses a signature split
 across lines or a `testing` import under another name (P16); `morph accept` compares `git status --porcelain` paths without `-z`, so a quoted path (spaces, non-ASCII) reads as outside the targets (P17).

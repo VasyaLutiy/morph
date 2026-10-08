@@ -388,8 +388,8 @@ stop for the operator.
 
 08.10, main session on the VPS. Binary copy `/tmp/v2bin-p18` (`templates` linked beside its dist/), processor `ds`, run
 **20261008-130655**, exit 0, **439 s**: 5 / 5 written, 7 requests, 137 390 in / 57 151 out tokens, **$0.1054**
-(usageTotals.cost 0.10537452). Every card won at its first attempt: init-project v1 accepted (v2 rejected-free, its
-answer unused), parse-command v1 accepted (v2 untried), init-project-judge, main-judge, parse-command-judge v1. No fix.
+(usageTotals.cost 0.10537452). Every card won at its first attempt: init-project v1 accepted (v2 answered,
+not needed), parse-command v1 accepted (v2 untried), init-project-judge, main-judge, parse-command-judge v1. No fix.
 
 Verify on `morph/20261008-130655`: `git status --short` empty; `tsc --noEmit`, `eslint src tests` clean; `vitest run`
 **766 / 766 in 119 files**; `npm run build` green. Own read against §2.2 and the record: `initProject` resolves the
@@ -398,3 +398,10 @@ a non-empty one naming the smallest entry by code unit, refuses a missing `commo
 overlays the language's files on common's, writes sorted by code unit with one left-to-right `{{name|module|language}}`
 pass and the source's mode; module defaults to the name. cli only parses (`--name`, `--language`, `--module`,
 `--templates`, the three checks in the record's order) and routes. No defect found.
+
+**Issue #9's smoke** (§8, `decks/p18/smoke/run.sh`, `S1_RUN=1`, binary copy `/tmp/v2bin-p18s` from merged main 82adc49):
+typescript init exit 0 (27 files) · leak 0 · plan --checks exit 0 (4 cards) · deck check 0 errors; go init exit 0 (22
+files) · leak 0 · plan --checks exit 0 (4 cards) · deck check 0 errors; python init exit 0 (19 files) · leak 0 · plan (map
+acceptances, no python builder) exit 0 (4 cards) · deck check 0 errors. Go deck on ds: run **20261008-131623** exit 0,
+4 / 4 written, **$0.0037**, 0.2 min; on its branch `go vet ./...` ok, `gofmt -l .` empty, `go test -count=1 ./...` ok
+mini/calc, `git status` clean.
