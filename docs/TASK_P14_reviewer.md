@@ -497,3 +497,14 @@ python3 decks/tools/scale_tokens.py decks/p14/deck.json 3
 npm run build && rm -rf /tmp/v2bin-p14 && mkdir -p /tmp/v2bin-p14 && cp -r dist /tmp/v2bin-p14/ && ln -s $PWD/node_modules /tmp/v2bin-p14/node_modules
 node /tmp/v2bin-p14/dist/cli.js run --root . --deck decks/p14/deck.json --processor ds --deadline 2400 > /tmp/p14-run.json
 ```
+
+### Run (08.10, VPS, autonomous) — cut by V2, run by the V2 binary on processor ds
+
+Deck `decks/p14/deck.json` (V2 cut filtered to 10 cards by `decks/p14/filter.py`, maxTokens ×3), run by the V2 binary copy in
+`/tmp/v2bin-p14` with `--processor ds --deadline 2400`, default retry cap: run 20261008-041258, **10 / 10 written in one run,
+no fix**, 9 at the first attempt (retry won `plan-mutants-judge` r1, v1 red at its own test), $0.2110, 17.6 min (1053 s), 16
+requests, 282 650 in / 140 686 out tokens. On the run branch: `git status` clean; tsc, eslint, `npm run build` clean; vitest
+**724 / 724** in 2 of 2 full runs (logs kept: /tmp/p14-vt-{1,2}.log). Read once against §2.2: Check Envelope reads
+`--name-status -z` / `--numstat -z` in pairs (P14b must call BOTH with `--no-renames`, §8), exempts `.morph/`, is off when
+the range has no Morph commit, names the newest owner from ownership, and adds the scout scope rows and findings; the five
+Functions are pure (no fs, git, clock, env). 0 defects.
