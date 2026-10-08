@@ -1325,7 +1325,7 @@ System:
       description: >
         The `morph` binary: src/cli/*.ts and the entry src/cli.ts (bin dist/cli.js): argv parsed, routed to a command, one JSON document on stdout, log lines on
         stderr, an exit code per outcome. Only the entry touches the process. Commands: `deck check`, `run`, `plan`; `submit`, `collect` (routed to batches);
-        `primer` (routed to primer); the rest NotYetError.
+        `primer` (routed to primer); `scout`, `plan --from-scout` (routed to scout-session); the rest NotYetError.
       language: typescript
       requirements: [One Document Out]
       functions:
@@ -1333,18 +1333,22 @@ System:
           description: argv into one Command or a usage error.
           behavior: >
             parseCommand(argv) scans argv left to right. A token starting with "--" is a flag: --pretty, --judge and --write take no value; --root, --deck,
-            --processor, --run-id, --deadline, --max-cards, --max-retry-batches, --slice-cap-bytes, --spec, --component, --map, --out, --checks, --batch take
-            the next token whatever it is; any other flag (--x=y too) → "unknown flag: <t>"; a value flag last → "flag <t> needs a value"; a flag twice → "flag
+            --processor, --run-id, --deadline, --max-cards, --max-retry-batches, --slice-cap-bytes, --spec, --component, --map, --out, --checks, --batch,
+            --issue, --seed-file, --from-scout take the next token whatever it is; any other flag (--x=y too) → "unknown flag: <t>"; a value flag last → "flag <t> needs a value"; a flag twice → "flag
             <t> given twice", but --component repeats, its values in argv order (the first error by argv wins). Other tokens are words, giving the command: none
-            → "no command (commands: deck check, plan, run, submit, collect, primer)"; "run"; "plan"; "submit"; "collect"; "primer"; "deck" "check"; a first
-            word scout, review or report → NotYetError "command <word> is not available yet"; "deck" add|status|reset|clear → NotYetError "command deck <w> is
+            → "no command (commands: deck check, plan, run, submit, collect, primer, scout)"; "run"; "plan" ("plan --from-scout" when --from-scout is given);
+            "submit"; "collect"; "primer"; "scout"; "deck" "check"; a first word review or report → NotYetError "command <word> is not available yet"; "deck" add|status|reset|clear → NotYetError "command deck <w> is
             not available yet"; else "unknown command: <words, space-joined>". An extra word → "unexpected argument: <first extra>". Then in order: a flag the
             command does not take → "flag <f> does not apply to <command>", in argv order (deck check: --root, --pretty, --deck, --slice-cap-bytes; run: --root,
             --pretty, --deck, --processor, --run-id, --deadline, --max-cards, --max-retry-batches; plan: --root, --pretty, --spec, --component, --map, --judge,
-            --out, --checks; submit: --root, --pretty, --deck, --processor; collect: --root, --pretty, --batch; primer: --root, --pretty, --write); plan without
-            --spec → "missing --spec", else plan is done: the plan Command (components [] and map, out null when not given; checks a key only when given);
+            --out, --checks; submit: --root, --pretty, --deck, --processor; collect: --root, --pretty, --batch; primer: --root, --pretty, --write; scout: --root, --pretty,
+            --processor, --issue, --seed-file, --deadline; plan --from-scout: --root, --pretty, --from-scout, --out); plan --from-scout: a value not matching
+            ^[A-Za-z0-9._-]+$ → "--from-scout must match ^[A-Za-z0-9._-]+$ (got '<v>')", else done {name, root, pretty, fromScout, out: null when not given};
+            plan without --spec → "missing --spec", else plan is done: the plan Command (components [] and map, out null when not given; checks a key only when given);
             collect without --batch → "missing --batch", a --batch not matching ^[A-Za-z0-9._-]+$ → "--batch must match ^[A-Za-z0-9._-]+$ (got '<v>')", else
-            collect is done; primer is done: {name, root, pretty, write: --write given}; no --deck → "missing --deck"; run or submit without --processor →
+            collect is done; primer is done: {name, root, pretty, write: --write given}; scout without --processor → "missing --processor", without
+            --issue → "missing --issue", a --deadline not a positive integer → "--deadline must be a positive integer (got '<v>')", else done {name, root, pretty,
+            processor, issue, seedFile: null when not given, deadlineSeconds: 1800 when not given}; no --deck → "missing --deck"; run or submit without --processor →
             "missing --processor"; submit is then done; a run --run-id not matching ^[A-Za-z0-9._-]+$ → "--run-id must match ^[A-Za-z0-9._-]+$ (got '<v>')";
             numbers in the order --slice-cap-bytes (deck check), --deadline, --max-cards, --max-retry-batches (run): digits only, ≥ 1 ("<f> must be a positive
             integer (got '<v>')"), --max-retry-batches ≥ 0 ("must be a non-negative integer"). A failure is {ok: false, error: {error: {code: 4, kind:
@@ -1368,6 +1372,8 @@ System:
             - {given: 'parseArgv.json["14"]', when: parsed, then: 'parse.json["14"]'}
             - {given: 'parseArgv.json["15"]', when: parsed, then: 'parse.json["15"]'}
             - {given: 'parseArgv.json["16"]', when: parsed, then: 'parse.json["16"]'}
+            - {given: 'parseArgv.json["17"]', when: parsed, then: 'parse.json["17"]'}
+            - {given: 'parseArgv.json["18"]', when: parsed, then: 'parse.json["18"]'}
         - name: Emit Document
           description: One JSON document + newline on stdout; --pretty indents by 2.
           behavior: >
@@ -1429,7 +1435,7 @@ System:
             on the run branch.
           steps: [{uses: processor}, {calls: Read Deck File}, {uses: git}, {uses: runloop}, {produces: Run Document}]
           examples:
-            - {given: 'a tmpRepo; env with a git identity, MORPH_PROCESSOR_s_TYPE stub, MORPH_PROCESSOR_s_ANSWERS_DIR a side tmp root with a.md, b.md (fenced ts blocks); a deck file there: a → out/a.ts ("test -f out/a.ts"), b → out/b.ts dependsOn [a]; runId "r1"', when: run, then: 'code 0; runId "r1", branch "morph/r1", base = HEAD before; a, b "written", generations 2, processor "s", usageTotals.requests 2; archive {ok: true, dir: ".morph/runs/r1", commit: HEAD}; subjects since base, newest first: "morph run r1: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; HEAD on morph/r1; status clean'}
+            - {given: 'examples.json["Run Command 1"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'run', then: 'examples.json["Run Command 1"].then'}
             - {given: 'the same setup, one card a with acceptance "exit 1", maxRetryBatches 0', when: run, then: 'code 1; outcome a "failed", reason "acceptance failed"; archive ok with the trailer Morph-Failed: 1; out/a.ts absent'}
             - {given: 'processor "nope"; then "bad" with MORPH_PROCESSOR_bad_TYPE "x" in env', when: run, then: 'code 4 UsageError "processor nope is not configured"; then "processor bad is not configured: MORPH_PROCESSOR_bad_TYPE must be one of openrouter, stub (got ''x'')"; no morph/* branch'}
             - {given: 'the same setup with an untracked notes.txt in the repo', when: run, then: 'code 2 RefusalError "dirty tree outside .morph/: notes.txt"; the checkout still main; no archive'}
@@ -1437,8 +1443,8 @@ System:
             - {given: 'one card a; runId null; deps.now always 1791310149000', when: run, then: 'mintRunId(1791310149000) is "20261006-180909"; code 0; runId, report.runId "20261006-180909", branch "morph/20261006-180909"; .morph/runs/20261006-180909/report.json exists'}
             - {given: 'records {request.customId "a.v1", verdict "rejected", stages 4, lastStage "probe", finishReason "stop", text 30 chars}, {request.customId "b.r1.v2", verdict "corrupt", stages 0, lastStage null, finishReason null, text null}', when: variantLine, then: '"morph run: a.v1 rejected stage 4 probe finish stop chars 30\n"; "morph run: b.r1.v2 corrupt stage 0 finish none chars none\n"'}
             - {given: 'example 2 with maxRetryBatches 1, answers a.md and a.r1.md (each a 30-char fenced ts block); a log pushing its texts', when: run, ref: "tests/fixtures/cli/literals.json (\"<Function> <n>\" → the literal)", then: 'code 1; the log literals.json["Run Command 8"]; the archive commit adds exactly deck.json, report.json, answers/a.v1.answer.txt, a.r1.v1.answer.txt and answers/lines.txt (the two log lines) under .morph/runs/r1; the a.r1.v1 request (gunzipSync of requests/a.r1.v1.request.json.gz) has a last message holding "<acceptance_output>"; status clean'}
-            - {given: 'example 1 with the env of literals.json["Run Command 9"]; deps.transport answering 202 batchSubmittedLive.json, then 200 batchCompletedLive.json; cards clamp-value → out/clamp.ts, sign-of → out/sign.ts, "test -f <target>"; runId "r9"', ref: "tests/fixtures/processor/batchSubmittedLive.json, batchCompletedLive.json, tests/fixtures/cli/batch.r9.json (the record file's text), tests/fixtures/cli/literals.json", when: run, then: 'code 0, both written; every report.requests row batchId "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W"; usageTotals.cost 0.0005804; .morph/batches/<that id>.json exactly batch.r9.json; git status --porcelain exactly "?? .morph/batches/"'}
-            - {given: 'example 1, runId "r10"; a .git/hooks/commit-msg (755) that prints "card commits refused" to stderr, exit 1, on a message starting "morph a:"', when: run, then: 'code 3, the Run Document; report.fault "git commit failed (exit 1): card commits refused"; a, b "skipped", reason "fault"; archive {ok: true, dir: ".morph/runs/r10", commit: HEAD} (report.json with the fault, Morph-Skipped: 2), the only commit since base; HEAD on morph/r10'}
+            - {given: 'examples.json["Run Command 9"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then), tests/fixtures/processor/batchSubmittedLive.json, batchCompletedLive.json, tests/fixtures/cli/batch.r9.json (the record file''s text), tests/fixtures/cli/literals.json', when: 'run', then: 'examples.json["Run Command 9"].then'}
+            - {given: 'examples.json["Run Command 10"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'run', then: 'examples.json["Run Command 10"].then'}
             - {given: 'a deck file "[]"', when: run, then: 'code 2 RefusalError "deck has no cards"; no morph/* branch; no .morph'}
             - {given: 'example 1, deck [x → out/x.ts "true", q → out/q.ts no acceptance, d → out/d.ts " \n"]', when: run, then: 'code 2 RefusalError "deck has 2 card(s) with no acceptance: q,d"; no morph/* branch'}
         - name: Plan Command
@@ -1455,7 +1461,7 @@ System:
             document: {spec, components, cards, generations, externalDependsOn, out: args.out}}. Nothing else written; nothing on an error.
           steps: [{uses: contour}, {uses: planner}, {calls: Read Plan Checks}, {uses: builder}, {produces: Plan Document}]
           examples:
-            - {given: 'a tmp root holding ledger.yaml and ledger.map.json (the planner fixtures'' texts) and a tests/helpers.ts; args spec "ledger.yaml", components ["ledger", "store"], map "ledger.map.json", judge true, out "decks/p.json"', ref: "tests/fixtures/planner/ledger.yaml, tests/fixtures/planner/ledger.map.json, tests/fixtures/planner/ledger.plan.json", when: planCommand, then: 'code 0; document equal to ledger.plan.json plus out "decks/p.json"; the file decks/p.json is exactly JSON.stringify(document.cards, null, 2) + "\n"; Read Deck File of it is ok with 17 cards and externalDependsOn ["outside"]'}
+            - {given: 'examples.json["Plan Command 1"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then), tests/fixtures/planner/ledger.yaml, tests/fixtures/planner/ledger.map.json, tests/fixtures/planner/ledger.plan.json', when: 'planCommand', then: 'examples.json["Plan Command 1"].then'}
             - {given: 'the same root; spec "nope.yaml"; then spec "ledger.yaml" with map "m.json"', when: planCommand, then: '{code: 4, document: {error: {code: 4, kind: "UsageError", message: "spec file not found: nope.yaml"}}}; then the same with "map file not found: m.json"'}
             - {given: 'bad.yaml = "System: {}\n" as the spec; then spec ledger.yaml with m.json = "{\"docs\": \"x\"}" as the map', when: planCommand, ref: "tests/fixtures/cli/literals.json", then: 'code 2 DeckError, then code 2 DeckError: the messages literals.json["Plan Command 3"]'}
             - {given: 'the same root, components ["nope"], out "decks/q.json"', when: planCommand, then: "code 2 DeckError \"no Component 'nope' in the record (have: ledger, store)\"; decks/q.json not written"}
@@ -1481,27 +1487,30 @@ System:
           behavior: >
             main(argv, deps, io) → Promise<ExitCode>. Parse Command; a failure → io.stdout(renderDocument(its error document, pretty = argv holds "--pretty")),
             io.stderr("morph: <message>\n"), 4. Else root = path.resolve(deps.cwd, command.root); result = Deck Check, Plan Command, await Submit Deck(root,
-            deck, processor, D), await Collect Batch(root, batch, D), Primer Command(root, write, {env, now of deps}) (D = {env, now, transport of deps,
+            deck, processor, D), await Collect Batch(root, batch, D), Primer Command(root, write, {env, now of deps}), await Scout Command(root, command, deps), Plan From Scout(root,
+            command) (D = {env, now, transport of deps,
             saveState: git's saveBatchRecord(root, ·), saveAnswers: git's saveBatchAnswers(root, ·, ·)}) or await Run Command (io.stderr its log) by command, in
             try/catch, a thrown value → classifyThrown. Then one io.stdout(renderDocument(result.document, command.pretty)), one io.stderr("morph <command
             name>: exit <code>\n"), return result.code. The entry src/cli.ts (`#!/usr/bin/env node`) calls main(process.argv.slice(2), {env: process.env without
             undefined values, now: Date.now, cwd: process.cwd(), transport: null, interrupted: () => the first SIGINT or SIGTERM its own listeners caught, or
             null}, {stdout, stderr: the process streams' write}), sets process.exitCode to the result, never calls process.exit.
-          steps: [{calls: Parse Command}, {calls: Deck Check}, {calls: Plan Command}, {calls: Run Command}, {uses: batches}, {uses: primer}, {calls: Emit Document}, {calls: Classify Error}]
+          steps: [{calls: Parse Command}, {calls: Deck Check}, {calls: Plan Command}, {calls: Run Command}, {uses: batches}, {uses: primer}, {uses: scout-session}, {calls: Emit Document}, {calls: Classify Error}]
           examples:
             - {given: 'argv ["frobnicate"], in process', when: main, then: '4; stdout exactly ["{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"unknown command: frobnicate\"}}\n"]; stderr ["morph: unknown command: frobnicate\n"]'}
             - {given: 'a tmp root with d.json = the write-write fixture; argv ["deck", "check", "--deck", "d.json", "--root", <root>, "--pretty"]', ref: "tests/fixtures/decks/hazardsWriteWrite.json", when: main, then: '2; one stdout chunk beginning "{\n  \"deck\": \"d.json\",\n  \"cards\": 2,"; stderr ["morph deck check: exit 2\n"]'}
             - {given: 'a run with a valid stub env and deck, --run-id r1, --root and cwd both a tmp root that is not a git repository', when: main, then: '3; one document {error: {code: 3, kind: "RuntimeError", message beginning "git status failed (exit 128): "}}; stderr ["morph run: exit 3\n"]'}
-            - {given: 'the binary built by tsc -p tsconfig.build.json into a tmp out dir ({"type":"module"}, node_modules linked); a tmpRepo, a side root with a.md, b.md and the deck a, then b dependsOn a; `node <out>/cli.js run --root <repo> --deck <deck> --processor s --run-id e2e`, the stub env', ref: "tests/fixtures/cli/literals.json", when: spawned, then: 'exit 0; stdout one line of JSON: runId "e2e", branch "morph/e2e", outcomes written, written, archive ok; the last three subjects "morph run e2e: deck and report", "morph b: out/b.ts", "morph a: out/a.ts"; stderr literals.json["Main 4"] (a.md, b.md 30 chars each)'}
+            - {given: 'examples.json["Main 4"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then), tests/fixtures/cli/literals.json', when: 'spawned', then: 'examples.json["Main 4"].then'}
             - {given: 'the built binary, argv ["frobnicate"]', when: spawned, then: 'exit 4; stdout exactly example 1''s one stdout chunk'}
-            - {given: 'a tmpRepo; side root: a.md, deck a → out/a.ts (`sleep 30 & echo $! > <side>/sleep.pid; kill -INT $PPID; wait`), then b ("true"); `node --import tsx src/cli.ts run --root <repo> --deck <deck> --processor s --run-id sig`, cwd the repository, the stub env', when: "spawned (spawnSync, timeout 30000 ms)", then: 'status 3; one Run Document: fault "interrupted by SIGINT", a "failed" (log ending "acceptance interrupted by SIGINT\n"), b "skipped" "fault", archive ok; the sleep gone; HEAD on morph/sig; status clean'}
+            - {given: 'examples.json["Main 6"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'spawned (spawnSync, timeout 30000 ms)', then: 'examples.json["Main 6"].then'}
             - {given: 'in process, deps {env: {}, now: () => 0, cwd: "/", transport: null}; argv ["collect", "--batch", "batch-none", "--root", <a tmp root>]', when: main, then: '4; one stdout document {error: {code: 4, kind: "UsageError", message: "batch state not found: .morph/batches/batch-none.json"}}; stderr ["morph collect: exit 4\n"]'}
-            - {given: 'the setup of Submit Deck 1, argv ["submit", "--deck", "d.json", "--processor", "b", "--root", t]; then the transport and now of Collect Batch 1 in new deps, argv ["collect", "--batch", <its id>, "--root", t]', when: "main, twice", then: '0 and 0; the two documents of those examples on stdout; stderr "morph submit: exit 0\n", "morph collect: exit 0\n"; the state file and answer files as Collect Batch 1'}
-            - {given: 'a tmpRepo t, tests/a.test.ts "test(\"a\", () => {});\nit(\"b\", () => {});\n"; deps {env {PATH}, now 1791400000000, cwd "/"}; argv [primer, --write, --root, t]; then [primer, --root, a non-repo tmp root]', when: main, then: '0; one document: tests {language "typescript", files 1, tests 2}, written ".morph/primer.md" = its markdown; stderr ["morph primer: exit 0\n"]; then 3 RuntimeError beginning "git ls-files failed (exit 128): ", stderr ["morph primer: exit 3\n"]'}
+            - {given: 'examples.json["Main 8"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'main, twice', then: 'examples.json["Main 8"].then'}
+            - {given: 'examples.json["Main 9"].given', ref: 'tests/fixtures/cli/examples.json ("<Function> <n>" → the example''s given and then)', when: 'main', then: 'examples.json["Main 9"].then'}
+            - {given: 'a tmpRepo t, src/a.ts committed; a side root s: task.txt "Double a.\n", ans/scout.t1.md ANSWER {"targets": ["src/a.ts"]}; deps {env {PATH, MORPH_PROCESSOR_s_TYPE stub, MORPH_PROCESSOR_s_ANSWERS_DIR s/ans}, now 1791500000000, cwd s}; argv [scout, --processor, s, --issue, task.txt, --root, t], then [plan, --from-scout, latest, --root, t, --out, decks/s.json]', when: main, then: '0, 0; the documents of Scout Command (status ok) and Plan From Scout (one patch card scout-<scoutId> on src/a.ts), decks/s.json its cards; stderr "morph scout: exit 0\n", "morph plan --from-scout: exit 0\n"'}
+            - {given: 'those deps; argv [scout, --processor, nope, --issue, task.txt, --root, t]; [plan, --from-scout, latest, --root, an empty tmp root e]; [scout, --processor, s, --issue, task.txt, --root, e]', when: main, then: '4 "processor nope is not configured" (stderr "morph scout: exit 4\n"); 4 "no scout session under .morph/scout" ("morph plan --from-scout: exit 4\n"); 3 RuntimeError beginning "git ls-files failed (exit 128): "'}
       dataObjects:
         - name: Command
           description: One parsed invocation.
-          schema: "{ name: 'deck check', root, pretty, deck, sliceCapBytes } | { name: 'run', root, pretty, deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches } | { name: 'plan', root, pretty, spec, components: string[], map: string | null, judge: boolean, out: string | null, checks?: string } | { name: 'submit', root, pretty, deck, processor } | { name: 'collect', root, pretty, batch } | { name: 'primer', root, pretty, write: boolean }"
+          schema: "{ name: 'deck check', root, pretty, deck, sliceCapBytes } | { name: 'run', root, pretty, deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches } | { name: 'plan', root, pretty, spec, components: string[], map: string | null, judge: boolean, out: string | null, checks?: string } | { name: 'submit', root, pretty, deck, processor } | { name: 'collect', root, pretty, batch } | { name: 'primer', root, pretty, write: boolean } | { name: 'scout', root, pretty, processor, issue, seedFile: string | null, deadlineSeconds } | { name: 'plan --from-scout', root, pretty, fromScout, out: string | null }"
         - name: Error Document
           description: The document of every non-result exit.
           schema: "{ error: { code: 0|1|2|3|4, kind: 'UsageError'|'NotYetError'|'DeckError'|'RefusalError'|'RuntimeError', message: string } }"
@@ -2898,7 +2907,7 @@ System:
         READ/GREP/LIST/ANSWER (one action or one answer per model turn), the path cage (the tree's listing, realpath,
         .git, ".."), the three tool executors over an injected file system, the budgets → closed budget → stop_reason,
         and the seed. No model call, no clock, no environment, no network, no child process in P13a; the round loop,
-        scout.json, the real file system adapter and `plan --from-scout` are P13b.
+        scout.json, the real file system adapter and `plan --from-scout` are Component scout-session (P13b).
       language: typescript
       requirements: [Deterministic Core]
       functions:
@@ -3063,6 +3072,129 @@ System:
           description: What Seed From Ownership returns.
           schema: "{ source: 'primer', files: string[], notes: string[] }"
 
+    - name: scout-session
+      description: >
+        The scout's second Component (src/scout/, layer scout; the 30 000-byte rule): the round loop of one recon session
+        over P13a's pure pieces, `morph scout` (the processor, the issue, the git listing, the seed, the node:fs adapter,
+        .morph/scout/<id>/scout.json with provenance and spend) and `morph plan --from-scout` (one session's answer → one
+        patch card on the files it names). The model is reached only through the processor's Send Generation, the clock only
+        through deps.now; scoutCommand.ts and planFromScout.ts are the layer's only node:fs files.
+      language: typescript
+      requirements: [Deterministic Core, One Document Out]
+      functions:
+        - name: Run Scout
+          description: One recon session — round 0, then one model turn per round through the processor, read as an action or an answer, until an answer, a closed budget or a failed call.
+          behavior: >
+            runScout(session {question, tree, fs, seedText, budgets, caps, maxTokens}, deps {config, transport, now}) →
+            Promise of {status "ok" | "no_answer" | "invalid_answer", answer | null, stopReason, spent, elapsedMs, usage
+            {requests, inputTokens, outputTokens, cost}, journal, messages}. PROTOCOL = the text of
+            tests/fixtures/scout/protocol.txt exactly; REMINDER = "One line per turn: READ <path> [<from>-<to>], GREP
+            <pattern> [-- <dir>], LIST [<dir>] or ANSWER {json}.". openingMessages(session) = [{system, PROTOCOL}, {user,
+            (seedText + "\n" unless "") + Run Tool's LIST "" text (session caps) + "\n\nTask:\n" + question}]; round 0 is not
+            charged. start = now(); spent zero; usage {0, 0, 0, cost null}. Round r = spent.rounds + 1: one request
+            {customId "scout.t<r>", model null, maxTokens, reasoning null, messages: a copy} through processor Send
+            Generation(config, [request], transport); usage adds its tokens and its cost (null until one request reports a
+            cost); every round one journal entry {round, turn "action"|"answer"|"malformed"|"failed", action | null, chars,
+            error | null, inputTokens, outputTokens, cost} of that request. An answer error → turn failed, no_answer "no
+            answer: the model call failed in round <r>: <error>". Else its text (null → "") is the next assistant message,
+            Parse Turn reads it, elapsed = now() − start. An ANSWER → checkAnswer(answer, tree, fs): each target, then each
+            context_slice path through Cage Path (file), the first refusal → {ok false, error "targets: " | "context_slice: "
+            + its error}; else the caged paths, repeats dropped, slice paths that are targets dropped, reasoning kept. Valid →
+            charged (call false, read false, text ""), chars 0, ok, Spend Budget's stopReason(true, closed, why) of the
+            budget closed before. Rejected after the final turn → invalid_answer "no answer: the answer after the budget
+            closed was rejected: <error>"; rejected again after a correction → invalid_answer "no answer: the corrected
+            answer was rejected: <error>" (both charged with ""); the first rejection is charged with the reply "ANSWER
+            rejected: <error>. Name only files of the tree and send ANSWER again." After the final turn an action or a
+            malformed turn → charged with "", chars 0, no_answer "no answer: the model did not answer after the budget
+            closed: <why>". An action → Run Tool, charged (call true, read, its text), error = its error; a malformed turn →
+            charged (false, false, "Turn not understood: <reason>. " + REMINDER), error = the reason. The delivered text is
+            the next user message and the entry's chars. A budget the turn closed: deadline or rounds → no_answer
+            stopReason(false, closed, why) after that message; calls, reads or chars → the message gains "\n\nThe budget is
+            closed: <why>. No more tools will run: send ANSWER now, the JSON object last." and the next turn is the final
+            one. now() is called at the start, after each reply without an error, and once at the end (elapsedMs).
+          steps: [{uses: scout}, {uses: processor}, {reads: Scout Session}, {produces: Scout Outcome}]
+          examples:
+            - {given: 'the §2.1 tree of docs/TASK_P13b_scout.md (README.md, src/a.ts, src/b.ts) with the node fs; the stub processor answering scout.t1 "LIST src", t2 "Reading b.\nREAD src/b.ts", t3 ANSWER {"targets": ["src/b.ts"], "context_slice": ["./src/a.ts", "src/b.ts"], "reasoning": "b uses a"}; seedText "Seed: one\n", question "Make b twice a.\n", DEFAULT_BUDGETS, DEFAULT_TOOL_CAPS, maxTokens null, now always 5', when: runScout, then: 'ok, answer {["src/b.ts"], ["src/a.ts"], "b uses a"}, "the model answered on its own", spent {2, 1, 116, 3}, elapsedMs 0, usage {3, 0, 0, 0}, journal list 30, read 86, answer 0; 7 messages: system PROTOCOL, user "Seed: one\n\nLIST .: 2 entries\nREADME.md\nsrc/ (2 files)\n\nTask:\nMake b twice a.\n", then the three turns and two tool texts'}
+            - {given: 'the same tree, caps with listEntries 1; answers "I think it is b.", ANSWER {"targets": ["src/c.ts"]}, ANSWER {"targets": ["src"]}; then a fresh session answering ANSWER {"targets": ["src/c.ts"]}, ANSWER {"targets": ["src/a.ts"], "reasoning": "a"}', when: runScout, then: 'invalid_answer, "no answer: the corrected answer was rejected: targets: not in the tree (missing, ignored or a directory): src", spent {0, 0, <the two replies'' length>, 3}, round 0 "LIST .: 2 entries\nREADME.md\n… 1 more entries\n\nTask:\n…"; then ok "the model answered on its own" with {["src/a.ts"], [], "a"} in 2 rounds'}
+            - {given: 'budgets {calls 2, reads 5, chars 100000, rounds 10, deadlineMs 600000}; answers "GREP export const a -- src", "READ src/a.ts", ANSWER {"targets": ["src/a.ts"]}; then the same with "LIST" third', when: runScout, then: 'ok "the model answered after the budget closed: the call budget is spent (2 of 2 calls)", the READ reply + the final-turn sentence; then no_answer "no answer: the model did not answer after the budget closed: the call budget is spent (2 of 2 calls)", journal 3 action list "" chars 0'}
+            - {given: 'DEFAULT_BUDGETS with rounds 2, answers "LIST", "LIST src", ANSWER; then deadlineMs 1500 with now adding 1000 per call', when: runScout, then: 'no_answer "no answer: the round budget is spent (2 of 2 rounds)", 2 requests, the last message the LIST src text; then "no answer: the deadline (1.5 s) passed", elapsedMs 3000, spent {2, 0, <both LIST texts>, 2}'}
+            - {given: 'an empty answers dir; then an openrouter config (MAX_RETRIES 0) and a fakeFetch answering every request "READ src/a.ts" with usage {prompt_tokens 1000, completion_tokens 50, cost 0.25}, budgets calls 2, maxTokens 777', when: runScout, then: 'no_answer "no answer: the model call failed in round 1: stub has no answer: <dir>/scout.t1.md", journal [failed], 2 messages; then usage {3, 3000, 150, 0.75}, the third request body model "m/x", max_tokens 777, 6 messages, every entry cost 0.25'}
+        - name: Scout Command
+          description: "`morph scout`: one session on the working tree, its record written to .morph/scout/<id>/."
+          behavior: >
+            scoutCommand(root, args {processor, issue, seedFile, deadlineSeconds}, deps {env, now, cwd, transport}) →
+            Promise of {code, document}. In order, each refusal {code 4, document {error {code 4, kind "UsageError",
+            message}}} before any spend or write: 1. processor Read Registry(deps.env), no config with that id → "processor
+            <id> is not configured" + (": " + the messages of the faults keyed "MORPH_PROCESSOR_<id>_…", "; "-joined, when
+            any). 2. path.resolve(deps.cwd, issue) not a regular file → "issue file not found: <issue>"; its UTF-8 text is
+            the question; blank → "issue file is empty: <issue>". 3. the listing: git's gitOk(root, ["ls-files", "-z",
+            "--cached", "--others", "--exclude-standard"], env) split on "\0", empty and repeated pieces dropped (a throw
+            propagates). 4. the seed: seedFile given → path.resolve(deps.cwd, it) not a regular file → "seed file not
+            found: <seedFile>"; readSeedFile(text, listing) refusing → "seed file <seedFile>: <error>" (the JSON does not
+            parse; files must be a non-empty list of paths — also for a non-object; notes must be a list of strings; not in
+            the tree: <file>); seedText = renderFileSeed(files, notes) = FILE_SEED_HEADER ("Seed: files the operator named
+            (--seed-file):") + "\n", "- <file>\n" each, "Note: <note>\n" each; seed {source "file", path seedFile, files,
+            chars}. Else seedFromOwnership(readOwnership(readMorphLog(root, env)), listing, SEED_FILES), rendered with
+            SEED_CHARS; seed {source "primer", path null, files, chars: the text's length}. 5. ref = git rev-parse --verify
+            -q HEAD trimmed when exit 0, else null. 6. start = now(); Run Scout({question, tree {root, files: listing},
+            NODE_SCOUT_FS (realpathSync; readFileSync utf8), seedText, DEFAULT_BUDGETS with deadlineMs = deadlineSeconds ×
+            1000, DEFAULT_TOOL_CAPS, maxTokens null}, {config, deps.transport or realTransport(config.timeoutMs), now}). 7.
+            id = scoutId(start, sha256(question)) = the UTC "YYYYMMDD-HHMMSS" of start + "-" + the hex sha256's first 8
+            chars; SCOUT_DIR ".morph/scout"/<id>/ created under root, scout.json = JSON.stringify(record, null, 2) + "\n",
+            record {schema 1, scoutId, createdAt (ISO of start), root, ref, question, questionSha256, protocolSha256 (of
+            PROTOCOL), processor (the config id), model, seed, budgets, caps, status, answer, stopReason, spent, elapsedMs,
+            usage, journal}; transcript.json = the messages the same way. → {code 0 when status ok, else 1, document
+            {scoutId, scout ".morph/scout/<id>/scout.json", status, answer, stopReason, spent, elapsedMs, usage}}.
+          steps: [{calls: Run Scout}, {uses: processor}, {uses: git}, {uses: scout}, {produces: Scout Record}]
+          examples:
+            - {given: 'a tmpRepo: README.md and src/a.ts committed, then src/b.ts in a commit with the trailers Morph-Card b, Morph-Model m/b; a side root s (cwd): task.txt "Make b twice a.\n", the stub answering "READ src/b.ts", then ANSWER {"targets": ["src/b.ts"], "context_slice": ["src/a.ts"], "reasoning": "b reads a"}; now 1791500000000; {processor s, issue task.txt, seedFile null, deadlineSeconds 60}', when: scoutCommand, then: 'code 0, document {scoutId "20261008-225320-74e423b1", scout ".morph/scout/20261008-225320-74e423b1/scout.json", ok, the answer, "the model answered on its own", spent {1, 1, 86, 2}, 0, usage {2, 0, 0, 0}}; scout.json the record exactly (createdAt "2026-10-08T22:53:20.000Z", ref HEAD, seed {primer, null, ["src/b.ts"], chars}, budgets deadlineMs 60000); transcript.json 5 messages; git status "?? .morph/"'}
+            - {given: 'the same with seedFile seed.json = {"files": ["src/a.ts"], "notes": ["a is the base"]}; then nope.json, bad.json "{", z.json files ["src/z.ts"], e.json files [], n.json notes [1]', when: scoutCommand, then: 'code 0, seed {file, "seed.json", ["src/a.ts"], chars} and round 0 starting with its text; then 4 "seed file not found: nope.json", "seed file bad.json: the JSON does not parse", "…: not in the tree: src/z.ts", "…: files must be a non-empty list of paths", "…: notes must be a list of strings"'}
+            - {given: 'processor nope; processor bad with MORPH_PROCESSOR_bad_TYPE x; issue none.txt; issue blank.txt "  \n"; a root outside git', when: scoutCommand, then: '4 "processor nope is not configured"; "processor bad is not configured: MORPH_PROCESSOR_bad_TYPE must be one of openrouter, stub (got ''x'')"; "issue file not found: none.txt"; "issue file is empty: blank.txt"; no .morph; then a rejection "git ls-files failed (exit 128): …"'}
+            - {given: 'an empty answers dir, deadlineSeconds 5', when: scoutCommand, then: 'code 1, status no_answer, answer null, "no answer: the model call failed in round 1: stub has no answer: <s>/ans/scout.t1.md", usage.requests 1; scout.json written with that status, deadlineMs 5000, 1 journal entry'}
+            - {given: 'scoutId(1791500000000, the question''s sha), scoutId(0, "0123456789abcdef"), sha256(""), renderFileSeed(["x/a.py", "b.ts"], ["one", "two"]), readSeedFile of three texts, NODE_SCOUT_FS', when: called, then: '"20261008-225320-74e423b1", "19700101-000000-01234567", "e3b0c442…b855" (64 hex), the header + "- x/a.py\n- b.ts\nNote: one\nNote: two\n"; ok and two refusals; the file read and realpath, a missing path throws'}
+        - name: Plan From Scout
+          description: "`morph plan --from-scout`: one scout session's answer turned into one patch card on the files it names."
+          behavior: >
+            planFromScout(root, args {fromScout, out}) → {code, document}. The session: "latest" = the last name in
+            code-unit order of the entries of <root>/.morph/scout (SCOUT_SESSIONS) holding a regular scout.json, none or no
+            directory → 4 UsageError "no scout session under .morph/scout"; a named id without one → 4 UsageError "scout
+            session not found: <id>". <at> = ".morph/scout/<id>/scout.json". JSON.parse throws → 2 DeckError "<at> does not
+            parse"; schema not 1 → 2 DeckError "<at>: schema <JSON of it, null when absent>, expected 1"; status not "ok" or
+            answer null → 2 RefusalError "scout session <id> has no answer (<status>): <stopReason>"; no targets or a blank
+            question → 2 DeckError "<at>: the answer has no targets or the session no question". The answer's paths are
+            checked now through Cage Path (file) on the tree {root, files: targets then context_slice} with a node fs (a
+            path as given: no "./", no directory): a target refused → 2 RefusalError "target refused: <its error>", a target
+            not a regular file → "target refused: not a file: <t>"; a context path refused or not a file is dropped
+            (document dropped). card = patchCard({scoutId, question, targets, contextSlice: the kept, targetBytes: the
+            targets' sizes}) = {customId "scout-<id>", intent "patch", targets, contextSlice, instruction question.trim() +
+            "\n\n" + PATCH_CONTRACT, acceptance patchAcceptance(targets), model null, maxTokens max(16000, ceil(targetBytes /
+            3) × 2), reasoning null, variants 1, dependsOn []}. PATCH_CONTRACT = "Change the target files of this card to do
+            the task above. Return each target file COMPLETE, not a diff. Keep the public names the files already declare:
+            other code imports them. Write or change no other file." patchAcceptance: the first target with a language
+            profile gives its parseLine (+ " " + the targets of its extensions, " "-joined, when parseTakesFiles) + " && " +
+            its fullRunLine; none → null. out given → [card] as JSON.stringify(cards, null, 2) + "\n" at path.resolve(root,
+            out), parents created. → {code 0, document {scoutId, scout <at>, ref (a string or null), cards [card], dropped,
+            out}}. Nothing is written on a refusal.
+          steps: [{uses: scout}, {uses: language}, {reads: Scout Record}, {produces: Patch Plan}]
+          examples:
+            - {given: 'a tmp root: README.md "tiny\n", src/a.ts, src/b.ts; .morph/scout/20261008-225320-74e423b1/scout.json = tests/fixtures/scout/session.json', ref: "tests/fixtures/scout/session.json (status ok: targets [src/b.ts], context_slice [src/a.ts, README.md]), noAnswer.json (status no_answer)", when: 'planFromScout(root, {fromScout "latest", out "decks/s.json"})', then: 'code 0, document {scoutId, scout, ref "2e7116d687d05d6d6d18c5dad347cdcf78de3c0b", cards [{customId "scout-20261008-225320-74e423b1", intent "patch", targets ["src/b.ts"], contextSlice ["src/a.ts", "README.md"], instruction "Make b twice a.\n\n" + PATCH_CONTRACT, acceptance "node_modules/.bin/tsc --noEmit && node_modules/.bin/vitest run --reporter=dot", model null, maxTokens 16000, reasoning null, variants 1, dependsOn []}], dropped [], out "decks/s.json"}; the file its cards; Load Deck ok'}
+            - {given: 'that root plus 20200101-000000-00000000/scout.json = noAnswer.json and 20991231-000000-ffffffff/ without one; an empty root', when: 'latest; the id; 20200101-000000-00000000; zz; latest on the empty root', then: '0 with the 20261008 session twice; 2 RefusalError "scout session 20200101-000000-00000000 has no answer (no_answer): no answer: the model call failed in round 1: …"; 4 "scout session not found: zz"; 4 "no scout session under .morph/scout"; nothing written'}
+            - {given: 'the session with schema 2; "{"; targets ["../x.ts"]; targets ["src"]; then README.md removed; then src/b.ts removed', when: planFromScout, then: '2 DeckError "<at>: schema 2, expected 1"; "<at> does not parse"; 2 RefusalError "target refused: path leaves the root: ../x.ts"; "target refused: not a file: src"; 0 with dropped ["README.md"], contextSlice ["src/a.ts"]; "target refused: no such file: src/b.ts"'}
+            - {given: 'patchAcceptance of ["a.py", "b.md", "c.py"], ["notes.md", "x.ts", "y.py"], ["notes.md"]; patchCard with question "  Do it.\n\n" and targetBytes 30000, 100, 24000, 24001, 24002', when: called, then: '"python3 -m py_compile a.py c.py && python3 -m pytest -q --tb=short"; the TypeScript line; null; instruction "Do it.\n\n" + PATCH_CONTRACT, maxTokens 20000, 16000, 16000, 16002, 16002'}
+      dataObjects:
+        - name: Scout Session
+          description: What one session reads (Run Scout's first parameter) and its deps.
+          schema: "{ question, tree: Scout Tree, fs: ScoutFs, seedText, budgets: Scout Budgets, caps: Tool Caps, maxTokens: number | null } + deps { config: ProcessorConfig, transport: Transport, now(): number }"
+        - name: Scout Outcome
+          description: What Run Scout resolves to.
+          schema: "{ status: 'ok' | 'no_answer' | 'invalid_answer', answer: { targets, context_slice, reasoning } | null, stopReason, spent: { calls, reads, chars, rounds }, elapsedMs, usage: { requests, inputTokens, outputTokens, cost: number | null }, journal: { round, turn: 'action' | 'answer' | 'malformed' | 'failed', action: Scout Action | null, chars, error: string | null, inputTokens, outputTokens, cost: number | null }[], messages: Message[] }"
+        - name: Scout Record
+          description: .morph/scout/<id>/scout.json, read by Plan From Scout and the reviewer (P14).
+          schema: "{ schema: 1, scoutId, createdAt, root, ref: string | null, question, questionSha256, protocolSha256, processor, model, seed: { source: 'primer' | 'file', path: string | null, files: string[], chars }, budgets, caps, status, answer, stopReason, spent, elapsedMs, usage, journal }"
+        - name: Patch Plan
+          description: The document of plan --from-scout.
+          schema: "{ scoutId, scout, ref: string | null, cards: Card[], dropped: string[], out: string | null }"
+
     # ---------------------------------------------------------------- later epics (skeleton)
     - name: reviewer
       description: >
@@ -3108,6 +3240,10 @@ Requirement:
       scout reads no clock, no environment and no network and spawns nothing: Parse Turn, Spend Budget and
       Seed From Ownership are pure; Cage Path and Run Tool reach the file system only through the ScoutFs
       parameter (realpath, readFile); elapsed time is a parameter; node:path is its only Node module (P13a).
+      scout-session reaches the model only through the processor's Send Generation and the clock only through deps.now;
+      Run Scout reads the tree through the ScoutFs parameter; Scout Command and Plan From Scout are the scout layer's two
+      node:fs files (git through gitOk and runGit, node:crypto for the sha256 in Scout Command), the environment a
+      parameter (P13b).
   - name: Node Only
     description: >
       Runtime dependencies: Node 20 built-ins and the package `yaml` (the record reader), nothing

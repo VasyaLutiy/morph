@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "scoutId": "20261008-225320-74e423b1",
+  "createdAt": "2026-10-08T22:53:20.000Z",
+  "root": "/tmp/morph-repo-F2BzHc",
+  "ref": "2e7116d687d05d6d6d18c5dad347cdcf78de3c0b",
+  "question": "Make b twice a.\n",
+  "questionSha256": "74e423b13c2bf8652f79c8574d8df4851d73528b737afb6e481a609303ecb92f",
+  "protocolSha256": "9732611e1757d7319ab0c9e29a5235622796da57d618e080e6c13864d2a6accc",
+  "processor": "s",
+  "model": "stub",
+  "seed": {
+    "source": "primer",
+    "path": null,
+    "files": [
+      "src/b.ts"
+    ],
+    "chars": 131
+  },
+  "budgets": {
+    "calls": 30,
+    "reads": 12,
+    "chars": 120000,
+    "rounds": 40,
+    "deadlineMs": 60000
+  },
+  "caps": {
+    "readLines": 400,
+    "grepHits": 200,
+    "grepLineChars": 300,
+    "listEntries": 300,
+    "grepSkip": [
+      ".morph",
+      "decks"
+    ]
+  },
+  "status": "ok",
+  "answer": {
+    "targets": [
+      "src/b.ts"
+    ],
+    "context_slice": [
+      "src/a.ts",
+      "README.md"
+    ],
+    "reasoning": "b reads a"
+  },
+  "stopReason": "the model answered on its own",
+  "spent": {
+    "calls": 1,
+    "reads": 1,
+    "chars": 86,
+    "rounds": 2
+  },
+  "elapsedMs": 0,
+  "usage": {
+    "requests": 2,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cost": 0
+  },
+  "journal": [
+    {
+      "round": 1,
+      "turn": "action",
+      "action": {
+        "kind": "read",
+        "path": "src/b.ts",
+        "from": null,
+        "to": null
+      },
+      "chars": 86,
+      "error": null,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "cost": 0
+    },
+    {
+      "round": 2,
+      "turn": "answer",
+      "action": null,
+      "chars": 0,
+      "error": null,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "cost": 0
+    }
+  ]
+}

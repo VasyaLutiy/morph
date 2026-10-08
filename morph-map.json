@@ -1,7 +1,7 @@
 {
   "package": "src",
   "docs": [
-    "docs/TASK_P13a_scout.md"
+    "docs/TASK_P13b_scout.md"
   ],
   "groups": {
     "card-model": [
@@ -1073,17 +1073,19 @@
         "src/cli/main.ts"
       ],
       "context_slice": [
-        "docs/TASK_P12_primer.md",
+        "docs/TASK_P13b_scout.md",
         "docs/CONVENTIONS.md",
         "src/cli/document.ts",
-        "src/primer/primerCommand.ts"
+        "src/scout/scoutCommand.ts",
+        "src/scout/planFromScout.ts"
       ],
       "depends_on": [
-        "primer-command"
+        "scout-command",
+        "plan-from-scout"
       ],
       "variants": 2,
-      "max_tokens": 12000,
-      "instruction": "Read docs/TASK_P12_primer.md sections 2.2 (src/cli/types.ts, Parse Command, Main: the routing of primer) and 4. Patch three files (their current texts follow); change nothing else in them. src/cli/types.ts: add PrimerArgs exactly as section 2.2 shows and widen Command with it. src/cli/parse.ts: --write takes no value; primer is no longer a not-yet word; the word primer, its flags and its result as section 2.2 says, done after collect's checks and before missing --deck; the no-command message lists the six commands; every other check, message, default and key of deck check, run, plan, submit and collect stays exactly as it is. src/cli/main.ts: route primer to primerCommand(root, command.write, {env: deps.env, now: deps.now}) before the run branch, which stays the last else. Write no test file: a probe tests you and a judge writes the example tests."
+      "max_tokens": 24000,
+      "instruction": "Read docs/TASK_P13b_scout.md sections 2.2 (src/cli/types.ts, Parse Command, Main: the routing of scout and plan --from-scout and their tables) and 4. Patch three files (their current texts follow) and return each WHOLE; change nothing else in them. src/cli/types.ts: add ScoutArgs and FromScoutArgs exactly as section 2.2 shows and widen Command with them. src/cli/parse.ts: --issue, --seed-file and --from-scout are value flags; scout is a command word and no longer a not-yet word; plan with --from-scout is the command \"plan --from-scout\"; their flag sets, checks and results as section 2.2 says, plan --from-scout done before plan's missing --spec, scout done after primer and before missing --deck; the no-command message lists the seven commands; every other check, message, default and key stays exactly as it is. src/cli/main.ts: route scout to await scoutCommand(root, command, deps) and plan --from-scout to planFromScout(root, command) before the run branch, which stays the last else. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "deck-check": {
       "intent": "generate",
@@ -1177,7 +1179,7 @@
         "tests/cli/parse.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P12_primer.md",
+        "docs/TASK_P13b_scout.md",
         "docs/CONVENTIONS.md",
         "src/cli/types.ts",
         "src/cli/parse.ts"
@@ -1185,8 +1187,8 @@
       "depends_on": [
         "parse-command"
       ],
-      "max_tokens": 20000,
-      "instruction": "You patch tests/cli/parse.examples.test.ts and return it WHOLE (its current text follows). Read docs/TASK_P12_primer.md sections 2.2 (Parse Command) and 2.3 (the parse.examples bullet). Two changes only: in \"Parse Command example 8\" the no-command message becomes \"no command (commands: deck check, plan, run, submit, collect, primer)\"; after the last test add \"Parse Command example 16: the word primer and --write\" with the six argv of section 2.2's table, each result written out as a literal and compared whole with toStrictEqual, as examples 14 and 15 do. Keep every other test, its name and every other line exactly as it is. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "max_tokens": 24000,
+      "instruction": "You patch tests/cli/parse.examples.test.ts and return it WHOLE (its current text follows). Read docs/TASK_P13b_scout.md sections 2.2 (Parse Command and its table) and 2.3 (the parse.examples bullet). Three changes only: the test \"Parse Command example 4: scout and deck status answer NotYetError\" becomes \"Parse Command example 4: review and deck status answer NotYetError\", its first argv [\"review\"] and its message \"command review is not available yet\"; in \"Parse Command example 8\" the no-command message becomes \"no command (commands: deck check, plan, run, submit, collect, primer, scout)\"; after the last test add \"Parse Command example 17: the word scout and its flags\" with the seven argv and \"Parse Command example 18: plan --from-scout\" with the six argv of section 2.2's table, each result written out as a literal and compared whole with toStrictEqual, as examples 14 and 15 do. Keep every other test, its name and every other line exactly as it is. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "deck-check-judge": {
       "intent": "generate",
@@ -1233,10 +1235,10 @@
     "main-judge": {
       "intent": "generate",
       "targets": [
-        "tests/cli/main.p12.examples.test.ts"
+        "tests/cli/main.p13b.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P12_primer.md",
+        "docs/TASK_P13b_scout.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/cli/types.ts",
@@ -1246,7 +1248,7 @@
         "parse-command"
       ],
       "max_tokens": 12000,
-      "instruction": "You write tests/cli/main.p12.examples.test.ts only, a NEW file with the test of Main example 9; examples 1-8 are already tested and you do not repeat them. Read docs/TASK_P12_primer.md sections 2.1 (F1, F3) and 2.2 (Main). Call main(argv, deps, io) in process from \"../../src/cli/main.js\" with deps {env: {PATH: process.env.PATH ?? \"\"}, now: () => 1791400000000, cwd: \"/\", transport: null} and an io that pushes stdout and stderr chunks; parse each stdout chunk with JSON.parse; tmpRepo and tmpRoot from \"../helpers.js\". Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/cli/main.p13b.examples.test.ts only, a NEW file with the tests of Main examples 10 and 11; examples 1-9 are already tested and you do not repeat them. Read docs/TASK_P13b_scout.md sections 2.1 (the stub processor) and 2.2 (Main and its table). Call main(argv, deps, io) in process from \"../../src/cli/main.js\" with deps {env: {PATH: process.env.PATH ?? \"\", MORPH_PROCESSOR_s_TYPE: \"stub\", MORPH_PROCESSOR_s_ANSWERS_DIR: <side root>/ans}, now: () => 1791500000000, cwd: <side root>, transport: null} and an io that pushes stdout and stderr chunks; parse each stdout chunk with JSON.parse; tmpRepo and tmpRoot from \"../helpers.js\". The model's one turn is the file ans/scout.t1.md of the side root. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "profiles": {
       "intent": "generate",
@@ -2575,6 +2577,134 @@
       ],
       "max_tokens": 14000,
       "instruction": "You write tests/scout/seedFromOwnership.examples.test.ts only, a NEW file with the tests of Seed From Ownership examples 1-3. Read docs/TASK_P13a_scout.md sections 2.2 (Seed From Ownership and its table) and 2.3 (the seedFromOwnership.examples bullet). Import seedFromOwnership, renderSeed, SEED_HEADER and the types from \"../../src/scout/seedFromOwnership.js\". Build the ownership literal of example 1 once, compare every whole seed with toStrictEqual and every rendered text with toBe, the notes written out in full."
+    },
+    "run-scout": {
+      "intent": "generate",
+      "targets": [
+        "src/scout/runScout.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P13b_scout.md",
+        "docs/CONVENTIONS.md",
+        "tests/fixtures/scout/protocol.txt",
+        "src/scout/parseTurn.ts",
+        "src/scout/cagePath.ts",
+        "src/scout/runTool.ts",
+        "src/scout/spendBudget.ts",
+        "src/processor/send.ts",
+        "src/processor/types.ts",
+        "src/compiler/types.ts"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 20000,
+      "instruction": "Read docs/TASK_P13b_scout.md sections 2.1 (the functions you call), 2.2 (src/scout/runScout.ts, PROTOCOL, Run Scout steps 1-8 and its table) and 4; tests/fixtures/scout/protocol.txt is PROTOCOL's exact text (no final newline: write it as a string constant, nine lines joined with \"\\n\"); src/scout/parseTurn.ts, cagePath.ts, runTool.ts, spendBudget.ts, src/processor/send.ts and the two types files follow (import from them, do not change them). Write src/scout/runScout.ts, a NEW file of the layer scout that imports no node module: the exports of section 2.2 in that order. Each round is one request through sendGeneration(config, [request], transport); the delivered text of Spend Budget is the next user message; one correction of a rejected answer; after a calls, reads or chars close the close sentence is appended to that same user message and the next turn is the final one; deadline and rounds end at once. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "run-scout-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/scout/runScout.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P13b_scout.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/scout/runScout.ts",
+        "src/scout/cagePath.ts",
+        "src/processor/registry.ts"
+      ],
+      "depends_on": [
+        "run-scout"
+      ],
+      "max_tokens": 24000,
+      "instruction": "You write tests/scout/runScout.examples.test.ts only, a NEW file with the tests of Run Scout examples 1-5. Read docs/TASK_P13b_scout.md sections 2.1 (the tree, the stub processor and the harness skeleton: NODE_FS, NO_NET, stub(), the session) and 2.2 (Run Scout and its table) and 2.3 (the runScout.examples bullet). Import runScout, PROTOCOL, REMINDER and the types from \"../../src/scout/runScout.js\", readRegistry from \"../../src/processor/registry.js\", DEFAULT_TOOL_CAPS from \"../../src/scout/runTool.js\", DEFAULT_BUDGETS from \"../../src/scout/spendBudget.js\", the ScoutFs type from \"../../src/scout/cagePath.js\", the Transport and ProcessorConfig types from \"../../src/processor/types.js\", tmpRoot, fakeFetch, fakeClock and fixture from \"../helpers.js\", fs from \"node:fs\". Every model turn is a file scout.t<n>.md of an answers dir (the stub) or the fakeFetch route of example 5; compare PROTOCOL with fixture(\"scout/protocol.txt\"). Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+    },
+    "scout-command": {
+      "intent": "generate",
+      "targets": [
+        "src/scout/scoutCommand.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P13b_scout.md",
+        "docs/CONVENTIONS.md",
+        "src/scout/runScout.ts",
+        "src/scout/cagePath.ts",
+        "src/scout/parseTurn.ts",
+        "src/scout/runTool.ts",
+        "src/scout/spendBudget.ts",
+        "src/scout/seedFromOwnership.ts",
+        "src/git/run.ts",
+        "src/git/log.ts",
+        "src/git/ownership.ts",
+        "src/processor/registry.ts",
+        "src/processor/send.ts",
+        "src/processor/types.ts"
+      ],
+      "depends_on": [
+        "run-scout"
+      ],
+      "variants": 2,
+      "max_tokens": 20000,
+      "instruction": "Read docs/TASK_P13b_scout.md sections 2.1 (the functions you call), 2.2 (src/scout/scoutCommand.ts, Scout Command and its table, the ScoutRecord keys) and 4; src/scout/runScout.ts, the P13a scout files, the git and processor files follow (import from them, do not change them). Write src/scout/scoutCommand.ts, a NEW file of the layer scout and one of its two node:fs files (node:fs, node:crypto, node:path): the exports of section 2.2 in that order. The refusals in the record's order before any model call or write; the listing from gitOk(root, [\"ls-files\", \"-z\", \"--cached\", \"--others\", \"--exclude-standard\"], env); the clock only as deps.now(), called once before runScout (its value gives the id and createdAt); scout.json and transcript.json as JSON.stringify(value, null, 2) + \"\\n\" under .morph/scout/<id>/. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "scout-command-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/scout/scoutCommand.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P13b_scout.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/scout/scoutCommand.ts",
+        "src/scout/runScout.ts",
+        "src/scout/seedFromOwnership.ts",
+        "src/scout/runTool.ts"
+      ],
+      "depends_on": [
+        "scout-command"
+      ],
+      "max_tokens": 24000,
+      "instruction": "You write tests/scout/scoutCommand.examples.test.ts only, a NEW file with the tests of Scout Command examples 1-5. Read docs/TASK_P13b_scout.md sections 2.1 (the Scout Command harness: the tmpRepo with the Morph-Card: b commit, the side root, the deps and args) and 2.2 (Scout Command and its table, the ScoutRecord keys) and 2.3 (the scoutCommand.examples bullet). Import from \"../../src/scout/scoutCommand.js\", PROTOCOL from \"../../src/scout/runScout.js\", SEED_HEADER from \"../../src/scout/seedFromOwnership.js\", DEFAULT_TOOL_CAPS from \"../../src/scout/runTool.js\", tmpRepo and tmpRoot from \"../helpers.js\", fs from \"node:fs\". scoutCommand is async: await it; a root outside git makes its promise reject. Read scout.json with the tmpRepo's read and JSON.parse. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+    },
+    "plan-from-scout": {
+      "intent": "generate",
+      "targets": [
+        "src/scout/planFromScout.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P13b_scout.md",
+        "docs/CONVENTIONS.md",
+        "src/scout/cagePath.ts",
+        "src/language/paths.ts",
+        "src/language/types.ts",
+        "src/language/profiles.ts",
+        "src/cards/types.ts",
+        "tests/fixtures/scout/session.json"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 14000,
+      "instruction": "Read docs/TASK_P13b_scout.md sections 2.1, 2.2 (src/scout/planFromScout.ts, Plan From Scout and its table) and 4; src/scout/cagePath.ts, the language files and src/cards/types.ts follow (import cagePath, profileForPath, hasExtension and the types, do not change them); tests/fixtures/scout/session.json is a real scout.json. Write src/scout/planFromScout.ts, a NEW file of the layer scout and its second node:fs file (node:fs, node:path): the exports of section 2.2 in that order, the session chosen, the record read, the paths caged on the disk now, ONE patch card, the deck file written to out. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "plan-from-scout-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/scout/planFromScout.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P13b_scout.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/scout/planFromScout.ts",
+        "tests/fixtures/scout/session.json",
+        "tests/fixtures/scout/noAnswer.json"
+      ],
+      "depends_on": [
+        "plan-from-scout"
+      ],
+      "max_tokens": 16000,
+      "instruction": "You write tests/scout/planFromScout.examples.test.ts only, a NEW file with the tests of Plan From Scout examples 1-4. Read docs/TASK_P13b_scout.md sections 2.1 (the fixtures and the Plan From Scout harness) and 2.2 (Plan From Scout and its table) and 2.3 (the planFromScout.examples bullet). Import from \"../../src/scout/planFromScout.js\", loadDeck from \"../../src/cards/model.js\", the Card type from \"../../src/cards/types.js\", tmpRoot and fixture from \"../helpers.js\", fs from \"node:fs\". The sessions are fixture(\"scout/session.json\") and fixture(\"scout/noAnswer.json\") written under .morph/scout/<id>/scout.json of the tmp root; an edited session is JSON.stringify of the parsed fixture with the one change. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     }
   }
 }

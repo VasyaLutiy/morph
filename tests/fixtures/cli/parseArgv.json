@@ -34,7 +34,7 @@
   ],
   "4": [
     [
-      "scout"
+      "review"
     ],
     [
       "deck",
@@ -244,6 +244,107 @@
       "--write",
       "primer",
       "--write"
+    ]
+  ],
+  "17": [
+    [
+      "scout",
+      "--processor",
+      "ds",
+      "--issue",
+      "task.txt"
+    ],
+    [
+      "--pretty",
+      "scout",
+      "--root",
+      "/r",
+      "--processor",
+      "s",
+      "--issue",
+      "/tmp/q.md",
+      "--seed-file",
+      "seed.json",
+      "--deadline",
+      "90"
+    ],
+    [
+      "scout",
+      "--issue",
+      "t"
+    ],
+    [
+      "scout",
+      "--processor",
+      "s"
+    ],
+    [
+      "scout",
+      "--processor",
+      "s",
+      "--issue",
+      "t",
+      "--deadline",
+      "0"
+    ],
+    [
+      "scout",
+      "--processor",
+      "s",
+      "--issue",
+      "t",
+      "--deck",
+      "d"
+    ],
+    [
+      "run",
+      "--deck",
+      "d",
+      "--processor",
+      "s",
+      "--issue",
+      "t"
+    ]
+  ],
+  "18": [
+    [
+      "plan",
+      "--from-scout",
+      "latest"
+    ],
+    [
+      "plan",
+      "--root",
+      "/r",
+      "--from-scout",
+      "20261008-225320-74e423b1",
+      "--out",
+      "decks/s.json",
+      "--pretty"
+    ],
+    [
+      "plan",
+      "--from-scout",
+      "x",
+      "--spec",
+      "c.yaml"
+    ],
+    [
+      "plan",
+      "--from-scout",
+      "a/b"
+    ],
+    [
+      "plan",
+      "--spec",
+      "c.yaml",
+      "--from-scout"
+    ],
+    [
+      "plan",
+      "--from-scout",
+      "x",
+      "--judge"
     ]
   ]
 }

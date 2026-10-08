@@ -1,0 +1,127 @@
+{
+ "phase": "p13b",
+ "ownGit": false,
+ "fullExclude": [
+  "tests/cli/parse.examples.test.ts"
+ ],
+ "cards": [
+  {
+   "id": "run-scout"
+  },
+  {
+   "id": "scout-command"
+  },
+  {
+   "id": "plan-from-scout"
+  },
+  {
+   "id": "parse-command"
+  },
+  {
+   "id": "run-scout-judge",
+   "files": [
+    {
+     "file": "tests/scout/runScout.examples.test.ts",
+     "min": 5,
+     "max": 11,
+     "new": true,
+     "lits": [
+      "Run Scout example 1",
+      "Run Scout example 2",
+      "Run Scout example 3",
+      "Run Scout example 4",
+      "Run Scout example 5",
+      "scout.t1.md",
+      "the model answered after the budget closed: the call budget is spent (2 of 2 calls)",
+      "no answer: the corrected answer was rejected: targets: ",
+      "the deadline (1.5 s) passed",
+      "scout/protocol.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scout-command-judge",
+   "files": [
+    {
+     "file": "tests/scout/scoutCommand.examples.test.ts",
+     "min": 5,
+     "max": 11,
+     "new": true,
+     "lits": [
+      "Scout Command example 1",
+      "Scout Command example 2",
+      "Scout Command example 3",
+      "Scout Command example 4",
+      "Scout Command example 5",
+      "20261008-225320-74e423b1",
+      "Morph-Card: b",
+      "seed file z.json: not in the tree: src/z.ts",
+      "issue file is empty: blank.txt",
+      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "plan-from-scout-judge",
+   "files": [
+    {
+     "file": "tests/scout/planFromScout.examples.test.ts",
+     "min": 4,
+     "max": 10,
+     "new": true,
+     "lits": [
+      "Plan From Scout example 1",
+      "Plan From Scout example 2",
+      "Plan From Scout example 3",
+      "Plan From Scout example 4",
+      "scout/session.json",
+      "scout/noAnswer.json",
+      "target refused: path leaves the root: ../x.ts",
+      "no scout session under .morph/scout",
+      "python3 -m py_compile a.py c.py"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "parse-command-judge",
+   "files": [
+    {
+     "file": "tests/cli/parse.examples.test.ts",
+     "min": 24,
+     "max": 26,
+     "drop": [
+      "Parse Command example 4: scout and deck status answer NotYetError"
+     ],
+     "lits": [
+      "Parse Command example 17",
+      "Parse Command example 18",
+      "primer, scout)",
+      "command review is not available yet",
+      "flag --spec does not apply to plan --from-scout"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "main-judge",
+   "files": [
+    {
+     "file": "tests/cli/main.p13b.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Main example 10",
+      "Main example 11",
+      "morph plan --from-scout: exit 0",
+      "no scout session under .morph/scout",
+      "scout.t1.md"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "scoutId": "20261008-225420-74e423b1",
+  "createdAt": "2026-10-08T22:54:20.000Z",
+  "root": "/tmp/morph-repo-F2BzHc",
+  "ref": "2e7116d687d05d6d6d18c5dad347cdcf78de3c0b",
+  "question": "Make b twice a.\n",
+  "questionSha256": "74e423b13c2bf8652f79c8574d8df4851d73528b737afb6e481a609303ecb92f",
+  "protocolSha256": "9732611e1757d7319ab0c9e29a5235622796da57d618e080e6c13864d2a6accc",
+  "processor": "s",
+  "model": "stub",
+  "seed": {
+    "source": "primer",
+    "path": null,
+    "files": [
+      "src/b.ts"
+    ],
+    "chars": 131
+  },
+  "budgets": {
+    "calls": 30,
+    "reads": 12,
+    "chars": 120000,
+    "rounds": 40,
+    "deadlineMs": 60000
+  },
+  "caps": {
+    "readLines": 400,
+    "grepHits": 200,
+    "grepLineChars": 300,
+    "listEntries": 300,
+    "grepSkip": [
+      ".morph",
+      "decks"
+    ]
+  },
+  "status": "no_answer",
+  "answer": null,
+  "stopReason": "no answer: the model call failed in round 1: stub has no answer: /tmp/morph-side-l5V4h4/ans/scout.t1.md",
+  "spent": {
+    "calls": 0,
+    "reads": 0,
+    "chars": 0,
+    "rounds": 0
+  },
+  "elapsedMs": 0,
+  "usage": {
+    "requests": 1,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cost": 0
+  },
+  "journal": [
+    {
+      "round": 1,
+      "turn": "failed",
+      "action": null,
+      "chars": 0,
+      "error": "stub has no answer: /tmp/morph-side-l5V4h4/ans/scout.t1.md",
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "cost": 0
+    }
+  ]
+}

@@ -40,7 +40,7 @@
         "error": {
           "code": 4,
           "kind": "NotYetError",
-          "message": "command scout is not available yet"
+          "message": "command review is not available yet"
         }
       }
     },
@@ -102,7 +102,7 @@
         "error": {
           "code": 4,
           "kind": "UsageError",
-          "message": "no command (commands: deck check, plan, run, submit, collect, primer)"
+          "message": "no command (commands: deck check, plan, run, submit, collect, primer, scout)"
         }
       }
     }
@@ -363,6 +363,144 @@
           "code": 4,
           "kind": "UsageError",
           "message": "flag --write given twice"
+        }
+      }
+    }
+  ],
+  "17": [
+    {
+      "ok": true,
+      "command": {
+        "name": "scout",
+        "root": ".",
+        "pretty": false,
+        "processor": "ds",
+        "issue": "task.txt",
+        "seedFile": null,
+        "deadlineSeconds": 1800
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "scout",
+        "root": "/r",
+        "pretty": true,
+        "processor": "s",
+        "issue": "/tmp/q.md",
+        "seedFile": "seed.json",
+        "deadlineSeconds": 90
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --processor"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --issue"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--deadline must be a positive integer (got '0')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --deck does not apply to scout"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --issue does not apply to run"
+        }
+      }
+    }
+  ],
+  "18": [
+    {
+      "ok": true,
+      "command": {
+        "name": "plan --from-scout",
+        "root": ".",
+        "pretty": false,
+        "fromScout": "latest",
+        "out": null
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "plan --from-scout",
+        "root": "/r",
+        "pretty": true,
+        "fromScout": "20261008-225320-74e423b1",
+        "out": "decks/s.json"
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --spec does not apply to plan --from-scout"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--from-scout must match ^[A-Za-z0-9._-]+$ (got 'a/b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --from-scout needs a value"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --judge does not apply to plan --from-scout"
         }
       }
     }

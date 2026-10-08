@@ -1,0 +1,34 @@
+{
+  "Run Command 1": {
+    "given": "a tmpRepo; env with a git identity, MORPH_PROCESSOR_s_TYPE stub, MORPH_PROCESSOR_s_ANSWERS_DIR a side tmp root with a.md, b.md (fenced ts blocks); a deck file there: a → out/a.ts (\"test -f out/a.ts\"), b → out/b.ts dependsOn [a]; runId \"r1\"",
+    "then": "code 0; runId \"r1\", branch \"morph/r1\", base = HEAD before; a, b \"written\", generations 2, processor \"s\", usageTotals.requests 2; archive {ok: true, dir: \".morph/runs/r1\", commit: HEAD}; subjects since base, newest first: \"morph run r1: deck and report\", \"morph b: out/b.ts\", \"morph a: out/a.ts\"; HEAD on morph/r1; status clean"
+  },
+  "Run Command 9": {
+    "given": "example 1 with the env of literals.json[\"Run Command 9\"]; deps.transport answering 202 batchSubmittedLive.json, then 200 batchCompletedLive.json; cards clamp-value → out/clamp.ts, sign-of → out/sign.ts, \"test -f <target>\"; runId \"r9\"",
+    "then": "code 0, both written; every report.requests row batchId \"batch-1791388269-cp5qOr5IQ0xoz1ntuc8W\"; usageTotals.cost 0.0005804; .morph/batches/<that id>.json exactly batch.r9.json; git status --porcelain exactly \"?? .morph/batches/\""
+  },
+  "Run Command 10": {
+    "given": "example 1, runId \"r10\"; a .git/hooks/commit-msg (755) that prints \"card commits refused\" to stderr, exit 1, on a message starting \"morph a:\"",
+    "then": "code 3, the Run Document; report.fault \"git commit failed (exit 1): card commits refused\"; a, b \"skipped\", reason \"fault\"; archive {ok: true, dir: \".morph/runs/r10\", commit: HEAD} (report.json with the fault, Morph-Skipped: 2), the only commit since base; HEAD on morph/r10"
+  },
+  "Main 4": {
+    "given": "the binary built by tsc -p tsconfig.build.json into a tmp out dir ({\"type\":\"module\"}, node_modules linked); a tmpRepo, a side root with a.md, b.md and the deck a, then b dependsOn a; `node <out>/cli.js run --root <repo> --deck <deck> --processor s --run-id e2e`, the stub env",
+    "then": "exit 0; stdout one line of JSON: runId \"e2e\", branch \"morph/e2e\", outcomes written, written, archive ok; the last three subjects \"morph run e2e: deck and report\", \"morph b: out/b.ts\", \"morph a: out/a.ts\"; stderr literals.json[\"Main 4\"] (a.md, b.md 30 chars each)"
+  },
+  "Main 6": {
+    "given": "a tmpRepo; side root: a.md, deck a → out/a.ts (`sleep 30 & echo $! > <side>/sleep.pid; kill -INT $PPID; wait`), then b (\"true\"); `node --import tsx src/cli.ts run --root <repo> --deck <deck> --processor s --run-id sig`, cwd the repository, the stub env",
+    "then": "status 3; one Run Document: fault \"interrupted by SIGINT\", a \"failed\" (log ending \"acceptance interrupted by SIGINT\\n\"), b \"skipped\" \"fault\", archive ok; the sleep gone; HEAD on morph/sig; status clean"
+  },
+  "Main 9": {
+    "given": "a tmpRepo t, tests/a.test.ts \"test(\\\"a\\\", () => {});\\nit(\\\"b\\\", () => {});\\n\"; deps {env {PATH}, now 1791400000000, cwd \"/\"}; argv [primer, --write, --root, t]; then [primer, --root, a non-repo tmp root]",
+    "then": "0; one document: tests {language \"typescript\", files 1, tests 2}, written \".morph/primer.md\" = its markdown; stderr [\"morph primer: exit 0\\n\"]; then 3 RuntimeError beginning \"git ls-files failed (exit 128): \", stderr [\"morph primer: exit 3\\n\"]"
+  },
+  "Plan Command 1": {
+    "given": "a tmp root holding ledger.yaml and ledger.map.json (the planner fixtures' texts) and a tests/helpers.ts; args spec \"ledger.yaml\", components [\"ledger\", \"store\"], map \"ledger.map.json\", judge true, out \"decks/p.json\"",
+    "then": "code 0; document equal to ledger.plan.json plus out \"decks/p.json\"; the file decks/p.json is exactly JSON.stringify(document.cards, null, 2) + \"\\n\"; Read Deck File of it is ok with 17 cards and externalDependsOn [\"outside\"]"
+  },
+  "Main 8": {
+    "given": "the setup of Submit Deck 1, argv [\"submit\", \"--deck\", \"d.json\", \"--processor\", \"b\", \"--root\", t]; then the transport and now of Collect Batch 1 in new deps, argv [\"collect\", \"--batch\", <its id>, \"--root\", t]",
+    "then": "0 and 0; the two documents of those examples on stdout; stderr \"morph submit: exit 0\\n\", \"morph collect: exit 0\\n\"; the state file and answer files as Collect Batch 1"
+  }
+}

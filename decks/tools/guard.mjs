@@ -18,7 +18,8 @@ const LAYERS = {
   builder: ["cards", "language"],
   primer: ["cards", "git", "store", "language"],
   // P13a: the seed reads language's profiles (and, from P13b, git's ownership) (docs/TASK_P13a_scout.md §4)
-  scout: ["cards", "processor", "wait", "primer", "language", "git"],
+  // P13b: the round loop builds the processor's Request and Message (compiler's types) (docs/TASK_P13b_scout.md §4)
+  scout: ["cards", "processor", "wait", "primer", "language", "git", "compiler"],
   reviewer: ["cards", "contour", "primer", "scout", "git"],
   runloop: ["cards", "wait", "store", "compiler", "response", "acceptance", "language",
     "git", "processor"],
@@ -34,7 +35,8 @@ const PROCESS = new Set(["cli", "processor", "acceptance"]);
 const NO_CLOCK = new Set(["cards", "compiler", "response", "language", "contour", "planner", "builder", "batches", "primer",
   "scout"]);
 // P12a: the one file of src/primer that turns the clock parameter deps.now() into an ISO string (docs/TASK_P12_primer.md §4)
-const CLOCK_FORMATTERS = new Set(["src/primer/primerCommand.ts"]);
+// P13b: the one file of src/scout that turns deps.now() into the session id and createdAt (docs/TASK_P13b_scout.md §4)
+const CLOCK_FORMATTERS = new Set(["src/primer/primerCommand.ts", "src/scout/scoutCommand.ts"]);
 const YAML = new Set(["contour"]);
 // P3: the acceptance gets the child's environment as a parameter (docs/TASK_P3_acceptance.md §4)
 const NO_ENV = new Set(["acceptance", "processor", "git", "batches", "primer", "scout"]);
@@ -56,6 +58,11 @@ const CLI_ENTRY = "src/cli.ts";
 // (docs/TASK_P13a_scout.md §4; P13b adds the one node:fs adapter file)
 const NODE_ONLY = { language: new Set(["node:path"]), contour: new Set(), planner: new Set(["node:path"]),
   builder: new Set(["node:path"]), scout: new Set(["node:path"]) };
+// P13b: the two I/O files of src/scout, the commands `morph scout` (the node:fs ScoutFs adapter, git ls-files, the
+// scout.json write, the question's sha256) and `morph plan --from-scout` (reads scout.json, writes the deck); every other
+// scout file stays pure (docs/TASK_P13b_scout.md §4)
+const NODE_FILES = { "src/scout/scoutCommand.ts": new Set(["node:fs", "node:crypto"]),
+  "src/scout/planFromScout.ts": new Set(["node:fs"]) };
 const YAML_FILE = "src/contour/load.ts";
 
 function parse(file) {
@@ -123,7 +130,7 @@ function checkSrc(files) {
     const allowed = layer === null ? [] : LAYERS[layer];
     for (const [node, spec] of moduleSpecifiers(sf)) {
       if (spec.startsWith("node:")) {
-        if (layer in NODE_ONLY && !NODE_ONLY[layer].has(spec))
+        if (layer in NODE_ONLY && !NODE_ONLY[layer].has(spec) && !(NODE_FILES[rel]?.has(spec)))
           report(sf, node, `${spec} in the pure layer ${layer} (only ${[...NODE_ONLY[layer]].join(", ") || "none"})`);
         if (spec === "node:child_process" && !SHELL.has(layer))
           report(sf, node, `node:child_process outside src/acceptance and src/git`);
