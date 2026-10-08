@@ -124,6 +124,27 @@ test("§2.2 rows: the constants; a target written as ./src/b.ts is refused; the 
     const got = planFromScout(p.root, { fromScout: "latest", out: "a/b/c.json" });
     expect((got.document as { cards: Card[] }).cards[0].maxTokens).toBe(20002);
     expect(JSON.parse(p.read("a/b/c.json"))).toStrictEqual((got.document as { cards: Card[] }).cards);
+    const at = `.morph/scout/${ID}/scout.json`;
+    const full = JSON.parse(fixture("scout/session.json")) as Record<string, unknown>;
+    p.write(at, JSON.stringify({ ...full, status: "invalid_answer" }));
+    expect(planFromScout(p.root, { fromScout: ID, out: null })).toStrictEqual(
+      err(2, "RefusalError", `scout session ${ID} has no answer (invalid_answer): the model answered on its own`));
+    p.write(at, JSON.stringify({ ...full, answer: null }));
+    expect(planFromScout(p.root, { fromScout: ID, out: null })).toStrictEqual(
+      err(2, "RefusalError", `scout session ${ID} has no answer (ok): the model answered on its own`));
+    p.write(at, JSON.stringify({ ...full, answer: { targets: [], context_slice: [], reasoning: "" } }));
+    expect(planFromScout(p.root, { fromScout: ID, out: null })).toStrictEqual(
+      err(2, "DeckError", `${at}: the answer has no targets or the session no question`));
+    p.write("src/b.ts", B);
+    p.write(at, JSON.stringify({ ...full, answer: { targets: ["src/b.ts", "src/a.ts"], context_slice: ["src", "README.md"], reasoning: "" } }));
+    const two = planFromScout(p.root, { fromScout: ID, out: null }).document as { cards: Card[]; dropped: string[] };
+    expect([two.dropped, two.cards[0].contextSlice, two.cards[0].maxTokens]).toStrictEqual([["src"], ["README.md"], 16000]);
+    p.write("src/a.ts", "y".repeat(30000));
+    const big = planFromScout(p.root, { fromScout: ID, out: null }).document as { cards: Card[] };
+    expect(big.cards[0].maxTokens).toBe(20036);
+    p.write(at, JSON.stringify({ ...full, question: " \n" }));
+    expect(planFromScout(p.root, { fromScout: ID, out: null })).toStrictEqual(
+      err(2, "DeckError", `${at}: the answer has no targets or the session no question`));
   } finally {
     p.rm();
   }

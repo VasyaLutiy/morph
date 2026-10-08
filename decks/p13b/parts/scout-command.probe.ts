@@ -10,7 +10,7 @@ import type { ScoutCommandDeps, ScoutOptions, ScoutRecord } from "../../src/scou
 import { PROTOCOL } from "../../src/scout/runScout.js";
 import { DEFAULT_TOOL_CAPS } from "../../src/scout/runTool.js";
 import { SEED_HEADER } from "../../src/scout/seedFromOwnership.js";
-import { tmpRepo, tmpRoot } from "../../tests/helpers.js";
+import { fakeFetch, tmpRepo, tmpRoot } from "../../tests/helpers.js";
 import type { TmpRepo, TmpRoot } from "../../tests/helpers.js";
 
 const NOW = 1791500000000;
@@ -165,5 +165,43 @@ test("Scout Command example 5: the id, the sha, the file seed text, the seed rea
     expect(() => NODE_SCOUT_FS.realpath(p.path("gone"))).toThrow();
   } finally {
     p.rm();
+  }
+});
+
+test("§2.2 rows: the listing holds untracked files and no ignored ones; two seeded files; the start's clock; openrouter without max_tokens", async () => {
+  const t = repo();
+  const s = side(["READ src/b.ts", ANSWER]);
+  try {
+    t.write("src/c.ts", "export const c = 3;\n");
+    t.git(["add", "."]);
+    t.git(["commit", "-q", "-m", "morph c: src/c.ts\n\nMorph-Card: c\nMorph-Model: m/c"]);
+    t.write("src/new.ts", "export const n = 0;\n");
+    t.write(".gitignore", "hidden.ts\n");
+    t.write("hidden.ts", "secret\n");
+    s.write("u.json", '{"files": ["src/new.ts"]}');
+    s.write("h.json", '{"files": ["hidden.ts"]}');
+    expect(await scoutCommand(t.root, { ...ARGS, seedFile: "h.json" }, deps(s))).toStrictEqual(usage("seed file h.json: not in the tree: hidden.ts"));
+    let ms = NOW;
+    const ticking = { ...deps(s), now: () => (ms += 1000) };
+    const got = await scoutCommand(t.root, { ...ARGS, seedFile: "u.json" }, ticking);
+    const id = "20261008-225321-74e423b1";
+    expect([got.code, (got.document as { scoutId: string }).scoutId]).toStrictEqual([0, id]);
+    const rec = JSON.parse(t.read(`.morph/scout/${id}/scout.json`)) as ScoutRecord;
+    expect([rec.createdAt, rec.elapsedMs, rec.seed.files]).toStrictEqual(["2026-10-08T22:53:21.000Z", 3000, ["src/new.ts"]]);
+    const own = await scoutCommand(t.root, ARGS, deps(s));
+    expect(own.code).toBe(0);
+    const rec2 = JSON.parse(t.read(`.morph/scout/${ID}/scout.json`)) as ScoutRecord;
+    expect(rec2.seed.files).toStrictEqual(["src/c.ts", "src/b.ts"]);
+    const f = fakeFetch({ "https://openrouter.ai/api/v1/chat/completions": { body: { choices: [{ message: { content: ANSWER } }], usage: { prompt_tokens: 9, completion_tokens: 2, cost: 0.5 } } } });
+    const env = { PATH: process.env.PATH ?? "", MORPH_PROCESSOR_o_TYPE: "openrouter", MORPH_PROCESSOR_o_API_KEY: "k", MORPH_PROCESSOR_o_MODEL: "m/o" };
+    const live = await scoutCommand(t.root, { ...ARGS, processor: "o" }, { env, now: () => NOW, cwd: s.root, transport: { fetch: f.fetch, sleep: async () => undefined } });
+    expect((live.document as { usage: unknown }).usage).toStrictEqual({ requests: 1, inputTokens: 9, outputTokens: 2, cost: 0.5 });
+    const body = JSON.parse(f.calls[0].body ?? "{}") as Record<string, unknown>;
+    expect(["max_tokens" in body, body.model]).toStrictEqual([false, "m/o"]);
+    const rec3 = JSON.parse(t.read(`.morph/scout/${ID}/scout.json`)) as ScoutRecord;
+    expect([rec3.processor, rec3.model]).toStrictEqual(["o", "m/o"]);
+  } finally {
+    t.rm();
+    s.rm();
   }
 });

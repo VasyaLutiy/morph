@@ -199,6 +199,19 @@ test("§2.2 rows: openingMessages and checkAnswer alone; a refused READ journale
     expect(got.stopReason).toBe("no answer: the model did not answer after the budget closed: the character budget is spent (103 of 60 chars)");
     expect(got.usage).toStrictEqual({ requests: 2, inputTokens: 0, outputTokens: 0, cost: null });
     expect(got.messages[3].content).toBe(delivered + FINAL("the character budget is spent (103 of 60 chars)"));
+    const nul = fakeFetch({ "https://openrouter.ai/api/v1/chat/completions": { body: { choices: [{ message: { content: null } }], usage: { cost: 0 } } } });
+    const once = await runScout(session(p, { budgets: { ...DEFAULT_BUDGETS, rounds: 1 } }), { config: or, transport: { fetch: nul.fetch, sleep: clock.sleep }, now: () => 7 });
+    const empty = "Turn not understood: empty turn. " + REMINDER;
+    expect([once.status, once.stopReason, once.messages[2], once.messages[3]]).toStrictEqual(["no_answer", "no answer: the round budget is spent (1 of 1 rounds)",
+      { role: "assistant", content: "" }, { role: "user", content: empty }]);
+    expect(once.journal).toStrictEqual([j(1, "malformed", null, empty.length, "empty turn", 0)]);
+    const rj = stub(p, "rj", ['ANSWER {"targets": ["nope.ts"]}']);
+    const rejected = await runScout(session(p, { budgets: { ...DEFAULT_BUDGETS, rounds: 1 } }), { config: rj, transport: NO_NET, now: () => 7 });
+    expect([rejected.status, rejected.stopReason, rejected.usage.requests]).toStrictEqual(["no_answer", "no answer: the round budget is spent (1 of 1 rounds)", 1]);
+    const fin = stub(p, "fin", ["LIST", 'ANSWER {"targets": ["gone.ts"]}']);
+    const late = await runScout(session(p, { budgets: { ...DEFAULT_BUDGETS, calls: 1 } }), { config: fin, transport: NO_NET, now: () => 7 });
+    expect([late.status, late.stopReason]).toStrictEqual(["invalid_answer",
+      "no answer: the answer after the budget closed was rejected: targets: not in the tree (missing, ignored or a directory): gone.ts"]);
     expect(PROTOCOL).toBe(fixture("scout/protocol.txt"));
     expect(REMINDER).toBe("One line per turn: READ <path> [<from>-<to>], GREP <pattern> [-- <dir>], LIST [<dir>] or ANSWER {json}.");
   } finally {
