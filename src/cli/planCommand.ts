@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { loadContour, loadMap } from "../contour/load.js";
 import { planSpec } from "../planner/plan.js";
+import { selectCards } from "../planner/selectCards.js";
 import { buildAcceptances } from "../builder/buildAcceptances.js";
 import { resolveProfile } from "../language/profiles.js";
 import { readPlanChecks } from "./readPlanChecks.js";
@@ -77,7 +78,15 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
   if (!planned.ok) {
     return { code: 2, document: errorDocument(2, "DeckError", planned.error) };
   }
-  const plan = planned.plan;
+
+  let plan = planned.plan;
+  if (args.only !== undefined) {
+    const selected = selectCards(plan, args.only);
+    if (!selected.ok) {
+      return { code: 2, document: errorDocument(2, "DeckError", selected.error) };
+    }
+    plan = selected.plan;
+  }
 
   let cards: Card[] = plan.cards;
   if (args.checks !== undefined) {
@@ -90,9 +99,14 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
     if (!read.ok) {
       return read.result;
     }
+    let checks = read.checks;
+    if (args.only !== undefined) {
+      const kept = new Set<string>(plan.cards.map((card) => card.customId));
+      checks = { ...checks, cards: checks.cards.filter((c) => kept.has(c.id)) };
+    }
     const built = buildAcceptances({
       cards: plan.cards,
-      checks: read.checks,
+      checks,
       profile: profiled.profile,
       texts: read.texts,
       uses: planned.uses,
