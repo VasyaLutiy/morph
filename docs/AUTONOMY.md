@@ -6,14 +6,14 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (08.10, after P13a)
+## State at handoff (08.10, after P13b)
 
-P0–P13a merged (P13a: scout protocol, cage, budgets, seed, tools — pure, no model call); `main` = origin = VPS. Issues #1, #3, #4, #5 closed. **Processor `ds`** (maxTokens ×3; glm53 the
+P0–P13b merged (P13a+b: `morph scout` — protocol, cage, budgets, seed, round loop, `.morph/scout/<id>/scout.json` — and `plan --from-scout`); `main` = origin = VPS. Issues #1, #3, #4, #5 closed. **Processor `ds`** (maxTokens ×3; glm53 the
 fallback; batch route glm53b). No external review passes (operator 08.10); the session's own pre-merge code read stays.
 Every new MEASURE row fills the `прогоны` column. `morph primer` gives the story, the totals (debt rows out, running total
 vs archive total) and file ownership by trailers (208 Morph commits, 173 paths) — the seed of the scout. Running total
-$3.5365 of $30.
-Next, in order: **P13b** scout (rounds, `scout/<id>/scout.json`, `plan --from-scout`); **P14** reviewer → **final smoke stop**
+$3.9487 of $30.
+Next: **P14** reviewer → **final smoke stop**
 (plan --checks, run on ds, primer, scout, review on a tiny repo): 🧪, then stop; the operator resumes.
 Lessons for the next preparations: default code targets add a test file (give a smoke cap or code-only targets); new
 files need `"intent": "generate"` in the map; a new `src/` folder needs its layer in `decks/tools/guard.mjs`; size a judge
