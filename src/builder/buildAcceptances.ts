@@ -1,9 +1,11 @@
 import { layerGenerations } from "../cards/layer.js";
-import { testTarget } from "../language/paths.js";
+import { hasExtension, testTarget } from "../language/paths.js";
 import { codeAcceptance, judgeAcceptance } from "./compose.js";
+import { goCodeAcceptance, goJudgeAcceptance } from "./goAcceptance.js";
 import type { Deck } from "../cards/types.js";
 import type { BuildInput, BuildResult, CardContext, Checks } from "./types.js";
 import type { Card } from "../cards/types.js";
+import type { LanguageProfile } from "../language/types.js";
 
 export const HEREDOC_TAGS: readonly string[] = [
   "MORPH_GUARD_EOF",
@@ -24,11 +26,20 @@ function tagErrors(kind: string, text: string): string[] {
   return errors;
 }
 
+export function probeFile(profile: LanguageProfile, id: string): string {
+  if (profile.id === "go") {
+    return "_" + id + "_probe_test.go";
+  }
+  return id + ".probe.ts";
+}
+
 export function buildAcceptances(input: BuildInput): BuildResult {
-  if (input.profile.id !== "typescript") {
+  if (input.profile.id !== "typescript" && input.profile.id !== "go") {
     return {
       ok: false,
-      errors: ["no acceptance builder for language '" + input.profile.id + "' (only typescript)"],
+      errors: [
+        "no acceptance builder for language '" + input.profile.id + "' (only typescript, go)",
+      ],
     };
   }
 
@@ -49,6 +60,9 @@ export function buildAcceptances(input: BuildInput): BuildResult {
     if (card === undefined) {
       errors.push("checks card '" + check.id + "' is not in the deck");
       continue;
+    }
+    if (!card.targets.some((t) => hasExtension(input.profile, t))) {
+      errors.push("card '" + check.id + "' has no " + input.profile.id + " target");
     }
     if (check.files !== null) {
       const paths = check.files.map((f) => f.file);
@@ -128,11 +142,19 @@ export function buildAcceptances(input: BuildInput): BuildResult {
       firstdiff: input.texts.firstdiff,
     };
     if (check.files !== null) {
-      acceptanceOf.set(card.customId, judgeAcceptance(ctx, check.files));
-    } else {
       acceptanceOf.set(
         card.customId,
-        codeAcceptance(ctx, input.texts.probes[check.id] ?? "", check.smoke, check.extra),
+        input.profile.id === "go"
+          ? goJudgeAcceptance(ctx, check.files)
+          : judgeAcceptance(ctx, check.files),
+      );
+    } else {
+      const probe = input.texts.probes[check.id] ?? "";
+      acceptanceOf.set(
+        card.customId,
+        input.profile.id === "go"
+          ? goCodeAcceptance(ctx, probe, check.smoke, check.extra)
+          : codeAcceptance(ctx, probe, check.smoke, check.extra),
       );
     }
   }
