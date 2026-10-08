@@ -1,0 +1,125 @@
+import { expect, test } from "vitest";
+import {
+  goCodeAcceptance,
+  goJudgeAcceptance,
+  goNamesKept,
+  goPackages,
+  goProbePath,
+  goTestStep,
+  overlayJson,
+} from "../../src/builder/goAcceptance.js";
+import { DEFAULT_FROZEN } from "../../src/builder/readChecks.js";
+import { GO } from "../../src/language/profiles.js";
+import { fixture } from "../helpers.js";
+import type { CardContext, JudgeFile } from "../../src/builder/types.js";
+
+const ctx = (over: Partial<CardContext>): CardContext => ({
+  id: "percent-of",
+  phase: "m1",
+  targets: ["calc/percent_of.go"],
+  siblings: ["calc/clamp_value_examples_test.go"],
+  frozen: ["go.mod", "internal"],
+  fullExclude: [],
+  ownGit: false,
+  profile: GO,
+  guard: "// guard\n",
+  firstdiff: "// firstdiff\n",
+  ...over,
+});
+
+test("Go Acceptance example 1: a code card with no smoke test writes the probe, runs it and removes it", () => {
+  const script = goCodeAcceptance(ctx({}), "package calc\n", null, null);
+  expect(script).toBe(fixture("builder/go/code1.txt"));
+});
+
+test("Go Acceptance example 2: own git, a smoke test and an extra step surround the stages", () => {
+  const script = goCodeAcceptance(
+    ctx({
+      id: "a",
+      phase: "p2",
+      targets: ["report/a.go", "report/a_test.go"],
+      siblings: [],
+      frozen: DEFAULT_FROZEN,
+      fullExclude: ["calc/old_test.go"],
+      ownGit: true,
+    }),
+    "package report\n",
+    5,
+    "echo '== bin'; true\n",
+  );
+  expect(script).toBe(fixture("builder/go/code2.txt"));
+});
+
+test("Go Acceptance example 3: a judge card guards the lits and runs the own package", () => {
+  const files: JudgeFile[] = [
+    {
+      file: "calc/percent_of_examples_test.go",
+      min: 5,
+      max: 11,
+      lits: ["TestPercentOfExample1", "0% (0 of 0)"],
+      drop: [],
+      new: true,
+    },
+  ];
+  const script = goJudgeAcceptance(
+    ctx({
+      id: "percent-of-judge",
+      targets: ["calc/percent_of_examples_test.go"],
+      siblings: ["report/format_share.go"],
+    }),
+    files,
+  );
+  expect(script).toBe(fixture("builder/go/judge1.txt"));
+});
+
+test("Go Acceptance example 4: two judge files, one patched, keep the HEAD names it may not drop", () => {
+  const files: JudgeFile[] = [
+    {
+      file: "calc/a_examples_test.go",
+      min: 3,
+      max: 11,
+      lits: ["TestAExample1"],
+      drop: [],
+      new: true,
+    },
+    {
+      file: "report/b_examples_test.go",
+      min: 4,
+      max: 4,
+      lits: [],
+      drop: ["TestBExample2"],
+      new: false,
+    },
+  ];
+  const script = goJudgeAcceptance(
+    ctx({
+      id: "ab-judge",
+      phase: "p3",
+      targets: ["calc/a_examples_test.go", "report/b_examples_test.go"],
+      siblings: [],
+      frozen: DEFAULT_FROZEN,
+      fullExclude: ["report/b_examples_test.go"],
+      ownGit: true,
+    }),
+    files,
+  );
+  expect(script).toBe(fixture("builder/go/judge2.txt"));
+});
+
+test("Go Acceptance example 5: the small helpers render packages, overlays, probes and the steps", () => {
+  const steps =
+    goTestStep("-overlay $P/overlay.json ./calc") +
+    goNamesKept("calc/a_examples_test.go", ["TestAExample4", "TestA_old"]) +
+    goNamesKept("report/b_test.go", []);
+  expect(steps).toBe(fixture("builder/go/steps.txt"));
+  expect(goPackages(["calc/a.go", "calc/a_test.go", "main.go", "x/y/z.go"])).toStrictEqual([
+    "./calc",
+    ".",
+    "./x/y",
+  ]);
+  expect(overlayJson(["calc/b.go", "README.md", "x/c_test.go"])).toBe(
+    '{"Replace":{"calc/b.go":"","x/c_test.go":""}}\n',
+  );
+  expect(goProbePath("a", "calc/a.go")).toBe("calc/a_probe_test.go");
+  expect(goProbePath("m", "main.go")).toBe("m_probe_test.go");
+});
