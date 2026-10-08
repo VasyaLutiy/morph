@@ -1,0 +1,3 @@
+?   	hsize/internal/testhelp	[no test files]
+ok  	hsize/size	0.005s
+ok  	hsize/word	0.002s

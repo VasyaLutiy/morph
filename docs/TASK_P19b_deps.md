@@ -424,3 +424,13 @@ same `allowArg` on the Go `src` guard; `buildAcceptances.ts` reads the card's al
 (own property only, else `[]`) and `vendor` as `input.vendor === true`; `types.ts` adds the optional fields;
 `planCommand.ts` passes `planned.uses` and `hasFile("vendor/modules.txt")`. Judges keep no allow list (§2.2). No defect
 found.
+
+### Smokes (issue #10, after the merge)
+
+`S1_RUN=1 BIN=/tmp/v2bin-p19b-smoke OUT=/tmp/p19b-smoke decks/p19b/smoke/run.sh go typescript` from merged main cd10475:
+exit 0, 92 s, **0 failed checks**. Go: go-humanize v1.0.1 vendored once with the network, every acceptance
+`GOFLAGS=-mod=vendor GOPROXY=off`, the guard rejects an undeclared module and another Component's module, the run on ds
+20261008-155154 4/4 written for **$0.0018**, then `go vet` / `gofmt -l` / `go test ./...` green offline (empty module
+cache, dead proxies) and the `-mod=mod` control red. TypeScript: change-case 5.4.4, the guard line and the digest only on
+the using card, stub run 4/4, planted stub run 0/2 rejected by the guard. Log and run documents in
+`decks/p19b/smoke/out/`.

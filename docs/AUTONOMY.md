@@ -6,24 +6,19 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (08.10, operator: P19 dependencies, then stop)
+## State at handoff (08.10, after P19: stopped for the operator)
 
-**Next: P19b dependencies** (issue #10, label `P19-deps`; the second half of P19). P19a (record half: `System.dependencies`,
-`Component.uses`, the dependency finale, the doc in the slice, `PlanResult.uses`) is merged: run 20261008-141116, 8/8,
-$0.0935. P19b holds exactly `docs/TASK_P19a_deps.md` §7: builder + builder-go (TS guard allows a card's declared packages,
-Go guard the declared module paths, `GOFLAGS=-mod=vendor` exactly when `vendor/modules.txt` exists, `GOPROXY=off` always),
-cli Plan Command passing `planned.uses` and the vendor flag, guard data, MorphV2's own `yaml` declared in `contour.yaml` +
-`docs/deps/yaml.md`, the templates/common docs, and issue #10's two smokes (`decks/p19b/smoke/`). After P19b's merge: the
-smokes (Go live on ds with a vendored module and no network; TypeScript up to a stub run), 🧪, then **stop for the
-operator** (`~/.morph-wait-operator`); nothing is queued after P19. Dependency-free decks must stay byte-identical
-(go-mini, P15 — re-cut against the pre-P19 binary 44aaf8d as P19a §11 Run did). Read issue #10 with
-`gh issue view 10 --json title,body,comments` (plain `gh issue view` fails on a Projects-classic GraphQL error).
-P0–P18 and P19a closed, 0 open issues besides #10. No external review passes (operator 08.10). Running total
-$5.1657 of $30.
+**Nothing queued. P19 is closed** (issue #10, label `P19-deps`): P19a (record half, run 20261008-141116, 8/8, $0.0935) and
+P19b (builder half: per-card allowed packages in the TS/Go guard, `GOFLAGS=-mod=vendor` exactly when
+`vendor/modules.txt` exists, `GOPROXY=off` always, Plan Command wiring, MorphV2's own `yaml` declared in `contour.yaml` +
+`docs/deps/yaml.md`, templates/common docs; run 20261008-152814, 8/8, $0.0934) are merged. Issue #10's smokes are green
+(Go live on ds with vendored go-humanize v1.0.1 offline, TypeScript with change-case up to stub runs; `decks/p19b/smoke/`,
+TASK_P19b §11). The session stopped after 🧪 (`~/.morph-wait-operator`); the next phase is the operator's to name.
+Running total $5.2609 of $30.
 **Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). No mrph cross-check
 at the gate (operator 08.10). Own pre-merge code read: yes. External review passes: no (operator 08.10). Every new
 MEASURE row fills the `прогоны` column.
-Known limits carried: `morph plan --checks` has no python acceptance builder (a python project cuts with map acceptances, P18); `morph init` finds `templates/` two levels above its module, so a binary copy needs `templates` linked beside its `dist/` (P18); No New Skips counts skip tokens inside string literals; one unreproduced vitest flake in P13b (logs
+Known limits carried: a generate card of a Component with no `docs` and no dependency gets its own (missing) target as its only slice file and the run refuses it (`contextSlice … does not exist`; P19b smoke map uses `docs: ["package.json"]`); a random tmp name can contain a forbidden substring in `run.p11c` example 5 (≈1 in 770, P19b); `morph plan --checks` has no python acceptance builder (a python project cuts with map acceptances, P18); `morph init` finds `templates/` two levels above its module, so a binary copy needs `templates` linked beside its `dist/` (P18); No New Skips counts skip tokens inside string literals; one unreproduced vitest flake in P13b (logs
 kept since); the ds batch slug is slow (~73 min); a `--checks` deck mixing languages builds by its first Component's
 language; gofmt can redden otherwise correct Go (the retry sees the diff); the primer's Go call rule misses a signature split
 across lines or a `testing` import under another name (P16); `morph accept` compares `git status --porcelain` paths without `-z`, so a quoted path (spaces, non-ASCII) reads as outside the targets (P17).
