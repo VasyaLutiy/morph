@@ -1,0 +1,463 @@
+import fs from "node:fs";
+
+import { expect, test } from "vitest";
+
+import { PROTOCOL } from "../../src/scout/runScout.js";
+import { DEFAULT_TOOL_CAPS } from "../../src/scout/runTool.js";
+import { SEED_HEADER } from "../../src/scout/seedFromOwnership.js";
+import {
+  FILE_SEED_HEADER,
+  NODE_SCOUT_FS,
+  SCOUT_DIR,
+  readSeedFile,
+  renderFileSeed,
+  scoutCommand,
+  scoutId,
+  sha256,
+} from "../../src/scout/scoutCommand.js";
+import type { ScoutRecord } from "../../src/scout/scoutCommand.js";
+import { tmpRepo, tmpRoot } from "../helpers.js";
+import type { TmpRepo, TmpRoot } from "../helpers.js";
+
+const QUESTION = "Make b twice a.\n";
+const QUESTION_SHA =
+  "74e423b13c2bf8652f79c8574d8df4851d73528b737afb6e481a609303ecb92f";
+const SCOUT_ID = "20261008-225320-74e423b1";
+const NOW = 1791500000000;
+
+const README = "tiny\n";
+const A_TS = "export const a = 1;\n";
+const B_TS = 'import { a } from "./a.js";\nexport const b = a + 1;\n';
+
+const READ_B =
+  'READ src/b.ts lines 1-2 of 2\n1: import { a } from "./a.js";\n2: export const b = a + 1;';
+const LIST_ROOT = "LIST .: 2 entries\nREADME.md\nsrc/ (2 files)";
+
+function seedRepo(t: TmpRepo): void {
+  t.write("README.md", README);
+  t.write("src/a.ts", A_TS);
+  t.git(["add", "."]);
+  t.git(["commit", "-q", "-m", "files"]);
+  t.write("src/b.ts", B_TS);
+  t.git(["add", "."]);
+  t.git([
+    "commit",
+    "-q",
+    "-m",
+    "morph b: src/b.ts\n\nMorph-Card: b\nMorph-Model: m/b",
+  ]);
+}
+
+function stubEnv(s: TmpRoot, dir = "ans"): Record<string, string> {
+  fs.mkdirSync(s.path(dir), { recursive: true });
+  return {
+    PATH: process.env["PATH"] ?? "",
+    MORPH_PROCESSOR_s_TYPE: "stub",
+    MORPH_PROCESSOR_s_ANSWERS_DIR: s.path(dir),
+  };
+}
+
+interface Deps {
+  env: Record<string, string>;
+  now: () => number;
+  cwd: string;
+  transport: null;
+}
+
+function depsOf(s: TmpRoot, env: Record<string, string>, now = NOW): Deps {
+  return { env, now: () => now, cwd: s.root, transport: null };
+}
+
+function usageResult(message: string): unknown {
+  return {
+    code: 4,
+    document: { error: { code: 4, kind: "UsageError", message } },
+  };
+}
+
+function scoutPath(id: string): string {
+  return SCOUT_DIR + "/" + id + "/scout.json";
+}
+
+test("Scout Command example 1: a session writes its record and transcript", async () => {
+  const t = tmpRepo();
+  const s = tmpRoot();
+  try {
+    seedRepo(t);
+    s.write("task.txt", QUESTION);
+    const env = stubEnv(s);
+    s.write("ans/scout.t1.md", "READ src/b.ts");
+    s.write(
+      "ans/scout.t2.md",
+      'ANSWER {"targets": ["src/b.ts"], "context_slice": ["src/a.ts"], "reasoning": "b reads a"}',
+    );
+
+    const result = await scoutCommand(
+      t.root,
+      {
+        processor: "s",
+        issue: "task.txt",
+        seedFile: null,
+        deadlineSeconds: 60,
+      },
+      depsOf(s, env),
+    );
+
+    expect(result).toStrictEqual({
+      code: 0,
+      document: {
+        scoutId: SCOUT_ID,
+        scout: scoutPath(SCOUT_ID),
+        status: "ok",
+        answer: {
+          targets: ["src/b.ts"],
+          context_slice: ["src/a.ts"],
+          reasoning: "b reads a",
+        },
+        stopReason: "the model answered on its own",
+        spent: { calls: 1, reads: 1, chars: 86, rounds: 2 },
+        elapsedMs: 0,
+        usage: { requests: 2, inputTokens: 0, outputTokens: 0, cost: 0 },
+      },
+    });
+
+    const head = t.git(["rev-parse", "HEAD"]);
+    const recordText = t.read(".morph/scout/" + SCOUT_ID + "/scout.json");
+    const record = JSON.parse(recordText) as ScoutRecord;
+    const expected: ScoutRecord = {
+      schema: 1,
+      scoutId: SCOUT_ID,
+      createdAt: "2026-10-08T22:53:20.000Z",
+      root: t.root,
+      ref: head,
+      question: QUESTION,
+      questionSha256: QUESTION_SHA,
+      protocolSha256: sha256(PROTOCOL),
+      processor: "s",
+      model: "stub",
+      seed: { source: "primer", path: null, files: ["src/b.ts"], chars: 131 },
+      budgets: {
+        calls: 30,
+        reads: 12,
+        chars: 120000,
+        rounds: 40,
+        deadlineMs: 60000,
+      },
+      caps: DEFAULT_TOOL_CAPS,
+      status: "ok",
+      answer: {
+        targets: ["src/b.ts"],
+        context_slice: ["src/a.ts"],
+        reasoning: "b reads a",
+      },
+      stopReason: "the model answered on its own",
+      spent: { calls: 1, reads: 1, chars: 86, rounds: 2 },
+      elapsedMs: 0,
+      usage: { requests: 2, inputTokens: 0, outputTokens: 0, cost: 0 },
+      journal: [
+        {
+          round: 1,
+          turn: "action",
+          action: { kind: "read", path: "src/b.ts", from: null, to: null },
+          chars: 86,
+          error: null,
+          inputTokens: 0,
+          outputTokens: 0,
+          cost: 0,
+        },
+        {
+          round: 2,
+          turn: "answer",
+          action: null,
+          chars: 0,
+          error: null,
+          inputTokens: 0,
+          outputTokens: 0,
+          cost: 0,
+        },
+      ],
+    };
+    expect(record).toStrictEqual(expected);
+    expect(recordText).toBe(JSON.stringify(expected, null, 2) + "\n");
+
+    const transcript = JSON.parse(
+      t.read(".morph/scout/" + SCOUT_ID + "/transcript.json"),
+    ) as { role: string; content: string }[];
+    expect(transcript).toHaveLength(5);
+    expect(transcript[0]).toStrictEqual({ role: "system", content: PROTOCOL });
+    expect(transcript[1]).toStrictEqual({
+      role: "user",
+      content:
+        SEED_HEADER +
+        "\n- src/b.ts: written by b (m/b, run —)\n" +
+        "\n" +
+        LIST_ROOT +
+        "\n\nTask:\n" +
+        QUESTION,
+    });
+    expect(transcript[2]).toStrictEqual({
+      role: "assistant",
+      content: "READ src/b.ts",
+    });
+    expect(transcript[3]).toStrictEqual({ role: "user", content: READ_B });
+    expect(transcript[4]).toStrictEqual({
+      role: "assistant",
+      content:
+        'ANSWER {"targets": ["src/b.ts"], "context_slice": ["src/a.ts"], "reasoning": "b reads a"}',
+    });
+
+    expect(t.git(["status", "--porcelain"])).toBe("?? .morph/");
+  } finally {
+    s.rm();
+    t.rm();
+  }
+});
+
+test("Scout Command example 2: --seed-file replaces the ownership seed", async () => {
+  const t = tmpRepo();
+  const s = tmpRoot();
+  try {
+    seedRepo(t);
+    s.write("task.txt", QUESTION);
+    const env = stubEnv(s);
+    s.write("ans/scout.t1.md", 'ANSWER {"targets": ["src/a.ts"]}');
+    s.write("seed.json", '{"files": ["src/a.ts"], "notes": ["a is the base"]}');
+    s.write("bad.json", "{");
+    s.write("z.json", '{"files": ["src/z.ts"]}');
+    s.write("e.json", '{"files": []}');
+    s.write("n.json", '{"files": ["src/a.ts"], "notes": [1]}');
+
+    const ok = await scoutCommand(
+      t.root,
+      {
+        processor: "s",
+        issue: "task.txt",
+        seedFile: "seed.json",
+        deadlineSeconds: 60,
+      },
+      depsOf(s, env),
+    );
+    expect(ok.code).toBe(0);
+
+    const record = JSON.parse(
+      t.read(".morph/scout/" + SCOUT_ID + "/scout.json"),
+    ) as ScoutRecord;
+    expect(record.seed).toStrictEqual({
+      source: "file",
+      path: "seed.json",
+      files: ["src/a.ts"],
+      chars: 77,
+    });
+
+    const transcript = JSON.parse(
+      t.read(".morph/scout/" + SCOUT_ID + "/transcript.json"),
+    ) as { role: string; content: string }[];
+    expect(
+      transcript[1].content.startsWith(
+        FILE_SEED_HEADER +
+          "\n- src/a.ts\nNote: a is the base\n" +
+          "\nLIST .: ",
+      ),
+    ).toBe(true);
+
+    const refusals: [string, string][] = [
+      ["nope.json", "seed file not found: nope.json"],
+      ["bad.json", "seed file bad.json: the JSON does not parse"],
+      ["z.json", "seed file z.json: not in the tree: src/z.ts"],
+      ["e.json", "seed file e.json: files must be a non-empty list of paths"],
+      ["n.json", "seed file n.json: notes must be a list of strings"],
+    ];
+    for (const [file, message] of refusals) {
+      const r = await scoutCommand(
+        t.root,
+        {
+          processor: "s",
+          issue: "task.txt",
+          seedFile: file,
+          deadlineSeconds: 60,
+        },
+        depsOf(s, env),
+      );
+      expect(r).toStrictEqual(usageResult(message));
+    }
+  } finally {
+    s.rm();
+    t.rm();
+  }
+});
+
+test("Scout Command example 3: the usage refusals come before any session", async () => {
+  const t = tmpRepo();
+  const s = tmpRoot();
+  try {
+    seedRepo(t);
+    s.write("task.txt", QUESTION);
+    s.write("blank.txt", "  \n");
+    const env = stubEnv(s);
+
+    const nope = await scoutCommand(
+      t.root,
+      {
+        processor: "nope",
+        issue: "task.txt",
+        seedFile: null,
+        deadlineSeconds: 60,
+      },
+      depsOf(s, env),
+    );
+    expect(nope).toStrictEqual(usageResult("processor nope is not configured"));
+
+    const envBad = { ...env, MORPH_PROCESSOR_bad_TYPE: "x" };
+    const bad = await scoutCommand(
+      t.root,
+      {
+        processor: "bad",
+        issue: "task.txt",
+        seedFile: null,
+        deadlineSeconds: 60,
+      },
+      depsOf(s, envBad),
+    );
+    expect(bad).toStrictEqual(
+      usageResult(
+        "processor bad is not configured: MORPH_PROCESSOR_bad_TYPE must be one of openrouter, stub (got 'x')",
+      ),
+    );
+
+    const none = await scoutCommand(
+      t.root,
+      {
+        processor: "s",
+        issue: "none.txt",
+        seedFile: null,
+        deadlineSeconds: 60,
+      },
+      depsOf(s, env),
+    );
+    expect(none).toStrictEqual(usageResult("issue file not found: none.txt"));
+
+    const blank = await scoutCommand(
+      t.root,
+      {
+        processor: "s",
+        issue: "blank.txt",
+        seedFile: null,
+        deadlineSeconds: 60,
+      },
+      depsOf(s, env),
+    );
+    expect(blank).toStrictEqual(usageResult("issue file is empty: blank.txt"));
+
+    expect(t.exists(".morph")).toBe(false);
+
+    const outside = tmpRoot();
+    try {
+      outside.write("task.txt", QUESTION);
+      const envOutside = stubEnv(outside);
+      await expect(
+        scoutCommand(
+          outside.root,
+          {
+            processor: "s",
+            issue: "task.txt",
+            seedFile: null,
+            deadlineSeconds: 60,
+          },
+          depsOf(outside, envOutside),
+        ),
+      ).rejects.toThrow(/git ls-files failed \(exit 128\): /);
+      expect(outside.exists(".morph")).toBe(false);
+    } finally {
+      outside.rm();
+    }
+  } finally {
+    s.rm();
+    t.rm();
+  }
+});
+
+test("Scout Command example 4: a failed model call writes its record", async () => {
+  const t = tmpRepo();
+  const s = tmpRoot();
+  try {
+    seedRepo(t);
+    s.write("task.txt", QUESTION);
+    const env = stubEnv(s);
+
+    const result = await scoutCommand(
+      t.root,
+      {
+        processor: "s",
+        issue: "task.txt",
+        seedFile: null,
+        deadlineSeconds: 5,
+      },
+      depsOf(s, env),
+    );
+
+    const stop =
+      "no answer: the model call failed in round 1: stub has no answer: " +
+      s.path("ans/scout.t1.md");
+
+    expect(result.code).toBe(1);
+    expect(result.document).toStrictEqual({
+      scoutId: SCOUT_ID,
+      scout: scoutPath(SCOUT_ID),
+      status: "no_answer",
+      answer: null,
+      stopReason: stop,
+      spent: { calls: 0, reads: 0, chars: 0, rounds: 0 },
+      elapsedMs: 0,
+      usage: { requests: 1, inputTokens: 0, outputTokens: 0, cost: 0 },
+    });
+
+    const record = JSON.parse(
+      t.read(".morph/scout/" + SCOUT_ID + "/scout.json"),
+    ) as ScoutRecord;
+    expect(record.status).toBe("no_answer");
+    expect(record.answer).toBe(null);
+    expect(record.stopReason).toBe(stop);
+    expect(record.budgets.deadlineMs).toBe(5000);
+    expect(record.journal).toHaveLength(1);
+  } finally {
+    s.rm();
+    t.rm();
+  }
+});
+
+test("Scout Command example 5: the pure helpers", () => {
+  expect(scoutId(NOW, QUESTION_SHA)).toBe("20261008-225320-74e423b1");
+  expect(scoutId(0, "0123456789abcdef")).toBe("19700101-000000-01234567");
+  expect(sha256("")).toBe(
+    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  );
+  expect(sha256(QUESTION)).toBe(QUESTION_SHA);
+  expect(renderFileSeed(["x/a.py", "b.ts"], ["one", "two"])).toBe(
+    FILE_SEED_HEADER + "\n- x/a.py\n- b.ts\nNote: one\nNote: two\n",
+  );
+  expect(readSeedFile('{"files": ["b.ts"]}', ["a.ts", "b.ts"])).toStrictEqual({
+    ok: true,
+    files: ["b.ts"],
+    notes: [],
+  });
+  expect(readSeedFile('["b.ts"]', ["a.ts", "b.ts"])).toStrictEqual({
+    ok: false,
+    error: "files must be a non-empty list of paths",
+  });
+  expect(
+    readSeedFile('{"files": ["b.ts", ""]}', ["a.ts", "b.ts"]),
+  ).toStrictEqual({
+    ok: false,
+    error: "files must be a non-empty list of paths",
+  });
+
+  const f = tmpRoot();
+  try {
+    const abs = f.write("x.txt", "hello\n");
+    expect(NODE_SCOUT_FS.readFile(abs)).toBe("hello\n");
+    expect(NODE_SCOUT_FS.realpath(abs)).toBe(fs.realpathSync(abs));
+    expect(() => NODE_SCOUT_FS.realpath(f.path("missing.txt"))).toThrow();
+  } finally {
+    f.rm();
+  }
+});
