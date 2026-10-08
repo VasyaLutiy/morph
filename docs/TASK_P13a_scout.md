@@ -459,3 +459,46 @@ Attempts and first red per variant, minutes per generation, $ (provider), trunca
 its `прогоны` cell; DECISIONS lines "P13a scout".
 
 ## 11. Actual
+
+### Gate (preparation)
+
+08.10, on the VPS, by the preparing orchestrator (Opus 5.5); no paid run, no call to the live service. Data commits 0768352
+(spec, record, map, guard layer, probes, checks, filter, deck, DECISIONS), d1df538 (7 probe rows closing the first pass's
+mutation survivors; deck re-cut) and the gate commit (this section). Component size: scout 316 → **23 318** bytes; cli
+and every other Component untouched; Deterministic Core gains the P13a sentence. Issues labelled P13a-scout / P13-scout:
+none open.
+
+The deck **cut by V2**: `node dist/cli.js plan --component scout --judge --checks decks/p13a/checks.json --out
+decks/p13a/deck.json` exit 0, 10 cards, `decks/p13a/filter.py` keeps 10 of 10; generations `[cage-path, parse-turn,
+seed-from-ownership, spend-budget] [cage-path-judge, parse-turn-judge, run-tool, seed-from-ownership-judge,
+spend-budget-judge] [run-tool-judge]`; `node dist/cli.js deck check` **0 errors, 0 warnings**, no hazards. Cross-check: the
+old `mrph plan --spec … --component scout --judge` (dry, exit 0) gives the same 10 ids in the same order and the same 3
+generations; targets, slices, dependsOn, intent, variants, max_tokens and reasoning (2 500) equal on all 10; instructions
+differ on all 10 (the P10a design); acceptances differ on all 10 (V2's chain from checks.json; mrph's default `npx tsc`).
+
+Scratch worktree from d1df538 (references of the 5 code files and 5 judge files, deleted afterwards), cards run in deck
+order with the deck's own acceptances, each accepted card committed before the next: **10 of 10 chains green, 48.8–53.3 s
+each (502.6 s in all; limit 250 s per chain)**. Ripple: 0 of 667. The final tree: `tsc`, `eslint src tests`, guard
+clean, `vitest run` **695 / 695** in 98 files (667 + the 28 tests of the probe-shaped reference judges; the real judges
+write ≈ 22 → 689). Typed one-line throwing stubs (`Error: stub <fn> <args JSON>`; types and constants as specified): every
+code card red at the probe — parse-turn 8/8, cage-path 4/4, run-tool 6/6, spend-budget 6/6, seed-from-ownership 4/4
+(**28/28**), each FAIL with its readable stub line; chains 8.2–8.9 s. Judges with the reference code and the file absent:
+red at the guard ("… missing", 6.0–6.5 s). Mutation check: **91 single-rule mutations** of the references (parseTurn 23,
+cagePath 13, runTool 29, spendBudget 14, seedFromOwnership 12), each under a 120 s subprocess timeout: first pass 82
+killed, 9 survivors; 7 closed by probe rows (d1df538); second pass **89 killed, 0 by timeout** (max 7.1 s), 2 equivalent:
+the trailing "\r" kept on a line (every argument is trimmed and JSON.parse takes "\r" as whitespace) and a directory entry
+built as `slice(0, i) + "/"` instead of `slice(0, i + 1)`.
+
+Max slice + targets: run-tool-judge 47 596 bytes + runTool.ts and cagePath.ts (≈ 6.7 KB) ≈ 54 KB (gate 200 KB).
+**Forecast** on `ds` with every maxTokens × 3: P12b ran 7 cards, 10 requests, $0.1162 at 30–59 KB in; here 10 cards of
+41–54 KB in, 15 first requests (5 code × 2 variants + 5 judges), ≈ 15–22 requests ≈ **$0.12–0.22**, ≤ $0.40 with a re-cut;
+≤ $1. **Gate holds.**
+
+**Run command** (from the repo root, the binary copied first; the session applies maxTokens × 3 first, as the operator
+ordered):
+
+```
+python3 decks/tools/scale_tokens.py decks/p13a/deck.json 3
+npm run build && rm -rf /tmp/v2bin-p13a && mkdir -p /tmp/v2bin-p13a && cp -r dist /tmp/v2bin-p13a/ && ln -s $PWD/node_modules /tmp/v2bin-p13a/node_modules
+node /tmp/v2bin-p13a/dist/cli.js run --root . --deck decks/p13a/deck.json --processor ds --deadline 2400 > /tmp/p13a-run.json
+```
