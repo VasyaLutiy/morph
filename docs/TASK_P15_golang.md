@@ -505,3 +505,19 @@ node /tmp/v2bin-p15/dist/cli.js run --root . --deck decks/p15/deck.json --proces
 ```
 
 After the merge: the P15 smoke of §8 (go-mini end to end), then stop.
+
+### Run (08.10, VPS, autonomous) — cut by V2, run by the V2 binary on processor ds
+
+Deck `decks/p15/deck.json` (V2 cut filtered to 12 cards by `decks/p15/filter.py`, maxTokens ×3, commit 0365336), run by
+the V2 binary copy in `/tmp/v2bin-p15` with `--processor ds --deadline 2400`, default retry cap: run 20261008-074231,
+**12 / 12 written in one run, no fix**, 11 at the first attempt (`plan-command-judge` won r2: v1 red at tsc TS2593, no
+`import { test, expect } from "vitest"`; r1 red at eslint `no-regex-spaces`), 5 untried v2, $0.1929, 18.5 min (1111 s),
+19 requests, 420 822 in / 71 553 out tokens, every finish `stop`. On the run branch: `git status` clean; tsc, eslint,
+`npm run build` clean; vitest **746 / 746** (log /tmp/p15-verify-vt.log; the reference had 749: the judges' own counts).
+Read once against §2.2: GO_ENV (GOPROXY=off, GOFLAGS=-mod=mod, GOSUMDB=off, GOTOOLCHAIN=local, GOWORK=off, cache under
+/tmp/morph) opens every Go acceptance; build, vet and the probe run on the card's own packages with `-overlay` hiding the
+generation's siblings, the full stage `go test ./...` with the fullExclude overlay; vet and gofmt held as one verdict
+after the probe; `go test` output from the first `--- FAIL` plus the firstdiff line; judges keep the old `func Test` names
+(`drop` honoured); `plan --checks` takes the first selected Component's language and refuses a card with no target in it;
+the primer counts `^func Test…(` per line. 0 defects. Observation (not a defect): the primer's Go pattern also counts
+`func TestMain(`, which is not a test.
