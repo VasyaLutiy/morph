@@ -68,3 +68,15 @@ test("§2.2 rows: KIND_ORDER; stable within a kind; a cell's | escaped, the head
   expect(md).toContain("| m\\|n.ts:3 | \\|\\| → && | killed |");
   expect(got.markdown.endsWith("## Findings\n\nNone.\n")).toBe(true);
 });
+
+test("§2.2 rows: id is the first key; byKind counts repeats; missing sums lengths; findings without a missing example are not clean; one null count is binary", () => {
+  const f = (kind: string): Finding => ({ kind, source: "s", path: null, expected: "x", got: "y" });
+  expect(Object.keys(orderFindings([f("scope")])[0])).toStrictEqual(["id", "kind", "source", "path", "expected", "got"]);
+  const got = renderFindings({ base: "a", head: "b", guardrails: [], mutants: null, findings: [f("scope"), f("scope")],
+    changed: [{ path: "p", status: "modified", added: 3, deleted: null, writers: [], scope: null }],
+    obligations: [{ component: "c", function: "F", touchedBy: ["card f"], examples: 4, missing: [1, 3] }] });
+  expect([got.counts.byKind.scope, got.counts.missing, got.verdict]).toStrictEqual([2, 2, "findings"]);
+  expect(got.markdown.split("\n")).toContain("| p | modified | binary | — | — |");
+  expect(renderFindings({ base: "a", head: "b", changed: [], obligations: [], guardrails: [], mutants: null, findings: [f("zz")] }).verdict)
+    .toBe("findings");
+});

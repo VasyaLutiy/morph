@@ -53,3 +53,11 @@ test("§2.2 rows: the twelve rules in order; every rule fires once on its line; 
     [[1, 19, "=== → !=="], [1, 25, "&& → ||"], [1, 34, "> → >="]]);
   expect(planMutants("e.ts", "", 3)).toStrictEqual([]);
 });
+
+test("§2.2 rows: a quote of the other kind inside a string; // inside a string; $ is a word char; overlapping occurrences", () => {
+  expect(at(planMutants("q.ts", 'const s = "it\'s" + x;', 5))).toStrictEqual([[1, 18, "+ → -"]]);
+  expect(at(planMutants("u.ts", 'const u = "http://x" + y;', 5))).toStrictEqual([[1, 22, "+ → -"]]);
+  expect(at(planMutants("d.ts", "const t = $true || true$;", 5))).toStrictEqual([[1, 17, "|| → &&"]]);
+  expect(at(planMutants("o.ts", "a ==== b", 5))).toStrictEqual([[1, 3, "=== → !=="], [1, 4, "=== → !=="]]);
+  expect(planMutants("x.ts", "export type { T }; const k = a === b;", 5)).toStrictEqual([]);
+});

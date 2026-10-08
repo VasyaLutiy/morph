@@ -93,3 +93,8 @@ test("§2.2 rows: the constants; writers distinct in commit order; a deleted tar
   ]);
   expect(readDiff("M\0only.ts\0", "")).toStrictEqual([{ path: "only.ts", status: "modified", added: null, deleted: null }]);
 });
+
+test("§2.2 rows: readDiff reads each count on its own and skips an empty letter mid-stream", () => {
+  expect(readDiff("M\0x.ts\0", "3\t-\tx.ts\0")).toStrictEqual([{ path: "x.ts", status: "modified", added: 3, deleted: null }]);
+  expect(readDiff("\0\0A\0y.ts\0", "")).toStrictEqual([{ path: "y.ts", status: "added", added: null, deleted: null }]);
+});

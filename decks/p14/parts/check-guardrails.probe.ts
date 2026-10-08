@@ -72,3 +72,10 @@ test("§2.2 rows: GUARDRAILS; fewer skips is fine; a renamed title is lost; titl
   expect(testTitles('xit("a");\n$test("b");\nit(\n"c")\ntest("d")', "typescript")).toStrictEqual(["c", "d"]);
   expect(skipCount("x.describe.skip(1); describe.todo(2); it.skip (3)", "typescript")).toBe(1);
 });
+
+test("§2.2 rows: a profile id that is not python reads no python; a head file without a profile is not counted", () => {
+  expect(testTitles("def test_x():\n    pass\n", "go")).toStrictEqual([]);
+  expect(skipCount("@pytest.mark.skip\n", "go")).toBe(0);
+  expect(checkGuardrails({ base: [], head: [{ path: "README.md", text: "it.only(1)" }, { path: "t/a.test.ts", text: "" }] }).rows)
+    .toStrictEqual([{ name: "Tests Kept", files: 0, findings: 0 }, { name: "No New Skips", files: 1, findings: 0 }]);
+});

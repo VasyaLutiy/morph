@@ -320,8 +320,8 @@ Built by `morph plan --checks decks/p14/checks.json`, narrow to broad, every sta
 
 Code cards (no test file; code-only targets, `intent: generate`): `probe/<card>/` → `tsc` (per-card tsconfig excluding the
 generation's other targets) → `eslint <target>` → `guard.mjs src <target>` → `decks/p14/parts/<card>.probe.ts`
-(find-obligations FO 1–4 + 1 row = 5; check-envelope CE 1–4 + 1 = 5; check-guardrails CG 1–3 + 1 = 4; plan-mutants PM 1–3 +
-1 = 4; render-findings RF 1–3 + 1 = 4; **22 tests**) → eslint's verdict → full `vitest run` → frozen → untracked.
+(find-obligations FO 1–4 + 2 rows = 6; check-envelope CE 1–4 + 2 = 6; check-guardrails CG 1–3 + 2 = 5; plan-mutants PM 1–3
++ 2 = 5; render-findings RF 1–3 + 2 = 5; **27 tests**; the second row of each closes the first mutation pass's survivors) → eslint's verdict → full `vitest run` → frozen → untracked.
 
 Judge cards: `probe/<card>/` → `tsc` → `eslint <target>` → `guard.mjs tests <file> <min> <max> lits0.json` → `vitest run
 <target>` → eslint's verdict → full run → frozen → untracked.

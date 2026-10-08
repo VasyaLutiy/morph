@@ -91,3 +91,15 @@ test("§2.2 rows: a card touches once though named twice; map.language reaches a
   expect(hasTitle(["Add Tax example 1: a"], "Add Tax example 1", PYTHON)).toBe(false);
   expect(hasTitle(["test_a_example_1_b"], "test_a_example_1", PYTHON)).toBe(true);
 });
+
+test("§2.2 rows: cardUnit only strips a final .r<digits>; the first map group wins; an unknown language does not stop the walk", () => {
+  expect([cardUnit("a.r"), cardUnit("x.r1.y"), cardUnit("b.r12")]).toStrictEqual(["a.r", "x.r1.y", "b"]);
+  const { record, map } = inputs();
+  const [shop, ledger, legacy] = record.system.groups;
+  const reordered: ContourRecord = { ...record, system: { ...record.system, groups: [legacy, shop, ledger] } };
+  const twoGroups: ContourMap = { ...map, groups: [{ name: "taxes", functions: ["Add Tax"] }, { name: "later", functions: ["Add Tax"] }] };
+  const got = findObligations({ record: reordered, map: twoGroups, changed: [], cards: ["taxes", "later", "old-total"], titles: [] });
+  expect(got.obligations.map((o) => [o.function, o.unit, o.touchedBy, o.judge])).toStrictEqual([
+    ["Add Tax", "taxes", ["card taxes"], "tests/shop/taxes.examples.test.ts"]]);
+  expect(got.findings.length).toBe(3);
+});
