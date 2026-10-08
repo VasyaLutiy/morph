@@ -1,0 +1,28 @@
+{
+ "phase": "p16",
+ "ownGit": true,
+ "fullExclude": [],
+ "cards": [
+  {
+   "id": "primer-command"
+  },
+  {
+   "id": "primer-command-judge",
+   "files": [
+    {
+     "file": "tests/primer/primerCommand.p16.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Primer Command example 8",
+      "Primer Command example 9",
+      "primer/examples.json",
+      "primer/go-smoke/",
+      "go-mini/"
+     ]
+    }
+   ]
+  }
+ ]
+}

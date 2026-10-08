@@ -2952,13 +2952,17 @@ System:
             profileForPath, the first in PROFILES order on a tie or when none claims a file
             (typescript). 3. A test file of a profile (isTestFile, exported): hasExtension and its
             base name (after normalizePath) matching new RegExp(profile.testFilePattern) — test
-            directories alone do not count (tests/helpers.ts is not a test file). countTests(profile,
+            directories alone do not count (tests/helpers.ts is not a test file); never a path under
+            the top-level decks/ (Morph's deck data: probes, smoke copies), whatever the profile; for
+            go only a file go test ./... runs: no segment (a directory or the file) beginning with
+            "_" or ".", no directory named testdata or vendor. countTests(profile,
             files {path, text}[]) (exported) → {language: profile.id, files: the test files among
             them, tests: the sum over them of the matches of the profile's call rule}: typescript
             /(?<![\w.$])(?:test|it)\s*\(/g (test( and it( — test.skip(, it.todo(, x.test( and
             split( do not match), python /^[ \t]*(?:async[ \t]+)?def[ \t]+test_\w+/gm, go
-            /^func Test(?:[A-Z0-9_]\w*)?\s*\(/gm (P15: go test's rule, Test then nothing or a
-            character that is not a lower-case letter; an indented or commented func does not count).
+            /^func Test(?:[A-Z0-9_]\w*)?\s*\(\s*(?:\w+\s+)?\*testing\.T\s*\)/gm (go test's rule:
+            Test then nothing or a character that is not a lower-case letter, one parameter *testing.T,
+            named or not — TestMain(m *testing.M) is no test; an indented or commented func does not count).
             The command
             reads every test file of the listing (UTF-8; an unreadable one is left out) and calls
             countTests. 4. Archives: each directory under <root>/.morph/runs (none → []), sorted:
@@ -2981,12 +2985,14 @@ System:
           steps: [{uses: git}, {uses: language}, {calls: Read Runs}, {calls: Read Story}, {calls: Render Primer}, {produces: Primer Document}]
           examples:
             - {given: 'a tmpRepo with tests/a.test.ts "test(\"a\", () => {});\ntest (\"b\", () => {});\n", tests/b.spec.ts "it(\"c\", () => {});\nit.skip(\"d\", () => {});\ntest.todo(\"e\");\nexpect(/x/.test(\"x\")).toBe(true);\n", src/c.ts "export const test = (s: string): string => s;\ntest(\"not a test file\");\n"; env {PATH}', when: 'primerCommand(t, false, {env, now: () => 1791400000000}); and countTests(typescript, those three files)', then: 'code 0; document.tests {language: "typescript", files: 2, tests: 3} — two test( and one it( give 3; files 3; generatedAt "2026-10-07T19:06:40.000Z"; written null; countTests gives the same'}
-            - {given: 'a tmpRepo with pkg/a.py, pkg/b.py, tests/test_a.py "def test_x():\n    pass\n\nasync def test_y():\n    pass\n\ndef helper():\n    pass\n", pkg/b_test.py "class T:\n    def test_m(self):\n        pass\n", web/x.ts "test(\"ts\");\n"', when: 'primerCommand(t, false, deps)', then: 'document.tests {language: "python", files: 2, tests: 3}; files 5 — four python files outvote one typescript file'}
+            - {given: 'examples.json["Primer Command 2"].given', ref: "tests/fixtures/primer/examples.json", when: 'primerCommand(t, false, deps)', then: 'examples.json["Primer Command 2"].then'}
             - {given: 'a tmpRepo t: docs/MEASURE.md, PLAN.md, AUTONOMY.md, DECISIONS.md and .morph/issues.json = the story fixtures; .morph/runs/<dir>/report.json for the five runs fixtures; .morph/runs/20261007-204822/answers/a.v1.answer.txt "A" and lines.txt "L"; .morph/runs/broken/deck.json "[]" (no report); tests/a.test.ts, tests/b.spec.ts, src/c.ts of example 1; now 1791400000000', ref: "tests/fixtures/primer/command.json, primer3.md", when: 'primerCommand(t, true, deps)', then: 'code 0; the document without root and markdown exactly command.json["Primer Command 3"] (files 16, tests 2 files 3 tests, runs 5: V2 3 and mrph 2, unpriced 1, answers 1, skipped 1, chronology 16, next "P12a", issues "read", ownership {commits 0, paths 0}, running null, written ".morph/primer.md"); root t; markdown = primer3.md with "{name}" replaced by the base name of t; .morph/primer.md holds the same text'}
             - {given: 'example 1''s repo with write false; then a tmp root that is not a git repository', when: primerCommand, then: 'written null and no .morph/primer.md; then a thrown Error whose message begins "git ls-files failed (exit 128): "'}
             - {given: 'a tmpRepo with only its first empty commit; now () => 0', ref: "tests/fixtures/primer/primer5.md", when: 'primerCommand(t, false, deps)', then: 'code 0; files 0, tests {language: "typescript", files: 0, tests: 0}, runs.runs 0, skipped 0, chronology 0, next null, missing ["measure", "plan", "autonomy", "decisions"], issues "absent", generatedAt "1970-01-01T00:00:00.000Z"; markdown = primer5.md with "{name}" replaced'}
             - {given: 'examples.json["Primer Command 6"].given', ref: "tests/fixtures/primer/examples.json", when: 'primerCommand(t, false, deps); runningLine', then: 'examples.json["Primer Command 6"].then'}
             - {given: 'examples.json["Primer Command 7"].given', ref: "tests/fixtures/primer/examples.json", when: 'primerCommand(t, false, deps); countTests', then: 'examples.json["Primer Command 7"].then'}
+            - {given: 'examples.json["Primer Command 8"].given (files, ts)', ref: "tests/fixtures/primer/examples.json", when: 'primerCommand(t, false, deps); countTests', then: 'examples.json["Primer Command 8"].then'}
+            - {given: 'examples.json["Primer Command 9"].given (mini, smoke)', ref: "tests/fixtures/primer/examples.json, go-mini/, primer/go-smoke/", when: 'primerCommand(t, false, deps); countTests', then: 'examples.json["Primer Command 9"].then'}
       dataObjects:
         - name: Run Archive
           description: One directory of .morph/runs as the command read it.

@@ -1,7 +1,7 @@
 {
   "package": "src",
   "docs": [
-    "docs/TASK_P15_golang.md"
+    "docs/TASK_P16_primer-go.md"
   ],
   "groups": {
     "card-model": [
@@ -2236,16 +2236,14 @@
         "src/primer/primerCommand.ts"
       ],
       "context_slice": [
-        "docs/TASK_P15_golang.md",
+        "docs/TASK_P16_primer-go.md",
         "docs/CONVENTIONS.md",
         "src/language/types.ts"
       ],
-      "depends_on": [
-        "profiles"
-      ],
+      "depends_on": [],
       "variants": 2,
       "max_tokens": 16000,
-      "instruction": "Read docs/TASK_P15_golang.md sections 2.2 (src/primer/primerCommand.ts: the go test rule) and 4. Patch src/primer/primerCommand.ts (its current text follows) and return it WHOLE: the call rule of the profile id \"go\" is /^func Test(?:[A-Z0-9_]\\w*)?\\s*\\(/gm, next to the typescript and python rules; every other line stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P16_primer-go.md sections 2.2 (src/primer/primerCommand.ts: isTestFile and the go rule) and 4. Patch src/primer/primerCommand.ts (its current text follows) and return it WHOLE with two changes. 1. isTestFile: after the extension check, a path whose first segment (after normalizePath, split on \"/\") is \"decks\" and that has more segments is no test file, for every profile; for the profile id \"go\" a path is no test file when any segment begins with \"_\" or \".\", or when any segment but the last is \"testdata\" or \"vendor\". 2. The call rule of the profile id \"go\" is /^func Test(?:[A-Z0-9_]\\w*)?\\s*\\(\\s*(?:\\w+\\s+)?\\*testing\\.T\\s*\\)/gm. Every other line stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "read-runs-judge": {
       "intent": "generate",
@@ -2304,10 +2302,10 @@
     "primer-command-judge": {
       "intent": "generate",
       "targets": [
-        "tests/primer/primerCommand.p15.examples.test.ts"
+        "tests/primer/primerCommand.p16.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P15_golang.md",
+        "docs/TASK_P16_primer-go.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/primer/primerCommand.ts",
@@ -2317,7 +2315,7 @@
         "primer-command"
       ],
       "max_tokens": 12000,
-      "instruction": "You write tests/primer/primerCommand.p15.examples.test.ts only, a NEW file with the test of Primer Command example 7 (examples 1-6 are already tested). Read docs/TASK_P15_golang.md sections 2.2 (Primer Command: the go rule) and 2.3 (the primerCommand.p15 bullet) and tests/fixtures/primer/examples.json[\"Primer Command 7\"], whose file texts you write exactly. Import primerCommand and countTests from \"../../src/primer/primerCommand.js\", GO from \"../../src/language/profiles.js\", tmpRepo from \"../helpers.js\"; call primerCommand(t.root, false, {env: {PATH: process.env.PATH ?? \"\"}, now: () => 1791400000000}). Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/primer/primerCommand.p16.examples.test.ts only, a NEW file with the tests of Primer Command examples 8 and 9 (examples 1-7 are already tested). Read docs/TASK_P16_primer-go.md sections 2.1 (the harness skeleton, follow it), 2.2 (Primer Command) and 2.3 (the primerCommand.p16 bullet) and tests/fixtures/primer/examples.json keys \"Primer Command 8\" and \"Primer Command 9\". Import primerCommand and countTests from \"../../src/primer/primerCommand.js\", GO and TYPESCRIPT from \"../../src/language/profiles.js\", tmpRepo, fixture and fixtureJson from \"../helpers.js\"; call primerCommand(t.root, false, {env: {PATH: process.env.PATH ?? \"\"}, now: () => 1791400000000}). Every expected number is a literal in the test. Numbers and strings with toBe, a whole count with toStrictEqual. Every tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "read-morph-log": {
       "intent": "generate",

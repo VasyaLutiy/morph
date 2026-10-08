@@ -1,4 +1,8 @@
 {
+  "Primer Command 2": {
+    "given": "a tmpRepo with pkg/a.py, pkg/b.py, tests/test_a.py \"def test_x():\\n    pass\\n\\nasync def test_y():\\n    pass\\n\\ndef helper():\\n    pass\\n\", pkg/b_test.py \"class T:\\n    def test_m(self):\\n        pass\\n\", web/x.ts \"test(\\\"ts\\\");\\n\"",
+    "then": "document.tests {language: \"python\", files: 2, tests: 3}; files 5 — four python files outvote one typescript file"
+  },
   "Primer Command 6": {
     "given": "a tmpRepo with docs/MEASURE.md \"# M\\n\\nRunning total of the stretch: $1.5000 of $9 (A $1 + B $0.5).\\n\\n| фаза | строитель | карт план/принято | $ исп. | прогоны |\\n|---|---|---|---|---|\\n| P1 | night | 1 / 1 | 0.5 | |\\n| P1 debt (agent) | claude -p | 1 / 1 | 2.25 | |\\n\" (untracked) and three commits, oldest first: q writes src/q.ts and src/r.ts, trailers \"Morph-Card: q\\nMorph-Model: m/q\"; an empty commit \"Morph-Run: 20261110-101010\"; q-judge writes tests/q.test.ts \"test(\\\"q\\\", () => {});\\n\", \"Morph-Card: q-judge\\nMorph-Model: m/r\"; then runningLine of null, of \"x\\n  Running total: $1 (a (b)\\n\" and of \"Running total \" + 250 × \"y\"",
     "then": "document.ownership {commits: 2, paths: 3}, running \"Running total of the stretch: $1.5000 of $9\"; the markdown holds \"- debt rows (docs/MEASURE.md), not in these totals: P1 debt (agent) $2.25\", \"- running total (docs/MEASURE.md): \\\"Running total of the stretch: $1.5000 of $9\\\" vs $0.0000 archived here, difference 1.5000 — \", \"- git carries 2 Morph commits: m/r 1, m/q 1\", \"- tests/q.test.ts ← q-judge (m/r, run —)\", \"- src/q.ts ← q (m/q, run 20261110-101010)\", \"- src/r.ts ← q (m/q, run 20261110-101010)\"; runningLine null, \"Running total: $1\", the first 199 chars + \"…\""
@@ -6,5 +10,90 @@
   "Primer Command 7": {
     "given": "a tmpRepo with go.mod \"module mini\\n\\ngo 1.22\\n\", calc/a.go \"package calc\\n\", calc/a_test.go \"package calc\\n\\nimport \\\"testing\\\"\\n\\nfunc TestA(t *testing.T) {}\\nfunc TestB_2(t *testing.T) {}\\nfunc Testable(t *testing.T) {}\\nfunc helper() {}\\n// func TestC(t *testing.T) {}\\n\", report/r_test.go \"package report\\n\\nimport \\\"testing\\\"\\n\\nfunc Test(t *testing.T) {}\\n\\tfunc TestIndented(t *testing.T) {}\\nfunc Test9(t *testing.T) {}\\n\", web/x.ts \"test(\\\"ts\\\");\\n\"; env {PATH}; then countTests(the go profile, [{path \"calc/a_test.go\", text: that text}, {path \"calc/a.go\", text \"func TestZ(t *testing.T) {}\\n\"}])",
     "then": "code 0; document.tests {language: \"go\", files: 2, tests: 4} — TestA, TestB_2, Test and Test9 count; Testable (a lower-case letter after Test), helper, the commented TestC and the indented TestIndented do not; files 5 — three .go files outvote one .ts file (go.mod has no profile); then {language: \"go\", files: 1, tests: 2} — calc/a.go is not a test file"
+  },
+  "Primer Command 8": {
+    "given": "a tmpRepo with each [path, text] of files written exactly; env {PATH}; then countTests(the go profile, files as {path, text}) and countTests(the typescript profile, ts as {path, text})",
+    "files": [
+      [
+        "go.mod",
+        "module ex\n\ngo 1.22\n"
+      ],
+      [
+        "calc/c.go",
+        "package calc\n"
+      ],
+      [
+        "calc/c_test.go",
+        "package calc\n\nimport \"testing\"\n\nfunc TestMain(m *testing.M) { m.Run() }\nfunc TestSum(t *testing.T) {}\nfunc TestEdge(*testing.T) {}\n"
+      ],
+      [
+        "calc/_old_test.go",
+        "package calc\n\nimport \"testing\"\n\nfunc TestOld(t *testing.T) {}\n"
+      ],
+      [
+        "calc/.swap_test.go",
+        "package calc\n\nimport \"testing\"\n\nfunc TestSwap(t *testing.T) {}\n"
+      ],
+      [
+        "calc/testdata/fix_test.go",
+        "package fix\n\nimport \"testing\"\n\nfunc TestFix(t *testing.T) {}\n"
+      ],
+      [
+        "_attic/a_test.go",
+        "package attic\n\nimport \"testing\"\n\nfunc TestAttic(t *testing.T) {}\n"
+      ],
+      [
+        "vendor/v/v_test.go",
+        "package v\n\nimport \"testing\"\n\nfunc TestVendor(t *testing.T) {}\n"
+      ],
+      [
+        "decks/m1/parts/_p_probe_test.go",
+        "package calc\n\nimport \"testing\"\n\nfunc TestProbeP(t *testing.T) {}\n"
+      ],
+      [
+        "decks/m1/smoke/s_test.go",
+        "package smoke\n\nimport \"testing\"\n\nfunc TestSmoke(t *testing.T) {}\n"
+      ],
+      [
+        "report/r_test.go",
+        "package report\n\nimport \"testing\"\n\nfunc TestShare(t *testing.T) {}\nfunc TestRound(t *testing.T) {}\nfunc TestPad(t *testing.T) {}\n"
+      ]
+    ],
+    "ts": [
+      [
+        "tests/a.test.ts",
+        "test(\"a\", () => {});\n"
+      ],
+      [
+        "decks/p9/parts/a.probe.ts",
+        "test(\"p\", () => {});\n"
+      ],
+      [
+        "decks/p9/smoke/b.test.ts",
+        "test(\"s\", () => {});\ntest(\"t\", () => {});\n"
+      ]
+    ],
+    "then": "code 0; document.tests {language: \"go\", files: 2, tests: 5} — calc/c_test.go (TestSum, TestEdge; TestMain(m *testing.M) is not a test) and report/r_test.go (3); not counted: a file or directory beginning with \"_\" or \".\" (calc/_old_test.go, calc/.swap_test.go, _attic/a_test.go, decks/m1/parts/_p_probe_test.go), a testdata or vendor directory (calc/testdata/fix_test.go, vendor/v/v_test.go), anything under decks/ (decks/m1/smoke/s_test.go, which go test ./... would run); files 11; countTests(go, files) gives the same {language: \"go\", files: 2, tests: 5}; countTests(typescript, ts) {language: \"typescript\", files: 1, tests: 1} — a probe (.probe.ts) is no test file and decks/ is not counted"
+  },
+  "Primer Command 9": {
+    "given": "the go-mini smoke tree (P15 run 20261008-080344): a tmpRepo with each path of mini written with the text of fixture(\"go-mini/\" + path) and each path of smoke with the text of fixture(\"primer/go-smoke/\" + path); env {PATH}; then countTests(the go profile, all 13 as {path, text})",
+    "mini": [
+      ".gitignore",
+      "contour.yaml",
+      "morph-map.json",
+      "go.mod",
+      "internal/testhelp/testhelp.go",
+      "decks/m1/checks.json",
+      "decks/m1/parts/_clamp-value_probe_test.go",
+      "decks/m1/parts/_percent-of_probe_test.go",
+      "decks/m1/parts/_format-share_probe_test.go",
+      "decks/tools/layers.json"
+    ],
+    "smoke": [
+      "calc/clamp_value_examples_test.go",
+      "calc/percent_of_examples_test.go",
+      "report/format_share_examples_test.go"
+    ],
+    "then": "code 0; document.tests {language: \"go\", files: 3, tests: 12} — the three judges' files (4 + 5 + 3 func Test), not the three decks/m1/parts/_<id>_probe_test.go (5 + 6 + 4); files 13; countTests gives the same {language: \"go\", files: 3, tests: 12}"
   }
 }
