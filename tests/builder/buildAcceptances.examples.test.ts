@@ -1,9 +1,10 @@
 import { test, expect } from "vitest";
 import { fixture, fixtureJson } from "../helpers.js";
-import { buildAcceptances } from "../../src/builder/buildAcceptances.js";
+import { buildAcceptances, probeFile } from "../../src/builder/buildAcceptances.js";
+import { goJudgeAcceptance } from "../../src/builder/goAcceptance.js";
 import { codeAcceptance } from "../../src/builder/compose.js";
 import { DEFAULT_FROZEN } from "../../src/builder/readChecks.js";
-import { TYPESCRIPT, PYTHON } from "../../src/language/profiles.js";
+import { TYPESCRIPT, PYTHON, GO } from "../../src/language/profiles.js";
 import { loadDeck } from "../../src/cards/model.js";
 import type { CardContext, Checks } from "../../src/builder/types.js";
 import type { Card } from "../../src/cards/types.js";
@@ -92,7 +93,50 @@ test("Build Acceptances example 4: python is refused", () => {
     profile: PYTHON,
     texts: { guard: "// guard\n", firstdiff: "// firstdiff\n", probes: { a: "// probe\n" } },
   });
-  expect(r).toStrictEqual({ ok: false, errors: ["no acceptance builder for language 'python' (only typescript)"] });
+  expect(r).toStrictEqual({ ok: false, errors: ["no acceptance builder for language 'python' (only typescript, go)"] });
+});
+
+test("Build Acceptances example 5: the go cut, a code card and a judge", () => {
+  const r = buildAcceptances({
+    cards: [card("percent-of", ["calc/percent_of.go"]), card("clamp-value-judge", ["calc/clamp_value_examples_test.go"])],
+    checks: {
+      ...checks([
+        { id: "percent-of", smoke: null, extra: null, files: null },
+        { id: "clamp-value-judge", smoke: null, extra: null, files: [{ file: "calc/clamp_value_examples_test.go", min: 4, max: 10, lits: ["TestClampValueExample1"], drop: [], new: true }] },
+      ]),
+      phase: "m1",
+      frozen: ["go.mod", "internal"],
+    },
+    profile: GO,
+    texts: { guard: "// guard\n", firstdiff: "// firstdiff\n", probes: { "percent-of": "package calc\n" } },
+  });
+  if (!r.ok) throw new Error("expected ok");
+  const byId = new Map(r.cards.map((c) => [c.customId, c]));
+  expect(byId.get("percent-of")?.acceptance).toBe(fixture("builder/go/code1.txt"));
+  expect(byId.get("clamp-value-judge")?.acceptance).toBe(
+    goJudgeAcceptance(
+      ctx({
+        id: "clamp-value-judge", phase: "m1", targets: ["calc/clamp_value_examples_test.go"],
+        siblings: ["calc/percent_of.go"], frozen: ["go.mod", "internal"], profile: GO,
+      }),
+      [{ file: "calc/clamp_value_examples_test.go", min: 4, max: 10, lits: ["TestClampValueExample1"], drop: [], new: true }],
+    ),
+  );
+});
+
+test("Build Acceptances example 6: a typescript card under go, probeFile per profile", () => {
+  const r = buildAcceptances({
+    cards: [card("a", ["src/x/a.ts"]), card("b", ["calc/b.go"])],
+    checks: checks([
+      { id: "a", smoke: null, extra: null, files: null },
+      { id: "b", smoke: null, extra: null, files: null },
+    ]),
+    profile: GO,
+    texts: { guard: "// guard\n", firstdiff: "// firstdiff\n", probes: { a: "// probe\n" } },
+  });
+  expect(r).toStrictEqual({ ok: false, errors: ["card 'a' has no go target", "code card 'b' has no probe"] });
+  expect(probeFile(GO, "percent-of")).toBe("_percent-of_probe_test.go");
+  expect(probeFile(TYPESCRIPT, "a")).toBe("a.probe.ts");
 });
 
 test("Build Acceptances own 1: a heredoc tag in the first-difference locator", () => {
