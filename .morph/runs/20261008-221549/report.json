@@ -1,0 +1,206 @@
+{
+  "runId": "20261008-221549",
+  "completedAt": 1791498730769,
+  "branch": "morph/20261008-221549",
+  "processor": "ds",
+  "generations": 3,
+  "outcomes": [
+    {
+      "customId": "parse-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "052ba6069ee617da2e1131d251f727cad373e78f",
+      "diffstat": {
+        "files": 2,
+        "insertions": 21,
+        "deletions": 1
+      }
+    },
+    {
+      "customId": "select-cards",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "select-cards.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "5e9e31234c723474459f29c0193f38c6f6197df8",
+      "diffstat": {
+        "files": 1,
+        "insertions": 29,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "parse-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/parse.p20.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "81bddb137a8d16bedad33825f7b9963a72dc098a",
+      "diffstat": {
+        "files": 1,
+        "insertions": 177,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "39f5ebe751dd61c764f3a2e4be1e2574e8daf97c",
+      "diffstat": {
+        "files": 1,
+        "insertions": 16,
+        "deletions": 2
+      }
+    },
+    {
+      "customId": "select-cards-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "select-cards-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/planner/selectCards.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "ee615741697b533bd7468a14a1711b3a6d953fb9",
+      "diffstat": {
+        "files": 1,
+        "insertions": 64,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/planCommand.p20.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "ab65d33b445c652fa97f8a7fa44b174cd46d41f1",
+      "diffstat": {
+        "files": 1,
+        "insertions": 91,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 158495,
+    "outputTokens": 73446,
+    "cost": 0.06286521,
+    "requests": 9
+  },
+  "requests": [
+    {
+      "customId": "parse-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791497750-Wa1yokkFSR6aBh8p3dnv",
+      "inputTokens": 21385,
+      "outputTokens": 7020,
+      "cost": 0.00741975,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791497750-F6TFqbSaF7Z9RowrOspK",
+      "inputTokens": 21385,
+      "outputTokens": 7894,
+      "cost": 0.00794415,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "select-cards.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791497750-Kf1jEOl26EXdAwvRlgdG",
+      "inputTokens": 15389,
+      "outputTokens": 611,
+      "cost": 0.00267495,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "select-cards.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791497762-XRZ0f8c74BizZnCaav4X",
+      "inputTokens": 15389,
+      "outputTokens": 909,
+      "cost": 0.00078015,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791497952-mUWKY6SMs50pYtqmJqKZ",
+      "inputTokens": 19982,
+      "outputTokens": 10043,
+      "cost": 0.0090231,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791497952-J6FZ5VTfLufZQ6CA5RdK",
+      "inputTokens": 16520,
+      "outputTokens": 4269,
+      "cost": 0.0050394,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791497952-laaUNNR1do7htrk2tsGT",
+      "inputTokens": 16520,
+      "outputTokens": 3455,
+      "cost": 0.00233916,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "select-cards-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791497997-2gPPyoEDZU21mMcl5U1T",
+      "inputTokens": 15113,
+      "outputTokens": 2849,
+      "cost": 0.00328515,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791498259-bP18Mlrgvzft00h5CzLm",
+      "inputTokens": 16812,
+      "outputTokens": 36396,
+      "cost": 0.0243594,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+```ts
+import { expect, test } from "vitest";
+import { selectCards } from "../../src/planner/selectCards.js";
+import { fixtureJson } from "../helpers.js";
+import type { Plan } from "../../src/planner/types.js";
+
+const fresh = (): Plan => fixtureJson("planner/subset.plan.json") as Plan;
+
+test("Select Cards example 1: only d and c keeps c then d", () => {
+  const plan = fresh();
+  const result = selectCards(plan, ["d", "c"]);
+  if (!result.ok) throw new Error("expected ok: " + result.error);
+  expect(result.plan.cards[0]).toBe(plan.cards[3]);
+  expect(result.plan.cards[1]).toBe(plan.cards[4]);
+  expect(result.plan.cards.map((card) => card.customId)).toStrictEqual(["c", "d"]);
+  expect(result.plan.generations).toStrictEqual([["c"], ["d"]]);
+  expect(result.plan.externalDependsOn).toStrictEqual({ c: ["a"], d: ["b"] });
+  expect(result.plan.spec).toBe("s.yaml");
+  expect(result.plan.components).toStrictEqual(["k"]);
+});
+
+test("Select Cards example 2: only e, b, a keeps a, e, b", () => {
+  const plan = fresh();
+  const result = selectCards(plan, ["e", "b", "a"]);
+  if (!result.ok) throw new Error("expected ok: " + result.error);
+  expect(result.plan.cards.map((card) => card.customId)).toStrictEqual(["a", "e", "b"]);
+  expect(result.plan.generations).toStrictEqual([["a", "e"], ["b"]]);
+  expect(result.plan.externalDependsOn).toStrictEqual({ e: ["outside"] });
+});
+
+test("Select Cards example 3: unknown ids fail with the missing ones", () => {
+  const plan = fresh();
+  const result = selectCards(plan, ["zz", "c", "y.1"]);
+  expect(result).toStrictEqual({
+    ok: false,
+    error: "--only names cards the plan does not have: zz, y.1",
+  });
+});
+
+test("Select Cards example 4: every card keeps the plan whole", () => {
+  const plan = fresh();
+  const result = selectCards(plan, ["d", "c", "b", "e", "a"]);
+  expect(result).toStrictEqual({ ok: true, plan });
+});
+
+test("selectCards leaves the plan it is given unchanged", () => {
+  const plan = fresh();
+  const before = JSON.stringify(plan);
+  selectCards(plan, ["d", "c"]);
+  selectCards(plan, ["zz"]);
+  expect(JSON.stringify(plan)).toBe(before);
+});
+
+test("the order of only never matters", () => {
+  const plan = fresh();
+  const first = selectCards(plan, ["b", "a", "d", "c"]);
+  const second = selectCards(plan, ["c", "d", "a", "b"]);
+  if (!first.ok) throw new Error("expected ok: " + first.error);
+  if (!second.ok) throw new Error("expected ok: " + second.error);
+  expect(first.plan.cards.map((card) => card.customId)).toStrictEqual(
+    second.plan.cards.map((card) => card.customId),
+  );
+  expect(first.plan.generations).toStrictEqual(second.plan.generations);
+  expect(first.plan.externalDependsOn).toStrictEqual(second.plan.externalDependsOn);
+});
+```
