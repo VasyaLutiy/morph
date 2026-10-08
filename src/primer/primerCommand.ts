@@ -160,6 +160,7 @@ export function runningLine(measure: string | null): string | null {
 function testCallPattern(id: string): RegExp | null {
   if (id === "typescript") return /(?<![\w.$])(?:test|it)\s*\(/g;
   if (id === "python") return /^[ \t]*(?:async[ \t]+)?def[ \t]+test_\w+/gm;
+  if (id === "go") return /^func Test(?:[A-Z0-9_]\w*)?\s*\(/gm;
   return null;
 }
 
