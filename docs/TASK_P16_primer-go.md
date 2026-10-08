@@ -149,7 +149,7 @@ min = 2 examples; max = min + 6 (new file).
 
 | card | returns | `max_tokens` |
 |---|---|---|
-| primer-command | primerCommand.ts ≈ 7.3 KB whole (reference 7 296 bytes) | 16 000 |
+| primer-command | primerCommand.ts ≈ 7.3 KB whole (reference 7 215 bytes) | 16 000 |
 | primer-command-judge | ≈ 2.5–3.5 KB new (the probe's two example tests: 2.3 KB) | 12 000 |
 
 ## 4. Constraints
@@ -206,3 +206,43 @@ Attempts and first red per variant, minutes, $ (provider), truncations, judge de
 ## 11. Actual
 
 ### Gate (preparation)
+
+08.10, on the VPS, by the preparing orchestrator (Opus 5.5, fresh context, no sub-agents); no paid run, no model call.
+Data commit 673d783 (spec, record, map, fixtures, checks, probe, filter, deck, DECISIONS) and the gate commit (this
+section). Component primer 29 805 bytes. Issues: #7 only (no `P16-*` label exists).
+
+The deck **cut by V2**: `plan --component primer --judge --checks decks/p16/checks.json` exit 0, 8 cards,
+`decks/p16/filter.py` keeps 2; generations `[primer-command] [primer-command-judge]`; `scale_tokens.py … 3` (48 000 /
+36 000); `deck check` **0 errors, 0 warnings**, no hazards; max slice + targets **37 337 bytes** (primer-command-judge;
+primer-command 25 120). No mrph cross-check (operator 08.10).
+
+Scratch worktree `/tmp/p16-gate` from 673d783 (removed afterwards; no watcher left; the `/tmp/morph/*-p16` snapshots
+removed), the deck's own acceptances:
+- **Stubs, red per example at the probe (4/4 twice):** main's own primerCommand.ts (the old behaviour) — example 8
+  `first difference … expected files 2 / tests 5, received files 9 / tests 13`, example 9 `expected 3 / 12, received
+  6 / 27` (issue #7's numbers), the path rows (`expected false … received true`), the call rule (`tests 5` vs `10`);
+  typed throwing stubs of isTestFile/countTests — `Error: stub isTestFile ["go","_attic/a_test.go"]`, `… [".gitignore"]`,
+  `… ["go","a_test.go"]`, `Error: stub countTests "go"`.
+- **Judge before its file:** red at the guard (`guard: tests/primer/primerCommand.p16.examples.test.ts missing`); the
+  reference judge on the old code red at own per example (2/2 FAIL).
+- **Reference (scratch only):** primerCommand.ts 7 215 bytes, chain green **65.4 s**; reference judge (2 041 bytes, 2
+  tests) chain green **64.9 s** (limit 250 s). Final tree: `tsc`, `eslint src tests` clean, `vitest run` **748 / 748 in
+  114 files** (746 + 2); log /tmp/p16-prep-vt-1.log. The reference binary's primer on the smoke tree
+  `/tmp/smoke-go/M`: `tests {go, 3, 12}` (main's: 6 / 27); on this repository `{typescript, 113, 763}` before and after.
+- **Mutants** (the changed contracts only: isTestFile's three rules and the go call rule), each under a 120 s subprocess
+  timeout against the probe: **25 tried, 25 killed by the probe, 0 by timeout, 1.12 min in all (max 3.0 s)**. The
+  reference judge alone kills 14 of 25; its 11 survivors (decks on any segment, decks before normalizePath, testdata/
+  vendor as substrings, the go rules for every profile, the rule without `)`, without `\s*` after `(`, without `^`,
+  with a lower-case letter after Test, TestMain excluded by name only, leading whitespace) are rows of the probe, not
+  record examples — the code card's probe kills them all; no known-risk line needed.
+
+**Forecast** on `ds` with maxTokens × 3: 2 cards, 3 first requests (2 variants + 1 judge), slices 25–37 KB, answers
+2–7 KB; P15 ran 12 cards in ≈ 17 requests for $0.1929 (≈ $0.011 a request): **≈ $0.04**, ≤ $0.10 with a re-cut; ≤ $1.
+**Gate holds.**
+
+**Run command** (from the repo root, the binary copied first):
+
+```
+npm run build && rm -rf /tmp/v2bin-p16 && mkdir -p /tmp/v2bin-p16 && cp -r dist /tmp/v2bin-p16/ && ln -s $PWD/node_modules /tmp/v2bin-p16/node_modules
+node /tmp/v2bin-p16/dist/cli.js run --root . --deck decks/p16/deck.json --processor ds --deadline 2400 > /tmp/p16-run.json
+```
