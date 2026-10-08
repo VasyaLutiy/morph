@@ -1,0 +1,388 @@
+import fs from "node:fs";
+import { expect, test } from "vitest";
+
+import { tmpRoot } from "../helpers.js";
+import type { ScoutFs, ScoutTree } from "../../src/scout/cagePath.js";
+import {
+  DEFAULT_TOOL_CAPS,
+  runTool,
+} from "../../src/scout/runTool.js";
+import type { ToolCaps } from "../../src/scout/runTool.js";
+
+const NODE_FS: ScoutFs = {
+  realpath: (p) => fs.realpathSync(p),
+  readFile: (p) => fs.readFileSync(p, "utf8"),
+};
+
+const C: ToolCaps = {
+  readLines: 2,
+  grepHits: 3,
+  grepLineChars: 12,
+  listEntries: 2,
+  grepSkip: [".morph", "decks"],
+};
+
+const FILES: Record<string, string> = {
+  "src/a.ts": "l1\nl2\nl3\nl4\nl5\n",
+  "src/e.ts": "",
+  "src/bin.dat": "a\0alpha",
+  "src/b.ts":
+    'const alpha = 1;\nconst beta = 2;\nconst gamma = "alphabetagammadelta";\n',
+  "README.md": "alpha here\n",
+  "decks/p1/deck.json": "alpha in a deck\n",
+  ".morph/runs/r/report.json": "alpha in a report\n",
+  "tests/a.test.ts": "beta\n",
+};
+
+function build(): { p: ReturnType<typeof tmpRoot>; tree: ScoutTree } {
+  const p = tmpRoot("morph-tool-");
+  for (const [k, v] of Object.entries(FILES)) p.write("t/" + k, v);
+  p.write("t-out/secret.txt", "alpha secret\n");
+  fs.symlinkSync(p.path("t-out/secret.txt"), p.path("t/out.txt"));
+  fs.symlinkSync("src", p.path("t/dirlink"));
+  return {
+    p,
+    tree: {
+      root: p.path("t"),
+      files: [...Object.keys(FILES), "out.txt", "dirlink"],
+    },
+  };
+}
+
+test("Run Tool example 1: READ ranges and the read cap", () => {
+  const { p, tree } = build();
+  try {
+    expect(
+      runTool(
+        { kind: "read", path: "src/a.ts", from: null, to: null },
+        tree,
+        NODE_FS,
+        DEFAULT_TOOL_CAPS,
+      ),
+    ).toStrictEqual({
+      text: [
+        "READ src/a.ts lines 1-5 of 5",
+        "1: l1",
+        "2: l2",
+        "3: l3",
+        "4: l4",
+        "5: l5",
+      ].join("\n"),
+      read: true,
+      error: null,
+    });
+
+    expect(
+      runTool(
+        { kind: "read", path: "src/a.ts", from: 2, to: 3 },
+        tree,
+        NODE_FS,
+        DEFAULT_TOOL_CAPS,
+      ),
+    ).toStrictEqual({
+      text: ["READ src/a.ts lines 2-3 of 5", "2: l2", "3: l3"].join("\n"),
+      read: true,
+      error: null,
+    });
+
+    expect(
+      runTool(
+        { kind: "read", path: "src/a.ts", from: null, to: null },
+        tree,
+        NODE_FS,
+        C,
+      ),
+    ).toStrictEqual({
+      text: [
+        "READ src/a.ts lines 1-2 of 5",
+        "1: l1",
+        "2: l2",
+        "… 3 more lines; READ src/a.ts 3-5 for the next",
+      ].join("\n"),
+      read: true,
+      error: null,
+    });
+
+    expect(
+      runTool(
+        { kind: "read", path: "./src/a.ts", from: 4, to: 9 },
+        tree,
+        NODE_FS,
+        DEFAULT_TOOL_CAPS,
+      ),
+    ).toStrictEqual({
+      text: ["READ src/a.ts lines 4-5 of 5", "4: l4", "5: l5"].join("\n"),
+      read: true,
+      error: null,
+    });
+  } finally {
+    p.rm();
+  }
+});
+
+test("Run Tool example 2: READ refusals, the empty file and the binary file", () => {
+  const { p, tree } = build();
+  try {
+    expect(
+      runTool(
+        { kind: "read", path: "src/a.ts", from: 6, to: 7 },
+        tree,
+        NODE_FS,
+        DEFAULT_TOOL_CAPS,
+      ),
+    ).toStrictEqual({
+      text: "READ failed: line range 6-7 is past the end (5 lines): src/a.ts",
+      read: true,
+      error: "line range 6-7 is past the end (5 lines): src/a.ts",
+    });
+
+    expect(
+      runTool(
+        { kind: "read", path: "src/e.ts", from: null, to: null },
+        tree,
+        NODE_FS,
+        DEFAULT_TOOL_CAPS,
+      ),
+    ).toStrictEqual({
+      text: "READ src/e.ts: empty file",
+      read: true,
+      error: null,
+    });
+
+    expect(
+      runTool(
+        { kind: "read", path: "src/bin.dat", from: null, to: null },
+        tree,
+        NODE_FS,
+        DEFAULT_TOOL_CAPS,
+      ),
+    ).toStrictEqual({
+      text: "READ failed: binary file: src/bin.dat",
+      read: true,
+      error: "binary file: src/bin.dat",
+    });
+
+    expect(
+      runTool(
+        { kind: "read", path: "out.txt", from: null, to: null },
+        tree,
+        NODE_FS,
+        DEFAULT_TOOL_CAPS,
+      ),
+    ).toStrictEqual({
+      text: "READ failed: symlink out of the root refused: out.txt",
+      read: true,
+      error: "symlink out of the root refused: out.txt",
+    });
+
+    expect(
+      runTool(
+        { kind: "read", path: "dirlink", from: null, to: null },
+        tree,
+        NODE_FS,
+        DEFAULT_TOOL_CAPS,
+      ),
+    ).toStrictEqual({
+      text: "READ failed: unreadable: dirlink",
+      read: true,
+      error: "unreadable: dirlink",
+    });
+
+    expect(
+      runTool(
+        { kind: "read", path: "src/zz.ts", from: null, to: null },
+        tree,
+        NODE_FS,
+        DEFAULT_TOOL_CAPS,
+      ),
+    ).toStrictEqual({
+      text: "READ failed: not in the tree (missing, ignored or a directory): src/zz.ts",
+      read: true,
+      error: "not in the tree (missing, ignored or a directory): src/zz.ts",
+    });
+  } finally {
+    p.rm();
+  }
+});
+
+test("Run Tool example 3: GREP with alternation, hits, clip and the skip list", () => {
+  const { p, tree } = build();
+  try {
+    expect(
+      runTool(
+        { kind: "grep", pattern: "alpha|beta", path: "" },
+        tree,
+        NODE_FS,
+        C,
+      ),
+    ).toStrictEqual({
+      text: [
+        "GREP /alpha|beta/ in the tree: 5 matches in 3 files",
+        "README.md:1: alpha here",
+        "src/b.ts:1: const alpha … (+4 chars)",
+        "src/b.ts:2: const beta =… (+3 chars)",
+        "… 2 more matches",
+        "(2 files refused by the cage)",
+      ].join("\n"),
+      read: false,
+      error: null,
+    });
+  } finally {
+    p.rm();
+  }
+});
+
+test("Run Tool example 4: GREP over a named skipped dir, no skip, no match, bad dir and bad pattern", () => {
+  const { p, tree } = build();
+  try {
+    expect(
+      runTool(
+        { kind: "grep", pattern: "alpha", path: "decks" },
+        tree,
+        NODE_FS,
+        DEFAULT_TOOL_CAPS,
+      ),
+    ).toStrictEqual({
+      text: [
+        "GREP /alpha/ in decks/: 1 match in 1 file",
+        "decks/p1/deck.json:1: alpha in a deck",
+      ].join("\n"),
+      read: false,
+      error: null,
+    });
+
+    expect(
+      runTool(
+        { kind: "grep", pattern: "alpha", path: "" },
+        tree,
+        NODE_FS,
+        { ...DEFAULT_TOOL_CAPS, grepSkip: [] },
+      ),
+    ).toStrictEqual({
+      text: [
+        "GREP /alpha/ in the tree: 5 matches in 4 files",
+        ".morph/runs/r/report.json:1: alpha in a report",
+        "README.md:1: alpha here",
+        "decks/p1/deck.json:1: alpha in a deck",
+        "src/b.ts:1: const alpha = 1;",
+        'src/b.ts:3: const gamma = "alphabetagammadelta";',
+        "(2 files refused by the cage)",
+      ].join("\n"),
+      read: false,
+      error: null,
+    });
+
+    expect(
+      runTool(
+        { kind: "grep", pattern: "zzz", path: "src" },
+        tree,
+        NODE_FS,
+        DEFAULT_TOOL_CAPS,
+      ),
+    ).toStrictEqual({
+      text: "GREP /zzz/ in src/: 0 matches in 0 files",
+      read: false,
+      error: null,
+    });
+
+    expect(
+      runTool(
+        { kind: "grep", pattern: "x", path: "nope" },
+        tree,
+        NODE_FS,
+        DEFAULT_TOOL_CAPS,
+      ),
+    ).toStrictEqual({
+      text: "GREP failed: no such directory in the tree: nope",
+      read: false,
+      error: "no such directory in the tree: nope",
+    });
+
+    expect(
+      runTool(
+        { kind: "grep", pattern: "(", path: "" },
+        tree,
+        NODE_FS,
+        DEFAULT_TOOL_CAPS,
+      ),
+    ).toStrictEqual({
+      text: "GREP failed: invalid pattern /(/",
+      read: false,
+      error: "invalid pattern /(/",
+    });
+  } finally {
+    p.rm();
+  }
+});
+
+test("Run Tool example 5: LIST the tree, the cap, a directory, a file and a leaving path", () => {
+  const { p, tree } = build();
+  try {
+    expect(
+      runTool({ kind: "list", path: "" }, tree, NODE_FS, C),
+    ).toStrictEqual({
+      text: [
+        "LIST .: 7 entries",
+        ".morph/ (1 file)",
+        "README.md",
+        "… 5 more entries",
+      ].join("\n"),
+      read: false,
+      error: null,
+    });
+
+    expect(
+      runTool({ kind: "list", path: "" }, tree, NODE_FS, DEFAULT_TOOL_CAPS),
+    ).toStrictEqual({
+      text: [
+        "LIST .: 7 entries",
+        ".morph/ (1 file)",
+        "README.md",
+        "decks/ (1 file)",
+        "dirlink",
+        "out.txt",
+        "src/ (4 files)",
+        "tests/ (1 file)",
+      ].join("\n"),
+      read: false,
+      error: null,
+    });
+
+    expect(
+      runTool({ kind: "list", path: "src/" }, tree, NODE_FS, DEFAULT_TOOL_CAPS),
+    ).toStrictEqual({
+      text: [
+        "LIST src/: 4 entries",
+        "a.ts",
+        "b.ts",
+        "bin.dat",
+        "e.ts",
+      ].join("\n"),
+      read: false,
+      error: null,
+    });
+
+    expect(
+      runTool(
+        { kind: "list", path: "src/a.ts" },
+        tree,
+        NODE_FS,
+        DEFAULT_TOOL_CAPS,
+      ),
+    ).toStrictEqual({
+      text: "LIST failed: no such directory in the tree: src/a.ts",
+      read: false,
+      error: "no such directory in the tree: src/a.ts",
+    });
+
+    expect(
+      runTool({ kind: "list", path: "../x" }, tree, NODE_FS, DEFAULT_TOOL_CAPS),
+    ).toStrictEqual({
+      text: "LIST failed: path leaves the root: ../x",
+      read: false,
+      error: "path leaves the root: ../x",
+    });
+  } finally {
+    p.rm();
+  }
+});
