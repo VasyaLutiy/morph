@@ -52,6 +52,8 @@ test("Run Tool example 1: READ whole, a range, the line cap with its next range,
       .toStrictEqual(okText("READ src/a.ts lines 2-3 of 5\n2: l2\n3: l3", true));
     expect(runTool({ kind: "read", path: "src/a.ts", from: null, to: null }, tree, NODE_FS, C))
       .toStrictEqual(okText("READ src/a.ts lines 1-2 of 5\n1: l1\n2: l2\n… 3 more lines; READ src/a.ts 3-5 for the next", true));
+    expect(runTool({ kind: "read", path: "src/a.ts", from: 1, to: 4 }, tree, NODE_FS, C))
+      .toStrictEqual(okText("READ src/a.ts lines 1-2 of 5\n1: l1\n2: l2\n… 2 more lines; READ src/a.ts 3-4 for the next", true));
     expect(runTool({ kind: "read", path: "./src/a.ts", from: 4, to: 9 }, tree, NODE_FS, D))
       .toStrictEqual(okText("READ src/a.ts lines 4-5 of 5\n4: l4\n5: l5", true));
   });
@@ -123,6 +125,7 @@ test("§2.2 rows: DEFAULT_TOOL_CAPS; an in-memory tree — CRLF, a file without 
     "/m/a/decks/d.ts": "k\n",
     "/m/b/y.ts": "k\n\nk\n",
     "/m/decksx/q.ts": "k\n",
+    "/m/bx/k.ts": "k\n",
   };
   const mem: ScoutFs = {
     realpath: (p: string): string => p,
@@ -145,6 +148,9 @@ test("§2.2 rows: DEFAULT_TOOL_CAPS; an in-memory tree — CRLF, a file without 
   expect(runTool({ kind: "list", path: "b" }, tree, mem, D)).toStrictEqual(okText("LIST b/: 2 entries\nx.ts\ny.ts", false));
   expect(runTool({ kind: "list", path: "a" }, tree, mem, D)).toStrictEqual(okText("LIST a/: 1 entry\ndecks/ (1 file)", false));
   expect(runTool({ kind: "grep", pattern: "k", path: "z.ts" }, tree, mem, D)).toStrictEqual(failed("GREP", "no such directory in the tree: z.ts", false));
+  expect(runTool({ kind: "grep", pattern: "ONE", path: "" }, tree, mem, D)).toStrictEqual(okText("GREP /ONE/ in the tree: 0 matches in 0 files", false));
+  expect(runTool({ kind: "grep", pattern: "k", path: "b" }, { root: "/m", files: ["bx/k.ts", "b/x.ts"] }, mem, D)).toStrictEqual(okText(
+    "GREP /k/ in b/: 3 matches in 1 file\nb/x.ts:1: k\nb/x.ts:2: k\nb/x.ts:3: k", false));
   const gone: ScoutTree = { root: "/m", files: ["z.ts", "lost.ts"] };
   expect(runTool({ kind: "grep", pattern: "ne", path: "" }, gone, mem, D)).toStrictEqual(okText(
     "GREP /ne/ in the tree: 1 match in 1 file\nz.ts:1: one\n(1 file refused by the cage)", false));

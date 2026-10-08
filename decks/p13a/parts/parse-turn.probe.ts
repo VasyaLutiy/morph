@@ -66,6 +66,7 @@ test("§2.2 rows: VERBS; three actions counted in order; tab after a verb; range
   expect(parseTurn("LIST\nANSWER {}\n  GREP q")).toStrictEqual(bad("3 actions in one turn (LIST, ANSWER, GREP): send one per turn"));
   expect(parseTurn("READ\tsrc/t.ts")).toStrictEqual(act({ kind: "read", path: "src/t.ts", from: null, to: null }));
   expect(parseTurn("READ x.ts 08-010")).toStrictEqual(act({ kind: "read", path: "x.ts", from: 8, to: 10 }));
+  expect(parseTurn("READ x.ts  3-5")).toStrictEqual(act({ kind: "read", path: "x.ts", from: 3, to: 5 }));
   expect(parseTurn("READ x.ts 3-")).toStrictEqual(act({ kind: "read", path: "x.ts 3-", from: null, to: null }));
   expect(parseTurn("GREP  a|b  --   lib dir  ")).toStrictEqual(act({ kind: "grep", pattern: "a|b", path: "lib dir" }));
   expect(parseTurn("GREP -- src")).toStrictEqual(act({ kind: "grep", pattern: "-- src", path: "" }));
@@ -76,6 +77,7 @@ test("§2.2 rows: VERBS; three actions counted in order; tab after a verb; range
 test("§2.2 rows: ANSWER on its own line, reasoning absent, a JSON array, braces in strings, prose after the object", () => {
   expect(parseTurn('ANSWER\n{"targets": ["q.ts"]}')).toStrictEqual(ans({ targets: ["q.ts"], context_slice: [], reasoning: "" }));
   expect(parseTurn('ANSWER [{"targets": ["q.ts"]}]')).toStrictEqual(ans({ targets: ["q.ts"], context_slice: [], reasoning: "" }));
+  expect(parseTurn('ANSWER {"targets": ["q.ts"], "reasoning": " r "}')).toStrictEqual(ans({ targets: ["q.ts"], context_slice: [], reasoning: " r " }));
   expect(parseTurn('ANSWER {"targets": ["q.ts"], "reasoning": "{x}"}')).toStrictEqual(ans({ targets: ["q.ts"], context_slice: [], reasoning: "{x}" }));
   expect(parseTurn('ANSWER {"targets": ["q.ts"]} - see {above}')).toStrictEqual(bad("ANSWER: the JSON does not parse"));
   expect(parseTurn("ANSWER }{")).toStrictEqual(bad("ANSWER: no JSON object"));

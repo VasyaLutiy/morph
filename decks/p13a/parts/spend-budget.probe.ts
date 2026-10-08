@@ -67,7 +67,7 @@ test("§2.2 rows: the marker; the input not changed; text exactly at the budget;
   expect(exact).toStrictEqual({ spent: { calls: 4, reads: 6, chars: 16, rounds: 8 }, text: "abcdefghij", closed: "chars",
     why: "the character budget is spent (16 of 16 chars)" });
   expect(JSON.stringify(spent)).toBe(before);
-  const over = spendTurn(big, { calls: 0, reads: 0, chars: 20, rounds: 0 }, { call: true, read: false, text: "abc" }, 0);
+  const over = spendTurn(big, { calls: 0, reads: 0, chars: 20, rounds: 0 }, { call: true, read: false, text: "abcdefgh" }, 0);
   expect(over.text).toBe(CLIP_MARKER);
   expect(over.spent).toStrictEqual({ calls: 1, reads: 0, chars: 63, rounds: 1 });
   expect(over.closed).toBe("chars");

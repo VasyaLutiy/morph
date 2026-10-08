@@ -78,6 +78,8 @@ test("§2.2 rows: realpath of the root itself; a drive letter needs a slash; .gi
   expect(calls).toContain("/r/src/a.ts");
   const escape: ScoutFs = { realpath: (q: string): string => (q === "/r" ? "/r" : "/r-old/a.ts"), readFile: (q: string): string => q };
   expect(cagePath(TREE, "src/a.ts", "file", escape)).toStrictEqual(no("symlink out of the root refused: src/a.ts"));
+  const lost: ScoutFs = { realpath: (q: string): string => { if (q !== "/r") throw new Error("ENOENT"); return q; }, readFile: (q: string): string => q };
+  expect(cagePath(TREE, "./src/a.ts", "file", lost)).toStrictEqual(no("no such file: ./src/a.ts"));
   const self: ScoutFs = { realpath: (): string => "/r", readFile: (q: string): string => q };
   expect(cagePath(TREE, "src/a.ts", "file", self)).toStrictEqual(no("symlink out of the root refused: src/a.ts"));
   const colon: ScoutTree = { root: "/r", files: ["c:x.ts", "a/.gitkeep", "a/b/.git/h"] };
