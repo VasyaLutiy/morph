@@ -17,7 +17,8 @@ const LAYERS = {
   processor: ["cards", "wait", "compiler"], planner: ["cards", "contour", "language"],
   builder: ["cards", "language"],
   primer: ["cards", "git", "store", "language"],
-  scout: ["cards", "processor", "wait", "primer"],
+  // P13a: the seed reads language's profiles (and, from P13b, git's ownership) (docs/TASK_P13a_scout.md §4)
+  scout: ["cards", "processor", "wait", "primer", "language", "git"],
   reviewer: ["cards", "contour", "primer", "scout", "git"],
   runloop: ["cards", "wait", "store", "compiler", "response", "acceptance", "language",
     "git", "processor"],
@@ -30,12 +31,13 @@ const SHELL = new Set(["acceptance", "git"]);          // node:child_process
 const NET = new Set(["processor"]);                    // fetch, WebSocket, XMLHttpRequest
 const CONSOLE = new Set(["cli"]);                      // console, process.exit
 const PROCESS = new Set(["cli", "processor", "acceptance"]);
-const NO_CLOCK = new Set(["cards", "compiler", "response", "language", "contour", "planner", "builder", "batches", "primer"]);
+const NO_CLOCK = new Set(["cards", "compiler", "response", "language", "contour", "planner", "builder", "batches", "primer",
+  "scout"]);
 // P12a: the one file of src/primer that turns the clock parameter deps.now() into an ISO string (docs/TASK_P12_primer.md §4)
 const CLOCK_FORMATTERS = new Set(["src/primer/primerCommand.ts"]);
 const YAML = new Set(["contour"]);
 // P3: the acceptance gets the child's environment as a parameter (docs/TASK_P3_acceptance.md §4)
-const NO_ENV = new Set(["acceptance", "processor", "git", "batches", "primer"]);
+const NO_ENV = new Set(["acceptance", "processor", "git", "batches", "primer", "scout"]);
 // P4: the one file of a NO_ENV layer that may read process.env (Read Registry, docs/TASK_P4_processor.md §4)
 const ENV_READERS = new Set(["src/processor/registry.ts"]);
 // P6: the one file of src/git that spawns (Run Git, docs/TASK_P6_git.md §4); git takes the env whole
@@ -50,8 +52,10 @@ const CLI_ENTRY = "src/cli.ts";
 // (src/contour/load.ts) (docs/TASK_P9_contour.md §4)
 // P10a: planner is pure like language: of the Node modules only node:path (docs/TASK_P10a_planner.md §4)
 // P10b: builder is pure the same way (docs/TASK_P10b_builder.md §4)
+// P13a: scout reaches the file system only through its ScoutFs parameter: of the Node modules only node:path
+// (docs/TASK_P13a_scout.md §4; P13b adds the one node:fs adapter file)
 const NODE_ONLY = { language: new Set(["node:path"]), contour: new Set(), planner: new Set(["node:path"]),
-  builder: new Set(["node:path"]) };
+  builder: new Set(["node:path"]), scout: new Set(["node:path"]) };
 const YAML_FILE = "src/contour/load.ts";
 
 function parse(file) {

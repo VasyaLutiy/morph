@@ -1,0 +1,127 @@
+{
+ "phase": "p13a",
+ "ownGit": false,
+ "fullExclude": [],
+ "cards": [
+  {
+   "id": "parse-turn"
+  },
+  {
+   "id": "cage-path"
+  },
+  {
+   "id": "run-tool"
+  },
+  {
+   "id": "spend-budget"
+  },
+  {
+   "id": "seed-from-ownership"
+  },
+  {
+   "id": "parse-turn-judge",
+   "files": [
+    {
+     "file": "tests/scout/parseTurn.examples.test.ts",
+     "min": 6,
+     "max": 12,
+     "new": true,
+     "lits": [
+      "Parse Turn example 1",
+      "Parse Turn example 2",
+      "Parse Turn example 3",
+      "Parse Turn example 4",
+      "Parse Turn example 5",
+      "Parse Turn example 6",
+      "lib/b one.ts",
+      "readOwnership|readMorphLog",
+      "2 actions in one turn (READ, GREP): send one per turn",
+      "ANSWER: targets must be a non-empty list of paths"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "cage-path-judge",
+   "files": [
+    {
+     "file": "tests/scout/cagePath.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": [
+      "Cage Path example 1",
+      "Cage Path example 2",
+      "Cage Path example 3",
+      "t-out",
+      "symlink out of the root refused: out.txt",
+      "inside .git: gitcfg",
+      "not in the tree (missing, ignored or a directory): src/b.ts"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "run-tool-judge",
+   "files": [
+    {
+     "file": "tests/scout/runTool.examples.test.ts",
+     "min": 5,
+     "max": 11,
+     "new": true,
+     "lits": [
+      "Run Tool example 1",
+      "Run Tool example 2",
+      "Run Tool example 3",
+      "Run Tool example 4",
+      "Run Tool example 5",
+      "… 3 more lines; READ src/a.ts 3-5 for the next",
+      "const alpha … (+4 chars)",
+      "(2 files refused by the cage)",
+      "LIST .: 7 entries"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "spend-budget-judge",
+   "files": [
+    {
+     "file": "tests/scout/spendBudget.examples.test.ts",
+     "min": 5,
+     "max": 11,
+     "new": true,
+     "lits": [
+      "Spend Budget example 1",
+      "Spend Budget example 2",
+      "Spend Budget example 3",
+      "Spend Budget example 4",
+      "Spend Budget example 5",
+      "the character budget is spent (93 of 50 chars)",
+      "the deadline (1.5 s) passed",
+      "no answer: the session ended with every budget open"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "seed-from-ownership-judge",
+   "files": [
+    {
+     "file": "tests/scout/seedFromOwnership.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": [
+      "Seed From Ownership example 1",
+      "Seed From Ownership example 2",
+      "Seed From Ownership example 3",
+      "q0 (—, run —); … 1 more",
+      "web/app.tsx: written by w (m/w, run R3)",
+      "2 more seeded files not shown"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -2889,10 +2889,181 @@ System:
           description: stdout of primer.
           schema: "{ root, generatedAt, files, tests: { language, files, tests }, runs: totals, skipped, chronology, next: string | null, missing: string[], issues, ownership: { commits, paths }, running: string | null, chars, written: string | null, markdown }"
 
-    # ---------------------------------------------------------------- later epics (skeleton)
+    # ---------------------------------------------------------------- P13a
     - name: scout
-      description: Recon session with a cheap model and read-only tools under call/read/char/round budgets; seed from the primer's ownership head; one final answer-only turn after the budget closes; scout.json with provenance and spend.
+      description: >
+        `morph scout`: a recon session with a cheap model and read-only tools under call/read/char/round budgets and a
+        deadline; the seed from the primer's ownership head (git's Morph-Card trailers); one final answer-only turn after a
+        budget closes; scout.json with provenance and spend. P13a (src/scout/*.ts): the pure pieces — the text protocol
+        READ/GREP/LIST/ANSWER (one action or one answer per model turn), the path cage (the tree's listing, realpath,
+        .git, ".."), the three tool executors over an injected file system, the budgets → closed budget → stop_reason,
+        and the seed. No model call, no clock, no environment, no network, no child process in P13a; the round loop,
+        scout.json, the real file system adapter and `plan --from-scout` are P13b.
       language: typescript
+      requirements: [Deterministic Core]
+      functions:
+        - name: Parse Turn
+          description: One model turn of the scout protocol read as one action, one final answer or a malformed turn with its reason.
+          behavior: >
+            parseTurn(text: string | null) → Turn. VERBS = ["READ", "GREP", "LIST", "ANSWER"]. 1. null, or a text whose
+            trim is "" → malformed "empty turn". 2. lines = text split on "\n", one trailing "\r" removed from each; an
+            action line is a line whose trimStart matches /^(READ|GREP|LIST|ANSWER)(?=\s|$)/ (upper case only; prose and
+            fence lines around it are ignored). None → malformed "no action: one line must start with READ, GREP, LIST
+            or ANSWER"; more than one → malformed "<n> actions in one turn (<their verbs in order, ", "-joined>): send
+            one per turn". 3. args = the action line trimmed, without its verb, trimmed. READ: args "" → "READ needs a
+            path"; args matching /^(.*\S)\s+(\d+)-(\d+)$/ → path = group 1, from and to = Number of groups 2 and 3, from
+            < 1 or to < from → "READ: bad line range <from>-<to>"; else path = args, from and to null. GREP: split args
+            at its LAST " -- ": pattern = the part before, trimmed, path = the part after, trimmed; without " -- " the
+            pattern is args and the path "". pattern "" → "GREP needs a pattern"; new RegExp(pattern) throws → "GREP:
+            invalid pattern /<pattern>/". LIST: path = args ("" is the root). 4. ANSWER: rest = the action line (trimStart)
+            after its verb, then every following line, "\n"-joined; the JSON is rest from its first "{" to its last "}"
+            (no "{", or the last "}" before it → "ANSWER: no JSON object"); JSON.parse throws → "ANSWER: the JSON does
+            not parse"; targets must be an array of non-empty strings with at least one ("ANSWER: targets must be a
+            non-empty list of paths"); context_slice absent → [], else an array of non-empty strings ("ANSWER:
+            context_slice must be a list of paths"); reasoning absent → "", else a string ("ANSWER: reasoning must be a
+            string"); the answer carries only targets, context_slice, reasoning, in that order, the lists as given.
+            Results: {kind "action", action: {kind "read", path, from, to} | {kind "grep", pattern, path} | {kind
+            "list", path}}, {kind "answer", answer}, {kind "malformed", reason}; keys in these orders.
+          steps: [{reads: Model Turn}, {produces: Turn}]
+          examples:
+            - {given: '"I will check the cage first.\nREAD src/scout/cagePath.ts"; "READ lib/b one.ts 12-40"; "  READ src/a.ts 7-7\r\n"', when: parseTurn, then: 'actions read {path "src/scout/cagePath.ts", from null, to null}; {path "lib/b one.ts", from 12, to 40}; {path "src/a.ts", from 7, to 7}'}
+            - {given: '"GREP readOwnership|readMorphLog -- src/git"; "GREP a -- b -- tests"; "GREP export function"', when: parseTurn, then: 'actions grep {pattern "readOwnership|readMorphLog", path "src/git"}; {pattern "a -- b", path "tests"}; {pattern "export function", path ""}'}
+            - {given: '"LIST"; "```\nLIST tests/fixtures\n```"', when: parseTurn, then: 'actions list {path ""}; {path "tests/fixtures"}'}
+            - {given: '"Done.\nANSWER\n```json\n{\"targets\": [\"src/x.ts\"], \"reasoning\": \"GREP found it\", \"acceptance\": \"npm test\"}\n```"; then "ANSWER {\"context_slice\": [\"c.ts\"], \"reasoning\": \"r\", \"targets\": [\"a.ts\", \"b.ts\"]}"', when: parseTurn, then: 'answer {targets ["src/x.ts"], context_slice [], reasoning "GREP found it"} (acceptance dropped); answer {targets ["a.ts", "b.ts"], context_slice ["c.ts"], reasoning "r"}, JSON.stringify of the turn exactly {"kind":"answer","answer":{"targets":["a.ts","b.ts"],"context_slice":["c.ts"],"reasoning":"r"}}'}
+            - {given: 'null; " \n\t"; "The change is in src/a.ts"; "Read src/a.ts"; "READX a"; "READ src/a.ts\nGREP x"; "READ"; "READ a.ts 9-3"; "READ a.ts 0-3"; "GREP ( -- src"; "GREP"', when: parseTurn, then: 'malformed "empty turn" twice; "no action: one line must start with READ, GREP, LIST or ANSWER" three times; "2 actions in one turn (READ, GREP): send one per turn"; "READ needs a path"; "READ: bad line range 9-3"; "READ: bad line range 0-3"; "GREP: invalid pattern /(/"; "GREP needs a pattern"'}
+            - {given: '"ANSWER the cage"; "ANSWER {targets: [a]}"; "ANSWER {\"targets\": []}"; "ANSWER {\"targets\": [\"a\", \"\"]}"; "ANSWER {\"targets\": [\"a\"], \"context_slice\": \"b\"}"; "ANSWER {\"targets\": [\"a\"], \"reasoning\": 5}"', when: parseTurn, then: 'malformed "ANSWER: no JSON object"; "ANSWER: the JSON does not parse"; "ANSWER: targets must be a non-empty list of paths" twice; "ANSWER: context_slice must be a list of paths"; "ANSWER: reasoning must be a string"'}
+        - name: Cage Path
+          description: A path the model wrote, admitted only when it names a listed file (or a directory of listed files) whose real path stays inside the root and outside .git.
+          behavior: >
+            cagePath(tree {root, files: the listing, root-relative "/" paths}, path, kind "file" | "dir", fs {realpath,
+            readFile}) → {ok true, path: the normalised relative path} | {ok false, error}; <p> in a message is the path
+            as given. In order: every "\" read as "/"; starting "/" or a drive /^[A-Za-z]:\// → "absolute path refused:
+            <p>"; a segment ".." → "path leaves the root: <p>"; the segments without "" and "." → a segment ".git" →
+            "inside .git: <p>"; rel = them "/"-joined; rel "" → dir: {ok, ""} (the root), file: "empty path". dir: some
+            listed file starts with rel + "/" → {ok, rel}, else "no such directory in the tree: <p>" (directories are
+            never resolved). file: rel not in the listing → "not in the tree (missing, ignored or a directory): <p>";
+            real = fs.realpath(posix join of root and rel), a throw → "no such file: <p>"; rootReal = fs.realpath(root);
+            real must start with rootReal + "/", else "symlink out of the root refused: <p>" (a sibling sharing the
+            root's prefix is outside); the rest of real after it holding a segment ".git" → "inside .git: <p>"; →
+            {ok, rel}. readFile is never called. Ignored files are refused because the listing (git ls-files --cached
+            --others --exclude-standard, read in P13b) does not hold them.
+          steps: [{reads: Scout Tree}, {produces: Caged Path}]
+          examples:
+            - {given: 'tree {root "/r", files ["src/a.ts", "lib/b one.ts", "docs/n.md"]}, fs with realpath = identity', when: 'cagePath file "src/a.ts", "./lib/b one.ts", "src\\a.ts", "src//./a.ts"; dir "src/", "", "."', then: 'ok "src/a.ts", "lib/b one.ts", "src/a.ts", "src/a.ts"; ok "src", "", ""'}
+            - {given: 'the same tree and fs', when: 'cagePath file "", "/etc/passwd", "C:\\x.ts", "../etc/passwd"; dir "src/../../x"; file ".git/config", "src/b.ts", "src"; dir "docs/n.md", "lib/b"', then: 'errors "empty path"; "absolute path refused: /etc/passwd"; "absolute path refused: C:\\x.ts"; "path leaves the root: ../etc/passwd"; "path leaves the root: src/../../x"; "inside .git: .git/config"; "not in the tree (missing, ignored or a directory): src/b.ts" and "…: src"; "no such directory in the tree: docs/n.md"; "no such directory in the tree: lib/b"'}
+            - {given: 'a real tmp dir p: p/t/src/a.ts, p/t/.git/config, p/t-out/secret.txt; symlinks p/t/out.txt → p/t-out/secret.txt, p/t/in.txt → src/a.ts, p/t/gitcfg → .git/config, p/t/gone.ts → nowhere.ts, p/link → p/t; files ["src/a.ts", "out.txt", "in.txt", "gitcfg", "gone.ts"]; fs = node fs (realpathSync, readFileSync utf8)', when: 'cagePath file with root p/t: out.txt, in.txt, gitcfg, gone.ts; then with root p/link: src/a.ts, out.txt', then: '"symlink out of the root refused: out.txt"; ok "in.txt"; "inside .git: gitcfg"; "no such file: gone.ts"; then ok "src/a.ts"; "symlink out of the root refused: out.txt"'}
+        - name: Run Tool
+          description: One READ, GREP or LIST executed over the listing through the cage and the injected file system, its text capped.
+          behavior: >
+            runTool(action, tree, fs, caps {readLines, grepHits, grepLineChars, listEntries, grepSkip: string[]}) →
+            {text, read: action is a READ, error: string | null}. DEFAULT_TOOL_CAPS = {readLines 400, grepHits 200,
+            grepLineChars 300, listEntries 300, grepSkip [".morph", "decks"]}. A failure: error = its message, text =
+            "<READ|GREP|LIST> failed: <error>"; else error null and text = its lines "\n"-joined, no final newline. A
+            file's lines: its text split on "\n", one trailing "\r" removed from each, the last piece dropped when it is
+            "". The listing is walked in code-unit order. READ: Cage Path (file) refused → its error; fs.readFile(posix
+            join of root and the caged path) throws → "unreadable: <path>"; a "\0" in it → "binary file: <path>"; 0 lines
+            → the one line "READ <path>: empty file"; from = action.from ?? 1, from > n lines → "line range
+            <from>-<action.to ?? n> is past the end (<n> lines): <path>"; to = min(action.to ?? n, n), last = min(to,
+            from + readLines − 1): "READ <path> lines <from>-<last> of <n>", then "<i>: <line i>" for i from..last, then
+            when last < to "… <to − last> more lines; READ <path> <last + 1>-<to> for the next". GREP: new
+            RegExp(pattern) (no flags) throws → "invalid pattern /<pattern>/"; Cage Path (dir) refused → its error; skip =
+            grepSkip, or none when the caged path's first segment is in grepSkip; each listed file under the caged path
+            whose first segment is not skipped: Cage Path (file) refused or readFile throws → counted refused; a "\0" →
+            passed over silently; each line i that the pattern tests true is a match, shown while fewer than grepHits
+            are shown as "<file>:<i>: <line>", a line longer than grepLineChars as its first grepLineChars chars + "…
+            (+<the rest's length> chars)". Lines: "GREP /<pattern>/ in <'the tree' or the caged path + '/'>: <m>
+            match|matches in <f> file|files" (f = files with a match), the shown matches, "… <m − shown> more matches"
+            when any left, "(<r> file|files refused by the cage)" when r > 0. LIST: Cage Path (dir) refused → its error;
+            entries = the next segment of each listed file under the caged path: a file name, or a directory name + "/"
+            with the count of its files; entries in code-unit order: "LIST <'.' or the caged path + '/'>: <k>
+            entry|entries", the first listEntries as "<name>" or "<dir>/ (<c> file|files)", "… <k − listEntries> more
+            entries" when more. LIST and GREP never read a directory; LIST reads no file.
+          steps: [{calls: Cage Path}, {reads: Scout Action}, {reads: Tool Caps}, {produces: Tool Result}]
+          examples:
+            - {given: 'the §2.1 tree of docs/TASK_P13a_scout.md (a real tmp dir: src/a.ts "l1\nl2\nl3\nl4\nl5\n", src/e.ts "", src/bin.dat "a\0alpha", src/b.ts, README.md, decks/p1/deck.json, .morph/runs/r/report.json, tests/a.test.ts, out.txt → a sibling secret, dirlink → src); caps D = DEFAULT_TOOL_CAPS, C = {readLines 2, grepHits 3, grepLineChars 12, listEntries 2, grepSkip [".morph", "decks"]}', when: 'READ src/a.ts (D); 2-3 (D); whole (C); "./src/a.ts" 4-9 (D)', then: '"READ src/a.ts lines 1-5 of 5\n1: l1\n2: l2\n3: l3\n4: l4\n5: l5"; "READ src/a.ts lines 2-3 of 5\n2: l2\n3: l3"; "READ src/a.ts lines 1-2 of 5\n1: l1\n2: l2\n… 3 more lines; READ src/a.ts 3-5 for the next"; "READ src/a.ts lines 4-5 of 5\n4: l4\n5: l5"; read true, error null'}
+            - {given: 'the same tree, D', when: 'READ src/a.ts 6-7; src/e.ts; src/bin.dat; out.txt; dirlink; src/zz.ts', then: 'errors "line range 6-7 is past the end (5 lines): src/a.ts", text "READ failed: " + it; text "READ src/e.ts: empty file" with error null; "binary file: src/bin.dat"; "symlink out of the root refused: out.txt"; "unreadable: dirlink"; "not in the tree (missing, ignored or a directory): src/zz.ts"; read true on every one'}
+            - {given: 'the same tree, C', when: 'GREP "alpha|beta" in ""', then: 'text "GREP /alpha|beta/ in the tree: 5 matches in 3 files\nREADME.md:1: alpha here\nsrc/b.ts:1: const alpha … (+4 chars)\nsrc/b.ts:2: const beta =… (+3 chars)\n… 2 more matches\n(2 files refused by the cage)", read false'}
+            - {given: 'the same tree', when: 'GREP "alpha" in "decks" (D); "alpha" in "" with D and grepSkip []; "zzz" in "src"; "x" in "nope"; "(" in ""', then: '"GREP /alpha/ in decks/: 1 match in 1 file\ndecks/p1/deck.json:1: alpha in a deck"; "GREP /alpha/ in the tree: 5 matches in 4 files" then .morph/runs/r/report.json:1, README.md:1, decks/p1/deck.json:1, src/b.ts:1, src/b.ts:3 and "(2 files refused by the cage)"; "GREP /zzz/ in src/: 0 matches in 0 files"; "GREP failed: no such directory in the tree: nope"; "GREP failed: invalid pattern /(/"'}
+            - {given: 'the same tree', when: 'LIST "" (C); LIST "" (D); "src/"; "src/a.ts"; "../x"', then: '"LIST .: 7 entries\n.morph/ (1 file)\nREADME.md\n… 5 more entries"; "LIST .: 7 entries\n.morph/ (1 file)\nREADME.md\ndecks/ (1 file)\ndirlink\nout.txt\nsrc/ (4 files)\ntests/ (1 file)"; "LIST src/: 4 entries\na.ts\nb.ts\nbin.dat\ne.ts"; "LIST failed: no such directory in the tree: src/a.ts"; "LIST failed: path leaves the root: ../x"; read false'}
+        - name: Spend Budget
+          description: One turn charged against the five budgets; the first closed budget and its sentence; the stop_reason.
+          behavior: >
+            spendTurn(budgets {calls, reads, chars, rounds, deadlineMs}, spent {calls, reads, chars, rounds}, charge
+            {call, read, text}, elapsedMs) → {spent, text, closed, why}; spent is not changed. remaining = budgets.chars −
+            spent.chars; text = charge.text when its length ≤ remaining, else its first max(remaining, 0) chars +
+            CLIP_MARKER ("\n[… clipped: the character budget is spent]"). The new spent: calls + 1 when call, reads + 1
+            when read, chars + the delivered text's length (the marker counted), rounds + 1 always (a malformed turn is
+            charged call false, read false). closed = the first that holds, in this order: elapsedMs ≥ deadlineMs →
+            "deadline", why "the deadline (<deadlineMs / 1000> s) passed"; rounds ≥ budgets.rounds → "rounds", "the round
+            budget is spent (<rounds> of <budgets.rounds> rounds)"; calls → "the call budget is spent (<n> of <b>
+            calls)"; reads → "the read budget is spent (<n> of <b> reads)"; chars → "the character budget is spent (<n> of
+            <b> chars)" (each ≥, with the new counts); else null, null. FINAL_TURN = ["calls", "reads", "chars"]: after
+            one of these closes the loop grants one answer-only turn; after deadline or rounds none. DEFAULT_BUDGETS =
+            {calls 30, reads 12, chars 120000, rounds 40, deadlineMs 1800000}. stopReason(answered, closed, why): answered
+            and closed null → "the model answered on its own"; answered → "the model answered after the budget closed:
+            <why>"; closed → "no answer: <why>"; else "no answer: the session ended with every budget open". Keys in the
+            orders written.
+          steps: [{reads: Scout Budgets}, {produces: Charged Turn}]
+          examples:
+            - {given: 'budgets B {calls 3, reads 2, chars 50, rounds 10, deadlineMs 60000}, spent 0 0 0 0, charge {call true, read true, text 20 × "x"}, elapsed 0', when: spendTurn, then: '{spent {calls 1, reads 1, chars 20, rounds 1}, text the same, closed null, why null}'}
+            - {given: 'B, spent {1, 1, 40, 1}, charge {call true, read false, text 25 × "y"}, elapsed 1000', when: spendTurn, then: '{spent {2, 1, 93, 2}, text 10 × "y" + "\n[… clipped: the character budget is spent]", closed "chars", why "the character budget is spent (93 of 50 chars)"}'}
+            - {given: 'B; spent {2, 0, 0, 2} + {call true, read false, "ok"}; spent {0, 1, 0, 0} + {true, true, ""}; spent {1, 0, 10, 9} + {false, false, "no action"}', when: spendTurn at 0, then: 'closed "calls" "the call budget is spent (3 of 3 calls)"; "reads" "the read budget is spent (2 of 2 reads)" (spent {1, 2, 0, 1}); "rounds" "the round budget is spent (10 of 10 rounds)" with spent {1, 0, 19, 10}'}
+            - {given: 'spent {2, 1, 45, 9}, charge {true, true, 10 × "z"}', when: 'spendTurn with B at 60000; B at 59999; B with rounds 40; also calls 30; also reads 12; B with deadlineMs 1500 at 1500', then: '"deadline" "the deadline (60 s) passed"; "rounds"; "calls"; "reads"; "chars" "the character budget is spent (93 of 50 chars)"; "deadline" "the deadline (1.5 s) passed"'}
+            - {given: 'stopReason(true, null, null); (true, "reads", "the read budget is spent (2 of 2 reads)"); (false, "deadline", "the deadline (60 s) passed"); (false, null, null)', when: stopReason, then: '"the model answered on its own"; "the model answered after the budget closed: the read budget is spent (2 of 2 reads)"; "no answer: the deadline (60 s) passed"; "no answer: the session ended with every budget open"; FINAL_TURN ["calls", "reads", "chars"]; DEFAULT_BUDGETS as written'}
+        - name: Seed From Ownership
+          description: The head of git's ownership as the scout's seed — the code the project's cards wrote, newest first — and its round-zero text.
+          behavior: >
+            seedFromOwnership(ownership {paths: {path, writes: {card, model, run}[]}[]} (git's Read Ownership result, most
+            recently written first), files: the tree's listing, limit) → {source "primer", files, notes}. Walk the paths
+            in order while fewer than limit are kept; keep a path in the listing whose language profileForPath is not
+            null and that is not a test of that profile (language isTest: a test directory or the test file pattern).
+            Its note: "<path>: written by " + its first SEED_WRITES (3) writes "<card> (<model or — when "">, run <run or
+            —>)" "; "-joined, + "; … <k> more" when k more. SEED_FILES = 6, SEED_CHARS = 8000 (P13b's defaults).
+            renderSeed(seed, maxChars) → "" when seed.files is empty; else SEED_HEADER ("Seed: code the project's cards
+            wrote, most recently written first (git Morph-Card trailers):") + "\n", then each note as "- <note>\n" while
+            the text stays ≤ maxChars chars; the first note that does not fit and every later one are left out and "- …
+            <k> more seeded file|files not shown\n" is appended (past maxChars if need be). Pure: no file read.
+          steps: [{uses: language}, {reads: Seed Ownership}, {produces: Scout Seed}]
+          examples:
+            - {given: 'ownership paths in order: tests/q.test.ts [q-judge m/r —], src/q.ts [q m/q 20261110-101010, q1 m/q R1, q0 "" null, qq m/x R0], docs/n.md, src/gone.ts, tools/x.py [x m/p R2], src/p.spec.ts, lib/c.ts [c m/c null], web/app.tsx [w m/w R3]; files = all but src/gone.ts', when: 'seedFromOwnership(…, 3)', then: 'files ["src/q.ts", "tools/x.py", "lib/c.ts"]; notes "src/q.ts: written by q (m/q, run 20261110-101010); q1 (m/q, run R1); q0 (—, run —); … 1 more", "tools/x.py: written by x (m/p, run R2)", "lib/c.ts: written by c (m/c, run —)"'}
+            - {given: 'the same; then {paths []}', when: 'limit 10; limit 0; then limit 6', then: 'files + "web/app.tsx" (note "web/app.tsx: written by w (m/w, run R3)"); files [] notes []; {source "primer", files [], notes []}'}
+            - {given: 'the seed of example 1', when: 'renderSeed with 8000; with the header + the first note line exactly; with 10; renderSeed of the empty seed', then: 'SEED_HEADER + "\n" + the three "- <note>\n"; the header, the first note, "- … 2 more seeded files not shown\n"; the header, "- … 3 more seeded files not shown\n"; ""'}
+      dataObjects:
+        - name: Model Turn
+          description: The text of one model answer (Answer.text of the processor), null when the provider gave none.
+          schema: "string | null"
+        - name: Turn
+          description: What Parse Turn returns.
+          schema: "{ kind: 'action', action: Scout Action } | { kind: 'answer', answer: { targets: string[], context_slice: string[], reasoning: string } } | { kind: 'malformed', reason: string }"
+        - name: Scout Action
+          description: One tool call of the protocol.
+          schema: "{ kind: 'read', path, from: number | null, to: number | null } | { kind: 'grep', pattern, path } | { kind: 'list', path }"
+        - name: Scout Tree
+          description: The repository the scout reads, and the file system it reads it through (injected; node fs in P13b).
+          schema: "{ root: string, files: string[] } + ScoutFs { realpath(path): string, readFile(path): string } (both throw on failure)"
+        - name: Caged Path
+          description: What Cage Path returns.
+          schema: "{ ok: true, path: string } | { ok: false, error: string }"
+        - name: Tool Caps
+          description: Caps on one tool answer, not budgets.
+          schema: "{ readLines, grepHits, grepLineChars, listEntries: number, grepSkip: string[] }"
+        - name: Tool Result
+          description: What Run Tool returns.
+          schema: "{ text: string, read: boolean, error: string | null }"
+        - name: Scout Budgets
+          description: The five budgets and what one session has spent.
+          schema: "budgets { calls, reads, chars, rounds, deadlineMs }; spent { calls, reads, chars, rounds }"
+        - name: Charged Turn
+          description: What Spend Budget's spendTurn returns.
+          schema: "{ spent, text, closed: 'deadline'|'rounds'|'calls'|'reads'|'chars' | null, why: string | null }"
+        - name: Seed Ownership
+          description: The part of git's Ownership the seed reads (structurally Read Ownership's result).
+          schema: "{ paths: { path, writes: { card, model, run: string | null }[] }[] }"
+        - name: Scout Seed
+          description: What Seed From Ownership returns.
+          schema: "{ source: 'primer', files: string[], notes: string[] }"
+
+    # ---------------------------------------------------------------- later epics (skeleton)
     - name: reviewer
       description: >
         `morph review <base> <head>`: obligations from the record, scope table from a scout report, ownership and envelope from the primer, mutation of new tests, a findings document with EXPECTED/GOT and a source tag.
@@ -2934,6 +3105,9 @@ Requirement:
       primer reads files and spawns git (git's gitOk, the environment a parameter) only in Primer
       Command, the clock only there through deps.now; Read Runs, Read Story and Render Primer are pure
       functions of what they are given, no network anywhere (P12a).
+      scout reads no clock, no environment and no network and spawns nothing: Parse Turn, Spend Budget and
+      Seed From Ownership are pure; Cage Path and Run Tool reach the file system only through the ScoutFs
+      parameter (realpath, readFile); elapsed time is a parameter; node:path is its only Node module (P13a).
   - name: Node Only
     description: >
       Runtime dependencies: Node 20 built-ins and the package `yaml` (the record reader), nothing

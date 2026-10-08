@@ -1,7 +1,7 @@
 {
   "package": "src",
   "docs": [
-    "docs/TASK_P12b_primer.md"
+    "docs/TASK_P13a_scout.md"
   ],
   "groups": {
     "card-model": [
@@ -2413,6 +2413,168 @@
       ],
       "max_tokens": 12000,
       "instruction": "You write tests/git/ownership.examples.test.ts only, a NEW file with the tests of Read Ownership examples 1-2. Read docs/TASK_P12b_primer.md sections 2.2 (Read Ownership) and 2.3 (the ownership.examples bullet). Import readOwnership and its types from \"../../src/git/ownership.js\". Each test compares the whole result with toStrictEqual against the record's literal, every write written out as {card, model, run}."
+    },
+    "parse-turn": {
+      "intent": "generate",
+      "targets": [
+        "src/scout/parseTurn.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P13a_scout.md",
+        "docs/CONVENTIONS.md"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 10000,
+      "instruction": "Read docs/TASK_P13a_scout.md sections 2.2 (src/scout/parseTurn.ts, Parse Turn and its table) and 4. Write src/scout/parseTurn.ts, a NEW pure file of the layer scout that imports nothing. It exports, in this order, ScoutAction, ScoutAnswer, Turn, VERBS and parseTurn(text) exactly as section 2.2 shows: one action line per turn found by the verb regex on each line's trimStart (upper case only), READ's optional trailing range, GREP split at the last \" -- \" and its pattern compiled once to reject an invalid one, LIST's path, ANSWER's JSON from the first \"{\" to the last \"}\" checked key by key, every malformed reason exactly as pinned. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "cage-path": {
+      "intent": "generate",
+      "targets": [
+        "src/scout/cagePath.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P13a_scout.md",
+        "docs/CONVENTIONS.md"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 8000,
+      "instruction": "Read docs/TASK_P13a_scout.md sections 2.2 (src/scout/cagePath.ts, Cage Path and its table) and 4. Write src/scout/cagePath.ts, a NEW file of the layer scout whose only import is posix from \"node:path\". It exports, in this order, ScoutFs, ScoutTree, Caged and cagePath(tree, path, kind, fs) exactly as section 2.2 shows: the checks in the stated order, the listing decides what exists (directories by a listed file under them, never resolved), a file's real path through fs.realpath compared with the root's real path plus \"/\", every error message exactly as pinned. The file system is only the fs parameter. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "run-tool": {
+      "intent": "generate",
+      "targets": [
+        "src/scout/runTool.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P13a_scout.md",
+        "docs/CONVENTIONS.md",
+        "src/scout/parseTurn.ts",
+        "src/scout/cagePath.ts"
+      ],
+      "depends_on": [
+        "parse-turn",
+        "cage-path"
+      ],
+      "variants": 2,
+      "max_tokens": 14000,
+      "instruction": "Read docs/TASK_P13a_scout.md sections 2.1 (the tree of the examples), 2.2 (src/scout/runTool.ts, Run Tool and its table) and 4; src/scout/parseTurn.ts and src/scout/cagePath.ts follow (import their types and cagePath, do not change them). Write src/scout/runTool.ts, a NEW file of the layer scout importing only posix from \"node:path\", \"./cagePath.js\" and types from \"./parseTurn.js\". It exports ToolCaps, DEFAULT_TOOL_CAPS, ToolResult and runTool(action, tree, fs, caps) exactly as section 2.2 shows: READ through cagePath (file) with its range and the readLines cap, GREP over the sorted listing with the skip list, the per-file cage, the hit cap and the line clip, LIST of one directory level; every line format and failure text exactly as pinned, caps read only from the caps parameter. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "spend-budget": {
+      "intent": "generate",
+      "targets": [
+        "src/scout/spendBudget.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P13a_scout.md",
+        "docs/CONVENTIONS.md"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 8000,
+      "instruction": "Read docs/TASK_P13a_scout.md sections 2.2 (src/scout/spendBudget.ts, Spend Budget and its table) and 4. Write src/scout/spendBudget.ts, a NEW pure file of the layer scout that imports nothing. It exports, in this order, ScoutBudgets, DEFAULT_BUDGETS, ScoutSpent, BudgetName, Charge, Charged, CLIP_MARKER, FINAL_TURN, spendTurn(budgets, spent, charge, elapsedMs) and stopReason(answered, closed, why) exactly as section 2.2 shows: the clip at the remaining characters with the marker counted, the new counts, the first closed budget in the order deadline, rounds, calls, reads, chars with its sentence, the input not changed. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "seed-from-ownership": {
+      "intent": "generate",
+      "targets": [
+        "src/scout/seedFromOwnership.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P13a_scout.md",
+        "docs/CONVENTIONS.md",
+        "src/language/paths.ts"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 8000,
+      "instruction": "Read docs/TASK_P13a_scout.md sections 2.2 (src/scout/seedFromOwnership.ts, Seed From Ownership and its table) and 4; src/language/paths.ts follows (import profileForPath and isTest from \"../language/paths.js\", do not change it). Write src/scout/seedFromOwnership.ts, a NEW pure file of the layer scout. It exports, in this order, SeedOwnership, ScoutSeed, SEED_FILES, SEED_CHARS, SEED_WRITES, SEED_HEADER, seedFromOwnership(ownership, files, limit) and renderSeed(seed, maxChars) exactly as section 2.2 shows: the ownership order kept, code files of a profile that are not tests and still listed, up to limit, each note with its first SEED_WRITES writes; the rendered text cut by whole lines with the pinned tail. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "parse-turn-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/scout/parseTurn.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P13a_scout.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/scout/parseTurn.ts"
+      ],
+      "depends_on": [
+        "parse-turn"
+      ],
+      "max_tokens": 16000,
+      "instruction": "You write tests/scout/parseTurn.examples.test.ts only, a NEW file with the tests of Parse Turn examples 1-6. Read docs/TASK_P13a_scout.md sections 2.2 (Parse Turn) and 2.3 (the parseTurn.examples bullet). Import parseTurn and its types from \"../../src/scout/parseTurn.js\". Each test compares every whole Turn with toStrictEqual against the record's literal, the inputs written as TypeScript string literals exactly as the record's (\\n, \\r, \\t and the JSON quotes escaped)."
+    },
+    "cage-path-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/scout/cagePath.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P13a_scout.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/scout/cagePath.ts"
+      ],
+      "depends_on": [
+        "cage-path"
+      ],
+      "max_tokens": 16000,
+      "instruction": "You write tests/scout/cagePath.examples.test.ts only, a NEW file with the tests of Cage Path examples 1-3. Read docs/TASK_P13a_scout.md sections 2.1 (the harness skeleton: MEM, NODE_FS, the symlink tree) and 2.2 (Cage Path) and 2.3 (the cagePath.examples bullet). Import cagePath and its types from \"../../src/scout/cagePath.js\", tmpRoot from \"../helpers.js\", fs from \"node:fs\". Examples 1-2 run on the in-memory tree with MEM; example 3 builds its tree under one tmpRoot with fs.symlinkSync, calls cagePath with NODE_FS and removes the tmp dir in finally. Every result compared with toStrictEqual."
+    },
+    "run-tool-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/scout/runTool.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P13a_scout.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/scout/runTool.ts",
+        "src/scout/cagePath.ts"
+      ],
+      "depends_on": [
+        "run-tool"
+      ],
+      "max_tokens": 20000,
+      "instruction": "You write tests/scout/runTool.examples.test.ts only, a NEW file with the tests of Run Tool examples 1-5. Read docs/TASK_P13a_scout.md sections 2.1 (the tree of the examples and its build skeleton) and 2.2 (Run Tool and its table) and 2.3 (the runTool.examples bullet). Import runTool, DEFAULT_TOOL_CAPS and the types from \"../../src/scout/runTool.js\", the ScoutFs and ScoutTree types from \"../../src/scout/cagePath.js\", tmpRoot from \"../helpers.js\", fs from \"node:fs\". Each test builds the \u00a72.1 tree under its own tmpRoot (the skeleton's build), removes it in finally, and compares every whole ToolResult {text, read, error} with toStrictEqual, the texts written out line by line as the table gives them."
+    },
+    "spend-budget-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/scout/spendBudget.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P13a_scout.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/scout/spendBudget.ts"
+      ],
+      "depends_on": [
+        "spend-budget"
+      ],
+      "max_tokens": 14000,
+      "instruction": "You write tests/scout/spendBudget.examples.test.ts only, a NEW file with the tests of Spend Budget examples 1-5. Read docs/TASK_P13a_scout.md sections 2.2 (Spend Budget and its table) and 2.3 (the spendBudget.examples bullet). Import spendTurn, stopReason, FINAL_TURN, DEFAULT_BUDGETS and the types from \"../../src/scout/spendBudget.js\". Compare every whole Charged result with toStrictEqual (spent written out as {calls, reads, chars, rounds}), the sentences with toBe."
+    },
+    "seed-from-ownership-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/scout/seedFromOwnership.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P13a_scout.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/scout/seedFromOwnership.ts"
+      ],
+      "depends_on": [
+        "seed-from-ownership"
+      ],
+      "max_tokens": 14000,
+      "instruction": "You write tests/scout/seedFromOwnership.examples.test.ts only, a NEW file with the tests of Seed From Ownership examples 1-3. Read docs/TASK_P13a_scout.md sections 2.2 (Seed From Ownership and its table) and 2.3 (the seedFromOwnership.examples bullet). Import seedFromOwnership, renderSeed, SEED_HEADER and the types from \"../../src/scout/seedFromOwnership.js\". Build the ownership literal of example 1 once, compare every whole seed with toStrictEqual and every rendered text with toBe, the notes written out in full."
     }
   }
 }
