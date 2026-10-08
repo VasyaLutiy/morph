@@ -95,6 +95,8 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
       checks: read.checks,
       profile: profiled.profile,
       texts: read.texts,
+      uses: planned.uses,
+      vendor: hasFile("vendor/modules.txt"),
     });
     if (!built.ok) {
       const n = built.errors.length;
