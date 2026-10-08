@@ -1,0 +1,108 @@
+{
+ "phase": "p19b",
+ "ownGit": true,
+ "frozen": [
+  "contour.yaml",
+  "morph-map.json",
+  "docs",
+  "decks",
+  "tests/fixtures",
+  "templates"
+ ],
+ "cards": [
+  {
+   "id": "compose"
+  },
+  {
+   "id": "go-acceptance"
+  },
+  {
+   "id": "build-acceptances"
+  },
+  {
+   "id": "plan-command"
+  },
+  {
+   "id": "compose-judge",
+   "files": [
+    {
+     "file": "tests/builder/compose.p19.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Code Acceptance example 3",
+      "Judge Acceptance example 4",
+      "builder/code1.txt",
+      "builder/code2.txt",
+      "builder/judge1.txt",
+      "@scope/pkg",
+      "ajv"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "go-acceptance-judge",
+   "files": [
+    {
+     "file": "tests/builder/goAcceptance.p19.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Go Acceptance example 6",
+      "Go Acceptance example 7",
+      "GOFLAGS=-mod=vendor",
+      "github.com/dustin/go-humanize",
+      "golang.org/x/text",
+      "golang.org/x/mod",
+      "builder/go/code1.txt",
+      "builder/go/judge1.txt",
+      "builder/go/code2.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "build-acceptances-judge",
+   "files": [
+    {
+     "file": "tests/builder/buildAcceptances.p19.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Build Acceptances example 7",
+      "Build Acceptances example 8",
+      "'zod,yaml'",
+      "a-judge",
+      "github.com/dustin/go-humanize,golang.org/x/text",
+      "builder/go/code1.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "plan-command-judge",
+   "files": [
+    {
+     "file": "tests/cli/planCommand.p19.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Plan Command example 10",
+      "Plan Command example 11",
+      "planner/deps.yaml",
+      "planner/deps.map.json",
+      "vendor/modules.txt",
+      "'yaml,zod'",
+      "'github.com/google/go-cmp'",
+      "GOFLAGS=-mod=vendor"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1471,7 +1471,8 @@ System:
             extraCards: []}); an error → 2 DeckError, it. Plan Spec({record, map, spec: args.spec, components: args.components, judge: args.judge, hasFile: a
             path is a regular file under root}); an error → 2 DeckError, it. With args.checks: profile = Resolve Profile(the first selected Component's
             language, map.language) — the Component's wins, as in the cut (P15) — an error → 2 DeckError "the map: " + it; Read Plan Checks(root, args.checks,
-            profile) (a failure is the result); Build Acceptances({cards, checks, profile, texts}), errors → 2 DeckError "acceptances not built (<n> error|errors):\n"
+            profile) (a failure is the result); Build Acceptances({cards, checks, profile, texts, uses: Plan Spec's uses, vendor: "vendor/modules.txt" is a
+            regular file under root} (P19)), errors → 2 DeckError "acceptances not built (<n> error|errors):\n"
             + them "\n"-joined; its cards replace the plan's, except a card the map gives an acceptance (map card by customId ?? id, extra card by customId).
             args.out not null → the cards written to path.resolve(root, args.out) as JSON.stringify(cards, null, 2) + "\n", parents created. → {code: 0,
             document: {spec, components, cards, generations, externalDependsOn, out: args.out}}. Nothing else written; nothing on an error.
@@ -1486,6 +1487,8 @@ System:
             - {given: 'examples.json["Plan Command 7"].given', when: "planCommand", then: 'examples.json["Plan Command 7"].then'}
             - {given: 'examples.json["Plan Command 8"].given', ref: "decks/p10/v2deck.json, tests/fixtures/builder/guard.p10.txt", when: "planCommand", then: 'examples.json["Plan Command 8"].then'}
             - {given: 'examples.json["Plan Command 9"].given', ref: 'tests/fixtures/go-mini/ (the Go module of P15), tests/fixtures/cli/goMini.deck.json', when: planCommand, then: 'examples.json["Plan Command 9"].then'}
+            - {given: 'examples.json["Plan Command 10"].given', ref: 'tests/fixtures/planner/deps.yaml, tests/fixtures/planner/deps.map.json', when: planCommand, then: 'examples.json["Plan Command 10"].then'}
+            - {given: 'examples.json["Plan Command 11"].given', ref: 'tests/fixtures/planner/deps.yaml, tests/fixtures/planner/deps.map.json', when: planCommand, then: 'examples.json["Plan Command 11"].then'}
         - name: Read Plan Checks
           description: Files of `plan --checks`.
           behavior: >
@@ -1924,6 +1927,7 @@ System:
         ones it uses (Component.uses); the planner turns them into the finale and the slice.
       language: typescript
       requirements: [Deterministic Core]
+      uses: [yaml]
       functions:
         - name: Validate Record
           description: Turns a parsed record document into a typed Contour Record, or every problem it has.
@@ -2501,7 +2505,9 @@ System:
         and the first difference. The scripts equal build.py's P10a form byte for byte. The
         typescript profile builds here, the go profile by builder-go (P15); no other profile has a
         builder. No file read, no clock, no environment; node:path is the only Node module. `morph
-        plan --checks` (cli) reads the files and calls it.
+        plan --checks` (cli) reads the files and calls it. Since P19 (issue #10) a code card's guard
+        line names the packages its Component declares (Plan Spec's uses); a card without any keeps
+        its acceptance byte for byte.
       language: typescript
       requirements: [Deterministic Core]
       functions:
@@ -2613,12 +2619,14 @@ System:
             codeAcceptance(ctx, probe, smoke, extra), ctx a Card Context. code = codeTargets of the
             profile, test = testTarget when smoke is not null, else none. The body, in order: Probe Dir
             with the probe and ctx.siblings; OWN_GIT_BEFORE when ctx.ownGit; tscStep; eslintStep over
-            ctx.targets; "echo '== guard'; node $P/guard.mjs src <code joined by ','>" plus "; node
-            $P/guard.mjs tests <test> 1 <smoke>" with a test, then "\n"; "echo '== probe'; " + vitestStep
+            ctx.targets; "echo '== guard'; node $P/guard.mjs src <code joined by ','>" + allowArg(ctx.allowed
+            ?? []) plus "; node $P/guard.mjs tests <test> 1 <smoke>" with a test, then "\n"; "echo '== probe'; " + vitestStep
             with "--config $P/probe.config.mts"; with a test "echo '== own'; " + vitestStep with the test;
             ESLINT_VERDICT; extra when not null; "echo '== full'; " + vitestStep with fullArgs of
             ctx.fullExclude; OWN_GIT_AFTER when ctx.ownGit; frozenStep of ctx.frozen; untrackedStep of
-            ctx.targets. The result is wrapScript(ctx.id, ctx.phase, ctx.targets, body).
+            ctx.targets. The result is wrapScript(ctx.id, ctx.phase, ctx.targets, body). allowArg(allowed)
+            (exported, P19) = "" when allowed is empty, else " '" + allowed joined by "," + "'" — the
+            guard's third argument, the packages it allows in these code files; ctx.vendor is not read.
           steps:
             - calls: Wrap Script
             - calls: Check Steps
@@ -2635,6 +2643,10 @@ System:
               ref: "tests/fixtures/builder/code2.txt (the whole script)"
               when: "codeAcceptance"
               then: 'exactly the fixture text: own git around the stages, "node $P/guard.mjs tests tests/x/a.test.ts 1 5", an own step, the extra line after the verdict, the full step with --exclude tests/x/old.test.ts'
+            - given: 'allowArg([]), allowArg(["zod"]), allowArg(["yaml", "@scope/pkg"]); codeAcceptance of the ctx of example 1 with allowed ["yaml", "@scope/pkg"]; of the ctx of example 2 with allowed ["ajv"] and vendor true (probe, smoke 5 and extra as there); of the ctx of example 1 with allowed [] and vendor false'
+              ref: "tests/fixtures/builder/code1.txt, tests/fixtures/builder/code2.txt"
+              when: "written"
+              then: '""; " ''zod''"; " ''yaml,@scope/pkg''"; code1.txt with its line "echo ''== guard''; node $P/guard.mjs src src/x/a.ts" ending in " ''yaml,@scope/pkg''", nothing else changed; code2.txt with "guard.mjs src src/x/a.ts; node" become "guard.mjs src src/x/a.ts ''ajv''; node", nothing else changed; exactly code1.txt'
         - name: Judge Acceptance
           description: The acceptance of a judge card — per test file its bounds, literals and kept names, then the files run together.
           behavior: >
@@ -2665,6 +2677,10 @@ System:
             - given: 'litsJson(["a", "é"]); litsJson([])'
               when: "written"
               then: '"[\"a\", \"é\"]" (not escaped to \u00e9); "[]"'
+            - given: 'judgeAcceptance of the ctx and files of example 1 with allowed ["zod"] and vendor true'
+              ref: "tests/fixtures/builder/judge1.txt"
+              when: "judgeAcceptance"
+              then: 'exactly judge1.txt: a judge''s acceptance reads neither allowed nor vendor (P19: judges keep their import rules)'
         - name: Read Checks
           description: Turns a parsed checks document into typed Checks, or every problem it has.
           behavior: >
@@ -2726,7 +2742,10 @@ System:
             member's siblings are the targets of the other members of its generation, in the checks'
             order. Each member gets Code Acceptance or Judge Acceptance — with the go profile builder-go's
             goCodeAcceptance or goJudgeAcceptance, same arguments — with ctx {id, phase, targets,
-            siblings, frozen, fullExclude, ownGit, profile, guard, firstdiff}. → {ok: true, cards}: the
+            siblings, frozen, fullExclude, ownGit, profile, guard, firstdiff, allowed, vendor} — P19: the input's
+            optional uses (Plan Spec's, customId → declared names) and vendor (vendor/modules.txt exists), absent
+            {} and false; allowed = uses[customId] as given when uses has that own key, else []; vendor = input.vendor
+            === true; nothing else reads them. → {ok: true, cards}: the
             input cards in their order, each member a copy with its acceptance, every other card as
             given. probeFile(profile, id) (exported; cli reads the probe by it) = "_<id>_probe_test.go"
             for the go profile (the leading "_" makes the go tool ignore the file where it is kept,
@@ -2759,6 +2778,13 @@ System:
             - given: 'the go profile; cards a (["src/x/a.ts"]) and b (["calc/b.go"]); checks cards a, b; probes {a: "// probe\n"}; then probeFile(go, "percent-of") and probeFile(typescript, "a")'
               when: "buildAcceptances; probeFile"
               then: "{ok: false, errors: [\"card 'a' has no go target\", \"code card 'b' has no probe\"]}; \"_percent-of_probe_test.go\"; \"a.probe.ts\""
+            - given: 'cards a (["src/x/a.ts"]), b (["src/x/b.ts"]), acceptances null; checks phase "p7" with cards a, b; probes a, b "// probe\n"; guard "// guard\n", firstdiff "// firstdiff\n"; uses {"a": ["zod", "yaml"], "a-judge": ["ajv"], "c": ["x"]}, vendor true; then the same input without uses and vendor'
+              when: "buildAcceptances"
+              then: 'ok; a''s acceptance = codeAcceptance(ctx {id "a", phase "p7", targets ["src/x/a.ts"], siblings ["src/x/b.ts"], frozen DEFAULT_FROZEN, fullExclude [], ownGit false, typescript, the texts, allowed ["zod", "yaml"]}, "// probe\n", null, null), holding "node $P/guard.mjs src src/x/a.ts ''zod,yaml''\n"; b''s = codeAcceptance with siblings ["src/x/a.ts"], holding "node $P/guard.mjs src src/x/b.ts\n"; then a''s holds "node $P/guard.mjs src src/x/a.ts\n" and b''s is the same as before'
+            - given: 'the go input of example 5 plus uses {"percent-of": ["github.com/dustin/go-humanize", "golang.org/x/text"]} and vendor true'
+              ref: "tests/fixtures/builder/go/code1.txt"
+              when: "buildAcceptances"
+              then: 'ok; percent-of''s acceptance = code1.txt with "export GOFLAGS=-mod=mod " become "export GOFLAGS=-mod=vendor " and its guard line "node $P/guard.mjs src calc/percent_of.go" ending in " ''github.com/dustin/go-humanize,golang.org/x/text''"; the judge''s = goJudgeAcceptance(its ctx with siblings ["calc/percent_of.go"] and vendor true, files), holding "export GOFLAGS=-mod=vendor " and no "-mod=mod"'
       dataObjects:
         - name: Checks
           description: A phase's acceptance knobs, read from its checks document (decks/<phase>/checks.json).
@@ -2771,7 +2797,7 @@ System:
           schema: "{ ok: true, checks: Checks } | { ok: false, problems: string[] }"
         - name: Card Context
           description: What one card's acceptance is built from.
-          schema: "{ id: string, phase: string, targets: string[], siblings: string[], frozen: string[], fullExclude: string[], ownGit: boolean, profile: LanguageProfile, guard: string, firstdiff: string }"
+          schema: "{ id: string, phase: string, targets: string[], siblings: string[], frozen: string[], fullExclude: string[], ownGit: boolean, profile: LanguageProfile, guard: string, firstdiff: string, allowed?: string[], vendor?: boolean }"
         - name: Build Result
           description: The cards with their acceptances, or every error.
           schema: "{ ok: true, cards: Card[] } | { ok: false, errors: string[] }"
@@ -2785,8 +2811,8 @@ System:
         the card's own packages only (go build, go vet and gofmt, the probe, the own test) under an overlay that
         hides the same generation's other targets — Go builds a package whole, so a sibling's file would otherwise
         redden the card, as a whole-project tsc did in P1 — then the whole module (go test ./...). The go command
-        never reaches the network: GOPROXY=off, GOFLAGS=-mod=mod, GOSUMDB=off, GOTOOLCHAIN=local, GOWORK=off, and the
-        build cache outside the tree. The guard and the locator are the repository's own decks/tools/guard.mjs and
+        never reaches the network: GOPROXY=off, GOFLAGS=-mod=mod (-mod=vendor when the repository vendors its declared
+        modules, P19), GOSUMDB=off, GOTOOLCHAIN=local, GOWORK=off, and the build cache outside the tree. The guard and the locator are the repository's own decks/tools/guard.mjs and
         firstdiff.mjs (a Go module keeps V2's decks/tools/goguard.mjs and gofirstdiff.mjs under those names).
       language: typescript
       requirements: [Deterministic Core]
@@ -2826,6 +2852,10 @@ System:
             "echo '== guard <file>'; node $P/guard.mjs tests <file> <min> <max> $P/lits<n>.json\n" (as Judge Acceptance),
             goNamesKept per file that is not new, "echo '== own'; " + goTestStep("-overlay $P/overlay.json <goPackages(the
             targets)>"), GO_LINT_VERDICT, the full step, OWN_GIT_AFTER, frozen and untracked as the code card; wrapScript.
+            P19: GO_ENV_VENDOR = GO_ENV with "-mod=mod" become "-mod=vendor", nothing else; goEnv(vendor) = GO_ENV_VENDOR
+            when vendor, else GO_ENV; both acceptances begin with goEnv(ctx.vendor === true) in place of GO_ENV; the code
+            card's guard line is "node $P/guard.mjs src <code joined by ','>" + builder's allowArg(ctx.allowed ?? []) before
+            the tests part. The judge's reads no allowed.
           steps:
             - uses: builder
             - uses: language
@@ -2853,6 +2883,13 @@ System:
               ref: "tests/fixtures/builder/go/steps.txt (the three lines)"
               when: "written"
               then: 'exactly the fixture text; ["./calc", ".", "./x/y"]; "{\"Replace\":{\"calc/b.go\":\"\",\"x/c_test.go\":\"\"}}\n"; "calc/a_probe_test.go", "m_probe_test.go"'
+            - given: 'GO_ENV_VENDOR; goEnv(false); goEnv(true)'
+              when: "written"
+              then: '''export GOFLAGS=-mod=vendor GOPROXY=off GOSUMDB=off GOTOOLCHAIN=local GOWORK=off GOCACHE="${GOCACHE:-/tmp/morph/go-build}" GOPATH="${GOPATH:-/tmp/morph/go}"'' + "\n" (one line); GO_ENV; GO_ENV_VENDOR'
+            - given: 'goCodeAcceptance of the ctx of example 1 with allowed ["github.com/dustin/go-humanize"] and vendor true; goJudgeAcceptance of the ctx and files of example 3 with allowed ["golang.org/x/text"] and vendor true; goCodeAcceptance of the ctx of example 2 with allowed ["golang.org/x/mod"] (probe, smoke 5, extra as there); of the ctx of example 1 with allowed [] and vendor false'
+              ref: "tests/fixtures/builder/go/code1.txt, judge1.txt, code2.txt"
+              when: "goCodeAcceptance; goJudgeAcceptance"
+              then: 'code1.txt with its GO_ENV line become GO_ENV_VENDOR''s and its guard line ending in " ''github.com/dustin/go-humanize''", nothing else changed; judge1.txt with only its GO_ENV line become GO_ENV_VENDOR''s; code2.txt with "guard.mjs src report/a.go; node" become "guard.mjs src report/a.go ''golang.org/x/mod''; node", nothing else changed; exactly code1.txt'
 
     # ---------------------------------------------------------------- P12a
     - name: primer
@@ -3729,6 +3766,8 @@ System:
           description: stdout of morph init.
           schema: "{ name: string, language: 'typescript' | 'python' | 'go', module: string, files: string[] }"
 
+  dependencies:
+    - {name: yaml, version: "2.9.1", language: typescript, doc: docs/deps/yaml.md}
 Actor:
   - name: Operator
     description: A human or an agent session driving Morph from a shell.

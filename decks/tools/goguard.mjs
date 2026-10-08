@@ -2,7 +2,8 @@
 // rules. A Go repository keeps this file as its decks/tools/guard.mjs: `morph plan --checks` inlines that path into
 // every acceptance and the Go acceptances call it as the TypeScript ones do. Imports are read by the go tool
 // (`go list`), never by grep: a word in a comment is not an import. Node's standard library only.
-//   node guard.mjs src <file,file,...>                    the packages of these Go files
+//   node guard.mjs src <file,file,...> [mod,mod,...]      the packages of these Go files; the module paths the card's
+//                                                         Component declares (`uses`, P19): a path or a path + "/..."
 //   node guard.mjs tests <file> <min> <max> [lits.json]   one Go test file; lits = strings it must hold
 // decks/tools/layers.json: {"layers": {"<dir>": ["<dir it may import>", ...]}, "pure": ["<dir>", ...]};
 // absent → every package of the module may import every other, no package is pure.
@@ -35,7 +36,7 @@ function goImports(dir) {
   });
   return out.split("\n").filter(Boolean);
 }
-function checkSrc(files) {
+function checkSrc(files, allowed) {
   const mod = modulePath();
   const { layers, pure } = readLayers();
   const dirs = [];
@@ -56,7 +57,11 @@ function checkSrc(files) {
           bad.push(`guard: package ${dir} imports ${imp} (allowed: ${layers[dir].join(", ") || "none"})`);
         continue;
       }
-      if (!isStd(imp)) { bad.push(`guard: package ${dir} imports ${imp} (the standard library only)`); continue; }
+      if (!isStd(imp)) {
+        if (allowed.some((m) => imp === m || imp.startsWith(m + "/"))) continue;
+        bad.push(`guard: package ${dir} imports ${imp} (the standard library ${allowed.length ? "and " + allowed.join(", ") + " " : ""}only)`);
+        continue;
+      }
       if (pure.includes(dir) && PURE_FORBIDDEN.includes(imp))
         bad.push(`guard: package ${dir} imports ${imp} in a pure package (no ${PURE_FORBIDDEN.join(", ")})`);
     }
@@ -88,7 +93,7 @@ function checkTest(file, min, max, lits) {
 }
 
 const [mode, a, b, c, d] = process.argv.slice(2);
-if (mode === "src") checkSrc((a ?? "").split(",").filter(Boolean));
+if (mode === "src") checkSrc((a ?? "").split(",").filter(Boolean), (b ?? "").split(",").filter(Boolean));
 else if (mode === "tests") checkTest(a, Number(b), Number(c), d ? JSON.parse(fs.readFileSync(d, "utf8")) : []);
 else bad.push(`guard: unknown mode ${mode}`);
 for (const x of bad) console.log(x);
