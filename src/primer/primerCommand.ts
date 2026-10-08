@@ -52,6 +52,15 @@ export const PRIMER_FILE = ".morph/primer.md";
 export function isTestFile(profile: LanguageProfile, file: string): boolean {
   if (!hasExtension(profile, file)) return false;
   const parts = normalizePath(file).split("/");
+  if (parts[0] === "decks" && parts.length > 1) return false;
+  if (profile.id === "go") {
+    for (const part of parts) {
+      if (part.startsWith("_") || part.startsWith(".")) return false;
+    }
+    for (let i = 0; i < parts.length - 1; i += 1) {
+      if (parts[i] === "testdata" || parts[i] === "vendor") return false;
+    }
+  }
   const base = parts[parts.length - 1];
   return new RegExp(profile.testFilePattern).test(base);
 }
@@ -160,7 +169,7 @@ export function runningLine(measure: string | null): string | null {
 function testCallPattern(id: string): RegExp | null {
   if (id === "typescript") return /(?<![\w.$])(?:test|it)\s*\(/g;
   if (id === "python") return /^[ \t]*(?:async[ \t]+)?def[ \t]+test_\w+/gm;
-  if (id === "go") return /^func Test(?:[A-Z0-9_]\w*)?\s*\(/gm;
+  if (id === "go") return /^func Test(?:[A-Z0-9_]\w*)?\s*\(\s*(?:\w+\s+)?\*testing\.T\s*\)/gm;
   return null;
 }
 
