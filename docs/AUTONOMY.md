@@ -8,16 +8,15 @@ and can change any line; the session reads it at the start of every phase.
 
 ## State at handoff (08.10, operator: the new flow — one phase, one session)
 
-**Next: P16 primer-go** (PLAN row P16, issue #7, label `P15-golang`): the primer's Go test count by the language profile
-counts only `func TestXxx(t *testing.T)` in `*_test.go` files that `go test ./...` runs — not the `_`-prefixed probe
-files, not anything under `decks/` or `testdata/`, not `TestMain`; one record example each (go-mini gives the exact
-counts). After its merge: **stop for the operator** (no next phase queued; `~/.morph-wait-operator`). The P15L gate
-waiver is superseded: the mrph cross-check is gone from the gate (operator 08.10). Running total $4.7384 of $30.
-**Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). Own pre-merge code read: yes. External review
-passes: no (operator 08.10). Every new MEASURE row fills the `прогоны` column.
+**P16 primer-go closed** (run 20261008-105700 on ds, 2/2 first attempt, no fix, $0.0215; issue #7 closed). **No next
+phase is named: stop for the operator** (`~/.morph-wait-operator`); the operator names the next phase here. Running
+total $4.7599 of $30. **Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). No mrph cross-check
+at the gate (operator 08.10). Own pre-merge code read: yes. External review passes: no (operator 08.10). Every new
+MEASURE row fills the `прогоны` column.
 Known limits carried: No New Skips counts skip tokens inside string literals; one unreproduced vitest flake in P13b (logs
 kept since); the ds batch slug is slow (~73 min); a `--checks` deck mixing languages builds by its first Component's
-language; gofmt can redden otherwise correct Go (the retry sees the diff).
+language; gofmt can redden otherwise correct Go (the retry sees the diff); the primer's Go call rule misses a signature split
+across lines or a `testing` import under another name (P16).
 Lessons for the next preparations: default code targets add a test file (give a smoke cap or code-only targets); new
 files need `"intent": "generate"` in the map; a new `src/` folder needs its layer in `decks/tools/guard.mjs`; size a judge
 from its expected answer (≥ 28 000 for a ~20 KB answer, before the ×3); vary every constant the code must not hard-code
