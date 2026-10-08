@@ -502,3 +502,15 @@ python3 decks/tools/scale_tokens.py decks/p13a/deck.json 3
 npm run build && rm -rf /tmp/v2bin-p13a && mkdir -p /tmp/v2bin-p13a && cp -r dist /tmp/v2bin-p13a/ && ln -s $PWD/node_modules /tmp/v2bin-p13a/node_modules
 node /tmp/v2bin-p13a/dist/cli.js run --root . --deck decks/p13a/deck.json --processor ds --deadline 2400 > /tmp/p13a-run.json
 ```
+
+### Run (08.10, VPS, autonomous) — cut by V2, run by the V2 binary on processor ds
+
+Deck `decks/p13a/deck.json` (V2 cut filtered to 10 cards by `decks/p13a/filter.py`, maxTokens ×3), run by the V2 binary copy
+in `/tmp/v2bin-p13a` with `--processor ds --deadline 2400`, default retry cap: run 20261008-011300, **10 / 10 written in one
+run, no fix**, 9 at the first attempt (retry won `cage-path-judge` r1, v1 red at tsc; `spend-budget` won on v2), $0.1545,
+11.1 min (663 s), 16 requests, 291 526 in / 87 829 out tokens. On the run branch: `git status` clean; tsc, eslint,
+`npm run build` clean; vitest **689 / 689** in 98 files. Read once against §2.2: Cage Path refuses absolute, `..` and
+`.git` before any fs call, decides existence by the listing, and requires the real path under `realpath(root) + "/"`;
+Run Tool's GREP cages every file it reads (a symlink out of the root is counted "refused by the cage"), skips `.morph` and
+`decks` unless named, RegExp without flags; READ caps lines and names the next range; the scout layer has no clock, env,
+network or child process. 0 defects.
