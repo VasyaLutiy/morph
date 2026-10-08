@@ -14,6 +14,7 @@ import { planFromScout } from "../scout/planFromScout.js";
 import { reviewCommand } from "../reviewer/reviewCommand.js";
 import { cardBrief } from "../debt/cardBrief.js";
 import { acceptCard } from "../debt/acceptCard.js";
+import { initProject } from "../scaffold/initProject.js";
 import type { CliDeps, CliIo, CommandResult, ExitCode } from "./types.js";
 
 export async function main(argv: string[], deps: CliDeps, io: CliIo): Promise<ExitCode> {
@@ -56,6 +57,8 @@ export async function main(argv: string[], deps: CliDeps, io: CliIo): Promise<Ex
       result = cardBrief(root, command);
     } else if (command.name === "accept") {
       result = await acceptCard(root, command, deps);
+    } else if (command.name === "init") {
+      result = initProject(root, command, deps.cwd);
     } else {
       result = await runCommand(root, command, deps, io.stderr);
     }

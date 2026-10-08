@@ -25,6 +25,10 @@ const VALUE_FLAGS: ReadonlySet<string> = new Set([
   "--test",
   "--id",
   "--model",
+  "--name",
+  "--language",
+  "--module",
+  "--templates",
 ]);
 
 const NOT_YET_WORDS: ReadonlySet<string> = new Set([
@@ -131,6 +135,15 @@ const ACCEPT_FLAGS: ReadonlySet<string> = new Set([
   "--commit",
 ]);
 
+const INIT_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--name",
+  "--language",
+  "--module",
+  "--templates",
+]);
+
 function isPositiveInteger(v: string): boolean {
   return /^[0-9]+$/.test(v) && Number(v) >= 1;
 }
@@ -192,7 +205,8 @@ export function parseCommand(argv: string[]): ParseResult {
     | "scout"
     | "review"
     | "card"
-    | "accept";
+    | "accept"
+    | "init";
   let arity: number;
   if (words.length === 0) {
     return {
@@ -200,7 +214,7 @@ export function parseCommand(argv: string[]): ParseResult {
       error: errorDocument(
         4,
         "UsageError",
-        "no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept)",
+        "no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept, init)",
       ),
     };
   }
@@ -235,6 +249,9 @@ export function parseCommand(argv: string[]): ParseResult {
     arity = 1;
   } else if (first === "accept") {
     name = "accept";
+    arity = 1;
+  } else if (first === "init") {
+    name = "init";
     arity = 1;
   } else if (first === "deck") {
     if (words.length >= 2 && words[1] === "check") {
@@ -297,6 +314,8 @@ export function parseCommand(argv: string[]): ParseResult {
     allowed = CARD_FLAGS;
   } else if (name === "accept") {
     allowed = ACCEPT_FLAGS;
+  } else if (name === "init") {
+    allowed = INIT_FLAGS;
   } else {
     allowed = FROM_SCOUT_FLAGS;
   }
@@ -365,6 +384,59 @@ export function parseCommand(argv: string[]): ParseResult {
       id,
       model,
       commit: seen.has("--commit"),
+    };
+    return { ok: true, command };
+  }
+
+  // Check 4c: init, right after card and accept and before review.
+  if (name === "init") {
+    if (!values.has("--name")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --name") };
+    }
+    const project = values.get("--name") ?? "";
+    if (!/^[A-Za-z0-9._-]+$/.test(project)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--name must match ^[A-Za-z0-9._-]+$ (got '" + project + "')",
+        ),
+      };
+    }
+    if (!values.has("--language")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --language") };
+    }
+    const languageRaw = values.get("--language") ?? "";
+    if (languageRaw !== "typescript" && languageRaw !== "python" && languageRaw !== "go") {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--language must be one of typescript, python, go (got '" + languageRaw + "')",
+        ),
+      };
+    }
+    const moduleRaw = values.get("--module");
+    if (moduleRaw !== undefined && !/^[A-Za-z0-9._/-]+$/.test(moduleRaw)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--module must match ^[A-Za-z0-9._/-]+$ (got '" + moduleRaw + "')",
+        ),
+      };
+    }
+    const command: Command = {
+      name: "init",
+      root,
+      pretty,
+      project,
+      language: languageRaw,
+      module: moduleRaw ?? null,
+      templates: values.get("--templates") ?? null,
     };
     return { ok: true, command };
   }
