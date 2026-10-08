@@ -353,4 +353,52 @@ its `прогоны` cell; DECISIONS lines "P12b primer".
 
 ### Gate (preparation)
 
-_Filled at the gate._
+08.10, on the VPS, by the preparing orchestrator (Opus 5.5); no paid run, no call to the live service. Data commits d233500
+(spec, record, map, fixtures, checks, probes, filter, deck, DECISIONS), bf48a74 (the first chain showed a renderPrimer-only
+card red at its own tsc — the digest's new keys break primerCommand.ts — so primer-command writes both files; PC 6 varied to
+3 paths of 2 commits; a probe row with a leading-space path) and the gate commit (this section). Component sizes: git
+18 902 → **24 373**, primer 25 170 → **29 837**; cli and every other Component untouched.
+
+The deck **cut by V2**: `node dist/cli.js plan --component git --component primer --judge --checks decks/p12b/checks.json
+--out decks/p12b/deck.json` exit 0, 20 cards, filtered by `decks/p12b/filter.py` to 7; generations `[read-morph-log,
+read-ownership] [primer-command, read-morph-log-judge, read-ownership-judge] [primer-command-judge, render-primer-judge]`;
+`node dist/cli.js deck check` **0 errors, 0 warnings**. Cross-check: the old `mrph plan --spec … --component git --component
+primer --judge` (dry) gives the same 20 ids in the same order and the same 3 generations; targets, slices, dependsOn, intent,
+variants, max_tokens and reasoning (2 500) equal on all 20; instructions differ on all 20 (the P10a design); acceptances
+differ on the 7 phase cards (V2's chain from checks.json) and on 9 cards outside the phase with no map acceptance.
+
+Scratch worktree from bf48a74 (references of the 4 code files and the 5 test files, deleted afterwards), cards run in deck
+order with the deck's own acceptances, each accepted card committed before the next: **7 of 7 chains green, 47.7–52.1 s
+each (349.5 s in all; limit 250 s per chain)**. Ripple with the code references alone: 1 of 660 red (RP 1's 5952). The final
+tree: `tsc`, `eslint src tests`, guard, build clean, `vitest run` **667 / 667** in 93 files (660 + 7). Typed one-line
+throwing stubs (`Error: stub <fn> <args>`; the types and constants as specified): every code card red at the probe —
+read-morph-log 4/4, read-ownership 3/3, primer-command 10/10 (**17/17**), each FAIL with its readable stub line; chains
+8.2–9.1 s. Judges with the reference code: the three new files absent → red at the guard ("… missing", 5.9–6.6 s);
+renderPrimer.examples at HEAD → red at the guard ("does not mention the example literal \"11033\"", 7.6 s). Mutation check:
+**60 single-rule mutations** of the references (log.ts 14, ownership.ts 9, renderPrimer.ts 25, primerCommand.ts 12), each
+under a 120 s subprocess timeout: **58 killed by the card's probe, 0 by timeout** (max 1.8 s); the first pass left 3
+survivors: a leading-space path trimmed (closed by a probe row), and two equivalent on this host — the trailer values
+untrimmed (git already trims a trailer's value) and the env dropped from readMorphLog (git is found on the default path
+without PATH).
+
+Max slice + targets: primer-command 55 834 bytes + its two dependencies' files (≈ 3 KB) ≈ 59 KB (gate 200 KB). **Forecast**
+on `ds` with every maxTokens × 3: P12a ran 11 cards, 21 requests, $0.1998; here 7 cards of 30–59 KB in, 10 first requests
+(3 code × 2 variants + 4 judges), ≈ 10–16 requests ≈ **$0.07–0.14**, ≤ $0.30 with a re-cut; ≤ $1. **Gate holds.**
+
+**What the reference `morph primer` prints on this repository** (bf48a74, `--root .`, exit 0, 12 840 chars, 0 skipped):
+`- cost: $3.1558 over 33 priced runs (0 unpriced)`; `- debt rows (docs/MEASURE.md), not in these totals: P5 debt (fable)
+$4.1723`; `- running total (docs/MEASURE.md): "Running total of the autonomous stretch: $3.2658 of $30" vs $3.1558 archived here,
+difference 0.1100 — the two differ by runs made outside this repository (in MEASURE, no archive here) and archived runs
+MEASURE's total leaves out; debt rows are in neither`; `- git carries 201 Morph commits: deepseek/deepseek-v4.1-flash 56,
+z-ai/glm-5.3 53, glm53 91, claude-fable-5-1 1`; `- 167 paths written by cards, most recent first; …`; 30 path lines from
+`- tests/cli/parse.examples.test.ts ← parse-command-judge (deepseek/deepseek-v4.1-flash, run 20261007-231118); …; … 1 more`;
+`- … 137 more paths`; document `ownership {commits: 201, paths: 167}`.
+
+**Run command** (from the repo root, the binary copied first; the session applies maxTokens × 3 first, as the operator
+ordered):
+
+```
+python3 decks/tools/scale_tokens.py decks/p12b/deck.json 3
+npm run build && rm -rf /tmp/v2bin-p12b && mkdir -p /tmp/v2bin-p12b && cp -r dist /tmp/v2bin-p12b/ && ln -s $PWD/node_modules /tmp/v2bin-p12b/node_modules
+node /tmp/v2bin-p12b/dist/cli.js run --root . --deck decks/p12b/deck.json --processor ds --deadline 2400 > /tmp/p12b-run.json
+```
