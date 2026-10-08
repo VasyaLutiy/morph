@@ -1,0 +1,111 @@
+import { caseName, cutTargets, slugName } from "../language/naming.js";
+import { resolveProfile } from "../language/profiles.js";
+import type { LanguageProfile } from "../language/types.js";
+import type { ContourMap, ContourRecord } from "../contour/types.js";
+
+export interface ObligationInput { record: ContourRecord; map: ContourMap; changed: string[]; cards: string[]; titles: string[] }
+export interface Obligation {
+  component: string; function: string; unit: string; touchedBy: string[];
+  examples: number; judge: string | null; missing: number[];
+}
+export interface Finding { kind: string; source: string; path: string | null; expected: string; got: string }
+export interface ObligationResult { obligations: Obligation[]; findings: Finding[] }
+
+export function exampleTitle(profile: LanguageProfile, functionName: string, n: number): string {
+  if (profile.id === "python") {
+    return "test_" + caseName(functionName, "snake") + "_example_" + n;
+  }
+  return functionName + " example " + n;
+}
+
+export function hasTitle(titles: readonly string[], wanted: string, profile: LanguageProfile): boolean {
+  const sep = profile.id === "python" ? "_" : ":";
+  return titles.some((title) => title === wanted || title.startsWith(wanted + sep));
+}
+
+export function cardUnit(card: string): string {
+  return card.replace(/\.r\d+$/, "");
+}
+
+export function findObligations(input: ObligationInput): ObligationResult {
+  const obligations: Obligation[] = [];
+  const findings: Finding[] = [];
+  for (const component of input.record.system.groups) {
+    const resolved = resolveProfile(component.language, input.map.language);
+    if (!resolved.ok) {
+      continue;
+    }
+    const profile = resolved.profile;
+    for (const fn of component.functions) {
+      const group = input.map.groups.find((g) => g.functions.includes(fn.name));
+      const unitName = group !== undefined ? group.name : fn.name;
+      const unit = slugName(unitName);
+      const cut = cutTargets(profile, component.name, unitName);
+      if (!cut.ok) {
+        continue;
+      }
+      const codeCard = input.map.cards.find((c) => c.id === unit);
+      const codePaths =
+        codeCard !== undefined && codeCard.targets !== null
+          ? codeCard.targets
+          : [cut.targets.code, cut.targets.test];
+      const judgeCard = input.map.cards.find((c) => c.id === unit + "-judge");
+      const judgePaths =
+        judgeCard !== undefined && judgeCard.targets !== null
+          ? judgeCard.targets
+          : [cut.targets.judge];
+      const touchedBy: string[] = [];
+      const seen = new Set<string>();
+      for (const card of input.cards) {
+        const cu = cardUnit(card);
+        if (cu === unit || cu === unit + "-judge") {
+          const entry = "card " + cu;
+          if (!seen.has(entry)) {
+            seen.add(entry);
+            touchedBy.push(entry);
+          }
+        }
+      }
+      for (const p of input.changed) {
+        if (codePaths.includes(p) || judgePaths.includes(p)) {
+          const entry = "file " + p;
+          if (!seen.has(entry)) {
+            seen.add(entry);
+            touchedBy.push(entry);
+          }
+        }
+      }
+      if (touchedBy.length === 0) {
+        continue;
+      }
+      const missing: number[] = [];
+      for (let n = 1; n <= fn.examples.length; n += 1) {
+        const wanted = exampleTitle(profile, fn.name, n);
+        if (!hasTitle(input.titles, wanted, profile)) {
+          missing.push(n);
+        }
+      }
+      const judge: string | null = judgePaths.length > 0 ? judgePaths[0] ?? null : null;
+      obligations.push({
+        component: component.name,
+        function: fn.name,
+        unit,
+        touchedBy,
+        examples: fn.examples.length,
+        judge,
+        missing,
+      });
+      for (const n of missing) {
+        const wanted = exampleTitle(profile, fn.name, n);
+        findings.push({
+          kind: "obligation",
+          source: "record: " + component.name + " · " + fn.name + " · example " + n,
+          path: judge,
+          expected: 'a test named "' + wanted + '"',
+          got: "no test title at head starts with it",
+        });
+      }
+    }
+  }
+  return { obligations, findings };
+}
