@@ -466,3 +466,26 @@ node /tmp/v2bin-p17/dist/cli.js run --root . --deck decks/p17/deck.json --proces
 
 After the merge: issue #8's smoke (§8) and the regulation part of #8 (AUTONOMY "Paying a debt on a V2 deck"), both the
 main session's.
+
+### Run
+
+08.10, main session on the VPS. Binary copy `/tmp/v2bin-p17`, processor `ds`, run **20261008-120153**, exit 0, **1 139 s**:
+7 / 7 written, 11 requests, 265 439 in / 110 780 out tokens, **$0.2032** (usageTotals.cost 0.20316738). card-brief v1
+rejected at the probe, v2 accepted; accept-card v1 accepted (v2 untried); parse-command v1 accepted (v2 untried);
+accept-card-judge v1 rejected at the guard (`tests/debt/acceptCard.examples.test.ts`), r1 accepted; card-brief-judge,
+main-judge, parse-command-judge first attempt. No fix.
+
+Verify on `morph/20261008-120153`: `git status --short` empty; `tsc --noEmit`, `eslint src tests` clean; `vitest run`
+**759 / 759 in 117 files**; `npm run build` green. Own read against §2.2 and the record: `cardBrief` finds the card,
+reads targets and slice from the current tree, the latest run's outcome, reason, log and answer files, and `--md` adds
+`markdown`; `acceptCard` refuses a card without acceptance (2), takes the outside list before the acceptance with
+`--commit`, runs it through `runAcceptance` (the env scrub of MORPH_PROCESSOR_/_KEY/_TOKEN holds), and commits only
+the targets with the four trailers; cli only parses and routes. No defect found. Known limit (not pinned by the record):
+`changedOutside` reads `git status --porcelain` without `-z`, so a path git quotes (spaces, non-ASCII) is compared
+quoted.
+
+**Issue #8's smoke** (§8, $0, stub): run 20261008-122242 exit 1 (a written, b failed `acceptance failed`, c skipped);
+`card --id b --md` exit 0, `last run: 20261008-122242, processor stub, failed, attempts 3`; with `notes.txt` → `accept
+--commit` exit 1 `changed outside the targets: notes.txt`, HEAD unchanged; red target → exit 1 `acceptance failed (exit
+1)`, HEAD unchanged; right target → exit 0, the commit lists only `src/b.ts` and ends with `Morph-Card: b`,
+`Morph-Model: claude-fable-5-1`, `Morph-Acceptance-Exit: 0`, `Morph-Debt: true`; status clean.
