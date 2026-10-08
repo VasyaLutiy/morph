@@ -26,8 +26,8 @@
 - **The stub check missed a vet line.** The fix deck passed MorphStudio's gate as "red at == guard on a one-test stub"
   while the same log held the vet error of the blanked file: the check counted guard lines and read nothing else.
 - **Size.** 3 code cards + 3 judges = **6 cards**, 3 generations, code-only targets (probes, no smoke test). Reference
-  code: 46 changed lines in 4 files (one optional field, one flag with one check, one 25-line pure function, 12 lines of
-  wiring).
+  code: 57 changed lines in 4 files (54 added, 3 removed: one optional field, one flag with one check, one 25-line pure
+  function, 13 lines of wiring).
 - **Ripple, measured** (the reference code in a scratch worktree from b70c5eb with this phase's data, full suite): **0 of
   784** red — `only` is an optional key that parse writes only when given, `PlanArgs.only` is optional, and without
   `--only` planCommand runs today's code path; every existing fixture is byte for byte.
@@ -321,4 +321,71 @@ the stop for the operator (`~/.morph-wait-operator`, never `~/.morph-phase-done`
 
 ## 11. Actual
 
-(filled by the gate below and by the run)
+### Gate (preparation)
+
+08.10, on the VPS, by the preparing orchestrator (Opus 5.5, fresh context, no sub-agents); no paid run, no model call.
+Data commits 29c8aba (spec, record, map, fixtures, checks, probes, filter, deck, guards, stubcheck, regulation) and the
+gate commit (a probe row on the map's acceptance, the re-cut deck, this section, DECISIONS). Component sizes: cli 28 554 →
+**29 567**, planner-subset **2 904** (new), planner 29 348. Issues: #11 only (`P20-rerun`). No split (6 cards ≤ 12).
+
+The deck **cut by V2** (main's binary, b70c5eb): `plan --component cli --component planner-subset --judge --checks
+decks/p20/checks.json` **exit 0**, 16 cards, `decks/p20/filter.py` keeps 6; `scale_tokens.py … 3` (maxTokens:
+parse-command 72 000, select-cards 24 000, plan-command 36 000, parse-command-judge 48 000, select-cards-judge 48 000,
+plan-command-judge 60 000); `deck check` **0 errors, 0 warnings**, no hazards; generations `[parse-command, select-cards]
+[parse-command-judge, plan-command, select-cards-judge] [plan-command-judge]`. Slices (deck check, slice + existing
+targets, this spec at its final size): 46.0–63.6 KB, the largest parse-command-judge **63 615 B**. No mrph cross-check (operator 08.10).
+
+Scratch worktree `/tmp/p20-scratch` from 29c8aba (removed afterwards; no watcher or worker left), the deck's own
+acceptances run as Morph runs them (`/bin/sh -c`, 300 s cap), cards in generation order, each accepted reference
+committed before the next:
+- **Stubs, red per example at the probe (10/10)**, typed throwing stubs: `Error: stub parseCommand
+  ["plan","--spec","c.yaml","--only","a,b.v_2"]`, `stub selectCards [5,["d","c"]]` … `[5,["d","c","b","e","a"]]`, `stub
+  planCommand [true,["calc","report"],null,"decks/m1/checks.json"]`, `… ["percent-of-judge","format-share"] …`, `…
+  ["conf","plain"],["read-config"] …`: parse-command 2/2, select-cards 5/5, plan-command 3/3. **stubcheck.mjs exit 0 on
+  all 6 stub logs** (code cards red at `probe`, judges red at `guard` — `guard: tests/…p20….test.ts missing`; no tsc line
+  outside the targets).
+- **References green, chain seconds** (limit 250): parse-command 67.8, select-cards 68.9, parse-command-judge 68.9,
+  plan-command 69.5 (71.3 after the probe row), select-cards-judge 71.3, plan-command-judge 70.9 — **max 71.3 s**. Final
+  tree: `tsc`, `eslint src tests` clean, `vitest run` **792 / 792 in 128 files** (784 + the reference judges' 1 + 5 + 2);
+  `git status` clean. Ripple 0 of 784 with the data.
+- **Mutants** (the changed contracts only: the flag, its check and the key in parse.ts; selectCards; the wiring in
+  planCommand.ts), each under a 120 s subprocess timeout against its probe: **26 mutants, 2 campaigns (52 runs), 1.2 min,
+  max 3.1 s, 0 timeouts; 25 killed**; one survivor is equivalent (selectCards keeping the cards in `only`'s order: Order
+  Deck sorts every layer by id, so the result is the same) — DECISIONS. The map-acceptance mutant (planCommand's
+  `overridden` reading Plan Spec's cards by index) survived the first campaign and was killed after a probe row (a go-mini
+  map acceptance on format-share kept in the subset).
+- **Byte identity of a cut without `--only`** (main's binary b70c5eb vs the P20 reference binary, same trees): go-mini cut
+  with `--checks decks/m1/checks.json` (this phase's goguard/gofirstdiff installed) **identical** (6 cards, 75 416 B; plan
+  documents equal but for `out`); the P15 deck re-cut from its own tree 0365336 (plan, filter, ×3) **identical** (12 cards,
+  398 622 B) and identical to the deck committed there.
+- **Issue #11 reproduced on go-mini** (`decks/p20/demo.sh <bin>`, the reference binary, a git module with this phase's goguard and
+  gofirstdiff, the reference calc files committed as accepted): (1) map `goMini.sameGen.map.json`, the full cut's
+  percent-of acceptance (= a hand-filtered re-cut) on the correct reference code → **exit 1 at `== build`,
+  `calc/percent_of.go:8:9: undefined: ClampValue`**; the `--only percent-of` cut on the same tree → **exit 0** (build, vet,
+  gofmt, guard, probe, full, frozen). (2) go-mini's own map plus an accepted `calc/half.go` calling PercentOf (mount.go's
+  role): the full cut's clamp-value-judge acceptance on the stub tree (no test file) is red at `== guard … missing` — the
+  count MorphStudio's gate read — while its `== vet` printed `vet: calc/half.go:4:31: undefined: PercentOf`;
+  **stubcheck.mjs exit 1** (`stubcheck: vet names calc/half.go, outside the targets: …`); the `--only clamp-value-judge`
+  cut: vet clean, guard red, **stubcheck exit 0**.
+- **Guards (data), run by hand**: Go (`templates/go/decks/tools/guard.mjs` and `decks/tools/goguard.mjs`, a go.mod with a
+  single-line require, a block require and an `// indirect` line): a test importing go-humanize, go-humanize/english, the
+  go-sdk's `mcp` and the module's testhelp → exit 0; golang.org/x/text/language (indirect) and github.com/other/x → exit 1,
+  `(the standard library, example.com/mini/internal/testhelp, github.com/modelcontextprotocol/go-sdk,
+  github.com/dustin/go-humanize only)`; with no require the old text. TypeScript template guard: change-case and
+  `@scope/pkg/sub` from package.json `dependencies` → exit 0; typescript (a devDependency) and zod → exit 1; no
+  dependencies → the old text. `decks/p18/smoke/leak.sh templates`: the new template text adds no line (one pre-existing hit,
+  `templates/common/tools/vps-start.sh:20` "(operator 08.10)", from bc311aa).
+
+**Forecast** on `ds` with every maxTokens × 3: P19b ran 8 cards for $0.0934, P19a 8 for $0.0935; here 9 first requests (3
+code × 2 variants + 3 judges), 40–57 KB in, answers 1–22 KB: **≈ $0.04–0.10**, ≤ $0.25 with a re-cut; ≤ $1. **Gate holds.**
+
+**Run command** (from the repo root, the binary copied first; the deck is already scaled ×3):
+
+```
+npm run build && rm -rf /tmp/v2bin-p20 && mkdir -p /tmp/v2bin-p20 && cp -r dist /tmp/v2bin-p20/ && ln -s $PWD/node_modules /tmp/v2bin-p20/node_modules && ln -s $PWD/templates /tmp/v2bin-p20/templates
+node /tmp/v2bin-p20/dist/cli.js run --root . --deck decks/p20/deck.json --processor ds --deadline 2400 > /tmp/p20-run.json
+```
+
+### Run
+
+(left for the run)

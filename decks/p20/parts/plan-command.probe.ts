@@ -66,7 +66,7 @@ test("Plan Command example 13: two kept siblings still hide each other; unknown 
   }
 });
 
-test("row: a typescript subset drops the other card from the per-card tsconfig; the go-mini deck without --only unchanged", () => {
+test("row: a typescript subset drops the other card from the per-card tsconfig; the go-mini deck without --only unchanged; a map acceptance kept in the subset", () => {
   const r = tmpRoot();
   try {
     r.write("contour.yaml", fixture("planner/deps.yaml"));
@@ -90,6 +90,11 @@ test("row: a typescript subset drops the other card from the per-card tsconfig; 
   try {
     docOf(planCommand(m.root, args({})));
     expect(m.read("decks/m1/deck.json")).toBe(fixture("cli/goMini.deck.json"));
+    const map = JSON.parse(fixture("go-mini/morph-map.json")) as { cards: Record<string, Record<string, unknown>> };
+    map.cards["format-share"].acceptance = "echo map-acc";
+    m.write("morph-map.json", JSON.stringify(map));
+    const sub = docOf(planCommand(m.root, args({ only: ["percent-of-judge", "format-share"], out: null })));
+    expect(sub.cards.map((c) => [c.customId, c.acceptance === "echo map-acc"])).toStrictEqual([["format-share", true], ["percent-of-judge", false]]);
   } finally {
     m.rm();
   }
