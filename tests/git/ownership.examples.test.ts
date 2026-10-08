@@ -1,0 +1,53 @@
+import { expect, test } from "vitest";
+
+import type { OwnershipCommit } from "../../src/git/ownership.js";
+import { readOwnership } from "../../src/git/ownership.js";
+
+test("Read Ownership example 1: models by first appearance, paths by newest write", () => {
+  const commits: OwnershipCommit[] = [
+    { card: "p-judge", model: "acme/q", run: null, paths: ["tests/p.test.ts", "src/p.ts"] },
+    { card: "p", model: "acme/r", run: "20261109-120000", paths: ["src/p.ts"] },
+    { card: "o", model: "acme/q", run: "20261109-120000", paths: ["src/o.ts", "src/p.ts"] },
+  ];
+
+  expect(readOwnership(commits)).toStrictEqual({
+    commits: 3,
+    models: [
+      { model: "acme/q", commits: 2 },
+      { model: "acme/r", commits: 1 },
+    ],
+    paths: [
+      {
+        path: "tests/p.test.ts",
+        writes: [{ card: "p-judge", model: "acme/q", run: null }],
+      },
+      {
+        path: "src/p.ts",
+        writes: [
+          { card: "p-judge", model: "acme/q", run: null },
+          { card: "p", model: "acme/r", run: "20261109-120000" },
+          { card: "o", model: "acme/q", run: "20261109-120000" },
+        ],
+      },
+      {
+        path: "src/o.ts",
+        writes: [{ card: "o", model: "acme/q", run: "20261109-120000" }],
+      },
+    ],
+  });
+});
+
+test("Read Ownership example 2: empty input, then a repeated path and a modelless commit", () => {
+  expect(readOwnership([])).toStrictEqual({ commits: 0, models: [], paths: [] });
+
+  const commits: OwnershipCommit[] = [
+    { card: "x", model: "", run: null, paths: ["d/x", "d/x"] },
+    { card: "y", model: "", run: "r", paths: [] },
+  ];
+
+  expect(readOwnership(commits)).toStrictEqual({
+    commits: 2,
+    models: [{ model: "", commits: 2 }],
+    paths: [{ path: "d/x", writes: [{ card: "x", model: "", run: null }] }],
+  });
+});
