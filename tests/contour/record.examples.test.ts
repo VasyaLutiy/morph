@@ -37,7 +37,7 @@ test("Validate Record example 5: no version means 1 and texts are trimmed", () =
     ok: true,
     record: {
       version: 1,
-      system: { name: "s", description: "d", requirements: [], guardrails: [], groups: [] },
+      system: { name: "s", description: "d", requirements: [], guardrails: [], groups: [], dependencies: [] },
       actors: [],
       requirements: [],
       guardrails: [],
@@ -233,5 +233,51 @@ test("Validate Record own: a Function name duplicated within its Component is fl
   expect(r).toStrictEqual({
     ok: false,
     problems: ["System.groups[0].functions[1].name: duplicate Function name 'f'"],
+  });
+});
+
+test("Validate Record example 7: declared dependencies and the uses of three Components", () => {
+  expect(validateRecord(fixtureJson("contour/deps.json"))).toStrictEqual({
+    ok: true,
+    record: fixtureJson("contour/deps.typed.json"),
+  });
+});
+
+test("Validate Record example 8: every dependency and uses fault named", () => {
+  expect(validateRecord(fixtureJson("contour/badDeps.json"))).toStrictEqual({
+    ok: false,
+    problems: fixtureJson("contour/badDeps.problems.json"),
+  });
+  expect(
+    validateRecord({
+      System: {
+        name: "s",
+        description: "d",
+        groups: [
+          {
+            name: "c",
+            description: "C.",
+            uses: ["yaml"],
+            functions: [
+              {
+                name: "f",
+                description: "F.",
+                behavior: "B.",
+                examples: [{ given: "g", when: "w", then: "t" }],
+              },
+            ],
+          },
+        ],
+      },
+    }),
+  ).toStrictEqual({
+    ok: false,
+    problems: ["System.groups[0].uses[0]: unknown dependency 'yaml' (declared: none)"],
+  });
+  expect(
+    validateRecord({ System: { name: "s", description: "d", groups: [], dependencies: {} } }),
+  ).toStrictEqual({
+    ok: false,
+    problems: ["System.dependencies: must be a list"],
   });
 });
