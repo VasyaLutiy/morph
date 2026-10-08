@@ -1,4 +1,5 @@
 import { functionLinks } from "../contour/select.js";
+import { dependencyFinale } from "../language/dependencyFinale.js";
 import { cutTargets, slugName } from "../language/naming.js";
 import { resolveProfile } from "../language/profiles.js";
 import { acceptanceScript } from "../language/template.js";
@@ -14,6 +15,8 @@ import type {
   Component,
   ContourFunction,
   ContourInterface,
+  ContourRecord,
+  Dependency,
   MapGroup,
 } from "../contour/types.js";
 import type { CutCard, CutInput, CutResult, Unit, UnitsResult } from "./types.js";
@@ -53,6 +56,10 @@ export function cutUnits(component: Component, groups: readonly MapGroup[]): Uni
   return { ok: true, units };
 }
 
+export function componentDependencies(record: ContourRecord, component: Component): Dependency[] {
+  return record.system.dependencies.filter((dep) => component.uses.includes(dep.name));
+}
+
 interface Base {
   baseId: string;
   targets: string[];
@@ -71,6 +78,17 @@ export function cutComponent(input: CutInput): CutResult {
     return { ok: false, error: `Component '${component.name}': ${profileResult.error}` };
   }
   const profile = profileResult.profile;
+
+  const componentDeps = componentDependencies(record, component);
+  const wrongDep = componentDeps.find((dep) => dep.language !== profile.id);
+  if (wrongDep !== undefined) {
+    return {
+      ok: false,
+      error:
+        `Component '${component.name}' uses '${wrongDep.name}', a ${wrongDep.language} ` +
+        `dependency (the Component is ${profile.id})`,
+    };
+  }
 
   const linksResult = functionLinks(record, component);
   if (!linksResult.ok) return { ok: false, error: linksResult.errors[0] };
@@ -193,7 +211,7 @@ export function cutComponent(input: CutInput): CutResult {
     const inherited = inheritedSection(record, component);
     if (inherited !== "") blocks.push(inherited);
     blocks.push("Write the files: " + targets.map((t) => "`" + t + "`").join(", ") + ".");
-    blocks.push(profile.finale);
+    blocks.push(dependencyFinale(profile, componentDeps));
     const instruction =
       override?.instruction != null
         ? [override.instruction, ...blocks.slice(1)].join("\n\n")
