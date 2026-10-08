@@ -433,3 +433,30 @@ node /tmp/v2bin-p19a/dist/cli.js run --root . --deck decks/p19a/deck.json --proc
 
 After the merge: P19b is queued (`~/.morph-phase-done`), prepared by a fresh session from the merged binary (§7); issue
 #10's smokes belong to P19b.
+
+### Run
+
+08.10, main session on the VPS. Binary copy `/tmp/v2bin-p19a` (`node_modules` and `templates` linked beside its dist/),
+processor `ds`, run **20261008-141116**, exit 0, **1082 s**: 8 / 8 written, 13 requests, 267 753 in / 98 673 out tokens,
+**$0.0935** (usageTotals.cost 0.09350883). First attempts: dependency-finale, validate-record, cut-component, plan-spec v1
+accepted (their v2 answered or untried, not needed), validate-record-judge, cut-component-judge, plan-spec-judge v1.
+One retry won: dependency-finale-judge v1 red at `tsc` (no `import { test, expect } from "vitest"`: TS2593/TS2304), r1.v1
+accepted. No fix, no truncation.
+
+Verify on `morph/20261008-141116`: `git status --short` empty; `tsc --noEmit`, `eslint src tests` clean; `vitest run`
+**776 / 776 in 121 files** (the three deck-wide exclusions green again); `npm run build` green. Own read against §2.2 and
+the record: `record.ts` accepts `System.dependencies` (keys name/version/language/doc, exact-version regex, duplicate
+names) and `Component.uses` (a list, non-empty strings, declared names only, "declared: none" when nothing is declared,
+repeats refused), reading the declared names before walking groups so `uses` resolves whatever the key order;
+`dependencyFinale` returns `profile.finale` untouched for no dependency, else swaps the Go/Python stdlib clause and appends
+" Imports: the standard library plus name@version, …; their API is in <docs, deduplicated>; no other import." in record
+order; `cutComponent` refuses a dependency of another language before anything else and uses the new finale;
+`planSpec` faults a missing doc naming the dependency and Component, appends used docs to the code card's and its judge's
+slice as NEW lists (no in-place push into the map), and returns `uses` beside an unchanged `Plan`. No defect found.
+
+**Byte identity after the merge** (§10): the merged binary vs the pre-P19 binary (44aaf8d, built in a scratch worktree):
+go-mini cut with `--checks decks/m1/checks.json` (goguard/gofirstdiff installed) **identical**, 65 750 B; the P15 deck
+re-cut in its own tree 0365336 (plan, filter, ×3) **identical**, 398 622 B, and equal to the deck committed there.
+
+P19b (§7: builder/builder-go guards and `-mod=vendor`, cli wiring, MorphV2's `yaml` declared, templates docs, issue #10's
+two smokes) is queued for a fresh session.

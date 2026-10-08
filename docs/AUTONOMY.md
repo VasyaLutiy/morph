@@ -8,12 +8,18 @@ and can change any line; the session reads it at the start of every phase.
 
 ## State at handoff (08.10, operator: P19 dependencies, then stop)
 
-**Next: P19 dependencies** (PLAN row P19, issue #10, label `P19-deps`; read the issue in full before the record). A split
-(P19a/P19b) queues its second half by `~/.morph-phase-done` as usual. After the last half's merge: the issue's two smokes
-(Go live on ds with a vendored module and no network; TypeScript up to a stub run), 🧪, then **stop for the operator**
-(`~/.morph-wait-operator`); nothing is queued after P19. Dependency-free decks must stay byte-identical (go-mini, P15).
-P0–P18 closed (main 1ce0dc0+), 0 open issues besides #10. No external review passes (operator 08.10). Running total
-$5.0722 of $30.
+**Next: P19b dependencies** (issue #10, label `P19-deps`; the second half of P19). P19a (record half: `System.dependencies`,
+`Component.uses`, the dependency finale, the doc in the slice, `PlanResult.uses`) is merged: run 20261008-141116, 8/8,
+$0.0935. P19b holds exactly `docs/TASK_P19a_deps.md` §7: builder + builder-go (TS guard allows a card's declared packages,
+Go guard the declared module paths, `GOFLAGS=-mod=vendor` exactly when `vendor/modules.txt` exists, `GOPROXY=off` always),
+cli Plan Command passing `planned.uses` and the vendor flag, guard data, MorphV2's own `yaml` declared in `contour.yaml` +
+`docs/deps/yaml.md`, the templates/common docs, and issue #10's two smokes (`decks/p19b/smoke/`). After P19b's merge: the
+smokes (Go live on ds with a vendored module and no network; TypeScript up to a stub run), 🧪, then **stop for the
+operator** (`~/.morph-wait-operator`); nothing is queued after P19. Dependency-free decks must stay byte-identical
+(go-mini, P15 — re-cut against the pre-P19 binary 44aaf8d as P19a §11 Run did). Read issue #10 with
+`gh issue view 10 --json title,body,comments` (plain `gh issue view` fails on a Projects-classic GraphQL error).
+P0–P18 and P19a closed, 0 open issues besides #10. No external review passes (operator 08.10). Running total
+$5.1657 of $30.
 **Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). No mrph cross-check
 at the gate (operator 08.10). Own pre-merge code read: yes. External review passes: no (operator 08.10). Every new
 MEASURE row fills the `прогоны` column.
