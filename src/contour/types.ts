@@ -8,13 +8,15 @@ export interface ContourFunction {
 }
 export interface DataObject { name: string; description: string; schema: string | null }
 export interface ContourInterface { name: string; description: string; exposes: string[] }
+export interface Dependency { name: string; version: string; language: string; doc: string | null }
 export interface Component {
   name: string; description: string; language: string | null;
-  requirements: string[]; guardrails: string[];
+  requirements: string[]; guardrails: string[]; uses: string[];
   functions: ContourFunction[]; dataObjects: DataObject[]; interfaces: ContourInterface[];
 }
 export interface ContourSystem {
   name: string; description: string; requirements: string[]; guardrails: string[]; groups: Component[];
+  dependencies: Dependency[];
 }
 export interface Definition { name: string; description: string }
 export interface Actor { name: string; description: string; uses: string[] }
@@ -36,7 +38,7 @@ export interface ContourMap {
   groups: MapGroup[]; cards: MapCard[]; extraCards: ExtraCard[];
 }
 export type MapResult = { ok: true; map: ContourMap } | { ok: false; problems: string[] };
-export type DocResult = { ok: true; doc: Record<string, unknown> } | { ok: false, error: string };
+export type DocResult = { ok: true; doc: Record<string, unknown> } | { ok: false; error: string };
 export type LoadRecordResult = { ok: true; record: ContourRecord } | { ok: false; error: string };
 export type LoadMapResult = { ok: true; map: ContourMap } | { ok: false; error: string };
 export type SelectResult = { ok: true; components: Component[] } | { ok: false; error: string };

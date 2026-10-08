@@ -6,6 +6,7 @@ import type {
   ContourSystem,
   DataObject,
   Definition,
+  Dependency,
   Example,
   RecordResult,
   Step,
@@ -14,10 +15,14 @@ import type {
 
 export const STEP_VERBS: readonly StepVerb[] = ["calls", "reads", "modifies", "produces", "uses"];
 
+export const EXACT_VERSION = /^v?[0-9]+(\.[0-9]+)*([-+][0-9A-Za-z.+-]+)?$/;
+
 const ROOT_KEYS: readonly string[] = ["version", "System", "Actor", "Requirement", "Guardrail"];
-const SYSTEM_KEYS: readonly string[] = ["name", "description", "requirements", "guardrails", "groups"];
+const SYSTEM_KEYS: readonly string[] = [
+  "name", "description", "requirements", "guardrails", "groups", "dependencies",
+];
 const COMPONENT_KEYS: readonly string[] = [
-  "name", "description", "language", "requirements", "guardrails",
+  "name", "description", "language", "requirements", "guardrails", "uses",
   "functions", "dataObjects", "interfaces",
 ];
 const FUNCTION_KEYS: readonly string[] = [
@@ -29,6 +34,7 @@ const DATA_OBJECT_KEYS: readonly string[] = ["name", "description", "schema"];
 const INTERFACE_KEYS: readonly string[] = ["name", "description", "exposes"];
 const ACTOR_KEYS: readonly string[] = ["name", "description", "uses"];
 const DEFINITION_KEYS: readonly string[] = ["name", "description"];
+const DEPENDENCY_KEYS: readonly string[] = ["name", "version", "language", "doc"];
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
@@ -42,6 +48,8 @@ class RecordWalker {
   readonly problems: string[] = [];
   private readonly componentNames: Set<string> = new Set();
   private readonly dataObjectNames: Set<string> = new Set();
+  private readonly dependencyNames: Set<string> = new Set();
+  private declaredDependencyNames: string[] = [];
 
   validate(doc: unknown): RecordResult {
     if (!isPlainObject(doc)) {
@@ -55,12 +63,26 @@ class RecordWalker {
     if ("System" in doc) {
       if (!isPlainObject(doc.System)) {
         this.problems.push("System: must be an object");
-        system = { name: "", description: "", requirements: [], guardrails: [], groups: [] };
+        system = {
+          name: "",
+          description: "",
+          requirements: [],
+          guardrails: [],
+          groups: [],
+          dependencies: [],
+        };
       } else {
         system = this.walkSystem(doc.System);
       }
     } else {
-      system = { name: "", description: "", requirements: [], guardrails: [], groups: [] };
+      system = {
+        name: "",
+        description: "",
+        requirements: [],
+        guardrails: [],
+        groups: [],
+        dependencies: [],
+      };
     }
     const actors = this.elementList(doc, "Actor", "(root)", (o, p) => this.walkActor(o, p));
     const requirements = this.elementList(doc, "Requirement", "(root)", (o, p) => this.walkDefinition(o, p));
@@ -143,19 +165,76 @@ class RecordWalker {
     return null;
   }
 
+  private readDeclaredDependencyNames(system: Record<string, unknown>): string[] {
+    const out: string[] = [];
+    if (!("dependencies" in system)) return out;
+    const v = system.dependencies;
+    if (!Array.isArray(v)) return out;
+    const seen: Set<string> = new Set();
+    for (let i = 0; i < v.length; i += 1) {
+      const item = v[i];
+      if (!isPlainObject(item)) continue;
+      const raw = item.name;
+      if (typeof raw !== "string" || raw.trim() === "") continue;
+      const name = raw.trim();
+      if (seen.has(name)) continue;
+      seen.add(name);
+      out.push(name);
+    }
+    return out;
+  }
+
+  private readUses(o: Record<string, unknown>, parent: string): string[] {
+    if (!("uses" in o)) return [];
+    const v = o.uses;
+    const usesPath = keyPath(parent, "uses");
+    if (!Array.isArray(v)) {
+      this.problems.push(`${usesPath}: must be a list`);
+      return [];
+    }
+    const out: string[] = [];
+    const seen: Set<string> = new Set();
+    for (let i = 0; i < v.length; i += 1) {
+      const item = v[i];
+      const itemPath = `${usesPath}[${i}]`;
+      if (typeof item !== "string" || item.trim() === "") {
+        this.problems.push(`${itemPath}: must be a non-empty string`);
+        continue;
+      }
+      const name = item.trim();
+      if (!this.declaredDependencyNames.includes(name)) {
+        const declared = this.declaredDependencyNames.length === 0
+          ? "none"
+          : this.declaredDependencyNames.join(", ");
+        this.problems.push(`${itemPath}: unknown dependency '${name}' (declared: ${declared})`);
+        continue;
+      }
+      if (seen.has(name)) {
+        this.problems.push(`${itemPath}: dependency '${name}' repeated`);
+        continue;
+      }
+      seen.add(name);
+      out.push(name);
+    }
+    return out;
+  }
+
   private walkSystem(o: Record<string, unknown>): ContourSystem {
     this.checkKeys(o, SYSTEM_KEYS, ["name", "description", "groups"], "System");
     const name = this.readText(o, "name", "System");
     const description = this.readText(o, "description", "System");
     const requirements = this.stringList(o, "requirements", "System");
     const guardrails = this.stringList(o, "guardrails", "System");
+    this.declaredDependencyNames = this.readDeclaredDependencyNames(o);
     const groups = this.elementList(o, "groups", "System", (g, p) => this.walkComponent(g, p));
+    const dependencies = this.elementList(o, "dependencies", "System", (d, p) => this.walkDependency(d, p));
     return {
       name: name ?? "",
       description: description ?? "",
       requirements,
       guardrails,
       groups,
+      dependencies,
     };
   }
 
@@ -173,6 +252,7 @@ class RecordWalker {
     const language = this.readText(o, "language", path);
     const requirements = this.stringList(o, "requirements", path);
     const guardrails = this.stringList(o, "guardrails", path);
+    const uses = this.readUses(o, path);
     const functionNames: Set<string> = new Set();
     const functions = this.elementList(o, "functions", path, (f, p) => this.walkFunction(f, p, functionNames));
     const dataObjects = this.elementList(o, "dataObjects", path, (d, p) => this.walkDataObject(d, p));
@@ -183,9 +263,34 @@ class RecordWalker {
       language,
       requirements,
       guardrails,
+      uses,
       functions,
       dataObjects,
       interfaces,
+    };
+  }
+
+  private walkDependency(o: Record<string, unknown>, path: string): Dependency {
+    this.checkKeys(o, DEPENDENCY_KEYS, ["name", "version", "language"], path);
+    const name = this.readText(o, "name", path);
+    if (name !== null) {
+      if (this.dependencyNames.has(name)) {
+        this.problems.push(`${keyPath(path, "name")}: duplicate dependency name '${name}'`);
+      } else {
+        this.dependencyNames.add(name);
+      }
+    }
+    const version = this.readText(o, "version", path);
+    if (version !== null && !EXACT_VERSION.test(version)) {
+      this.problems.push(`${keyPath(path, "version")}: must be an exact version (got '${version}')`);
+    }
+    const language = this.readText(o, "language", path);
+    const doc = this.readText(o, "doc", path);
+    return {
+      name: name ?? "",
+      version: version ?? "",
+      language: language ?? "",
+      doc,
     };
   }
 
