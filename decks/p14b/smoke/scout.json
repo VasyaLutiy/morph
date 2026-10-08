@@ -1,0 +1,202 @@
+{
+  "schema": 1,
+  "scoutId": "20261008-061109-1f30a15b",
+  "createdAt": "2026-10-08T06:11:09.789Z",
+  "root": "/tmp/smoke-final/T",
+  "ref": "93e42929d86235b34b13b7d6c8d79b7d910235be",
+  "question": "Make Clamp Percent round half down; name the file that must change.\n",
+  "questionSha256": "1f30a15b41debfe244c99030bf4b208b3c7c4afcfc9acc0dc7348e85951ed6c6",
+  "protocolSha256": "9732611e1757d7319ab0c9e29a5235622796da57d618e080e6c13864d2a6accc",
+  "processor": "ds",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "seed": {
+    "source": "primer",
+    "path": null,
+    "files": [
+      "src/calc/clampPercent.ts",
+      "src/calc/clampValue.ts"
+    ],
+    "chars": 299
+  },
+  "budgets": {
+    "calls": 30,
+    "reads": 12,
+    "chars": 120000,
+    "rounds": 40,
+    "deadlineMs": 300000
+  },
+  "caps": {
+    "readLines": 400,
+    "grepHits": 200,
+    "grepLineChars": 300,
+    "listEntries": 300,
+    "grepSkip": [
+      ".morph",
+      "decks"
+    ]
+  },
+  "status": "ok",
+  "answer": {
+    "targets": [
+      "src/calc/clampPercent.ts"
+    ],
+    "context_slice": [
+      "src/calc/clampValue.ts",
+      "tests/calc/clampPercent.examples.test.ts"
+    ],
+    "reasoning": "The rounding lives in a single line: clampPercent.ts line 9 uses Math.round(clampValue(x, 0, 100)), and Math.round breaks ties upward (half up), so the tie handling must be changed there (e.g. Math.ceil(v - 0.5) after clamping). clampValue.ts supplies the clampValue definition that the rounding wraps but its logic is untouched, and the existing examples test only uses non-tie values (42.4, 150, -7.6), so it does not need modification for this change."
+  },
+  "stopReason": "the model answered on its own",
+  "spent": {
+    "calls": 7,
+    "reads": 3,
+    "chars": 1827,
+    "rounds": 11
+  },
+  "elapsedMs": 25415,
+  "usage": {
+    "requests": 11,
+    "inputTokens": 9123,
+    "outputTokens": 1107,
+    "cost": 0.0028557
+  },
+  "journal": [
+    {
+      "round": 1,
+      "turn": "malformed",
+      "action": null,
+      "chars": 197,
+      "error": "5 actions in one turn (LIST, LIST, READ, READ, LIST): send one per turn",
+      "inputTokens": 488,
+      "outputTokens": 69,
+      "cost": 0.0002292
+    },
+    {
+      "round": 2,
+      "turn": "action",
+      "action": {
+        "kind": "list",
+        "path": "src"
+      },
+      "chars": 34,
+      "error": null,
+      "inputTokens": 607,
+      "outputTokens": 44,
+      "cost": 0.00013122
+    },
+    {
+      "round": 3,
+      "turn": "action",
+      "action": {
+        "kind": "list",
+        "path": "src/calc"
+      },
+      "chars": 55,
+      "error": null,
+      "inputTokens": 626,
+      "outputTokens": 12,
+      "cost": 0.00006396
+    },
+    {
+      "round": 4,
+      "turn": "action",
+      "action": {
+        "kind": "read",
+        "path": "src/calc/clampPercent.ts",
+        "from": null,
+        "to": null
+      },
+      "chars": 371,
+      "error": null,
+      "inputTokens": 652,
+      "outputTokens": 9,
+      "cost": 0.00006816
+    },
+    {
+      "round": 5,
+      "turn": "action",
+      "action": {
+        "kind": "read",
+        "path": "tests",
+        "from": null,
+        "to": null
+      },
+      "chars": 69,
+      "error": "not in the tree (missing, ignored or a directory): tests",
+      "inputTokens": 784,
+      "outputTokens": 70,
+      "cost": 0.0003192
+    },
+    {
+      "round": 6,
+      "turn": "action",
+      "action": {
+        "kind": "list",
+        "path": "tests/"
+      },
+      "chars": 58,
+      "error": null,
+      "inputTokens": 806,
+      "outputTokens": 26,
+      "cost": 0.000273
+    },
+    {
+      "round": 7,
+      "turn": "action",
+      "action": {
+        "kind": "list",
+        "path": "tests/calc"
+      },
+      "chars": 85,
+      "error": null,
+      "inputTokens": 831,
+      "outputTokens": 16,
+      "cost": 0.00013026
+    },
+    {
+      "round": 8,
+      "turn": "malformed",
+      "action": null,
+      "chars": 185,
+      "error": "3 actions in one turn (READ, READ, READ): send one per turn",
+      "inputTokens": 863,
+      "outputTokens": 141,
+      "cost": 0.00022074
+    },
+    {
+      "round": 9,
+      "turn": "action",
+      "action": {
+        "kind": "read",
+        "path": "tests/calc/clampPercent.examples.test.ts",
+        "from": null,
+        "to": null
+      },
+      "chars": 594,
+      "error": null,
+      "inputTokens": 983,
+      "outputTokens": 120,
+      "cost": 0.00023154
+    },
+    {
+      "round": 10,
+      "turn": "malformed",
+      "action": null,
+      "chars": 179,
+      "error": "2 actions in one turn (GREP, GREP): send one per turn",
+      "inputTokens": 1201,
+      "outputTokens": 159,
+      "cost": 0.0005511
+    },
+    {
+      "round": 11,
+      "turn": "answer",
+      "action": null,
+      "chars": 0,
+      "error": null,
+      "inputTokens": 1282,
+      "outputTokens": 441,
+      "cost": 0.00063732
+    }
+  ]
+}

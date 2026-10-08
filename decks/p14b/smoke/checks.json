@@ -1,0 +1,31 @@
+{
+ "phase": "s14",
+ "cards": [
+  { "id": "clamp-value" },
+  { "id": "clamp-percent" },
+  {
+   "id": "clamp-value-judge",
+   "files": [
+    {
+     "file": "tests/calc/clampValue.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": ["Clamp Value example 1", "Clamp Value example 2", "Clamp Value example 3"]
+    }
+   ]
+  },
+  {
+   "id": "clamp-percent-judge",
+   "files": [
+    {
+     "file": "tests/calc/clampPercent.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": ["Clamp Percent example 1", "Clamp Percent example 2", "Clamp Percent example 3"]
+    }
+   ]
+  }
+ ]
+}

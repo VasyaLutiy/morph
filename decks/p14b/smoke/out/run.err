@@ -1,0 +1,6 @@
+morph run: clamp-value.v1 accepted stage 6 frozen finish stop chars 299
+morph run: clamp-percent.v1 accepted stage 6 frozen finish stop chars 311
+morph run: clamp-value-judge.v1 rejected stage 1 tsc finish stop chars 553
+morph run: clamp-value-judge.r1.v1 accepted stage 6 frozen finish stop chars 554
+morph run: clamp-percent-judge.v1 accepted stage 6 frozen finish stop chars 494
+morph run: exit 0
