@@ -1,0 +1,18 @@
+{
+  "phase": "s1",
+  "frozen": ["contour.yaml", "morph-map.json", "decks", "go.mod", "internal", "docs", "tools"],
+  "cards": [
+    { "id": "clamp-value" },
+    { "id": "percent-of" },
+    {
+      "id": "clamp-value-judge",
+      "files": [{ "file": "calc/clamp_value_examples_test.go", "min": 4, "max": 10, "new": true,
+        "lits": ["TestClampValueExample1", "TestClampValueExample2", "TestClampValueExample3", "TestClampValueExample4"] }]
+    },
+    {
+      "id": "percent-of-judge",
+      "files": [{ "file": "calc/percent_of_examples_test.go", "min": 5, "max": 11, "new": true,
+        "lits": ["TestPercentOfExample1", "TestPercentOfExample2", "TestPercentOfExample3", "TestPercentOfExample4", "TestPercentOfExample5"] }]
+    }
+  ]
+}

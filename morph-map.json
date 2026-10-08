@@ -1,7 +1,7 @@
 {
   "package": "src",
   "docs": [
-    "docs/TASK_P17_debt.md"
+    "docs/TASK_P18_template.md"
   ],
   "groups": {
     "card-model": [
@@ -1073,18 +1073,17 @@
         "src/cli/main.ts"
       ],
       "context_slice": [
-        "docs/TASK_P17_debt.md",
+        "docs/TASK_P18_template.md",
         "docs/CONVENTIONS.md",
         "src/cli/document.ts",
-        "src/debt/cardBrief.ts",
-        "src/debt/acceptCard.ts"
+        "src/scaffold/initProject.ts"
       ],
       "depends_on": [
-        "accept-card"
+        "init-project"
       ],
       "variants": 2,
       "max_tokens": 28000,
-      "instruction": "Read docs/TASK_P17_debt.md sections 2.2 (src/cli/types.ts, Parse Command, Main: the routing of card and accept and their tables) and 4. Patch three files (their current texts follow) and return each WHOLE; change nothing else in them. src/cli/types.ts: add CardArgs and AcceptArgs exactly as section 2.2 shows and widen Command with them. src/cli/parse.ts: --id and --model are value flags, --md and --commit take no value; card and accept are one-word commands with their flag sets; their checks and results as section 2.2 says, done right after the flag check; the no-command message lists the ten commands; every other check, message, default and key stays exactly as it is. src/cli/main.ts: route card to cardBrief(root, command) and accept to await acceptCard(root, command, deps) (from \"../debt/cardBrief.js\" and \"../debt/acceptCard.js\") before the run branch, which stays the last else. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P18_template.md sections 2.2 (src/cli/types.ts, Parse Command, Main: the routing of init and their tables) and 4. Patch three files (their current texts follow) and return each WHOLE; change nothing else in them. src/cli/types.ts: add InitArgs exactly as section 2.2 shows and widen Command with it. src/cli/parse.ts: --name, --language, --module and --templates are value flags; init is a one-word command with its flag set; its checks and result as section 2.2 says, done right after the checks of card and accept; the no-command message lists the eleven commands; every other check, message, default and key stays exactly as it is. src/cli/main.ts: route init to initProject(root, command, deps.cwd) (from \"../scaffold/initProject.js\") before the run branch, which stays the last else. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "deck-check": {
       "intent": "generate",
@@ -1178,7 +1177,7 @@
         "tests/cli/parse.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P17_debt.md",
+        "docs/TASK_P18_template.md",
         "docs/CONVENTIONS.md",
         "src/cli/types.ts",
         "src/cli/parse.ts"
@@ -1187,7 +1186,7 @@
         "parse-command"
       ],
       "max_tokens": 28000,
-      "instruction": "You patch tests/cli/parse.examples.test.ts and return it WHOLE (its current text follows). Read docs/TASK_P17_debt.md sections 2.2 (Parse Command and its table) and 2.3 (the parse.examples bullet). Two changes only: in \"Parse Command example 8\" the no-command message becomes \"no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept)\"; after the last test add \"Parse Command example 20: card and accept, their flags and checks\" with the fifteen argv of section 2.2's table, each result written out as a literal and compared whole with toStrictEqual, as example 19 does. Keep every other test, its name and every other line exactly as it is. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You patch tests/cli/parse.examples.test.ts and return it WHOLE (its current text follows). Read docs/TASK_P18_template.md sections 2.2 (Parse Command and its table) and 2.3 (the parse.examples bullet). Two changes only: in \"Parse Command example 8\" the no-command message becomes \"no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept, init)\"; after the last test add \"Parse Command example 21: init, its flags and checks\" with the sixteen argv of section 2.2's table, each result written out as a literal and compared whole with toStrictEqual, as example 20 does. Keep every other test, its name and every other line exactly as it is. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "deck-check-judge": {
       "intent": "generate",
@@ -1234,22 +1233,28 @@
     "main-judge": {
       "intent": "generate",
       "targets": [
-        "tests/cli/main.p17.examples.test.ts"
+        "tests/cli/main.p18.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P17_debt.md",
+        "docs/TASK_P18_template.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/cli/types.ts",
         "src/cli/main.ts",
-        "tests/fixtures/debt/deck.json",
-        "tests/fixtures/debt/accept.deck.json"
+        "tests/fixtures/scaffold/tpl/common/.gitignore",
+        "tests/fixtures/scaffold/tpl/common/README.md",
+        "tests/fixtures/scaffold/tpl/common/docs/notes.md",
+        "tests/fixtures/scaffold/tpl/common/tools/hello.sh",
+        "tests/fixtures/scaffold/tpl/go/README.md",
+        "tests/fixtures/scaffold/tpl/go/go.mod",
+        "tests/fixtures/scaffold/tpl/go/internal/keep.txt",
+        "tests/fixtures/scaffold/tpl/python/pyproject.toml"
       ],
       "depends_on": [
         "parse-command"
       ],
       "max_tokens": 16000,
-      "instruction": "You write tests/cli/main.p17.examples.test.ts only, a NEW file with the tests of Main examples 14 and 15; examples 1-13 are already tested and you do not repeat them. Read docs/TASK_P17_debt.md sections 2.1 (the Card Brief tree and the Accept Card tmpRepo) and 2.2 (Main and its table). Call main(argv, deps, io) in process from \"../../src/cli/main.js\" with deps {env: {PATH: process.env.PATH ?? \"\"}, now: () => 0, cwd: <as the example says>, transport: null} and an io that pushes stdout and stderr chunks; parse each stdout chunk with JSON.parse; tmpRepo, tmpRoot and fixture from \"../helpers.js\". Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/cli/main.p18.examples.test.ts only, a NEW file with the test of Main example 16; examples 1-15 are already tested and you do not repeat them. Read docs/TASK_P18_template.md sections 2.1 (the fixture tree) and 2.2 (Main and its table). Call main(argv, deps, io) in process from \"../../src/cli/main.js\" with deps {env: {PATH: process.env.PATH ?? \"\"}, now: () => 0, cwd: t.root, transport: null} and an io that pushes stdout and stderr chunks; parse each stdout chunk with JSON.parse; tmpRoot and fixturePath from \"../helpers.js\"; the fixture tree is fixturePath(\"scaffold/tpl\"). Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "card-brief": {
       "intent": "generate",
@@ -3043,6 +3048,45 @@
       ],
       "max_tokens": 16000,
       "instruction": "You write tests/builder/goAcceptance.examples.test.ts only, a NEW file with the tests of Go Acceptance examples 1-5. Read docs/TASK_P15_golang.md sections 2.1 (the ctx helper, verbatim) and 2.2 (Go Acceptance) and 2.3 (the goAcceptance.examples bullet). Import from \"../../src/builder/goAcceptance.js\", GO from \"../../src/language/profiles.js\", DEFAULT_FROZEN from \"../../src/builder/readChecks.js\", fixture from \"../helpers.js\", types with `import type`. Each whole script is compared with toBe to fixture(\"builder/go/<name>.txt\"). Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+    },
+    "init-project": {
+      "intent": "generate",
+      "targets": [
+        "src/scaffold/initProject.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P18_template.md",
+        "docs/CONVENTIONS.md"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 12000,
+      "instruction": "Read docs/TASK_P18_template.md sections 2.1 and 2.2 (src/scaffold/initProject.ts: initProject, defaultTemplatesDir, listTemplateFiles, fillTemplate and the Init Project table) and 4. Write src/scaffold/initProject.ts, a NEW file of the layer scaffold: the exports of section 2.2 in that order, the types exactly as shown. Of the Node modules only node:fs, node:path and node:url (fileURLToPath); import no other src/ folder. defaultTemplatesDir is two directories up from this module's own directory, then templates. Check in order: the target, then the folder common, then the language's folder; nothing is written until every check passed. fillTemplate is ONE regex pass over exactly the three placeholders. Every written file gets its source's mode & 0o777 with chmodSync. No clock, no process, no console, no child process. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "init-project-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/scaffold/initProject.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P18_template.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/scaffold/initProject.ts",
+        "tests/fixtures/scaffold/tpl/common/.gitignore",
+        "tests/fixtures/scaffold/tpl/common/README.md",
+        "tests/fixtures/scaffold/tpl/common/docs/notes.md",
+        "tests/fixtures/scaffold/tpl/common/tools/hello.sh",
+        "tests/fixtures/scaffold/tpl/go/README.md",
+        "tests/fixtures/scaffold/tpl/go/go.mod",
+        "tests/fixtures/scaffold/tpl/go/internal/keep.txt",
+        "tests/fixtures/scaffold/tpl/python/pyproject.toml"
+      ],
+      "depends_on": [
+        "init-project"
+      ],
+      "max_tokens": 16000,
+      "instruction": "You write tests/scaffold/initProject.examples.test.ts only, a NEW file with the tests of Init Project examples 1-5. Read docs/TASK_P18_template.md sections 2.1 (the fixture tree and the harness skeleton) and 2.2 (initProject and its table) and 2.3 (the initProject.examples bullet). Import from \"../../src/scaffold/initProject.js\", tmpRoot and fixturePath from \"../helpers.js\", fs from \"node:fs\" and path from \"node:path\"; the fixture tree is fixturePath(\"scaffold/tpl\"), the repository root is path.resolve(fixturePath(\".\"), \"..\", \"..\"). Compare a file's mode with fs.statSync(p).mode & 0o777, never with a fixed number (the checkout's umask decides it). Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     }
   }
 }

@@ -1,0 +1,78 @@
+{
+ "phase": "p18",
+ "ownGit": true,
+ "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates"],
+ "fullExclude": [
+  "tests/cli/parse.examples.test.ts"
+ ],
+ "cards": [
+  {
+   "id": "init-project"
+  },
+  {
+   "id": "parse-command"
+  },
+  {
+   "id": "init-project-judge",
+   "files": [
+    {
+     "file": "tests/scaffold/initProject.examples.test.ts",
+     "min": 5,
+     "max": 11,
+     "new": true,
+     "lits": [
+      "Init Project example 1",
+      "Init Project example 2",
+      "Init Project example 3",
+      "Init Project example 4",
+      "Init Project example 5",
+      "scaffold/tpl",
+      "example.com/acme/internal go",
+      "beta_svcbeta_svc",
+      "{{module}}:x/y:go",
+      "target directory is not empty (first entry: .a)",
+      "target is not a directory",
+      "template folder not found: typescript",
+      "template folder not found: common"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "parse-command-judge",
+   "files": [
+    {
+     "file": "tests/cli/parse.examples.test.ts",
+     "min": 27,
+     "max": 29,
+     "lits": [
+      "Parse Command example 21",
+      "card, accept, init)",
+      "--language must be one of typescript, python, go (got 'TypeScript')",
+      "--module must match ^[A-Za-z0-9._/-]+$ (got 'a b')",
+      "flag --templates does not apply to card",
+      "flag --name does not apply to run"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "main-judge",
+   "files": [
+    {
+     "file": "tests/cli/main.p18.examples.test.ts",
+     "min": 1,
+     "max": 7,
+     "new": true,
+     "lits": [
+      "Main example 16",
+      "morph init: exit 0",
+      "morph init: exit 2",
+      "target directory is not empty (first entry: .gitignore)",
+      "scaffold/tpl"
+     ]
+    }
+   ]
+  }
+ ]
+}

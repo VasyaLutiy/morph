@@ -1,0 +1,14 @@
+{
+  "language": "python",
+  "docs": [],
+  "cards": {
+    "slugify": { "intent": "generate", "targets": ["text/slugify.py"], "max_tokens": 6000,
+      "acceptance": "python3 -m py_compile text/slugify.py && python3 -c 'from text.slugify import slugify; assert slugify(\"Hello, World!\") == \"hello-world\"; assert slugify(\"!!!\") == \"\"'" },
+    "word-count": { "intent": "generate", "targets": ["text/word_count.py"], "max_tokens": 6000,
+      "acceptance": "python3 -m py_compile text/word_count.py && python3 -c 'from text.word_count import word_count; assert word_count(\"one two  three\") == 3; assert word_count(\" \") == 0'" },
+    "slugify-judge": { "intent": "generate", "max_tokens": 8000,
+      "acceptance": "python3 -m pytest tests/test_slugify_examples.py -q --tb=short" },
+    "word-count-judge": { "intent": "generate", "max_tokens": 8000,
+      "acceptance": "python3 -m pytest tests/test_word_count_examples.py -q --tb=short" }
+  }
+}

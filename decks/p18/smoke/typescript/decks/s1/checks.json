@@ -1,0 +1,11 @@
+{
+  "phase": "s1",
+  "cards": [
+    { "id": "slugify" },
+    { "id": "word-count" },
+    { "id": "slugify-judge", "files": [{ "file": "tests/text/slugify.examples.test.ts", "min": 3, "max": 9, "new": true,
+      "lits": ["Slugify example 1", "Slugify example 2", "Slugify example 3", "morph-cards-2"] }] },
+    { "id": "word-count-judge", "files": [{ "file": "tests/text/wordCount.examples.test.ts", "min": 3, "max": 9, "new": true,
+      "lits": ["Word Count example 1", "Word Count example 2", "Word Count example 3"] }] }
+  ]
+}

@@ -102,7 +102,7 @@
         "error": {
           "code": 4,
           "kind": "UsageError",
-          "message": "no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept)"
+          "message": "no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept, init)"
         }
       }
     }
@@ -785,6 +785,174 @@
           "code": 4,
           "kind": "UsageError",
           "message": "missing --deck"
+        }
+      }
+    }
+  ],
+  "21": [
+    {
+      "ok": true,
+      "command": {
+        "name": "init",
+        "root": ".",
+        "pretty": false,
+        "project": "acme",
+        "language": "go",
+        "module": null,
+        "templates": null
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "init",
+        "root": "/w/p",
+        "pretty": true,
+        "project": "beta_svc",
+        "language": "python",
+        "module": "example.com/x-y/beta",
+        "templates": "../tpl"
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "init",
+        "root": ".",
+        "pretty": false,
+        "project": "a",
+        "language": "typescript",
+        "module": "github.com/acme/x_1.v2",
+        "templates": null
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --name"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--name must match ^[A-Za-z0-9._-]+$ (got 'a b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--name must match ^[A-Za-z0-9._-]+$ (got 'a b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --language"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--language must be one of typescript, python, go (got 'rust')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--language must be one of typescript, python, go (got 'TypeScript')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--module must match ^[A-Za-z0-9._/-]+$ (got 'a b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --deck does not apply to init"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --name does not apply to run"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --templates does not apply to card"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "unexpected argument: x"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --name given twice"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --language needs a value"
         }
       }
     }

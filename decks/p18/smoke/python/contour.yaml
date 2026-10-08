@@ -1,0 +1,34 @@
+version: 1
+System:
+  name: slugs
+  description: >
+    Turns titles into URL slugs and counts their words. One Component, text (text/), pure functions.
+  requirements: []
+  guardrails: []
+  groups:
+    - name: text
+      description: Pure string helpers in text/; no I/O, no clock, no environment.
+      language: python
+      functions:
+        - name: Slugify
+          description: A title as a URL slug.
+          behavior: >
+            Exported as `slugify(title: str) -> str` in text/slugify.py. Lower-cases the title, replaces every
+            run of characters outside a-z and 0-9 by one "-", and strips "-" from both ends.
+          steps:
+            - produces: string
+          examples:
+            - {given: '"Hello, World!"', when: slugified, then: '"hello-world"'}
+            - {given: '"  Morph -- Cards 2  "', when: slugified, then: '"morph-cards-2"'}
+            - {given: '"!!!"', when: slugified, then: '""'}
+        - name: Word Count
+          description: The number of words of a text.
+          behavior: >
+            Exported as `word_count(text: str) -> int` in text/word_count.py. A word is a maximal run of
+            non-white-space characters; an empty or white-space-only text has 0 words.
+          steps:
+            - produces: number
+          examples:
+            - {given: '"one two  three"', when: counted, then: "3"}
+            - {given: '"  \\t\\n "', when: counted, then: "0"}
+            - {given: '"a-b c"', when: counted, then: "2"}

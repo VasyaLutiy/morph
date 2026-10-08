@@ -150,5 +150,61 @@
   "Main 15": {
     "given": "a tmpRepo t, one commit \"base\" of d.json = debt/accept.deck.json and src/a.ts \"broken\\n\", then src/a.ts written \"fixed\\n\"; deps {env {PATH}, now () => 0, cwd t, transport null}; argv [accept, --deck, d.json, --id, fix-a, --model, claude-fable-5-1, --commit]; then the same argv again; then [accept, --deck, d.json, --id, fix-a, --model, m x]",
     "then": "0, one stdout document {deck \"d.json\", card \"fix-a\", model \"claude-fable-5-1\", exit 0, timedOut false, green true, log \"\", outside [], commit HEAD's sha, diffstat {1, 1, 1}, reason null}, the HEAD message \"morph fix-a: src/a.ts\\n\\nMorph-Card: fix-a\\nMorph-Model: claude-fable-5-1\\nMorph-Acceptance-Exit: 0\\nMorph-Debt: true\", stderr [\"morph accept: exit 0\\n\"]; then 1, commit null, reason \"nothing to commit: the targets equal HEAD\", stderr [\"morph accept: exit 1\\n\"]; then 4 UsageError \"--model must match ^[A-Za-z0-9._/:-]+$ (got 'm x')\", stderr [\"morph: --model must match ^[A-Za-z0-9._/:-]+$ (got 'm x')\\n\"]"
+  },
+  "Emit Document 1": {
+    "given": "doc {a: 1, b: [true, null]}, pretty false",
+    "then": "\"{\\\"a\\\":1,\\\"b\\\":[true,null]}\\n\""
+  },
+  "Emit Document 2": {
+    "given": "the same doc, pretty true",
+    "then": "\"{\\n  \\\"a\\\": 1,\\n  \\\"b\\\": [\\n    true,\\n    null\\n  ]\\n}\\n\""
+  },
+  "Emit Document 3": {
+    "given": "errorDocument(4, \"UsageError\", \"unknown command: x\")",
+    "then": "\"{\\\"error\\\":{\\\"code\\\":4,\\\"kind\\\":\\\"UsageError\\\",\\\"message\\\":\\\"unknown command: x\\\"}}\\n\""
+  },
+  "Classify Error 1": {
+    "given": "new Error(\"git add failed (exit 1): fatal: x\")",
+    "then": "{code: 3, document: {error: {code: 3, kind: \"RuntimeError\", message: \"git add failed (exit 1): fatal: x\"}}}"
+  },
+  "Classify Error 2": {
+    "given": "the string \"boom\"",
+    "then": "as example 1, message \"boom\""
+  },
+  "Classify Error 3": {
+    "given": "reports with outcomes [written, written] and [written, skipped], archive ok; then [written] with archive {ok: false}",
+    "then": "0, 1, 3"
+  },
+  "Deck Check 1": {
+    "given": "a tmp root holding only d.json = the write-write fixture (a and b both write src/x.ts)",
+    "then": "code 2; document equal to tests/fixtures/cli/deckCheck.writeWrite.json"
+  },
+  "Deck Check 3": {
+    "given": "the same tree, sliceCapBytes 10",
+    "then": "code 0; warnings 2; hazards [the implicit-read, then {kind: \"oversized-slice\", severity: \"warning\", cards: [\"a\"], path: null, repair: null, bytes: 20, cap: 10}]"
+  },
+  "Run Command 3": {
+    "given": "processor \"nope\"; then \"bad\" with MORPH_PROCESSOR_bad_TYPE \"x\" in env",
+    "then": "code 4 UsageError \"processor nope is not configured\"; then \"processor bad is not configured: MORPH_PROCESSOR_bad_TYPE must be one of openrouter, stub (got 'x')\"; no morph/* branch"
+  },
+  "Run Command 5": {
+    "given": "a deck of a and b both targeting out/x.ts",
+    "then": "code 2 RefusalError \"deck has 1 hazard error(s): write-write a,b out/x.ts\"; no morph/* branch"
+  },
+  "Run Command 11": {
+    "given": "a deck file \"[]\"",
+    "then": "code 2 RefusalError \"deck has no cards\"; no morph/* branch; no .morph"
+  },
+  "Plan Command 7": {
+    "given": "example 6, checks decks/l2/checks.json = {\"phase\": \"l2\", \"cards\": [{\"id\": \"zz\"}]}",
+    "then": "2 DeckError \"acceptances not built (1 error):\\nchecks card 'zz' is not in the deck\""
+  },
+  "Plan Command 8": {
+    "given": "the repository; contour.yaml, planner, cli, judge, map tests/fixtures/cli/p10.map.json, checks decks/p10/checks.json",
+    "then": "code 0; v2deck.json's 12 acceptances byte for byte, guard.p10.txt (trimEnd) replaced by decks/tools/guard.mjs"
+  },
+  "Main 16": {
+    "given": "a tmpRoot t; deps {env {PATH}, now () => 0, cwd t.root, transport null}; argv A = init --root p --name acme --language go --module example.com/acme --templates <the fixture tree tests/fixtures/scaffold/tpl, absolute>; then A again; then init --name acme --language rust; then t/t2 holding common/a.txt \"{{name}}\\n\" and python/b.txt \"{{language}}\\n\", argv init --root q --name b --language python --templates t2",
+    "then": "exit 0, stderr [\"morph init: exit 0\\n\"], one stdout document {name \"acme\", language \"go\", module \"example.com/acme\", files [\".gitignore\", \"README.md\", \"docs/notes.md\", \"go.mod\", \"internal/keep.txt\", \"tools/hello.sh\"]}, t/p/go.mod \"module example.com/acme\\n\\ngo 1.22\\n\"; then exit 2, stdout {error {code 2, kind \"RefusalError\", message \"target directory is not empty (first entry: .gitignore)\"}}, stderr [\"morph init: exit 2\\n\"]; then exit 4, stderr [\"morph: --language must be one of typescript, python, go (got 'rust')\\n\"]; then exit 0, {name \"b\", language \"python\", module \"b\", files [\"a.txt\", \"b.txt\"]}, t/q/a.txt \"b\\n\", t/q/b.txt \"python\\n\" (root and templates resolved against cwd)"
   }
 }

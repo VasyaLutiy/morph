@@ -30,6 +30,8 @@ const LAYERS = {
   // P17: the debt commands (morph card / morph accept, issue #8) read the deck through cards, run the card's acceptance
   // through acceptance and commit through git (docs/TASK_P17_debt.md §4)
   debt: ["cards", "acceptance", "git"],
+  // P18: morph init (issue #9) copies the template folders into a new project: no other layer (docs/TASK_P18_template.md §4)
+  scaffold: [],
   cli: "*",
 };
 const ROOT_FILES = new Set(["src/index.ts"]);
@@ -38,13 +40,13 @@ const NET = new Set(["processor"]);                    // fetch, WebSocket, XMLH
 const CONSOLE = new Set(["cli"]);                      // console, process.exit
 const PROCESS = new Set(["cli", "processor", "acceptance"]);
 const NO_CLOCK = new Set(["cards", "compiler", "response", "language", "contour", "planner", "builder", "batches", "primer",
-  "scout", "reviewer", "debt"]);
+  "scout", "reviewer", "debt", "scaffold"]);
 // P12a: the one file of src/primer that turns the clock parameter deps.now() into an ISO string (docs/TASK_P12_primer.md §4)
 // P13b: the one file of src/scout that turns deps.now() into the session id and createdAt (docs/TASK_P13b_scout.md §4)
 const CLOCK_FORMATTERS = new Set(["src/primer/primerCommand.ts", "src/scout/scoutCommand.ts"]);
 const YAML = new Set(["contour"]);
 // P3: the acceptance gets the child's environment as a parameter (docs/TASK_P3_acceptance.md §4)
-const NO_ENV = new Set(["acceptance", "processor", "git", "batches", "primer", "scout", "reviewer", "debt"]);
+const NO_ENV = new Set(["acceptance", "processor", "git", "batches", "primer", "scout", "reviewer", "debt", "scaffold"]);
 // P4: the one file of a NO_ENV layer that may read process.env (Read Registry, docs/TASK_P4_processor.md §4)
 const ENV_READERS = new Set(["src/processor/registry.ts"]);
 // P6: the one file of src/git that spawns (Run Git, docs/TASK_P6_git.md §4); git takes the env whole
@@ -63,7 +65,9 @@ const CLI_ENTRY = "src/cli.ts";
 // (docs/TASK_P13a_scout.md §4; P13b adds the one node:fs adapter file)
 const NODE_ONLY = { language: new Set(["node:path"]), contour: new Set(), planner: new Set(["node:path"]),
   builder: new Set(["node:path"]), scout: new Set(["node:path"]), reviewer: new Set(),
-  debt: new Set(["node:fs", "node:path"]) };
+  debt: new Set(["node:fs", "node:path"]), scaffold: new Set(["node:fs", "node:path", "node:url"]) };
+// P18: scaffold reads the template folders and writes the new project (node:fs, node:path) and finds the package root from
+// its own module file (node:url's fileURLToPath of import.meta.url); it spawns nothing (docs/TASK_P18_template.md §4)
 // P17: debt reads the deck file, the card's files and the run archive (node:fs, node:path); it spawns only through
 // acceptance's runAcceptance and git's gitOk (docs/TASK_P17_debt.md §4)
 // P14a: the reviewer's checks are pure functions of git's outputs, the record and the texts they are given: no Node

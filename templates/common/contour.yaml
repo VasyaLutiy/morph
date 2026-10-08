@@ -1,0 +1,27 @@
+# The record of {{name}}: the current contract only (no history). A Component stays under 30 KB; large literals live in
+# tests/fixtures/ and are named by `ref`. Validate after every edit with a dry cut:
+#   morph plan --root . --spec contour.yaml --map morph-map.json --component <name>
+version: 1
+System:
+  name: {{name}}
+  description: >
+    One paragraph: what {{name}} does, for whom, and the boundary of the system.
+  requirements: []
+  guardrails: []
+  groups: []
+  # A Component, one per code folder (layer), added under groups:
+  #   - name: <component>
+  #     description: >
+  #       What it does; its folder; which other Components it may use; what it never touches (clock, network, env).
+  #     language: {{language}}
+  #     functions:
+  #       - name: <Function Name>
+  #         description: <one line>
+  #         behavior: >
+  #           The exported signature and every rule: orders, defaults, messages pinned exactly.
+  #         steps: [{produces: <Data Object>}]
+  #         examples:
+  #           - {given: '<the input, full values>', when: '<the call>', then: '<the full result>'}
+  #     dataObjects:
+  #       - name: <Data Object>
+  #         schema: "<its shape>"

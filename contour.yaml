@@ -1326,7 +1326,7 @@ System:
         The `morph` binary: src/cli/*.ts and the entry src/cli.ts (bin dist/cli.js): argv parsed, routed to a command, one JSON document on stdout, log lines on
         stderr, an exit code per outcome. Only the entry touches the process. Commands: `deck check`, `run`, `plan`; `submit`, `collect` (routed to batches);
         `primer` (routed to primer); `scout`, `plan --from-scout` (routed to scout-session); `review` (routed to review-session); `card`, `accept` (routed
-        to debt); the rest NotYetError.
+        to debt); `init` (routed to scaffold); the rest NotYetError.
         tests/fixtures/cli/examples.json["<Function> <n>"] holds the given and then of an example that names it.
       language: typescript
       requirements: [One Document Out]
@@ -1336,19 +1336,22 @@ System:
           behavior: >
             parseCommand(argv) scans argv left to right. A token starting with "--" is a flag: --pretty, --judge, --write, --md and --commit take no value; --root, --deck,
             --processor, --run-id, --deadline, --max-cards, --max-retry-batches, --slice-cap-bytes, --spec, --component, --map, --out, --checks, --batch,
-            --issue, --seed-file, --from-scout, --scout, --mutants, --mutant-timeout, --test, --id, --model take the next token whatever it is; any other flag (--x=y too) → "unknown flag: <t>"; a value flag last → "flag <t> needs a value"; a flag twice → "flag
+            --issue, --seed-file, --from-scout, --scout, --mutants, --mutant-timeout, --test, --id, --model, --name, --language, --module, --templates take the next token whatever it is; any other flag (--x=y too) → "unknown flag: <t>"; a value flag last → "flag <t> needs a value"; a flag twice → "flag
             <t> given twice", but --component repeats, its values in argv order (the first error by argv wins). Other tokens are words, giving the command: none
-            → "no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept)"; "run"; "plan" ("plan --from-scout" when --from-scout is given);
-            "submit"; "collect"; "primer"; "scout"; "review" with two words after it (<base> <head>); "card"; "accept"; "deck" "check"; a first word report → NotYetError "command report is not available yet"; "deck" add|status|reset|clear → NotYetError "command deck <w> is
+            → "no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept, init)"; "run"; "plan" ("plan --from-scout" when --from-scout is given);
+            "submit"; "collect"; "primer"; "scout"; "review" with two words after it (<base> <head>); "card"; "accept"; "init"; "deck" "check"; a first word report → NotYetError "command report is not available yet"; "deck" add|status|reset|clear → NotYetError "command deck <w> is
             not available yet"; else "unknown command: <words, space-joined>". An extra word → "unexpected argument: <first extra>". Then in order: a flag the
             command does not take → "flag <f> does not apply to <command>", in argv order (deck check: --root, --pretty, --deck, --slice-cap-bytes; run: --root,
             --pretty, --deck, --processor, --run-id, --deadline, --max-cards, --max-retry-batches; plan: --root, --pretty, --spec, --component, --map, --judge,
             --out, --checks; review: --root, --pretty, --spec, --map, --scout, --mutants, --mutant-timeout, --test, --write; submit: --root, --pretty, --deck, --processor; collect: --root, --pretty, --batch; primer: --root, --pretty, --write; scout: --root, --pretty,
             --processor, --issue, --seed-file, --deadline; plan --from-scout: --root, --pretty, --from-scout, --out; card: --root, --pretty, --deck, --id, --md;
-            accept: --root, --pretty, --deck, --id, --model, --commit); card and accept: no --deck → "missing --deck", no --id → "missing --id", an --id not
+            accept: --root, --pretty, --deck, --id, --model, --commit; init: --root, --pretty, --name, --language, --module, --templates); card and accept: no --deck → "missing --deck", no --id → "missing --id", an --id not
             matching ^[A-Za-z0-9._-]+$ → "--id must match ^[A-Za-z0-9._-]+$ (got '<v>')", card done {name, root, pretty, deck, id, md}; accept: no --model →
             "missing --model", a --model not matching ^[A-Za-z0-9._/:-]+$ → "--model must match ^[A-Za-z0-9._/:-]+$ (got '<v>')", else done {name, root,
-            pretty, deck, id, model, commit}; review: fewer than two refs → "review
+            pretty, deck, id, model, commit}; init: no --name → "missing --name", a --name not matching ^[A-Za-z0-9._-]+$ → "--name must match
+            ^[A-Za-z0-9._-]+$ (got '<v>')", no --language → "missing --language", a --language not typescript, python or go → "--language must be one of
+            typescript, python, go (got '<v>')", a --module not matching ^[A-Za-z0-9._/-]+$ → "--module must match ^[A-Za-z0-9._/-]+$ (got '<v>')", else done
+            {name, root, pretty, project, language, module (null), templates (null)}; review: fewer than two refs → "review
             needs two refs: <base> <head>", a --scout not matching ^[A-Za-z0-9._-]+$ → "--scout must match ^[A-Za-z0-9._-]+$ (got '<v>')", --mutants then
             --mutant-timeout not a positive integer, else done {name, root, pretty, base, head, spec, map, scout, mutants (null), mutantTimeoutSeconds (120),
             test (null), write}; plan --from-scout: a value not matching
@@ -1385,6 +1388,7 @@ System:
             - {given: 'parseArgv.json["18"]', when: parsed, then: 'parse.json["18"]'}
             - {given: 'parseArgv.json["19"]', when: parsed, then: 'parse.json["19"]'}
             - {given: 'parseArgv.json["20"]', when: parsed, then: 'parse.json["20"]'}
+            - {given: 'parseArgv.json["21"]', when: parsed, then: 'parse.json["21"]'}
         - name: Emit Document
           description: One JSON document + newline on stdout; --pretty indents by 2.
           behavior: >
@@ -1392,9 +1396,9 @@ System:
             keys in that order.
           steps: [{produces: Error Document}]
           examples:
-            - {given: 'doc {a: 1, b: [true, null]}, pretty false', when: rendered, then: '"{\"a\":1,\"b\":[true,null]}\n"'}
-            - {given: 'the same doc, pretty true', when: rendered, then: '"{\n  \"a\": 1,\n  \"b\": [\n    true,\n    null\n  ]\n}\n"'}
-            - {given: 'errorDocument(4, "UsageError", "unknown command: x")', when: rendered compact, then: '"{\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"unknown command: x\"}}\n"'}
+            - {given: 'examples.json["Emit Document 1"].given', when: "rendered", then: 'examples.json["Emit Document 1"].then'}
+            - {given: 'examples.json["Emit Document 2"].given', when: "rendered", then: 'examples.json["Emit Document 2"].then'}
+            - {given: 'examples.json["Emit Document 3"].given', when: "rendered compact", then: 'examples.json["Emit Document 3"].then'}
         - name: Classify Error
           description: "Exit codes: 0 ok; 1 a card not written; 2 a refusal before spend; 3 a fault under way; 4 a usage error."
           behavior: >
@@ -1403,9 +1407,9 @@ System:
             RuntimeError (3).
           steps: [{produces: Command Result}]
           examples:
-            - {given: 'new Error("git add failed (exit 1): fatal: x")', when: classifyThrown, then: '{code: 3, document: {error: {code: 3, kind: "RuntimeError", message: "git add failed (exit 1): fatal: x"}}}'}
-            - {given: 'the string "boom"', when: classifyThrown, then: 'as example 1, message "boom"'}
-            - {given: 'reports with outcomes [written, written] and [written, skipped], archive ok; then [written] with archive {ok: false}', when: runExitCode, then: '0, 1, 3'}
+            - {given: 'examples.json["Classify Error 1"].given', when: "classifyThrown", then: 'examples.json["Classify Error 1"].then'}
+            - {given: 'examples.json["Classify Error 2"].given', when: "classifyThrown", then: 'examples.json["Classify Error 2"].then'}
+            - {given: 'examples.json["Classify Error 3"].given', when: "runExitCode", then: 'examples.json["Classify Error 3"].then'}
         - name: Read Deck File
           description: The deck file a command names, read by Load Deck.
           behavior: >
@@ -1414,9 +1418,9 @@ System:
             errorDocument(2, "DeckError", "invalid deck: " + each "<key>: <message>", "; "-joined)}}. Else {ok: true, deck}.
           steps: [{reads: Deck}, {produces: Command Result}]
           examples:
-            - {given: 'examples.json["Read Deck File 1"].given', ref: "tests/fixtures/cli/examples.json, tests/fixtures/decks/tiny.json (one card a \u2192 src/a.ts)", when: "readDeckFile(root, \"d.json\")", then: 'examples.json["Read Deck File 1"].then'}
-            - {given: 'examples.json["Read Deck File 2"].given', ref: "tests/fixtures/cli/examples.json", when: "readDeckFile(root, \"nope.json\")", then: 'examples.json["Read Deck File 2"].then'}
-            - {given: 'examples.json["Read Deck File 3"].given', ref: "tests/fixtures/cli/examples.json, tests/fixtures/decks/cycle.json, tests/fixtures/decks/duplicate.json", when: 'read', then: 'examples.json["Read Deck File 3"].then'}
+            - {given: 'examples.json["Read Deck File 1"].given', ref: "tests/fixtures/decks/tiny.json (one card a \u2192 src/a.ts)", when: "readDeckFile(root, \"d.json\")", then: 'examples.json["Read Deck File 1"].then'}
+            - {given: 'examples.json["Read Deck File 2"].given', when: "readDeckFile(root, \"nope.json\")", then: 'examples.json["Read Deck File 2"].then'}
+            - {given: 'examples.json["Read Deck File 3"].given', ref: "tests/fixtures/decks/cycle.json, tests/fixtures/decks/duplicate.json", when: 'read', then: 'examples.json["Read Deck File 3"].then'}
         - name: Deck Check
           description: "`morph deck check`: generations, hazards, slice weights."
           behavior: >
@@ -1425,9 +1429,9 @@ System:
             and warnings: the hazards of each severity counted, hazards, weights: the weighing's}, keys in that order; code 2 when errors > 0, else 0.
           steps: [{calls: Read Deck File}, {uses: cards}, {produces: Deck Check Document}]
           examples:
-            - {given: 'a tmp root holding only d.json = the write-write fixture (a and b both write src/x.ts)', ref: "tests/fixtures/decks/hazardsWriteWrite.json, tests/fixtures/cli/deckCheck.writeWrite.json", when: 'deckCheckCommand(root, "d.json", 500000)', then: 'code 2; document equal to tests/fixtures/cli/deckCheck.writeWrite.json'}
-            - {given: 'examples.json["Deck Check 2"].given', ref: "tests/fixtures/cli/examples.json, tests/fixtures/decks/tiny.json", when: 'deckCheckCommand(root, "d.json", 500000)', then: 'examples.json["Deck Check 2"].then'}
-            - {given: 'the same tree, sliceCapBytes 10', when: checked, then: 'code 0; warnings 2; hazards [the implicit-read, then {kind: "oversized-slice", severity: "warning", cards: ["a"], path: null, repair: null, bytes: 20, cap: 10}]'}
+            - {given: 'examples.json["Deck Check 1"].given', ref: "tests/fixtures/decks/hazardsWriteWrite.json, tests/fixtures/cli/deckCheck.writeWrite.json", when: "deckCheckCommand(root, \"d.json\", 500000)", then: 'examples.json["Deck Check 1"].then'}
+            - {given: 'examples.json["Deck Check 2"].given', ref: "tests/fixtures/decks/tiny.json", when: 'deckCheckCommand(root, "d.json", 500000)', then: 'examples.json["Deck Check 2"].then'}
+            - {given: 'examples.json["Deck Check 3"].given', when: "checked", then: 'examples.json["Deck Check 3"].then'}
         - name: Run Command
           description: "`morph run`: processor, deck, hazards, run branch, Run Deck, archive; one Run Document."
           behavior: >
@@ -1446,18 +1450,18 @@ System:
             on the run branch.
           steps: [{uses: processor}, {calls: Read Deck File}, {uses: git}, {uses: runloop}, {produces: Run Document}]
           examples:
-            - {given: 'examples.json["Run Command 1"].given', ref: "tests/fixtures/cli/examples.json", when: 'run', then: 'examples.json["Run Command 1"].then'}
-            - {given: 'examples.json["Run Command 2"].given', ref: "tests/fixtures/cli/examples.json", when: 'run', then: 'examples.json["Run Command 2"].then'}
-            - {given: 'processor "nope"; then "bad" with MORPH_PROCESSOR_bad_TYPE "x" in env', when: run, then: 'code 4 UsageError "processor nope is not configured"; then "processor bad is not configured: MORPH_PROCESSOR_bad_TYPE must be one of openrouter, stub (got ''x'')"; no morph/* branch'}
-            - {given: 'examples.json["Run Command 4"].given', ref: "tests/fixtures/cli/examples.json", when: run, then: 'examples.json["Run Command 4"].then'}
-            - {given: 'a deck of a and b both targeting out/x.ts', when: run, then: 'code 2 RefusalError "deck has 1 hazard error(s): write-write a,b out/x.ts"; no morph/* branch'}
-            - {given: 'examples.json["Run Command 6"].given', ref: "tests/fixtures/cli/examples.json", when: run, then: 'examples.json["Run Command 6"].then'}
-            - {given: 'examples.json["Run Command 7"].given', ref: "tests/fixtures/cli/examples.json", when: variantLine, then: 'examples.json["Run Command 7"].then'}
-            - {given: 'examples.json["Run Command 8"].given', ref: "tests/fixtures/cli/examples.json, tests/fixtures/cli/literals.json (\"<Function> <n>\" → the literal)", when: 'run', then: 'examples.json["Run Command 8"].then'}
-            - {given: 'examples.json["Run Command 9"].given', ref: 'tests/fixtures/cli/examples.json, tests/fixtures/processor/batchSubmittedLive.json, batchCompletedLive.json, tests/fixtures/cli/batch.r9.json (the record file''s text), tests/fixtures/cli/literals.json', when: 'run', then: 'examples.json["Run Command 9"].then'}
-            - {given: 'examples.json["Run Command 10"].given', ref: "tests/fixtures/cli/examples.json", when: 'run', then: 'examples.json["Run Command 10"].then'}
-            - {given: 'a deck file "[]"', when: run, then: 'code 2 RefusalError "deck has no cards"; no morph/* branch; no .morph'}
-            - {given: 'examples.json["Run Command 12"].given', ref: "tests/fixtures/cli/examples.json", when: 'run', then: 'examples.json["Run Command 12"].then'}
+            - {given: 'examples.json["Run Command 1"].given', when: 'run', then: 'examples.json["Run Command 1"].then'}
+            - {given: 'examples.json["Run Command 2"].given', when: 'run', then: 'examples.json["Run Command 2"].then'}
+            - {given: 'examples.json["Run Command 3"].given', when: "run", then: 'examples.json["Run Command 3"].then'}
+            - {given: 'examples.json["Run Command 4"].given', when: run, then: 'examples.json["Run Command 4"].then'}
+            - {given: 'examples.json["Run Command 5"].given', when: "run", then: 'examples.json["Run Command 5"].then'}
+            - {given: 'examples.json["Run Command 6"].given', when: run, then: 'examples.json["Run Command 6"].then'}
+            - {given: 'examples.json["Run Command 7"].given', when: variantLine, then: 'examples.json["Run Command 7"].then'}
+            - {given: 'examples.json["Run Command 8"].given', ref: "tests/fixtures/cli/literals.json (\"<Function> <n>\" → the literal)", when: 'run', then: 'examples.json["Run Command 8"].then'}
+            - {given: 'examples.json["Run Command 9"].given', ref: 'tests/fixtures/processor/batchSubmittedLive.json, batchCompletedLive.json, tests/fixtures/cli/batch.r9.json (the record file''s text), tests/fixtures/cli/literals.json', when: 'run', then: 'examples.json["Run Command 9"].then'}
+            - {given: 'examples.json["Run Command 10"].given', when: 'run', then: 'examples.json["Run Command 10"].then'}
+            - {given: 'examples.json["Run Command 11"].given', when: "run", then: 'examples.json["Run Command 11"].then'}
+            - {given: 'examples.json["Run Command 12"].given', when: 'run', then: 'examples.json["Run Command 12"].then'}
         - name: Plan Command
           description: "`morph plan --spec`: record and map cut by Plan Spec, the deck to --out; one Plan Document."
           behavior: >
@@ -1473,15 +1477,15 @@ System:
             document: {spec, components, cards, generations, externalDependsOn, out: args.out}}. Nothing else written; nothing on an error.
           steps: [{uses: contour}, {uses: planner}, {calls: Read Plan Checks}, {uses: builder}, {produces: Plan Document}]
           examples:
-            - {given: 'examples.json["Plan Command 1"].given', ref: 'tests/fixtures/cli/examples.json, tests/fixtures/planner/ledger.yaml, tests/fixtures/planner/ledger.map.json, tests/fixtures/planner/ledger.plan.json', when: 'planCommand', then: 'examples.json["Plan Command 1"].then'}
-            - {given: 'examples.json["Plan Command 2"].given', ref: "tests/fixtures/cli/examples.json", when: 'planCommand', then: 'examples.json["Plan Command 2"].then'}
-            - {given: 'examples.json["Plan Command 3"].given', ref: "tests/fixtures/cli/examples.json, tests/fixtures/cli/literals.json", when: 'planCommand', then: 'examples.json["Plan Command 3"].then'}
-            - {given: 'examples.json["Plan Command 4"].given', ref: "tests/fixtures/cli/examples.json", when: 'planCommand', then: 'examples.json["Plan Command 4"].then'}
-            - {given: 'examples.json["Plan Command 5"].given', ref: "tests/fixtures/cli/examples.json", when: main, then: 'examples.json["Plan Command 5"].then'}
-            - {given: 'examples.json["Plan Command 6"].given', ref: "tests/fixtures/cli/examples.json, tests/fixtures/cli/l1.checks.json", when: 'planCommand', then: 'examples.json["Plan Command 6"].then'}
-            - {given: 'example 6, checks decks/l2/checks.json = {"phase": "l2", "cards": [{"id": "zz"}]}', when: planCommand, then: '2 DeckError "acceptances not built (1 error):\nchecks card ''zz'' is not in the deck"'}
-            - {given: 'the repository; contour.yaml, planner, cli, judge, map tests/fixtures/cli/p10.map.json, checks decks/p10/checks.json', ref: "decks/p10/v2deck.json, tests/fixtures/builder/guard.p10.txt", when: planCommand, then: 'code 0; v2deck.json''s 12 acceptances byte for byte, guard.p10.txt (trimEnd) replaced by decks/tools/guard.mjs'}
-            - {given: 'examples.json["Plan Command 9"].given', ref: 'tests/fixtures/cli/examples.json, tests/fixtures/go-mini/ (the Go module of P15), tests/fixtures/cli/goMini.deck.json', when: planCommand, then: 'examples.json["Plan Command 9"].then'}
+            - {given: 'examples.json["Plan Command 1"].given', ref: 'tests/fixtures/planner/ledger.yaml, tests/fixtures/planner/ledger.map.json, tests/fixtures/planner/ledger.plan.json', when: 'planCommand', then: 'examples.json["Plan Command 1"].then'}
+            - {given: 'examples.json["Plan Command 2"].given', when: 'planCommand', then: 'examples.json["Plan Command 2"].then'}
+            - {given: 'examples.json["Plan Command 3"].given', ref: "tests/fixtures/cli/literals.json", when: 'planCommand', then: 'examples.json["Plan Command 3"].then'}
+            - {given: 'examples.json["Plan Command 4"].given', when: 'planCommand', then: 'examples.json["Plan Command 4"].then'}
+            - {given: 'examples.json["Plan Command 5"].given', when: main, then: 'examples.json["Plan Command 5"].then'}
+            - {given: 'examples.json["Plan Command 6"].given', ref: "tests/fixtures/cli/l1.checks.json", when: 'planCommand', then: 'examples.json["Plan Command 6"].then'}
+            - {given: 'examples.json["Plan Command 7"].given', when: "planCommand", then: 'examples.json["Plan Command 7"].then'}
+            - {given: 'examples.json["Plan Command 8"].given', ref: "decks/p10/v2deck.json, tests/fixtures/builder/guard.p10.txt", when: "planCommand", then: 'examples.json["Plan Command 8"].then'}
+            - {given: 'examples.json["Plan Command 9"].given', ref: 'tests/fixtures/go-mini/ (the Go module of P15), tests/fixtures/cli/goMini.deck.json', when: planCommand, then: 'examples.json["Plan Command 9"].then'}
         - name: Read Plan Checks
           description: Files of `plan --checks`.
           behavior: >
@@ -1492,42 +1496,43 @@ System:
             {guard, firstdiff, probes}}.
           steps: [{reads: Checks}, {uses: contour}, {uses: builder}, {produces: Plan Checks}]
           examples:
-            - {given: 'examples.json["Read Plan Checks 1"].given', ref: "tests/fixtures/cli/examples.json, tests/fixtures/cli/p1.checks.json (cards a, b, a-judge), tests/fixtures/cli/p1.planChecks.json", when: "readPlanChecks(root, \"decks/p1/checks.json\")", then: 'examples.json["Read Plan Checks 1"].then'}
-            - {given: 'examples.json["Read Plan Checks 2"].given', ref: "tests/fixtures/cli/examples.json", when: "readPlanChecks(root, \"nope.json\"); then \"decks/p1/checks.json\" twice", then: 'examples.json["Read Plan Checks 2"].then'}
-            - {given: 'examples.json["Read Plan Checks 3"].given', ref: "tests/fixtures/cli/examples.json", when: "readPlanChecks(root, \"c.json\")", then: 'examples.json["Read Plan Checks 3"].then'}
+            - {given: 'examples.json["Read Plan Checks 1"].given', ref: "tests/fixtures/cli/p1.checks.json (cards a, b, a-judge), tests/fixtures/cli/p1.planChecks.json", when: "readPlanChecks(root, \"decks/p1/checks.json\")", then: 'examples.json["Read Plan Checks 1"].then'}
+            - {given: 'examples.json["Read Plan Checks 2"].given', when: "readPlanChecks(root, \"nope.json\"); then \"decks/p1/checks.json\" twice", then: 'examples.json["Read Plan Checks 2"].then'}
+            - {given: 'examples.json["Read Plan Checks 3"].given', when: "readPlanChecks(root, \"c.json\")", then: 'examples.json["Read Plan Checks 3"].then'}
         - name: Main
           description: Routing, one document, log lines, exit code; src/cli.ts wires the process.
           behavior: >
             main(argv, deps, io) → Promise<ExitCode>. Parse Command; a failure → io.stdout(renderDocument(its error document, pretty = argv holds "--pretty")),
             io.stderr("morph: <message>\n"), 4. Else root = path.resolve(deps.cwd, command.root); result = Deck Check, Plan Command, await Submit Deck(root,
             deck, processor, D), await Collect Batch(root, batch, D), Primer Command(root, write, {env, now of deps}), await Scout Command(root, command, deps), Plan From Scout(root,
-            command), await Review Command(root, command, deps), Card Brief(root, command), await Accept Card(root, command, deps) (D = {env, now, transport of deps,
+            command), await Review Command(root, command, deps), Card Brief(root, command), await Accept Card(root, command, deps), Init Project(root, command, deps.cwd) (D = {env, now, transport of deps,
             saveState: git's saveBatchRecord(root, ·), saveAnswers: git's saveBatchAnswers(root, ·, ·)}) or await Run Command (io.stderr its log) by command, in
             try/catch, a thrown value → classifyThrown. Then one io.stdout(renderDocument(result.document, command.pretty)), one io.stderr("morph <command
             name>: exit <code>\n"), return result.code. The entry src/cli.ts (`#!/usr/bin/env node`) calls main(process.argv.slice(2), {env: process.env without
             undefined values, now: Date.now, cwd: process.cwd(), transport: null, interrupted: () => the first SIGINT or SIGTERM its own listeners caught, or
             null}, {stdout, stderr: the process streams' write}), sets process.exitCode to the result, never calls process.exit.
-          steps: [{calls: Parse Command}, {calls: Deck Check}, {calls: Plan Command}, {calls: Run Command}, {uses: batches}, {uses: primer}, {uses: scout-session}, {uses: review-session}, {uses: debt}, {calls: Emit Document}, {calls: Classify Error}]
+          steps: [{calls: Parse Command}, {calls: Deck Check}, {calls: Plan Command}, {calls: Run Command}, {uses: batches}, {uses: primer}, {uses: scout-session}, {uses: review-session}, {uses: debt}, {uses: scaffold}, {calls: Emit Document}, {calls: Classify Error}]
           examples:
-            - {given: 'examples.json["Main 1"].given', ref: "tests/fixtures/cli/examples.json", when: 'main', then: 'examples.json["Main 1"].then'}
-            - {given: 'examples.json["Main 2"].given', ref: "tests/fixtures/cli/examples.json, tests/fixtures/decks/hazardsWriteWrite.json", when: 'main', then: 'examples.json["Main 2"].then'}
-            - {given: 'examples.json["Main 3"].given', ref: "tests/fixtures/cli/examples.json", when: 'main', then: 'examples.json["Main 3"].then'}
-            - {given: 'examples.json["Main 4"].given', ref: 'tests/fixtures/cli/examples.json, tests/fixtures/cli/literals.json', when: 'spawned', then: 'examples.json["Main 4"].then'}
-            - {given: 'examples.json["Main 5"].given', ref: "tests/fixtures/cli/examples.json", when: 'spawned', then: 'examples.json["Main 5"].then'}
-            - {given: 'examples.json["Main 6"].given', ref: "tests/fixtures/cli/examples.json", when: 'spawned (spawnSync, timeout 30000 ms)', then: 'examples.json["Main 6"].then'}
-            - {given: 'examples.json["Main 7"].given', ref: "tests/fixtures/cli/examples.json", when: 'main', then: 'examples.json["Main 7"].then'}
-            - {given: 'examples.json["Main 8"].given', ref: "tests/fixtures/cli/examples.json", when: 'main, twice', then: 'examples.json["Main 8"].then'}
-            - {given: 'examples.json["Main 9"].given', ref: "tests/fixtures/cli/examples.json", when: 'main', then: 'examples.json["Main 9"].then'}
-            - {given: 'examples.json["Main 10"].given', ref: "tests/fixtures/cli/examples.json", when: 'main', then: 'examples.json["Main 10"].then'}
-            - {given: 'examples.json["Main 11"].given', ref: "tests/fixtures/cli/examples.json", when: 'main', then: 'examples.json["Main 11"].then'}
-            - {given: 'examples.json["Main 12"].given', ref: "tests/fixtures/cli/examples.json", when: 'main', then: 'examples.json["Main 12"].then'}
-            - {given: 'examples.json["Main 13"].given', ref: "tests/fixtures/cli/examples.json", when: 'main', then: 'examples.json["Main 13"].then'}
-            - {given: 'examples.json["Main 14"].given', ref: "tests/fixtures/cli/examples.json, tests/fixtures/debt/deck.json", when: 'main', then: 'examples.json["Main 14"].then'}
-            - {given: 'examples.json["Main 15"].given', ref: "tests/fixtures/cli/examples.json, tests/fixtures/debt/accept.deck.json", when: 'main', then: 'examples.json["Main 15"].then'}
+            - {given: 'examples.json["Main 1"].given', when: 'main', then: 'examples.json["Main 1"].then'}
+            - {given: 'examples.json["Main 2"].given', ref: "tests/fixtures/decks/hazardsWriteWrite.json", when: 'main', then: 'examples.json["Main 2"].then'}
+            - {given: 'examples.json["Main 3"].given', when: 'main', then: 'examples.json["Main 3"].then'}
+            - {given: 'examples.json["Main 4"].given', ref: 'tests/fixtures/cli/literals.json', when: 'spawned', then: 'examples.json["Main 4"].then'}
+            - {given: 'examples.json["Main 5"].given', when: 'spawned', then: 'examples.json["Main 5"].then'}
+            - {given: 'examples.json["Main 6"].given', when: 'spawned (spawnSync, timeout 30000 ms)', then: 'examples.json["Main 6"].then'}
+            - {given: 'examples.json["Main 7"].given', when: 'main', then: 'examples.json["Main 7"].then'}
+            - {given: 'examples.json["Main 8"].given', when: 'main, twice', then: 'examples.json["Main 8"].then'}
+            - {given: 'examples.json["Main 9"].given', when: 'main', then: 'examples.json["Main 9"].then'}
+            - {given: 'examples.json["Main 10"].given', when: 'main', then: 'examples.json["Main 10"].then'}
+            - {given: 'examples.json["Main 11"].given', when: 'main', then: 'examples.json["Main 11"].then'}
+            - {given: 'examples.json["Main 12"].given', when: 'main', then: 'examples.json["Main 12"].then'}
+            - {given: 'examples.json["Main 13"].given', when: 'main', then: 'examples.json["Main 13"].then'}
+            - {given: 'examples.json["Main 14"].given', ref: "tests/fixtures/debt/deck.json", when: 'main', then: 'examples.json["Main 14"].then'}
+            - {given: 'examples.json["Main 15"].given', ref: "tests/fixtures/debt/accept.deck.json", when: 'main', then: 'examples.json["Main 15"].then'}
+            - {given: 'examples.json["Main 16"].given', ref: "tests/fixtures/scaffold/tpl/", when: 'main', then: 'examples.json["Main 16"].then'}
       dataObjects:
         - name: Command
           description: One parsed invocation.
-          schema: "{ name: 'deck check', root, pretty, deck, sliceCapBytes } | { name: 'run', root, pretty, deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches } | { name: 'plan', root, pretty, spec, components: string[], map: string | null, judge: boolean, out: string | null, checks?: string } | { name: 'submit', root, pretty, deck, processor } | { name: 'collect', root, pretty, batch } | { name: 'primer', root, pretty, write: boolean } | { name: 'scout', root, pretty, processor, issue, seedFile: string | null, deadlineSeconds } | { name: 'plan --from-scout', root, pretty, fromScout, out: string | null } | { name: 'review', root, pretty, base, head, spec: string | null, map: string | null, scout: string | null, mutants: number | null, mutantTimeoutSeconds, test: string | null, write: boolean } | { name: 'card', root, pretty, deck, id, md: boolean } | { name: 'accept', root, pretty, deck, id, model, commit: boolean }"
+          schema: "{ name: 'deck check', root, pretty, deck, sliceCapBytes } | { name: 'run', root, pretty, deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches } | { name: 'plan', root, pretty, spec, components: string[], map: string | null, judge: boolean, out: string | null, checks?: string } | { name: 'submit', root, pretty, deck, processor } | { name: 'collect', root, pretty, batch } | { name: 'primer', root, pretty, write: boolean } | { name: 'scout', root, pretty, processor, issue, seedFile: string | null, deadlineSeconds } | { name: 'plan --from-scout', root, pretty, fromScout, out: string | null } | { name: 'review', root, pretty, base, head, spec: string | null, map: string | null, scout: string | null, mutants: number | null, mutantTimeoutSeconds, test: string | null, write: boolean } | { name: 'card', root, pretty, deck, id, md: boolean } | { name: 'accept', root, pretty, deck, id, model, commit: boolean } | { name: 'init', root, pretty, project, language: 'typescript' | 'python' | 'go', module: string | null, templates: string | null }"
         - name: Error Document
           description: The document of every non-result exit.
           schema: "{ error: { code: 0|1|2|3|4, kind: 'UsageError'|'NotYetError'|'DeckError'|'RefusalError'|'RuntimeError', message: string } }"
@@ -3633,6 +3638,52 @@ System:
           description: stdout of morph accept.
           schema: "{ deck, card, model, exit: number | null, timedOut: boolean, green: boolean, log: string, outside: string[] | null, commit: string | null, diffstat: { files, insertions, deletions } | null, reason: string | null }"
 
+    - name: scaffold
+      description: >
+        A new project from the template (issue #9): `morph init` copies the template folders of Morph's own templates/
+        (common/ and the language's folder) into an empty directory and fills three placeholders. src/scaffold/*.ts, layer
+        scaffold: no other layer; of the Node modules node:fs, node:path and node:url only; no clock, no environment, no
+        spawn, no network. The template is data in templates/ beside dist/ (the package root); the code knows no file of it.
+      language: typescript
+      requirements: [Deterministic Core, One Document Out]
+      functions:
+        - name: Init Project
+          description: "`morph init --root <dir> --name <name> --language typescript|python|go [--module <path>] [--templates <dir>]`: the template written into an empty directory, the files listed."
+          behavior: >
+            initProject(root, args {project, language, module, templates}, cwd) → {code, document}; root is absolute. In
+            order: 1. templates = defaultTemplatesDir() when args.templates is null, else path.resolve(cwd, args.templates);
+            defaultTemplatesDir() (exported) = path.resolve(<the directory of this module's file, from import.meta.url>, "..",
+            "..", "templates"): src/scaffold/ and dist/scaffold/ both sit two levels under the package root. 2. root exists
+            and is not a directory → {code 2, document {error {code 2, kind "RefusalError", message "target is not a
+            directory"}}}; root is a directory holding any entry (a dot entry too) → 2 RefusalError "target directory is not
+            empty (first entry: <the first entry name in code-unit order>)". 3. For folder "common" (COMMON_DIR, exported),
+            then folder <language>: <templates>/<folder> not a directory → 2 RefusalError "template folder not found:
+            <folder>". Nothing is written by a refusal. 4. The files: listTemplateFiles(<templates>/common), then
+            listTemplateFiles(<templates>/<language>), keyed by relative path; a language file replaces the common file of
+            the same path; files = the distinct paths in code-unit order. listTemplateFiles(dir) (exported) = every regular
+            file under dir, recursively, as a "/"-joined path relative to dir, in code-unit order; a symbolic link or other
+            kind is skipped; dir not a directory → []. 5. values {name: project, module: module or project when null,
+            language}; root created with its parents; per file: its parent directories created, the text fillTemplate(the
+            source's UTF-8 text, values) written, the mode set to the source's mode & 0o777. fillTemplate(text, values)
+            (exported, pure) replaces every "{{name}}", "{{module}}" and "{{language}}" in one left-to-right pass (a value
+            holding a placeholder is not replaced again); any other brace text ("{{ name }}", "{{other}}", "${{ x }}",
+            "{{join .Imports}}") stays. 6. {code 0, document {name: project, language, module: the value used, files}}, keys
+            in that order. A failure of the file system under way throws (main: exit 3).
+          steps: [{reads: Template Folder}, {produces: Init Document}]
+          examples:
+            - {given: 'a tmpRoot t; root t/acme (absent); templates = the fixture tree tests/fixtures/scaffold/tpl (common: .gitignore, README.md, docs/notes.md, tools/hello.sh executable; go: README.md, go.mod, internal/keep.txt; python: pyproject.toml; no typescript)', ref: "tests/fixtures/scaffold/tpl/", when: 'initProject(t/acme, {project: "acme", language: "go", module: "example.com/acme", templates: <the fixture tree, absolute>}, "/")', then: 'code 0, document {name "acme", language "go", module "example.com/acme", files [".gitignore", "README.md", "docs/notes.md", "go.mod", "internal/keep.txt", "tools/hello.sh"]}; README.md "# acme (Go)\n" (go replaces common); go.mod "module example.com/acme\n\ngo 1.22\n"; internal/keep.txt "example.com/acme/internal go\n"; every file''s mode & 0o777 equals its source''s, tools/hello.sh executable'}
+            - {given: 'root = t itself (an empty directory); cwd = the directory tests/fixtures/scaffold; templates "tpl" (relative)', ref: "tests/fixtures/scaffold/tpl/", when: 'initProject(t, {project: "beta_svc", language: "python", module: null, templates: "tpl"}, cwd)', then: 'code 0, document {name "beta_svc", language "python", module "beta_svc", files [".gitignore", "README.md", "docs/notes.md", "pyproject.toml", "tools/hello.sh"]}; README.md "# beta_svc\n\nA python project, module beta_svc.\n"; pyproject.toml "[project]\nname = \"beta_svc\"\n"; docs/notes.md "Keep {{ name }}, {{other}}, ${{ env.HOME }} and {{join .Imports}} as they are; beta_svcbeta_svc.\n"'}
+            - {given: 'fillTemplate on "{{name}}:{{module}}:{{language}}" with {name: "{{module}}", module: "x/y", language: "go"}; then on "{name} {{Name}} {{name}" with {name: "n", module: "m", language: "l"}', when: fillTemplate, then: '"{{module}}:x/y:go" (one pass); then "{name} {{Name}} {{name}" unchanged'}
+            - {given: 'a root holding b.txt and .a; a root that is a file f.txt; an absent root with language typescript on the fixture tree; an absent root with templates "nope" (cwd t)', when: initProject, then: 'code 2 RefusalError "target directory is not empty (first entry: .a)", the root still holds only .a and b.txt; "target is not a directory"; "template folder not found: typescript"; "template folder not found: common"; the absent roots still absent'}
+            - {given: 'templates null; root t/gx (absent)', ref: "templates/", when: 'defaultTemplatesDir(); initProject(t/gx, {project: "gx", language: "go", module: "example.com/gx", templates: null}, "/"); listTemplateFiles on the fixture tree''s common and on t/none', then: 'path.resolve(<the repository root>, "templates"); code 0 with files = the distinct paths of listTemplateFiles(templates/common) and (templates/go) in code-unit order, among them "CLAUDE.md", "docs/AUTONOMY.md", "go.mod", "internal/testhelp/testhelp.go", "decks/tools/guard.mjs", "tools/tg.sh"; go.mod begins "module example.com/gx\n"; no written file holds "{{name}}", "{{module}}" or "{{language}}"; tools/tg.sh executable; [".gitignore", "README.md", "docs/notes.md", "tools/hello.sh"]; []'}
+      dataObjects:
+        - name: Template Folder
+          description: Morph's templates/<common|typescript|python|go>/, data; text files with the placeholders {{name}}, {{module}}, {{language}}.
+          schema: "a directory tree of UTF-8 text files"
+        - name: Init Document
+          description: stdout of morph init.
+          schema: "{ name: string, language: 'typescript' | 'python' | 'go', module: string, files: string[] }"
+
 Actor:
   - name: Operator
     description: A human or an agent session driving Morph from a shell.
@@ -3685,6 +3736,8 @@ Requirement:
       and no model call (P14b).
       debt spawns only through acceptance's Run Acceptance and git's Run Git, reads the deck file, the card's files and
       the run archive through node:fs, no clock and no model call; the environment is a parameter (P17).
+      scaffold reads the template folders and writes the new project through node:fs (node:url only to find the package
+      root from its own module file), spawns nothing, reads no clock and no environment (P18).
   - name: Node Only
     description: >
       Runtime dependencies: Node 20 built-ins and the package `yaml` (the record reader), nothing

@@ -1,0 +1,57 @@
+version: 1
+System:
+  name: mini
+  description: >
+    A tiny Go module (module path "mini", Go 1.22, the standard library only) that keeps integers in a range and
+    turns a part of a whole into a whole percent. One package: calc (directory calc/); the tests compare with Equal of
+    mini/internal/testhelp.
+  groups:
+    - name: calc
+      description: Pure integer arithmetic, package calc in calc/; no I/O, no clock, no randomness.
+      language: go
+      functions:
+        - name: Clamp Value
+          description: An integer kept inside the closed range of two bounds given in any order.
+          behavior: >
+            Exported as `func ClampValue(v, lo, hi int) int` in package calc. When lo > hi the two bounds are
+            swapped first. Returns lo when v < lo, hi when v > hi, else v.
+          steps:
+            - produces: int
+          examples:
+            - given: v 5, lo 0, hi 3
+              when: clamped
+              then: "3"
+            - given: v -2, lo -1, hi 4
+              when: clamped
+              then: "-1"
+            - given: v 7, lo 9, hi 2
+              when: clamped
+              then: "7 — the bounds are swapped to 2..9"
+            - given: v 12, lo 9, hi 2
+              when: clamped
+              then: "9"
+        - name: Percent Of
+          description: A part of a whole as a whole percent, rounded half up and kept inside 0..100.
+          behavior: >
+            Exported as `func PercentOf(part, whole int) int` in package calc. whole <= 0 → 0. Else share =
+            (200*part + whole) / (2*whole) in Go integer arithmetic (part*100/whole rounded half up for a
+            non-negative part), and the result is ClampValue(share, 0, 100).
+          steps:
+            - calls: Clamp Value
+            - produces: int
+          examples:
+            - given: part 1, whole 3
+              when: taken as a percent
+              then: "33"
+            - given: part 2, whole 3
+              when: taken as a percent
+              then: "67"
+            - given: part 1, whole 8
+              when: taken as a percent
+              then: "13 — 12.5 rounds half up"
+            - given: part 5, whole 4
+              when: taken as a percent
+              then: "100 — 125 is clamped"
+            - given: part 3, whole 0; then part -3, whole 7
+              when: taken as a percent
+              then: "0; then 0 — no whole, and a negative share clamped"

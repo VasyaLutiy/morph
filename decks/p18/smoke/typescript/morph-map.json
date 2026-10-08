@@ -1,0 +1,11 @@
+{
+  "package": "src",
+  "language": "typescript",
+  "docs": [],
+  "cards": {
+    "slugify": { "intent": "generate", "targets": ["src/text/slugify.ts"], "max_tokens": 6000 },
+    "word-count": { "intent": "generate", "targets": ["src/text/wordCount.ts"], "max_tokens": 6000 },
+    "slugify-judge": { "intent": "generate", "max_tokens": 8000 },
+    "word-count-judge": { "intent": "generate", "max_tokens": 8000 }
+  }
+}
