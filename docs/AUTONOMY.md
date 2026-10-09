@@ -6,12 +6,18 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (09.10, after P21c: 🧪 stop for the operator)
+## State at handoff (09.10, operator: next P22, then a stop)
 
-**Next: none named. Stop for the operator** (PLAN row P21c: "после мержа — 🧪 стоп оператору"). The session never resumes
-itself; the operator names the next phase here. Every MorphV2 session ends with `~/.morph-wait-operator`, never
+**Next: P22, issue #13 (label `P22-gate`), then 🧪 and a stop for the operator** (operator 09.10: "после P21c — P22
+morph gate"). Scope = the issue body (read it whole: `gh issue view 13`): one headless `morph gate --deck --stubs --refs`
+with a JSON verdict (stub/ref play per generation, stubcheck/fullvet logic inside, chain times; reuse P21b's stub trees and
+P21c's forced-retry case), mutants inside it through `morph review --mutants` (cap ≤ 30 / ≤ 20 min, survivors listed),
+byte identity as a committed corpus + test; optional `morph report` and `plan --scale-tokens` (may split to P22b);
+AUTONOMY and templates switch the hand gate steps to `morph gate`, and this phase's own gate is the first played by it.
+General per language (Go and TS fixtures), no phase names in `src/`. Cap $5 per phase. Split rather than narrow. Issue #12
+stays open: MorphStudio's PM re-checks P7b. Every MorphV2 session ends with `~/.morph-wait-operator`, never
 `~/.morph-phase-done` (flag files shared with MorphStudio's session; the cron watchdog is MorphStudio's); never touch
-`/home/morph/MorphStudio` or its tmux session `MorphStudio`. Issue #12 stays open for the operator's check.
+`/home/morph/MorphStudio` or its tmux session `MorphStudio`.
 
 **P21c is merged** (`docs/TASK_P21c_transaction.md`, issue #12 item 2, general per language): runs 20261009-114343 (9/10,
 plan-command-judge `budget-exceeded` on the 2400 s deadline, never tried — ENV[time], no re-cut) and 20261009-122642 (the
