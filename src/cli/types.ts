@@ -37,7 +37,7 @@ export interface InitArgs {
   name: "init"; root: string; pretty: boolean; project: string; language: "typescript" | "python" | "go";
   module: string | null; templates: string | null;
 }
-export interface GateArgs { name: "gate"; root: string; pretty: boolean; deck: string; stubs: string; refs: string }
+export interface GateArgs { name: "gate"; root: string; pretty: boolean; deck: string; stubs: string; refs: string; mutants?: number }
 export type Command =
   | DeckCheckArgs | RunArgs | PlanArgs | SubmitArgs | CollectArgs | PrimerArgs | ScoutArgs | FromScoutArgs | ReviewArgs
   | CardArgs | AcceptArgs | InitArgs | GateArgs;

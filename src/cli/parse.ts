@@ -154,6 +154,7 @@ const GATE_FLAGS: ReadonlySet<string> = new Set([
   "--deck",
   "--stubs",
   "--refs",
+  "--mutants",
 ]);
 
 function isPositiveInteger(v: string): boolean {
@@ -657,6 +658,17 @@ export function parseCommand(argv: string[]): ParseResult {
     if (!values.has("--refs")) {
       return { ok: false, error: errorDocument(4, "UsageError", "missing --refs") };
     }
+    const mutantsRaw = values.get("--mutants");
+    if (mutantsRaw !== undefined && !isPositiveInteger(mutantsRaw)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--mutants must be a positive integer (got '" + mutantsRaw + "')",
+        ),
+      };
+    }
     const command: Command = {
       name: "gate",
       root,
@@ -664,6 +676,7 @@ export function parseCommand(argv: string[]): ParseResult {
       deck,
       stubs: values.get("--stubs") ?? "",
       refs: values.get("--refs") ?? "",
+      ...(mutantsRaw !== undefined ? { mutants: Number(mutantsRaw) } : {}),
     };
     return { ok: true, command };
   }
