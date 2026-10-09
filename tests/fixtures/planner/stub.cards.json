@@ -7,7 +7,7 @@
   ],
   "contextSlice": [],
   "instruction": "write calc/a.go",
-  "acceptance": "set -e\nexport GOFLAGS=-mod=mod GOPROXY=off\nP=$PWD/probe/x\ncat > $P/full.json <<'MORPH_CONF_EOF'\n{\"Replace\":{\"calc/b.go\":\"\",\"report/c.go\":\"\"}}\nMORPH_CONF_EOF\ngo vet -overlay $P/full.json ./...\n",
+  "acceptance": "(\n set -e\n export NO_COLOR=1 CI=1\nexport GOFLAGS=-mod=mod GOPROXY=off\nP=$PWD/probe/x; mkdir -p $P\ncat > $P/full.json <<'MORPH_CONF_EOF'\n{\"Replace\":{\"calc/b.go\":\"\",\"report/c.go\":\"\"}}\nMORPH_CONF_EOF\necho '== full'; go vet -overlay $P/full.json ./...\n)\n",
   "model": null,
   "maxTokens": null,
   "reasoning": null,
@@ -33,11 +33,27 @@
   "customId": "t",
   "intent": "generate",
   "targets": [
-   "src/t.ts"
+   "src/t.ts",
+   "tests/t.test.ts"
   ],
   "contextSlice": [],
   "instruction": "write src/t.ts",
-  "acceptance": "npx vitest run src/t.test.ts\n",
+  "acceptance": "(\n set -e\n export NO_COLOR=1 CI=1\nP=$PWD/probe/x; mkdir -p $P\ncat > $P/probe.config.mts <<'MORPH_CONF_EOF'\nexport default defineConfig({});\nMORPH_CONF_EOF\ncat > $P/tsconfig.card.json <<'MORPH_TSCONF_EOF'\n{\n  \"extends\": \"../../tsconfig.json\",\n  \"include\": [\n    \"../../src\",\n    \"../../tests\",\n    \"./*.probe.ts\"\n  ],\n  \"exclude\": []\n}\nMORPH_TSCONF_EOF\necho '== tsc'; node_modules/.bin/tsc --noEmit -p $P/tsconfig.card.json\n)\n",
+  "model": null,
+  "maxTokens": null,
+  "reasoning": null,
+  "variants": 1,
+  "dependsOn": []
+ },
+ {
+  "customId": "p",
+  "intent": "generate",
+  "targets": [
+   "pkg/p.py"
+  ],
+  "contextSlice": [],
+  "instruction": "write pkg/p.py",
+  "acceptance": "(\n export NO_COLOR=1 CI=1\npython3 -m pytest -q\n)\n",
   "model": null,
   "maxTokens": null,
   "reasoning": null,
@@ -53,7 +69,7 @@
   ],
   "contextSlice": [],
   "instruction": "write calc/b.go",
-  "acceptance": "set -e\nexport GOFLAGS=-mod=vendor GOPROXY=off GOCACHE=\"${GOCACHE:-/tmp/q9/go-build}\"\nP=$PWD/probe/x\ncat > $P/full.json <<'MORPH_CONF_EOF'\n{\"Replace\":{\"report/c.go\":\"\"}}\nMORPH_CONF_EOF\ngo vet -overlay $P/full.json ./...\n",
+  "acceptance": "(\n set -e\n export NO_COLOR=1 CI=1\nexport GOFLAGS=-mod=vendor GOPROXY=off GOCACHE=\"${GOCACHE:-/tmp/q9/go-build}\"\nP=$PWD/probe/x; mkdir -p $P\ncat > $P/full.json <<'MORPH_CONF_EOF'\n{\"Replace\":{\"report/c.go\":\"\"}}\nMORPH_CONF_EOF\necho '== full'; go vet -overlay $P/full.json ./...\n)\n",
   "model": null,
   "maxTokens": null,
   "reasoning": null,
@@ -71,7 +87,7 @@
   ],
   "contextSlice": [],
   "instruction": "write report/c.go",
-  "acceptance": "set -e\nexport GOFLAGS=-mod=mod GOPROXY=off\nP=$PWD/probe/x\ncat > $P/full.json <<'MORPH_CONF_EOF'\n{\"Replace\":{\"calc/b.go\":\"\",\"calc/b_test.go\":\"\"}}\nMORPH_CONF_EOF\ngo vet -overlay $P/full.json ./...\n",
+  "acceptance": "(\n set -e\n export NO_COLOR=1 CI=1\nexport GOFLAGS=-mod=mod GOPROXY=off\nP=$PWD/probe/x; mkdir -p $P\ncat > $P/full.json <<'MORPH_CONF_EOF'\n{\"Replace\":{\"calc/b.go\":\"\",\"calc/b_test.go\":\"\"}}\nMORPH_CONF_EOF\necho '== full'; go vet -overlay $P/full.json ./...\n)\n",
   "model": null,
   "maxTokens": null,
   "reasoning": null,
@@ -89,13 +105,30 @@
   ],
   "contextSlice": [],
   "instruction": "write calc/v.go",
-  "acceptance": "export GOFLAGS=-mod=mod\ngo vet ./...\n",
+  "acceptance": "(\nexport GOFLAGS=-mod=mod GOPROXY=off\ngo vet ./...\n)\n",
   "model": null,
   "maxTokens": null,
   "reasoning": null,
   "variants": 1,
   "dependsOn": [
    "a"
+  ]
+ },
+ {
+  "customId": "u",
+  "intent": "generate",
+  "targets": [
+   "tests/u.test.ts"
+  ],
+  "contextSlice": [],
+  "instruction": "write tests/u.test.ts",
+  "acceptance": "(\n set -e\n export NO_COLOR=1 CI=1\nP=$PWD/probe/x; mkdir -p $P\ncat > $P/probe.config.mts <<'MORPH_CONF_EOF'\nexport default defineConfig({});\nMORPH_CONF_EOF\ncat > $P/tsconfig.card.json <<'MORPH_TSCONF_EOF'\n{\n  \"extends\": \"../../tsconfig.json\",\n  \"include\": [\n    \"../../src\",\n    \"../../tests\",\n    \"./*.probe.ts\"\n  ],\n  \"exclude\": [\n    \"../../tests/t.test.ts\"\n  ]\n}\nMORPH_TSCONF_EOF\necho '== tsc'; node_modules/.bin/tsc --noEmit -p $P/tsconfig.card.json\n)\n",
+  "model": null,
+  "maxTokens": null,
+  "reasoning": null,
+  "variants": 1,
+  "dependsOn": [
+   "t"
   ]
  },
  {
@@ -106,7 +139,7 @@
   ],
   "contextSlice": [],
   "instruction": "write calc/a_examples_test.go",
-  "acceptance": "set -e\nexport GOFLAGS=-mod=vendor GOPROXY=off GOCACHE=\"${GOCACHE:-/tmp/q9/go-build}\"\nP=$PWD/probe/x\ncat > $P/full.json <<'MORPH_CONF_EOF'\n{\"Replace\":{\"report/c.go\":\"\"}}\nMORPH_CONF_EOF\ngo vet -overlay $P/full.json ./...\n",
+  "acceptance": "(\n set -e\n export NO_COLOR=1 CI=1\nexport GOFLAGS=-mod=vendor GOPROXY=off GOCACHE=\"${GOCACHE:-/tmp/q9/go-build}\"\nP=$PWD/probe/x; mkdir -p $P\ncat > $P/full.json <<'MORPH_CONF_EOF'\n{\"Replace\":{\"report/c.go\":\"\"}}\nMORPH_CONF_EOF\necho '== full'; go vet -overlay $P/full.json ./...\n)\n",
   "model": null,
   "maxTokens": null,
   "reasoning": null,

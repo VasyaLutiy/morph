@@ -3,224 +3,406 @@
   {
    "card": "control-contract",
    "generation": 0,
-   "hidden": 0,
+   "language": "go",
    "stubbed": 1,
    "missing": [],
-   "breaks": []
+   "breaks": [],
+   "note": null
   },
   {
    "card": "control-contract-judge",
    "generation": 1,
-   "hidden": 0,
+   "language": "go",
    "stubbed": 2,
    "missing": [],
-   "breaks": []
+   "breaks": [],
+   "note": null
   },
   {
    "card": "phase-loop",
    "generation": 1,
-   "hidden": 0,
+   "language": "go",
    "stubbed": 2,
    "missing": [],
    "breaks": [
     "supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)"
-   ]
+   ],
+   "note": null
   },
   {
    "card": "phase-loop-judge",
    "generation": 2,
-   "hidden": 0,
+   "language": "go",
    "stubbed": 4,
    "missing": [],
    "breaks": [
     "supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)"
-   ]
+   ],
+   "note": null
   },
   {
    "card": "runtime-guard",
    "generation": 2,
-   "hidden": 0,
+   "language": "go",
    "stubbed": 4,
    "missing": [],
    "breaks": [
+    "daemon/daemon.go:9:78: not enough arguments in call to d.Loop.Exited",
     "daemon/daemon.go:9:81: not enough arguments in call to d.Loop.Exited",
     "supervisor/guard_examples_test.go:11:16: not enough arguments in call to l.Exited"
-   ]
+   ],
+   "note": null
   },
   {
    "card": "daemon-core",
    "generation": 3,
-   "hidden": 0,
+   "language": "go",
    "stubbed": 6,
    "missing": [],
    "breaks": [
     "daemon/daemon_examples_test.go:11:43: not enough arguments in call to d.OnExit",
     "supervisor/guard_examples_test.go:11:16: not enough arguments in call to l.Exited"
-   ]
+   ],
+   "note": null
   },
   {
    "card": "runtime-guard-judge",
    "generation": 3,
-   "hidden": 0,
+   "language": "go",
    "stubbed": 6,
    "missing": [],
    "breaks": [
+    "daemon/daemon.go:9:78: not enough arguments in call to d.Loop.Exited",
     "daemon/daemon.go:9:81: not enough arguments in call to d.Loop.Exited"
-   ]
+   ],
+   "note": null
   },
   {
    "card": "daemon-core-judge",
    "generation": 4,
-   "hidden": 0,
+   "language": "go",
    "stubbed": 8,
    "missing": [],
-   "breaks": []
+   "breaks": [],
+   "note": null
   }
  ],
  "p21": [
   {
    "card": "control-contract",
    "generation": 0,
-   "hidden": 5,
+   "language": "go",
    "stubbed": 1,
    "missing": [],
-   "breaks": []
+   "breaks": [],
+   "note": null
   },
   {
    "card": "control-contract-judge",
    "generation": 1,
-   "hidden": 4,
+   "language": "go",
    "stubbed": 2,
    "missing": [],
-   "breaks": []
+   "breaks": [],
+   "note": null
   },
   {
    "card": "phase-loop",
    "generation": 1,
-   "hidden": 6,
+   "language": "go",
    "stubbed": 2,
    "missing": [],
-   "breaks": []
+   "breaks": [],
+   "note": null
   },
   {
    "card": "phase-loop-judge",
    "generation": 2,
-   "hidden": 4,
+   "language": "go",
    "stubbed": 4,
    "missing": [],
-   "breaks": []
+   "breaks": [],
+   "note": null
   },
   {
    "card": "runtime-guard",
    "generation": 2,
-   "hidden": 4,
+   "language": "go",
    "stubbed": 4,
    "missing": [],
-   "breaks": []
+   "breaks": [],
+   "note": null
   },
   {
    "card": "daemon-core",
    "generation": 3,
-   "hidden": 2,
+   "language": "go",
    "stubbed": 6,
    "missing": [],
-   "breaks": []
+   "breaks": [],
+   "note": null
   },
   {
    "card": "runtime-guard-judge",
    "generation": 3,
-   "hidden": 2,
+   "language": "go",
    "stubbed": 6,
    "missing": [],
-   "breaks": []
+   "breaks": [],
+   "note": null
   },
   {
    "card": "daemon-core-judge",
    "generation": 4,
-   "hidden": 0,
+   "language": "go",
    "stubbed": 8,
    "missing": [],
-   "breaks": []
+   "breaks": [],
+   "note": null
   }
  ],
  "p21 without the guard.go stub": [
   {
    "card": "control-contract",
    "generation": 0,
-   "hidden": 5,
+   "language": "go",
    "stubbed": 1,
    "missing": [],
-   "breaks": []
+   "breaks": [],
+   "note": null
   },
   {
    "card": "control-contract-judge",
    "generation": 1,
-   "hidden": 4,
+   "language": "go",
    "stubbed": 2,
    "missing": [],
-   "breaks": []
+   "breaks": [],
+   "note": null
   },
   {
    "card": "phase-loop",
    "generation": 1,
-   "hidden": 6,
+   "language": "go",
    "stubbed": 2,
    "missing": [],
-   "breaks": []
+   "breaks": [],
+   "note": null
   },
   {
    "card": "phase-loop-judge",
    "generation": 2,
-   "hidden": 4,
+   "language": "go",
    "stubbed": 4,
    "missing": [],
-   "breaks": []
+   "breaks": [],
+   "note": null
   },
   {
    "card": "runtime-guard",
    "generation": 2,
-   "hidden": 4,
+   "language": "go",
    "stubbed": 3,
    "missing": [
     "supervisor/guard.go"
    ],
-   "breaks": []
+   "breaks": [],
+   "note": null
   },
   {
    "card": "daemon-core",
    "generation": 3,
-   "hidden": 2,
+   "language": "go",
    "stubbed": 5,
    "missing": [
     "supervisor/guard.go"
    ],
    "breaks": [
     "supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)"
-   ]
+   ],
+   "note": null
   },
   {
    "card": "runtime-guard-judge",
    "generation": 3,
-   "hidden": 2,
+   "language": "go",
    "stubbed": 5,
    "missing": [
     "supervisor/guard.go"
    ],
    "breaks": [
     "supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)"
-   ]
+   ],
+   "note": null
   },
   {
    "card": "daemon-core-judge",
    "generation": 4,
-   "hidden": 0,
+   "language": "go",
    "stubbed": 7,
    "missing": [
     "supervisor/guard.go"
    ],
    "breaks": [
     "supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)"
-   ]
+   ],
+   "note": null
+  }
+ ],
+ "ts-rename": [
+  {
+   "card": "to-metres",
+   "generation": 0,
+   "language": "typescript",
+   "stubbed": 1,
+   "missing": [],
+   "breaks": [
+    "src/report/line.ts(1,17): error TS2724: '\"../units/convert.js\"' has no exported member named 'toMeters'. Did you mean 'toMetres'?",
+    "tests/units/convert.examples.test.ts(2,10): error TS2724: '\"../../src/units/convert.js\"' has no exported member named 'toMeters'. Did you mean 'toMetres'?"
+   ],
+   "note": null
+  },
+  {
+   "card": "length-line",
+   "generation": 1,
+   "language": "typescript",
+   "stubbed": 2,
+   "missing": [],
+   "breaks": [
+    "tests/report/line.examples.test.ts(5,44): error TS2554: Expected 3 arguments, but got 2.",
+    "tests/report/line.examples.test.ts(6,44): error TS2554: Expected 3 arguments, but got 2."
+   ],
+   "note": null
+  },
+  {
+   "card": "to-metres-judge",
+   "generation": 1,
+   "language": "typescript",
+   "stubbed": 2,
+   "missing": [],
+   "breaks": [
+    "src/report/line.ts(1,17): error TS2724: '\"../units/convert.js\"' has no exported member named 'toMeters'. Did you mean 'toMetres'?"
+   ],
+   "note": null
+  },
+  {
+   "card": "length-line-judge",
+   "generation": 2,
+   "language": "typescript",
+   "stubbed": 4,
+   "missing": [],
+   "breaks": [],
+   "note": null
+  }
+ ],
+ "cards": [
+  {
+   "card": "a",
+   "generation": 0,
+   "language": "go",
+   "stubbed": 1,
+   "missing": [],
+   "breaks": [
+    "calc/zz.go:1:2: go ran with -mod=mod"
+   ],
+   "note": null
+  },
+  {
+   "card": "n",
+   "generation": 0,
+   "language": "go",
+   "stubbed": 0,
+   "missing": [],
+   "breaks": [],
+   "note": "the acceptance writes no $P/full.json: not built"
+  },
+  {
+   "card": "t",
+   "generation": 0,
+   "language": "typescript",
+   "stubbed": 2,
+   "missing": [],
+   "breaks": [
+    "src/zz.ts(2,3): error TS2: tsc ran with 1 probe/t/tsconfig.card.json"
+   ],
+   "note": null
+  },
+  {
+   "card": "p",
+   "generation": 0,
+   "language": "python",
+   "stubbed": 0,
+   "missing": [],
+   "breaks": [],
+   "note": "python has no compile or typecheck step: not built"
+  },
+  {
+   "card": "b",
+   "generation": 1,
+   "language": "go",
+   "stubbed": 1,
+   "missing": [
+    "calc/n.go",
+    "calc/b.go",
+    "calc/b_test.go"
+   ],
+   "breaks": [
+    "calc/zz.go:1:2: go ran with -mod=vendor"
+   ],
+   "note": null
+  },
+  {
+   "card": "c",
+   "generation": 1,
+   "language": "go",
+   "stubbed": 2,
+   "missing": [
+    "calc/n.go"
+   ],
+   "breaks": [
+    "calc/zz.go:1:2: go ran with -mod=mod"
+   ],
+   "note": null
+  },
+  {
+   "card": "v",
+   "generation": 1,
+   "language": "go",
+   "stubbed": 0,
+   "missing": [],
+   "breaks": [],
+   "note": "the acceptance writes no $P/full.json: not built"
+  },
+  {
+   "card": "u",
+   "generation": 1,
+   "language": "typescript",
+   "stubbed": 2,
+   "missing": [
+    "tests/u.test.ts"
+   ],
+   "breaks": [
+    "src/t.ts(1,1): error TS1: own",
+    "src/zz.ts(2,3): error TS2: tsc ran with 1 probe/u/tsconfig.card.json"
+   ],
+   "note": null
+  },
+  {
+   "card": "j",
+   "generation": 2,
+   "language": "go",
+   "stubbed": 2,
+   "missing": [
+    "calc/n.go",
+    "calc/b.go",
+    "calc/b_test.go",
+    "calc/v.go",
+    "calc/a_examples_test.go"
+   ],
+   "breaks": [
+    "calc/zz.go:1:2: go ran with -mod=vendor"
+   ],
+   "note": null
   }
  ]
 }

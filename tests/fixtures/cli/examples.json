@@ -185,15 +185,15 @@
   },
   "Deck Check 4": {
     "given": "a tmp root holding a copy of tests/fixtures/go-p7b (decks/b1/deck.p20.json, deck.p21.json and decks/b1/_stubs/ among its files); env {PATH: the test process's PATH}; the deck \"decks/b1/deck.p20.json\", then \"decks/b1/deck.p21.json\"",
-    "then": "code 2; errors 7 (no hazard error; the 7 breaks of Check Builds 1), warnings 0, generations [[\"control-contract\"], [\"control-contract-judge\", \"phase-loop\"], [\"phase-loop-judge\", \"runtime-guard\"], [\"daemon-core\", \"runtime-guard-judge\"], [\"daemon-core-judge\"]], builds equal to tests/fixtures/cli/checkBuilds.json[\"p20\"] (phase-loop's breaks [\"supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)\"]), the last key of the document; then code 0, errors 0, builds equal to checkBuilds.json[\"p21\"]"
+    "then": "code 2; errors 9 (no hazard error; the 9 breaks of Check Builds 1), warnings 0, generations [[\"control-contract\"], [\"control-contract-judge\", \"phase-loop\"], [\"phase-loop-judge\", \"runtime-guard\"], [\"daemon-core\", \"runtime-guard-judge\"], [\"daemon-core-judge\"]], builds equal to tests/fixtures/cli/checkBuilds.json[\"p20\"] (phase-loop's breaks [\"supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)\"]), the last key of the document; then code 0, errors 0, builds equal to checkBuilds.json[\"p21\"]"
   },
   "Deck Check 5": {
-    "given": "the tree of Deck Check 2 (d.json = the tiny fixture, src/a.ts) plus _stubs/src/a.ts = \"x\"",
-    "then": "code 0; the document of Deck Check 2 with one more key, builds: [] (the deck has no Go acceptance); without _stubs/ the document has no builds key"
+    "given": "a tmp root holding the files of tests/fixtures/ts-rename.json and node_modules linked to this repository's; env {PATH}; the deck \"decks/r1/deck.json\"; then a tmp root of Deck Check 2 (d.json = the tiny fixture, src/a.ts) plus _stubs/src/a.ts = \"x\", deckCheckCommand(root, \"d.json\", 500000)",
+    "then": "code 2, errors 5, warnings 0, builds equal to checkBuilds.json[\"ts-rename\"]; then code 0 and the document of Deck Check 2 with one more key, builds: [{card: \"a\", generation: 0, language: \"typescript\", stubbed: 0, missing: [], breaks: [], note: \"the acceptance writes no $P/tsconfig.card.json: not built\"}], warnings 2 (the implicit-read and the note); without _stubs/ the document has no builds key"
   },
   "Deck Check 6": {
-    "given": "the go-p7b root of Deck Check 4 plus bin/go, a script (mode 755) printing \"vet: ./x/fake.go:3:1: fake go ran with $GOFLAGS\" and exiting 1; main(argv [\"deck\", \"check\", \"--deck\", \"decks/b1/deck.p21.json\", \"--root\", <root>], deps {env: {PATH: <root>/bin + \":\" + PATH}, now: () => 0, cwd: \"/\", transport: null}, io collecting)",
-    "then": "2; one stdout document with errors 8 and every build's breaks [\"x/fake.go:3:1: fake go ran with -mod=mod\"] (Main hands deps.env to Deck Check); stderr [\"morph deck check: exit 2\\n\"]"
+    "given": "the root of Check Builds 3 (d.json = planner/stub.cards.json, its _stubs/, bin/go and node_modules/.bin/tsc scripts); main(argv [\"deck\", \"check\", \"--deck\", \"d.json\", \"--root\", <root>], deps {env: {PATH: <root>/bin + \":\" + PATH}, now: () => 0, cwd: \"/\", transport: null}, io collecting)",
+    "then": "2; one stdout document with errors 17 (9 missing + 8 breaks), warnings 12 (9 implicit-read hazards + 3 notes: n, p, v) and builds equal to checkBuilds.json[\"cards\"] (Main hands deps.env to Deck Check); stderr [\"morph deck check: exit 2\\n\"]"
   },
   "Run Command 3": {
     "given": "processor \"nope\"; then \"bad\" with MORPH_PROCESSOR_bad_TYPE \"x\" in env",

@@ -11,16 +11,38 @@
  ],
  "cards": [
   {
+   "id": "tree-profiles"
+  },
+  {
    "id": "stub-trees"
   },
   {
-   "id": "vet-tree"
+   "id": "tree-check"
   },
   {
    "id": "check-builds"
   },
   {
    "id": "deck-check"
+  },
+  {
+   "id": "tree-profiles-judge",
+   "files": [
+    {
+     "file": "tests/language/treeProfiles.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Tree Profiles example 1",
+      "Tree Profiles example 2",
+      "tsconfig.card.json",
+      "full.json",
+      "rust",
+      "tests/test_a.py"
+     ]
+    }
+   ]
   },
   {
    "id": "stub-trees-judge",
@@ -43,21 +65,21 @@
    ]
   },
   {
-   "id": "vet-tree-judge",
+   "id": "tree-check-judge",
    "files": [
     {
-     "file": "tests/acceptance/vetTree.examples.test.ts",
+     "file": "tests/acceptance/treeCheck.examples.test.ts",
      "min": 3,
      "max": 9,
      "new": true,
      "lits": [
-      "Vet Tree example 1",
-      "Vet Tree example 2",
-      "Vet Tree example 3",
-      "acceptance/vetOutput.txt",
-      "acceptance/vet",
+      "Tree Check example 1",
+      "Tree Check example 2",
+      "Tree Check example 3",
+      "acceptance/treeOutput.json",
+      "acceptance/tree",
       "a/a.go:6:25: undefined: b.Old",
-      "go vet timed out after 700 ms"
+      "Q9"
      ]
     }
    ]
@@ -76,8 +98,8 @@
       "Check Builds example 3",
       "cli/checkBuilds.json",
       "decks/b1/deck.p20.json",
-      "p21 without the guard.go stub",
-      "fake go ran with"
+      "ts-rename.json",
+      "p21 without the guard.go stub"
      ]
     }
    ]
@@ -95,6 +117,7 @@
       "Deck Check example 5",
       "Deck Check example 6",
       "decks/b1/deck.p20.json",
+      "decks/r1/deck.json",
       "_stubs/src/a.ts",
       "morph deck check: exit 2"
      ]

@@ -1099,7 +1099,7 @@
       ],
       "variants": 2,
       "max_tokens": 14000,
-      "instruction": "Read docs/TASK_P21b_deckcheck.md sections 2.2 (src/cli/deckCheck.ts, types.ts, main.ts: Deck Check, Main) and 4. Patch the three files (their current texts follow) and return each WHOLE; change nothing else in them. deckCheck.ts: deckCheckCommand gains a 4th parameter `env: Record<string, string> = {}`; generations = layerGenerations(deck) computed once; builds = checkBuilds(root, deckPath, deck, generations, env) (from \"./checkBuilds.js\"); when not null the document gets builds as its LAST key and errors also counts every missing and every break of it; code 2 when errors > 0, else 0; without a stub directory the result is exactly today's. types.ts: DeckCheckDocument gains `builds?: BuildCheck[]` after weights, with `import type { BuildCheck } from \"./checkBuilds.js\"`. main.ts: the deck check call passes deps.env as the 4th argument. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P21b_deckcheck.md sections 2.2 (src/cli/deckCheck.ts, types.ts, main.ts: Deck Check, Main) and 4. Patch the three files (their current texts follow) and return each WHOLE; change nothing else in them. deckCheck.ts: deckCheckCommand gains a 4th parameter `env: Record<string, string> = {}`; generations = layerGenerations(deck) computed once; builds = checkBuilds(root, deckPath, deck, generations, env) (from \"./checkBuilds.js\"); when not null the document gets builds as its LAST key, errors also counts every missing and every break of it and warnings every build whose note is not null; code 2 when errors > 0, else 0; without a stub directory the result is exactly today's. types.ts: DeckCheckDocument gains `builds?: BuildCheck[]` after weights, with `import type { BuildCheck } from \"./checkBuilds.js\"`. main.ts: the deck check call passes deps.env as the 4th argument. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "run-command": {
       "intent": "patch",
@@ -1201,7 +1201,7 @@
         "deck-check"
       ],
       "max_tokens": 20000,
-      "instruction": "You write tests/cli/deckCheck.p21b.examples.test.ts only, a NEW file with the tests of Deck Check examples 4-6 (examples 1-3 are already tested). Read docs/TASK_P21b_deckcheck.md sections 2.1 (the skeleton: copyOf, pathEnv, goScript, builds, io, verbatim) and 2.2 (Deck Check and its table) and 2.3; Deck Check 2's document is {deck: \"d.json\", cards: 1, generations: [[\"a\"]], errors: 0, warnings: 1, hazards: [{kind: \"implicit-read\", severity: \"warning\", cards: [\"a\"], path: null, repair: null}], weights: [{card: \"a\", bytes: 20, missing: []}]} on d.json = fixture(\"decks/tiny.json\") and src/a.ts = \"export const a = 1;\\n\". Import deckCheckCommand from \"../../src/cli/deckCheck.js\", main from \"../../src/cli/main.js\", tmpRoot, fixture, fixtureJson and fixturePath from \"../helpers.js\", fs from \"node:fs\", types with `import type`. CommandResult.document is unknown: cast once (`const doc = got.document as DeckCheckDocument;`). Every test that runs go gets 120000 as the third argument of test(...); every tmp root is removed in finally; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/cli/deckCheck.p21b.examples.test.ts only, a NEW file with the tests of Deck Check examples 4-6 (examples 1-3 are already tested). Read docs/TASK_P21b_deckcheck.md sections 2.1 (the skeleton: copyOf, rootOf, pathEnv, scriptsRoot, builds, io, DC2, verbatim) and 2.2 (Deck Check and its table) and 2.3. Import deckCheckCommand from \"../../src/cli/deckCheck.js\", main from \"../../src/cli/main.js\", tmpRoot, fixture, fixtureJson and fixturePath from \"../helpers.js\", fs from \"node:fs\", path from \"node:path\", types with `import type`. CommandResult.document is unknown: cast once (`const doc = got.document as DeckCheckDocument;`). every test that runs a child process gets 120000 as the third argument of test(...); every tmp root is removed in finally; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "run-command-judge": {
       "intent": "patch",
@@ -3224,7 +3224,7 @@
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000,
-      "instruction": "Read docs/TASK_P21b_deckcheck.md sections 2.2 (src/planner/stubTrees.ts) and 4. Write one file src/planner/stubTrees.ts: `export interface StubTree` and `export function stubTrees(cards: Card[], generations: string[][], stubDir: string, stubs: string[]): StubTree[]` exactly as section 2.2 shows, importing `path` from \"node:path\" (path.posix.join only) and `import type { Card } from \"../cards/types.js\"`. Pure: no process, no console, no Date, no Math.random, no file read, no other node: module; the inputs are never changed. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P21b_deckcheck.md sections 2.2 (src/planner/stubTrees.ts) and 4. Write one file src/planner/stubTrees.ts: `export interface TreeLanguage`, `export interface StubTree` and `export function stubTrees(cards: Card[], generations: string[][], stubDir: string, stubs: string[], languages: TreeLanguage[]): StubTree[]` exactly as section 2.2 shows, importing `path` from \"node:path\" (path.posix only) and `import type { Card } from \"../cards/types.js\"`. Pure: no process, no console, no Date, no Math.random, no file read, no other node: module; the inputs are never changed. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "stub-trees-judge": {
       "intent": "generate",
@@ -3246,42 +3246,6 @@
       "max_tokens": 16000,
       "instruction": "You write tests/planner/stubTrees.examples.test.ts only, a NEW file. Read docs/TASK_P21b_deckcheck.md sections 2.1 (stub.cards.json, stub.trees.json and the Stub Trees skeleton, verbatim) and 2.2 (Stub Trees and its table) and 2.3. Import stubTrees from \"../../src/planner/stubTrees.js\", fixtureJson from \"../helpers.js\", types with `import type`. One test per example of Stub Trees (1-3), in record order, named \"Stub Trees example <n>: <what>\"; then at most 6 of your own on section 2.2 rows (e.g. the inputs unchanged). Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
-    "vet-tree": {
-      "intent": "generate",
-      "targets": [
-        "src/acceptance/vetTree.ts"
-      ],
-      "context_slice": [
-        "docs/TASK_P21b_deckcheck.md",
-        "docs/CONVENTIONS.md",
-        "src/acceptance/types.ts"
-      ],
-      "depends_on": [],
-      "variants": 2,
-      "max_tokens": 8000,
-      "instruction": "Read docs/TASK_P21b_deckcheck.md sections 2.2 (src/acceptance/vetTree.ts) and 4. Write one file src/acceptance/vetTree.ts: `export interface VetResult`, `export function vetBreaks(output: string, overlay: Record<string, string>, own: string[]): string[]` and `export function vetTree(root: string, envLine: string, overlay: Record<string, string>, own: string[], env: Record<string, string>, timeoutMs: number): VetResult` exactly as section 2.2 shows, importing spawnSync from \"node:child_process\", fs from \"node:fs\", os from \"node:os\", path from \"node:path\". The child's environment is exactly the env parameter; never read process.env; no console. The tmp directory is removed in finally. Write no test file: a probe tests you and a judge writes the example tests."
-    },
-    "vet-tree-judge": {
-      "intent": "generate",
-      "targets": [
-        "tests/acceptance/vetTree.examples.test.ts"
-      ],
-      "context_slice": [
-        "docs/TASK_P21b_deckcheck.md",
-        "docs/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/acceptance/vetTree.ts",
-        "tests/fixtures/acceptance/vetOutput.txt",
-        "tests/fixtures/acceptance/vet/a/a.go",
-        "tests/fixtures/acceptance/vet/b/b.go",
-        "tests/fixtures/acceptance/vet/_stubs/b/b.go"
-      ],
-      "depends_on": [
-        "vet-tree"
-      ],
-      "max_tokens": 16000,
-      "instruction": "You write tests/acceptance/vetTree.examples.test.ts only, a NEW file. Read docs/TASK_P21b_deckcheck.md sections 2.1 (vetOutput.txt, acceptance/vet and the skeleton: copyOf, G, pathEnv, goScript, verbatim) and 2.2 (Vet Tree and its table) and 2.3. Import vetBreaks and vetTree from \"../../src/acceptance/vetTree.js\", tmpRoot, fixture and fixturePath from \"../helpers.js\", fs from \"node:fs\", types with `import type`. One test per example of Vet Tree (1-3), in record order, named \"Vet Tree example <n>: <what>\", every expected break list written out as a literal; every test that runs go or sh gets 120000 as the third argument of test(...); every tmp root is removed in finally; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
-    },
     "check-builds": {
       "intent": "generate",
       "targets": [
@@ -3291,16 +3255,19 @@
         "docs/TASK_P21b_deckcheck.md",
         "docs/CONVENTIONS.md",
         "src/cards/types.ts",
+        "src/language/profiles.ts",
+        "src/language/treeProfiles.ts",
         "src/planner/stubTrees.ts",
-        "src/acceptance/vetTree.ts"
+        "src/acceptance/treeCheck.ts"
       ],
       "depends_on": [
         "stub-trees",
-        "vet-tree"
+        "tree-check",
+        "tree-profiles"
       ],
       "variants": 2,
       "max_tokens": 8000,
-      "instruction": "Read docs/TASK_P21b_deckcheck.md sections 2.2 (src/cli/checkBuilds.ts) and 4. Write one file src/cli/checkBuilds.ts: `export interface BuildCheck` and `export function checkBuilds(root: string, deckPath: string, deck: Deck, generations: string[][], env: Record<string, string>): BuildCheck[] | null` exactly as section 2.2 shows, importing fs from \"node:fs\", path from \"node:path\", stubTrees from \"../planner/stubTrees.js\", vetTree from \"../acceptance/vetTree.js\" and `import type { Deck } from \"../cards/types.js\"`. Synchronous; no process, no console, no child process of your own (vetTree spawns). Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P21b_deckcheck.md sections 2.2 (src/cli/checkBuilds.ts) and 4. Write one file src/cli/checkBuilds.ts: `export interface BuildCheck` and `export function checkBuilds(root: string, deckPath: string, deck: Deck, generations: string[][], env: Record<string, string>): BuildCheck[] | null` exactly as section 2.2 shows, importing fs from \"node:fs\", path from \"node:path\", PROFILES from \"../language/profiles.js\", treeProfileFor from \"../language/treeProfiles.js\", stubTrees from \"../planner/stubTrees.js\", findBreaks and treeCheck from \"../acceptance/treeCheck.js\", and the types Deck and TreeLanguage with `import type`. The three notes character for character. Synchronous; no process, no console, no child process of your own. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "check-builds-judge": {
       "intent": "generate",
@@ -3314,14 +3281,81 @@
         "src/cards/types.ts",
         "src/cli/document.ts",
         "src/cards/layer.ts",
-        "src/cli/checkBuilds.ts",
-        "tests/fixtures/cli/checkBuilds.json"
+        "src/cli/checkBuilds.ts"
       ],
       "depends_on": [
         "check-builds"
       ],
       "max_tokens": 20000,
-      "instruction": "You write tests/cli/checkBuilds.examples.test.ts only, a NEW file. Read docs/TASK_P21b_deckcheck.md sections 2.1 (go-p7b's deck.p20.json, deck.p21.json, _stubs/, checkBuilds.json and the skeleton: copyOf, pathEnv, goScript, load, builds, verbatim) and 2.2 (Check Builds and its table) and 2.3. Import checkBuilds from \"../../src/cli/checkBuilds.js\", readDeckFile from \"../../src/cli/document.js\", layerGenerations from \"../../src/cards/layer.js\", tmpRoot, fixture, fixtureJson and fixturePath from \"../helpers.js\", fs from \"node:fs\", types with `import type`. One test per example of Check Builds (1-3), in record order, named \"Check Builds example <n>: <what>\", each result compared whole with toStrictEqual against builds(<key>) or a literal; every test that runs go gets 120000 as the third argument of test(...); every tmp root is removed in finally; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/cli/checkBuilds.examples.test.ts only, a NEW file. Read docs/TASK_P21b_deckcheck.md sections 2.1 (go-p7b's decks and _stubs, ts-rename.json, stub.cards.json, checkBuilds.json and the skeleton: copyOf, rootOf, pathEnv, scriptsRoot, load, builds, verbatim) and 2.2 (Check Builds and its table) and 2.3. Import checkBuilds from \"../../src/cli/checkBuilds.js\", readDeckFile from \"../../src/cli/document.js\", layerGenerations from \"../../src/cards/layer.js\", tmpRoot, fixture, fixtureJson and fixturePath from \"../helpers.js\", fs from \"node:fs\", path from \"node:path\", types with `import type`. One test per example of Check Builds (1-3), in record order, named \"Check Builds example <n>: <what>\", each result compared whole with toStrictEqual against builds(<key>); every test that runs a child process gets 120000 as the third argument of test(...); every tmp root is removed in finally; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+    },
+    "tree-profiles": {
+      "intent": "generate",
+      "targets": [
+        "src/language/treeProfiles.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P21b_deckcheck.md",
+        "docs/CONVENTIONS.md",
+        "src/language/profiles.ts"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 8000,
+      "instruction": "Read docs/TASK_P21b_deckcheck.md sections 2.2 (src/language/treeProfiles.ts) and 4. Write one file src/language/treeProfiles.ts: `export interface TreeProfile`, `export const TREE_PROFILES: readonly TreeProfile[]` and `export function treeProfileFor(id: string): TreeProfile | null` exactly as section 2.2 shows, the three entries' strings character for character. Pure data: no import at all, no process, no console. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "tree-profiles-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/language/treeProfiles.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P21b_deckcheck.md",
+        "docs/CONVENTIONS.md",
+        "src/language/profiles.ts",
+        "src/language/treeProfiles.ts"
+      ],
+      "depends_on": [
+        "tree-profiles"
+      ],
+      "max_tokens": 12000,
+      "instruction": "You write tests/language/treeProfiles.examples.test.ts only, a NEW file. Read docs/TASK_P21b_deckcheck.md sections 2.2 (Tree Profiles and its table) and 2.3. Import TREE_PROFILES and treeProfileFor from \"../../src/language/treeProfiles.js\" and PROFILES from \"../../src/language/profiles.js\". One test per example of Tree Profiles (1-2), in record order, named \"Tree Profiles example <n>: <what>\", every expected entry and match written out as a literal; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+    },
+    "tree-check": {
+      "intent": "generate",
+      "targets": [
+        "src/acceptance/treeCheck.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P21b_deckcheck.md",
+        "docs/CONVENTIONS.md",
+        "src/acceptance/types.ts"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 10000,
+      "instruction": "Read docs/TASK_P21b_deckcheck.md sections 2.2 (src/acceptance/treeCheck.ts) and 4. Write one file src/acceptance/treeCheck.ts: `export interface TreeRun`, `export interface TreeInput`, `export function findBreaks(output: string, fileLine: string, own: string[]): string[]` and `export function treeCheck(root: string, input: TreeInput, env: Record<string, string>, timeoutMs: number): TreeRun` exactly as section 2.2 shows, importing spawnSync from \"node:child_process\", fs from \"node:fs\", os from \"node:os\", path from \"node:path\". The child's environment is exactly the env parameter; never read process.env; no console; stdio \"ignore\" (the output goes to a file, so a killed shell's children never hold a pipe). The tmp directory is removed in finally. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "tree-check-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/acceptance/treeCheck.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P21b_deckcheck.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/acceptance/treeCheck.ts",
+        "tests/fixtures/acceptance/treeOutput.json",
+        "tests/fixtures/acceptance/tree/a/a.go",
+        "tests/fixtures/acceptance/tree/b/b.go",
+        "tests/fixtures/acceptance/tree/_stubs/b/b.go"
+      ],
+      "depends_on": [
+        "tree-check"
+      ],
+      "max_tokens": 16000,
+      "instruction": "You write tests/acceptance/treeCheck.examples.test.ts only, a NEW file. Read docs/TASK_P21b_deckcheck.md sections 2.1 (treeOutput.json, acceptance/tree and the skeleton: copyOf, G, GO_LINE, TS_LINE, GO_CMD, pathEnv, verbatim) and 2.2 (Tree Check and its table) and 2.3. Import findBreaks and treeCheck from \"../../src/acceptance/treeCheck.js\", tmpRoot, fixtureJson and fixturePath from \"../helpers.js\", fs from \"node:fs\", types with `import type`. One test per example of Tree Check (1-3), in record order, named \"Tree Check example <n>: <what>\", every expected result written out as a literal; every test that runs a child process gets 120000 as the third argument of test(...); every tmp root is removed in finally; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     }
   }
 }
