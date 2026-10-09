@@ -1,0 +1,152 @@
+```ts
+import path from "node:path";
+import { TRANSACTION_MARK } from "../cards/transaction.js";
+import type { Card } from "../cards/types.js";
+
+export interface TreeLanguage {
+  id: string;
+  extensions: string[];
+  config: string | null;
+}
+
+export interface StubTree {
+  card: string;
+  generation: number;
+  language: string | null;
+  exports: string[];
+  config: { name: string; text: string } | null;
+  stubs: Record<string, string>;
+  own: string[];
+  missing: string[];
+}
+
+const HEREDOC_OPEN = /^cat > \$P\/(\S+) <<'(.+)'$/;
+const EXPORT_LINE = /^export [A-Za-z_][A-Za-z0-9_]*=/;
+
+// The first heredoc in the acceptance that writes $P/<config>: its body, the
+// lines between the opening line and the line that is exactly the tag.
+function readConfig(acceptance: string, config: string): { name: string; text: string } | null {
+  const lines = acceptance.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const m = HEREDOC_OPEN.exec(lines[i]);
+    if (m === null || m[1] !== config) continue;
+    const tag = m[2];
+    const body: string[] = [];
+    for (let k = i + 1; k < lines.length; k++) {
+      if (lines[k] === tag) return { name: config, text: body.join("\n") };
+      body.push(lines[k]);
+    }
+    return null;
+  }
+  return null;
+}
+
+// The acceptance's `export NAME=` lines, trimmed, in order.
+function readExports(acceptance: string): string[] {
+  const out: string[] = [];
+  for (const line of acceptance.split("\n")) {
+    const trimmed = line.trim();
+    if (EXPORT_LINE.test(trimmed)) out.push(trimmed);
+  }
+  return out;
+}
+
+function holds(language: TreeLanguage, target: string): boolean {
+  return language.extensions.includes(path.posix.extname(target));
+}
+
+export function stubTrees(
+  cards: Card[],
+  generations: string[][],
+  stubDir: string,
+  stubs: string[],
+  languages: TreeLanguage[],
+): StubTree[] {
+  const byId = new Map<string, Card>();
+  for (const card of cards) {
+    if (!byId.has(card.customId)) byId.set(card.customId, card);
+  }
+  const stubSet = new Set<string>(stubs);
+  const trees: StubTree[] = [];
+
+  for (let g = 0; g < generations.length; g++) {
+    for (const id of generations[g]) {
+      const card = byId.get(id);
+      if (card === undefined) continue;
+
+      const acceptance = card.acceptance ?? "";
+
+      let language: TreeLanguage | null = null;
+      let config: { name: string; text: string } | null = null;
+      for (const candidate of languages) {
+        if (candidate.config === null) continue;
+        const found = readConfig(acceptance, candidate.config);
+        if (found !== null) {
+          language = candidate;
+          config = found;
+          break;
+        }
+      }
+      if (language === null) {
+        const first = card.targets[0];
+        if (first !== undefined) {
+          for (const candidate of languages) {
+            if (holds(candidate, first)) {
+              language = candidate;
+              break;
+            }
+          }
+        }
+      }
+
+      const chosen = language;
+      const treeConfig = config;
+      const map: Record<string, string> = {};
+      const missing: string[] = [];
+
+      if (chosen !== null && treeConfig !== null) {
+        const seen = new Set<string>();
+        const consider = (target: string): void => {
+          if (seen.has(target)) return;
+          if (!holds(chosen, target)) return;
+          seen.add(target);
+          if (stubSet.has(target)) map[target] = path.posix.join(stubDir, target);
+          else missing.push(target);
+        };
+        const transaction = acceptance.startsWith(TRANSACTION_MARK + "\n");
+        if (transaction) {
+          for (const generation of generations) {
+            for (const otherId of generation) {
+              const other = byId.get(otherId);
+              if (other === undefined) continue;
+              for (const target of other.targets) consider(target);
+            }
+          }
+        } else {
+          for (let e = 0; e < g; e++) {
+            for (const otherId of generations[e]) {
+              const other = byId.get(otherId);
+              if (other === undefined) continue;
+              for (const target of other.targets) consider(target);
+            }
+          }
+          for (const target of card.targets) consider(target);
+        }
+      }
+
+      trees.push({
+        card: card.customId,
+        generation: g,
+        language: chosen === null ? null : chosen.id,
+        exports: readExports(acceptance),
+        config: treeConfig,
+        stubs: map,
+        own: [...card.targets],
+        missing,
+      });
+    }
+  }
+
+  return trees;
+}
+```

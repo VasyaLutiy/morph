@@ -1,0 +1,342 @@
+{
+  "runId": "20261009-114343",
+  "completedAt": 1791548629715,
+  "branch": "morph/20261009-114343",
+  "processor": "ds",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "transaction-deck",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "transaction-deck.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "30a73fb40165d3a9ff0090e66a81f2c7b0897c98",
+      "diffstat": {
+        "files": 1,
+        "insertions": 67,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "build-acceptances",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "build-acceptances.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "da1347aca5fb414fc6a2eb50300d2208405128d6",
+      "diffstat": {
+        "files": 2,
+        "insertions": 36,
+        "deletions": 4
+      }
+    },
+    {
+      "customId": "run-transaction",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-transaction.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "6f4c66c173b38578500b1a5574113274feecb885",
+      "diffstat": {
+        "files": 2,
+        "insertions": 491,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "stub-trees",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "stub-trees.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "f9e63e21195f989cd98aa32b93076c0647584156",
+      "diffstat": {
+        "files": 1,
+        "insertions": 7,
+        "deletions": 2
+      }
+    },
+    {
+      "customId": "transaction-deck-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "transaction-deck-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cards/transaction.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "3c63743ed05bc1826db41d1008b9947b0250b12a",
+      "diffstat": {
+        "files": 1,
+        "insertions": 127,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "build-acceptances-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "build-acceptances-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/buildAcceptances.p21c.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "c8b9e4aac9649417e4f2ff4e37a372ff735dd8d0",
+      "diffstat": {
+        "files": 1,
+        "insertions": 238,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "ed4a507a9edd79e022757ba8971532c383d2c0c4",
+      "diffstat": {
+        "files": 1,
+        "insertions": 1,
+        "deletions": 5
+      }
+    },
+    {
+      "customId": "run-transaction-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 3,
+      "winningVariant": "run-transaction-judge.r2.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/runloop/transaction.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard tests/runloop/transaction.examples.test.ts\n== own\n FAIL  tests/runloop/transaction.examples.test.ts > Run Transaction example 1: a card's own acceptance runs on the tree with every card written\nAssertionError: expected [ 'a.v1', 'b.v1' ] to strictly equal [ 'a', 'b' ]\n\n- Expected\n+ Received\n\n  [\n-   \"a\",\n-   \"b\",\n+   \"a.v1\",\n+   \"b.v1\",\n  ]\n\n ❯ tests/runloop/transaction.examples.test.ts:127:72\n    125|     expect(res.report.generations).toBe(2);\n    126|     expect(res.report.usageTotals.requests).toBe(2);\n    127|     expect((res.report.requests ?? []).map((entry) => entry.customId))…\n       |                                                                        ^\n    128|       \"a\",\n    129|       \"b\",\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 11 passed (12)\n\nfirst difference at char 6 (line 2) of 17/23: expected \"[\\n  \\\"a\\\",\\n  \\\"b\\\",\\n]\" received \"[\\n  \\\"a.v1\\\",\\n  \\\"b.v1\\\",\\n]\"\n",
+        "== tsc\n== eslint\n== guard tests/runloop/transaction.examples.test.ts\n== own\n FAIL  tests/runloop/transaction.examples.test.ts > Run Transaction extra: the deadline marks only the blamed card budget-exceeded\nAssertionError: expected 'budget-exceeded' to be 'failed' // Object.is equality\n\nExpected: \"failed\"\nReceived: \"budget-exceeded\"\n\n ❯ tests/runloop/transaction.examples.test.ts:522:22\n    520|     expect(a.commit).toBe(null);\n    521|     const b = outcome(res, \"b\");\n    522|     expect(b.status).toBe(\"failed\");\n       |                      ^\n    523|     expect(b.reason).toBe(\"transaction rolled back\");\n    524|     expect(res.report.usageTotals.requests).toBe(2);\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 10 passed (11)\n\nfirst difference at char 1 (line 1) of 8/17: expected \"\\\"failed\\\"\" received \"\\\"budget-exceeded\\\"\"\n"
+      ],
+      "commit": "d25acc9ce0de0d2aed0acb56e55b5dead5f8fb8d",
+      "diffstat": {
+        "files": 1,
+        "insertions": 503,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "stub-trees-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "stub-trees-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/planner/stubTrees.p21c.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "3439602446428395b00e7010c35e5c114b67d971",
+      "diffstat": {
+        "files": 1,
+        "insertions": 84,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-command-judge",
+      "status": "budget-exceeded",
+      "reason": "deadline",
+      "attempts": 0,
+      "winningVariant": null,
+      "acceptanceLog": "",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 355681,
+    "outputTokens": 257876,
+    "cost": 0.3926547,
+    "requests": 16
+  },
+  "requests": [
+    {
+      "customId": "transaction-deck.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791546224-Ch8zIQT5YxZRhjf28QZ1",
+      "inputTokens": 16781,
+      "outputTokens": 4731,
+      "cost": 0.0107115,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "transaction-deck.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791546224-tgOICFo0NYgUwimdiHCx",
+      "inputTokens": 16781,
+      "outputTokens": 4358,
+      "cost": 0.00584022,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791546383-blAoQbdXc9qjOZCp31H6",
+      "inputTokens": 20860,
+      "outputTokens": 3999,
+      "cost": 0.0110568,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791546383-2Tmx07PGd5YrXC6Tuf8k",
+      "inputTokens": 20860,
+      "outputTokens": 6679,
+      "cost": 0.0142728,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-transaction.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791546383-OsEvLUpw6Irl691QMOzY",
+      "inputTokens": 27998,
+      "outputTokens": 37683,
+      "cost": 0.053619,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-transaction.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791546416-LJ93xtjXXcvSv4ToL7tZ",
+      "inputTokens": 27998,
+      "outputTokens": 36017,
+      "cost": 0.04415484,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "stub-trees.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791546434-I1WFiNSdx85V115pPluP",
+      "inputTokens": 18076,
+      "outputTokens": 2293,
+      "cost": 0.0081744,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "stub-trees.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791546453-MTI4hOETPoXCmTswaq6F",
+      "inputTokens": 18076,
+      "outputTokens": 2433,
+      "cost": 0.00364224,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "transaction-deck-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791546481-2da0SUyc7kWWrwoHWKdB",
+      "inputTokens": 18250,
+      "outputTokens": 11332,
+      "cost": 0.0190734,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791547146-hnquHnKt2FwJmJ969cxX",
+      "inputTokens": 23314,
+      "outputTokens": 24535,
+      "cost": 0.0364362,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791547146-6PKhHX2sPVCbPlHi7kr2",
+      "inputTokens": 19009,
+      "outputTokens": 1809,
+      "cost": 0.0078735,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791547146-09Slkbl9aGqhix6n9DDb",
+      "inputTokens": 19009,
+      "outputTokens": 1794,
+      "cost": 0.0078555,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-transaction-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791547160-x6PuhG1rK6eG1YPwgrRg",
+      "inputTokens": 23008,
+      "outputTokens": 43108,
+      "cost": 0.05531424,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "stub-trees-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791547167-uSioQFtxY4tjiuVy6Bnx",
+      "inputTokens": 21861,
+      "outputTokens": 16004,
+      "cost": 0.02216886,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-transaction-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791547875-2rofTxj5HTjeY7TsceID",
+      "inputTokens": 31931,
+      "outputTokens": 26511,
+      "cost": 0.0413925,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-transaction-judge.r2.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791548137-thfLeWI4q54gD7pGj5xz",
+      "inputTokens": 31869,
+      "outputTokens": 34590,
+      "cost": 0.0510687,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}

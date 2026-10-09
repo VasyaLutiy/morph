@@ -1,0 +1,16 @@
+morph run: transaction-deck.v1 accepted stage 7 frozen finish stop chars 1591
+morph run: transaction-deck.v2 untried stage 0 finish stop chars 1538
+morph run: build-acceptances.v1 accepted stage 7 frozen finish stop chars 8553
+morph run: build-acceptances.v2 untried stage 0 finish stop chars 8568
+morph run: run-transaction.v1 accepted stage 7 frozen finish stop chars 28843
+morph run: run-transaction.v2 untried stage 0 finish stop chars 27469
+morph run: stub-trees.v1 accepted stage 7 frozen finish stop chars 4312
+morph run: stub-trees.v2 untried stage 0 finish stop chars 4574
+morph run: transaction-deck-judge.v1 accepted stage 7 frozen finish stop chars 5915
+morph run: build-acceptances-judge.v1 accepted stage 7 frozen finish stop chars 6586
+morph run: plan-command.v1 accepted stage 7 frozen finish stop chars 4862
+morph run: plan-command.v2 untried stage 0 finish stop chars 4854
+morph run: run-transaction-judge.v1 rejected stage 4 own finish stop chars 19016
+morph run: stub-trees-judge.v1 accepted stage 7 frozen finish stop chars 2668
+morph run: run-transaction-judge.r1.v1 rejected stage 4 own finish stop chars 17848
+morph run: run-transaction-judge.r2.v1 accepted stage 7 frozen finish stop chars 16197
