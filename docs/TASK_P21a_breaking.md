@@ -361,4 +361,54 @@ and a live smoke on ds of the go-p7b re-cut (issue #12's acceptance); then 🧪 
 
 ### Gate (preparation)
 
-(filled below)
+09.10, on the VPS, by the preparing orchestrator (Opus 5.5, fresh context, no sub-agents); no paid run, no model call.
+Data commit 151df02 (spec, record, map, go-p7b, probes, checks, deck, fullvet, regulation, DECISIONS) and gate commit
+e11edeb (two probe rows, the re-cut deck, PLAN row P21b); this section and the gate DECISIONS lines in the last commit.
+Mid-preparation the operator's amendment of #12 (comment 6075790078, MorphStudio eb52a5a) made item 3.5 required and
+asked for a P7b-shaped fixture: the first fixture (go-break, calc/report/summary) was replaced by go-p7b before any
+commit, and the phase split (P21a here, P21b = `deck check`, §7).
+
+The deck **cut by V2** (main's binary, f6cf44d): `plan --component planner-subset --component builder --component cli
+--judge --checks decks/p21/checks.json --only <the 8 ids>` **exit 0**, 8 cards; `scale_tokens.py … 3` (maxTokens:
+hide-later 24 000, read-go-tree 24 000, build-acceptances 42 000, plan-command 36 000, read-go-tree-judge and
+build-acceptances-judge 48 000, hide-later-judge and plan-command-judge 60 000); `deck check` **0 errors, 0 warnings, 0
+hazards**; generations `[build-acceptances, hide-later] [build-acceptances-judge, hide-later-judge, read-go-tree]
+[plan-command, read-go-tree-judge] [plan-command-judge]`. Slices (slice + existing targets): 36.7–57.4 KB, the largest
+build-acceptances-judge **57 408 B**. The same cut by this phase's reference binary is byte-identical (TypeScript).
+
+Scratch worktree `/tmp/p21-gate` from e11edeb (removed afterwards; no watcher or worker left), the deck's own
+acceptances run as Morph runs them (`/bin/sh -c`, 300 s cap), cards in deck order, each accepted reference committed
+before the next:
+- **Stubs, red per example at the probe (13/13)**, typed throwing stubs: `Error: stub hideLater [["s","f","r","sj","fj",
+  "m","mj"],9]` … `[["s"],9]`, `stub readGoTree true`, `stub buildAcceptances ["p9",["a","b","zz"]]`, `stub planCommand
+  [true,["control","supervisor","daemon"],[…8 ids]]`: hide-later 5/5, read-go-tree 4/4, build-acceptances 2/2,
+  plan-command 2/2. **stubcheck.mjs exit 0 on all 8 stub logs** (code cards red at `probe`, judges at `guard … missing`).
+  fullvet does not apply (a TypeScript deck); it ran on go-p7b (§1).
+- **References green, chain seconds** (limit 250): build-acceptances 128.8, hide-later 131.8, build-acceptances-judge
+  132.0, hide-later-judge 134.3, read-go-tree 134.9, plan-command 139.6, read-go-tree-judge 132.3, plan-command-judge
+  134.9 — **max 139.6 s**. Final tree `vitest run` **806 / 806 in 132 files** (793 + the reference judges' 13); ripple 0
+  of 793; `git status` clean.
+- **Mutants** (the changed contracts only), each under a 120 s subprocess timeout against its probe: **30 mutants** (13
+  hideLater.ts, 10 goTree.ts, 4 buildAcceptances.ts, 3 planCommand.ts), 32 runs, **3.7 min**, max 120.1 s (one timeout:
+  the fixed point without "at least one non-test file" loops forever — counted killed); **30 killed**, two of them only
+  after a probe row each (goTree without `files.sort()`: Node's readdir is sorted, so only `b.go` beside `b/` tells the
+  walk order from the sort; buildAcceptances keeping a duplicate in ctx.siblings: equal for Go, whose overlay is an
+  object, killed by a TypeScript row).
+- **Byte identity** (main's binary f6cf44d vs this phase's reference binary, same trees): go-mini cut with `--checks
+  decks/m1/checks.json` (goguard/gofirstdiff installed) **identical** (6 cards, 75 416 B); the P15 deck re-cut from its
+  own tree 0365336 (plan, filter, ×3) **identical** (12 cards, 398 622 B) and identical to the deck committed there; a
+  one-generation `--only` cut of go-mini (percent-of-judge, format-share — P20's Plan Command 13) **identical**; go-p7b
+  cut without `--only` **identical**.
+- **Issue #12 on go-p7b** (`decks/p21/demo.sh <bin> <variant>`, §1's table): main's binary stubcheck 4/8, fullvet 5/8,
+  references 6/8 red (phase-loop at `== build` `supervisor/guard.go:20:23: l.Resumes undefined`); the reference binary
+  0/8, 0/8, 0/8; variants r1 (1 card red at its own `== build`), r3 and r4 (named by fullvet at phase-loop's stub).
+
+**Forecast** on `ds` with every maxTokens × 3: P20 ran 6 cards for $0.0629 (9 requests); here 12 first requests (4 code
+× 2 variants + 4 judges), 37–57 KB in, answers 1–8 KB: **≈ $0.07–0.15**, ≤ $0.35 with a re-cut; ≤ $1. **Gate holds.**
+
+**Run command** (from the repo root, the binary copied first; the deck is already scaled ×3):
+
+```
+npm run build && rm -rf /tmp/v2bin-p21 && mkdir -p /tmp/v2bin-p21 && cp -r dist /tmp/v2bin-p21/ && ln -s $PWD/node_modules /tmp/v2bin-p21/node_modules && ln -s $PWD/templates /tmp/v2bin-p21/templates
+node /tmp/v2bin-p21/dist/cli.js run --root . --deck decks/p21/deck.json --processor ds --deadline 2400 > /tmp/p21-run.json
+```
