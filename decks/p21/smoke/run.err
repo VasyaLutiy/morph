@@ -1,0 +1,12 @@
+morph run: control-contract.v1 accepted stage 7 frozen finish stop chars 230
+morph run: control-contract-judge.v1 rejected stage 3 guard control/control_examples_test.go finish stop chars 414
+morph run: phase-loop.v1 accepted stage 7 frozen finish stop chars 624
+morph run: control-contract-judge.r1.v1 rejected stage 6 full finish stop chars 374
+morph run: control-contract-judge.r2.v1 rejected stage 6 full finish stop chars 374
+morph run: phase-loop-judge.v1 rejected stage 6 full finish stop chars 725
+morph run: runtime-guard.v1 rejected stage 6 full finish stop chars 636
+morph run: phase-loop-judge.r1.v1 rejected stage 6 full finish stop chars 725
+morph run: runtime-guard.r1.v1 rejected stage 6 full finish stop chars 590
+morph run: phase-loop-judge.r2.v1 rejected stage 6 full finish stop chars 727
+morph run: runtime-guard.r2.v1 rejected stage 6 full finish stop chars 590
+morph run: exit 1

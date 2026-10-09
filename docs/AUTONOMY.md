@@ -6,23 +6,29 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (09.10, operator: next P21, then a stop)
+## State at handoff (09.10, after P21a: STOP for the operator — smoke red)
 
-**Next: P21, issue #12 (label `P21-breaking-recut`), then 🧪 and a stop for the operator.** Request of MorphStudio's PM
-(github.com/VasyaLutiy/MorphStudio `docs/MORPHV2_REQUEST_breaking-recut.md`, read it via `gh api`, never from or in
-`/home/morph/MorphStudio`): an `--only` subset whose record changes an exported Go identifier (rename, removed field,
-changed signature) used by targets of LATER generations of the same subset stops at the gate, because P20's overlay hides
-only the same generation (MorphStudio P7b: `supervisor/guard.go:20:22: l.Resumes undefined`, `not enough arguments in
-call to l.Exited`). Must hold: such a subset passes the gate with no hand edit and no compat names; a card is still judged
-on a compiling tree (no package hidden whole, no stage skips build/vet); files outside the subset never hidden, and a break
-of them is named before any paid run; cuts without `--only` byte for byte (go-mini P15, P20); nice to have: `plan --only`
-warns file:line on kept files outside the subset that use a changed identifier. Directions A/B/C in the issue; the phase
-chooses and measures (the operator side leans to A, "hide every subset target not yet written in this run", measured
-against its risk). Acceptance on a MorphV2 Go fixture (go-mini style, rename + signature change across three generations)
-plus a live smoke on ds; MorphStudio's PM re-checks P7b in a scratch copy itself. Cap $5. May be split (P21a/P21b), but
-every MorphV2 session ends with `~/.morph-wait-operator`, never `~/.morph-phase-done`: the flag files are shared with
-MorphStudio's session on this VPS and the cron watchdog is MorphStudio's. Never touch `/home/morph/MorphStudio` or its
-tmux session `MorphStudio` (read-only at most).
+**Next: none queued. The operator decides P21b** (issue #12 stays open, label `P21-breaking-recut`). The session ended with
+`~/.morph-wait-operator` (the flag files are shared with MorphStudio's session on this VPS; the cron watchdog is
+MorphStudio's; never touch `/home/morph/MorphStudio` or its tmux session `MorphStudio`).
+
+**P21a is merged** (`docs/TASK_P21a_breaking.md`, issue #12, request MorphStudio eb52a5a incl. the operator's amendment,
+comment 6075790078): run 20261009-074114 on ds, 8/8 on the first attempt, $0.1969, 21.7 min, no fix; vitest 812/812. A
+Go `morph plan --only` cut now hides, per card, every subset target of its own and LATER generations (NEW Hide Later in
+planner-subset, NEW Read Go Tree in cli), except a package's files while a visible file lies in it or imports it (the keep
+rule, to a fixed point); cuts without `--only` byte for byte (go-mini, P15). Data: go-p7b (a P7b-shaped fixture),
+`decks/tools/fullvet.mjs` (= `templates/go/decks/tools/fullvet.mjs`, a hand gate step for item 3.5 until P21b),
+`decks/p21/demo.sh` (none 0/8 stubcheck · fullvet · references red; main's binary 4/8 · 5/8 · 6/8).
+**The live smoke on ds is RED** (run 20261009-081603 on go-p7b, 2/8 written, $0.0643, `decks/p21/smoke/`, TASK §11):
+a card RETRIED after a same-generation sibling of the same package was accepted builds the new file beside a
+later-generation file the keep rule restored (`mcp/session.go` outside the subset imports supervisor) —
+`supervisor/guard.go:20:23: l.Resumes undefined` on control-contract-judge r1/r2 `== full`, then a cascade. The stub
+demo plays a generation in deck order, so it cannot show it. **P21b, prepared only after the operator's word**: item 3.5
+(`morph deck check` on an `--only` deck builds each generation's tree on stubs and names file:line of a non-own break,
+in the tool; acceptance: non-zero naming `supervisor/guard.go:20` on go-p7b cut by f6cf44d, 0 on the fixed cut; needs
+~8 cards, the cli record at 29.9 KB of 30 KB first) AND the retry gap above (B, a joint acceptance of a package group, or
+the run re-hiding a kept package's later files once a sibling in it is accepted). MorphStudio's PM re-checks P7b itself.
+Running total $5.5850 of $30.
 
 **P20 is closed** (issue #11, label `P20-rerun`; `docs/TASK_P20_rerun.md`): run 20261008-221549 on ds, 6/6 on the first
 attempt, $0.0629, 16 min, no fix. (1) `morph plan … --only <id>,<id>,…` (Parse Command, NEW Select Cards in Component
@@ -40,7 +46,6 @@ P19b (builder half: per-card allowed packages in the TS/Go guard, `GOFLAGS=-mod=
 `docs/deps/yaml.md`, templates/common docs; run 20261008-152814, 8/8, $0.0934) are merged. Issue #10's smokes are green
 (Go live on ds with vendored go-humanize v1.0.1 offline, TypeScript with change-case up to stub runs; `decks/p19b/smoke/`,
 TASK_P19b §11).
-Running total $5.3238 of $30.
 **Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). No mrph cross-check
 at the gate (operator 08.10). Own pre-merge code read: yes. External review passes: no (operator 08.10). Every new
 MEASURE row fills the `прогоны` column.

@@ -412,3 +412,48 @@ before the next:
 npm run build && rm -rf /tmp/v2bin-p21 && mkdir -p /tmp/v2bin-p21 && cp -r dist /tmp/v2bin-p21/ && ln -s $PWD/node_modules /tmp/v2bin-p21/node_modules && ln -s $PWD/templates /tmp/v2bin-p21/templates
 node /tmp/v2bin-p21/dist/cli.js run --root . --deck decks/p21/deck.json --processor ds --deadline 2400 > /tmp/p21-run.json
 ```
+
+### Run (the session, 09.10)
+
+`node /tmp/v2bin-p21/dist/cli.js run --root . --deck decks/p21/deck.json --processor ds --deadline 2400`: run
+**20261009-074114**, exit 0, **8 / 8 written on the first attempt**, 0 burned, no fix; **$0.1969** (12 requests, 220 845
+in / 116 947 out), **21.7 min** (1 301 s). One losing variant cut at its `max_tokens` (hide-later.v2, 24 000, finish
+`length`); v1 won at 15 675 out tokens. Verify on `morph/20261009-074114`: `git status` clean, `tsc --noEmit`, `eslint src
+tests`, `vitest run` **812 / 812 in 132 files** (pre-registered 802 ± 6: the judges wrote 6 tests more), `npm run build`
+green. Own read: `src/planner/hideLater.ts` (89 lines) is the §2.2 rule as written — every Go target of a card of the same
+or a later generation, minus the packages kept by a visible file in or importing them, to a fixed point;
+`buildAcceptances` appends it to that card's siblings and full excludes (copies, no duplicates); `planCommand` passes it
+only for `--only` and the go profile. No defect in the written code against the record.
+
+After the run, with the run's binary (`/tmp/v2bin-p21run`):
+- byte identity vs main's binary f6cf44d: go-mini `--checks decks/m1/checks.json` **identical** (75 416 B), its
+  one-generation `--only` cut (percent-of-judge, format-share) **identical**, the P15 deck re-cut from 0365336 (filter, ×3)
+  **identical** (398 622 B) and equal to the deck committed there;
+- `decks/p21/demo.sh` none: stub 8/8 red, stubcheck 0/8, fullvet 0/8, references 0/8 red (claim 6 holds); r1: phase-loop's
+  own build red (`supervisor/loop.go:25:8: l.Guard undefined`, as measured); r3: fullvet names `mcp/count.go:6:52:
+  l.Resumes undefined`; r4: fullvet names `daemon/daemon.go:9:78: not enough arguments in call to d.Loop.Exited`.
+
+### Live smoke on ds (issue #12's acceptance) — RED
+
+go-p7b copied to `/tmp/p21smoke/mod` (goguard/gofirstdiff installed, one base commit), cut with the run's binary `plan
+--component control --component supervisor --component daemon --judge --checks decks/b1/checks.json --only <the 8 ids>`
+exit 0, ×3, `deck check` exit 0; `run --processor ds`: run **20261009-081603**, exit 1, **2 / 8 written** (control-contract,
+phase-loop), 3 failed after 3 attempts, 3 skipped; **$0.0643** (11 requests), 9.4 min. Deck, report and stderr in
+`decks/p21/smoke/`.
+
+Cause (read from the logs and the smoke repo's history): **an order effect inside a generation that the stub demo cannot
+show.** Generation 2 is [control-contract-judge, phase-loop]. control-contract-judge's first attempt was red at its own
+guard; phase-loop was then accepted and committed `supervisor/loop.go` with `Restarts`; the judge's retries r1, r2 ran
+on that tree. Its hide list is empty for `supervisor/`: `mcp/session.go` (outside the subset) imports supervisor, so the
+keep rule restores `supervisor/guard.go` (runtime-guard, gen 3, still old), and P20's sibling overlay blanks `loop.go`
+only in the narrow stages. `== full` therefore built the new `loop.go` beside the old `guard.go`:
+`supervisor/guard.go:20:23: l.Resumes undefined` — the issue's own line, now on a judge retry. The two later reds
+(phase-loop-judge, runtime-guard at `== full`: `control_examples_test.go:10: PhaseName: got "P7 · daemon" want "P7:
+daemon"`) are a cascade: control-contract (accepted, new format) beside the old `control_examples_test.go` that the failed
+judge never rewrote. The demo plays cards in deck order with each reference accepted before the next, so a sibling's
+retry never sees a sibling already written; the real run accepts a generation's cards as they arrive.
+
+Read: direction A + keep fixes the cross-generation break on the first attempt of every card, but not a retry after a
+same-generation sibling of the same package was accepted, when a file outside the subset keeps the package visible.
+Exactly MorphStudio P7b's shape (mcp imports supervisor). Not a defect of the written code against its record — a gap in
+§2.2's rule; class **data** (record/design), for the operator: P21b (deck check, item 3.5) and this gap together.
