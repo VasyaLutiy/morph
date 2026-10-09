@@ -1,0 +1,178 @@
+```ts
+import { expect, test } from "vitest";
+import { planMutants } from "../../src/reviewer/planMutants.js";
+import type { Mutant } from "../../src/reviewer/planMutants.js";
+import { runMutants, runMutantsUntil } from "../../src/reviewer/runMutants.js";
+import { fixtureJson, tmpRoot } from "../helpers.js";
+
+const H = "export const h = (a: number, b: number): boolean => a === b && a > 0;\n";
+
+const env = (): Record<string, string> => ({
+  PATH: process.env.PATH ?? "",
+  HOME: process.env.HOME ?? "",
+});
+
+const clock = (step: number): (() => number) => {
+  let t = 0;
+  return () => (t += step);
+};
+
+interface UntriedFixture {
+  baseline: { exit: number | null; timedOut: boolean };
+  results: {
+    path: string;
+    line: number;
+    column: number;
+    rule: string;
+    killed: boolean;
+    exit: number | null;
+    timedOut: boolean;
+  }[];
+  findings: {
+    kind: string;
+    source: string;
+    path: string | null;
+    expected: string;
+    got: string;
+  }[];
+  untried: { path: string; line: number; column: number; rule: string }[];
+}
+
+const corpus = (): Record<string, UntriedFixture> =>
+  fixtureJson("reviewer/untried.json") as Record<string, UntriedFixture>;
+
+function base(root: string): {
+  root: string;
+  command: string;
+  mutants: Mutant[];
+  timeoutMs: number;
+  env: Record<string, string>;
+} {
+  return {
+    root,
+    command: 'grep -q "a === b" lib/h.ts',
+    mutants: planMutants("lib/h.ts", H, 10),
+    timeoutMs: 5000,
+    env: env(),
+  };
+}
+
+test(
+  "Run Mutants example 5: a stopAt of 2500 leaves the last mutant untried",
+  async () => {
+    const r = tmpRoot();
+    try {
+      r.write("lib/h.ts", H);
+      const result = await runMutantsUntil({
+        ...base(r.root),
+        now: clock(1000),
+        stopAt: 2500,
+      });
+      expect(result).toStrictEqual(corpus()["stop"]);
+      expect(r.read("lib/h.ts")).toBe(H);
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test(
+  "Run Mutants example 5: a stopAt of 0 leaves every mutant untried",
+  async () => {
+    const r = tmpRoot();
+    try {
+      r.write("lib/h.ts", H);
+      const result = await runMutantsUntil({
+        ...base(r.root),
+        now: clock(1000),
+        stopAt: 0,
+      });
+      expect(result).toStrictEqual(corpus()["zero"]);
+      expect(r.read("lib/h.ts")).toBe(H);
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test(
+  "Run Mutants example 5: a red baseline is untried and calls now zero times",
+  async () => {
+    const r = tmpRoot();
+    try {
+      r.write("lib/h.ts", H);
+      let calls = 0;
+      const result = await runMutantsUntil({
+        ...base(r.root),
+        command: "exit 3",
+        now: () => {
+          calls += 1;
+          return 0;
+        },
+        stopAt: 99,
+      });
+      expect(result).toStrictEqual(corpus()["red"]);
+      expect(calls).toBe(0);
+      expect(r.read("lib/h.ts")).toBe(H);
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test(
+  "Run Mutants example 5: runMutants keeps its three keys",
+  async () => {
+    const r = tmpRoot();
+    try {
+      r.write("lib/h.ts", H);
+      const result = await runMutants(base(r.root));
+      expect(Object.keys(result)).toStrictEqual(["baseline", "results", "findings"]);
+      expect(r.read("lib/h.ts")).toBe(H);
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test(
+  "Run Mutants example 5: a far stopAt runs and judges every mutant",
+  async () => {
+    const r = tmpRoot();
+    try {
+      r.write("lib/h.ts", H);
+      const result = await runMutantsUntil({
+        ...base(r.root),
+        now: clock(1000),
+        stopAt: 1000000,
+      });
+      expect(result.baseline).toStrictEqual({ exit: 0, timedOut: false });
+      expect(result.results.map((m) => m.killed)).toStrictEqual([true, false, false]);
+      expect(result.results.map((m) => m.column)).toStrictEqual([55, 61, 66]);
+      expect(result.results.map((m) => m.rule)).toStrictEqual([
+        "=== → !==",
+        "&& → ||",
+        "> → >=",
+      ]);
+      expect(result.findings.length).toBe(2);
+      expect(result.findings.map((f) => f.source)).toStrictEqual([
+        "mutation lib/h.ts:1",
+        "mutation lib/h.ts:1",
+      ]);
+      expect(result.findings.map((f) => f.expected)).toStrictEqual([
+        "a test fails on && → || at line 1",
+        "a test fails on > → >= at line 1",
+      ]);
+      expect(result.untried).toStrictEqual([]);
+      expect(r.read("lib/h.ts")).toBe(H);
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+```
