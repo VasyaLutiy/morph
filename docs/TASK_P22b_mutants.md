@@ -421,4 +421,62 @@ the vitest log of every verify run; DECISIONS lines "P22b gate"; after the merge
 
 ## 11. Actual
 
-(filled at the gate and after the run)
+### Gate (preparation)
+
+09.10, on the VPS, by the preparing orchestrator (Opus 5.5, fresh context, no sub-agents); no paid run, no model call.
+
+The deck **cut by V2** (main's binary, 0ded27b code; data d749d4d, 2f24dc9): `plan --component review-session
+--component gate-proof --component gate --component cli --judge --checks decks/p22b/checks.json --only <the 10 ids>`
+**exit 0**, 10 cards, generations `[check-identity, parse-command, run-mutants] [check-identity-judge, gate-mutants,
+parse-command-judge, run-mutants-judge] [gate-command, gate-mutants-judge] [gate-command-judge]`, every acceptance with
+the transaction mark; `scale_tokens.py … 3` (maxTokens: check-identity 24 000; run-mutants, gate-mutants 36 000;
+gate-command 72 000; parse-command 84 000; run-mutants-judge, parse-command-judge 48 000; check-identity-judge,
+gate-mutants-judge, gate-command-judge 72 000); `deck check` **0 errors, 0 warnings, 0 hazards, builds 10 trees over
+`decks/p22b/_stubs/` (12 stubs each), 0 breaks, 0 missing** (89 s). Slices (slice + existing targets): ≤ **63 770 B**
+(parse-command: two whole cli files). Deck 345 122 B. Every import edge of a reference target is a dependsOn of its card
+(checked over the 12 reference files: 0 missing).
+
+**`morph gate`** (dogfood; main's binary copied to /tmp/v2bin-p22b-gate) on the committed deck: `gate --root . --deck
+decks/p22b/deck.json --stubs decks/p22b/_stubs --refs /tmp/p22b/refs` — **exit 0**, transaction, **20 rows** (10 stub,
+10 ref), errors [], builds 10 × 12 stubs 0 breaks, **maxSeconds 137.9**, 25.3 min wall (first play on a180e76: exit 0,
+the same shape, 25.8 min).
+- **Stubs red per example at the probe (14/14 FAIL lines)**: check-identity 4/4, parse-command 1/1, run-mutants 2/2,
+  gate-mutants 4/4, gate-command 3/3 (typed throwing stubs; the patch stubs are main's files with the new types only);
+  the five judges red at `== guard <file>`; no outside line. Stub chains 10.2–13.4 s.
+- **References green**: chains 124.0–137.9 s (limit 250).
+- **Ripple**: the references on a180e76 + the full `vitest run`: **905 / 905 in 151 files** (895 + 10), 124 s; 0 of 895
+  red.
+- **Mutants** (still the hand regulation for this phase; reviewer's planMutants over the reference code files, only on
+  the lines this phase adds, each against its card's probe under a 120 s timeout): **28 mutants** (5 runMutants.ts, 8
+  gateMutants.ts, 5 identity.ts, 7 gateCommand.ts, 1 playGate.ts, 2 parse.ts), two passes, **56 runs, 2.1 min**, max
+  7.2 s, 0 timeouts; first pass 24 killed; three probe gaps got rows (runMutants.ts:105 `>=` → `>`: now() equal to
+  stopAt; identity.ts:65 the out file per entry; identity.ts:74 equal bytes with another sha256) and were killed on the
+  re-run: **27 killed**; the survivor gateMutants.ts:61 `n <= 0` → `n < 0` is equivalent (n = 0 spreads to []) —
+  DECISIONS known risk.
+- **Identity corpus**: main's binary re-cuts go-mini 75 416 B, go-p7b 100 388 B, P15 (0365336, raw 1 247 586 B; filter
+  ×3 **398 622 B = the committed deck**), P21c 362 610 B, P22a 337 622 B (×3 = the committed decks/p22a/deck.json);
+  the corpus test with the references 2.1 s green; a spike on render.ts (one character of the instruction tail) turns
+  Check Identity example 1 red naming go-mini and go-p7b (equal bytes, other sha256).
+- No `src/` file of the reference names a phase, go-mini, go-p7b, ts-rename or a corpus entry (grep).
+
+**Forecast** on `ds` with every maxTokens × 3: P22a ran 10 cards for $0.4599 + $0.1752; here 15 first requests (5 code ×
+2 variants + 5 judges), 40–64 KB in, answers 1.5–23.5 KB: **≈ $0.25–0.45**, ≤ $0.80 with a fix; ≤ $1. **Gate holds.**
+
+**Deadline.** A transaction deck of 4 generations (as P22a): the write ≈ 4 × 8 min on ds, one round of 10 acceptances
+one after another ≈ 10 × 135 s ≈ 23 min, each retry batch ≈ 30 min more: **`--deadline 7200`**.
+
+**Run command** (from the repo root, the binary copied first; the deck is already scaled ×3):
+
+```
+npm run build && rm -rf /tmp/v2bin-p22b && mkdir -p /tmp/v2bin-p22b && cp -r dist /tmp/v2bin-p22b/ && ln -s $PWD/node_modules /tmp/v2bin-p22b/node_modules && ln -s $PWD/templates /tmp/v2bin-p22b/templates
+node /tmp/v2bin-p22b/dist/cli.js run --root . --deck decks/p22b/deck.json --processor ds --deadline 7200 > /tmp/p22b-run.json
+```
+
+**P22a's dogfood, played here** (the gate P22a's salvage left; main's binary, refs = the committed P22a targets at HEAD,
+12 files): `gate --deck decks/p22a/deck-fix.json --stubs decks/p22a/_stubs --refs <them>` — **exit 0**, transaction, 20
+rows, stubs **19/19 FAIL lines at the probe** (gate-plan 4, stub-verdict 4, play-gate 4, gate-command 4, parse-command 3)
+and the five judges at the guard, references 10/10 green, maxSeconds 127.2 (P22a's hand gate: 152.2), builds 0 breaks,
+21.9 min — P22a §11's gate reproduced by `morph gate` (issue #13's acceptance, first bullet).
+
+**Post-run dogfood (the session):** the run's binary, `morph gate … --mutants 30` on this deck with the run's targets as
+references: expected code 0 or 1 (the equivalent survivor above), planned ≤ 30, seconds ≤ 1 320; claim 6.
