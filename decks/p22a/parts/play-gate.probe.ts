@@ -23,7 +23,7 @@ const state = (r: TmpRepo): string[] => [r.git(["rev-parse", "HEAD"]), r.git(["f
   r.git(["status", "--porcelain"]), r.git(["worktree", "list", "--porcelain"]).split("\n")[0]];
 test("Play Gate example 1: three shell cards over two generations in a scratch clone", async () => {
   const cards = [
-    card("a", ["src/a.txt"], "echo '== probe'; grep -q A1 src/a.txt || { echo ' FAIL  probe/a.probe.ts > A example 1'; exit 1; }; echo '== frozen'"),
+    card("a", ["src/a.txt"], "echo '== probe'; grep -q A1 src/a.txt || { echo 'FAIL probe/a.probe.ts > A example 1'; exit 1; }; echo '== frozen'"),
     card("b", ["src/b.txt"], "echo '== tsc'; grep -q B2 src/b.txt || { echo 'src/zz.ts(1,1): error TS2: zz'; exit 2; }\necho '== probe'"),
     card("c", ["tests/c.txt"], "echo '== guard tests/c.txt'; grep -q C3 tests/c.txt || exit 1\necho '== own git'; [ \"$(git log -3 --format=%s | tr '\\n' ,)\" = 'gate: b,gate: a,base,' ]", ["a", "b"]),
   ];

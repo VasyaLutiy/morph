@@ -451,7 +451,7 @@
      "expected": "probe",
      "outside": [],
      "failures": [
-      "FAIL  probe/t1.probe.ts > T1 example 1"
+      "FAIL probe/t1.probe.ts > T1 example 1"
      ],
      "ok": true
     },

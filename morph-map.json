@@ -3505,7 +3505,7 @@
         "gate-plan"
       ],
       "variants": 2,
-      "max_tokens": 12000,
+      "max_tokens": 24000,
       "instruction": "Read docs/TASK_P22a_gate.md sections 2.1 (the preconditions of git and acceptance) and 2.2 (src/gate/playGate.ts: Play Gate, steps 1-6) and 4. Write one file src/gate/playGate.ts exporting `interface PlayRow`, `interface PlayInput`, `interface PlayDeps` and `async function playGate(input: PlayInput, deps: PlayDeps): Promise<PlayRow[]>` exactly as section 2.2 shows, importing fs from \"node:fs\", os from \"node:os\", path from \"node:path\", runAcceptance from \"../acceptance/run.js\", gitOk from \"../git/run.js\", TREE_PROFILES from \"../language/treeProfiles.js\", expectedStage and stubVerdict from \"./stubVerdict.js\", and the types Card, GatePhase and GateStep with `import type`. The scratch is a `git clone --shared --no-checkout` of root checked out detached at root's HEAD, never a worktree; root is never written; the scratch's base directory is removed in finally. No process, no console, no clock but deps.now, no child process of your own. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "gate-command": {
@@ -3526,7 +3526,7 @@
         "gate-plan"
       ],
       "variants": 2,
-      "max_tokens": 12000,
+      "max_tokens": 24000,
       "instruction": "Read docs/TASK_P22a_gate.md sections 2.1 and 2.2 (src/gate/gateCommand.ts: Gate Command, steps 1-5) and 4. Write one file src/gate/gateCommand.ts exporting `CHAIN_LIMIT_SECONDS = 250`, `interface GateBuild`, `interface GateArgs`, `type GateDeckRead`, `interface GateDeps`, `interface GateDocument` and `async function gateCommand(root, args, deps)` exactly as section 2.2 shows, importing fs from \"node:fs\", path from \"node:path\", layerGenerations from \"../cards/layer.js\", gatePlan from \"./gatePlan.js\", playGate from \"./playGate.js\", and the types Deck and PlayRow with `import type`. It imports no cli module: deps.readDeck and deps.builds come from Main. Every error text character for character, in the order of step 4; the stubs are copied for deps.builds inside the scratch (playGate's before), never into root. No process, no console, no clock but deps.now, no child process. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "stub-verdict-judge": {
@@ -3565,7 +3565,7 @@
       "depends_on": [
         "gate-plan"
       ],
-      "max_tokens": 16000,
+      "max_tokens": 32000,
       "instruction": "You write tests/gate/gatePlan.examples.test.ts only, a NEW file. Read docs/TASK_P22a_gate.md sections 2.1 (the fixtures and the harness skeleton, verbatim: copy the helpers you use) and 2.2 (Gate Plan and its table) and 2.3. Import gatePlan from \"../../src/gate/gatePlan.js\", loadDeck from \"../../src/cards/model.js\", layerGenerations from \"../../src/cards/layer.js\", fixtureJson and fixturePath from \"../helpers.js\", fs from \"node:fs\", types with `import type`. One test per example of Gate Plan (1-3), in record order, named \"Gate Plan example <n>: <what>\", each plan compared whole with the plans.json entry; then at most 6 of your own on section 2.2 rows (a Card literal has every field: use the skeleton's card). Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "play-gate-judge": {

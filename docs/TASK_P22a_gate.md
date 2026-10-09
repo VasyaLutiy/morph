@@ -101,8 +101,23 @@ const result = (k: string): { code: number; document: unknown } => (fixtureJson(
 const deps = (step = 1000): GateDeps => ({ env: env(), now: clock(step), readDeck: readDeckFile, builds: checkBuilds });
 const B1 = { deck: "decks/b1/deck.p21.json", stubs: "decks/b1/_stubs", refs: "decks/b1/_refs" };
 const M = TRANSACTION_MARK + "\n";                         // Gate Command 2: both acceptances start with it
+// Main 17: examples.json["Main 17"] is PROSE for a reader — never parse its given or then; the calls, verbatim:
+function io(): { io: CliIo; out: string[]; err: string[] } { const out: string[] = [], err: string[] = [];
+  return { io: { stdout: (t) => { out.push(t); }, stderr: (t) => { err.push(t); } }, out, err }; }
+const cliDeps = (): CliDeps => ({ env: { PATH: process.env.PATH ?? "" }, now: () => 0, cwd: "/", transport: null });
+//   const r = tmpRoot(); const a = io();
+//   expect(await main(["gate", "--deck", "nope.json", "--stubs", "s", "--refs", "r", "--root", r.root], cliDeps(), a.io)).toBe(4);
+//   expect(a.out).toStrictEqual(['{"error":{"code":4,"kind":"UsageError","message":"deck file not found: nope.json"}}\n']);
+//   expect(a.err).toStrictEqual(["morph gate: exit 4\n"]);
+//   then ["gate", "--deck", "d.json", "--root", r.root] → 4, out ['{"error":{"code":4,"kind":"UsageError","message":"missing --stubs"}}\n'],
+//   err ["morph: missing --stubs\n"]; r.rm() in finally
 // every test that runs a child process: test(name, fn, 120000); every repo: try { … } finally { r.rm(); }
 ```
+
+**Literals and whitespace** (fix of run 20261009-153356): the cut renders a record example into the judge's instruction
+with runs of spaces collapsed to one, so no example literal of this record relies on two spaces in a row (vitest's
+`FAIL  file` is only in the real logs of `gate/stubLogs.json`, read from the fixture, never retyped); a literal of an
+example's acceptance is typed exactly as the record shows it.
 
 **Distinct markers.** Card ids a, b, c, n, x, k, m, z, s, u, t1, t2, zz and the fixtures' ids; marks A1, B2, C3, N1, X1, X2, T1, T2, BROKEN, U1,
 "old a", "kept"; dirs st, rf, st2, st3, rf3, s, s2, f, k; the clock steps 1000, 2500, 300000, 249000. No name of P7b, go-p7b,
@@ -146,8 +161,9 @@ export function gatePlan(cards: readonly Card[], generations: string[][], stubs:
 - order = per g, per id of generations[g] whose card exists, {card, generation: g}; transaction = isTransactionDeck(cards).
 - missing: per entry, per target: "no stub: <t>" when not in stubs, then "no reference: <t>" when not in refs, each
   once; not empty → steps [].
-- Not a transaction: per g, per its entries {stub, put targets → "stub", commit []} then {ref, put → "ref", commit the
-  targets}; then, when g has ≥ 2 entries, per entry {retry, put {}, commit []}. A transaction: a stub step per entry (the
+- Not a transaction: per g, per entry two steps in a row — its {stub, put targets → "stub", commit []} immediately
+  followed by its {ref, put → "ref", commit the targets} (generation [a, b]: stub a, ref a, stub b, ref b, then retry a,
+  retry b; never every stub of the generation first); then, when g has ≥ 2 entries, per entry {retry, put {}, commit []}. A transaction: a stub step per entry (the
   first puts every target of every entry → "stub", each once, first-seen order; the rest put {}), then a ref step per
   entry (the first puts them all → "ref"; the last commits them all); no retry.
 

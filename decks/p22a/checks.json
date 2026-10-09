@@ -9,6 +9,13 @@
   "tests/fixtures",
   "templates"
  ],
+ "fullExclude": [
+  "tests/gate/stubVerdict.examples.test.ts",
+  "tests/gate/gatePlan.examples.test.ts",
+  "tests/gate/playGate.examples.test.ts",
+  "tests/gate/gateCommand.examples.test.ts",
+  "tests/cli/gate.examples.test.ts"
+ ],
  "cards": [
   {
    "id": "stub-verdict"

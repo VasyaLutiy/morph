@@ -11,7 +11,7 @@
    "expected": "probe",
    "outside": [],
    "failures": [
-    "FAIL  probe/a.probe.ts > A example 1"
+    "FAIL probe/a.probe.ts > A example 1"
    ],
    "ok": true
   },

@@ -28,7 +28,7 @@ test("Gate Command example 1: go-p7b's P21a cut, the retry after a sibling names
 const M = "# morph: subset transaction\n";
 test("Gate Command example 2: a transaction of two shell cards; planted stubs are named", async () => {
   const cards = [{ customId: "t1", targets: ["src/t1.txt"], dependsOn: [] as string[],
-    acceptance: M + "echo '== probe'\ngrep -q T1 src/t1.txt || { echo ' FAIL  probe/t1.probe.ts > T1 example 1'; exit 1; }" },
+    acceptance: M + "echo '== probe'\ngrep -q T1 src/t1.txt || { echo 'FAIL probe/t1.probe.ts > T1 example 1'; exit 1; }" },
   { customId: "t2", targets: ["src/t2.txt"], dependsOn: ["t1"],
     acceptance: M + "echo '== tsc'\n! grep -q BROKEN src/t2.txt || { echo 'lib/old.ts(3,4): error TS2304: Cannot find name q7.'; exit 2; }\necho '== probe'\ngrep -q T1 src/t1.txt && grep -q T2 src/t2.txt" }]
     .map((c) => ({ intent: "generate", contextSlice: [], instruction: "w", model: null, maxTokens: null, reasoning: null, variants: 1, ...c }));
