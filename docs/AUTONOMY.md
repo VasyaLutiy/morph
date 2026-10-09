@@ -161,7 +161,22 @@ preparation agent repeats this line.
    the mutation, and do not block the gate. The P15 preparation (full campaign, 72 min) is the
    baseline; record the mutant count and minutes in the MEASURE notes of every phase; the data and the
    deck committed on `main`.
-2. **Gate without the operator.** The run starts by itself only when ALL hold:
+   **From the P22a merge on (issue #13), the stub and reference play is one command, `morph gate`.** The stubs of every
+   target are data committed at `decks/<phase>/_stubs/` (a typed throwing stub per new code file, the current file for a
+   patch target, a one-test file per judge file; `deck check` builds them too), the reference targets lie in a directory
+   outside the tree (`/tmp/<phase>/refs/`, never committed); with the data and the deck committed:
+   `nohup node dist/cli.js gate --root . --deck decks/<phase>/deck.json --stubs decks/<phase>/_stubs --refs /tmp/<phase>/refs
+   > /tmp/<phase>-gate.json 2> /tmp/<phase>-gate.err &` — the preparing agent ends its turn and reads the one JSON verdict
+   when it exits (no polling). It plays HEAD in a scratch clone: every card's acceptance on its stubs (red at its probe,
+   a judge at its guard, and no build/vet/tsc line naming a file outside its targets — stubcheck.mjs's rule), then on
+   its references (green), then, for a deck without the transaction mark, every card of a generation again once the
+   whole generation is written (the retry tree the P21a smoke went red on); every run timed against 250 s; Check Builds
+   on the stubs (fullvet's job). `rows[].failures` (the expected stage's FAIL lines) are read against the probes'
+   examples for "red per example"; exit 0 replaces the stub, stubcheck, fullvet and chain items of this step and of step
+   2. The hand play with stubcheck.mjs stays for a deck the tool cannot play (an uncommitted tree). Mutants stay the hand
+   step above until P22b moves them into the gate.
+2. **Gate without the operator.** The run starts by itself only when ALL hold (from the P22a merge on, `morph gate` exit 0
+   stands for the stubs, stubcheck, fullvet and chain items below):
    `morph plan` exit 0; `morph deck check` errors 0; every probe red per example with a readable line on the stubs and stubcheck.mjs exit 0 on each stub log (and
    fullvet.mjs exit 0 on each stub tree of a Go `--only` deck); chain under 250 s each; every mutant run under a timeout and the mutation cap kept (≤ 30 mutants, ≤ 20 min); forecast ≤ $1 for the phase; no slice over 200 KB. Otherwise the phase stops with a report in `docs/MEASURE.md` (row with
    "stopped at gate: <reason>"), touches `~/.morph-wait-operator` and stops.

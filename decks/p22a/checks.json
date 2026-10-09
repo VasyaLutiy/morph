@@ -77,9 +77,9 @@
       "Play Gate example 2",
       "Play Gate example 3",
       "gate/playGate.json",
-      "gate/ts-rename.gate.json",
       "gate: b,gate: a,base,",
-      "node_modules/q/index.js"
+      "node_modules/q/index.js",
+      "timeoutMs: 700"
      ]
     }
    ]
@@ -97,9 +97,9 @@
       "Gate Command example 2",
       "Gate Command example 3",
       "gate/gateCommand.json",
-      "deck.p21c.json",
-      "mcp/count.go",
-      "green stub",
+      "decks/b1/_refs",
+      "planted",
+      "BROKEN",
       "300000"
      ]
     }

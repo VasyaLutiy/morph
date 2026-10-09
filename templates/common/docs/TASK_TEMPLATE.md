@@ -122,3 +122,6 @@ before/after.
   each stub log passing `decks/tools/stubcheck.mjs` (no build/vet/tsc line outside the card's targets), and for a Go
   `--only` deck each stub tree passing `decks/tools/fullvet.mjs` (the `== full` overlay vetted);
   mutants within the cap killed or recorded; chain under 250 s.
+- Where `morph` has the `gate` command: the stubs committed at `decks/<phase>/_stubs/`, the references outside the tree,
+  and `morph gate --deck … --stubs … --refs …` exit 0 in place of the hand stub play, stubcheck, fullvet and the chain
+  timing.

@@ -8,10 +8,8 @@ import { test, expect } from "vitest";
 import { playGate } from "../../src/gate/playGate.js";
 import type { PlayRow } from "../../src/gate/playGate.js";
 import { gatePlan } from "../../src/gate/gatePlan.js";
-import { readDeckFile } from "../../src/cli/document.js";
-import { layerGenerations } from "../../src/cards/layer.js";
 import type { Card } from "../../src/cards/types.js";
-import { fixtureJson, fixturePath, tmpRepo } from "../../tests/helpers.js";
+import { fixtureJson, tmpRepo } from "../../tests/helpers.js";
 import type { TmpRepo } from "../../tests/helpers.js";
 
 const rows = (k: string): PlayRow[] => (fixtureJson("gate/playGate.json") as Record<string, PlayRow[]>)[k];
@@ -23,9 +21,6 @@ const card = (id: string, targets: string[], acceptance: string | null, dependsO
   contextSlice: [], instruction: "w", acceptance, model: null, maxTokens: null, reasoning: null, variants: 1, dependsOn });
 const state = (r: TmpRepo): string[] => [r.git(["rev-parse", "HEAD"]), r.git(["for-each-ref", "--format=%(refname) %(objectname)"]),
   r.git(["status", "--porcelain"]), r.git(["worktree", "list", "--porcelain"]).split("\n")[0]];
-function files(dir: string): string[] { const out: string[] = []; const walk = (a: string, p: string): void => { for (const e of fs.readdirSync(a, { withFileTypes: true })) {
-  const rel = p === "" ? e.name : p + "/" + e.name; if (e.isDirectory()) walk(path.join(a, e.name), rel); else out.push(rel); } }; walk(dir, ""); return out.sort(); }
-
 test("Play Gate example 1: three shell cards over two generations in a scratch clone", async () => {
   const cards = [
     card("a", ["src/a.txt"], "echo '== probe'; grep -q A1 src/a.txt || { echo ' FAIL  probe/a.probe.ts > A example 1'; exit 1; }; echo '== frozen'"),
@@ -59,31 +54,22 @@ test("Play Gate example 2: node_modules linked and excluded; the hook sees the s
   } finally { r.rm(); }
 }, 120000);
 
-test("Play Gate example 3: ts-rename's transaction cut, TypeScript stubs and references", async () => {
-  const r = tmpRepo();
-  try {
-    for (const [p, t] of Object.entries(fixtureJson("ts-rename.json") as Record<string, string>)) r.write(p, t);
-    for (const [p, t] of Object.entries(fixtureJson("gate/ts-rename.gate.json") as Record<string, string>)) r.write(p, t);
-    for (const f of ["eslint.config.js", "vitest.config.ts", "decks/tools/guard.mjs", "decks/tools/firstdiff.mjs", "decks/tools/layers.json"])
-      r.write(f, fs.readFileSync(path.resolve(fixturePath("."), "../../templates/typescript", f), "utf8"));
-    r.write(".gitignore", "probe/\nnode_modules\n");
-    fs.symlinkSync(path.resolve(fixturePath("."), "../../node_modules"), r.path("node_modules"));
-    r.git(["add", "-A"]); r.git(["commit", "-q", "-m", "base"]);
-    const l = readDeckFile(r.root, "decks/r1/deck.tx.json"); if (!l.ok) throw new Error("deck");
-    const steps = gatePlan(l.deck.cards, layerGenerations(l.deck), files(r.path("decks/r1/_stubs")), files(r.path("decks/r1/_refs"))).steps;
-    const got = await playGate({ root: r.root, cards: l.deck.cards, steps, stubDir: r.path("decks/r1/_stubs"), refDir: r.path("decks/r1/_refs") }, { env: env(), now: clock(1000) });
-    expect(got).toStrictEqual(rows("ts-rename"));
-  } finally { r.rm(); }
-}, 120000);
-
-test("rows: an unknown card is skipped, a null acceptance runs as empty, the timeout reaches the run", async () => {
+test("Play Gate example 3: an unknown card is skipped, a null acceptance runs as empty, the timeout reaches the run", async () => {
   const cards = [card("z", ["z.txt"], null), card("s", ["s.txt"], "echo '== probe'; echo started; sleep 5; echo late")];
   const r = repo({ "st/z.txt": "s\n", "rf/z.txt": "r\n", "st/s.txt": "s\n", "rf/s.txt": "r\n" });
   try {
     const steps = [{ phase: "stub" as const, generation: 0, card: "nope", put: {}, commit: [] }, ...gatePlan(cards, [["z"], ["s"]], ["s.txt", "z.txt"], ["s.txt", "z.txt"]).steps];
-    const got = await playGate({ root: r.root, cards, steps, stubDir: r.path("st"), refDir: r.path("rf") }, { env: env(), now: clock(100), timeoutMs: 700 });
-    expect(got.map((g) => [g.phase, g.card, g.exit, g.timedOut, g.stage, g.ok, g.seconds])).toStrictEqual([
-      ["stub", "z", 0, false, null, false, 0.1], ["ref", "z", 0, false, null, true, 0.1],
-      ["stub", "s", null, true, "probe", true, 0.1], ["ref", "s", null, true, "probe", false, 0.1]]);
+    expect(await playGate({ root: r.root, cards, steps, stubDir: r.path("st"), refDir: r.path("rf") }, { env: env(), now: clock(100), timeoutMs: 700 }))
+      .toStrictEqual(rows("timeout"));
+  } finally { r.rm(); }
+}, 120000);
+
+test("rows: a commit of an unchanged target goes through; no node_modules, no link; the files land at their paths", async () => {
+  const cards = [card("u", ["deep/a/u.txt"], "echo '== probe'\n[ ! -e node_modules ] && grep -q U1 deep/a/u.txt")];
+  const r = repo({ "deep/a/u.txt": "U1\n", "st/deep/a/u.txt": "s\n", "rf/deep/a/u.txt": "U1\n" });
+  try {
+    const got = await playGate({ root: r.root, cards, steps: gatePlan(cards, [["u"]], ["deep/a/u.txt"], ["deep/a/u.txt"]).steps, stubDir: r.path("st"), refDir: r.path("rf") },
+      { env: env(), now: clock(1000) });
+    expect(got.map((g) => [g.phase, g.exit, g.ok])).toStrictEqual([["stub", 1, true], ["ref", 0, true]]);
   } finally { r.rm(); }
 }, 120000);

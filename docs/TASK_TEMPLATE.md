@@ -142,3 +142,6 @@ Filled after the run; a re-cut gets its own sub-section with every spec change b
 - Every slice path exists on disk at plan time; `contour.yaml` is in no slice.
 - Dry `plan --spec` exit 0; `deck check` errors 0; every acceptance red per example on
   stubs in a scratch worktree; chain under 250 s.
+- From the P22a merge on (issue #13): the stubs committed at `decks/<phase>/_stubs/`, the references outside the tree,
+  and `morph gate --deck … --stubs … --refs …` exit 0 in place of the hand stub play, stubcheck and the chain timing;
+  §11 quotes its verdict's numbers (rows, failures per probe, maxSeconds, builds).

@@ -1,6 +1,6 @@
 // P22a probe for gate-command by docs/TASK_P22a_gate.md §2.2 (src/gate/gateCommand.ts) — `morph gate`: the P21a cut's
-// retry red that the hand gate missed, a planted green stub, refusals, missing files, the 250 s chain limit (issue #13
-// item 1). Record Gate Command examples 1-3 (example 2's transaction and outside cases are the judge's), then rows.
+// retry red that the hand gate missed, a transaction and planted stubs, refusals, missing files, the 250 s chain limit (issue #13
+// item 1). Record Gate Command examples 1-3, then rows.
 import fs from "node:fs";
 import { test, expect } from "vitest";
 import { gateCommand, CHAIN_LIMIT_SECONDS } from "../../src/gate/gateCommand.js";
@@ -25,13 +25,21 @@ test("Gate Command example 1: go-p7b's P21a cut, the retry after a sibling names
   } finally { r.rm(); }
 }, 120000);
 
-test("Gate Command example 2 (one part): a stub that is the reference is green on its stubs", async () => {
-  const r = p7b();
+const M = "# morph: subset transaction\n";
+test("Gate Command example 2: a transaction of two shell cards; planted stubs are named", async () => {
+  const cards = [{ customId: "t1", targets: ["src/t1.txt"], dependsOn: [] as string[],
+    acceptance: M + "echo '== probe'\ngrep -q T1 src/t1.txt || { echo ' FAIL  probe/t1.probe.ts > T1 example 1'; exit 1; }" },
+  { customId: "t2", targets: ["src/t2.txt"], dependsOn: ["t1"],
+    acceptance: M + "echo '== tsc'\n! grep -q BROKEN src/t2.txt || { echo 'lib/old.ts(3,4): error TS2304: Cannot find name q7.'; exit 2; }\necho '== probe'\ngrep -q T1 src/t1.txt && grep -q T2 src/t2.txt" }]
+    .map((c) => ({ intent: "generate", contextSlice: [], instruction: "w", model: null, maxTokens: null, reasoning: null, variants: 1, ...c }));
+  const q = tmpRepo();
   try {
-    fs.cpSync(r.path("decks/b1/_stubs"), r.path("st2"), { recursive: true });
-    fs.copyFileSync(r.path("decks/b1/_refs/control/control.go"), r.path("st2/control/control.go"));
-    expect(await gateCommand(r.root, { deck: "decks/b1/deck.p21c.json", stubs: "st2", refs: "decks/b1/_refs" }, deps())).toStrictEqual(want("green stub"));
-  } finally { r.rm(); }
+    q.write("d.json", JSON.stringify(cards));
+    for (const [p, t] of Object.entries({ "s/src/t1.txt": "s\n", "s/src/t2.txt": "s\n", "f/src/t1.txt": "T1\n", "f/src/t2.txt": "T2\n", "s2/src/t1.txt": "T1\n", "s2/src/t2.txt": "BROKEN\n" })) q.write(p, t);
+    q.git(["add", "-A"]); q.git(["commit", "-q", "-m", "base"]);
+    expect(await gateCommand(q.root, { deck: "d.json", stubs: "s", refs: "f" }, deps())).toStrictEqual(want("tx"));
+    expect(await gateCommand(q.root, { deck: "d.json", stubs: "s2", refs: "f" }, deps())).toStrictEqual(want("planted"));
+  } finally { q.rm(); }
 }, 120000);
 
 test("Gate Command example 3: refusals, missing files, the chain limit", async () => {

@@ -65,8 +65,16 @@ preparation agent repeats this line.
    the record's examples and the contracts the phase changes, **at most 30 per phase and at most 20 min in total**,
    every mutant run under a 120 s timeout (a timeout counts as killed); survivors beyond the cap go to
    `docs/DECISIONS.md` as a known risk naming the file and the mutation. The data and the deck are committed on `main`.
+   With a `morph` that has the `gate` command, the stub and reference play is one command: the stubs of every target
+   committed at `decks/<phase>/_stubs/` (a typed throwing stub per new code file, the current file for a patch target, a
+   one-test file per judge file), the reference targets in a directory outside the tree, then
+   `morph gate --root . --deck decks/<phase>/deck.json --stubs decks/<phase>/_stubs --refs <dir> > /tmp/<phase>-gate.json`
+   under nohup, one JSON verdict read when it exits: every stub red at its expected stage with no compile line outside
+   its targets, every reference green, every card of a generation green again once its generation is written, every run
+   under 250 s, Check Builds clean on the stubs. Its exit 0 replaces the stub, stubcheck, fullvet and chain items here
+   and in step 2; `rows[].failures` are read against the probes' examples. Mutants stay a hand step.
 2. **Gate without the operator.** The run starts by itself only when ALL hold: `morph plan` exit 0; `morph deck check`
-   errors 0; every probe red per example with a readable line on the stubs and stubcheck.mjs exit 0 on each stub log (fullvet.mjs too for a Go `--only` deck); every acceptance chain under 250 s; the
+   errors 0; `morph gate` exit 0 where the command exists, else every probe red per example with a readable line on the stubs and stubcheck.mjs exit 0 on each stub log (fullvet.mjs too for a Go `--only` deck); every acceptance chain under 250 s; the
    mutation cap kept; forecast ≤ $1 for the phase; no slice over 200 KB. Otherwise the phase stops with a report in
    `docs/MEASURE.md` (a row "stopped at gate: <reason>"), touches `~/.morph-wait-operator` and stops.
 3. **Run**: from the repository root, the binary copy:

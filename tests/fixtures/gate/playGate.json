@@ -137,74 +137,42 @@
    "ok": true
   }
  ],
- "ts-rename": [
+ "timeout": [
   {
    "phase": "stub",
    "generation": 0,
-   "card": "to-metres",
-   "exit": 1,
+   "card": "z",
+   "exit": 0,
    "timedOut": false,
-   "seconds": 1,
-   "stage": "probe",
-   "expected": "probe",
-   "outside": [],
-   "failures": [
-    "FAIL  probe/to-metres/to-metres.probe.ts > To Metres example 1",
-    "FAIL  probe/to-metres/to-metres.probe.ts > To Metres example 2"
-   ],
-   "ok": true
-  },
-  {
-   "phase": "stub",
-   "generation": 1,
-   "card": "length-line",
-   "exit": 1,
-   "timedOut": false,
-   "seconds": 1,
-   "stage": "probe",
-   "expected": "probe",
-   "outside": [],
-   "failures": [
-    "FAIL  probe/length-line/length-line.probe.ts > Length Line example 1",
-    "FAIL  probe/length-line/length-line.probe.ts > Length Line example 2"
-   ],
-   "ok": true
-  },
-  {
-   "phase": "stub",
-   "generation": 1,
-   "card": "to-metres-judge",
-   "exit": 1,
-   "timedOut": false,
-   "seconds": 1,
-   "stage": "guard",
+   "seconds": 0.1,
+   "stage": null,
    "expected": "guard",
    "outside": [],
    "failures": [],
-   "ok": true
-  },
-  {
-   "phase": "stub",
-   "generation": 2,
-   "card": "length-line-judge",
-   "exit": 1,
-   "timedOut": false,
-   "seconds": 1,
-   "stage": "guard",
-   "expected": "guard",
-   "outside": [],
-   "failures": [],
-   "ok": true
+   "ok": false
   },
   {
    "phase": "ref",
    "generation": 0,
-   "card": "to-metres",
+   "card": "z",
    "exit": 0,
    "timedOut": false,
-   "seconds": 1,
-   "stage": "frozen",
+   "seconds": 0.1,
+   "stage": null,
    "expected": null,
+   "outside": [],
+   "failures": [],
+   "ok": true
+  },
+  {
+   "phase": "stub",
+   "generation": 1,
+   "card": "s",
+   "exit": null,
+   "timedOut": true,
+   "seconds": 0.1,
+   "stage": "probe",
+   "expected": "probe",
    "outside": [],
    "failures": [],
    "ok": true
@@ -212,41 +180,15 @@
   {
    "phase": "ref",
    "generation": 1,
-   "card": "length-line",
-   "exit": 0,
-   "timedOut": false,
-   "seconds": 1,
-   "stage": "frozen",
+   "card": "s",
+   "exit": null,
+   "timedOut": true,
+   "seconds": 0.1,
+   "stage": "probe",
    "expected": null,
    "outside": [],
    "failures": [],
-   "ok": true
-  },
-  {
-   "phase": "ref",
-   "generation": 1,
-   "card": "to-metres-judge",
-   "exit": 0,
-   "timedOut": false,
-   "seconds": 1,
-   "stage": "frozen",
-   "expected": null,
-   "outside": [],
-   "failures": [],
-   "ok": true
-  },
-  {
-   "phase": "ref",
-   "generation": 2,
-   "card": "length-line-judge",
-   "exit": 0,
-   "timedOut": false,
-   "seconds": 1,
-   "stage": "frozen",
-   "expected": null,
-   "outside": [],
-   "failures": [],
-   "ok": true
+   "ok": false
   }
  ]
 }

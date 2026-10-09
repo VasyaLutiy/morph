@@ -68,11 +68,10 @@
 | `gate/stubLogs.json` (NEW) | ONE object name → text (7 logs) | real acceptance logs of gate stub runs: "go probe" (go-p7b control-contract, red at probe, one `--- FAIL:` line, a panic trace with indented lines), "go judge" (red at `== guard control/control_examples_test.go`), "go vet outside" (runtime-guard on the P20 cut: a `vet:` line naming `supervisor/guard_examples_test.go`, red later at probe), "ts tsc" (ts-rename to-metres on the old cut: two tsc lines naming other files), "ts probe" (two vitest ` FAIL ` lines); "mixed" (written: build, vet and tsc stages, own files, a `#` line, a tab line, a line with no file, a probe stage, the held eslint verdict) and "none" (no header) | Stub Verdict 2, 3 |
 | `gate/verdicts.json` (NEW) | ONE object name → `StubVerdict` | the verdicts of Stub Verdict 2–3 under the log's name, plus "mixed, every stage", "mixed, no pattern" | Stub Verdict 2, 3 |
 | `gate/plans.json` (NEW) | ONE object "p21", "p21c", "missing", "small" → `GatePlan` | the plans of Gate Plan 1–3 | Gate Plan 1–3 |
-| `gate/playGate.json` (NEW) | ONE object "shell", "node_modules", "ts-rename" → `PlayRow[]` | the rows of Play Gate 1–3 (8, 2, 8 rows) | Play Gate 1–3 |
-| `gate/gateCommand.json` (NEW) | ONE object name → `{code, document}` (9 names: "p21", "p21c", "green stub", "outside", "deck not found", "stubs not found", "refs not found", "missing", "slow") | the results of Gate Command 1–3 | Gate Command 1–3 |
-| `gate/ts-rename.gate.json` (NEW) | ONE object path → text (5 files) | `decks/r1/deck.tx.json` (ts-rename's 4 cards cut `--only` with `--checks` by main: a transaction deck) and `decks/r1/_refs/` (the 4 reference targets = `decks/p21c/demo/ts-rename/*.md`) — laid over `ts-rename.json`'s files | Play Gate 3 |
-| `go-p7b/decks/b1/deck.p21c.json` (NEW) | deck file (8 cards, 102 026 B) | go-p7b cut by main `--only` the 8 ids with `--checks decks/b1/checks.json` (goguard/gofirstdiff installed): every acceptance carries the transaction mark | Stub Verdict 1, Gate Plan 2, Gate Command 2 |
-| `go-p7b/decks/b1/_refs/` (NEW) | 8 files at their targets' paths | the reference targets of go-p7b (= `decks/p21/break/ref/`) | Gate Command 1–3 |
+| `gate/playGate.json` (NEW) | ONE object "shell", "node_modules", "timeout" → `PlayRow[]` | the rows of Play Gate 1–3 (8, 2, 4 rows) | Play Gate 1–3 |
+| `gate/gateCommand.json` (NEW) | ONE object name → `{code, document}` (8 names: "p21", "tx", "planted", "deck not found", "stubs not found", "refs not found", "missing", "slow") | the results of Gate Command 1–3 | Gate Command 1–3 |
+| `go-p7b/decks/b1/deck.p21c.json` (NEW) | deck file (8 cards, 102 026 B) | go-p7b cut by main `--only` the 8 ids with `--checks decks/b1/checks.json` (goguard/gofirstdiff installed): every acceptance carries the transaction mark | Stub Verdict 1, Gate Plan 2 |
+| `go-p7b/decks/b1/_refs/` (NEW) | 8 files at their targets' paths | the reference targets of go-p7b (= `decks/p21/break/ref/`) | Gate Command 1, 3 |
 | `go-p7b/decks/b1/deck.p21.json`, `_stubs/` (P21b) | deck file; 8 stub files | the P21a cut; the gate's stubs | Gate Plan 1, 3; Gate Command 1–3 |
 | `cli/parseArgv.json`, `cli/parse.json` (key "23" added) | ONE object | 10 argv lists of `gate` and their results | Parse Command 23 |
 | `cli/examples.json` (key "Main 17" added) | ONE object | given/then of Main 17 | — |
@@ -101,23 +100,12 @@ const rows = (k: string): PlayRow[] => (fixtureJson("gate/playGate.json") as Rec
 const result = (k: string): { code: number; document: unknown } => (fixtureJson("gate/gateCommand.json") as Record<string, { code: number; document: unknown }>)[k];
 const deps = (step = 1000): GateDeps => ({ env: env(), now: clock(step), readDeck: readDeckFile, builds: checkBuilds });
 const B1 = { deck: "decks/b1/deck.p21.json", stubs: "decks/b1/_stubs", refs: "decks/b1/_refs" };
-const COUNT_GO = "package mcp\n\nimport \"morphlite/supervisor\"\n\n// Resumed is a file outside the subset that still reads the renamed field Resumes.\nfunc Resumed(l supervisor.Loop) int { return len(l.Resumes) }\n";
-// Play Gate 3: ts-rename as a committed repository
-function tsRename(): TmpRepo { const r = tmpRepo();
-  for (const [p, t] of Object.entries(fixtureJson("ts-rename.json") as Record<string, string>)) r.write(p, t);
-  for (const [p, t] of Object.entries(fixtureJson("gate/ts-rename.gate.json") as Record<string, string>)) r.write(p, t);
-  for (const f of ["eslint.config.js", "vitest.config.ts", "decks/tools/guard.mjs", "decks/tools/firstdiff.mjs", "decks/tools/layers.json"])
-    r.write(f, fs.readFileSync(path.resolve(fixturePath("."), "../../templates/typescript", f), "utf8"));
-  r.write(".gitignore", "probe/\nnode_modules\n"); fs.symlinkSync(path.resolve(fixturePath("."), "../../node_modules"), r.path("node_modules"));
-  r.git(["add", "-A"]); r.git(["commit", "-q", "-m", "base"]); return r; }
-function files(dir: string): string[] { const out: string[] = []; const walk = (a: string, p: string): void => {
-  for (const e of fs.readdirSync(a, { withFileTypes: true })) { const rel = p === "" ? e.name : p + "/" + e.name;
-    if (e.isDirectory()) walk(path.join(a, e.name), rel); else out.push(rel); } }; walk(dir, ""); return out.sort(); }
+const M = TRANSACTION_MARK + "\n";                         // Gate Command 2: both acceptances start with it
 // every test that runs a child process: test(name, fn, 120000); every repo: try { … } finally { r.rm(); }
 ```
 
-**Distinct markers.** Card ids a, b, c, n, x, k, m, n, z, s, zz and the fixtures' ids; marks A1, B2, C3, N1, X1, X2, "old
-a", "kept"; dirs st, rf, st2, st3, rf3, s, f, k; the clock steps 1000, 2500, 300000, 249000. No name of P7b, go-p7b,
+**Distinct markers.** Card ids a, b, c, n, x, k, m, z, s, u, t1, t2, zz and the fixtures' ids; marks A1, B2, C3, N1, X1, X2, T1, T2, BROKEN, U1,
+"old a", "kept"; dirs st, rf, st2, st3, rf3, s, s2, f, k; the clock steps 1000, 2500, 300000, 249000. No name of P7b, go-p7b,
 ts-rename, supervisor or Resumes, no card id of a fixture, is in any `src/` file: only CHAIN_LIMIT_SECONDS, the stage
 names, the commit identity and the messages below are fixed by the record.
 
@@ -199,7 +187,7 @@ export async function playGate(input: PlayInput, deps: PlayDeps): Promise<PlayRo
 |---|---|---|
 | Play Gate 1 | repo of d.json, src/a.txt "old a\n", st/, rf/; cards a, b, c (the record's acceptances); Gate Plan(cards, [[a, b], [c]], …); now +1000 | playGate.json "shell" (stub b NOT ok: stage tsc, outside the `src/zz.ts(1,1)` line); root's HEAD, refs, status, worktree list unchanged; src/a.txt "old a\n" |
 | Play Gate 2 | node_modules ignored in root; card n; before records | "node_modules"; before once, a dir "w" under os.tmpdir() with d.json and the link, gone afterwards |
-| Play Gate 3 | tsRename(); Gate Plan of decks/r1/deck.tx.json over files(_stubs), files(_refs) | "ts-rename": 4 stub rows ok, 4 ref rows green |
+| Play Gate 3 | cards z (acceptance null), s (`sleep 5`); a step of an unknown card first; timeoutMs 700; now +100 | "timeout": the unknown card skipped; z's stub green (NOT ok), its ref ok; s's stub timed out at "probe" (ok), its ref timed out (NOT ok) |
 
 **`src/gate/gateCommand.ts`** (NEW; layer gate; node:fs, node:path; cards' layerGenerations and the Deck type,
 ./gatePlan.js, ./playGate.js) — **Gate Command**:
@@ -237,7 +225,7 @@ export async function gateCommand(root: string, args: GateArgs, deps: GateDeps):
 | example | given | result |
 |---|---|---|
 | Gate Command 1 | p7b(), B1, deps() | gateCommand.json "p21": code 2, the one retry error naming `supervisor/guard.go:20:23`; root status "" |
-| Gate Command 2 | deck.p21c.json; then stubs st2 (= _stubs, control/control.go from _refs); then COUNT_GO committed at mcp/count.go, stubs _stubs | "p21c" code 0; "green stub" ["stub control-contract: green on its stubs"]; "outside" 16 errors (8 build, 8 ref) naming `mcp/count.go:6:52` |
+| Gate Command 2 | repo of d.json (the record's t1, t2 with M), s/, f/, s2/; stubs "s" then "s2", refs "f" | "tx" code 0, transaction, 4 rows, two build notes; "planted" code 2: ["stub t1: green on its stubs", "stub t2: red at tsc, expected probe", "stub t2: names a file outside its targets: lib/old.ts(3,4): error TS2304: Cannot find name q7."] |
 | Gate Command 3 | deck nope.json; stubs nope; refs nope; st3 without supervisor/guard.go + rf3 without daemon/daemon.go; a repo with d.json = card x (src/x.txt), s/, f/, deps(300000) | "deck not found" 4; "stubs not found" 4; "refs not found" 4; "missing" 2 (no play); "slow" 2: two "300 s, over the 250 s limit", builds [x's note "no language profile claims src/x.txt: not built"] |
 
 **`src/cli/types.ts`, `src/cli/parse.ts`, `src/cli/main.ts`** (PATCH) — **Parse Command**, **Main**:
@@ -297,6 +285,11 @@ export async function gateCommand(root: string, args: GateArgs, deps: GateDeps):
   issue asks; code 2 is "a refusal before spend" (Classify Error).
 - **No-command message** · unchanged · two pins (parse.json "1" and tests/cli/parse.examples.test.ts:132); the listing
   is a help text, not a contract of this phase.
+- **Test time** · the examples play real Go once (go-p7b deck.p21.json, 18 s) and shell decks otherwise; TypeScript is
+  covered by real tsc/vitest logs (Stub Verdict 2) and by the dogfood gate of this deck · measured: with go-p7b's
+  transaction, planted and outside plays and ts-rename's TypeScript play in the examples the four gate test files took
+  113 s and the full suite 204 s on this 2-core VPS (100 s without them), every later chain over 250 s; those plays are
+  §1's measurements and claim 6, not tests.
 - **Dogfood** · this phase's own gate is played by hand (the tool exists after the run): the reference binary of this
   preparation runs the deck's acceptances, plus stubcheck.mjs on every stub log; after the run the session re-plays this
   deck with the run's binary (`morph gate --deck decks/p22a/deck.json --stubs decks/p22a/_stubs --refs <the run's
@@ -331,7 +324,7 @@ Built by `morph plan --checks decks/p22a/checks.json`, narrow to broad, every st
 
 Code cards (code-only targets): `probe/<card>/` → `tsc` (per-card tsconfig) → `eslint <targets>` → `guard.mjs src
 <targets>` → the probe `decks/p22a/parts/<card>.probe.ts` (stub-verdict SV 1–3 + 1 row = 4; gate-plan GP 1–3 + 1 row = 4;
-play-gate PG 1–3 + 1 row = 4; gate-command GC 1, the green stub of 2, 3 + 1 row = 4; parse-command PC 23, Main 17 + 1 row
+play-gate PG 1–3 + 1 row = 4; gate-command GC 1–3 + 1 row = 4; parse-command PC 23, Main 17 + 1 row
 = 3; **19 tests**) → eslint's verdict → full `vitest run` → own git → frozen → untracked.
 
 Judge cards: `probe/<card>/` → `tsc` → `eslint <targets>` → `guard.mjs tests <file> <min> <max> lits<i>.json` → `vitest
@@ -341,8 +334,8 @@ run <targets>` → eslint's verdict → full run → own git → frozen → untr
 |---|---|---|---|---|
 | `tests/gate/stubVerdict.examples.test.ts` | yes | 3 | 9 | `Stub Verdict example 1` … `3`, `gate/stubLogs.json`, `gate/verdicts.json`, `mixed, every stage`, `builder/go/judge1.txt` |
 | `tests/gate/gatePlan.examples.test.ts` | yes | 3 | 9 | `Gate Plan example 1` … `3`, `gate/plans.json`, `deck.p21c.json`, `extra.ts` |
-| `tests/gate/playGate.examples.test.ts` | yes | 3 | 9 | `Play Gate example 1` … `3`, `gate/playGate.json`, `gate/ts-rename.gate.json`, `gate: b,gate: a,base,`, `node_modules/q/index.js` |
-| `tests/gate/gateCommand.examples.test.ts` | yes | 3 | 9 | `Gate Command example 1` … `3`, `gate/gateCommand.json`, `deck.p21c.json`, `mcp/count.go`, `green stub`, `300000` |
+| `tests/gate/playGate.examples.test.ts` | yes | 3 | 9 | `Play Gate example 1` … `3`, `gate/playGate.json`, `gate: b,gate: a,base,`, `node_modules/q/index.js`, `timeoutMs: 700` |
+| `tests/gate/gateCommand.examples.test.ts` | yes | 3 | 9 | `Gate Command example 1` … `3`, `gate/gateCommand.json`, `decks/b1/_refs`, `planted`, `BROKEN`, `300000` |
 | `tests/cli/gate.examples.test.ts` | yes | 2 | 8 | `Parse Command example 23`, `Main example 17`, `missing --stubs`, `deck file not found: nope.json`, `morph gate: exit 4` |
 
 min = the record's examples in the file; max = min + 6.
