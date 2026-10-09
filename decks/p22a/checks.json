@@ -1,0 +1,127 @@
+{
+ "phase": "p22a",
+ "ownGit": true,
+ "frozen": [
+  "contour.yaml",
+  "morph-map.json",
+  "docs",
+  "decks",
+  "tests/fixtures",
+  "templates"
+ ],
+ "cards": [
+  {
+   "id": "stub-verdict"
+  },
+  {
+   "id": "gate-plan"
+  },
+  {
+   "id": "play-gate"
+  },
+  {
+   "id": "gate-command"
+  },
+  {
+   "id": "parse-command"
+  },
+  {
+   "id": "stub-verdict-judge",
+   "files": [
+    {
+     "file": "tests/gate/stubVerdict.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": [
+      "Stub Verdict example 1",
+      "Stub Verdict example 2",
+      "Stub Verdict example 3",
+      "gate/stubLogs.json",
+      "gate/verdicts.json",
+      "mixed, every stage",
+      "builder/go/judge1.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "gate-plan-judge",
+   "files": [
+    {
+     "file": "tests/gate/gatePlan.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": [
+      "Gate Plan example 1",
+      "Gate Plan example 2",
+      "Gate Plan example 3",
+      "gate/plans.json",
+      "deck.p21c.json",
+      "extra.ts"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "play-gate-judge",
+   "files": [
+    {
+     "file": "tests/gate/playGate.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": [
+      "Play Gate example 1",
+      "Play Gate example 2",
+      "Play Gate example 3",
+      "gate/playGate.json",
+      "gate/ts-rename.gate.json",
+      "gate: b,gate: a,base,",
+      "node_modules/q/index.js"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "gate-command-judge",
+   "files": [
+    {
+     "file": "tests/gate/gateCommand.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": [
+      "Gate Command example 1",
+      "Gate Command example 2",
+      "Gate Command example 3",
+      "gate/gateCommand.json",
+      "deck.p21c.json",
+      "mcp/count.go",
+      "green stub",
+      "300000"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "parse-command-judge",
+   "files": [
+    {
+     "file": "tests/cli/gate.examples.test.ts",
+     "min": 2,
+     "max": 8,
+     "new": true,
+     "lits": [
+      "Parse Command example 23",
+      "Main example 17",
+      "missing --stubs",
+      "deck file not found: nope.json",
+      "morph gate: exit 4"
+     ]
+    }
+   ]
+  }
+ ]
+}

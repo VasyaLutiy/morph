@@ -1,0 +1,1552 @@
+{
+ "deck not found": {
+  "code": 4,
+  "document": {
+   "error": {
+    "code": 4,
+    "kind": "UsageError",
+    "message": "deck file not found: nope.json"
+   }
+  }
+ },
+ "stubs not found": {
+  "code": 4,
+  "document": {
+   "error": {
+    "code": 4,
+    "kind": "UsageError",
+    "message": "stubs directory not found: nope"
+   }
+  }
+ },
+ "refs not found": {
+  "code": 4,
+  "document": {
+   "error": {
+    "code": 4,
+    "kind": "UsageError",
+    "message": "references directory not found: nope"
+   }
+  }
+ },
+ "missing": {
+  "code": 2,
+  "document": {
+   "deck": "decks/b1/deck.p21.json",
+   "transaction": false,
+   "cards": 8,
+   "generations": [
+    [
+     "control-contract"
+    ],
+    [
+     "control-contract-judge",
+     "phase-loop"
+    ],
+    [
+     "phase-loop-judge",
+     "runtime-guard"
+    ],
+    [
+     "daemon-core",
+     "runtime-guard-judge"
+    ],
+    [
+     "daemon-core-judge"
+    ]
+   ],
+   "missing": [
+    "no stub: supervisor/guard.go",
+    "no reference: daemon/daemon.go"
+   ],
+   "builds": null,
+   "rows": [],
+   "maxSeconds": 0,
+   "errors": [
+    "no stub: supervisor/guard.go",
+    "no reference: daemon/daemon.go"
+   ]
+  }
+ },
+ "slow": {
+  "code": 2,
+  "document": {
+   "deck": "d.json",
+   "transaction": false,
+   "cards": 1,
+   "generations": [
+    [
+     "x"
+    ]
+   ],
+   "missing": [],
+   "builds": [
+    {
+     "card": "x",
+     "generation": 0,
+     "language": null,
+     "stubbed": 0,
+     "missing": [],
+     "breaks": [],
+     "note": "no language profile claims src/x.txt: not built"
+    }
+   ],
+   "rows": [
+    {
+     "phase": "stub",
+     "generation": 0,
+     "card": "x",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 300,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 0,
+     "card": "x",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 300,
+     "stage": "probe",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    }
+   ],
+   "maxSeconds": 300,
+   "errors": [
+    "stub x: 300 s, over the 250 s limit",
+    "ref x: 300 s, over the 250 s limit"
+   ]
+  }
+ },
+ "p21": {
+  "code": 2,
+  "document": {
+   "deck": "decks/b1/deck.p21.json",
+   "transaction": false,
+   "cards": 8,
+   "generations": [
+    [
+     "control-contract"
+    ],
+    [
+     "control-contract-judge",
+     "phase-loop"
+    ],
+    [
+     "phase-loop-judge",
+     "runtime-guard"
+    ],
+    [
+     "daemon-core",
+     "runtime-guard-judge"
+    ],
+    [
+     "daemon-core-judge"
+    ]
+   ],
+   "missing": [],
+   "builds": [
+    {
+     "card": "control-contract",
+     "generation": 0,
+     "language": "go",
+     "stubbed": 1,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "control-contract-judge",
+     "generation": 1,
+     "language": "go",
+     "stubbed": 2,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "phase-loop",
+     "generation": 1,
+     "language": "go",
+     "stubbed": 2,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "phase-loop-judge",
+     "generation": 2,
+     "language": "go",
+     "stubbed": 4,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "runtime-guard",
+     "generation": 2,
+     "language": "go",
+     "stubbed": 4,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "daemon-core",
+     "generation": 3,
+     "language": "go",
+     "stubbed": 6,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "runtime-guard-judge",
+     "generation": 3,
+     "language": "go",
+     "stubbed": 6,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "daemon-core-judge",
+     "generation": 4,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    }
+   ],
+   "rows": [
+    {
+     "phase": "stub",
+     "generation": 0,
+     "card": "control-contract",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "--- FAIL: TestProbeControlContractExample1 (0.00s)"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 0,
+     "card": "control-contract",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 1,
+     "card": "control-contract-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "guard",
+     "expected": "guard",
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 1,
+     "card": "control-contract-judge",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 1,
+     "card": "phase-loop",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "--- FAIL: TestProbePhaseLoopExample1 (0.00s)"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 1,
+     "card": "phase-loop",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "retry",
+     "generation": 1,
+     "card": "control-contract-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "full",
+     "expected": null,
+     "outside": [
+      "supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)"
+     ],
+     "failures": [],
+     "ok": false
+    },
+    {
+     "phase": "retry",
+     "generation": 1,
+     "card": "phase-loop",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 2,
+     "card": "phase-loop-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "guard",
+     "expected": "guard",
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 2,
+     "card": "phase-loop-judge",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 2,
+     "card": "runtime-guard",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "--- FAIL: TestProbeRuntimeGuardExample1 (0.00s)"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 2,
+     "card": "runtime-guard",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "retry",
+     "generation": 2,
+     "card": "phase-loop-judge",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "retry",
+     "generation": 2,
+     "card": "runtime-guard",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 3,
+     "card": "daemon-core",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "--- FAIL: TestProbeDaemonCoreExample1 (0.00s)"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 3,
+     "card": "daemon-core",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 3,
+     "card": "runtime-guard-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "guard",
+     "expected": "guard",
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 3,
+     "card": "runtime-guard-judge",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "retry",
+     "generation": 3,
+     "card": "daemon-core",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "retry",
+     "generation": 3,
+     "card": "runtime-guard-judge",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 4,
+     "card": "daemon-core-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "guard",
+     "expected": "guard",
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 4,
+     "card": "daemon-core-judge",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    }
+   ],
+   "maxSeconds": 1,
+   "errors": [
+    "retry control-contract-judge: red (exit 1) at full: supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)"
+   ]
+  }
+ },
+ "p21c": {
+  "code": 0,
+  "document": {
+   "deck": "decks/b1/deck.p21c.json",
+   "transaction": true,
+   "cards": 8,
+   "generations": [
+    [
+     "control-contract"
+    ],
+    [
+     "control-contract-judge",
+     "phase-loop"
+    ],
+    [
+     "phase-loop-judge",
+     "runtime-guard"
+    ],
+    [
+     "daemon-core",
+     "runtime-guard-judge"
+    ],
+    [
+     "daemon-core-judge"
+    ]
+   ],
+   "missing": [],
+   "builds": [
+    {
+     "card": "control-contract",
+     "generation": 0,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "control-contract-judge",
+     "generation": 1,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "phase-loop",
+     "generation": 1,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "phase-loop-judge",
+     "generation": 2,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "runtime-guard",
+     "generation": 2,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "daemon-core",
+     "generation": 3,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "runtime-guard-judge",
+     "generation": 3,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "daemon-core-judge",
+     "generation": 4,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    }
+   ],
+   "rows": [
+    {
+     "phase": "stub",
+     "generation": 0,
+     "card": "control-contract",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "--- FAIL: TestProbeControlContractExample1 (0.00s)"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 1,
+     "card": "control-contract-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "guard",
+     "expected": "guard",
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 1,
+     "card": "phase-loop",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "--- FAIL: TestProbePhaseLoopExample1 (0.00s)"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 2,
+     "card": "phase-loop-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "guard",
+     "expected": "guard",
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 2,
+     "card": "runtime-guard",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "--- FAIL: TestProbeRuntimeGuardExample1 (0.00s)"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 3,
+     "card": "daemon-core",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "--- FAIL: TestProbeDaemonCoreExample1 (0.00s)"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 3,
+     "card": "runtime-guard-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "guard",
+     "expected": "guard",
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 4,
+     "card": "daemon-core-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "guard",
+     "expected": "guard",
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 0,
+     "card": "control-contract",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 1,
+     "card": "control-contract-judge",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 1,
+     "card": "phase-loop",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 2,
+     "card": "phase-loop-judge",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 2,
+     "card": "runtime-guard",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 3,
+     "card": "daemon-core",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 3,
+     "card": "runtime-guard-judge",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 4,
+     "card": "daemon-core-judge",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    }
+   ],
+   "maxSeconds": 1,
+   "errors": []
+  }
+ },
+ "green stub": {
+  "code": 2,
+  "document": {
+   "deck": "decks/b1/deck.p21c.json",
+   "transaction": true,
+   "cards": 8,
+   "generations": [
+    [
+     "control-contract"
+    ],
+    [
+     "control-contract-judge",
+     "phase-loop"
+    ],
+    [
+     "phase-loop-judge",
+     "runtime-guard"
+    ],
+    [
+     "daemon-core",
+     "runtime-guard-judge"
+    ],
+    [
+     "daemon-core-judge"
+    ]
+   ],
+   "missing": [],
+   "builds": [
+    {
+     "card": "control-contract",
+     "generation": 0,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "control-contract-judge",
+     "generation": 1,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "phase-loop",
+     "generation": 1,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "phase-loop-judge",
+     "generation": 2,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "runtime-guard",
+     "generation": 2,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "daemon-core",
+     "generation": 3,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "runtime-guard-judge",
+     "generation": 3,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    },
+    {
+     "card": "daemon-core-judge",
+     "generation": 4,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [],
+     "note": null
+    }
+   ],
+   "rows": [
+    {
+     "phase": "stub",
+     "generation": 0,
+     "card": "control-contract",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": "probe",
+     "outside": [],
+     "failures": [],
+     "ok": false
+    },
+    {
+     "phase": "stub",
+     "generation": 1,
+     "card": "control-contract-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "guard",
+     "expected": "guard",
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 1,
+     "card": "phase-loop",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "--- FAIL: TestProbePhaseLoopExample1 (0.00s)"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 2,
+     "card": "phase-loop-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "guard",
+     "expected": "guard",
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 2,
+     "card": "runtime-guard",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "--- FAIL: TestProbeRuntimeGuardExample1 (0.00s)"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 3,
+     "card": "daemon-core",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "--- FAIL: TestProbeDaemonCoreExample1 (0.00s)"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 3,
+     "card": "runtime-guard-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "guard",
+     "expected": "guard",
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 4,
+     "card": "daemon-core-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "guard",
+     "expected": "guard",
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 0,
+     "card": "control-contract",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 1,
+     "card": "control-contract-judge",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 1,
+     "card": "phase-loop",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 2,
+     "card": "phase-loop-judge",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 2,
+     "card": "runtime-guard",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 3,
+     "card": "daemon-core",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 3,
+     "card": "runtime-guard-judge",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 4,
+     "card": "daemon-core-judge",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "frozen",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    }
+   ],
+   "maxSeconds": 1,
+   "errors": [
+    "stub control-contract: green on its stubs"
+   ]
+  }
+ },
+ "outside": {
+  "code": 2,
+  "document": {
+   "deck": "decks/b1/deck.p21c.json",
+   "transaction": true,
+   "cards": 8,
+   "generations": [
+    [
+     "control-contract"
+    ],
+    [
+     "control-contract-judge",
+     "phase-loop"
+    ],
+    [
+     "phase-loop-judge",
+     "runtime-guard"
+    ],
+    [
+     "daemon-core",
+     "runtime-guard-judge"
+    ],
+    [
+     "daemon-core-judge"
+    ]
+   ],
+   "missing": [],
+   "builds": [
+    {
+     "card": "control-contract",
+     "generation": 0,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [
+      "mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)"
+     ],
+     "note": null
+    },
+    {
+     "card": "control-contract-judge",
+     "generation": 1,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [
+      "mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)"
+     ],
+     "note": null
+    },
+    {
+     "card": "phase-loop",
+     "generation": 1,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [
+      "mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)"
+     ],
+     "note": null
+    },
+    {
+     "card": "phase-loop-judge",
+     "generation": 2,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [
+      "mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)"
+     ],
+     "note": null
+    },
+    {
+     "card": "runtime-guard",
+     "generation": 2,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [
+      "mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)"
+     ],
+     "note": null
+    },
+    {
+     "card": "daemon-core",
+     "generation": 3,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [
+      "mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)"
+     ],
+     "note": null
+    },
+    {
+     "card": "runtime-guard-judge",
+     "generation": 3,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [
+      "mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)"
+     ],
+     "note": null
+    },
+    {
+     "card": "daemon-core-judge",
+     "generation": 4,
+     "language": "go",
+     "stubbed": 8,
+     "missing": [],
+     "breaks": [
+      "mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)"
+     ],
+     "note": null
+    }
+   ],
+   "rows": [
+    {
+     "phase": "stub",
+     "generation": 0,
+     "card": "control-contract",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "--- FAIL: TestProbeControlContractExample1 (0.00s)"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 1,
+     "card": "control-contract-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "guard",
+     "expected": "guard",
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 1,
+     "card": "phase-loop",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "--- FAIL: TestProbePhaseLoopExample1 (0.00s)"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 2,
+     "card": "phase-loop-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "guard",
+     "expected": "guard",
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 2,
+     "card": "runtime-guard",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "--- FAIL: TestProbeRuntimeGuardExample1 (0.00s)"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 3,
+     "card": "daemon-core",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "--- FAIL: TestProbeDaemonCoreExample1 (0.00s)"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 3,
+     "card": "runtime-guard-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "guard",
+     "expected": "guard",
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "stub",
+     "generation": 4,
+     "card": "daemon-core-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "guard",
+     "expected": "guard",
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 0,
+     "card": "control-contract",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "full",
+     "expected": null,
+     "outside": [
+      "mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)"
+     ],
+     "failures": [],
+     "ok": false
+    },
+    {
+     "phase": "ref",
+     "generation": 1,
+     "card": "control-contract-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "full",
+     "expected": null,
+     "outside": [
+      "mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)"
+     ],
+     "failures": [],
+     "ok": false
+    },
+    {
+     "phase": "ref",
+     "generation": 1,
+     "card": "phase-loop",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "full",
+     "expected": null,
+     "outside": [
+      "mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)"
+     ],
+     "failures": [],
+     "ok": false
+    },
+    {
+     "phase": "ref",
+     "generation": 2,
+     "card": "phase-loop-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "full",
+     "expected": null,
+     "outside": [
+      "mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)"
+     ],
+     "failures": [],
+     "ok": false
+    },
+    {
+     "phase": "ref",
+     "generation": 2,
+     "card": "runtime-guard",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "full",
+     "expected": null,
+     "outside": [
+      "mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)"
+     ],
+     "failures": [],
+     "ok": false
+    },
+    {
+     "phase": "ref",
+     "generation": 3,
+     "card": "daemon-core",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "full",
+     "expected": null,
+     "outside": [
+      "mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)"
+     ],
+     "failures": [],
+     "ok": false
+    },
+    {
+     "phase": "ref",
+     "generation": 3,
+     "card": "runtime-guard-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "full",
+     "expected": null,
+     "outside": [
+      "mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)"
+     ],
+     "failures": [],
+     "ok": false
+    },
+    {
+     "phase": "ref",
+     "generation": 4,
+     "card": "daemon-core-judge",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "full",
+     "expected": null,
+     "outside": [
+      "mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)"
+     ],
+     "failures": [],
+     "ok": false
+    }
+   ],
+   "maxSeconds": 1,
+   "errors": [
+    "build control-contract: mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)",
+    "build control-contract-judge: mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)",
+    "build phase-loop: mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)",
+    "build phase-loop-judge: mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)",
+    "build runtime-guard: mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)",
+    "build daemon-core: mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)",
+    "build runtime-guard-judge: mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)",
+    "build daemon-core-judge: mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)",
+    "ref control-contract: red (exit 1) at full: mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)",
+    "ref control-contract-judge: red (exit 1) at full: mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)",
+    "ref phase-loop: red (exit 1) at full: mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)",
+    "ref phase-loop-judge: red (exit 1) at full: mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)",
+    "ref runtime-guard: red (exit 1) at full: mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)",
+    "ref daemon-core: red (exit 1) at full: mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)",
+    "ref runtime-guard-judge: red (exit 1) at full: mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)",
+    "ref daemon-core-judge: red (exit 1) at full: mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)"
+   ]
+  }
+ }
+}

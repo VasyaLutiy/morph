@@ -1,0 +1,447 @@
+{
+ "p21": {
+  "transaction": false,
+  "steps": [
+   {
+    "phase": "stub",
+    "generation": 0,
+    "card": "control-contract",
+    "put": {
+     "control/control.go": "stub"
+    },
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 0,
+    "card": "control-contract",
+    "put": {
+     "control/control.go": "ref"
+    },
+    "commit": [
+     "control/control.go"
+    ]
+   },
+   {
+    "phase": "stub",
+    "generation": 1,
+    "card": "control-contract-judge",
+    "put": {
+     "control/control_examples_test.go": "stub"
+    },
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 1,
+    "card": "control-contract-judge",
+    "put": {
+     "control/control_examples_test.go": "ref"
+    },
+    "commit": [
+     "control/control_examples_test.go"
+    ]
+   },
+   {
+    "phase": "stub",
+    "generation": 1,
+    "card": "phase-loop",
+    "put": {
+     "supervisor/loop.go": "stub"
+    },
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 1,
+    "card": "phase-loop",
+    "put": {
+     "supervisor/loop.go": "ref"
+    },
+    "commit": [
+     "supervisor/loop.go"
+    ]
+   },
+   {
+    "phase": "retry",
+    "generation": 1,
+    "card": "control-contract-judge",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "retry",
+    "generation": 1,
+    "card": "phase-loop",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "stub",
+    "generation": 2,
+    "card": "phase-loop-judge",
+    "put": {
+     "supervisor/loop_examples_test.go": "stub"
+    },
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 2,
+    "card": "phase-loop-judge",
+    "put": {
+     "supervisor/loop_examples_test.go": "ref"
+    },
+    "commit": [
+     "supervisor/loop_examples_test.go"
+    ]
+   },
+   {
+    "phase": "stub",
+    "generation": 2,
+    "card": "runtime-guard",
+    "put": {
+     "supervisor/guard.go": "stub"
+    },
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 2,
+    "card": "runtime-guard",
+    "put": {
+     "supervisor/guard.go": "ref"
+    },
+    "commit": [
+     "supervisor/guard.go"
+    ]
+   },
+   {
+    "phase": "retry",
+    "generation": 2,
+    "card": "phase-loop-judge",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "retry",
+    "generation": 2,
+    "card": "runtime-guard",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "stub",
+    "generation": 3,
+    "card": "daemon-core",
+    "put": {
+     "daemon/daemon.go": "stub"
+    },
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 3,
+    "card": "daemon-core",
+    "put": {
+     "daemon/daemon.go": "ref"
+    },
+    "commit": [
+     "daemon/daemon.go"
+    ]
+   },
+   {
+    "phase": "stub",
+    "generation": 3,
+    "card": "runtime-guard-judge",
+    "put": {
+     "supervisor/guard_examples_test.go": "stub"
+    },
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 3,
+    "card": "runtime-guard-judge",
+    "put": {
+     "supervisor/guard_examples_test.go": "ref"
+    },
+    "commit": [
+     "supervisor/guard_examples_test.go"
+    ]
+   },
+   {
+    "phase": "retry",
+    "generation": 3,
+    "card": "daemon-core",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "retry",
+    "generation": 3,
+    "card": "runtime-guard-judge",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "stub",
+    "generation": 4,
+    "card": "daemon-core-judge",
+    "put": {
+     "daemon/daemon_examples_test.go": "stub"
+    },
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 4,
+    "card": "daemon-core-judge",
+    "put": {
+     "daemon/daemon_examples_test.go": "ref"
+    },
+    "commit": [
+     "daemon/daemon_examples_test.go"
+    ]
+   }
+  ],
+  "missing": []
+ },
+ "p21c": {
+  "transaction": true,
+  "steps": [
+   {
+    "phase": "stub",
+    "generation": 0,
+    "card": "control-contract",
+    "put": {
+     "control/control.go": "stub",
+     "control/control_examples_test.go": "stub",
+     "supervisor/loop.go": "stub",
+     "supervisor/loop_examples_test.go": "stub",
+     "supervisor/guard.go": "stub",
+     "daemon/daemon.go": "stub",
+     "supervisor/guard_examples_test.go": "stub",
+     "daemon/daemon_examples_test.go": "stub"
+    },
+    "commit": []
+   },
+   {
+    "phase": "stub",
+    "generation": 1,
+    "card": "control-contract-judge",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "stub",
+    "generation": 1,
+    "card": "phase-loop",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "stub",
+    "generation": 2,
+    "card": "phase-loop-judge",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "stub",
+    "generation": 2,
+    "card": "runtime-guard",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "stub",
+    "generation": 3,
+    "card": "daemon-core",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "stub",
+    "generation": 3,
+    "card": "runtime-guard-judge",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "stub",
+    "generation": 4,
+    "card": "daemon-core-judge",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 0,
+    "card": "control-contract",
+    "put": {
+     "control/control.go": "ref",
+     "control/control_examples_test.go": "ref",
+     "supervisor/loop.go": "ref",
+     "supervisor/loop_examples_test.go": "ref",
+     "supervisor/guard.go": "ref",
+     "daemon/daemon.go": "ref",
+     "supervisor/guard_examples_test.go": "ref",
+     "daemon/daemon_examples_test.go": "ref"
+    },
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 1,
+    "card": "control-contract-judge",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 1,
+    "card": "phase-loop",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 2,
+    "card": "phase-loop-judge",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 2,
+    "card": "runtime-guard",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 3,
+    "card": "daemon-core",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 3,
+    "card": "runtime-guard-judge",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 4,
+    "card": "daemon-core-judge",
+    "put": {},
+    "commit": [
+     "control/control.go",
+     "control/control_examples_test.go",
+     "supervisor/loop.go",
+     "supervisor/loop_examples_test.go",
+     "supervisor/guard.go",
+     "daemon/daemon.go",
+     "supervisor/guard_examples_test.go",
+     "daemon/daemon_examples_test.go"
+    ]
+   }
+  ],
+  "missing": []
+ },
+ "missing": {
+  "transaction": false,
+  "steps": [],
+  "missing": [
+   "no reference: control/control.go",
+   "no stub: supervisor/guard.go",
+   "no reference: daemon/daemon.go"
+  ]
+ },
+ "small": {
+  "transaction": false,
+  "steps": [
+   {
+    "phase": "stub",
+    "generation": 0,
+    "card": "k",
+    "put": {
+     "src/k.ts": "stub",
+     "tests/k.test.ts": "stub"
+    },
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 0,
+    "card": "k",
+    "put": {
+     "src/k.ts": "ref",
+     "tests/k.test.ts": "ref"
+    },
+    "commit": [
+     "src/k.ts",
+     "tests/k.test.ts"
+    ]
+   },
+   {
+    "phase": "stub",
+    "generation": 2,
+    "card": "m",
+    "put": {
+     "src/m.ts": "stub"
+    },
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 2,
+    "card": "m",
+    "put": {
+     "src/m.ts": "ref"
+    },
+    "commit": [
+     "src/m.ts"
+    ]
+   },
+   {
+    "phase": "stub",
+    "generation": 2,
+    "card": "n",
+    "put": {
+     "src/n.ts": "stub"
+    },
+    "commit": []
+   },
+   {
+    "phase": "ref",
+    "generation": 2,
+    "card": "n",
+    "put": {
+     "src/n.ts": "ref"
+    },
+    "commit": [
+     "src/n.ts"
+    ]
+   },
+   {
+    "phase": "retry",
+    "generation": 2,
+    "card": "m",
+    "put": {},
+    "commit": []
+   },
+   {
+    "phase": "retry",
+    "generation": 2,
+    "card": "n",
+    "put": {},
+    "commit": []
+   }
+  ],
+  "missing": []
+ }
+}

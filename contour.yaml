@@ -1494,7 +1494,7 @@ System:
     # ---------------------------------------------------------------- P7
     - name: cli
       description: >
-        The `morph` binary: src/cli/*.ts and the entry src/cli.ts (bin dist/cli.js): argv parsed, routed to a command by Main, one JSON document on stdout, log
+        The `morph` binary: src/cli/*.ts and the entry src/cli.ts (bin dist/cli.js): argv parsed, routed by Main, one JSON document on stdout, log
         lines on stderr, an exit code per outcome. Only the entry touches the process.
         tests/fixtures/cli/examples.json["<Function> <n>"] holds the given and then of an example that names it.
       language: typescript
@@ -1503,37 +1503,37 @@ System:
         - name: Parse Command
           description: argv into one Command or a usage error.
           behavior: >
-            parseCommand(argv) scans argv left to right. A token starting with "--" is a flag: --pretty, --judge, --write, --md and --commit take no value; --root, --deck,
-            --processor, --run-id, --deadline, --max-cards, --max-retry-batches, --slice-cap-bytes, --spec, --component, --map, --out, --checks, --batch,
-            --issue, --seed-file, --from-scout, --scout, --mutants, --mutant-timeout, --test, --id, --model, --name, --language, --module, --templates, --only take the next token whatever it is; any other flag (--x=y too) → "unknown flag: <t>"; a value flag last → "flag <t> needs a value"; a flag twice → "flag
-            <t> given twice", but --component repeats, its values in argv order (the first error by argv wins). Other tokens are words, giving the command: none
-            → "no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept, init)"; "run"; "plan" ("plan --from-scout" when --from-scout is given);
-            "submit"; "collect"; "primer"; "scout"; "review" with two words after it (<base> <head>); "card"; "accept"; "init"; "deck" "check"; a first word report → NotYetError "command report is not available yet"; "deck" add|status|reset|clear → NotYetError "command deck <w> is
-            not available yet"; else "unknown command: <words, space-joined>". An extra word → "unexpected argument: <first extra>". Then in order: a flag the
-            command does not take → "flag <f> does not apply to <command>", in argv order (deck check: --root, --pretty, --deck, --slice-cap-bytes; run: --root,
-            --pretty, --deck, --processor, --run-id, --deadline, --max-cards, --max-retry-batches; plan: --root, --pretty, --spec, --component, --map, --judge,
-            --out, --checks, --only; review: --root, --pretty, --spec, --map, --scout, --mutants, --mutant-timeout, --test, --write; submit: --root, --pretty, --deck, --processor; collect: --root, --pretty, --batch; primer: --root, --pretty, --write; scout: --root, --pretty,
-            --processor, --issue, --seed-file, --deadline; plan --from-scout: --root, --pretty, --from-scout, --out; card: --root, --pretty, --deck, --id, --md;
-            accept: --root, --pretty, --deck, --id, --model, --commit; init: --root, --pretty, --name, --language, --module, --templates); card and accept: no --deck → "missing --deck", no --id → "missing --id", an --id not
-            matching ^[A-Za-z0-9._-]+$ → "--id must match ^[A-Za-z0-9._-]+$ (got '<v>')", card done; accept: no --model →
-            "missing --model", a --model not matching ^[A-Za-z0-9._/:-]+$ → "--model must match ^[A-Za-z0-9._/:-]+$ (got '<v>')", else done; init: no --name → "missing --name", a --name not matching ^[A-Za-z0-9._-]+$ → "--name must match
-            ^[A-Za-z0-9._-]+$ (got '<v>')", no --language → "missing --language", a --language not typescript, python or go → "--language must be one of
-            typescript, python, go (got '<v>')", a --module not matching ^[A-Za-z0-9._/-]+$ → "--module must match ^[A-Za-z0-9._/-]+$ (got '<v>')", else done
-            (module, templates null when not given); review: fewer than two refs → "review
-            needs two refs: <base> <head>", a --scout not matching ^[A-Za-z0-9._-]+$ → "--scout must match ^[A-Za-z0-9._-]+$ (got '<v>')", --mutants then
-            --mutant-timeout not a positive integer, else done (mutants null, mutantTimeoutSeconds 120, test null when not given); plan --from-scout: a value not matching
-            ^[A-Za-z0-9._-]+$ → "--from-scout must match ^[A-Za-z0-9._-]+$ (got '<v>')", else done (out null when not given);
-            plan without --spec → "missing --spec"; a given --only split on "," must be distinct ids each matching ^[A-Za-z0-9._-]+$, else "--only must be distinct card
-            ids joined by \",\" (got '<v>')"; else plan is done (components [] and map, out null when not given; checks, then only (the ids in order), a key only when given);
-            collect without --batch → "missing --batch", a --batch not matching ^[A-Za-z0-9._-]+$ → "--batch must match ^[A-Za-z0-9._-]+$ (got '<v>')", else
-            collect is done; primer is done (write: --write given); scout without --processor → "missing --processor", without
-            --issue → "missing --issue", a --deadline not a positive integer → "--deadline must be a positive integer (got '<v>')", else done (seedFile null,
-            deadlineSeconds 1800 when not given); no --deck → "missing --deck"; run or submit without --processor →
-            "missing --processor"; submit is then done; a run --run-id not matching ^[A-Za-z0-9._-]+$ → "--run-id must match ^[A-Za-z0-9._-]+$ (got '<v>')";
-            numbers in the order --slice-cap-bytes (deck check), --deadline, --max-cards, --max-retry-batches (run): digits only, ≥ 1 ("<f> must be a positive
-            integer (got '<v>')"), --max-retry-batches ≥ 0 ("must be a non-negative integer"). A failure is {ok: false, error: {error: {code: 4, kind:
-            "UsageError" | "NotYetError", message}}}. Defaults: root ".", pretty false, sliceCapBytes 500000, runId null, deadlineSeconds 2400, maxCards null
-            (the card count), maxRetryBatches 2.
+            parseCommand(argv) scans argv left to right. A token starting with "--" is a flag: --pretty, --judge, --write, --md and --commit take no value; --root,
+            --deck, --processor, --run-id, --deadline, --max-cards, --max-retry-batches, --slice-cap-bytes, --spec, --component, --map, --out, --checks, --batch, --issue,
+            --seed-file, --from-scout, --scout, --mutants, --mutant-timeout, --test, --id, --model, --name, --language, --module, --templates, --only, --stubs, --refs
+            take the next token whatever it is; any other flag (--x=y too) → "unknown flag: <t>"; a value flag last → "flag <t> needs a value"; a flag twice → "flag <t>
+            given twice", but --component repeats, its values in argv order (the first error by argv wins). Other tokens are words, giving the command: none → "no command
+            (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept, init)"; "run"; "plan" ("plan --from-scout" when --from-scout is
+            given); "submit"; "collect"; "primer"; "scout"; "review" with two words after it (<base> <head>); "card"; "accept"; "init"; "gate"; "deck" "check"; a first
+            word report → NotYetError "command report is not available yet"; "deck" add|status|reset|clear → NotYetError "command deck <w> is not available yet"; else
+            "unknown command: <words, space-joined>". An extra word → "unexpected argument: <first extra>". Then in order: a flag the command does not take → "flag <f>
+            does not apply to <command>", in argv order (every command takes --root and --pretty, and: deck check --deck, --slice-cap-bytes; run --deck, --processor,
+            --run-id, --deadline, --max-cards, --max-retry-batches; plan --spec, --component, --map, --judge, --out, --checks, --only; review --spec, --map, --scout,
+            --mutants, --mutant-timeout, --test, --write; submit --deck, --processor; collect --batch; primer --write; scout --processor, --issue, --seed-file,
+            --deadline; plan --from-scout --from-scout, --out; card --deck, --id, --md; accept --deck, --id, --model, --commit; init --name, --language, --module,
+            --templates; gate --deck, --stubs, --refs); card and accept: no --deck → "missing --deck", no --id → "missing --id", an --id not matching ^[A-Za-z0-9._-]+$ →
+            "--id must match ^[A-Za-z0-9._-]+$ (got '<v>')", card done; accept: no --model → "missing --model", a --model not matching ^[A-Za-z0-9._/:-]+$ → "--model must
+            match ^[A-Za-z0-9._/:-]+$ (got '<v>')", else done; init: no --name → "missing --name", a --name not matching ^[A-Za-z0-9._-]+$ → "--name must match
+            ^[A-Za-z0-9._-]+$ (got '<v>')", no --language → "missing --language", a --language not typescript, python or go → "--language must be one of typescript,
+            python, go (got '<v>')", a --module not matching ^[A-Za-z0-9._/-]+$ → "--module must match ^[A-Za-z0-9._/-]+$ (got '<v>')", else done (module, templates null
+            when not given); review: fewer than two refs → "review needs two refs: <base> <head>", a --scout not matching ^[A-Za-z0-9._-]+$ → "--scout must match
+            ^[A-Za-z0-9._-]+$ (got '<v>')", --mutants then --mutant-timeout not a positive integer, else done (mutants null, mutantTimeoutSeconds 120, test null when not
+            given); plan --from-scout: a value not matching ^[A-Za-z0-9._-]+$ → "--from-scout must match ^[A-Za-z0-9._-]+$ (got '<v>')", else done (out null when not
+            given); plan without --spec → "missing --spec"; a given --only split on "," must be distinct ids each matching ^[A-Za-z0-9._-]+$, else "--only must be
+            distinct card ids joined by \",\" (got '<v>')"; else plan is done (components [] and map, out null when not given; checks, then only (the ids in order), a key
+            only when given); collect without --batch → "missing --batch", a --batch not matching ^[A-Za-z0-9._-]+$ → "--batch must match ^[A-Za-z0-9._-]+$ (got '<v>')",
+            else collect is done; primer is done (write: --write given); scout without --processor → "missing --processor", without --issue → "missing --issue", a
+            --deadline not a positive integer → "--deadline must be a positive integer (got '<v>')", else done (seedFile null, deadlineSeconds 1800 when not given); no
+            --deck → "missing --deck"; gate without --stubs → "missing --stubs", without --refs → "missing --refs", else done; run or submit without --processor →
+            "missing --processor"; submit is then done; a run --run-id not matching ^[A-Za-z0-9._-]+$ → "--run-id must match ^[A-Za-z0-9._-]+$ (got '<v>')"; numbers in
+            the order --slice-cap-bytes (deck check), --deadline, --max-cards, --max-retry-batches (run): digits only, ≥ 1 ("<f> must be a positive integer (got '<v>')"),
+            --max-retry-batches ≥ 0 ("must be a non-negative integer"). A failure is {ok: false, error: {error: {code: 4, kind: "UsageError" | "NotYetError", message}}}.
+            Defaults: root ".", pretty false, sliceCapBytes 500000, runId null, deadlineSeconds 2400, maxCards null (the card count), maxRetryBatches 2.
           steps: [{produces: Command}]
           examples:
             - {given: 'parseArgv.json["1"]', ref: "tests/fixtures/cli/parseArgv.json (example number → its argv lists), parse.json (→ the result; a list for several)", when: parsed, then: 'parse.json["1"]'}
@@ -1558,6 +1558,7 @@ System:
             - {given: 'parseArgv.json["20"]', when: parsed, then: 'parse.json["20"]'}
             - {given: 'parseArgv.json["21"]', when: parsed, then: 'parse.json["21"]'}
             - {given: 'parseArgv.json["22"]', when: parsed, then: 'parse.json["22"]'}
+            - {given: 'parseArgv.json["23"]', when: parsed, then: 'parse.json["23"]'}
         - name: Emit Document
           description: One JSON document + newline on stdout; --pretty indents by 2.
           behavior: >
@@ -1609,19 +1610,18 @@ System:
         - name: Run Command
           description: "`morph run`: processor, deck, hazards, run branch, Run Deck, archive; one Run Document."
           behavior: >
-            runCommand(root, args, deps, log?), every check before any git call or spend, in order. 1. readRegistry(deps.env); no config with id args.processor
-            → 4 UsageError "processor <id> is not configured" + (": " + the messages of the faults keyed "MORPH_PROCESSOR_<id>_…", "; "-joined, when any). 2.
-            Read Deck File (its failure is the result); no cards → 2 RefusalError "deck has no cards". 3. Find Hazards errors → 2 RefusalError "deck has <n>
-            hazard error(s): " + each "<kind> <cards ","-joined>[ <path>]", "; "-joined; then cards whose acceptance is null or blank → 2 RefusalError "deck has
-            <n> card(s) with no acceptance: <ids in deck order, ","-joined>". 4. start = deps.now(); runId = args.runId or mintRunId(start)
-            (UTC "YYYYMMDD-HHMMSS"). 5. Open Run Branch(root, runId, deps.env); a refusal → 2 RefusalError, its error. 6. Run Deck, input {root, runId, branch,
-            deck, budget {maxCards: args.maxCards or the card count, maxRetryBatches, deadline: start + deadlineSeconds × 1000}}, deps {config, transport:
-            {...(deps.transport or realTransport(config.timeoutMs)), saveBatch: (record) => git's saveBatchRecord(root, record)}, commit: makeCommitHook(root,
-            config.model, deps.env), now: deps.now, env: deps.env, interrupted: deps.interrupted, onVariant: line = variantLine(record), keep {...record, line},
-            log given → log(line)}. 7. Archive Run(root, {runId, deck, report, answers: the kept records}, deps.env). → {code: 3 when report.fault is set (the
-            partial report archived), else runExitCode(report, archive), document: {runId, branch, base, report, archive}}. variantLine(r) (exported) = "morph
-            run: <r.request.customId> <verdict> stage <stages>[ <lastStage>] finish <finishReason, or none> chars <text length, or none>\n". The checkout stays
-            on the run branch.
+            runCommand(root, args, deps, log?), every check before any git call or spend, in order. 1. readRegistry(deps.env); no config with id args.processor → 4
+            UsageError "processor <id> is not configured" + (": " + the messages of the faults keyed "MORPH_PROCESSOR_<id>_…", "; "-joined, when any). 2. Read Deck File
+            (its failure is the result); no cards → 2 RefusalError "deck has no cards". 3. Find Hazards errors → 2 RefusalError "deck has <n> hazard error(s): " + each
+            "<kind> <cards ","-joined>[ <path>]", "; "-joined; then cards whose acceptance is null or blank → 2 RefusalError "deck has <n> card(s) with no acceptance:
+            <ids in deck order, ","-joined>". 4. start = deps.now(); runId = args.runId or mintRunId(start) (UTC "YYYYMMDD-HHMMSS"). 5. Open Run Branch(root, runId,
+            deps.env); a refusal → 2 RefusalError, its error. 6. Run Deck, input {root, runId, branch, deck, budget {maxCards: args.maxCards or the card count,
+            maxRetryBatches, deadline: start + deadlineSeconds × 1000}}, deps {config, transport: {...(deps.transport or realTransport(config.timeoutMs)), saveBatch:
+            (record) => git's saveBatchRecord(root, record)}, commit: makeCommitHook(root, config.model, deps.env), now: deps.now, env: deps.env, interrupted:
+            deps.interrupted, onVariant: line = variantLine(record), keep {...record, line}, log given → log(line)}. 7. Archive Run(root, {runId, deck, report, answers:
+            the kept records}, deps.env). → {code: 3 when report.fault is set (the partial report archived), else runExitCode(report, archive), document: {runId, branch,
+            base, report, archive}}. variantLine(r) (exported) = "morph run: <r.request.customId> <verdict> stage <stages>[ <lastStage>] finish <finishReason, or none>
+            chars <text length, or none>\n". The checkout stays on the run branch.
           steps: [{uses: processor}, {calls: Read Deck File}, {uses: git}, {uses: runloop}, {produces: Run Document}]
           examples:
             - {given: 'examples.json["Run Command 1"].given', when: 'run', then: 'examples.json["Run Command 1"].then'}
@@ -1639,18 +1639,17 @@ System:
         - name: Plan Command
           description: "`morph plan --spec`: record and map cut by Plan Spec, the deck to --out; one Plan Document."
           behavior: >
-            planCommand(root, args), in order. The spec (path.resolve(root, args.spec)) not a regular file → 4 UsageError "spec file not found: <spec as
-            given>"; a given map not a regular file → 4 UsageError "map file not found: <map as given>". loadContour(the spec's text, args.spec), then
-            loadMap(the map's text, args.map) when given (else the empty map {version: 1, package: null, language: null, docs: [], groups: [], cards: [],
-            extraCards: []}); an error → 2 DeckError, it. Plan Spec({record, map, spec: args.spec, components: args.components, judge: args.judge, hasFile: a
-            path is a regular file under root}); an error → 2 DeckError, it. With args.only, Select Cards(plan, args.only), an error → 2 DeckError, it; its plan
-            replaces Plan Spec's and the checks keep only its cards. With args.checks: profile = Resolve Profile(the first selected Component's
-            language, map.language), an error → 2 DeckError "the map: " + it; Read Plan Checks(root, args.checks, profile) (a failure is the result); Build
-            Acceptances({cards, checks, profile, texts, uses: Plan Spec's uses, vendor: "vendor/modules.txt" is a regular file under root, and with args.only
-            transaction: true (P21c: an --only cut runs as one transaction; no hide, no tree read)}), errors → 2 DeckError "acceptances not built (<n> error|errors):\n"
-            + them "\n"-joined; its cards replace the plan's, except a card the map gives an acceptance (map card by customId ?? id, extra card by customId).
-            args.out not null → the cards written to path.resolve(root, args.out) as JSON.stringify(cards, null, 2) + "\n", parents created. → {code: 0,
-            document: {spec, components, cards, generations, externalDependsOn, out: args.out}}. Nothing else written; nothing on an error.
+            planCommand(root, args), in order. The spec (path.resolve(root, args.spec)) not a regular file → 4 UsageError "spec file not found: <spec as given>"; a given
+            map not a regular file → 4 UsageError "map file not found: <map as given>". loadContour(the spec's text, args.spec), then loadMap(the map's text, args.map)
+            when given (else the empty map: version 1, every list [], the rest null); an error → 2 DeckError, it. Plan
+            Spec({record, map, spec: args.spec, components: args.components, judge: args.judge, hasFile: a path is a regular file under root}); an error → 2 DeckError,
+            it. With args.only, Select Cards(plan, args.only), an error → 2 DeckError, it; its plan replaces Plan Spec's and the checks keep only its cards. With
+            args.checks: profile = Resolve Profile(the first selected Component's language, map.language), an error → 2 DeckError "the map: " + it; Read Plan Checks(root,
+            args.checks, profile) (a failure is the result); Build Acceptances({cards, checks, profile, texts, uses: Plan Spec's uses, vendor: "vendor/modules.txt" is a
+            regular file under root, and with args.only transaction: true}), errors → 2 DeckError "acceptances not built (<n> error|errors):\n" + them "\n"-joined; its
+            cards replace the plan's, except a card the map gives an acceptance (map card by customId ?? id, extra card by customId). args.out not null → the cards
+            written to path.resolve(root, args.out) as JSON.stringify(cards, null, 2) + "\n", parents created. → {code: 0, document: {spec, components, cards,
+            generations, externalDependsOn, out: args.out}}. Nothing else written; nothing on an error.
           steps: [{uses: contour}, {uses: planner}, {calls: Read Plan Checks}, {uses: builder}, {produces: Plan Document}]
           examples:
             - {given: 'examples.json["Plan Command 1"].given', ref: 'tests/fixtures/planner/ledger.yaml, tests/fixtures/planner/ledger.map.json, tests/fixtures/planner/ledger.plan.json', when: 'planCommand', then: 'examples.json["Plan Command 1"].then'}
@@ -1684,15 +1683,16 @@ System:
           description: Routing, one document, log lines, exit code; src/cli.ts wires the process.
           behavior: >
             main(argv, deps, io) → Promise<ExitCode>. Parse Command; a failure → io.stdout(renderDocument(its error document, pretty = argv holds "--pretty")),
-            io.stderr("morph: <message>\n"), 4. Else root = path.resolve(deps.cwd, command.root); result = Deck Check (env: deps.env), Plan Command, await Submit Deck(root,
-            deck, processor, D), await Collect Batch(root, batch, D), Primer Command(root, write, {env, now of deps}), await Scout Command(root, command, deps), Plan From Scout(root,
-            command), await Review Command(root, command, deps), Card Brief(root, command), await Accept Card(root, command, deps), Init Project(root, command, deps.cwd) (D = {env, now, transport of deps,
-            saveState: git's saveBatchRecord(root, ·), saveAnswers: git's saveBatchAnswers(root, ·, ·)}) or await Run Command (io.stderr its log) by command, in
-            try/catch, a thrown value → classifyThrown. Then one io.stdout(renderDocument(result.document, command.pretty)), one io.stderr("morph <command
-            name>: exit <code>\n"), return result.code. The entry src/cli.ts (`#!/usr/bin/env node`) calls main(process.argv.slice(2), {env: process.env without
-            undefined values, now: Date.now, cwd: process.cwd(), transport: null, interrupted: () => the first SIGINT or SIGTERM its own listeners caught, or
-            null}, {stdout, stderr: the process streams' write}), sets process.exitCode to the result, never calls process.exit.
-          steps: [{calls: Parse Command}, {calls: Deck Check}, {calls: Plan Command}, {calls: Run Command}, {uses: batches}, {uses: primer}, {uses: scout-session}, {uses: review-session}, {uses: debt}, {uses: scaffold}, {calls: Emit Document}, {calls: Classify Error}]
+            io.stderr("morph: <message>\n"), 4. Else root = path.resolve(deps.cwd, command.root); result = Deck Check (env: deps.env), Plan Command, await Submit
+            Deck(root, deck, processor, D), await Collect Batch(root, batch, D), Primer Command(root, write, {env, now of deps}), await Scout Command(root, command,
+            deps), Plan From Scout(root, command), await Review Command(root, command, deps), Card Brief(root, command), await Accept Card(root, command, deps), Init
+            Project(root, command, deps.cwd), await Gate Command(root, command, {env, now, readDeck: Read Deck File, builds: Check Builds}) (D = {env, now, transport of
+            deps, saveState: git's saveBatchRecord(root, ·), saveAnswers: git's saveBatchAnswers(root, ·, ·)}) or await Run Command (io.stderr its log) by command, in
+            try/catch, a thrown value → classifyThrown. Then one io.stdout(renderDocument(result.document, command.pretty)), one io.stderr("morph <command name>: exit
+            <code>\n"), return result.code. The entry src/cli.ts (`#!/usr/bin/env node`) calls main(process.argv.slice(2), {env: process.env without undefined values,
+            now: Date.now, cwd: process.cwd(), transport: null, interrupted: () => the first SIGINT or SIGTERM its own listeners caught, or null}, {stdout, stderr: the
+            process streams' write}), sets process.exitCode to the result, never calls process.exit.
+          steps: [{calls: Parse Command}, {calls: Deck Check}, {calls: Plan Command}, {calls: Run Command}, {uses: batches}, {uses: primer}, {uses: scout-session}, {uses: review-session}, {uses: debt}, {uses: scaffold}, {uses: gate}, {calls: Emit Document}, {calls: Classify Error}]
           examples:
             - {given: 'examples.json["Main 1"].given', when: 'main', then: 'examples.json["Main 1"].then'}
             - {given: 'examples.json["Main 2"].given', ref: "tests/fixtures/decks/hazardsWriteWrite.json", when: 'main', then: 'examples.json["Main 2"].then'}
@@ -1710,10 +1710,11 @@ System:
             - {given: 'examples.json["Main 14"].given', ref: "tests/fixtures/debt/deck.json", when: 'main', then: 'examples.json["Main 14"].then'}
             - {given: 'examples.json["Main 15"].given', ref: "tests/fixtures/debt/accept.deck.json", when: 'main', then: 'examples.json["Main 15"].then'}
             - {given: 'examples.json["Main 16"].given', ref: "tests/fixtures/scaffold/tpl/", when: 'main', then: 'examples.json["Main 16"].then'}
+            - {given: 'examples.json["Main 17"].given', when: 'main', then: 'examples.json["Main 17"].then'}
       dataObjects:
         - name: Command
           description: One parsed invocation.
-          schema: "{ name: 'deck check', root, pretty, deck, sliceCapBytes } | { name: 'run', root, pretty, deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches } | { name: 'plan', root, pretty, spec, components: string[], map: string | null, judge: boolean, out: string | null, checks?: string, only?: string[] } | { name: 'submit', root, pretty, deck, processor } | { name: 'collect', root, pretty, batch } | { name: 'primer', root, pretty, write: boolean } | { name: 'scout', root, pretty, processor, issue, seedFile: string | null, deadlineSeconds } | { name: 'plan --from-scout', root, pretty, fromScout, out: string | null } | { name: 'review', root, pretty, base, head, spec: string | null, map: string | null, scout: string | null, mutants: number | null, mutantTimeoutSeconds, test: string | null, write: boolean } | { name: 'card', root, pretty, deck, id, md: boolean } | { name: 'accept', root, pretty, deck, id, model, commit: boolean } | { name: 'init', root, pretty, project, language: 'typescript' | 'python' | 'go', module: string | null, templates: string | null }"
+          schema: "every variant also has root: string, pretty: boolean; { name: 'deck check', deck, sliceCapBytes } | { name: 'run', deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches } | { name: 'plan', spec, components: string[], map: string | null, judge: boolean, out: string | null, checks?: string, only?: string[] } | { name: 'submit', deck, processor } | { name: 'collect', batch } | { name: 'primer', write: boolean } | { name: 'scout', processor, issue, seedFile: string | null, deadlineSeconds } | { name: 'plan --from-scout', fromScout, out: string | null } | { name: 'review', base, head, spec: string | null, map: string | null, scout: string | null, mutants: number | null, mutantTimeoutSeconds, test: string | null, write: boolean } | { name: 'card', deck, id, md: boolean } | { name: 'accept', deck, id, model, commit: boolean } | { name: 'init', project, language: 'typescript' | 'python' | 'go', module: string | null, templates: string | null } | { name: 'gate', deck, stubs, refs }"
         - name: Error Document
           description: The document of every non-result exit.
           schema: "{ error: { code: 0|1|2|3|4, kind: 'UsageError'|'NotYetError'|'DeckError'|'RefusalError'|'RuntimeError', message: string } }"
@@ -4182,6 +4183,152 @@ System:
         - name: Init Document
           description: stdout of morph init.
           schema: "{ name: string, language: 'typescript' | 'python' | 'go', module: string, files: string[] }"
+
+    # ---------------------------------------------------------------- P22a
+    - name: gate
+      description: >
+        `morph gate` (P22a, issue #13): the mechanical gate of a cut deck in one headless command and one JSON verdict.
+        src/gate/*.ts, layer gate: cards, acceptance, git and language only; of the Node modules node:fs, node:os and
+        node:path; no clock (deps.now), no environment (deps.env), no child process of its own (acceptance's Run Acceptance
+        and git's gitOk spawn). The deck's stub targets and reference targets (two directories holding files at the
+        targets' paths) are played in a scratch clone of the repository's HEAD: every card's acceptance on its stubs must
+        be red at its expected stage with no compile line naming a file outside its targets (the rule of the hand tool
+        stubcheck.mjs), then green on its references; a deck without the transaction mark also re-runs every card of a
+        generation once its whole generation is written (the tree of a retry after a sibling: the P21a smoke RED,
+        `supervisor/guard.go:20:23`); every run is timed against the 250 s chain limit; Check Builds (deck check's
+        per-card stub trees, P21b) runs on the stubs. Nothing here names a language or a phase: the file:line patterns are
+        Tree Profiles' fileLine, the stage names are the builder's `== <stage>` lines.
+        tests/fixtures/gate/<name>.json holds the expected values of an example that names it.
+      language: typescript
+      requirements: [One Document Out, Deterministic Core]
+      functions:
+        - name: Stub Verdict
+          description: Where an acceptance log stopped, and its compile lines that name a file outside the card's targets.
+          behavior: >
+            src/gate/stubVerdict.ts, pure. expectedStage(acceptance) → "probe" when a line of it starts with "echo '==
+            probe'", else "guard" (a code card is red at its probe, a judge before its file at its guard).
+            stubVerdict(log, expected, targets, fileLines, stages = ["build", "vet", "tsc"]) → {stage, expected, outside,
+            failures}: per line of log.split("\n"), trimEnd()ed: a line matching /^== (\S+)/ sets current = "verdict" when it
+            holds " failed (see above)", else group 1 (no other effect); before the first such line nothing counts. Else t =
+            the line trimmed: current === expected and t starting "FAIL " or "--- FAIL: " → t into failures once. Then, when
+            stages is null or holds current, the line not "" and not starting with " " or "\t": the FIRST of
+            fileLines (new RegExp each, in order) that matches the line; group 1 not in targets → the line into outside once;
+            no match → nothing. stage = current at the end (null when the log has no header). Lists keep first-seen order.
+          steps: [{uses: language}, {produces: Stub Verdict}]
+          examples:
+            - given: 'expectedStage of tests/fixtures/builder/go/code1.txt, builder/go/judge1.txt, the first card''s acceptance of tests/fixtures/go-p7b/decks/b1/deck.p21c.json, "", "  echo ''== probe''; exit 1"'
+              ref: "tests/fixtures/builder/go/, tests/fixtures/go-p7b/decks/b1/deck.p21c.json"
+              when: expectedStage
+              then: '"probe", "guard", "probe", "guard", "guard"'
+            - given: 'FL = TREE_PROFILES'' fileLine in order; stubLogs.json "go probe" with "probe", [control/control.go]; "go judge" with "guard", [control/control_examples_test.go]; "go vet outside" with "probe", [supervisor/guard.go]; "ts tsc" with "probe", [src/units/convert.ts]; "ts probe" with "probe", [src/units/convert.ts]'
+              ref: "tests/fixtures/gate/stubLogs.json (name → a real acceptance log), tests/fixtures/gate/verdicts.json (name → the verdict)"
+              when: stubVerdict(log, expected, targets, FL)
+              then: 'verdicts.json under the same names: go probe {stage "probe", outside [], failures ["--- FAIL: TestProbeControlContractExample1 (0.00s)"]}; go judge stage "guard"; go vet outside stage "probe", outside ["vet: supervisor/guard_examples_test.go:11:16: not enough arguments in call to l.Exited"] (FAIL<tab> lines are no failures); ts tsc stage "tsc", two outside lines (src/report/line.ts(1,17), tests/units/convert.examples.test.ts(2,10)); ts probe two failures "FAIL  probe/to-metres/to-metres.probe.ts > To Metres example 1" and "… example 2"'
+            - given: 'stubLogs.json "mixed" with "probe", targets [b/b.go, src/own.ts], FL; then with stages null; then with fileLines []; then "none" with "probe", [], FL'
+              when: stubVerdict
+              then: 'verdicts.json "mixed": stage "verdict" (the held eslint line), outside ["./a/a.go:6:25: undefined: b.Old", "vet: ./a/a.go:6:25: undefined: b.Old", "src/u.ts(2,3): …", "tests/x.test.ts(4,5): …" without its trailing spaces] (own files, the "#" and tab lines, the line with no file and the probe stage''s src/zz.ts line left out; the build and vet copy once each), failures ["FAIL  probe/k/k.probe.ts > K example 1", "--- FAIL: TestProbeK (0.00s)"]; "mixed, every stage": + "src/zz.ts(9,9): error TS1: after the compile stages"; "mixed, no pattern": outside []; "none": stage null, outside [], failures []'
+        - name: Gate Plan
+          description: The steps of a gate play, from a deck and the stub and reference files.
+          behavior: >
+            src/gate/gatePlan.ts, pure. gatePlan(cards, generations, stubs, refs) → {transaction, steps, missing}; stubs and
+            refs are the paths of the files under the two directories. order = for every g, every id of generations[g] whose
+            card exists, {card, generation g}. transaction = Transaction Deck's isTransactionDeck(cards). missing: per entry
+            of order, per target, "no stub: <t>" when not in stubs, then "no reference: <t>" when not in refs, each once;
+            missing not empty → steps []. A Gate Step is {phase "stub" | "ref" | "retry", generation, card, put: target →
+            "stub" | "ref", commit: targets}. Not a transaction: per generation g in order, per its entries: {stub, put every
+            target → "stub", commit []}, then {ref, put every target → "ref", commit the targets}; after them, when g has
+            two entries or more, per entry {retry, put {}, commit []}. A transaction: one stub step per entry (the first puts
+            every target of every entry → "stub", each once, order kept; the others put {}), then one ref step per entry (the
+            first puts them all → "ref"; the last commits them all), no retry.
+          steps: [{uses: cards}, {produces: Gate Plan}]
+          examples:
+            - given: 'the cards and Layer Generations of tests/fixtures/go-p7b/decks/b1/deck.p21.json; stubs = refs = every target, sorted'
+              ref: "tests/fixtures/go-p7b/decks/b1/, tests/fixtures/gate/plans.json (name → the plan)"
+              when: gatePlan
+              then: 'plans.json "p21": transaction false, 22 steps (8 stub, 8 ref, a retry for each card of the generations [control-contract-judge, phase-loop], [phase-loop-judge, runtime-guard], [daemon-core, runtime-guard-judge] after their refs), missing []'
+            - given: 'the same for deck.p21c.json (the transaction cut)'
+              when: gatePlan
+              then: 'plans.json "p21c": transaction true, 16 steps: 8 stub steps, the first putting all 8 targets → "stub", then 8 ref steps, the first putting all → "ref", the last committing all 8'
+            - given: 'deck.p21.json with stubs lacking supervisor/guard.go and refs lacking daemon/daemon.go and control/control.go; then cards k (src/k.ts, tests/k.test.ts), m, n (dependsOn [k]) with generations [[k, zz], [], [m, n]], stubs + extra.ts'
+              when: gatePlan
+              then: 'plans.json "missing": steps [], missing ["no reference: control/control.go", "no stub: supervisor/guard.go", "no reference: daemon/daemon.go"]; then "small": 8 steps, zz skipped, no retry for generation 0 (one card), generation 2 with m and n retried, an extra stub ignored'
+        - name: Play Gate
+          description: The steps of a gate played in a scratch clone of HEAD; one row per acceptance run.
+          behavior: >
+            src/gate/playGate.ts. playGate({root, cards, steps, stubDir, refDir}, deps {env, now, timeoutMs?, before?}) →
+            Promise<Play Row[]>; stubDir and refDir absolute. base = fs.mkdtempSync(os.tmpdir()/"morph-gate-"), scratch =
+            base/w: gitOk(root, ["clone", "-q", "--shared", "--no-checkout", root, scratch]); gitOk(scratch, ["checkout",
+            "-q", "--detach", the trimmed output of gitOk(root, ["rev-parse", "HEAD"])]) — the committed tree, never the
+            working one. root/node_modules exists → a symbolic link scratch/node_modules to its real path, and "/node_modules\n"
+            appended to scratch/.git/info/exclude (directory created): a link is no directory to a "node_modules/" ignore
+            line. Then deps.before?.(scratch). Per step in order (its card by customId; none → skipped): each put entry
+            copies <stubDir or refDir>/<target> to scratch/<target>, parents created; start = deps.now(); Run
+            Acceptance(card.acceptance ?? "", scratch, {env: deps.env, timeoutMs: deps.timeoutMs}); seconds =
+            Math.round((deps.now() − start) / 100) / 10. A stub step: v = Stub Verdict(log, expectedStage(acceptance ?? ""),
+            targets, TREE_PROFILES' fileLine), ok = exit !== 0 and v.stage === v.expected and v.outside empty; a ref or
+            retry step: v = Stub Verdict(log, "", targets, the fileLines, null) (every stage), ok = exit === 0. Row
+            {phase, generation, card, exit, timedOut, seconds, stage: v.stage, expected: v.expected for a stub step else
+            null, outside: v.outside, failures: v.failures, ok}. Then a non-empty commit: gitOk(scratch, ["add", "-A", "-f",
+            "--", ...commit]); gitOk(scratch, ["-c", "user.name=morph gate", "-c", "user.email=gate@morph.invalid", "commit",
+            "-q", "--allow-empty", "-m", "gate: <card>"]). base is removed in a finally; root's HEAD, refs, index and files
+            are never touched.
+          steps: [{calls: Stub Verdict}, {uses: acceptance}, {uses: git}, {uses: language}, {produces: Play Row}]
+          examples:
+            - given: 'a tmpRepo r, one commit "base" of d.json, src/a.txt "old a\n", st/ and rf/ (src/a.txt, src/b.txt, tests/c.txt: "s\n" / "A1\n", "B2\n", "C3\n"); cards a → src/a.txt "echo ''== probe''; grep -q A1 src/a.txt || { echo '' FAIL  probe/a.probe.ts > A example 1''; exit 1; }; echo ''== frozen''", b → src/b.txt "echo ''== tsc''; grep -q B2 src/b.txt || { echo ''src/zz.ts(1,1): error TS2: zz''; exit 2; }\necho ''== probe''", c → tests/c.txt dependsOn [a, b] "echo ''== guard tests/c.txt''; grep -q C3 tests/c.txt || exit 1\necho ''== own git''; [ \"$(git log --format=%s | tr ''\\n'' ,)\" = ''gate: b,gate: a,base,'' ]"; steps of Gate Plan(cards, [[a, b], [c]], the three, the three); env {PATH, HOME}; now +1000 per call'
+              ref: "tests/fixtures/gate/playGate.json (name → the rows)"
+              when: playGate
+              then: 'playGate.json "shell": 8 rows, seconds 1 each; stub a ok (stage "probe", failures ["FAIL  probe/a.probe.ts > A example 1"]); stub b NOT ok (exit 2, stage "tsc", expected "probe", outside ["src/zz.ts(1,1): error TS2: zz"]); refs and retries green; stub c ok at "guard"; ref c green (the scratch holds the commits "gate: a", "gate: b" over "base"); r''s HEAD, refs, `git status --porcelain` "" and `git worktree list` (one line) unchanged'
+            - given: 'a tmpRepo q: .gitignore "node_modules/\n", node_modules/q/index.js (ignored), d.json, st/src/n.txt "s\n", rf/src/n.txt "N1\n" committed; card n → src/n.txt "echo ''== probe''; test -L node_modules && test -f node_modules/q/index.js && grep -q N1 src/n.txt && [ -z \"$(git ls-files --others --exclude-standard | grep -vx src/n.txt)\" ]"; now +2500 per call; before records its argument'
+              when: playGate
+              then: 'playGate.json "node_modules": stub ok at "probe", ref green, seconds 2.5; before called once, with a directory named "w" under os.tmpdir() holding d.json and the node_modules link; that directory gone when the promise resolves; q unchanged'
+            - given: 'a tmpRepo holding tests/fixtures/ts-rename.json''s files, tests/fixtures/gate/ts-rename.gate.json''s (decks/r1/deck.tx.json — the transaction cut by main — and decks/r1/_refs/), templates/typescript''s eslint.config.js, vitest.config.ts, decks/tools/{guard.mjs, firstdiff.mjs, layers.json}, .gitignore "probe/\nnode_modules\n", node_modules linked to this repository''s; the steps of Gate Plan on deck.tx.json, decks/r1/_stubs and decks/r1/_refs; now +1000'
+              ref: "tests/fixtures/ts-rename.json, tests/fixtures/gate/ts-rename.gate.json"
+              when: playGate
+              then: 'playGate.json "ts-rename": 4 stub rows ok (to-metres and length-line at "probe" with two FAIL lines each, the judges at "guard"), then 4 ref rows green at "frozen"'
+        - name: Gate Command
+          description: "`morph gate --deck <deck> --stubs <dir> --refs <dir>`: the gate played, one Gate Document."
+          behavior: >
+            src/gate/gateCommand.ts. CHAIN_LIMIT_SECONDS = 250 (exported). gateCommand(root, {deck, stubs, refs}, deps {env,
+            now, timeoutMs?, readDeck, builds}) → Promise<{code, document}>; Main passes Read Deck File as readDeck and Check
+            Builds as builds. In order: readDeck(root, deck) fails → its result. stubs then refs, path.resolve(root, v), not
+            a directory → {code 4, document {error {code 4, kind "UsageError", message "stubs directory not found: <v>" |
+            "references directory not found: <v>"}}}. generations = Layer Generations(deck); the regular files under each
+            directory (links not followed), "/"-joined, sorted; plan = Gate Plan. plan.missing empty → rows = Play Gate({root,
+            cards, steps, stubDir, refDir}, {env, now, timeoutMs, before: in the scratch, <dirname(deck)>/_stubs moved aside
+            when present, the stub directory copied there, builds = deps.builds(scratch, deck, the deck, generations, env),
+            the copy removed and the moved directory put back}); else rows [] and builds null. errors, in order: the missing;
+            per build check "build <card>: no stub for <m>" per missing, "build <card>: <line>" per break; per row (prefix
+            "<phase> <card>: "): a stub row with exit 0 "green on its stubs", else with stage ≠ expected "red at <stage or "no
+            stage">, expected <expected>"; then per outside line "names a file outside its targets: <line>"; a ref or retry
+            row with exit ≠ 0 "timed out" | "red (exit <exit>)" + " at <stage or "no stage">" + (": " + its first outside
+            line, when any); any row with seconds >= 250 "<seconds> s, over the 250 s limit". → {code: 2 when errors, else
+            0, document {deck, transaction, cards: the count, generations, missing, builds, rows, maxSeconds: the largest
+            seconds (0 when none), errors}}, keys in that order.
+          steps: [{calls: Gate Plan}, {calls: Play Gate}, {uses: cards}, {produces: Gate Document}]
+          examples:
+            - given: 'a tmpRepo holding a copy of tests/fixtures/go-p7b, one commit; deck "decks/b1/deck.p21.json" (the P21a cut), stubs "decks/b1/_stubs", refs "decks/b1/_refs"; deps {env {PATH, HOME}, now +1000, readDeck Read Deck File, builds Check Builds}'
+              ref: "tests/fixtures/go-p7b/, tests/fixtures/gate/gateCommand.json (name → the result)"
+              when: gateCommand
+              then: 'gateCommand.json "p21": code 2, errors ["retry control-contract-judge: red (exit 1) at full: supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)"] — the judge re-run after its generation sibling phase-loop wrote, the P21a smoke RED that the per-card stub play missed; 22 rows, 8 builds without a break'
+            - given: 'the same root; deck "decks/b1/deck.p21c.json" (the transaction cut); then stubs "st2" (a copy of decks/b1/_stubs whose control/control.go is the reference); then decks/b1/_stubs again after mcp/count.go (decks/p21/break/risk/r3: it reads the renamed Resumes, outside the subset) is committed'
+              when: gateCommand
+              then: '"p21c": code 0, errors [], transaction true, 16 rows; "green stub": code 2, errors ["stub control-contract: green on its stubs"]; "outside": code 2, 16 errors: "build <card>: mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)" for each of the 8 cards, then "ref <card>: red (exit 1) at full: mcp/count.go:6:52: …" for each; the root''s files and status unchanged by every call'
+            - given: 'deck "nope.json"; stubs "nope"; refs "nope"; stubs "st3" lacking supervisor/guard.go and refs "rf3" lacking daemon/daemon.go (deck.p21.json); then a tmpRepo with d.json = one card x → src/x.txt "echo ''== probe''\ngrep -q X1 src/x.txt", s/src/x.txt "s\n", f/src/x.txt "X1\n", now +300000'
+              when: gateCommand
+              then: '"deck not found" 4 UsageError "deck file not found: nope.json"; "stubs not found" "stubs directory not found: nope"; "refs not found" "references directory not found: nope"; "missing": code 2, missing and errors ["no stub: supervisor/guard.go", "no reference: daemon/daemon.go"], rows [], builds null, maxSeconds 0; "slow": code 2, builds [x''s note "no language profile claims src/x.txt: not built"], rows ok, errors ["stub x: 300 s, over the 250 s limit", "ref x: 300 s, over the 250 s limit"]'
+      dataObjects:
+        - name: Stub Verdict
+          description: What Stub Verdict reads off one log.
+          schema: "{ stage: string | null, expected: string, outside: string[], failures: string[] }"
+        - name: Gate Plan
+          description: What Gate Plan returns.
+          schema: "{ transaction: boolean, steps: { phase: 'stub' | 'ref' | 'retry', generation: number, card: string, put: Record<string, 'stub' | 'ref'>, commit: string[] }[], missing: string[] }"
+        - name: Play Row
+          description: One acceptance run of a gate play.
+          schema: "{ phase: 'stub' | 'ref' | 'retry', generation: number, card: string, exit: number | null, timedOut: boolean, seconds: number, stage: string | null, expected: string | null, outside: string[], failures: string[], ok: boolean }"
+        - name: Gate Document
+          description: stdout of morph gate.
+          schema: "{ deck: string, transaction: boolean, cards: number, generations: string[][], missing: string[], builds: Build Check[] | null, rows: Play Row[], maxSeconds: number, errors: string[] }"
 
   dependencies:
     - {name: yaml, version: "2.9.1", language: typescript, doc: docs/deps/yaml.md}

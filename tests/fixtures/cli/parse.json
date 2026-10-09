@@ -1112,5 +1112,109 @@
         }
       }
     }
+  ],
+  "23": [
+    {
+      "ok": true,
+      "command": {
+        "name": "gate",
+        "root": ".",
+        "pretty": false,
+        "deck": "decks/p9/deck.json",
+        "stubs": "decks/p9/_stubs",
+        "refs": "/abs/rf"
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "gate",
+        "root": "/q",
+        "pretty": true,
+        "deck": "d",
+        "stubs": "s",
+        "refs": "r"
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --deck"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --stubs"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --refs"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --processor does not apply to gate"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --stubs does not apply to deck check"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "unexpected argument: x"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --stubs needs a value"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --refs given twice"
+        }
+      }
+    }
   ]
 }
