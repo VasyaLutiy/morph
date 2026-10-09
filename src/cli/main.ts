@@ -38,7 +38,7 @@ export async function main(argv: string[], deps: CliDeps, io: CliIo): Promise<Ex
   let result: CommandResult;
   try {
     if (command.name === "deck check") {
-      result = deckCheckCommand(root, command.deck, command.sliceCapBytes);
+      result = deckCheckCommand(root, command.deck, command.sliceCapBytes, deps.env);
     } else if (command.name === "plan") {
       result = planCommand(root, command);
     } else if (command.name === "submit") {

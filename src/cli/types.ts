@@ -3,6 +3,7 @@ import type { Transport } from "../processor/types.js";
 import type { RunReport } from "../runloop/types.js";
 import type { ArchiveResult } from "../git/types.js";
 import type { Plan } from "../planner/types.js";
+import type { BuildCheck } from "./checkBuilds.js";
 
 export type ExitCode = 0 | 1 | 2 | 3 | 4;
 export type ErrorKind = "UsageError" | "NotYetError" | "DeckError" | "RefusalError" | "RuntimeError";
@@ -43,7 +44,7 @@ export type ParseResult = { ok: true; command: Command } | { ok: false; error: E
 export type DeckFileResult = { ok: true; deck: Deck } | { ok: false; result: CommandResult };
 export interface DeckCheckDocument {
   deck: string; cards: number; generations: string[][]; errors: number; warnings: number;
-  hazards: Hazard[]; weights: SliceWeight[];
+  hazards: Hazard[]; weights: SliceWeight[]; builds?: BuildCheck[];
 }
 export interface RunDocument { runId: string; branch: string; base: string; report: RunReport; archive: ArchiveResult }
 export interface PlanDocument extends Plan { out: string | null }
