@@ -6,9 +6,9 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (09.10, after P21b: stop for the operator, next P21c after the operator's word)
+## State at handoff (09.10, after P21b: stop for the operator, operator 09.10: next P21c, then a stop)
 
-**Next: P21c, issue #12 (label `P21-breaking-recut`), prepared ONLY after the operator's word; then 🧪 and a stop.** Scope
+**Next: P21c, issue #12 (label `P21-breaking-recut`), the operator gave the word 09.10 ("гоу"): prepare and run it now; then 🧪 and a stop.** Scope
 (PLAN row P21c): the subset transaction of comment https://github.com/VasyaLutiy/morph/issues/12#issuecomment-6077412737
 item 2, made general by comment 6077766447 and sharpened by MorphStudio 4efde92 §6 (read all three whole: `gh issue view
 12 --comments`; `gh api "repos/VasyaLutiy/MorphStudio/contents/docs/MORPHV2_REQUEST_breaking-recut.md?ref=4efde92"`):
