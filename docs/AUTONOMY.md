@@ -6,11 +6,20 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (09.10, after P21a: STOP for the operator — smoke red)
+## State at handoff (09.10, operator: next P21b, then a stop)
 
-**Next: none queued. The operator decides P21b** (issue #12 stays open, label `P21-breaking-recut`). The session ended with
-`~/.morph-wait-operator` (the flag files are shared with MorphStudio's session on this VPS; the cron watchdog is
-MorphStudio's; never touch `/home/morph/MorphStudio` or its tmux session `MorphStudio`).
+**Next: P21b, issue #12 (label `P21-breaking-recut`), then 🧪 and a stop for the operator.** Scope = the operator's
+comment https://github.com/VasyaLutiy/morph/issues/12#issuecomment-6077412737 (read it whole: `gh issue view 12
+--comments`): (1) item 3.5 in `morph deck check`; (2) a **subset transaction** — direction B widened to the WHOLE `--only`
+subset, not a package (the changed API is called across packages: supervisor and daemon in MorphStudio): cards written by
+generations as today, acceptances deferred until every subset card is written, then each runs on the full new tree; a
+build/vet line blames the card owning that file and only it is retried; a line in a file outside the subset is a record
+break, stop and name it; after every retry all acceptances re-run to a fixed point, rounds bounded; only `--only` decks,
+full cuts byte for byte. The re-hiding alternative is rejected. Acceptance: the P21a go-p7b live smoke on ds goes green
+with no hand edit, plus blame and outside-break fixtures, identity checks green. This changes the run loop: the phase may
+split (P21b = 3.5, P21c = transaction) and says so at the gate. Cap $5 per phase. Every MorphV2 session ends with
+`~/.morph-wait-operator`, never `~/.morph-phase-done` (flag files shared with MorphStudio's session; the cron watchdog is
+MorphStudio's); never touch `/home/morph/MorphStudio` or its tmux session `MorphStudio`.
 
 **P21a is merged** (`docs/TASK_P21a_breaking.md`, issue #12, request MorphStudio eb52a5a incl. the operator's amendment,
 comment 6075790078): run 20261009-074114 on ds, 8/8 on the first attempt, $0.1969, 21.7 min, no fix; vitest 812/812. A
