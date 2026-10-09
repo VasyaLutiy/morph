@@ -32,8 +32,10 @@
 // kept.
 
 import { layerGenerations } from "../cards/layer.js";
+import { isTransactionDeck } from "../cards/transaction.js";
 import { resolveRunnable } from "./resolve.js";
 import { processGeneration } from "./generation.js";
+import { runTransaction } from "./transaction.js";
 import { buildRetry } from "./retry.js";
 import type { Card } from "../cards/types.js";
 import type { Usage } from "../processor/types.js";
@@ -85,6 +87,8 @@ export async function runDeck(
   input: RunInput,
   deps: RunDeps
 ): Promise<RunResult> {
+  if (isTransactionDeck(input.deck.cards)) return runTransaction(input, deps);
+
   const gens = layerGenerations(input.deck);
 
   const byId = new Map<string, Card>();
