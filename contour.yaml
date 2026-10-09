@@ -20,7 +20,9 @@ System:
       description: >
         The card and deck model: src/cards/*.ts. Validates a card, loads a deck,
         layers it into generations by depends_on, finds ownership hazards and weighs
-        slices. Pure: no filesystem beyond reading the files a slice names, no git.
+        slices; since P21c (issue #12) marks a subset transaction and blames a red log's
+        files on their owning cards (src/cards/transaction.ts). Pure: no filesystem
+        beyond reading the files a slice names, no git.
       language: typescript
       requirements: [Deterministic Core]
       functions:
@@ -125,7 +127,57 @@ System:
             - given: "a card whose slice files total 600001 bytes and the default cap"
               when: "weighed"
               then: "one hazard {kind: 'oversized-slice', severity: 'warning', bytes: 600001, cap: 500000}"
+        - name: Transaction Deck
+          description: The mark an --only cut puts on every acceptance, and the test whether a deck carries it.
+          behavior: >
+            src/cards/transaction.ts (P21c, issue #12), pure, no import but the Card type: `export const TRANSACTION_MARK = "# morph:
+            subset transaction"` (a shell comment line) and isTransactionDeck(cards) — true when some card's acceptance is a string
+            starting with TRANSACTION_MARK + "\n", else false (an empty list included). The mark is written by Build Acceptances for
+            an --only cut and read by Run Deck (the deck runs as one transaction) and Stub Trees (the tree of the whole subset).
+          steps:
+            - reads: Card
+          examples:
+            - given: 'cards [a with acceptance TRANSACTION_MARK + "\nexit 0", b with acceptance null]; then [a "exit 0", b null]; then []'
+              when: isTransactionDeck
+              then: 'true; false; false'
+            - given: 'one card whose acceptance is TRANSACTION_MARK alone (no newline); then " " + TRANSACTION_MARK + "\nexit 0"; then "exit 0\n" + TRANSACTION_MARK + "\n"'
+              when: isTransactionDeck
+              then: 'false; false; false (only a first line equal to the mark counts)'
+        - name: Blame Log
+          description: The cards a red acceptance log blames by the files its lines name, and the lines naming files outside them.
+          behavior: >
+            blameLog(log, card, owners, fileLines, exists) in src/cards/transaction.ts, pure: log the red acceptance's output; card
+            the customId whose acceptance it is; owners a Record target path → owning customId; fileLines regular-expression
+            sources (Tree Profiles' fileLine, in order: group 1 the path, group 2 the rest); exists(path) whether the path is on
+            disk. For every line of log.split("\n"), its trailing white space removed (trimEnd): a line that is "" or starts with
+            "#", " " or "\t" is skipped; else the FIRST of fileLines (new RegExp, in order) that matches it gives p = group 1 and
+            rest = group 2 (none matches → the line is ignored); p an own key of owners → owners[p] is blamed; else exists(p)
+            false → card is blamed (a file of the acceptance itself, gone when it ends: a probe); else p + rest is an outside line.
+            No line matched any of fileLines → card is blamed. → Blame {cards: the blamed ids, outside: the outside lines}, each
+            once, sorted (JavaScript's default sort). The inputs are never changed.
+          steps:
+            - produces: Blame
+          examples:
+            - given: 'blameLogs.json["go"]; card "k7"; owners {"rate/rate.go": "k7", "pump/flow.go": "p2", "rate/rate_examples_test.go": "kj"}; fileLines the three Tree Profiles in their order; exists true for "cmd/tool/main.go", "pump/flow.go", "rate/rate.go" only; then owners without "rate/rate_examples_test.go" and exists always false'
+              ref: "tests/fixtures/cards/blameLogs.json"
+              when: blameLog
+              then: '{cards: ["k7", "p2"], outside: ["cmd/tool/main.go:6:2: m.Old undefined (type *rate.Meter has no field or method Old)"]} — flow.go twice (build and vet: once), rate.go its own, the gone probe rate/k7_probe_test.go its own, the indented test line, "#", "--- FAIL", "go:" and "FAIL<tab>…" lines ignored; then {cards: ["k7", "p2"], outside: []} (main.go is not on disk: the card''s own)'
+            - given: 'blameLogs.json["typescript"]; card "w3"; owners {"src/units/len.ts": "w3", "src/report/total.ts": "rt", "tests/report/total.examples.test.ts": "rtj"}; the three fileLines; exists true for those three paths only; then card "rt", owners {"src/report/total.ts": "rt"}, exists always true'
+              ref: "tests/fixtures/cards/blameLogs.json"
+              when: blameLog
+              then: '{cards: ["rt", "rtj", "w3"], outside: []}; then {cards: ["rt"], outside: ["probe/w3/w3.probe.ts(2,10): error TS2305: Module ''"../../src/units/len.js"'' has no exported member ''toYards''.", "src/units/len.ts(9,3): error TS1005: '';'' expected.", "tests/report/total.examples.test.ts(5,44): error TS2554: Expected 3 arguments, but got 2."]} (trailing spaces trimmed, the duplicate once)'
+            - given: 'blameLogs.json["none"], card "n4", owners {"src/a.ts": "q"}, the three fileLines, exists always true; then log ""; then "src/a.ts(1,1): error TS1: x\n" with card "z"; then blameLogs.json["go"], card "k7", owners {}, fileLines []'
+              ref: "tests/fixtures/cards/blameLogs.json"
+              when: blameLog
+              then: '{cards: ["n4"], outside: []}; {cards: ["n4"], outside: []}; {cards: ["q"], outside: []} (another card''s file only: the card itself is not blamed); {cards: ["k7"], outside: []}'
+            - given: 'blameLogs.json["go"], card "k7", owners {"pump/flow.go": "p2"}, fileLines [python''s, go''s] (Tree Profiles 2 and 3), exists always true'
+              ref: "tests/fixtures/cards/blameLogs.json"
+              when: blameLog
+              then: '{cards: ["p2"], outside: ["cmd/tool/main.go:6:2: m.Old undefined (type *rate.Meter has no field or method Old)", "rate/k7_probe_test.go:9:2: undefined: rate.Mid", "rate/rate.go:3:1: missing return"]}'
       dataObjects:
+        - name: Blame
+          description: What one red acceptance log blames.
+          schema: "{ cards: string[]; outside: string[] } — both sorted, each entry once"
         - name: Card
           description: One unit of work for an executor; what morph run compiles into a request.
           schema:
@@ -827,8 +879,7 @@ System:
         The run: src/runloop/*.ts. Resolves runnable cards per generation, compiles,
         sends, verifies, retries with the diagnosis, records outcomes and returns the Run
         Report; it fires an injected commit hook per accepted card and writes and commits
-        nothing itself. Clock and transport are injected: a test waits on no timer and
-        opens no socket.
+        nothing itself. Clock and transport are injected: no timer, no socket in a test.
       language: typescript
       guardrails: [Frozen Tree During Run]
       functions:
@@ -1011,8 +1062,9 @@ System:
               when: "built"
               then: 'instruction is exactly retryInstructions.json["6"] (no diff block)'
         - name: Run Deck
-          description: Generations in order, the budget at each boundary, retries per card (2) capped per generation, a carried-over retry before its dependants, a fault caught, the Run Report.
+          description: Generations in order, budget at each boundary, 2 retries per card capped per generation, carry-over, fault, the Run Report.
           behavior: >
+            A deck Transaction Deck marks goes to Run Transaction (P21c). Else
             runDeck(input, deps) runs input.deck generation by generation in the order of
             layerGenerations(input.deck). At each generation boundary: deps.now() >=
             input.budget.deadline → every not-yet-done card of this and later generations
@@ -1109,6 +1161,93 @@ System:
         - name: Variant Record
           description: One variant sent — its exact request, its raw answer and how far its acceptance got.
           schema: "{ request: Request, text: string | null, finishReason: string | null, error: string | null, verdict: 'accepted'|'rejected'|'corrupt'|'truncated'|'untried'|'stale', stages: number, lastStage: string | null }"
+
+    # ---------------------------------------------------------------- P21c
+    - name: runloop-subset
+      description: >
+        The subset transaction of `morph run` (P21c, issue #12 comment 6077412737 item 2, comment 6077766447, MorphStudio
+        4efde92 §6): src/runloop/transaction.ts, layer runloop. A deck cut with `--only` carries TRANSACTION_MARK on its
+        acceptances (Build Acceptances, Transaction Deck), and Run Deck hands it to Run Transaction. The whole deck is one
+        group: every card is written by generations as Run Deck writes them (a later card's slice reads an earlier card's
+        new file), and no acceptance runs until all are written; then every card's acceptance runs on that full tree, a red
+        log blames the cards owning the files its lines name (Blame Log, each language's file:line pattern from Tree
+        Profiles), only the blamed are retried, on that same tree, and every acceptance runs again after each retry batch,
+        to a fixed point. A line in a file no card owns stops the run ("outside the subset": the record breaks a caller the
+        subset does not re-cut). Green → every card committed, deck order; red at the end → every target restored, nothing
+        committed. Nothing here names a language, a package or a tool: the patterns are Tree Profiles' data. A MorphStudio
+        P7b-shaped re-cut (renamed Loop.Resumes, a new Exited argument, callers in later generations and other packages):
+        no intermediate tree compiles, the full one does (the P21a smoke RED: a judge retried after its generation sibling
+        wrote, `supervisor/guard.go:20:23`).
+      language: typescript
+      guardrails: [Frozen Tree During Run]
+      functions:
+        - name: Run Transaction
+          description: Write every card, then run every acceptance on the full tree, retry the owners of the red lines to a fixed point, commit all or nothing.
+          behavior: >
+            runTransaction(input, deps) → Promise<Run Result>; Run Deck calls it for a deck Transaction Deck marks, before
+            anything else (src/runloop/deck.ts: `if (isTransactionDeck(input.deck.cards)) return runTransaction(input,
+            deps);` as its first line; import from "./transaction.js" and "../cards/transaction.js"). owners: every target
+            of every card → its customId (deck order, the first owner kept). before = Snapshot Targets(root, every target,
+            deck order) — the run's starting tree. W = Write: runDeck(input with deck.cards each a copy with acceptance
+            "true", externalDependsOn as given; deps with commit () => null) — Run Deck's generations, budget, interrupts,
+            skips and retries of a card it could not write (corrupt, truncated, stale, compile), every written answer left
+            on the tree. W.report.fault set, or some W outcome not "written" → rollback (below), no acceptance run.
+            Else rounds r = 0, 1, …: every card in deck order runs ITS acceptance (Run Acceptance(card.acceptance, root, {env:
+            deps.env, timeoutMs: deps.acceptanceTimeoutMs ?? DEFAULT_TIMEOUT_MS})); exit 0 green, else red with Blame Log(its
+            log, its customId, owners, TREE_PROFILES' fileLine in order, p → a file or directory exists at root/p). All
+            green → deps.commit(id, targets) per card in deck order, id = the customId of the attempt whose files are on the
+            tree (the card's, or "<customId>.r<n>" of its last written retry); done. Some red: any outside line → fault
+            "outside the subset: " + every red card's outside lines (each once, sorted) joined ", ", then rollback. Else
+            blamed = every id some red card's Blame names, in deck order; a blamed card with 2 retries done (W's included),
+            or batches (0 at the first round) >= input.budget.maxRetryBatches → rollback; deps.interrupted?.() a string s
+            → throws Error "interrupted by <s>"; deps.now() >= input.budget.deadline → rollback, the blamed cards
+            "budget-exceeded" reason "deadline". Else batches += 1 and per blamed card, n its retries + 1:
+            {...buildRetry(card, n, acceptanceOutput, previousDiff), acceptance: "true"}, acceptanceOutput = the logs of
+            this round's red cards whose Blame names it, deck order, "\n"-joined; previousDiff = Build Attempt Diff(before's
+            text of its targets (null when absent), the targets' text on disk now ("" when absent)); processGeneration(those
+            cards, deps with commit () => null, root); a written retry's files are on the tree, a retry not written leaves
+            them; then round r + 1. Outcomes: written → {customId, status "written", reason null, attempts: 1 + its retries
+            (W's and these), winningVariant its last written attempt's, acceptanceLog its last round's log, earlierFailures:
+            W's + its red round logs in order, commit and diffstat from the hook}. Rollback: before restored (Restore
+            Snapshot); a card W did not write keeps W's outcome; every other → {status "failed" (or "budget-exceeded"
+            above), reason: "outside the subset" when its last log named an outside line, else "acceptance failed" when its
+            last round was red and its Blame names itself, else "transaction rolled back"; attempts 1 + its retries,
+            winningVariant null, acceptanceLog its last round's log (W's when no round ran), earlierFailures W's + its red
+            logs of rounds before the last, commit null, diffstat null}. A value thrown (an answer write, the interrupt, the
+            hook): before the first commit → before restored and every card {status "skipped", reason "fault", attempts 0,
+            winningVariant null, acceptanceLog "", earlierFailures [], commit null, diffstat null}; after → the committed
+            keep "written", the rest that outcome, nothing restored; fault = the Error's message. The Run Report: runId,
+            completedAt deps.now(), branch, processor deps.config.id, generations W's, outcomes in deck order, usageTotals
+            W's plus every retry request's (cost null when none), requests W's rows then the retries' in send order, fault
+            the last key when set. deps.onVariant sees every request (W's verdicts are those of the "true" acceptance).
+          steps:
+            - uses: runloop
+            - uses: cards
+            - uses: acceptance
+            - uses: language
+            - produces: Run Report
+          examples:
+            - given: 'the stub (answersDir the tmp root, a.md fenced ''export const a = "A1";\n'', b.md fenced ''export const b = "B2";\n''); M = TRANSACTION_MARK + "\n"; cards a → out/a.ts acceptance M + "grep -q B2 out/b.ts && grep -q A1 out/a.ts", b → out/b.ts dependsOn [a] acceptance M + "grep -q B2 out/b.ts"; budget {maxCards 99, maxRetryBatches 8, deadline 1e12}; a recording commit hook; then runDeck on the same input in a fresh root'
+              when: runTransaction
+              then: 'a and b "written", attempts 1, winningVariant "a.v1" / "b.v1", earlierFailures [], commit set — a''s acceptance, which needs the later card''s file, ran on the full tree; the hook fired a then b; generations 2; usageTotals.requests 2; requests a.v1, b.v1; no fault key; then runDeck gives the same outcomes (it hands the deck over)'
+            - given: 'the stub, a.md fenced ''export const a = 1;\n'', b.md ''export const b = "B_OLD";\n'', b.r1.md ''export const b = "B_NEW";\n''; a → out/a.ts acceptance M + ''grep -q B_NEW out/b.ts || { echo "out/b.ts(1,14): error TS2305: b is old"; exit 1; }'', b → out/b.ts dependsOn [a] acceptance M + "grep -q export out/b.ts"; deps.onVariant pushes each record'
+              when: runTransaction
+              then: 'a "written" attempts 1, earlierFailures ["out/b.ts(1,14): error TS2305: b is old\n"] (round 0: red, blaming b); b "written" attempts 2, winningVariant "b.r1.v1", earlierFailures [] (green itself, retried as the owner); requests a.v1, b.v1, b.r1.v1 (a never retried); the hook fired "a" then "b.r1"; the b.r1.v1 record''s request holds "error TS2305: b is old" and "<previous_attempt_diff>"; out/b.ts holds B_NEW'
+            - given: 'the stub; out/legacy.ts ''export const legacy = 0;\n'' on disk, no card''s target; a.md, b.md fenced; a → out/a.ts acceptance M + `echo "out/legacy.ts(3,4): error TS2304: Cannot find name ''q7''."; exit 1`, b → out/b.ts dependsOn [a] acceptance M + "exit 0"'
+              when: runTransaction
+              then: 'a "failed" reason "outside the subset", b "failed" reason "transaction rolled back", attempts 1, commit null; report.fault "outside the subset: out/legacy.ts(3,4): error TS2304: Cannot find name ''q7''.", the last key; out/a.ts and out/b.ts absent again, out/legacy.ts unchanged; the hook never fired; usageTotals.requests 2'
+            - given: 'the stub, s.md fenced ''export const s = "S1";\n'', j.md and j.r1.md fenced ''test("j", () => {});\n'', p.md ''export const p = "P5";\n''; cards [s → out/s.ts M + "grep -q S1 out/s.ts", j → tests/s.test.ts dependsOn [s] M + ''[ -f j.once ] || { touch j.once; echo "forced red"; exit 1; }; grep -q P5 out/p.ts'', p → out/p.ts dependsOn [s] M + "grep -q P5 out/p.ts"]'
+              when: runTransaction
+              then: 'generations 2 ([s], [j, p]); j red once (no file line: it blames itself), retried after its generation sibling p wrote out/p.ts; s, p "written" attempts 1; j "written" attempts 2, winningVariant "j.r1.v1", earlierFailures ["forced red\n"]; requests s.v1, j.v1, p.v1, j.r1.v1; the hook fired s, j.r1, p (deck order)'
+            - given: 'the stub; out/a.ts holds ''export const a = "OLD";\n''; a.md, a.r1.md, a.r2.md fenced ''export const a = "NEW";\n'', b.md fenced; a → out/a.ts M + "echo red-a7; exit 1", b → out/b.ts M + "exit 0" (one generation); maxRetryBatches 8'
+              when: runTransaction
+              then: 'a "failed" reason "acceptance failed", attempts 3, acceptanceLog "red-a7\n", earlierFailures ["red-a7\n", "red-a7\n"]; b "failed" reason "transaction rolled back", attempts 1, acceptanceLog "", earlierFailures []; requests a.v1, b.v1, a.r1.v1, a.r2.v1; no commit; out/a.ts holds OLD again, out/b.ts absent; no fault key'
+            - given: 'example 5 with maxRetryBatches 0'
+              when: runTransaction
+              then: 'a "failed" "acceptance failed" attempts 1, earlierFailures []; b "failed" "transaction rolled back" attempts 1; usageTotals.requests 2; out/a.ts holds OLD'
+            - given: 'the stub with a.md fenced only (no b.md, b.r1.md, b.r2.md); a → out/a.ts M + "touch ran-a; exit 0", b → out/b.ts dependsOn [a] M + "exit 0"; maxRetryBatches 2'
+              when: runTransaction
+              then: 'a "failed" "transaction rolled back" attempts 1; b W''s outcome: "failed" "acceptance failed" attempts 3, acceptanceLog "answer corrupt: stub has no answer: <answersDir>/b.r2.v1.md"; requests a.v1, b.v1, b.r1.v1, b.r2.v1; out/a.ts absent; ran-a absent (no acceptance of the deck ran); no commit'
 
     # ---------------------------------------------------------------- P6
     - name: git
@@ -1508,7 +1647,7 @@ System:
             replaces Plan Spec's and the checks keep only its cards. With args.checks: profile = Resolve Profile(the first selected Component's
             language, map.language), an error → 2 DeckError "the map: " + it; Read Plan Checks(root, args.checks, profile) (a failure is the result); Build
             Acceptances({cards, checks, profile, texts, uses: Plan Spec's uses, vendor: "vendor/modules.txt" is a regular file under root, and with args.only
-            and the go profile hide: Hide Later(plan, Read Go Tree(root))}), errors → 2 DeckError "acceptances not built (<n> error|errors):\n"
+            transaction: true (P21c: an --only cut runs as one transaction; no hide, no tree read)}), errors → 2 DeckError "acceptances not built (<n> error|errors):\n"
             + them "\n"-joined; its cards replace the plan's, except a card the map gives an acceptance (map card by customId ?? id, extra card by customId).
             args.out not null → the cards written to path.resolve(root, args.out) as JSON.stringify(cards, null, 2) + "\n", parents created. → {code: 0,
             document: {spec, components, cards, generations, externalDependsOn, out: args.out}}. Nothing else written; nothing on an error.
@@ -2565,7 +2704,7 @@ System:
         in the gen-2 card's build). Hide Later (src/planner/hideLater.ts, layer planner, pure, node:path only) says which
         Go files of the subset each card hides because the run has not written them yet; Read Go Tree (src/cli/goTree.ts,
         layer cli, node:fs and node:path) reads the module's Go files and their own-package imports for it.
-        tests/fixtures/planner/hide.plan.json is the Plan of the Hide Later examples: cards s ["calc/scale_value.go"],
+        Since P21c an --only cut is a transaction (Plan Command passes no hide). tests/fixtures/planner/hide.plan.json is the Plan of the Hide Later examples: cards s ["calc/scale_value.go"],
         f ["report/format_line.go"], r ["calc/ratio_of.go"], sj ["calc/scale_value_examples_test.go"],
         fj ["report/format_line_examples_test.go"], m ["summary/summary.go", "summary/README.md"],
         mj ["summary/summary_examples_test.go"] (targets), generations [["s"], ["f", "r", "sj"], ["fj", "m"], ["mj"]];
@@ -2690,7 +2829,9 @@ System:
             (flattened in order, ids with no card skipped) and then the card itself, every target whose extension the
             language's extensions hold and that is not yet stubbed: in stubs → stubs map target → path.posix.join(stubDir,
             target); else into missing, once. The card's generation siblings are never stubbed: its first attempt sees
-            them as its config leaves them, or as on disk. Without a config, stubs {} and missing []. → Stub Tree {card,
+            them as its config leaves them, or as on disk. P21c: a card whose acceptance starts with TRANSACTION_MARK + "\n"
+            (Transaction Deck) takes every card of every generation instead (flattened in order, itself among them): its
+            acceptance runs on the tree with the whole subset written. Without a config, stubs {} and missing []. → Stub Tree {card,
             generation: g, language: its id or null, exports, config, stubs, own: a copy of the card's targets, missing}.
             The inputs are never changed.
           steps:
@@ -2707,6 +2848,10 @@ System:
             - given: 'stub.cards.json, generations [["a", "t", "u"]], stubDir "st", stubs ["calc/a.go", "src/t.ts", "tests/t.test.ts", "tests/u.test.ts"], languages [the go entry of L only]'
               when: stubTrees
               then: 'equal to stub.trees.json["3"]: a go with stubs {"calc/a.go": "st/calc/a.go"}; t and u language null, config null, stubs {}, missing []'
+            - given: 'stub.cards.json with TRANSACTION_MARK + "\n" put before the acceptances of a, u and j; the generations, stubDir and languages of example 1; stubs ["calc/a.go", "calc/a_examples_test.go", "calc/b.go", "calc/b_test.go", "calc/n.go", "extra/z.go", "report/c.go", "src/t.ts", "tests/t.test.ts"]'
+              ref: "tests/fixtures/planner/stub.trees.p21c.json (key \"4\")"
+              when: stubTrees
+              then: 'equal to stub.trees.p21c.json["4"]: a''s stubs in order calc/a.go, calc/n.go, calc/b.go, calc/b_test.go, report/c.go, calc/a_examples_test.go (every Go target of every generation), missing ["calc/v.go"]; j the same; u stubs src/t.ts, tests/t.test.ts, missing ["tests/u.test.ts"]; n, t, p, b, c, v as without the mark'
         - name: Check Builds
           description: Every card's stub tree of a deck compiled by its language's step; the lines outside its own targets.
           behavior: >
@@ -2759,7 +2904,7 @@ System:
     - name: builder
       description: >
         The acceptance builder: src/builder/*.ts, pure functions that write every card's acceptance
-        shell script — the job decks/tools/build.py does today (issue #3, A1–A10 and B1–B2). Input:
+        shell script (issue #3, A1–A10 and B1–B2). Input:
         the deck's cards, a phase's checks document (the knobs: phase, frozen paths, full-suite
         excludes, own-git, per card a smoke cap, an extra step or a judge's test files with their
         bounds, literals and kept names), the language profile (its parse, lint and test lines) and
@@ -2773,9 +2918,7 @@ System:
         and the first difference. The scripts equal build.py's P10a form byte for byte. The
         typescript profile builds here, the go profile by builder-go (P15); no other profile has a
         builder. No file read, no clock, no environment; node:path is the only Node module. `morph
-        plan --checks` (cli) reads the files and calls it. Since P19 (issue #10) a code card's guard
-        line names the packages its Component declares (Plan Spec's uses); a card without any keeps
-        its acceptance byte for byte.
+        plan --checks` (cli) reads the files and calls it.
       language: typescript
       requirements: [Deterministic Core]
       functions:
@@ -3017,9 +3160,11 @@ System:
             input cards in their order, each member a copy with its acceptance, every other card as
             given. probeFile(profile, id) (exported; cli reads the probe by it) = "_<id>_probe_test.go"
             for the go profile (the leading "_" makes the go tool ignore the file where it is kept,
-            decks/<phase>/parts), else "<id>.probe.ts". P21 (#12): the input's optional hide (customId → paths;
-            Plan Command's Hide Later for a Go --only cut) appends hide[customId] (an own key) to a member's ctx siblings
-            and to its ctx fullExclude, each path a list already holds skipped; no hide or no key → as before.
+            decks/<phase>/parts), else "<id>.probe.ts". P21 (#12): an optional hide (customId → paths) appends
+            hide[customId] (an own key) to a member's ctx siblings and ctx fullExclude, a path already held skipped; no hide or
+            key → as before. P21c (#12): an optional transaction (Plan Command's for --only) true → every member's ctx siblings
+            [], hide ignored, and its acceptance = TRANSACTION_MARK (Transaction Deck) + "\n" + its script with the exact text
+            untrackedStep(its targets) replaced once by untrackedStep(every member's targets, checks' order, each once).
           steps:
             - calls: Code Acceptance
             - calls: Judge Acceptance
@@ -3056,6 +3201,7 @@ System:
               when: "buildAcceptances"
               then: 'ok; percent-of''s acceptance = code1.txt with "export GOFLAGS=-mod=mod " become "export GOFLAGS=-mod=vendor " and its guard line "node $P/guard.mjs src calc/percent_of.go" ending in " ''github.com/dustin/go-humanize,golang.org/x/text''"; the judge''s = goJudgeAcceptance(its ctx with siblings ["calc/percent_of.go"] and vendor true, files), holding "export GOFLAGS=-mod=vendor " and no "-mod=mod"'
             - {given: 'examples.json["Build Acceptances 9"].given', ref: "tests/fixtures/builder/examples.json", when: buildAcceptances, then: 'examples.json["Build Acceptances 9"].then'}
+            - {given: 'examples.json["Build Acceptances 10"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/go/code1.txt", when: buildAcceptances, then: 'examples.json["Build Acceptances 10"].then'}
       dataObjects:
         - name: Checks
           description: A phase's acceptance knobs, read from its checks document (decks/<phase>/checks.json).

@@ -1,0 +1,147 @@
+{
+ "phase": "p21c",
+ "ownGit": true,
+ "frozen": [
+  "contour.yaml",
+  "morph-map.json",
+  "docs",
+  "decks",
+  "tests/fixtures",
+  "templates"
+ ],
+ "fullExclude": [
+  "tests/cli/planCommand.p20.examples.test.ts",
+  "tests/cli/planCommand.p21.examples.test.ts"
+ ],
+ "cards": [
+  {
+   "id": "transaction-deck"
+  },
+  {
+   "id": "build-acceptances"
+  },
+  {
+   "id": "stub-trees"
+  },
+  {
+   "id": "run-transaction"
+  },
+  {
+   "id": "plan-command"
+  },
+  {
+   "id": "transaction-deck-judge",
+   "files": [
+    {
+     "file": "tests/cards/transaction.examples.test.ts",
+     "min": 6,
+     "max": 12,
+     "new": true,
+     "lits": [
+      "Transaction Deck example 1",
+      "Transaction Deck example 2",
+      "Blame Log example 1",
+      "Blame Log example 2",
+      "Blame Log example 3",
+      "Blame Log example 4",
+      "cards/blameLogs.json",
+      "toYards",
+      "n4"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "build-acceptances-judge",
+   "files": [
+    {
+     "file": "tests/builder/buildAcceptances.p21c.examples.test.ts",
+     "min": 1,
+     "max": 7,
+     "new": true,
+     "lits": [
+      "Build Acceptances example 10",
+      "builder/go/code1.txt",
+      "tests/x/old.test.ts",
+      "calc/clamp_value_examples_test.go"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "stub-trees-judge",
+   "files": [
+    {
+     "file": "tests/planner/stubTrees.p21c.examples.test.ts",
+     "min": 1,
+     "max": 7,
+     "new": true,
+     "lits": [
+      "Stub Trees example 4",
+      "planner/stub.trees.p21c.json",
+      "planner/stub.cards.json",
+      "decks/q9/_stubs"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "run-transaction-judge",
+   "files": [
+    {
+     "file": "tests/runloop/transaction.examples.test.ts",
+     "min": 7,
+     "max": 13,
+     "new": true,
+     "lits": [
+      "Run Transaction example 1",
+      "Run Transaction example 2",
+      "Run Transaction example 3",
+      "Run Transaction example 4",
+      "Run Transaction example 5",
+      "Run Transaction example 6",
+      "Run Transaction example 7",
+      "outside the subset: out/legacy.ts(3,4)",
+      "transaction rolled back",
+      "j.once",
+      "b.r1.v1"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "plan-command-judge",
+   "files": [
+    {
+     "file": "tests/cli/planCommand.p20.examples.test.ts",
+     "min": 2,
+     "max": 4,
+     "new": false,
+     "lits": [
+      "Plan Command example 12",
+      "Plan Command example 13",
+      "TRANSACTION_MARK"
+     ],
+     "drop": [
+      "Plan Command example 12: --only recomputes the overlay against the current tree",
+      "Plan Command example 13: --only keeps two siblings that still hide each other"
+     ]
+    },
+    {
+     "file": "tests/cli/planCommand.p21.examples.test.ts",
+     "min": 1,
+     "max": 3,
+     "new": false,
+     "lits": [
+      "Plan Command example 14",
+      "TRANSACTION_MARK",
+      "mcp/session.go"
+     ],
+     "drop": [
+      "Plan Command example 14"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,7 +1,7 @@
 {
   "package": "src",
   "docs": [
-    "docs/TASK_P21b_deckcheck.md"
+    "docs/TASK_P21c_transaction.md"
   ],
   "groups": {
     "card-model": [
@@ -151,6 +151,10 @@
     ],
     "send-batch": [
       "Send Batch"
+    ],
+    "transaction-deck": [
+      "Transaction Deck",
+      "Blame Log"
     ]
   },
   "cards": {
@@ -1720,22 +1724,18 @@
         "src/cli/planCommand.ts"
       ],
       "context_slice": [
-        "docs/TASK_P21a_breaking.md",
+        "docs/TASK_P21c_transaction.md",
         "docs/CONVENTIONS.md",
         "src/cli/types.ts",
         "src/planner/types.ts",
-        "src/planner/hideLater.ts",
-        "src/cli/goTree.ts",
         "src/builder/types.ts"
       ],
       "depends_on": [
-        "read-go-tree",
-        "hide-later",
         "build-acceptances"
       ],
       "variants": 2,
       "max_tokens": 12000,
-      "instruction": "Read docs/TASK_P21a_breaking.md sections 2.2 (src/cli/planCommand.ts: hide) and 4. Patch src/cli/planCommand.ts (its current text follows) and return it WHOLE; change nothing else in it. When args.only is given and the resolved profile's id is \"go\", the object passed to buildAcceptances also holds hide: hideLater(plan, readGoTree(root)) — hideLater from \"../planner/hideLater.js\", readGoTree from \"./goTree.js\", plan being the subset plan Select Cards returned; otherwise the object stays exactly as it is (no hide key) and the tree is not read. Without --only nothing changes. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P21c_transaction.md sections 2.2 (src/cli/planCommand.ts: transaction) and 4. Patch src/cli/planCommand.ts (its current text follows) and return it WHOLE; change nothing else in it. When args.only is given, the object passed to buildAcceptances is the same input plus `transaction: true` (no hide key: hideLater and readGoTree are no longer called, and their two imports go — eslint rejects an unused import); without args.only the object stays exactly as it is. Every other step, message and order stays as it is. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "render-judge": {
       "intent": "generate",
@@ -1823,23 +1823,26 @@
       "instruction": "You patch tests/planner/plan.examples.test.ts and return it WHOLE (its current text follows). Read docs/TASK_P19a_deps.md sections 2.1 (the deps fixtures) and 2.2 (Plan Spec and its table) and 2.3 (the plan.examples bullet). Four changes only: \"Plan Spec example 1\" also expects r.uses toStrictEqual {}; in \"Plan Spec example 5\" a card's acceptance is compared only when its map entry sets one (not null); after the last test add \"Plan Spec example 6: dependency docs ride in the slices of the Components that use them\" and \"Plan Spec example 7: a missing dependency doc is a plan fault\", every expected slice, uses and error written out as a literal. Keep every other test, its name and every other line exactly as it is. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "plan-command-judge": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
+        "tests/cli/planCommand.p20.examples.test.ts",
         "tests/cli/planCommand.p21.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P21a_breaking.md",
+        "docs/TASK_P21c_transaction.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
+        "src/cards/types.ts",
+        "src/cards/transaction.ts",
         "src/cli/types.ts",
         "src/cli/planCommand.ts",
-        "src/cards/types.ts"
+        "tests/fixtures/cli/examples.json"
       ],
       "depends_on": [
         "plan-command"
       ],
       "max_tokens": 20000,
-      "instruction": "You write tests/cli/planCommand.p21.examples.test.ts only, a NEW file with the test of Plan Command example 14 (examples 1-13 are already tested). Read docs/TASK_P21a_breaking.md sections 2.1 (the go-p7b root, its skeleton verbatim) and 2.2 (Plan Command: hide, and its table) and 2.3 (the planCommand.p21 bullet). Import planCommand from \"../../src/cli/planCommand.js\", tmpRoot and fixture from \"../helpers.js\", types with `import type`. Every tmp root is removed in finally. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You patch tests/cli/planCommand.p20.examples.test.ts and tests/cli/planCommand.p21.examples.test.ts (their current texts follow) and return each WHOLE. Read docs/TASK_P21c_transaction.md sections 2.1 (the Plan Command roots, verbatim) and 2.2 (Plan Command: transaction, and examples.json \"Plan Command 12\", \"13\", \"14\" as amended) and 2.3. Rewrite ONLY the three tests of Plan Command examples 12 and 13 (p20 file) and 14 (p21 file) to the amended contract, each still named \"Plan Command example <n>…\"; keep every other line, helper and import that is still used; add `import { TRANSACTION_MARK } from \"../../src/cards/transaction.js\";` where used. Every tmp root is removed in finally. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "read-checks": {
       "intent": "generate",
@@ -1915,15 +1918,17 @@
         "src/builder/buildAcceptances.ts"
       ],
       "context_slice": [
-        "docs/TASK_P21a_breaking.md",
+        "docs/TASK_P21c_transaction.md",
         "docs/CONVENTIONS.md",
-        "src/builder/compose.ts",
-        "src/builder/goAcceptance.ts"
+        "src/builder/steps.ts",
+        "src/cards/transaction.ts"
       ],
-      "depends_on": [],
+      "depends_on": [
+        "transaction-deck"
+      ],
       "variants": 2,
       "max_tokens": 14000,
-      "instruction": "Read docs/TASK_P21a_breaking.md sections 2.2 (src/builder/types.ts and src/builder/buildAcceptances.ts: hide) and 4. Patch both files (their current texts follow) and return each WHOLE; change nothing else in them. types.ts: BuildInput gains the optional field `hide?: Record<string, string[]>` after vendor. buildAcceptances.ts: a member whose customId is an OWN key of input.hide gets ctx.siblings = its siblings followed by each path of input.hide[customId] the list does not hold yet, and ctx.fullExclude = checks.fullExclude followed by each such path it does not hold yet (new arrays; checks is never changed); every other check, message, order and field stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P21c_transaction.md sections 2.2 (src/builder/types.ts and src/builder/buildAcceptances.ts: transaction) and 4. Patch both files (their current texts follow) and return each WHOLE; change nothing else in them. types.ts: BuildInput gains the optional LAST field `transaction?: boolean` after hide. buildAcceptances.ts: when input.transaction === true every member's ctx.siblings is [] and input.hide is not read; after all acceptances are built, each member's acceptance becomes TRANSACTION_MARK + \"\\n\" + its script with the exact text untrackedStep(member.targets) replaced ONCE by untrackedStep(every member's targets in the checks' order, each once) — use String.prototype.replace with a function as the replacement (the step holds `$`), untrackedStep from \"./steps.js\", TRANSACTION_MARK from \"../cards/transaction.js\"; when transaction is absent or false nothing changes, byte for byte. Every other check, message, order and field stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "steps-judge": {
       "intent": "generate",
@@ -2002,22 +2007,24 @@
     "build-acceptances-judge": {
       "intent": "generate",
       "targets": [
-        "tests/builder/buildAcceptances.p21.examples.test.ts"
+        "tests/builder/buildAcceptances.p21c.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P21a_breaking.md",
+        "docs/TASK_P21c_transaction.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/builder/types.ts",
         "src/builder/buildAcceptances.ts",
-        "src/builder/goAcceptance.ts",
+        "src/builder/compose.ts",
+        "src/builder/steps.ts",
+        "src/cards/transaction.ts",
         "tests/fixtures/builder/examples.json"
       ],
       "depends_on": [
         "build-acceptances"
       ],
       "max_tokens": 16000,
-      "instruction": "You write tests/builder/buildAcceptances.p21.examples.test.ts only, a NEW file with the test of Build Acceptances example 9 (examples 1-8 are already tested). Read docs/TASK_P21a_breaking.md sections 2.1 (the Build Acceptances skeleton, verbatim) and 2.2 (Build Acceptances: hide) and 2.3 (the buildAcceptances.p21 bullet). Import buildAcceptances from \"../../src/builder/buildAcceptances.js\", goCodeAcceptance from \"../../src/builder/goAcceptance.js\", DEFAULT_FROZEN from \"../../src/builder/readChecks.js\", GO from \"../../src/language/profiles.js\", types with `import type`. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/builder/buildAcceptances.p21c.examples.test.ts only, a NEW file with the test of Build Acceptances example 10 (examples 1-9 are already tested). Read docs/TASK_P21c_transaction.md sections 2.1 (the Build Acceptances skeleton, verbatim) and 2.2 (Build Acceptances: transaction) and 2.3. Import buildAcceptances from \"../../src/builder/buildAcceptances.js\", codeAcceptance and judgeAcceptance from \"../../src/builder/compose.js\", untrackedStep from \"../../src/builder/steps.js\", DEFAULT_FROZEN from \"../../src/builder/readChecks.js\", GO and TYPESCRIPT from \"../../src/language/profiles.js\", TRANSACTION_MARK from \"../../src/cards/transaction.js\", fixture from \"../helpers.js\", types with `import type`. One test named \"Build Acceptances example 10: <what>\"; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "read-plan-checks": {
       "intent": "generate",
@@ -3212,39 +3219,43 @@
       "instruction": "You write tests/cli/goTree.examples.test.ts only, a NEW file. Read docs/TASK_P21a_breaking.md sections 2.1 (the Read Go Tree skeleton, verbatim; the fixtures) and 2.2 (Read Go Tree and its table) and 2.3 (the goTree bullet). Import readGoTree from \"../../src/cli/goTree.js\", tmpRoot, fixture and fixtureJson from \"../helpers.js\", types with `import type`. One test per example of Read Go Tree (1-3), in record order, named \"Read Go Tree example <n>: <what>\"; then at most 6 of your own on section 2.2 rows. Every tmp root is removed in finally. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "stub-trees": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "src/planner/stubTrees.ts"
       ],
       "context_slice": [
-        "docs/TASK_P21b_deckcheck.md",
+        "docs/TASK_P21c_transaction.md",
         "docs/CONVENTIONS.md",
-        "src/cards/types.ts"
+        "src/cards/types.ts",
+        "src/cards/transaction.ts"
       ],
-      "depends_on": [],
+      "depends_on": [
+        "transaction-deck"
+      ],
       "variants": 2,
       "max_tokens": 8000,
-      "instruction": "Read docs/TASK_P21b_deckcheck.md sections 2.2 (src/planner/stubTrees.ts) and 4. Write one file src/planner/stubTrees.ts: `export interface TreeLanguage`, `export interface StubTree` and `export function stubTrees(cards: Card[], generations: string[][], stubDir: string, stubs: string[], languages: TreeLanguage[]): StubTree[]` exactly as section 2.2 shows, importing `path` from \"node:path\" (path.posix only) and `import type { Card } from \"../cards/types.js\"`. Pure: no process, no console, no Date, no Math.random, no file read, no other node: module; the inputs are never changed. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P21c_transaction.md sections 2.2 (src/planner/stubTrees.ts: a transaction card's tree) and 4. Patch src/planner/stubTrees.ts (its current text follows) and return it WHOLE; change nothing else in it. A card whose acceptance (\"\" when null) starts with TRANSACTION_MARK + \"\\n\" (import { TRANSACTION_MARK } from \"../cards/transaction.js\") considers, with a config, the targets of every card of EVERY generation (flattened in generation order, ids with no card skipped, the card itself among them) instead of generations[0..g-1] and then itself; every other card, the config, the exports and every other rule stay exactly as they are. Pure: no other import. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "stub-trees-judge": {
       "intent": "generate",
       "targets": [
-        "tests/planner/stubTrees.examples.test.ts"
+        "tests/planner/stubTrees.p21c.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P21b_deckcheck.md",
+        "docs/TASK_P21c_transaction.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/cards/types.ts",
+        "src/cards/transaction.ts",
         "src/planner/stubTrees.ts",
         "tests/fixtures/planner/stub.cards.json",
-        "tests/fixtures/planner/stub.trees.json"
+        "tests/fixtures/planner/stub.trees.p21c.json"
       ],
       "depends_on": [
         "stub-trees"
       ],
       "max_tokens": 16000,
-      "instruction": "You write tests/planner/stubTrees.examples.test.ts only, a NEW file. Read docs/TASK_P21b_deckcheck.md sections 2.1 (stub.cards.json, stub.trees.json and the Stub Trees skeleton, verbatim) and 2.2 (Stub Trees and its table) and 2.3. Import stubTrees from \"../../src/planner/stubTrees.js\", fixtureJson from \"../helpers.js\", types with `import type`. One test per example of Stub Trees (1-3), in record order, named \"Stub Trees example <n>: <what>\"; then at most 6 of your own on section 2.2 rows (e.g. the inputs unchanged). Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/planner/stubTrees.p21c.examples.test.ts only, a NEW file with the test of Stub Trees example 4 (examples 1-3 are already tested). Read docs/TASK_P21c_transaction.md sections 2.1 (stub.cards.json, stub.trees.p21c.json and the Stub Trees skeleton, verbatim) and 2.2 (Stub Trees: a transaction card's tree) and 2.3. Import stubTrees from \"../../src/planner/stubTrees.js\", TRANSACTION_MARK from \"../../src/cards/transaction.js\", fixtureJson from \"../helpers.js\", types with `import type`. One test named \"Stub Trees example 4: <what>\"; then at most 6 of your own on section 2.2 rows (e.g. a mark that is not the first line changes nothing). Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "check-builds": {
       "intent": "generate",
@@ -3357,6 +3368,88 @@
       ],
       "max_tokens": 16000,
       "instruction": "You write tests/acceptance/treeCheck.examples.test.ts only, a NEW file. Read docs/TASK_P21b_deckcheck.md sections 2.1 (treeOutput.json, acceptance/tree and the skeleton: copyOf, G, GO_LINE, TS_LINE, GO_CMD, pathEnv, verbatim) and 2.2 (Tree Check and its table) and 2.3. Import findBreaks and treeCheck from \"../../src/acceptance/treeCheck.js\", tmpRoot, fixtureJson and fixturePath from \"../helpers.js\", fs from \"node:fs\", types with `import type`. One test per example of Tree Check (1-3), in record order, named \"Tree Check example <n>: <what>\", every expected result written out as a literal; every test that runs a child process gets 120000 as the third argument of test(...); every tmp root is removed in finally; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+    },
+    "transaction-deck": {
+      "intent": "generate",
+      "targets": [
+        "src/cards/transaction.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P21c_transaction.md",
+        "docs/CONVENTIONS.md",
+        "src/cards/types.ts"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 8000,
+      "instruction": "Read docs/TASK_P21c_transaction.md sections 2.2 (src/cards/transaction.ts: Transaction Deck and Blame Log) and 4. Write one file src/cards/transaction.ts: `export const TRANSACTION_MARK`, `export function isTransactionDeck(cards: readonly Card[]): boolean`, `export interface Blame` and `export function blameLog(log: string, card: string, owners: Record<string, string>, fileLines: readonly string[], exists: (path: string) => boolean): Blame` exactly as section 2.2 shows, with `import type { Card } from \"./types.js\"` and no other import. Pure: no process, no console, no Date, no Math.random, no file read, no node: module; the inputs are never changed. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "transaction-deck-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/cards/transaction.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P21c_transaction.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/cards/types.ts",
+        "src/cards/transaction.ts",
+        "src/language/treeProfiles.ts",
+        "tests/fixtures/cards/blameLogs.json"
+      ],
+      "depends_on": [
+        "transaction-deck"
+      ],
+      "max_tokens": 16000,
+      "instruction": "You write tests/cards/transaction.examples.test.ts only, a NEW file. Read docs/TASK_P21c_transaction.md sections 2.1 (blameLogs.json and the Transaction Deck / Blame Log skeleton, verbatim) and 2.2 (Transaction Deck, Blame Log and their tables) and 2.3. Import TRANSACTION_MARK, isTransactionDeck and blameLog from \"../../src/cards/transaction.js\", TREE_PROFILES from \"../../src/language/treeProfiles.js\", fixtureJson from \"../helpers.js\", types with `import type`. One test per example, in record order: Transaction Deck 1-2, then Blame Log 1-4, named \"<Function> example <n>: <what>\"; then at most 6 of your own on section 2.2 rows (e.g. the inputs unchanged, a tab-indented line skipped). Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+    },
+    "run-transaction": {
+      "intent": "patch",
+      "targets": [
+        "src/runloop/transaction.ts",
+        "src/runloop/deck.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P21c_transaction.md",
+        "docs/CONVENTIONS.md",
+        "src/cards/types.ts",
+        "src/cards/transaction.ts",
+        "src/language/treeProfiles.ts",
+        "src/runloop/types.ts",
+        "src/runloop/generation.ts",
+        "src/runloop/retry.ts",
+        "src/acceptance/types.ts",
+        "src/acceptance/snapshot.ts",
+        "src/acceptance/run.ts"
+      ],
+      "depends_on": [
+        "transaction-deck"
+      ],
+      "variants": 2,
+      "max_tokens": 16000,
+      "instruction": "Read docs/TASK_P21c_transaction.md sections 2.1 (the shapes it calls) and 2.2 (src/runloop/transaction.ts and src/runloop/deck.ts: Run Transaction) and 4. Write src/runloop/transaction.ts, a NEW file exporting `async function runTransaction(input: RunInput, deps: RunDeps): Promise<RunResult>` exactly as section 2.2 says, and patch src/runloop/deck.ts (its current text follows): its ONE change is the first statement of runDeck, `if (isTransactionDeck(input.deck.cards)) return runTransaction(input, deps);`, with `import { runTransaction } from \"./transaction.js\";` and `import { isTransactionDeck } from \"../cards/transaction.js\";` — return deck.ts WHOLE, every other line exactly as it is. transaction.ts imports node:fs, node:path, runDeck from \"./deck.js\", processGeneration from \"./generation.js\", buildRetry from \"./retry.js\", blameLog from \"../cards/transaction.js\", TREE_PROFILES from \"../language/treeProfiles.js\", snapshotTargets and restoreSnapshot from \"../acceptance/snapshot.js\", runAcceptance and DEFAULT_TIMEOUT_MS from \"../acceptance/run.js\", buildAttemptDiff from \"../acceptance/diff.js\" (buildAttemptDiff(before: Record<string, string | null>, after: Record<string, string>): string), types with `import type`. It runs no git, reads no clock but deps.now, no process.env. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "run-transaction-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/runloop/transaction.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P21c_transaction.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/cards/types.ts",
+        "src/cards/transaction.ts",
+        "src/processor/types.ts",
+        "src/runloop/types.ts",
+        "src/runloop/transaction.ts"
+      ],
+      "depends_on": [
+        "run-transaction"
+      ],
+      "max_tokens": 24000,
+      "instruction": "You write tests/runloop/transaction.examples.test.ts only, a NEW file. Read docs/TASK_P21c_transaction.md sections 2.1 (the Run Transaction harness skeleton, verbatim) and 2.2 (Run Transaction and its table) and 2.3. Import runTransaction from \"../../src/runloop/transaction.js\", runDeck from \"../../src/runloop/deck.js\", TRANSACTION_MARK from \"../../src/cards/transaction.js\", fakeFetch and tmpRoot from \"../helpers.js\", node:fs and node:path only if you use them, types with `import type`. One test per example of Run Transaction (1-7), in record order, named \"Run Transaction example <n>: <what>\", each on its own tmp root (the stub's answersDir), removed in finally; then at most 6 of your own on section 2.2 rows. Every acceptance of a transaction card starts with TRANSACTION_MARK + \"\\n\". Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     }
   }
 }
