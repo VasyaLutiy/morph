@@ -1216,5 +1216,112 @@
         }
       }
     }
+  ],
+  "24": [
+    {
+      "ok": true,
+      "command": {
+        "name": "gate",
+        "root": ".",
+        "pretty": false,
+        "deck": "d.json",
+        "stubs": "s",
+        "refs": "r",
+        "mutants": 30
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "gate",
+        "root": "/w",
+        "pretty": true,
+        "deck": "d.json",
+        "stubs": "s",
+        "refs": "r",
+        "mutants": 5
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--mutants must be a positive integer (got '0')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--mutants must be a positive integer (got 'x7')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --stubs"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --mutants needs a value"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --mutants given twice"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --mutant-timeout does not apply to gate"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--mutants must be a positive integer (got '0')"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "gate",
+        "root": ".",
+        "pretty": false,
+        "deck": "d.json",
+        "stubs": "s",
+        "refs": "r"
+      }
+    }
   ]
 }

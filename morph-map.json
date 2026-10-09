@@ -1,7 +1,7 @@
 {
   "package": "src",
   "docs": [
-    "docs/TASK_P22a_gate.md"
+    "docs/TASK_P22b_mutants.md"
   ],
   "groups": {
     "card-model": [
@@ -1073,19 +1073,17 @@
       "intent": "patch",
       "targets": [
         "src/cli/types.ts",
-        "src/cli/parse.ts",
-        "src/cli/main.ts"
+        "src/cli/parse.ts"
       ],
       "context_slice": [
-        "docs/TASK_P22a_gate.md",
+        "docs/TASK_P22b_mutants.md",
         "docs/CONVENTIONS.md",
-        "src/cli/document.ts",
-        "src/cli/checkBuilds.ts"
+        "src/cli/document.ts"
       ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 28000,
-      "instruction": "Read docs/TASK_P22a_gate.md section 2.2 (src/cli/types.ts, parse.ts, main.ts: Parse Command, Main; and Gate Command's signature: `gateCommand(root: string, args: {deck, stubs, refs}, deps: {env, now, timeoutMs?, readDeck, builds}): Promise<{code, document}>` from \"../gate/gateCommand.js\", a file written by another card) and 4. Patch the three files (their current texts follow) and return each WHOLE; change nothing else in them. types.ts: `export interface GateArgs { name: \"gate\"; root: string; pretty: boolean; deck: string; stubs: string; refs: string }` before Command, `| GateArgs` last in the Command union. parse.ts: --stubs and --refs are value flags; \"gate\" is a command word of arity 1 taking --root, --pretty, --deck, --stubs, --refs; right after the existing missing --deck check, gate without --stubs → \"missing --stubs\", without --refs → \"missing --refs\", else the gate Command {name, root, pretty, deck, stubs, refs}; the \"no command (commands: …)\" message stays exactly as it is. main.ts: the gate route `result = await gateCommand(root, command, { env: deps.env, now: deps.now, readDeck: readDeckFile, builds: checkBuilds });` before the final run branch, readDeckFile added to the existing \"./document.js\" import, checkBuilds imported from \"./checkBuilds.js\". Every other check, message, default and key stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P22b_mutants.md sections 2.1 (Parse Command 24's argv, per word) and 2.2 (src/cli/types.ts, parse.ts: Parse Command) and 4. Patch the two files (their current texts follow) and return each WHOLE; change nothing else in them. types.ts: `GateArgs` gains `mutants?: number` as its last field. parse.ts: \"--mutants\" joins GATE_FLAGS; right after gate's \"missing --refs\" check, a given --mutants that is not a positive integer (isPositiveInteger) gives the UsageError \"--mutants must be a positive integer (got '<v>')\"; the gate command is {name, root, pretty, deck, stubs, refs} with `mutants: Number(v)` added as the LAST key only when --mutants is given (no key at all otherwise, never undefined). main.ts is not yours and does not change. Every other check, message, default and key stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "deck-check": {
       "intent": "patch",
@@ -1173,20 +1171,19 @@
     "parse-command-judge": {
       "intent": "generate",
       "targets": [
-        "tests/cli/gate.examples.test.ts"
+        "tests/cli/gate.p22b.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P22a_gate.md",
+        "docs/TASK_P22b_mutants.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
-        "src/cli/types.ts",
-        "src/cli/main.ts"
+        "src/cli/types.ts"
       ],
       "depends_on": [
         "parse-command"
       ],
       "max_tokens": 16000,
-      "instruction": "You write tests/cli/gate.examples.test.ts only, a NEW file with the tests of Parse Command example 23 and Main example 17 (the earlier examples are already tested). Read docs/TASK_P22a_gate.md sections 2.2 (Parse Command, Main and their table) and 2.3. Import parseCommand from \"../../src/cli/parse.js\", main from \"../../src/cli/main.js\", fixtureJson and tmpRoot from \"../helpers.js\", types with `import type`. Test \"Parse Command example 23: <what>\" maps parseArgv.json[\"23\"] through parseCommand and compares the list whole with parse.json[\"23\"]; test \"Main example 17: <what>\" calls main(argv, deps, io) in process with deps {env: {PATH: process.env.PATH ?? \"\"}, now: () => 0, cwd: \"/\", transport: null} and an io pushing stdout and stderr chunks, on a tmpRoot removed in finally, as examples.json[\"Main 17\"] says; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/cli/gate.p22b.examples.test.ts only, a NEW file with the test of Parse Command example 24 (the earlier examples are already tested). Read docs/TASK_P22b_mutants.md sections 2.1 (Parse Command 24's argv, per word: each argv is a JSON array of single words, exactly as listed) and 2.2 (Parse Command and its table) and 2.3. Import parseCommand from \"../../src/cli/parse.js\", fixtureJson from \"../helpers.js\", the ParseResult type with `import type` from \"../../src/cli/types.js\". Test \"Parse Command example 24: <what>\" maps parseArgv.json[\"24\"] through parseCommand and compares the list whole with parse.json[\"24\"]; then at most 6 of your own on section 2.2 rows, each argv a JSON array of single words (a command word like \"deck check\" is two elements, never one). Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "deck-check-judge": {
       "intent": "generate",
@@ -2914,12 +2911,12 @@
       "instruction": "You write tests/reviewer/renderFindings.examples.test.ts only, a NEW file with the tests of Render Findings examples 1-3. Read docs/TASK_P14_reviewer.md sections 2.1 (the fixtures and texts of Render Findings, verbatim) and 2.2 (Render Findings and its table) and 2.3 (the renderFindings.examples bullet). Import from \"../../src/reviewer/renderFindings.js\", fixture and fixtureJson from \"../helpers.js\"; example 2 reads fixtureJson(\"reviewer/review.input.json\") and compares the markdown with fixture(\"reviewer/review.md\") by toBe. Strings with toBe, a whole result with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no file written, no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "run-mutants": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "src/reviewer/runMutants.ts"
       ],
       "context_slice": [
-        "docs/TASK_P14b_reviewer.md",
+        "docs/TASK_P22b_mutants.md",
         "docs/CONVENTIONS.md",
         "src/reviewer/planMutants.ts",
         "src/acceptance/run.ts",
@@ -2929,7 +2926,7 @@
       "depends_on": [],
       "variants": 2,
       "max_tokens": 12000,
-      "instruction": "Read docs/TASK_P14b_reviewer.md sections 2.1 (the functions you call), 2.2 (src/reviewer/runMutants.ts, Run Mutants and its table) and 4. src/reviewer/planMutants.ts (the Mutant type) and the acceptance files follow (import runAcceptance, snapshotTargets, restoreSnapshot and the types; do not change them). Write src/reviewer/runMutants.ts, a NEW file of the layer reviewer that imports no Node module, no clock and no environment: the exports of section 2.2 in that order. Every run of the test command is runAcceptance with the given env and timeoutMs; the mutant's text reaches the file only through restoreSnapshot, and the file is restored in finally. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P22b_mutants.md sections 2.1 and 2.2 (src/reviewer/runMutants.ts: Run Mutants gains a stop time) and 4. Patch src/reviewer/runMutants.ts (its current text follows) and return it WHOLE: add the exports `interface MutantSpot`, `interface TimedMutantsInput extends MutantsInput`, `interface TimedMutantsResult extends MutantsResult` and `async function runMutantsUntil(input)` exactly as section 2.2 shows; runMutants, its types, baselineFinding, survivorFinding, DEFAULT_MUTANT_TIMEOUT_MS and BASELINE_SOURCE stay exactly as they are, and runMutants still resolves to the three keys baseline, results, findings (no untried key). runMutantsUntil: the baseline first with no now() call; a red baseline gives every mutant's spot as untried and never calls now(); after the first untried mutant every later one is untried with no further now() call. Share the per-mutant loop between the two if you like. Imports stay runAcceptance, snapshotTargets, restoreSnapshot and the Mutant type; no Node module, no clock, no environment. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "review-command": {
       "intent": "generate",
@@ -2963,10 +2960,10 @@
     "run-mutants-judge": {
       "intent": "generate",
       "targets": [
-        "tests/reviewer/runMutants.examples.test.ts"
+        "tests/reviewer/runMutants.p22b.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P14b_reviewer.md",
+        "docs/TASK_P22b_mutants.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/reviewer/runMutants.ts",
@@ -2976,7 +2973,7 @@
         "run-mutants"
       ],
       "max_tokens": 16000,
-      "instruction": "You write tests/reviewer/runMutants.examples.test.ts only, a NEW file with the tests of Run Mutants examples 1-4. Read docs/TASK_P14b_reviewer.md sections 2.1 (the Run Mutants harness and the text F, verbatim) and 2.2 (Run Mutants and its table) and 2.3 (the runMutants.examples bullet). Import from \"../../src/reviewer/runMutants.js\", planMutants from \"../../src/reviewer/planMutants.js\", tmpRoot from \"../helpers.js\"; await runMutants. The test commands are the shell lines of the record, written exactly; env {PATH: process.env.PATH ?? \"\"} plus the keys an example names. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/reviewer/runMutants.p22b.examples.test.ts only, a NEW file with the test of Run Mutants example 5 (examples 1-4 are already tested in tests/reviewer/runMutants.examples.test.ts, which you do not touch). Read docs/TASK_P22b_mutants.md sections 2.1 (the text H and the harness skeleton, verbatim: copy the helpers you use) and 2.2 (Run Mutants and its table) and 2.3. Import runMutants and runMutantsUntil (and the types you need) from \"../../src/reviewer/runMutants.js\", planMutants from \"../../src/reviewer/planMutants.js\", tmpRoot and fixtureJson from \"../helpers.js\", node:fs and node:path as you use them. One test \"Run Mutants example 5: <what>\" on a tmpRoot holding lib/h.ts = H, removed in finally, comparing each result whole with reviewer/untried.json's \"stop\", \"zero\" and \"red\" (literally `stopAt: 2500` for \"stop\"), the counting now's calls 0, lib/h.ts H again, and Object.keys of a runMutants result [\"baseline\", \"results\", \"findings\"]; test(..., 120000); then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "review-command-judge": {
       "intent": "generate",
@@ -3509,25 +3506,23 @@
       "instruction": "Read docs/TASK_P22a_gate.md sections 2.1 (the preconditions of git and acceptance) and 2.2 (src/gate/playGate.ts: Play Gate, steps 1-6) and 4. Write one file src/gate/playGate.ts exporting `interface PlayRow`, `interface PlayInput`, `interface PlayDeps` and `async function playGate(input: PlayInput, deps: PlayDeps): Promise<PlayRow[]>` exactly as section 2.2 shows, importing fs from \"node:fs\", os from \"node:os\", path from \"node:path\", runAcceptance from \"../acceptance/run.js\", gitOk from \"../git/run.js\", TREE_PROFILES from \"../language/treeProfiles.js\", expectedStage and stubVerdict from \"./stubVerdict.js\", and the types Card, GatePhase and GateStep with `import type`. The scratch is a `git clone --shared --no-checkout` of root checked out detached at root's HEAD, never a worktree; root is never written; the scratch's base directory is removed in finally. No process, no console, no clock but deps.now, no child process of your own. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "gate-command": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
+        "src/gate/playGate.ts",
         "src/gate/gateCommand.ts"
       ],
       "context_slice": [
-        "docs/TASK_P22a_gate.md",
+        "docs/TASK_P22b_mutants.md",
         "docs/CONVENTIONS.md",
         "src/cards/types.ts",
-        "src/cards/layer.ts",
-        "src/gate/gatePlan.ts",
-        "src/gate/playGate.ts"
+        "src/gate/gateMutants.ts"
       ],
       "depends_on": [
-        "play-gate",
-        "gate-plan"
+        "gate-mutants"
       ],
       "variants": 2,
       "max_tokens": 24000,
-      "instruction": "Read docs/TASK_P22a_gate.md sections 2.1 and 2.2 (src/gate/gateCommand.ts: Gate Command, steps 1-5) and 4. Write one file src/gate/gateCommand.ts exporting `CHAIN_LIMIT_SECONDS = 250`, `interface GateBuild`, `interface GateArgs`, `type GateDeckRead`, `interface GateDeps`, `interface GateDocument` and `async function gateCommand(root, args, deps)` exactly as section 2.2 shows, importing fs from \"node:fs\", path from \"node:path\", layerGenerations from \"../cards/layer.js\", gatePlan from \"./gatePlan.js\", playGate from \"./playGate.js\", and the types Deck and PlayRow with `import type`. It imports no cli module: deps.readDeck and deps.builds come from Main. Every error text character for character, in the order of step 4; the stubs are copied for deps.builds inside the scratch (playGate's before), never into root. No process, no console, no clock but deps.now, no child process. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P22b_mutants.md section 2.2 (src/gate/playGate.ts, src/gate/gateCommand.ts: Play Gate's after, Gate Command's mutants) and 4. Patch the two files (their current texts follow) and return each WHOLE; change nothing else in them. playGate.ts: PlayDeps gains `after?: (scratch: string, rows: readonly PlayRow[]) => Promise<void>`, awaited after the last step and before the rows are returned (the finally still removes base). gateCommand.ts: GateArgs gains `mutants?: number`, GateDeps `mutantTimeoutMs?: number` and `mutantStopSeconds?: number`, GateDocument `mutants?: GateMutants | null` (last); import MUTANT_CAP, planGateMutants and runGateMutants from \"./gateMutants.js\" and the GateMutants type with `import type`. Without args.mutants nothing changes (no after, no key mutants in the document, codes 0 and 2 as before). With it: the after planning over the reference files and running only when every ref and retry row is ok (else every planned spot untried), the baseline errors after the P22a errors, `document.mutants` set as the last key, code 2 when errors, else 1 when a survivor or an untried mutant, else 0. Every error text character for character. No process, no console, no clock but deps.now, no child process of its own. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "stub-verdict-judge": {
       "intent": "generate",
@@ -3591,14 +3586,14 @@
     "gate-command-judge": {
       "intent": "generate",
       "targets": [
-        "tests/gate/gateCommand.examples.test.ts"
+        "tests/gate/gateCommand.p22b.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P22a_gate.md",
+        "docs/TASK_P22b_mutants.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/cards/types.ts",
-        "src/gate/playGate.ts",
+        "src/gate/gateMutants.ts",
         "src/gate/gateCommand.ts",
         "src/cli/document.ts",
         "src/cli/checkBuilds.ts"
@@ -3607,7 +3602,78 @@
         "gate-command"
       ],
       "max_tokens": 24000,
-      "instruction": "You write tests/gate/gateCommand.examples.test.ts only, a NEW file. Read docs/TASK_P22a_gate.md sections 2.1 (the fixtures and the harness skeleton, verbatim: copy the helpers you use) and 2.2 (Gate Command: steps 1-5 and its table) and 2.3. Import gateCommand and CHAIN_LIMIT_SECONDS from \"../../src/gate/gateCommand.js\", readDeckFile from \"../../src/cli/document.js\", checkBuilds from \"../../src/cli/checkBuilds.js\", tmpRepo, fixtureJson and fixturePath from \"../helpers.js\", node:fs and node:path as you use them, types with `import type`. One test per example of Gate Command (1-3), in record order, named \"Gate Command example <n>: <what>\", each result compared whole with the gateCommand.json entry of its name (\"p21\", \"tx\", \"planted\", \"deck not found\", \"stubs not found\", \"refs not found\", \"missing\", \"slow\"); the root is the skeleton's p7b() or repo(...), committed before the gate, removed in finally; Gate Command 2's acceptances are written verbatim from the record example, each starting with TRANSACTION_MARK + \"\\n\" (import it from \"../../src/cards/transaction.js\"); every test gets 120000 as the third argument of test(...); then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/gate/gateCommand.p22b.examples.test.ts only, a NEW file with the tests of Gate Command examples 4 and 5 (examples 1-3 are already tested in tests/gate/gateCommand.examples.test.ts, which you do not touch). Read docs/TASK_P22b_mutants.md sections 2.1 (the harness skeleton, verbatim: A, repo, deps, args) and 2.2 (Gate Command and its table) and 2.3. Import gateCommand and the GateDeps type from \"../../src/gate/gateCommand.js\", readDeckFile from \"../../src/cli/document.js\", checkBuilds from \"../../src/cli/checkBuilds.js\", tmpRepo, fixtureJson and the TmpRepo type from \"../helpers.js\", the Card type with `import type`. Test \"Gate Command example 4: <what>\" on repo(A, H): mutants 30, then 1, then no mutants, then 30 with deps({ mutantStopSeconds: 0 }), each result compared whole with gate/gateCommand.p22b.json \"mutants\", \"one\", \"off\", \"stopped\", and the repo's git status \"\"; test \"Gate Command example 5: <what>\": the red-reference repo (\"ref red\") and the repo whose acceptance has `touch full.txt` (\"baseline\"), the acceptances typed exactly as the record shows; every repo committed before the gate and removed in finally; every test gets 120000 as the third argument of test(...); then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+    },
+    "check-identity": {
+      "intent": "generate",
+      "targets": [
+        "src/gate/identity.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P22b_mutants.md",
+        "docs/CONVENTIONS.md",
+        "src/git/run.ts"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 8000,
+      "instruction": "Read docs/TASK_P22b_mutants.md sections 2.1 and 2.2 (src/gate/identity.ts: Check Identity) and 4. Write one file src/gate/identity.ts exporting `interface IdentityEntry`, `interface IdentityRow`, `interface IdentityDeps`, `interface IdentityResult` and `async function checkIdentity(root, entries, deps)` exactly as section 2.2 shows, importing crypto from \"node:crypto\", fs from \"node:fs\", os from \"node:os\", path from \"node:path\" and gitOk from \"../git/run.js\". One shared clone per distinct commit (base/c0, base/c1, … in first-seen order), the install copies, out = base/out-<i>.json, the plan argv = the entry's argv then \"--root\", tree, \"--out\", out; every error text character for character; base removed in a finally; root never written. No process, no console, no clock, no environment read, no child process but gitOk. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "gate-mutants": {
+      "intent": "generate",
+      "targets": [
+        "src/gate/gateMutants.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P22b_mutants.md",
+        "docs/CONVENTIONS.md",
+        "src/cards/types.ts",
+        "src/language/paths.ts",
+        "src/reviewer/planMutants.ts",
+        "src/reviewer/runMutants.ts"
+      ],
+      "depends_on": [
+        "run-mutants"
+      ],
+      "variants": 2,
+      "max_tokens": 12000,
+      "instruction": "Read docs/TASK_P22b_mutants.md sections 2.1 and 2.2 (src/gate/gateMutants.ts: Gate Mutants) and 4. Write one file src/gate/gateMutants.ts exporting `MUTANT_CAP = 30`, `MUTANT_STOP_SECONDS = 1200`, `interface GateMutant`, `interface GateMutantSpot`, `interface GateBaseline`, `interface GateMutants`, `interface GateMutantDeps`, `function killCommand(acceptance)`, `function planGateMutants(cards, read, cap)` and `async function runGateMutants(root, cards, planned, deps)` exactly as section 2.2 shows, importing profileForPath and isTest from \"../language/paths.js\", planMutants from \"../reviewer/planMutants.js\", runMutantsUntil and DEFAULT_MUTANT_TIMEOUT_MS from \"../reviewer/runMutants.js\" (runMutantsUntil is written by another card: `runMutantsUntil({root, command, mutants, timeoutMs, env, now, stopAt})` resolves to {baseline: {exit, timedOut}, results: {path, line, column, rule, killed, exit, timedOut}[], findings, untried: {path, line, column, rule}[]}), and the Card and Mutant types with `import type`. The clock calls exactly as section 2.2 counts them (start, one per card group, the end); keys in the interface's order. No Node module, no process, no console, no environment read, no child process of its own. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "check-identity-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/gate/identity.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P22b_mutants.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/gate/identity.ts",
+        "src/cli/main.ts"
+      ],
+      "depends_on": [
+        "check-identity"
+      ],
+      "max_tokens": 24000,
+      "instruction": "You write tests/gate/identity.examples.test.ts only, a NEW file. Read docs/TASK_P22b_mutants.md sections 2.1 (the harness skeleton, verbatim: ROOT, corpus, plan, goMini) and 2.2 (Check Identity: the corpus and its table) and 2.3. Import checkIdentity and the IdentityEntry type from \"../../src/gate/identity.js\", main from \"../../src/cli/main.js\", fixtureJson and fixturePath from \"../helpers.js\", node:fs, node:path and execFileSync from node:child_process (git status of ROOT) as you use them. One test per example of Check Identity (1-3), in record order, named \"Check Identity example <n>: <what>\": 1 the whole identity/corpus.json with the real plan (5 rows ok with the corpus's bytes and sha256, errors [], ROOT's `git status --porcelain` unchanged); 2 the go-mini entry with a plan writing \"x\\n\" to the path after \"--out\" (row and error literally as the record, sha256 73cb3858a687a8494ca3323053016282f3dad39d42cf62ca4e79dda2aac7d9ac), then a plan resolving 2; 3 install {} with the real plan (plan exit 4), then commit \"0000000000000000000000000000000000000000\" rejecting with a message matching /^git checkout failed \\(exit / (`await expect(...).rejects.toThrow(...)`). Never write into ROOT; every test gets 120000 as the third argument of test(...); then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+    },
+    "gate-mutants-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/gate/gateMutants.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P22b_mutants.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/cards/types.ts",
+        "src/gate/gateMutants.ts"
+      ],
+      "depends_on": [
+        "gate-mutants"
+      ],
+      "max_tokens": 24000,
+      "instruction": "You write tests/gate/gateMutants.examples.test.ts only, a NEW file. Read docs/TASK_P22b_mutants.md sections 2.1 (the text H, the fixtures and the harness skeleton, verbatim: copy the helpers you use) and 2.2 (Gate Mutants and its table) and 2.3. Import killCommand, planGateMutants, runGateMutants, MUTANT_CAP and MUTANT_STOP_SECONDS (and the types you need) from \"../../src/gate/gateMutants.js\", the Card type, fixture, fixtureJson and tmpRoot from \"../helpers.js\", node:fs and node:path as you use them. One test per example of Gate Mutants (1-3), in record order, named \"Gate Mutants example <n>: <what>\": 1 killCommand on fixture(\"builder/code1.txt\") and fixture(\"builder/go/code1.txt\") (46 and 33 lines by split(\"\\n\"), one line fewer after, the full line gone) and on the literal of the record; 2 planGateMutants over gate/mutantFiles.json with the cards a, b, j, d of the record, each mapped to its spot and compared whole with gate/gateMutants.json \"only a\", \"two\", \"cap\", and cap 0 → []; 3 runGateMutants on a tmpRoot holding src/f.ts = H (removed in finally) with the four acceptances of the record, compared whole with \"run\", \"stop\", \"baseline\", \"timeout\" (literally `timeoutMs: 400` for the last), src/f.ts H at the end; every test that runs a child process gets 120000 as the third argument of test(...); then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     }
   }
 }

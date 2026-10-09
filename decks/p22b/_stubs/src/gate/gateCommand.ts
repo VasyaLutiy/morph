@@ -1,0 +1,237 @@
+import fs from "node:fs";
+import path from "node:path";
+import { layerGenerations } from "../cards/layer.js";
+import { gatePlan } from "./gatePlan.js";
+import { playGate } from "./playGate.js";
+import type { Deck } from "../cards/types.js";
+import type { PlayRow } from "./playGate.js";
+import type { GateMutants } from "./gateMutants.js";
+
+export const CHAIN_LIMIT_SECONDS = 250;
+
+export interface GateBuild {
+  card: string;
+  generation: number;
+  language: string | null;
+  stubbed: number;
+  missing: string[];
+  breaks: string[];
+  note: string | null;
+}
+
+export interface GateArgs {
+  deck: string;
+  stubs: string;
+  refs: string;
+  mutants?: number;
+}
+
+export type GateDeckRead =
+  | { ok: true; deck: Deck }
+  | { ok: false; result: { code: 0 | 1 | 2 | 3 | 4; document: unknown } };
+
+export interface GateDeps {
+  env: Record<string, string>;
+  now: () => number;
+  timeoutMs?: number;
+  mutantTimeoutMs?: number;
+  mutantStopSeconds?: number;
+  readDeck: (root: string, deckPath: string) => GateDeckRead;
+  builds: (
+    root: string,
+    deckPath: string,
+    deck: Deck,
+    generations: string[][],
+    env: Record<string, string>,
+  ) => GateBuild[] | null;
+}
+
+export interface GateDocument {
+  deck: string;
+  transaction: boolean;
+  cards: number;
+  generations: string[][];
+  missing: string[];
+  builds: GateBuild[] | null;
+  rows: PlayRow[];
+  maxSeconds: number;
+  errors: string[];
+  mutants?: GateMutants | null;
+}
+
+function isDirectory(p: string): boolean {
+  try {
+    return fs.statSync(p).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+function listFiles(dir: string, prefix: string, out: string[]): void {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const rel = prefix === "" ? entry.name : prefix + "/" + entry.name;
+    if (entry.isDirectory()) {
+      listFiles(path.join(dir, entry.name), rel, out);
+    } else if (entry.isFile()) {
+      out.push(rel);
+    }
+  }
+}
+
+function regularFiles(dir: string): string[] {
+  const out: string[] = [];
+  listFiles(dir, "", out);
+  out.sort();
+  return out;
+}
+
+/**
+ * The gate played in one headless command: reads the deck, requires a stub and
+ * a reference directory, fits a Gate Plan over the deck's generations, plays
+ * the plan in a scratch clone of HEAD through Play Gate (which, on the way,
+ * gives Check Builds the stubs at `<deck dir>/_stubs` inside that scratch
+ * only), then folds every finding into one Gate Document and one decision:
+ * code 2 when `errors` is not empty, 0 otherwise. No clock but `deps.now`, no
+ * environment read of its own, no child process of its own.
+ */
+export async function gateCommand(
+  root: string,
+  args: GateArgs,
+  deps: GateDeps,
+): Promise<{ code: 0 | 1 | 2 | 3 | 4; document: unknown }> {
+  const read = deps.readDeck(root, args.deck);
+  if (!read.ok) {
+    return read.result;
+  }
+  const deck = read.deck;
+
+  const stubDir = path.resolve(root, args.stubs);
+  if (!isDirectory(stubDir)) {
+    return {
+      code: 4,
+      document: {
+        error: {
+          code: 4,
+          kind: "UsageError",
+          message: "stubs directory not found: " + args.stubs,
+        },
+      },
+    };
+  }
+
+  const refDir = path.resolve(root, args.refs);
+  if (!isDirectory(refDir)) {
+    return {
+      code: 4,
+      document: {
+        error: {
+          code: 4,
+          kind: "UsageError",
+          message: "references directory not found: " + args.refs,
+        },
+      },
+    };
+  }
+
+  const generations = layerGenerations(deck);
+  const stubs = regularFiles(stubDir);
+  const refs = regularFiles(refDir);
+  const plan = gatePlan(deck.cards, generations, stubs, refs);
+
+  const box: { builds: GateBuild[] | null } = { builds: null };
+  let rows: PlayRow[] = [];
+
+  if (plan.missing.length === 0) {
+    rows = await playGate(
+      { root, cards: deck.cards, steps: plan.steps, stubDir, refDir },
+      {
+        env: deps.env,
+        now: deps.now,
+        timeoutMs: deps.timeoutMs,
+        before: (scratch: string) => {
+          const at = path.join(scratch, path.dirname(args.deck), "_stubs");
+          const kept = at + ".gate-kept";
+          let moved = false;
+          if (fs.existsSync(at)) {
+            fs.renameSync(at, kept);
+            moved = true;
+          }
+          fs.mkdirSync(path.dirname(at), { recursive: true });
+          fs.cpSync(stubDir, at, { recursive: true });
+          try {
+            box.builds = deps.builds(scratch, args.deck, deck, generations, deps.env);
+          } finally {
+            fs.rmSync(at, { recursive: true, force: true });
+            if (moved) {
+              fs.renameSync(kept, at);
+            }
+          }
+        },
+      },
+    );
+  }
+
+  const builds: GateBuild[] | null = box.builds;
+
+  const errors: string[] = [];
+
+  for (const m of plan.missing) {
+    errors.push(m);
+  }
+
+  if (builds !== null) {
+    for (const build of builds) {
+      for (const m of build.missing) {
+        errors.push("build " + build.card + ": no stub for " + m);
+      }
+      for (const line of build.breaks) {
+        errors.push("build " + build.card + ": " + line);
+      }
+    }
+  }
+
+  for (const row of rows) {
+    const prefix = row.phase + " " + row.card + ": ";
+    if (row.phase === "stub") {
+      if (row.exit === 0) {
+        errors.push(prefix + "green on its stubs");
+      } else if (row.stage !== row.expected) {
+        errors.push(
+          prefix + "red at " + (row.stage ?? "no stage") + ", expected " + row.expected,
+        );
+      }
+      for (const line of row.outside) {
+        errors.push(prefix + "names a file outside its targets: " + line);
+      }
+    } else if (row.exit !== 0) {
+      const why = row.timedOut ? "timed out" : "red (exit " + row.exit + ")";
+      const at = " at " + (row.stage ?? "no stage");
+      const outside = row.outside.length > 0 ? ": " + row.outside[0] : "";
+      errors.push(prefix + why + at + outside);
+    }
+    if (row.seconds >= CHAIN_LIMIT_SECONDS) {
+      errors.push(prefix + row.seconds + " s, over the " + CHAIN_LIMIT_SECONDS + " s limit");
+    }
+  }
+
+  let maxSeconds = 0;
+  for (const row of rows) {
+    if (row.seconds > maxSeconds) {
+      maxSeconds = row.seconds;
+    }
+  }
+
+  const document: GateDocument = {
+    deck: args.deck,
+    transaction: plan.transaction,
+    cards: deck.cards.length,
+    generations,
+    missing: plan.missing,
+    builds,
+    rows,
+    maxSeconds,
+    errors,
+  };
+
+  return { code: errors.length > 0 ? 2 : 0, document };
+}

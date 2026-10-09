@@ -1,0 +1,483 @@
+{
+ "mutants": {
+  "code": 1,
+  "document": {
+   "deck": "d.json",
+   "transaction": false,
+   "cards": 1,
+   "generations": [
+    [
+     "a"
+    ]
+   ],
+   "missing": [],
+   "builds": [
+    {
+     "card": "a",
+     "generation": 0,
+     "language": "typescript",
+     "stubbed": 0,
+     "missing": [],
+     "breaks": [],
+     "note": "the acceptance writes no $P/tsconfig.card.json: not built"
+    }
+   ],
+   "rows": [
+    {
+     "phase": "stub",
+     "generation": 0,
+     "card": "a",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "FAIL probe/a.probe.ts > A example 1"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 0,
+     "card": "a",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "full",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    }
+   ],
+   "maxSeconds": 1,
+   "errors": [],
+   "mutants": {
+    "planned": 3,
+    "tried": 3,
+    "killed": 1,
+    "timedOut": 0,
+    "seconds": 5,
+    "survivors": [
+     {
+      "card": "a",
+      "path": "src/a.ts",
+      "line": 1,
+      "column": 61,
+      "rule": "&& → ||"
+     },
+     {
+      "card": "a",
+      "path": "src/a.ts",
+      "line": 1,
+      "column": 66,
+      "rule": "> → >="
+     }
+    ],
+    "untried": [],
+    "baselines": []
+   }
+  }
+ },
+ "one": {
+  "code": 0,
+  "document": {
+   "deck": "d.json",
+   "transaction": false,
+   "cards": 1,
+   "generations": [
+    [
+     "a"
+    ]
+   ],
+   "missing": [],
+   "builds": [
+    {
+     "card": "a",
+     "generation": 0,
+     "language": "typescript",
+     "stubbed": 0,
+     "missing": [],
+     "breaks": [],
+     "note": "the acceptance writes no $P/tsconfig.card.json: not built"
+    }
+   ],
+   "rows": [
+    {
+     "phase": "stub",
+     "generation": 0,
+     "card": "a",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "FAIL probe/a.probe.ts > A example 1"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 0,
+     "card": "a",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "full",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    }
+   ],
+   "maxSeconds": 1,
+   "errors": [],
+   "mutants": {
+    "planned": 1,
+    "tried": 1,
+    "killed": 1,
+    "timedOut": 0,
+    "seconds": 3,
+    "survivors": [],
+    "untried": [],
+    "baselines": []
+   }
+  }
+ },
+ "off": {
+  "code": 0,
+  "document": {
+   "deck": "d.json",
+   "transaction": false,
+   "cards": 1,
+   "generations": [
+    [
+     "a"
+    ]
+   ],
+   "missing": [],
+   "builds": [
+    {
+     "card": "a",
+     "generation": 0,
+     "language": "typescript",
+     "stubbed": 0,
+     "missing": [],
+     "breaks": [],
+     "note": "the acceptance writes no $P/tsconfig.card.json: not built"
+    }
+   ],
+   "rows": [
+    {
+     "phase": "stub",
+     "generation": 0,
+     "card": "a",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "FAIL probe/a.probe.ts > A example 1"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 0,
+     "card": "a",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "full",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    }
+   ],
+   "maxSeconds": 1,
+   "errors": []
+  }
+ },
+ "stopped": {
+  "code": 1,
+  "document": {
+   "deck": "d.json",
+   "transaction": false,
+   "cards": 1,
+   "generations": [
+    [
+     "a"
+    ]
+   ],
+   "missing": [],
+   "builds": [
+    {
+     "card": "a",
+     "generation": 0,
+     "language": "typescript",
+     "stubbed": 0,
+     "missing": [],
+     "breaks": [],
+     "note": "the acceptance writes no $P/tsconfig.card.json: not built"
+    }
+   ],
+   "rows": [
+    {
+     "phase": "stub",
+     "generation": 0,
+     "card": "a",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "FAIL probe/a.probe.ts > A example 1"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 0,
+     "card": "a",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "full",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    }
+   ],
+   "maxSeconds": 1,
+   "errors": [],
+   "mutants": {
+    "planned": 3,
+    "tried": 0,
+    "killed": 0,
+    "timedOut": 0,
+    "seconds": 2,
+    "survivors": [],
+    "untried": [
+     {
+      "card": "a",
+      "path": "src/a.ts",
+      "line": 1,
+      "column": 55,
+      "rule": "=== → !=="
+     },
+     {
+      "card": "a",
+      "path": "src/a.ts",
+      "line": 1,
+      "column": 61,
+      "rule": "&& → ||"
+     },
+     {
+      "card": "a",
+      "path": "src/a.ts",
+      "line": 1,
+      "column": 66,
+      "rule": "> → >="
+     }
+    ],
+    "baselines": []
+   }
+  }
+ },
+ "ref red": {
+  "code": 2,
+  "document": {
+   "deck": "d.json",
+   "transaction": false,
+   "cards": 1,
+   "generations": [
+    [
+     "a"
+    ]
+   ],
+   "missing": [],
+   "builds": [
+    {
+     "card": "a",
+     "generation": 0,
+     "language": "typescript",
+     "stubbed": 0,
+     "missing": [],
+     "breaks": [],
+     "note": "the acceptance writes no $P/tsconfig.card.json: not built"
+    }
+   ],
+   "rows": [
+    {
+     "phase": "stub",
+     "generation": 0,
+     "card": "a",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [
+      "FAIL probe/a.probe.ts > A example 1"
+     ],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 0,
+     "card": "a",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": false
+    }
+   ],
+   "maxSeconds": 1,
+   "errors": [
+    "ref a: red (exit 1) at probe"
+   ],
+   "mutants": {
+    "planned": 3,
+    "tried": 0,
+    "killed": 0,
+    "timedOut": 0,
+    "seconds": 0,
+    "survivors": [],
+    "untried": [
+     {
+      "card": "a",
+      "path": "src/a.ts",
+      "line": 1,
+      "column": 55,
+      "rule": "!== → ==="
+     },
+     {
+      "card": "a",
+      "path": "src/a.ts",
+      "line": 1,
+      "column": 61,
+      "rule": "&& → ||"
+     },
+     {
+      "card": "a",
+      "path": "src/a.ts",
+      "line": 1,
+      "column": 66,
+      "rule": "> → >="
+     }
+    ],
+    "baselines": []
+   }
+  }
+ },
+ "baseline": {
+  "code": 2,
+  "document": {
+   "deck": "d.json",
+   "transaction": false,
+   "cards": 1,
+   "generations": [
+    [
+     "a"
+    ]
+   ],
+   "missing": [],
+   "builds": [
+    {
+     "card": "a",
+     "generation": 0,
+     "language": "typescript",
+     "stubbed": 0,
+     "missing": [],
+     "breaks": [],
+     "note": "the acceptance writes no $P/tsconfig.card.json: not built"
+    }
+   ],
+   "rows": [
+    {
+     "phase": "stub",
+     "generation": 0,
+     "card": "a",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [],
+     "ok": true
+    },
+    {
+     "phase": "ref",
+     "generation": 0,
+     "card": "a",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "own",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "ok": true
+    }
+   ],
+   "maxSeconds": 1,
+   "errors": [
+    "mutants a: red (exit 1) on its references without a mutant"
+   ],
+   "mutants": {
+    "planned": 3,
+    "tried": 0,
+    "killed": 0,
+    "timedOut": 0,
+    "seconds": 2,
+    "survivors": [],
+    "untried": [
+     {
+      "card": "a",
+      "path": "src/a.ts",
+      "line": 1,
+      "column": 55,
+      "rule": "=== → !=="
+     },
+     {
+      "card": "a",
+      "path": "src/a.ts",
+      "line": 1,
+      "column": 61,
+      "rule": "&& → ||"
+     },
+     {
+      "card": "a",
+      "path": "src/a.ts",
+      "line": 1,
+      "column": 66,
+      "rule": "> → >="
+     }
+    ],
+    "baselines": [
+     {
+      "card": "a",
+      "exit": 1,
+      "timedOut": false
+     }
+    ]
+   }
+  }
+ }
+}

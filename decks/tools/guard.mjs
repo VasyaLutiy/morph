@@ -35,7 +35,9 @@ const LAYERS = {
   // P22a: morph gate (issue #13) plays a deck's stubs and references in a scratch clone: the deck through cards, the
   // acceptances through acceptance, the clone and its commits through git, the file:line patterns through language
   // (docs/TASK_P22a_gate.md §4)
-  gate: ["cards", "acceptance", "git", "language"],
+  // P22b: the gate's mutants go through the reviewer's Plan Mutants and Run Mutants; Check Identity hashes a cut with
+  // node:crypto (docs/TASK_P22b_mutants.md §4)
+  gate: ["cards", "acceptance", "git", "language", "reviewer"],
   cli: "*",
 };
 const ROOT_FILES = new Set(["src/index.ts"]);
@@ -70,7 +72,7 @@ const CLI_ENTRY = "src/cli.ts";
 const NODE_ONLY = { language: new Set(["node:path"]), contour: new Set(), planner: new Set(["node:path"]),
   builder: new Set(["node:path"]), scout: new Set(["node:path"]), reviewer: new Set(),
   debt: new Set(["node:fs", "node:path"]), scaffold: new Set(["node:fs", "node:path", "node:url"]),
-  gate: new Set(["node:fs", "node:os", "node:path"]) };
+  gate: new Set(["node:fs", "node:os", "node:path", "node:crypto"]) };
 // P18: scaffold reads the template folders and writes the new project (node:fs, node:path) and finds the package root from
 // its own module file (node:url's fileURLToPath of import.meta.url); it spawns nothing (docs/TASK_P18_template.md §4)
 // P17: debt reads the deck file, the card's files and the run archive (node:fs, node:path); it spawns only through

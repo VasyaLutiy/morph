@@ -145,3 +145,8 @@ Filled after the run; a re-cut gets its own sub-section with every spec change b
 - From the P22a merge on (issue #13): the stubs committed at `decks/<phase>/_stubs/`, the references outside the tree,
   and `morph gate --deck … --stubs … --refs …` exit 0 in place of the hand stub play, stubcheck and the chain timing;
   §11 quotes its verdict's numbers (rows, failures per probe, maxSeconds, builds).
+- From the P22b merge on (issue #13 items 2–3): `morph gate … --mutants 30` in place of the hand mutants (code 0, or 1
+  with every `mutants.survivors` / `mutants.untried` spot given a probe row or a DECISIONS known-risk line; §11 quotes
+  planned/tried/killed/seconds), and the corpus test `tests/gate/identity.examples.test.ts` (in the full suite) in place
+  of the hand byte-identity re-cuts; a phase that cuts a new deck of MorphV2 adds its entry to
+  `tests/fixtures/identity/corpus.json` as data.

@@ -1,0 +1,109 @@
+{
+ "stop": {
+  "baseline": {
+   "exit": 0,
+   "timedOut": false
+  },
+  "results": [
+   {
+    "path": "lib/h.ts",
+    "line": 1,
+    "column": 55,
+    "rule": "=== → !==",
+    "killed": true,
+    "exit": 1,
+    "timedOut": false
+   },
+   {
+    "path": "lib/h.ts",
+    "line": 1,
+    "column": 61,
+    "rule": "&& → ||",
+    "killed": false,
+    "exit": 0,
+    "timedOut": false
+   }
+  ],
+  "findings": [
+   {
+    "kind": "mutation",
+    "source": "mutation lib/h.ts:1",
+    "path": "lib/h.ts",
+    "expected": "a test fails on && → || at line 1",
+    "got": "every test passed"
+   }
+  ],
+  "untried": [
+   {
+    "path": "lib/h.ts",
+    "line": 1,
+    "column": 66,
+    "rule": "> → >="
+   }
+  ]
+ },
+ "zero": {
+  "baseline": {
+   "exit": 0,
+   "timedOut": false
+  },
+  "results": [],
+  "findings": [],
+  "untried": [
+   {
+    "path": "lib/h.ts",
+    "line": 1,
+    "column": 55,
+    "rule": "=== → !=="
+   },
+   {
+    "path": "lib/h.ts",
+    "line": 1,
+    "column": 61,
+    "rule": "&& → ||"
+   },
+   {
+    "path": "lib/h.ts",
+    "line": 1,
+    "column": 66,
+    "rule": "> → >="
+   }
+  ]
+ },
+ "red": {
+  "baseline": {
+   "exit": 3,
+   "timedOut": false
+  },
+  "results": [],
+  "findings": [
+   {
+    "kind": "mutation",
+    "source": "mutation baseline",
+    "path": null,
+    "expected": "the test command passes before any mutant: exit 3",
+    "got": "exit 3"
+   }
+  ],
+  "untried": [
+   {
+    "path": "lib/h.ts",
+    "line": 1,
+    "column": 55,
+    "rule": "=== → !=="
+   },
+   {
+    "path": "lib/h.ts",
+    "line": 1,
+    "column": 61,
+    "rule": "&& → ||"
+   },
+   {
+    "path": "lib/h.ts",
+    "line": 1,
+    "column": 66,
+    "rule": "> → >="
+   }
+  ]
+ }
+}

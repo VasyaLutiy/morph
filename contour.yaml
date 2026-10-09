@@ -1495,8 +1495,8 @@ System:
     - name: cli
       description: >
         The `morph` binary: src/cli/*.ts and the entry src/cli.ts (bin dist/cli.js): argv parsed, routed by Main, one JSON document on stdout, log
-        lines on stderr, an exit code per outcome. Only the entry touches the process.
-        tests/fixtures/cli/examples.json["<Function> <n>"] holds the given and then of an example that names it.
+        lines on stderr, an exit code per outcome; only the entry touches the process.
+        tests/fixtures/cli/examples.json["<Function> <n>"] holds the given and then of an example naming it.
       language: typescript
       requirements: [One Document Out]
       functions:
@@ -1516,7 +1516,7 @@ System:
             --run-id, --deadline, --max-cards, --max-retry-batches; plan --spec, --component, --map, --judge, --out, --checks, --only; review --spec, --map, --scout,
             --mutants, --mutant-timeout, --test, --write; submit --deck, --processor; collect --batch; primer --write; scout --processor, --issue, --seed-file,
             --deadline; plan --from-scout --from-scout, --out; card --deck, --id, --md; accept --deck, --id, --model, --commit; init --name, --language, --module,
-            --templates; gate --deck, --stubs, --refs); card and accept: no --deck → "missing --deck", no --id → "missing --id", an --id not matching ^[A-Za-z0-9._-]+$ →
+            --templates; gate --deck, --stubs, --refs, --mutants); card and accept: no --deck → "missing --deck", no --id → "missing --id", an --id not matching ^[A-Za-z0-9._-]+$ →
             "--id must match ^[A-Za-z0-9._-]+$ (got '<v>')", card done; accept: no --model → "missing --model", a --model not matching ^[A-Za-z0-9._/:-]+$ → "--model must
             match ^[A-Za-z0-9._/:-]+$ (got '<v>')", else done; init: no --name → "missing --name", a --name not matching ^[A-Za-z0-9._-]+$ → "--name must match
             ^[A-Za-z0-9._-]+$ (got '<v>')", no --language → "missing --language", a --language not typescript, python or go → "--language must be one of typescript,
@@ -1529,10 +1529,10 @@ System:
             only when given); collect without --batch → "missing --batch", a --batch not matching ^[A-Za-z0-9._-]+$ → "--batch must match ^[A-Za-z0-9._-]+$ (got '<v>')",
             else collect is done; primer is done (write: --write given); scout without --processor → "missing --processor", without --issue → "missing --issue", a
             --deadline not a positive integer → "--deadline must be a positive integer (got '<v>')", else done (seedFile null, deadlineSeconds 1800 when not given); no
-            --deck → "missing --deck"; gate without --stubs → "missing --stubs", without --refs → "missing --refs", else done; run or submit without --processor →
+            --deck → "missing --deck"; gate without --stubs → "missing --stubs", without --refs → "missing --refs", --mutants as review's, else done (mutants only when given); run or submit without --processor →
             "missing --processor"; submit is then done; a run --run-id not matching ^[A-Za-z0-9._-]+$ → "--run-id must match ^[A-Za-z0-9._-]+$ (got '<v>')"; numbers in
             the order --slice-cap-bytes (deck check), --deadline, --max-cards, --max-retry-batches (run): digits only, ≥ 1 ("<f> must be a positive integer (got '<v>')"),
-            --max-retry-batches ≥ 0 ("must be a non-negative integer"). A failure is {ok: false, error: {error: {code: 4, kind: "UsageError" | "NotYetError", message}}}.
+            --max-retry-batches ≥ 0 ("must be a non-negative integer"). A failure is {ok: false, error: {error: {code: 4, kind: "UsageError"|"NotYetError", message}}}.
             Defaults: root ".", pretty false, sliceCapBytes 500000, runId null, deadlineSeconds 2400, maxCards null (the card count), maxRetryBatches 2.
           steps: [{produces: Command}]
           examples:
@@ -1559,6 +1559,7 @@ System:
             - {given: 'parseArgv.json["21"]', when: parsed, then: 'parse.json["21"]'}
             - {given: 'parseArgv.json["22"]', when: parsed, then: 'parse.json["22"]'}
             - {given: 'parseArgv.json["23"]', when: parsed, then: 'parse.json["23"]'}
+            - {given: 'parseArgv.json["24"]', when: parsed, then: 'parse.json["24"]'}
         - name: Emit Document
           description: One JSON document + newline on stdout; --pretty indents by 2.
           behavior: >
@@ -1714,7 +1715,7 @@ System:
       dataObjects:
         - name: Command
           description: One parsed invocation.
-          schema: "every variant also has root: string, pretty: boolean; { name: 'deck check', deck, sliceCapBytes } | { name: 'run', deck, processor, runId: string | null, deadlineSeconds, maxCards: number | null, maxRetryBatches } | { name: 'plan', spec, components: string[], map: string | null, judge: boolean, out: string | null, checks?: string, only?: string[] } | { name: 'submit', deck, processor } | { name: 'collect', batch } | { name: 'primer', write: boolean } | { name: 'scout', processor, issue, seedFile: string | null, deadlineSeconds } | { name: 'plan --from-scout', fromScout, out: string | null } | { name: 'review', base, head, spec: string | null, map: string | null, scout: string | null, mutants: number | null, mutantTimeoutSeconds, test: string | null, write: boolean } | { name: 'card', deck, id, md: boolean } | { name: 'accept', deck, id, model, commit: boolean } | { name: 'init', project, language: 'typescript' | 'python' | 'go', module: string | null, templates: string | null } | { name: 'gate', deck, stubs, refs }"
+          schema: "every variant also has root: string, pretty: boolean; {name: 'deck check', deck, sliceCapBytes}|{name: 'run', deck, processor, runId: string|null, deadlineSeconds, maxCards: number|null, maxRetryBatches}|{name: 'plan', spec, components: string[], map: string|null, judge: boolean, out: string|null, checks?: string, only?: string[]}|{name: 'submit', deck, processor}|{name: 'collect', batch}|{name: 'primer', write: boolean}|{name: 'scout', processor, issue, seedFile: string|null, deadlineSeconds}|{name: 'plan --from-scout', fromScout, out: string|null}|{name: 'review', base, head, spec: string|null, map: string|null, scout: string|null, mutants: number|null, mutantTimeoutSeconds, test: string|null, write: boolean}|{name: 'card', deck, id, md: boolean}|{name: 'accept', deck, id, model, commit: boolean}|{name: 'init', project, language: 'typescript' | 'python' | 'go', module: string|null, templates: string|null}|{name: 'gate', deck, stubs, refs, mutants?: number}"
         - name: Error Document
           description: The document of every non-result exit.
           schema: "{ error: { code: 0|1|2|3|4, kind: 'UsageError'|'NotYetError'|'DeckError'|'RefusalError'|'RuntimeError', message: string } }"
@@ -3996,13 +3997,20 @@ System:
             finally restoreSnapshot(snapshot) (an absent file is absent again). result {path, line, column, rule, killed:
             exit !== 0 (a timeout kills), exit, timedOut}; a survivor gives survivorFinding(result) = {kind "mutation",
             source "mutation <path>:<line>", path, expected "a test fails on <rule> at line <line>", got "every test
-            passed"}. DEFAULT_MUTANT_TIMEOUT_MS = 120000 (the operator's 120 s rule).
+            passed"}. DEFAULT_MUTANT_TIMEOUT_MS = 120000 (the operator's 120 s rule). A stop time (P22b, for morph gate):
+            runMutantsUntil({...the same input, now: () => number, stopAt: number}) → Promise of {baseline, results,
+            findings, untried} (exported with the types TimedMutantsInput, TimedMutantsResult and MutantSpot {path, line,
+            column, rule}); runMutants keeps its three keys exactly. The baseline always runs and calls no now(); a red
+            baseline → results [], findings [the baseline finding], untried every mutant's spot in order. Else per mutant
+            in order: once a mutant is untried every later one is untried with no now() call; else now() >= stopAt → it
+            is untried (nothing written, nothing run); else it runs exactly as in runMutants.
           steps: [{uses: acceptance}, {reads: Mutant}, {produces: Mutant Run}]
           examples:
             - {given: 'a tmpRoot holding src/f.ts = F = "export function f(a: number, b: number): boolean {\n  return a === b && a > 0;\n}\n"; mutants = planMutants("src/f.ts", F, 10); command grep -q "a === b" src/f.ts, timeoutMs 5000, env {PATH}', when: runMutants, then: 'baseline {0, false}; results [src/f.ts 2 12 "=== → !==" killed exit 1], [2 18 "&& → ||" survived exit 0], [2 23 "> → >=" survived exit 0], timedOut false each; findings the two survivors, "mutation src/f.ts:2" expecting "a test fails on && → || at line 2" and "… > → >= …", got "every test passed"; src/f.ts is F again'}
             - {given: 'the same root and mutants; command echo run >> ran.txt; exit 3', when: runMutants, then: 'baseline {3, false}; results []; findings [{mutation, "mutation baseline", null, "the test command passes before any mutant: echo run >> ran.txt; exit 3", "exit 3"}]; ran.txt "run\n" (only the baseline ran); src/f.ts is F'}
             - {given: 'lib/g.ts = F, mutants planMutants("lib/g.ts", F, 10); command if grep -q "a !== b" lib/g.ts; then sleep 5; fi with timeoutMs 400; then command sleep 5 with timeoutMs 300', when: runMutants, then: 'results [=== → !== killed, exit null, timedOut true], [&& → || survived], [> → >= survived], two findings "mutation lib/g.ts:2"; lib/g.ts is F; then baseline {null, true}, results [], the finding got "timed out after 300 ms"'}
             - {given: 'command test "$MARK" = m1 && test -z "$OPENAI_API_KEY", env {PATH, MARK m1, OPENAI_API_KEY k}, mutants []; then MARK m2; then command true with one mutant {gen/new.ts, 1, 1, "true → false", "x\n"} on a root without gen/new.ts', when: runMutants, then: 'baseline {0, false}, results [], findings []; then baseline {1, false} and the finding got "exit 1"; then one survivor and gen/new.ts absent after the run'}
+            - {given: 'a tmpRoot holding lib/h.ts = H = "export const h = (a: number, b: number): boolean => a === b && a > 0;\n", mutants = planMutants("lib/h.ts", H, 10), command grep -q "a === b" lib/h.ts, timeoutMs 5000, env {PATH}, now +1000 per call from 0 (first call 1000); stopAt 2500; then stopAt 0; then command exit 3 with stopAt 99 and a now that counts its calls', ref: "tests/fixtures/reviewer/untried.json (name → the result)", when: runMutantsUntil, then: 'untried.json "stop": baseline {0, false}, results [lib/h.ts 1 55 "=== → !==" killed exit 1, 1 61 "&& → ||" survived exit 0], one survivor finding, untried [{lib/h.ts, 1, 66, "> → >="}]; "zero": results [], findings [], untried the three spots; "red": baseline {3, false}, results [], the baseline finding got "exit 3", untried the three spots, now called 0 times; lib/h.ts is H again; runMutants on the same root gives the keys [baseline, results, findings] only'}
         - name: Review Command
           description: "`morph review <base> <head>`: the range's diff, Morph commits, test titles and texts, the record, a scout scope and the mutants, checked into one Review document."
           behavior: >
@@ -4050,7 +4058,7 @@ System:
       dataObjects:
         - name: Mutant Run
           description: What Run Mutants resolves to.
-          schema: "{ baseline: { exit: number | null, timedOut: boolean }, results: { path, line, column, rule, killed: boolean, exit: number | null, timedOut: boolean }[], findings: Finding[] }"
+          schema: "{ baseline: { exit: number | null, timedOut: boolean }, results: { path, line, column, rule, killed: boolean, exit: number | null, timedOut: boolean }[], findings: Finding[] } — runMutantsUntil adds untried: { path, line, column, rule }[]"
         - name: Review Document
           description: stdout of morph review, and review.json with --write.
           schema: "{ range, verdict: 'clean' | 'findings', base, head, counts, findings: (Finding & { id })[], envelope: boolean, scout: string | null, commits, morphCommits, testFiles, test: string | null, baseline: { exit, timedOut } | null, written: string | null, markdown }"
@@ -4197,8 +4205,8 @@ System:
         generation once its whole generation is written (the tree of a retry after a sibling: the P21a smoke RED,
         `supervisor/guard.go:20:23`); every run is timed against the 250 s chain limit; Check Builds (deck check's
         per-card stub trees, P21b) runs on the stubs. Nothing here names a language or a phase: the file:line patterns are
-        Tree Profiles' fileLine, the stage names are the builder's `== <stage>` lines.
-        tests/fixtures/gate/<name>.json holds the expected values of an example that names it.
+        Tree Profiles' fileLine, the stage names are the builder's `== <stage>` lines. With --mutants (P22b) the play ends
+        with gate-proof's Gate Mutants in the scratch. tests/fixtures/gate/<name>.json holds the expected values of an example that names it.
       language: typescript
       requirements: [One Document Out, Deterministic Core]
       functions:
@@ -4257,7 +4265,7 @@ System:
           description: The steps of a gate played in a scratch clone of HEAD; one row per acceptance run.
           behavior: >
             src/gate/playGate.ts. playGate({root, cards, steps, stubDir, refDir}, deps {env, now, timeoutMs?, before?}) →
-            Promise<Play Row[]>; stubDir and refDir absolute. base = fs.mkdtempSync(os.tmpdir()/"morph-gate-"), scratch =
+            Promise<Play Row[]>; stubDir and refDir absolute; deps.after? (scratch, rows) → Promise<void>. base = fs.mkdtempSync(os.tmpdir()/"morph-gate-"), scratch =
             base/w: gitOk(root, ["clone", "-q", "--shared", "--no-checkout", root, scratch]); gitOk(scratch, ["checkout",
             "-q", "--detach", the trimmed output of gitOk(root, ["rev-parse", "HEAD"])]) — the committed tree, never the
             working one. root/node_modules exists → a symbolic link scratch/node_modules to its real path, and "/node_modules\n"
@@ -4271,8 +4279,8 @@ System:
             {phase, generation, card, exit, timedOut, seconds, stage: v.stage, expected: v.expected for a stub step else
             null, outside: v.outside, failures: v.failures, ok}. Then a non-empty commit: gitOk(scratch, ["add", "-A", "-f",
             "--", ...commit]); gitOk(scratch, ["-c", "user.name=morph gate", "-c", "user.email=gate@morph.invalid", "commit",
-            "-q", "--allow-empty", "-m", "gate: <card>"]). base is removed in a finally; root's HEAD, refs, index and files
-            are never touched.
+            "-q", "--allow-empty", "-m", "gate: <card>"]). After the last step, deps.after?(scratch, rows) is awaited (P22b:
+            the mutants run there); base is removed in a finally; root's HEAD, refs, index and files are never touched.
           steps: [{calls: Stub Verdict}, {uses: acceptance}, {uses: git}, {uses: language}, {produces: Play Row}]
           examples:
             - given: 'a tmpRepo r, one commit "base" of d.json, src/a.txt "old a\n", st/ and rf/ (src/a.txt, src/b.txt, tests/c.txt: "s\n" / "A1\n", "B2\n", "C3\n"); cards a → src/a.txt "echo ''== probe''; grep -q A1 src/a.txt || { echo ''FAIL probe/a.probe.ts > A example 1''; exit 1; }; echo ''== frozen''", b → src/b.txt "echo ''== tsc''; grep -q B2 src/b.txt || { echo ''src/zz.ts(1,1): error TS2: zz''; exit 2; }\necho ''== probe''", c → tests/c.txt dependsOn [a, b] "echo ''== guard tests/c.txt''; grep -q C3 tests/c.txt || exit 1\necho ''== own git''; [ \"$(git log -3 --format=%s | tr ''\\n'' ,)\" = ''gate: b,gate: a,base,'' ]"; steps of Gate Plan(cards, [[a, b], [c]], the three, the three); env {PATH, HOME}; now +1000 per call'
@@ -4303,8 +4311,18 @@ System:
             row with exit ≠ 0 "timed out" | "red (exit <exit>)" + " at <stage or "no stage">" + (": " + its first outside
             line, when any); any row with seconds >= 250 "<seconds> s, over the 250 s limit". → {code: 2 when errors, else
             0, document {deck, transaction, cards: the count, generations, missing, builds, rows, maxSeconds: the largest
-            seconds (0 when none), errors}}, keys in that order.
-          steps: [{calls: Gate Plan}, {calls: Play Gate}, {uses: cards}, {produces: Gate Document}]
+            seconds (0 when none), errors}}, keys in that order. Mutants (P22b), only when args.mutants (a number, from
+            `--mutants <n>`) is given, else nothing below happens and the document has no key mutants: deps may carry
+            mutantTimeoutMs? and mutantStopSeconds?; Play Gate gets after(scratch, rows): planned = gate-proof's
+            planGateMutants(deck.cards, read: the text of refDir/<target> when a regular file, else null, Math.min(args.mutants,
+            MUTANT_CAP)); every ref and retry row ok → mutants = runGateMutants(scratch, deck.cards, planned, {env, now,
+            timeoutMs: deps.mutantTimeoutMs, stopSeconds: deps.mutantStopSeconds}); else mutants = {planned: its length,
+            tried 0, killed 0, timedOut 0, seconds 0, survivors [], untried: every planned spot {card, path, line, column,
+            rule}, baselines []} (nothing run on red references). A missing file (no play) leaves mutants null. After the
+            row errors, per baseline "mutants <card>: " + ("timed out" when timedOut, else "red (exit <exit>)") + " on its
+            references without a mutant". document.mutants = mutants, the last key. code: 2 when errors; else 1 when
+            mutants is not null and has a survivor or an untried mutant; else 0.
+          steps: [{calls: Gate Plan}, {calls: Play Gate}, {uses: gate-proof}, {uses: cards}, {produces: Gate Document}]
           examples:
             - given: 'a tmpRepo holding a copy of tests/fixtures/go-p7b, one commit; deck "decks/b1/deck.p21.json" (the P21a cut), stubs "decks/b1/_stubs", refs "decks/b1/_refs"; deps {env {PATH, HOME}, now +1000, readDeck Read Deck File, builds Check Builds}'
               ref: "tests/fixtures/go-p7b/, tests/fixtures/gate/gateCommand.json (name → the result)"
@@ -4316,6 +4334,13 @@ System:
             - given: 'deck "nope.json"; stubs "nope"; refs "nope"; stubs "st3" lacking supervisor/guard.go and refs "rf3" lacking daemon/daemon.go (deck.p21.json); then a tmpRepo with d.json = one card x → src/x.txt "echo ''== probe''\ngrep -q X1 src/x.txt", s/src/x.txt "s\n", f/src/x.txt "X1\n", now +300000'
               when: gateCommand
               then: '"deck not found" 4 UsageError "deck file not found: nope.json"; "stubs not found" "stubs directory not found: nope"; "refs not found" "references directory not found: nope"; "missing": code 2, missing and errors ["no stub: supervisor/guard.go", "no reference: daemon/daemon.go"], rows [], builds null, maxSeconds 0; "slow": code 2, builds [x''s note "no language profile claims src/x.txt: not built"], rows ok, errors ["stub x: 300 s, over the 250 s limit", "ref x: 300 s, over the 250 s limit"]'
+            - given: 'a tmpRepo, one commit "base" of d.json = one card a → src/a.ts, acceptance "echo ''== probe''\ngrep -q ''a === b'' src/a.ts || { echo ''FAIL probe/a.probe.ts > A example 1''; exit 1; }\necho ''== full''; true", s/src/a.ts "s\n", f/src/a.ts = H (Run Mutants example 5''s text); args {deck "d.json", stubs "s", refs "f", mutants 30}, deps() (now +1000); then mutants 1; then no mutants; then mutants 30 with deps.mutantStopSeconds 0'
+              ref: "tests/fixtures/gate/gateCommand.p22b.json (name → the result)"
+              when: gateCommand
+              then: 'gateCommand.p22b.json "mutants": code 1, errors [], the 2 rows ok, mutants {planned 3, tried 3, killed 1, timedOut 0, seconds 5, survivors [{a, src/a.ts, 1, 61, "&& → ||"}, {a, src/a.ts, 1, 66, "> → >="}], untried [], baselines []} — the survivors name card, file and line; "one": code 0, planned 1 (the "=== → !==" mutant, killed); "off": code 0, no key mutants (the P22a document); "stopped": code 1, tried 0, untried the three spots, seconds 2; the repo''s git status ""'
+            - given: 'the same repo with f/src/a.ts = "export const g = (a: number, b: number): boolean => a !== b && a > 0;\n" (red references), mutants 30; then a repo whose acceptance is "echo ''== probe''\ngrep -q ''a === b'' src/a.ts || exit 1\necho ''== full''; touch full.txt\necho ''== own''; test -f full.txt && rm full.txt" and f/src/a.ts = H'
+              when: gateCommand
+              then: '"ref red": code 2, errors ["ref a: red (exit 1) at probe"], mutants planned 3, tried 0, seconds 0, untried [{a, src/a.ts, 1, 55, "!== → ==="}, {…, 61, "&& → ||"}, {…, 66, "> → >="}]; "baseline": code 2, rows ok, errors ["mutants a: red (exit 1) on its references without a mutant"] (the killer drops the full line the own stage needs), baselines [{a, 1, false}], tried 0, untried the three spots'
       dataObjects:
         - name: Stub Verdict
           description: What Stub Verdict reads off one log.
@@ -4328,7 +4353,89 @@ System:
           schema: "{ phase: 'stub' | 'ref' | 'retry', generation: number, card: string, exit: number | null, timedOut: boolean, seconds: number, stage: string | null, expected: string | null, outside: string[], failures: string[], ok: boolean }"
         - name: Gate Document
           description: stdout of morph gate.
-          schema: "{ deck: string, transaction: boolean, cards: number, generations: string[][], missing: string[], builds: Build Check[] | null, rows: Play Row[], maxSeconds: number, errors: string[] }"
+          schema: "{ deck: string, transaction: boolean, cards: number, generations: string[][], missing: string[], builds: Build Check[] | null, rows: Play Row[], maxSeconds: number, errors: string[], mutants?: Gate Mutants | null }"
+    - name: gate-proof
+      description: >
+        The gate's second Component (src/gate/, layer gate; the 30 000-byte rule), P22b, issue #13 items 2 and 3: the
+        mutants of `morph gate --mutants <n>` and the byte identity of cuts. Gate Mutants plans the reviewer's mutants over
+        a deck's reference code files and runs them in the gate's scratch through Run Mutants with a stop time, the owner
+        card's acceptance without its `== full` line as the killer; cap 30 mutants, stop 20 min, each run under 120 s;
+        survivors and untried mutants name card, file and line. Check Identity cuts each entry of a committed corpus (a
+        tree at a commit, plan argv, bytes, sha256) again and compares. Layer gate: cards, acceptance, git, language,
+        reviewer; node:crypto, node:fs, node:os, node:path; no clock (deps.now), no environment (deps.env), no child
+        process of its own. tests/fixtures/gate/<name>.json holds the expected values of an example that names it.
+      language: typescript
+      requirements: [Deterministic Core]
+      functions:
+        - name: Gate Mutants
+          description: The gate's mutants over a deck's reference code, each killed or not by its owner card's acceptance without the full line.
+          behavior: >
+            src/gate/gateMutants.ts; imports language's profileForPath and isTest, the reviewer's planMutants and
+            runMutantsUntil (with DEFAULT_MUTANT_TIMEOUT_MS), the Card and Mutant types. MUTANT_CAP = 30, MUTANT_STOP_SECONDS =
+            1200 (exported; the operator's cap of 30 mutants and 20 min). killCommand(acceptance) = the acceptance split on
+            "\n" without every line whose trimStart() starts with "echo '== full'", "\n"-joined (the full suite is the
+            phase's, not the card's; a builder acceptance holds that stage on one line). planGateMutants(cards, read, cap) →
+            {card, mutant}[]: n = Math.min(cap, MUTANT_CAP); n <= 0 → []. Per card in order, per target in order, each path
+            once (its first owner): language's profileForPath(target) null or isTest(profile, target) → skipped; text =
+            read(target), null → skipped; each of Plan Mutants(target, text, n) → {card: customId, mutant}. all.length <= n
+            → all; else, as the reviewer's spreadMutants, entry floor(i × all.length / n) for i in 0 … n−1.
+            runGateMutants(root, cards, planned, deps {env, now, timeoutMs?, stopSeconds?}) → Promise<Gate Mutants>: start =
+            now(); stopAt = start + (stopSeconds ?? MUTANT_STOP_SECONDS) × 1000; the planned grouped by card in first-seen
+            order; per group: its card (by customId) missing → every mutant of it into untried, no now() call; else one now()
+            call, >= stopAt → the same; else
+            Run Mutants Until({root, command: killCommand(acceptance ?? ""), mutants, timeoutMs: timeoutMs ??
+            DEFAULT_MUTANT_TIMEOUT_MS, env, now, stopAt}): a baseline exit ≠ 0 → {card, exit, timedOut} into baselines;
+            per result tried + 1, killed → killed + 1 (and timedOut + 1 when it timed out), else its spot into survivors;
+            its untried spots into untried. A spot is {card, path, line, column, rule}. seconds = Math.round((now() −
+            start) / 100) / 10. → {planned: planned.length, tried, killed, timedOut, seconds, survivors, untried,
+            baselines}, keys in that order.
+          steps: [{uses: language}, {uses: reviewer}, {uses: review-session}, {produces: Gate Mutants}]
+          examples:
+            - given: 'killCommand of tests/fixtures/builder/code1.txt (46 lines, one "echo ''== full''; …" line) and of builder/go/code1.txt (33 lines, one); of "a\n echo ''== full''; x\nb\necho ''== fully''"'
+              when: killCommand
+              then: '45 lines and 32 lines, the full line gone and every other line kept in order; "a\nb\necho ''== fully''" (an indented full line goes; "== fully" is another stage, kept)'
+            - given: 'read = the map of tests/fixtures/gate/mutantFiles.json (src/a.ts = H, tests/a.test.ts, src/b.ts = 40 lines with one "===" each, docs/x.md, lib/q.go); cards a → [src/a.ts, tests/a.test.ts], b → [src/b.ts, src/a.ts, src/c.ts], j → [tests/j.examples.test.ts], d → [docs/x.md, lib/q.go]; cap 30 with the card a alone; cap 2; cap 99; cap 0'
+              ref: "tests/fixtures/gate/mutantFiles.json (path → text), tests/fixtures/gate/gateMutants.json (name → spots or Gate Mutants)"
+              when: planGateMutants, each mapped to its spot {card, path, line, column, rule}
+              then: 'gateMutants.json "only a": the 3 mutants of H on card a; "two": [{a, src/a.ts, 1, 55, "=== → !=="}, {b, src/b.ts, 21, 46, "=== → !=="}]; "cap": 30 spots (99 is capped at MUTANT_CAP), src/a.ts once under card a, no test file, no docs/x.md, src/c.ts skipped (read null), the last {d, lib/q.go, 2, 39, "&& → ||"}; cap 0 → []'
+            - given: 'a tmpRoot holding src/f.ts = H; card f → [src/f.ts], acceptance "echo ''== probe''\ngrep -q ''a === b'' src/f.ts\necho ''== full''; exit 7"; planned = planGateMutants([f], read H, 30); deps {env {PATH, HOME}, now +1000 per call, timeoutMs 5000}; then stopSeconds 3; then the acceptance "echo ''== probe''\ntest -f ok.txt"; then "echo ''== probe''\nif grep -q ''a !== b'' src/f.ts; then sleep 5; fi\ngrep -q ''a'' src/f.ts" with timeoutMs 400'
+              when: runGateMutants
+              then: 'gateMutants.json "run": planned 3, tried 3, killed 1, timedOut 0, seconds 5, survivors [{f, src/f.ts, 1, 61, "&& → ||"}, {f, src/f.ts, 1, 66, "> → >="}] (the dropped full line would have killed all three); "stop": tried 1, killed 1, untried the last two, seconds 4; "baseline": baselines [{f, 1, false}], tried 0, untried all three, seconds 2; "timeout": killed 1 and timedOut 1 (the "=== → !==" mutant), the other two survivors; src/f.ts is H at the end'
+        - name: Check Identity
+          description: Byte identity of cuts as a committed corpus — each tree at its commit cut again and compared by bytes and sha256.
+          behavior: >
+            src/gate/identity.ts; node:crypto, node:fs, node:os, node:path, git's gitOk. An Identity Entry is {name, commit,
+            dir, install: dest → source, argv, bytes, sha256}. checkIdentity(root, entries, deps {env, plan: (argv) →
+            Promise<number>}) → Promise<{rows, errors}>: base = fs.mkdtempSync(os.tmpdir()/"morph-identity-"); one clone per
+            distinct commit, in first-seen order: clone = base/c<k> (k = 0, 1, …), gitOk(root, ["clone", "-q", "--shared",
+            "--no-checkout", root, clone]), gitOk(clone, ["checkout", "-q", "--detach", commit]) (a git failure throws
+            gitOk's error). Per entry i in order: tree = clone/dir; per install entry in key order clone/<source> copied to
+            tree/<dest>, parents created; out = base/out-<i>.json; code = await deps.plan([...argv, "--root", tree, "--out",
+            out]); out exists → bytes = its size, sha256 = its sha256 hex; else 0 and "". row {name, code, bytes, sha256, ok:
+            code === 0 and both equal the entry's}; errors: code ≠ 0 → "<name>: plan exit <code>"; else not ok →
+            "<name>: <bytes> B, sha256 <its first 12>; the corpus has <entry bytes> B, sha256 <the entry's first 12>".
+            base is removed in a finally; root is never written. The corpus tests/fixtures/identity/corpus.json (go-mini and
+            go-p7b at one commit with goguard/gofirstdiff installed, P15 at 0365336, P21c and P22a at their deck commits) is
+            the regression test of every cut: deps.plan = Main on the argv.
+          steps: [{uses: git}, {produces: Identity Row}]
+          examples:
+            - given: 'root = this repository (two levels above tests/fixtures), entries = tests/fixtures/identity/corpus.json (5 entries), deps {env {PATH, HOME}, plan: argv → main(argv, {env, now: () => 0, cwd: "/", transport: null}, an io that drops both streams)}'
+              ref: "tests/fixtures/identity/corpus.json (the corpus: name, commit, dir, install, argv, bytes, sha256)"
+              when: checkIdentity
+              then: '5 rows, each ok with code 0 and the corpus''s bytes and sha256 (go-mini 75416, go-p7b 100388, p15 1247586, p21c 362610, p22a 337622), errors []; the root''s git status unchanged'
+            - given: 'the go-mini entry alone; plan writes "x\n" to the path after "--out" and resolves 0 (a changed planner output); then plan resolves 2 and writes nothing'
+              when: checkIdentity
+              then: 'rows [{go-mini, 0, 2, "73cb3858a687a8494ca3323053016282f3dad39d42cf62ca4e79dda2aac7d9ac", false}], errors ["go-mini: 2 B, sha256 73cb3858a687; the corpus has 75416 B, sha256 3568d65a52ff"]; then [{go-mini, 2, 0, "", false}], errors ["go-mini: plan exit 2"]'
+            - given: 'the go-mini entry with install {} and the real plan; then the entry with commit "0000000000000000000000000000000000000000"'
+              when: checkIdentity
+              then: 'rows [{go-mini, 4, 0, "", false}] (no decks/tools/guard.mjs: plan exit 4), errors ["go-mini: plan exit 4"]; then the promise rejects with a message starting "git checkout failed (exit "'
+      dataObjects:
+        - name: Gate Mutants
+          description: What runGateMutants resolves to; a spot is { card, path, line, column, rule }.
+          schema: "{ planned: number, tried: number, killed: number, timedOut: number, seconds: number, survivors: spot[], untried: spot[], baselines: { card: string, exit: number | null, timedOut: boolean }[] }"
+        - name: Identity Row
+          description: One corpus entry cut again.
+          schema: "{ name: string, code: number, bytes: number, sha256: string, ok: boolean }"
 
   dependencies:
     - {name: yaml, version: "2.9.1", language: typescript, doc: docs/deps/yaml.md}

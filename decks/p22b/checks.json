@@ -1,0 +1,23 @@
+{
+  "phase": "p22b",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates"],
+  "fullExclude": ["tests/reviewer/runMutants.p22b.examples.test.ts", "tests/gate/gateMutants.examples.test.ts", "tests/gate/identity.examples.test.ts", "tests/gate/gateCommand.p22b.examples.test.ts", "tests/cli/gate.p22b.examples.test.ts"],
+  "cards": [
+    { "id": "run-mutants" },
+    { "id": "check-identity" },
+    { "id": "parse-command" },
+    { "id": "gate-mutants" },
+    { "id": "gate-command" },
+    { "id": "run-mutants-judge", "files": [{ "file": "tests/reviewer/runMutants.p22b.examples.test.ts", "min": 1, "max": 7, "new": true,
+      "lits": ["Run Mutants example 5", "reviewer/untried.json", "stopAt: 2500"] }] },
+    { "id": "check-identity-judge", "files": [{ "file": "tests/gate/identity.examples.test.ts", "min": 3, "max": 9, "new": true,
+      "lits": ["Check Identity example 1", "Check Identity example 2", "Check Identity example 3", "identity/corpus.json", "73cb3858a687", "git checkout failed"] }] },
+    { "id": "parse-command-judge", "files": [{ "file": "tests/cli/gate.p22b.examples.test.ts", "min": 1, "max": 7, "new": true,
+      "lits": ["Parse Command example 24", "parseArgv.json", "\"24\""] }] },
+    { "id": "gate-mutants-judge", "files": [{ "file": "tests/gate/gateMutants.examples.test.ts", "min": 3, "max": 9, "new": true,
+      "lits": ["Gate Mutants example 1", "Gate Mutants example 2", "Gate Mutants example 3", "gate/mutantFiles.json", "gate/gateMutants.json", "builder/go/code1.txt", "timeoutMs: 400"] }] },
+    { "id": "gate-command-judge", "files": [{ "file": "tests/gate/gateCommand.p22b.examples.test.ts", "min": 2, "max": 8, "new": true,
+      "lits": ["Gate Command example 4", "Gate Command example 5", "gate/gateCommand.p22b.json", "mutantStopSeconds: 0", "touch full.txt"] }] }
+  ]
+}

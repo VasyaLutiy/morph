@@ -72,9 +72,14 @@ preparation agent repeats this line.
    under nohup, one JSON verdict read when it exits: every stub red at its expected stage with no compile line outside
    its targets, every reference green, every card of a generation green again once its generation is written, every run
    under 250 s, Check Builds clean on the stubs. Its exit 0 replaces the stub, stubcheck, fullvet and chain items here
-   and in step 2; `rows[].failures` are read against the probes' examples. Mutants stay a hand step.
+   and in step 2; `rows[].failures` are read against the probes' examples. With a `morph gate` that takes `--mutants`,
+   the mutants are the gate's too: `--mutants 30` plans at most 30 mutants over the reference code files, kills each with
+   its owner card's acceptance without the `== full` line, each run under 120 s, stops at 20 min; exit 1 lists every
+   survivor and untried mutant by card, file and line (`mutants.survivors`, `mutants.untried`): each gets a probe row or
+   a known-risk line in `docs/DECISIONS.md`, and then the gate holds; the hand mutants go. Where the project keeps a
+   byte-identity corpus test, a green `vitest run` (or the language's full suite) replaces the hand re-cuts.
 2. **Gate without the operator.** The run starts by itself only when ALL hold: `morph plan` exit 0; `morph deck check`
-   errors 0; `morph gate` exit 0 where the command exists, else every probe red per example with a readable line on the stubs and stubcheck.mjs exit 0 on each stub log (fullvet.mjs too for a Go `--only` deck); every acceptance chain under 250 s; the
+   errors 0; `morph gate` exit 0 (with `--mutants`: 0, or 1 with every listed mutant recorded) where the command exists, else every probe red per example with a readable line on the stubs and stubcheck.mjs exit 0 on each stub log (fullvet.mjs too for a Go `--only` deck); every acceptance chain under 250 s; the
    mutation cap kept; forecast ≤ $1 for the phase; no slice over 200 KB. Otherwise the phase stops with a report in
    `docs/MEASURE.md` (a row "stopped at gate: <reason>"), touches `~/.morph-wait-operator` and stops.
 3. **Run**: from the repository root, the binary copy:
