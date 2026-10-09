@@ -50,6 +50,7 @@ test("row: sort order, a nested vendor, a module without imports, a symlinked di
     "go.mod": "module q.io/w/v2\n",
     "b/z.go": 'package b\n\nimport (\n\t"q.io/w/v2/a"\n\t"q.io/w/v2/a"\n\t"q.io/w/v2"\n)\n',
     "B/c.go": "package B\n",
+    "b.go": "package w\n",
     "a/a.go": 'package a\n\nimport _ "q.io/w"\n',
     "a/vendor/v.go": "package v\n",
     "a/b/testdata/x.go": "package x\n",
@@ -59,8 +60,8 @@ test("row: sort order, a nested vendor, a module without imports, a symlinked di
   try {
     r.write("b/notes.md", "x\n");
     expect(readGoTree(r.root)).toStrictEqual({
-      files: ["B/c.go", "a/a.go", "a/b/c.go", "b/z.go"],
-      imports: { "B/c.go": [], "a/a.go": [], "a/b/c.go": ["b"], "b/z.go": ["a", "."] },
+      files: ["B/c.go", "a/a.go", "a/b/c.go", "b.go", "b/z.go"],
+      imports: { "B/c.go": [], "a/a.go": [], "a/b/c.go": ["b"], "b.go": [], "b/z.go": ["a", "."] },
     });
     expect(readGoTree(e.root)).toStrictEqual({ files: [], imports: {} });
   } finally {

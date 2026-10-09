@@ -53,8 +53,8 @@
 - **Ripple, measured** (the reference code in the scratch worktree with this phase's data, full suite): **0 of 793** red —
   `hide` is an optional input key, Plan Command passes it only with `--only` and the go profile, and Hide Later returns
   {} for a one-generation subset, so Plan Command 12/13 (P20) and every cut without `--only` are byte for byte.
-- **Record sizes** (bytes of each Component block): planner-subset 2 904 → **11 406**; builder 29 348 → **29 721** (Build
-  Acceptances example 9's literals in `tests/fixtures/builder/examples.json`); cli 29 568 → **29 859** (≤ 30 KB rule).
+- **Record sizes** (bytes of each Component block): planner-subset 2 900 → **11 694**; builder 29 240 → **29 721** (Build
+  Acceptances example 9's literals in `tests/fixtures/builder/examples.json`); cli 29 567 → **29 857** (≤ 30 KB rule).
 
 ## 2. Contract
 

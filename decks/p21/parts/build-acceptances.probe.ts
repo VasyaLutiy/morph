@@ -46,7 +46,8 @@ test("row: a judge member, hide {} and an inherited key, a typescript member", (
   const inherited = Object.create({ a: ["calc/z.go"] }) as Record<string, string[]>;
   const s = buildAcceptances({ cards, checks: ch, profile: GO, texts: texts(["a"], P), hide: inherited });
   expect(accOf(s, "a")).toBe(goCodeAcceptance(ctx("a", ["calc/a.go"], [], [], "p8"), P, null, null));
-  const t = buildAcceptances({ cards: [card("t", ["src/x/t.ts"])], checks: checks("p7", ["t"], []), profile: TYPESCRIPT,
-    texts: { guard: "// guard\n", firstdiff: "// firstdiff\n", probes: { t: "// probe\n" } }, hide: { t: ["tests/x/old.test.ts"] } });
-  expect(accOf(t, "t")).toBe(codeAcceptance({ ...ctx("t", ["src/x/t.ts"], ["tests/x/old.test.ts"], ["tests/x/old.test.ts"], "p7"), profile: TYPESCRIPT }, "// probe\n", null, null));
+  const t = buildAcceptances({ cards: [card("t", ["src/x/t.ts"]), card("u", ["src/x/u.ts"])], checks: checks("p7", ["t", "u"], []), profile: TYPESCRIPT,
+    texts: { guard: "// guard\n", firstdiff: "// firstdiff\n", probes: { t: "// probe\n", u: "// probe\n" } },
+    hide: { t: ["src/x/u.ts", "tests/x/old.test.ts"] } });
+  expect(accOf(t, "t")).toBe(codeAcceptance({ ...ctx("t", ["src/x/t.ts"], ["src/x/u.ts", "tests/x/old.test.ts"], ["src/x/u.ts", "tests/x/old.test.ts"], "p7"), profile: TYPESCRIPT }, "// probe\n", null, null));
 });
