@@ -16,6 +16,6 @@ export interface CardContext {
 export interface BuildTexts { guard: string; firstdiff: string; probes: Record<string, string> }
 export interface BuildInput {
   cards: Card[]; checks: Checks; profile: LanguageProfile; texts: BuildTexts;
-  uses?: Record<string, string[]>; vendor?: boolean;
+  uses?: Record<string, string[]>; vendor?: boolean; hide?: Record<string, string[]>;
 }
 export type BuildResult = { ok: true; cards: Card[] } | { ok: false; errors: string[] };

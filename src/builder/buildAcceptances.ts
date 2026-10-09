@@ -133,13 +133,32 @@ export function buildAcceptances(input: BuildInput): BuildResult {
       input.uses !== undefined && Object.prototype.hasOwnProperty.call(input.uses, card.customId)
         ? input.uses[card.customId]
         : [];
+    const baseSiblings = siblingsOf.get(card.customId) ?? [];
+    const hidden: string[] | undefined =
+      input.hide !== undefined && Object.prototype.hasOwnProperty.call(input.hide, card.customId)
+        ? input.hide[card.customId]
+        : undefined;
+    const ctxSiblings: string[] = hidden === undefined ? baseSiblings : baseSiblings.slice();
+    const ctxFullExclude: string[] = hidden === undefined ? checks.fullExclude : checks.fullExclude.slice();
+    if (hidden !== undefined) {
+      for (const path of hidden) {
+        if (!ctxSiblings.includes(path)) {
+          ctxSiblings.push(path);
+        }
+      }
+      for (const path of hidden) {
+        if (!ctxFullExclude.includes(path)) {
+          ctxFullExclude.push(path);
+        }
+      }
+    }
     const ctx: CardContext = {
       id: card.customId,
       phase: checks.phase,
       targets: card.targets,
-      siblings: siblingsOf.get(card.customId) ?? [],
+      siblings: ctxSiblings,
       frozen: checks.frozen,
-      fullExclude: checks.fullExclude,
+      fullExclude: ctxFullExclude,
       ownGit: checks.ownGit,
       profile: input.profile,
       guard: input.texts.guard,
