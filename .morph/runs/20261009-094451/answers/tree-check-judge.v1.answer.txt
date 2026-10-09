@@ -1,0 +1,126 @@
+```
+import fs from "node:fs";
+
+import { expect, test } from "vitest";
+
+import { findBreaks, treeCheck } from "../../src/acceptance/treeCheck.js";
+import type { TreeInput } from "../../src/acceptance/treeCheck.js";
+import { fixture, fixtureJson, fixturePath, tmpRoot } from "../helpers.js";
+import type { TmpRoot } from "../helpers.js";
+
+const GO_LINE = "^(?:vet: )?(?:\\./)?(\\S+?\\.go)(:\\d+.*)$";
+const TS_LINE = "^(\\S+?\\.tsx?)(\\(\\d+,\\d+\\).*)$";
+const G = 'export GOFLAGS=-mod=mod GOPROXY=off GOSUMDB=off GOTOOLCHAIN=local GOWORK=off GOCACHE="${GOCACHE:-/tmp/morph/go-build}" GOPATH="${GOPATH:-/tmp/morph/go}"';
+const GO_CMD = "go build -overlay {config} ./... ; go vet -overlay {config} ./...";
+
+const EMPTY_REPLACE = { name: "full.json", text: "{\"Replace\":{}}" };
+const DELETE_A = { name: "full.json", text: "{\"Replace\":{\"a/a.go\":\"\"}}" };
+const STUB_B: Record<string, string> = { "b/b.go": "_stubs/b/b.go" };
+
+function pathEnv(): Record<string, string> {
+  return { PATH: process.env.PATH ?? "" };
+}
+
+function copyOf(name: string): TmpRoot {
+  const r = tmpRoot();
+  fs.cpSync(fixturePath(name), r.root, { recursive: true });
+  return r;
+}
+
+function goInput(over: Partial<TreeInput>): TreeInput {
+  return { card: "k1", exports: [G], config: EMPTY_REPLACE, stubs: {}, command: GO_CMD, ...over };
+}
+
+test("Tree Check example 1: the breaks of a go output and of a tsc output", () => {
+  const outputs = fixtureJson("acceptance/treeOutput.json") as Record<string, string>;
+  const go = outputs.go ?? "";
+  const ts = outputs.typescript ?? "";
+  expect(findBreaks(go, GO_LINE, ["supervisor/loop.go"])).toStrictEqual([
+    "daemon/daemon.go:9:81: not enough arguments in call to d.Loop.Exited",
+    "go: updates to go.mod needed; to update it:",
+    "mcp/session.go:6:2: package morphlite/supervisor is not in std",
+    "supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)",
+  ]);
+  expect(findBreaks(ts, TS_LINE, ["src/units/convert.ts"])).toStrictEqual([
+    "error TS5083: Cannot read file '/x/tsconfig.json'.",
+    "src/report/line.ts(1,17): error TS2724: '\"../units/convert.js\"' has no exported member named 'toMeters'. Did you mean 'toMetres'?",
+    "tests/report/line.examples.test.ts(5,44): error TS2554: Expected 3 arguments, but got 2.",
+  ]);
+  expect(findBreaks(go, TS_LINE, [])).toStrictEqual([
+    "go: updates to go.mod needed; to update it:",
+    "mcp/session.go:6:2: package morphlite/supervisor is not in std",
+    "supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)",
+    "supervisor/loop.go:30: missing return",
+    "vet: ./supervisor/loop.go:12:2: declared and not used: x",
+    "vet: daemon/daemon.go:9:81: not enough arguments in call to d.Loop.Exited",
+    "vet: supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)",
+  ]);
+});
+
+test("Tree Check example 2: a go tree with the stub, with a/a.go deleted and left alone", () => {
+  const r = copyOf("acceptance/tree");
+  try {
+    const env = pathEnv();
+    const stubbed = treeCheck(r.root, goInput({ stubs: STUB_B }), env, 60000);
+    expect(stubbed).toStrictEqual({
+      exit: 1,
+      timedOut: false,
+      output: "# example.com/vq/a\na/a.go:6:25: undefined: b.Old\n# example.com/vq/a\nvet: a/a.go:6:25: undefined: b.Old\n",
+    });
+    const deleted = treeCheck(r.root, goInput({ config: DELETE_A, stubs: STUB_B }), env, 60000);
+    expect(deleted).toStrictEqual({ exit: 0, timedOut: false, output: "" });
+    const untouched = treeCheck(r.root, goInput({}), env, 60000);
+    expect(untouched).toStrictEqual({ exit: 0, timedOut: false, output: "" });
+    expect(r.read("a/a.go")).toBe(fixture("acceptance/tree/a/a.go"));
+    expect(r.read("b/b.go")).toBe(fixture("acceptance/tree/b/b.go"));
+    expect(r.exists("probe")).toBe(false);
+  } finally {
+    r.rm();
+  }
+}, 120000);
+
+test("Tree Check example 3: the copy, the exports and the timeout", () => {
+  const r = copyOf("acceptance/tree");
+  try {
+    r.write(".git/HEAD", "ref: refs/heads/main\n");
+    fs.mkdirSync(r.path("node_modules/q"), { recursive: true });
+    fs.mkdirSync(r.path("probe/old"), { recursive: true });
+    const env = pathEnv();
+    const inspect = 'echo "a.go:1:1: $Q9 $(cat {config}) $(head -3 b/b.go | tail -1)"; ls -a; echo "$(pwd)/x.go:2:2: abs"; readlink node_modules >/dev/null && echo linked';
+    const k2 = treeCheck(
+      r.root,
+      {
+        card: "k2",
+        exports: ["export Q9=-mod=vendor"],
+        config: { name: "c.json", text: "{\"q\": 9}" },
+        stubs: STUB_B,
+        command: inspect,
+      },
+      env,
+      60000,
+    );
+    expect(k2).toStrictEqual({
+      exit: 0,
+      timedOut: false,
+      output: "a.go:1:1: -mod=vendor {\"q\": 9} // New is the API after the change.\n.\n..\n_stubs\na\nb\ngo.mod\nnode_modules\nprobe\nx.go:2:2: abs\nlinked\n",
+    });
+    const started = Date.now();
+    const k3 = treeCheck(
+      r.root,
+      {
+        card: "k3",
+        exports: [],
+        config: { name: "c.json", text: "{\"q\": 9}" },
+        stubs: {},
+        command: "echo started; sleep 3; echo late",
+      },
+      env,
+      700,
+    );
+    expect(Date.now() - started).toBeLessThan(3000);
+    expect(k3).toStrictEqual({ exit: null, timedOut: true, output: "started\n" });
+  } finally {
+    r.rm();
+  }
+}, 120000);
+```

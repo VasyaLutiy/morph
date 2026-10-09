@@ -1,0 +1,366 @@
+{
+  "runId": "20261009-094451",
+  "completedAt": 1791540770049,
+  "branch": "morph/20261009-094451",
+  "processor": "ds",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "stub-trees",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "stub-trees.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "f00cab00476c2613b92062a173fc3ad7988c93f2",
+      "diffstat": {
+        "files": 1,
+        "insertions": 138,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "tree-check",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "tree-check.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "03b863937940b211fbaa0fe7edb1e3a33aa27b39",
+      "diffstat": {
+        "files": 1,
+        "insertions": 67,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "tree-profiles",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "tree-profiles.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "274a4c9848d3c9184b6b7f3b9036d97c39cfb9e5",
+      "diffstat": {
+        "files": 1,
+        "insertions": 36,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "check-builds",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "check-builds.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "8c55e7414528c3aa08817e1ab1ecfe4f5af0bde5",
+      "diffstat": {
+        "files": 1,
+        "insertions": 127,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "stub-trees-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "stub-trees-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/planner/stubTrees.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/planner/stubTrees.examples.test.ts(24,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/planner/stubTrees.examples.test.ts(32,3): error TS2304: Cannot find name 'expect'.\ntests/planner/stubTrees.examples.test.ts(33,3): error TS2304: Cannot find name 'expect'.\ntests/planner/stubTrees.examples.test.ts(34,3): error TS2304: Cannot find name 'expect'.\ntests/planner/stubTrees.examples.test.ts(35,3): error TS2304: Cannot find name 'expect'.\ntests/planner/stubTrees.examples.test.ts(36,3): error TS2304: Cannot find name 'expect'.\ntests/planner/stubTrees.examples.test.ts(37,3): error TS2304: Cannot find name 'expect'.\ntests/planner/stubTrees.examples.test.ts(38,3): error TS2304: Cannot find name 'expect'.\ntests/planner/stubTrees.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/planner/stubTrees.examples.test.ts(40,3): error TS2304: Cannot find name 'expect'.\ntests/planner/stubTrees.examples.test.ts(41,3): error TS2304: Cannot find name 'expect'.\ntests/planner/stubTrees.examples.test.ts(49,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/planner/stubTrees.examples.te\n[... 2386 chars clipped; diagnosis lines kept:]\n[...]\n name 'expect'.\ntests/planner/stubTrees.examples.test.ts(97,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/planner/stubTrees.examples.test.ts(101,3): error TS2304: Cannot find name 'expect'.\ntests/planner/stubTrees.examples.test.ts(102,3): error TS2304: Cannot find name 'expect'.\ntests/planner/stubTrees.examples.test.ts(105,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/planner/stubTrees.examples.test.ts(107,3): error TS2304: Cannot find name 'expect'.\ntests/planner/stubTrees.examples.test.ts(111,3): error TS2304: Cannot find name 'expect'.\ntests/planner/stubTrees.examples.test.ts(117,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/planner/stubTrees.examples.test.ts(119,3): error TS2304: Cannot find name 'expect'.\ntests/planner/stubTrees.examples.test.ts(123,3): error TS2304: Cannot find name 'expect'.\ntests/planner/stubTrees.examples.test.ts(124,3): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": "1c626e00959fcc2017d1fa04e71dfa7594d6e7e1",
+      "diffstat": {
+        "files": 1,
+        "insertions": 126,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "tree-check-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "tree-check-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/acceptance/treeCheck.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "6429ccf2feb65ee7364683c14d971d91ccaa618d",
+      "diffstat": {
+        "files": 1,
+        "insertions": 124,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "tree-profiles-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "tree-profiles-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/language/treeProfiles.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "a6f0ecb6d24f724139ce9a4c20f502ad761f2c89",
+      "diffstat": {
+        "files": 1,
+        "insertions": 121,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "check-builds-judge",
+      "status": "failed",
+      "reason": "acceptance failed",
+      "attempts": 3,
+      "winningVariant": null,
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/checkBuilds.examples.test.ts\n== own\n FAIL  tests/cli/checkBuilds.examples.test.ts > checkBuilds returns null when the deck has no _stubs directory\nError: d.json\n ❯ load tests/cli/checkBuilds.examples.test.ts:27:20\n     25| function load(r: TmpRoot, deckPath: string): { deck: Deck; generations…\n     26|   const l = readDeckFile(r.root, deckPath);\n     27|   if (!l.ok) throw new Error(deckPath);\n       |                    ^\n     28|   return { deck: l.deck, generations: layerGenerations(l.deck) };\n     29| }\n ❯ tests/cli/checkBuilds.examples.test.ts:141:15\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯\n\n FAIL  tests/cli/checkBuilds.examples.test.ts > checkBuilds notes a target no language profile claims\nError: d.json\n ❯ load tests/cli/checkBuilds.examples.test.ts:27:20\n     25| function load(r: TmpRoot, deckPath: string): { deck: Deck; generations…\n     26|   const l = readDeckFile(r.root, deckPath);\n     27|   if (!l.ok) throw new Error(deckPath);\n       |                    ^\n     28|   return { deck: l.deck, generations: layerGenerations(l.deck) };\n     29| }\n ❯ tests/cli/checkBuilds.examples.test.ts:153:15\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯\n\n FAIL  tests/cli/checkBuilds.examples.test.ts > checkBuilds notes a language with no compile or typecheck step\nError: d.json\n ❯ load tests/cli/checkBuilds.examples.test.ts:27:20\n     25| function load(r: TmpRoot, deckPath: string): { deck: Deck; generations…\n     26|   const l = readDeckFile(r.root, deckPath);\n     27|   if (!l.ok) throw new Error(deckPath);\n       |                    ^\n     28|   return { deck: l.deck, generations: layerGenerations(l.deck) };\n     29| }\n ❯ tests/cli/checkBuilds.examples.test.ts:175:15\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯\n\n FAIL  tests/cli/checkBuilds.examples.test.ts > checkBuilds notes an acceptance that writes no config\nError: d.json\n ❯ load tests/cli/checkBuilds.examples.test.ts:27:20\n     25| function load(r: TmpRoot, deckPath: string): { deck: Deck; generations…\n     26|   const l = readDeckFile(r.root, deckPath);\n     27|   if (!l.ok) throw new Error(deckPath);\n       |                    ^\n     28|   return { deck: l.deck, generations: layerGenerations(l.deck) };\n     29| }\n ❯ tests/cli/checkBuilds.examples.test.ts:197:15\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯\n\n FAIL  tests/cli/checkBuilds.examples.test.ts > checkBuilds does not count a symbolic link in _stubs as a stub\nError: d.json\n ❯ load tests/cli/checkBuilds.examples.test.ts:27:20\n     25| function load(r: TmpRoot, deckPath: string): { deck: Deck; generations…\n     26|   const l = readDeckFile(r.root, deckPath);\n     27|   if (!l.ok) throw new Error(deckPath);\n       |                    ^\n     28|   return { deck: l.deck, generations: layerGenerations(l.deck) };\n     29| }\n ❯ tests/cli/checkBuilds.examples.test.ts:221:15\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯\n\n FAIL  tests/cli/checkBuilds.examples.test.ts > checkBuilds counts a stub at the target's path\nError: d.json\n ❯ load tests/cli/checkBuilds.examples.test.ts:27:20\n     25| function load(r: TmpRoot, deckPath: string): { deck: Deck; generations…\n     26|   const l = readDeckFile(r.root, deckPath);\n     27|   if (!l.ok) throw new Error(deckPath);\n       |                    ^\n     28|   return { deck: l.deck, generations: layerGenerations(l.deck) };\n     29| }\n ❯ tests/cli/checkBuilds.examples.test.ts:243:15\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯\n\n\n Test Files  1 failed (1)\n      Tests  6 failed | 3 passed (9)\n\n",
+      "earlierFailures": [
+        "== tsc\ntests/cli/checkBuilds.examples.test.ts(122,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/checkBuilds.examples.test.ts(126,5): error TS2304: Cannot find name 'expect'.\ntests/cli/checkBuilds.examples.test.ts(131,5): error TS2304: Cannot find name 'expect'.\ntests/cli/checkBuilds.examples.test.ts(136,5): error TS2304: Cannot find name 'expect'.\ntests/cli/checkBuilds.examples.test.ts(144,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/checkBuilds.examples.test.ts(148,5): error TS2304: Cannot find name 'expect'.\ntests/cli/checkBuilds.examples.test.ts(156,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/checkBuilds.examples.test.ts(160,5): error TS2304: Cannot find name 'expect'.\ntests/cli/checkBuilds.examples.test.ts(168,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/checkBuilds.examples.test.ts(173,5): error TS2304: Cannot find name 'expect'.\ntests/cli/checkBuilds.examples.test.ts(179,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/checkBuilds.examples.test.ts(184,5): error TS2304: Cannot find name 'expect'.\ntests/cli/checkBuilds.examples.test.ts(187,5): error TS2304: Cannot find name 'expect'.\ntests/cli/checkBuilds.examples.test.ts(203,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/checkBuilds.examples.test.ts(212,5): error TS2304: Cannot find name 'expect'.\ntests/cli/checkBuilds.examples.test.ts(228,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/checkBuilds.examples.test.ts(235,5): error TS2304: Cannot find name 'expect'.\ntests/cli/checkBuilds.examples.test.ts(251,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/checkBuilds.examples.test.ts(258,5): error TS2304: Cannot find name 'expect'.\ntests/cli/checkBuilds.examples.test.ts(274,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/checkBuilds.examples.test.ts(281,5): error TS2304: Cannot find name 'expect'.\n",
+        "== tsc\n== eslint\n== guard tests/cli/checkBuilds.examples.test.ts\n== own\n FAIL  tests/cli/checkBuilds.examples.test.ts > checkBuilds returns null when the deck has no _stubs directory\nError: d.json\n ❯ load tests/cli/checkBuilds.examples.test.ts:27:20\n     25| function load(r: TmpRoot, deckPath: string): { deck: Deck; generations…\n     26|   const l = readDeckFile(r.root, deckPath);\n     27|   if (!l.ok) throw new Error(deckPath);\n       |                    ^\n     28|   return { deck: l.deck, generations: layerGenerations(l.deck) };\n     29| }\n ❯ tests/cli/checkBuilds.examples.test.ts:144:15\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯\n\n FAIL  tests/cli/checkBuilds.examples.test.ts > checkBuilds notes a target no language profile claims\nError: d.json\n ❯ load tests/cli/checkBuilds.examples.test.ts:27:20\n     25| function load(r: TmpRoot, deckPath: string): { deck: Deck; generations…\n     26|   const l = readDeckFile(r.root, deckPath);\n     27|   if (!l.ok) throw new Error(deckPath);\n       |                    ^\n     28|   return { deck: l.deck, generations: layerGenerations(l.deck) };\n     29| }\n ❯ tests/cli/checkBuilds.examples.test.ts:156:15\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯\n\n FAIL  tests/cli/checkBuilds.examples.test.ts > checkBuilds notes a language with no compile or typecheck step\nError: d.json\n ❯ load tests/cli/checkBuilds.examples.test.ts:27:20\n     25| function load(r: TmpRoot, deckPath: string): { deck: Deck; generations…\n     26|   const l = readDeckFile(r.root, deckPath);\n     27|   if (!l.ok) throw new Error(deckPath);\n       |                    ^\n     28|   return { deck: l.deck, generations: layerGenerations(l.deck) };\n     29| }\n ❯ tests/cli/checkBuilds.examples.test.ts:178:15\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯\n\n FAIL  tests/cli/checkBuilds.examples.test.ts > checkBuilds notes an acceptance that writes no config\nError: d.json\n ❯ load tests/cli/checkBuilds.examples.test.ts:27:20\n     25| function load(r: TmpRoot, deckPath: string): { deck: Deck; generations…\n     26|   const l = readDeckFile(r.root, deckPath);\n     27|   if (!l.ok) throw new Error(deckPath);\n       |                    ^\n     28|   return { deck: l.deck, generations: layerGenerations(l.deck) };\n     29| }\n ❯ tests/cli/checkBuilds.examples.test.ts:200:15\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯\n\n FAIL  tests/cli/checkBuilds.examples.test.ts > checkBuilds does not count a symbolic link in _stubs as a stub\nError: d.json\n ❯ load tests/cli/checkBuilds.examples.test.ts:27:20\n     25| function load(r: TmpRoot, deckPath: string): { deck: Deck; generations…\n     26|   const l = readDeckFile(r.root, deckPath);\n     27|   if (!l.ok) throw new Error(deckPath);\n       |                    ^\n     28|   return { deck: l.deck, generations: layerGenerations(l.deck) };\n     29| }\n ❯ tests/cli/checkBuilds.examples.test.ts:224:15\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯\n\n FAIL  tests/cli/checkBuilds.examples.test.ts > checkBuilds counts a stub at the target's path\nError: d.json\n ❯ load tests/cli/checkBuilds.examples.test.ts:27:20\n     25| function load(r: TmpRoot, deckPath: string): { deck: Deck; generations…\n     26|   const l = readDeckFile(r.root, deckPath);\n     27|   if (!l.ok) throw new Error(deckPath);\n       |                    ^\n     28|   return { deck: l.deck, generations: layerGenerations(l.deck) };\n     29| }\n ❯ tests/cli/checkBuilds.examples.test.ts:246:15\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯\n\n\n Test Files  1 failed (1)\n      Tests  6 failed | 3 passed (9)\n\n"
+      ],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "deck-check",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "deck-check.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "af9a05efb28ba83d91e940b530284abdb1485402",
+      "diffstat": {
+        "files": 3,
+        "insertions": 20,
+        "deletions": 5
+      }
+    },
+    {
+      "customId": "deck-check-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "deck-check-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/deckCheck.p21b.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "b564582e72dcf00738bd06dc7d935707c459cb8c",
+      "diffstat": {
+        "files": 1,
+        "insertions": 159,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 367693,
+    "outputTokens": 116459,
+    "cost": 0.22365485999999996,
+    "requests": 18
+  },
+  "requests": [
+    {
+      "customId": "stub-trees.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791539091-R4AKnL62Hh00qGqleDTr",
+      "inputTokens": 16826,
+      "outputTokens": 4849,
+      "cost": 0.0108666,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "stub-trees.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791539091-LWFkQYupRAm2YG2mI6pj",
+      "inputTokens": 16826,
+      "outputTokens": 10168,
+      "cost": 0.0172494,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "tree-check.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791539091-8JKmw3dlgWk4hcjLdUg3",
+      "inputTokens": 16782,
+      "outputTokens": 5002,
+      "cost": 0.011037,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "tree-check.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791539148-YFdrhmHapMs0OarLOsAG",
+      "inputTokens": 16782,
+      "outputTokens": 2802,
+      "cost": 0.00646164,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "tree-profiles.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791539149-qTRORs2PGQqhh95qEEDS",
+      "inputTokens": 17245,
+      "outputTokens": 512,
+      "cost": 0.00208998,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "tree-profiles.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791539169-shbQjfcOEZNPQnbms31b",
+      "inputTokens": 17245,
+      "outputTokens": 412,
+      "cost": 0.00103686,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "check-builds.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791539415-aRotqcBHpzYtqOZN2aVZ",
+      "inputTokens": 20617,
+      "outputTokens": 1213,
+      "cost": 0.0076407,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "check-builds.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791539415-XWSoMEuELB1T6Yj3Bx7z",
+      "inputTokens": 20617,
+      "outputTokens": 2862,
+      "cost": 0.0096195,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "stub-trees-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791539415-062AqjWguOvXGOUBOrvw",
+      "inputTokens": 22076,
+      "outputTokens": 5784,
+      "cost": 0.0135636,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "tree-check-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791539430-idc6Ho4hFbUcG9sTdeyS",
+      "inputTokens": 18386,
+      "outputTokens": 15203,
+      "cost": 0.01988868,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "tree-profiles-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791539443-nkBYJY2wVVuMMnnUvMgB",
+      "inputTokens": 16267,
+      "outputTokens": 6051,
+      "cost": 0.00844338,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "stub-trees-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791539832-mgc3DCZpqrfF78fW6cWk",
+      "inputTokens": 31315,
+      "outputTokens": 2138,
+      "cost": 0.0119601,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "check-builds-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791539938-7Gn02AjWxnw1LeIu3Lxx",
+      "inputTokens": 19526,
+      "outputTokens": 17034,
+      "cost": 0.02436324,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "deck-check.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791539938-wsgQPZZfsBBEGzhHhDUS",
+      "inputTokens": 19430,
+      "outputTokens": 3120,
+      "cost": 0.009573,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "deck-check.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791539938-KV6mdJBCf9Nz4U5rH0lh",
+      "inputTokens": 19430,
+      "outputTokens": 3059,
+      "cost": 0.00452316,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "check-builds-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791540195-oFqeKfB7imZVf6GHsflt",
+      "inputTokens": 29197,
+      "outputTokens": 16247,
+      "cost": 0.0282555,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "check-builds-judge.r2.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791540382-kPYR3eJ0l9czZ1awEa5o",
+      "inputTokens": 29387,
+      "outputTokens": 8000,
+      "cost": 0.0184161,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "deck-check-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791540504-16RIgjN2N6CB7mVDgEXp",
+      "inputTokens": 19739,
+      "outputTokens": 12003,
+      "cost": 0.01866642,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}

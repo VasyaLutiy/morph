@@ -1,0 +1,112 @@
+```
+import fs from "node:fs";
+import path from "node:path";
+import { PROFILES } from "../language/profiles.js";
+import { treeProfileFor } from "../language/treeProfiles.js";
+import { stubTrees } from "../planner/stubTrees.js";
+import { findBreaks, treeCheck } from "../acceptance/treeCheck.js";
+import type { TreeLanguage } from "../planner/stubTrees.js";
+import type { Deck } from "../cards/types.js";
+
+export interface BuildCheck {
+  card: string;
+  generation: number;
+  language: string | null;
+  stubbed: number;
+  missing: string[];
+  breaks: string[];
+  note: string | null;
+}
+
+const TIMEOUT_MS = 120000;
+const TIMEOUT_NOTE = "the compile step timed out after 120000 ms";
+
+// Every regular file under dir, paths relative to it joined by "/", links not
+// followed.
+function collectFiles(dir: string, prefix: string, out: string[]): void {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    const rel = prefix === "" ? entry.name : prefix + "/" + entry.name;
+    if (entry.isDirectory()) {
+      collectFiles(full, rel, out);
+    } else if (entry.isFile()) {
+      out.push(rel);
+    }
+  }
+}
+
+export function checkBuilds(
+  root: string,
+  deckPath: string,
+  deck: Deck,
+  generations: string[][],
+  env: Record<string, string>,
+): BuildCheck[] | null {
+  const stubDir = path.posix.join(path.posix.dirname(deckPath), "_stubs");
+  const stubRoot = path.resolve(root, stubDir);
+  const stat = fs.existsSync(stubRoot) ? fs.statSync(stubRoot) : null;
+  if (stat === null || !stat.isDirectory()) return null;
+
+  const stubs: string[] = [];
+  collectFiles(stubRoot, "", stubs);
+  stubs.sort();
+
+  const languages: TreeLanguage[] = PROFILES.map((profile) => ({
+    id: profile.id,
+    extensions: [...profile.extensions],
+    config: treeProfileFor(profile.id)?.config ?? null,
+  }));
+
+  const trees = stubTrees(deck.cards, generations, stubDir, stubs, languages);
+  const checks: BuildCheck[] = [];
+
+  for (const tree of trees) {
+    const base: BuildCheck = {
+      card: tree.card,
+      generation: tree.generation,
+      language: tree.language,
+      stubbed: Object.keys(tree.stubs).length,
+      missing: tree.missing,
+      breaks: [],
+      note: null,
+    };
+
+    if (tree.language === null) {
+      base.note = "no language profile claims " + (tree.own[0] ?? "no target") + ": not built";
+      checks.push(base);
+      continue;
+    }
+
+    const profile = treeProfileFor(tree.language);
+    if (profile === null || profile.command === null || profile.config === null) {
+      base.note = tree.language + " has no compile or typecheck step: not built";
+      checks.push(base);
+      continue;
+    }
+
+    if (tree.config === null) {
+      base.note = "the acceptance writes no $P/" + profile.config + ": not built";
+      checks.push(base);
+      continue;
+    }
+
+    const run = treeCheck(
+      root,
+      {
+        card: tree.card,
+        exports: tree.exports,
+        config: tree.config,
+        stubs: tree.stubs,
+        command: profile.command,
+      },
+      env,
+      TIMEOUT_MS,
+    );
+    base.breaks = findBreaks(run.output, profile.fileLine, tree.own);
+    if (run.timedOut) base.breaks.push(TIMEOUT_NOTE);
+    checks.push(base);
+  }
+
+  return checks;
+}
+```

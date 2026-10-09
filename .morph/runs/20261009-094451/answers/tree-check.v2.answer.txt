@@ -1,0 +1,101 @@
+```ts
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+export interface TreeRun {
+  exit: number | null;
+  timedOut: boolean;
+  output: string;
+}
+
+export interface TreeInput {
+  card: string;
+  exports: string[];
+  config: { name: string; text: string };
+  stubs: Record<string, string>;
+  command: string;
+}
+
+export function findBreaks(output: string, fileLine: string, own: string[]): string[] {
+  const re = new RegExp(fileLine);
+  const found = new Set<string>();
+  for (const raw of output.split("\n")) {
+    if (raw === "" || raw.startsWith("#") || /^\s/.test(raw)) continue;
+    const line = raw.trim();
+    if (line === "") continue;
+    const m = re.exec(line);
+    if (m === null) {
+      found.add(line);
+      continue;
+    }
+    if (own.includes(m[1])) continue;
+    found.add(m[1] + m[2]);
+  }
+  return Array.from(found).sort();
+}
+
+export function treeCheck(
+  root: string,
+  input: TreeInput,
+  env: Record<string, string>,
+  timeoutMs: number,
+): TreeRun {
+  const D = fs.mkdtempSync(path.join(os.tmpdir(), "morph-tree-"));
+  const T = path.join(D, "t");
+  const outPath = path.join(D, "output.txt");
+  try {
+    fs.mkdirSync(T);
+    const skip = new Set([".git", ".morph", "probe", "node_modules"]);
+    for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+      if (skip.has(entry.name)) continue;
+      fs.cpSync(path.join(root, entry.name), path.join(T, entry.name), {
+        recursive: true,
+        verbatimSymlinks: true,
+      });
+    }
+    const modules = path.join(root, "node_modules");
+    if (fs.existsSync(modules)) {
+      fs.symlinkSync(fs.realpathSync(modules), path.join(T, "node_modules"));
+    }
+    for (const [target, stub] of Object.entries(input.stubs)) {
+      const dest = path.join(T, target);
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      fs.cpSync(path.join(root, stub), dest, { recursive: true });
+    }
+    const probe = path.join(T, "probe", input.card);
+    fs.mkdirSync(probe, { recursive: true });
+    fs.writeFileSync(path.join(probe, input.config.name), input.config.text + "\n");
+
+    const configPath = `"$P/${input.config.name}"`;
+    const step = input.command.split("{config}").join(configPath);
+    const script = [
+      ...input.exports,
+      `P='${probe}'`,
+      "{ " + step + "\n} > '" + outPath + "' 2>&1",
+    ].join("\n");
+
+    const res = spawnSync("/bin/sh", ["-c", script], {
+      cwd: T,
+      env,
+      stdio: "ignore",
+      timeout: timeoutMs,
+    });
+
+    const code = (res.error as { code?: string } | undefined)?.code;
+    const timedOut = code === "ETIMEDOUT";
+    let output = "";
+    if (fs.existsSync(outPath)) output = fs.readFileSync(outPath, "utf8");
+    output = output.split(T + "/").join("");
+
+    return {
+      exit: timedOut ? null : res.status,
+      timedOut,
+      output,
+    };
+  } finally {
+    fs.rmSync(D, { recursive: true, force: true });
+  }
+}
+```

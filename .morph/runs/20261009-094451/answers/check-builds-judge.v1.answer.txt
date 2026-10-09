@@ -1,0 +1,297 @@
+```ts
+import fs from "node:fs";
+import path from "node:path";
+import { layerGenerations } from "../../src/cards/layer.js";
+import type { Deck } from "../../src/cards/types.js";
+import { checkBuilds } from "../../src/cli/checkBuilds.js";
+import type { BuildCheck } from "../../src/cli/checkBuilds.js";
+import { readDeckFile } from "../../src/cli/document.js";
+import { fixture, fixtureJson, fixturePath, tmpRoot } from "../helpers.js";
+import type { TmpRoot } from "../helpers.js";
+
+function copyOf(name: string): TmpRoot {
+  const r = tmpRoot();
+  fs.cpSync(fixturePath(name), r.root, { recursive: true });
+  return r;
+}
+
+function rootOf(name: string): TmpRoot {
+  const r = tmpRoot();
+  for (const [p, t] of Object.entries(fixtureJson(name) as Record<string, string>)) r.write(p, t);
+  fs.symlinkSync(path.resolve(fixturePath("."), "../../node_modules"), r.path("node_modules"));
+  return r;
+}
+
+function load(r: TmpRoot, deckPath: string): { deck: Deck; generations: string[][] } {
+  const l = readDeckFile(r.root, deckPath);
+  if (!l.ok) throw new Error(deckPath);
+  return { deck: l.deck, generations: layerGenerations(l.deck) };
+}
+
+const pathEnv = (): Record<string, string> => ({ PATH: process.env.PATH ?? "" });
+
+function scriptsRoot(): { r: TmpRoot; env: Record<string, string> } {
+  const r = tmpRoot();
+  r.write("d.json", fixture("planner/stub.cards.json"));
+  for (const f of ["calc/a.go", "report/c.go", "src/t.ts", "tests/t.test.ts"]) r.write("_stubs/" + f, "x\n");
+  r.write("bin/go", '#!/bin/sh\necho "vet: ./calc/zz.go:1:2: go ran with $GOFLAGS"\nexit 1\n');
+  r.write(
+    "node_modules/.bin/tsc",
+    '#!/bin/sh\necho "src/t.ts(1,1): error TS1: own"\necho "src/zz.ts(2,3): error TS2: tsc ran with $NO_COLOR $3"\nexit 2\n',
+  );
+  fs.chmodSync(r.path("bin/go"), 0o755);
+  fs.chmodSync(r.path("node_modules/.bin/tsc"), 0o755);
+  return { r, env: { PATH: r.path("bin") + ":" + (process.env.PATH ?? "") } };
+}
+
+const builds = (k: string): BuildCheck[] => (fixtureJson("cli/checkBuilds.json") as Record<string, BuildCheck[]>)[k];
+
+// A tmp root whose PATH finds a fake `go` that prints nothing a break
+// matcher would keep (a "#" line) and exits 0.
+function fakeGoRoot(): { r: TmpRoot; env: Record<string, string> } {
+  const r = tmpRoot();
+  r.write("bin/go", '#!/bin/sh\necho "# ok"\nexit 0\n');
+  fs.chmodSync(r.path("bin/go"), 0o755);
+  return { r, env: { PATH: r.path("bin") + ":" + (process.env.PATH ?? "") } };
+}
+
+const GO_ACCEPTANCE = [
+  "cat > $P/full.json <<'MORPH_CONF_EOF'",
+  '{"Replace":{}}',
+  "MORPH_CONF_EOF",
+  "export GOFLAGS=-mod=mod",
+  "",
+].join("\n");
+
+const DECK_GO = JSON.stringify({
+  cards: [
+    {
+      customId: "one",
+      intent: "generate",
+      targets: ["calc/a.go"],
+      contextSlice: [],
+      instruction: "x",
+      acceptance: GO_ACCEPTANCE,
+      model: null,
+      maxTokens: null,
+      reasoning: null,
+      variants: 1,
+      dependsOn: [],
+    },
+  ],
+  externalDependsOn: [],
+});
+
+const DECK_PY = JSON.stringify({
+  cards: [
+    {
+      customId: "p",
+      intent: "generate",
+      targets: ["tests/test_a.py"],
+      contextSlice: [],
+      instruction: "x",
+      acceptance: "pytest -q\n",
+      model: null,
+      maxTokens: null,
+      reasoning: null,
+      variants: 1,
+      dependsOn: [],
+    },
+  ],
+  externalDependsOn: [],
+});
+
+const DECK_TXT = JSON.stringify({
+  cards: [
+    {
+      customId: "m",
+      intent: "generate",
+      targets: ["Makefile"],
+      contextSlice: [],
+      instruction: "x",
+      acceptance: null,
+      model: null,
+      maxTokens: null,
+      reasoning: null,
+      variants: 1,
+      dependsOn: [],
+    },
+  ],
+  externalDependsOn: [],
+});
+
+test("Check Builds example 1: the P20 cut breaks, the P21 cut does not", () => {
+  const r = copyOf("go-p7b");
+  try {
+    const a = load(r, "decks/b1/deck.p20.json");
+    expect(
+      checkBuilds(r.root, "decks/b1/deck.p20.json", a.deck, a.generations, pathEnv()),
+    ).toStrictEqual(builds("p20"));
+
+    const b = load(r, "decks/b1/deck.p21.json");
+    expect(
+      checkBuilds(r.root, "decks/b1/deck.p21.json", b.deck, b.generations, pathEnv()),
+    ).toStrictEqual(builds("p21"));
+
+    fs.rmSync(r.path("decks/b1/_stubs/supervisor/guard.go"));
+    expect(
+      checkBuilds(r.root, "decks/b1/deck.p21.json", b.deck, b.generations, pathEnv()),
+    ).toStrictEqual(builds("p21 without the guard.go stub"));
+  } finally {
+    r.rm();
+  }
+}, 120000);
+
+test("Check Builds example 2: the TypeScript rename deck names its old files", () => {
+  const r = rootOf("ts-rename.json");
+  try {
+    const l = load(r, "decks/r1/deck.json");
+    expect(
+      checkBuilds(r.root, "decks/r1/deck.json", l.deck, l.generations, pathEnv()),
+    ).toStrictEqual(builds("ts-rename"));
+  } finally {
+    r.rm();
+  }
+}, 120000);
+
+test("Check Builds example 3: a scripted go and tsc name the breaks and notes", () => {
+  const s = scriptsRoot();
+  try {
+    const l = load(s.r, "d.json");
+    expect(
+      checkBuilds(s.r.root, "d.json", l.deck, l.generations, s.env),
+    ).toStrictEqual(builds("cards"));
+  } finally {
+    s.r.rm();
+  }
+}, 120000);
+
+test("checkBuilds is null when the deck's directory has no _stubs", () => {
+  const r = tmpRoot();
+  try {
+    r.write("d.json", DECK_GO);
+    const l = load(r, "d.json");
+    expect(checkBuilds(r.root, "d.json", l.deck, l.generations, pathEnv())).toBe(null);
+  } finally {
+    r.rm();
+  }
+});
+
+test("checkBuilds reads _stubs beside the deck file's own directory", () => {
+  const s = fakeGoRoot();
+  try {
+    s.r.write("sub/d.json", DECK_GO);
+    s.r.write("sub/_stubs/calc/a.go", "x\n");
+    expect(s.r.exists("_stubs")).toBe(false);
+    const l = load(s.r, "sub/d.json");
+    const got = checkBuilds(s.r.root, "sub/d.json", l.deck, l.generations, s.env);
+    expect(got).toStrictEqual([
+      {
+        card: "one",
+        generation: 0,
+        language: "go",
+        stubbed: 1,
+        missing: [],
+        breaks: [],
+        note: null,
+      },
+    ]);
+  } finally {
+    s.r.rm();
+  }
+}, 120000);
+
+test("checkBuilds does not count a symbolic link in _stubs as a stub", () => {
+  const s = fakeGoRoot();
+  try {
+    s.r.write("d.json", DECK_GO);
+    s.r.write("_stubs/real.go", "x\n");
+    fs.mkdirSync(s.r.path("_stubs/calc"), { recursive: true });
+    fs.symlinkSync("../real.go", s.r.path("_stubs/calc/a.go"));
+    const l = load(s.r, "d.json");
+    const got = checkBuilds(s.r.root, "d.json", l.deck, l.generations, s.env);
+    expect(got).toStrictEqual([
+      {
+        card: "one",
+        generation: 0,
+        language: "go",
+        stubbed: 0,
+        missing: ["calc/a.go"],
+        breaks: [],
+        note: null,
+      },
+    ]);
+  } finally {
+    s.r.rm();
+  }
+}, 120000);
+
+test("checkBuilds notes a language with no compile or typecheck step", () => {
+  const s = fakeGoRoot();
+  try {
+    s.r.write("d.json", DECK_PY);
+    s.r.write("_stubs/x.py", "x\n");
+    const l = load(s.r, "d.json");
+    const got = checkBuilds(s.r.root, "d.json", l.deck, l.generations, s.env);
+    expect(got).toStrictEqual([
+      {
+        card: "p",
+        generation: 0,
+        language: "python",
+        stubbed: 0,
+        missing: [],
+        breaks: [],
+        note: "python has no compile or typecheck step: not built",
+      },
+    ]);
+  } finally {
+    s.r.rm();
+  }
+});
+
+test("checkBuilds notes a target no language profile claims", () => {
+  const s = fakeGoRoot();
+  try {
+    s.r.write("d.json", DECK_TXT);
+    s.r.write("_stubs/x.go", "x\n");
+    const l = load(s.r, "d.json");
+    const got = checkBuilds(s.r.root, "d.json", l.deck, l.generations, s.env);
+    expect(got).toStrictEqual([
+      {
+        card: "m",
+        generation: 0,
+        language: null,
+        stubbed: 0,
+        missing: [],
+        breaks: [],
+        note: "no language profile claims Makefile: not built",
+      },
+    ]);
+  } finally {
+    s.r.rm();
+  }
+});
+
+test("checkBuilds counts a stub in _stubs at its target's path", () => {
+  const s = fakeGoRoot();
+  try {
+    s.r.write("d.json", DECK_GO);
+    s.r.write("_stubs/calc/a.go", "x\n");
+    const l = load(s.r, "d.json");
+    const got = checkBuilds(s.r.root, "d.json", l.deck, l.generations, s.env);
+    expect(got).toStrictEqual([
+      {
+        card: "one",
+        generation: 0,
+        language: "go",
+        stubbed: 1,
+        missing: [],
+        breaks: [],
+        note: null,
+      },
+    ]);
+  } finally {
+    s.r.rm();
+  }
+}, 120000);
+```

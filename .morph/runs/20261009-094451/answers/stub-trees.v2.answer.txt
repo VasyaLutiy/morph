@@ -1,0 +1,142 @@
+```
+import path from "node:path";
+import type { Card } from "../cards/types.js";
+
+export interface TreeLanguage {
+  id: string;
+  extensions: string[];
+  config: string | null;
+}
+
+export interface StubTree {
+  card: string;
+  generation: number;
+  language: string | null;
+  exports: string[];
+  config: { name: string; text: string } | null;
+  stubs: Record<string, string>;
+  own: string[];
+  missing: string[];
+}
+
+const EXPORT_LINE = /^export [A-Za-z_][A-Za-z0-9_]*=/;
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+interface FoundConfig {
+  language: TreeLanguage;
+  config: { name: string; text: string };
+}
+
+// The first language whose config heredoc the acceptance writes, with the
+// heredoc's body; null when no language's config is written.
+function findConfig(acceptance: string, languages: TreeLanguage[]): FoundConfig | null {
+  const lines = acceptance.split("\n");
+  for (const language of languages) {
+    const name = language.config;
+    if (name === null) continue;
+    const open = new RegExp(`^cat > \\$P/${escapeRegExp(name)} <<'(.+)'$`);
+    for (const [index, line] of lines.entries()) {
+      const match = open.exec(line);
+      if (match === null) continue;
+      const tag = match[1] ?? "";
+      let end = lines.length;
+      for (let j = index + 1; j < lines.length; j += 1) {
+        if (lines[j] === tag) {
+          end = j;
+          break;
+        }
+      }
+      const text = lines.slice(index + 1, end).join("\n");
+      return { language, config: { name, text } };
+    }
+  }
+  return null;
+}
+
+// The first language claiming the extension of the card's first target.
+function languageOfTarget(targets: string[], languages: TreeLanguage[]): TreeLanguage | null {
+  const first = targets[0];
+  if (first === undefined) return null;
+  const extension = path.posix.extname(first);
+  for (const language of languages) {
+    if (language.extensions.includes(extension)) return language;
+  }
+  return null;
+}
+
+// The cards of the generations before g, flattened in order (unknown ids
+// skipped), then the card itself.
+function ownersOf(
+  generations: string[][],
+  byId: Map<string, Card>,
+  card: Card,
+  generation: number,
+): Card[] {
+  const owners: Card[] = [];
+  for (let g = 0; g < generation; g += 1) {
+    for (const id of generations[g] ?? []) {
+      const owner = byId.get(id);
+      if (owner !== undefined) owners.push(owner);
+    }
+  }
+  owners.push(card);
+  return owners;
+}
+
+export function stubTrees(
+  cards: Card[],
+  generations: string[][],
+  stubDir: string,
+  stubs: string[],
+  languages: TreeLanguage[],
+): StubTree[] {
+  const byId = new Map<string, Card>();
+  for (const card of cards) {
+    if (!byId.has(card.customId)) byId.set(card.customId, card);
+  }
+  const stubSet = new Set(stubs);
+  const trees: StubTree[] = [];
+  for (let g = 0; g < generations.length; g += 1) {
+    for (const id of generations[g] ?? []) {
+      const card = byId.get(id);
+      if (card === undefined) continue;
+      const acceptance = card.acceptance ?? "";
+      const found = findConfig(acceptance, languages);
+      const language = found === null ? languageOfTarget(card.targets, languages) : found.language;
+      const config = found === null ? null : found.config;
+      const exports = acceptance
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => EXPORT_LINE.test(line));
+      const stubbed: Record<string, string> = {};
+      const missing: string[] = [];
+      if (config !== null && language !== null) {
+        const seen = new Set<string>();
+        for (const owner of ownersOf(generations, byId, card, g)) {
+          for (const target of owner.targets) {
+            if (!language.extensions.includes(path.posix.extname(target))) continue;
+            if (seen.has(target)) continue;
+            seen.add(target);
+            if (stubSet.has(target)) stubbed[target] = path.posix.join(stubDir, target);
+            else missing.push(target);
+          }
+        }
+      }
+      trees.push({
+        card: card.customId,
+        generation: g,
+        language: language === null ? null : language.id,
+        exports,
+        config,
+        stubs: stubbed,
+        own: [...card.targets],
+        missing,
+      });
+    }
+  }
+  return trees;
+}
+```

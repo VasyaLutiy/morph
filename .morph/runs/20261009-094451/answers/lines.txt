@@ -1,0 +1,18 @@
+morph run: stub-trees.v1 accepted stage 7 frozen finish stop chars 4080
+morph run: stub-trees.v2 untried stage 0 finish stop chars 4298
+morph run: tree-check.v1 accepted stage 7 frozen finish stop chars 3135
+morph run: tree-check.v2 untried stage 0 finish stop chars 2972
+morph run: tree-profiles.v1 accepted stage 7 frozen finish stop chars 843
+morph run: tree-profiles.v2 untried stage 0 finish stop chars 843
+morph run: check-builds.v1 accepted stage 7 frozen finish stop chars 3633
+morph run: check-builds.v2 untried stage 0 finish stop chars 3257
+morph run: stub-trees-judge.v1 rejected stage 1 tsc finish stop chars 4619
+morph run: tree-check-judge.v1 accepted stage 7 frozen finish stop chars 5351
+morph run: tree-profiles-judge.v1 accepted stage 7 frozen finish stop chars 4470
+morph run: stub-trees-judge.r1.v1 accepted stage 7 frozen finish stop chars 4658
+morph run: check-builds-judge.v1 rejected stage 1 tsc finish stop chars 8408
+morph run: deck-check.v1 accepted stage 7 frozen finish stop chars 8079
+morph run: deck-check.v2 untried stage 0 finish stop chars 8072
+morph run: check-builds-judge.r1.v1 rejected stage 4 own finish stop chars 8296
+morph run: check-builds-judge.r2.v1 rejected stage 4 own finish stop chars 8343
+morph run: deck-check-judge.v1 accepted stage 7 frozen finish stop chars 5343

@@ -1,0 +1,127 @@
+```
+import type { Card } from "../../src/cards/types.js";
+import type { StubTree, TreeLanguage } from "../../src/planner/stubTrees.js";
+import { stubTrees } from "../../src/planner/stubTrees.js";
+import { fixtureJson } from "../helpers.js";
+
+const cards = (): Card[] => fixtureJson("planner/stub.cards.json") as Card[];
+const trees = (key: string): StubTree[] =>
+  (fixtureJson("planner/stub.trees.json") as Record<string, StubTree[]>)[key];
+const L: TreeLanguage[] = [
+  { id: "typescript", extensions: [".ts", ".tsx"], config: "tsconfig.card.json" },
+  { id: "python", extensions: [".py", ".pyi"], config: null },
+  { id: "go", extensions: [".go"], config: "full.json" },
+];
+const FIRST_STUBS = [
+  "calc/a.go",
+  "calc/a_examples_test.go",
+  "calc/b.go",
+  "extra/z.go",
+  "report/c.go",
+  "src/t.ts",
+  "tests/t.test.ts",
+];
+
+test("Stub Trees example 1: three generations, one tree per card in generation order", () => {
+  const got = stubTrees(
+    cards(),
+    [["a", "n", "t", "p"], ["b", "c", "v", "u"], ["j"]],
+    "decks/q9/_stubs",
+    FIRST_STUBS,
+    L,
+  );
+  expect(got).toStrictEqual(trees("1"));
+  expect(got.map((t) => t.card)).toStrictEqual(["a", "n", "t", "p", "b", "c", "v", "u", "j"]);
+  expect(got[0].language).toBe("go");
+  expect(got[1].language).toBe("go");
+  expect(got[1].config).toBeNull();
+  expect(got[3].language).toBe("python");
+  expect(got[3].config).toBeNull();
+  expect(got[4].missing).toStrictEqual(["calc/n.go", "calc/b_test.go"]);
+  expect(got[7].missing).toStrictEqual(["tests/u.test.ts"]);
+  expect(got[8].stubs).toStrictEqual({
+    "calc/a.go": "decks/q9/_stubs/calc/a.go",
+    "calc/b.go": "decks/q9/_stubs/calc/b.go",
+    "report/c.go": "decks/q9/_stubs/report/c.go",
+    "calc/a_examples_test.go": "decks/q9/_stubs/calc/a_examples_test.go",
+  });
+});
+
+test("Stub Trees example 2: an unknown generation id is skipped and an absolute stub dir joins", () => {
+  const got = stubTrees(
+    cards(),
+    [["a"], ["zz", "j"]],
+    "/abs/st",
+    ["calc/a_examples_test.go"],
+    L,
+  );
+  expect(got).toStrictEqual(trees("2"));
+  expect(got.map((t) => t.card)).toStrictEqual(["a", "j"]);
+  expect(got[0].stubs).toStrictEqual({});
+  expect(got[0].missing).toStrictEqual(["calc/a.go"]);
+  expect(got[1].stubs).toStrictEqual({
+    "calc/a_examples_test.go": "/abs/st/calc/a_examples_test.go",
+  });
+  expect(got[1].missing).toStrictEqual(["calc/a.go"]);
+});
+
+test("Stub Trees example 3: a language list holding only go leaves TypeScript cards unbuilt", () => {
+  const goOnly: TreeLanguage[] = [L[2]];
+  const got = stubTrees(
+    cards(),
+    [["a", "t", "u"]],
+    "st",
+    ["calc/a.go", "src/t.ts", "tests/t.test.ts", "tests/u.test.ts"],
+    goOnly,
+  );
+  expect(got).toStrictEqual(trees("3"));
+  expect(got[0].language).toBe("go");
+  expect(got[0].stubs).toStrictEqual({ "calc/a.go": "st/calc/a.go" });
+  expect(got[0].missing).toStrictEqual([]);
+  expect(got[1].language).toBeNull();
+  expect(got[1].config).toBeNull();
+  expect(got[1].stubs).toStrictEqual({});
+  expect(got[1].missing).toStrictEqual([]);
+  expect(got[2].language).toBeNull();
+  expect(got[2].config).toBeNull();
+  expect(got[2].stubs).toStrictEqual({});
+});
+
+test("Stub Trees: a generation id that names no card is skipped", () => {
+  const got = stubTrees(cards(), [["zz", "n"]], "st", [], L);
+  expect(got.map((t) => t.card)).toStrictEqual(["n"]);
+  expect(got[0].generation).toBe(0);
+  expect(got[0].stubs).toStrictEqual({});
+  expect(got[0].missing).toStrictEqual([]);
+});
+
+test("Stub Trees: own is a copy of the card's targets", () => {
+  const list = cards();
+  const got = stubTrees(list, [["a"]], "st", ["calc/a.go"], L);
+  got[0].own.push("extra/z.go");
+  expect(got[0].own).toStrictEqual(["calc/a.go", "extra/z.go"]);
+  expect(list[0].targets).toStrictEqual(["calc/a.go"]);
+});
+
+test("Stub Trees: the config is the heredoc body and its name", () => {
+  const got = stubTrees(cards(), [["a"]], "st", ["calc/a.go"], L);
+  expect(got[0].config).toStrictEqual({
+    name: "full.json",
+    text: "{\"Replace\":{\"calc/b.go\":\"\",\"report/c.go\":\"\"}}",
+  });
+  expect(got[0].exports).toStrictEqual([
+    "export NO_COLOR=1 CI=1",
+    "export GOFLAGS=-mod=mod GOPROXY=off",
+  ]);
+});
+
+test("Stub Trees: a target of another extension is neither stubbed nor missing", () => {
+  const got = stubTrees(cards(), [["a"], ["c"]], "st", ["calc/a.go", "report/c.go"], L);
+  expect(got[1].stubs).toStrictEqual({
+    "calc/a.go": "st/calc/a.go",
+    "report/c.go": "st/report/c.go",
+  });
+  expect(got[1].missing).toStrictEqual([]);
+  expect(got[1].own).toStrictEqual(["report/c.go", "report/NOTES.md"]);
+});
+```
