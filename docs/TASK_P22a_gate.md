@@ -506,3 +506,35 @@ node /tmp/v2bin-p22a/dist/cli.js run --root . --deck decks/p22a/deck.json --proc
 --stubs decks/p22a/_stubs --refs <the run's 12 targets copied out of the run branch>` with the run's binary on main after
 the merge: expected code 0, 20 rows, stubs 19/19 failures at their probes and the judges at their guards, max chain < 250 s;
 and claim 6 on go-p7b.
+
+### Run 20261009-153356 (ds, `--deadline 7200`) — RED, and the one fix
+
+- **Run**: transaction 0/10, every target rolled back; 113 min, 34 requests (15 first + 19 retries), **$0.4599**; archive
+  afb650a on main. Round 0 was red on two tsc lines (gateCommand.ts:174, a closure-narrowed `never`; the cli judge without
+  its vitest import), both closed by their owners' retries; after that the reds were four judge tests, each failing every
+  card's full stage, so Blame Log (no file line) retried all ten cards; five retries were cut at `max_tokens`; one request
+  of gate-command-judge timed out in transport.
+- **Classes** (the final tree rebuilt from the archive's answers passes all **19/19 probe tests**: no code defect):
+  gate-command-judge DATA[spec] (+ ENV[transport] on r1) — the cut collapses the double space of `FAIL  probe/t1…` in the
+  rendered example, the judge typed one space against a two-space fixture; play-gate-judge DATA[record] — the record's
+  Play Gate 1 said `git log --format=%s` where the probe and fixture used `git log -3` (tmpRepo's "init" commit);
+  gate-plan-judge DATA[spec] (+ FIX[budget], r2 cut at 48 000) — the step order "per its entries {stub} then {ref}" read
+  as every stub first; parse-command-judge DATA[spec] — examples.json's Main 17 prose parsed as argv (`unknown flag:
+  --deck,`); play-gate (r1) and gate-command (r2) FIX[budget]; stub-verdict, stub-verdict-judge, gate-plan,
+  parse-command: rolled back with the transaction, no fault of their own.
+- **The one fix (P1b pattern, 1b6ba63; instructions unchanged)**: record — Play Gate 1 and Gate Command 2 echo `FAIL
+  probe/…` with one space, Play Gate 1 says `git log -3`, Gate Plan's order worded "two steps in a row per entry … never
+  every stub first"; fixtures gateCommand.json "tx"/"planted" and playGate.json "shell" with one space; probes likewise;
+  §2.1 "Literals and whitespace" and the Main 17 skeleton (examples.json is prose); §2.2 Gate Plan bullet; checks
+  `fullExclude` = the five judge files (a judge's red no longer retries the other nine cards); morph-map.json max_tokens
+  ×2 for gate-plan-judge (32 000), play-gate and gate-command (24 000).
+- **Fix deck** `decks/p22a/deck-fix.json` (same `--only`/`--checks`, ×3: gate-plan-judge 96 000, play-gate and
+  gate-command 72 000, the rest unchanged): plan exit 0, deck check **0 errors, 0 warnings, 0 hazards, builds 0 breaks / 0
+  missing**; slices ≤ 79.2 KB.
+- **Re-gate** (every acceptance changed: fullExclude), played by a `morph gate` built from the run's own generated code
+  (the archive's last answers, never committed), references = those code files + the probes as reference judges, on
+  1b6ba63: **exit 0, errors []**; stubs 19/19 red at the probe (failures 4, 3, 4, 4, 4), judges at the guard;
+  **stubcheck.mjs exit 0 on 10/10 stub logs**; references 10/10 green, chains 109.0–130.8 s, **max 130.8 s**; 22.7 min.
+  Mutants not re-run: the contracts are unchanged (two probes changed an echoed literal only).
+- **Forecast**: the first 15 requests of the red run cost $0.147; with the budget raised and the blame contained ≈ $0.20–0.35,
+  ≤ $0.60 with retries. **Deadline**: `--deadline 7200` (the red run used 6780 s with 19 retry requests).
