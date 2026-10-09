@@ -1,6 +1,7 @@
 import path from "node:path";
 import { parseCommand } from "./parse.js";
-import { renderDocument, classifyThrown } from "./document.js";
+import { renderDocument, classifyThrown, readDeckFile } from "./document.js";
+import { checkBuilds } from "./checkBuilds.js";
 import { deckCheckCommand } from "./deckCheck.js";
 import { runCommand } from "./runCommand.js";
 import { planCommand } from "./planCommand.js";
@@ -15,6 +16,7 @@ import { reviewCommand } from "../reviewer/reviewCommand.js";
 import { cardBrief } from "../debt/cardBrief.js";
 import { acceptCard } from "../debt/acceptCard.js";
 import { initProject } from "../scaffold/initProject.js";
+import { gateCommand } from "../gate/gateCommand.js";
 import type { CliDeps, CliIo, CommandResult, ExitCode } from "./types.js";
 
 export async function main(argv: string[], deps: CliDeps, io: CliIo): Promise<ExitCode> {
@@ -59,6 +61,8 @@ export async function main(argv: string[], deps: CliDeps, io: CliIo): Promise<Ex
       result = await acceptCard(root, command, deps);
     } else if (command.name === "init") {
       result = initProject(root, command, deps.cwd);
+    } else if (command.name === "gate") {
+      result = await gateCommand(root, command, { env: deps.env, now: deps.now, readDeck: readDeckFile, builds: checkBuilds });
     } else {
       result = await runCommand(root, command, deps, io.stderr);
     }

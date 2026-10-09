@@ -30,6 +30,8 @@ const VALUE_FLAGS: ReadonlySet<string> = new Set([
   "--module",
   "--templates",
   "--only",
+  "--stubs",
+  "--refs",
 ]);
 
 const NOT_YET_WORDS: ReadonlySet<string> = new Set([
@@ -146,6 +148,14 @@ const INIT_FLAGS: ReadonlySet<string> = new Set([
   "--templates",
 ]);
 
+const GATE_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--deck",
+  "--stubs",
+  "--refs",
+]);
+
 function isPositiveInteger(v: string): boolean {
   return /^[0-9]+$/.test(v) && Number(v) >= 1;
 }
@@ -208,7 +218,8 @@ export function parseCommand(argv: string[]): ParseResult {
     | "review"
     | "card"
     | "accept"
-    | "init";
+    | "init"
+    | "gate";
   let arity: number;
   if (words.length === 0) {
     return {
@@ -254,6 +265,9 @@ export function parseCommand(argv: string[]): ParseResult {
     arity = 1;
   } else if (first === "init") {
     name = "init";
+    arity = 1;
+  } else if (first === "gate") {
+    name = "gate";
     arity = 1;
   } else if (first === "deck") {
     if (words.length >= 2 && words[1] === "check") {
@@ -318,6 +332,8 @@ export function parseCommand(argv: string[]): ParseResult {
     allowed = ACCEPT_FLAGS;
   } else if (name === "init") {
     allowed = INIT_FLAGS;
+  } else if (name === "gate") {
+    allowed = GATE_FLAGS;
   } else {
     allowed = FROM_SCOUT_FLAGS;
   }
@@ -631,6 +647,25 @@ export function parseCommand(argv: string[]): ParseResult {
   // Check 10: missing --deck.
   if (!values.has("--deck")) {
     return { ok: false, error: errorDocument(4, "UsageError", "missing --deck") };
+  }
+
+  // Check 10b: gate needs --stubs and --refs.
+  if (name === "gate") {
+    if (!values.has("--stubs")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --stubs") };
+    }
+    if (!values.has("--refs")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --refs") };
+    }
+    const command: Command = {
+      name: "gate",
+      root,
+      pretty,
+      deck,
+      stubs: values.get("--stubs") ?? "",
+      refs: values.get("--refs") ?? "",
+    };
+    return { ok: true, command };
   }
 
   // Check 11: run or submit without --processor.

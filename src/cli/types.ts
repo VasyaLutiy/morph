@@ -37,9 +37,10 @@ export interface InitArgs {
   name: "init"; root: string; pretty: boolean; project: string; language: "typescript" | "python" | "go";
   module: string | null; templates: string | null;
 }
+export interface GateArgs { name: "gate"; root: string; pretty: boolean; deck: string; stubs: string; refs: string }
 export type Command =
   | DeckCheckArgs | RunArgs | PlanArgs | SubmitArgs | CollectArgs | PrimerArgs | ScoutArgs | FromScoutArgs | ReviewArgs
-  | CardArgs | AcceptArgs | InitArgs;
+  | CardArgs | AcceptArgs | InitArgs | GateArgs;
 export type ParseResult = { ok: true; command: Command } | { ok: false; error: ErrorDocument };
 export type DeckFileResult = { ok: true; deck: Deck } | { ok: false; result: CommandResult };
 export interface DeckCheckDocument {
