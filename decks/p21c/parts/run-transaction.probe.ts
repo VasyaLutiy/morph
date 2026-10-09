@@ -154,3 +154,26 @@ test("row: a deck without the mark runs as before, and an unblamed own red retri
     expect([plain.outcomes[0].status, h.commits, fs.existsSync(path.join(h.r.root, "out/c.ts"))]).toStrictEqual(["written", ["c"], true]);
   } finally { h.r.rm(); }
 });
+
+test("row: two outside lines are sorted and joined by \", \"; the logs that blame one card are joined by a newline", async () => {
+  const h = harness();
+  const h2 = harness();
+  try {
+    h.r.write("out/y.ts", "export const y = 0;\n");
+    h.r.write("out/z.ts", "export const z = 0;\n");
+    h.r.write("a.md", fence("export const a = 1;\n"));
+    const out = await runTransaction(input(h, [card("a", "out/a.ts", M + 'echo "out/z.ts(2,2): error TS2: zz"; echo "out/y.ts(1,1): error TS1: yy"; exit 1')]), h.deps);
+    expect(out.report.fault).toBe("outside the subset: out/y.ts(1,1): error TS1: yy, out/z.ts(2,2): error TS2: zz");
+    h2.r.write("a.md", fence("export const a = 1;\n"));
+    h2.r.write("c.md", fence("export const c = 1;\n"));
+    h2.r.write("b.md", fence('export const b = "B_OLD";\n'));
+    h2.r.write("b.r1.md", fence('export const b = "B_NEW";\n'));
+    const two = [card("a", "out/a.ts", M + 'grep -q B_NEW out/b.ts || { echo "out/b.ts(1,1): error TS1: from a"; exit 1; }'),
+      card("b", "out/b.ts", M + "exit 0"),
+      card("c", "out/c.ts", M + 'grep -q B_NEW out/b.ts || { echo "out/b.ts(2,2): error TS1: from c"; exit 1; }')];
+    const res = await runTransaction(input(h2, two), h2.deps);
+    expect(res.outcomes.map((o) => [o.customId, o.status, o.attempts])).toStrictEqual([["a", "written", 1], ["b", "written", 2], ["c", "written", 1]]);
+    const retry = JSON.stringify(h2.records.find((x) => x.request.customId === "b.r1.v1")?.request ?? null);
+    expect(retry.includes(JSON.stringify("from a\n\nout/b.ts(2,2): error TS1: from c").slice(1, -1))).toBe(true);
+  } finally { h.r.rm(); h2.r.rm(); }
+});

@@ -212,7 +212,7 @@ among them), not generations[0..g-1] then itself; nothing else changes.
 
 **`src/cli/planCommand.ts`** (PATCH) — **Plan Command**: with args.only (and --checks) the object passed to
 buildAcceptances is the input + `transaction: true`; Hide Later and Read Go Tree are no longer called (both imports go).
-Without --only nothing changes. Plan Command 12–14 as amended in `tests/fixtures/cli/examples.json`: 12 — the one card's
+Without --only nothing changes; any language (the probe's row cuts ts-rename). Plan Command 12–14 as amended in `tests/fixtures/cli/examples.json`: 12 — the one card's
 acceptance is `TRANSACTION_MARK + "\n"` + the full cut's with `{"Replace":{"calc/clamp_value.go":""}}` → `{"Replace":{}}`;
 13 — each of format-share and percent-of-judge = mark + its goMini.deck.json acceptance with its sibling overlay line →
 `{"Replace":{}}` and its untracked step → U2 (both targets); `--only` without checks unchanged, no mark; 14 — every
@@ -288,8 +288,8 @@ Built by `morph plan --checks decks/p21c/checks.json`, narrow to broad, every st
 
 Code cards (code-only targets): `probe/<card>/` → `tsc` (per-card tsconfig) → `eslint <targets>` → `guard.mjs src
 <targets>` → the probe `decks/p21c/parts/<card>.probe.ts` (transaction-deck TD 1–2 + BL 1–4 + 1 row = 7;
-build-acceptances BA 10 + 1 row = 2; stub-trees ST 4 + 2 rows = 3; run-transaction RT 1–7 + 1 row = 8; plan-command PC
-12–14 = 3; **23 tests**) → eslint's verdict → full `vitest run` → own git → frozen → untracked.
+build-acceptances BA 10 + 1 row = 2; stub-trees ST 4 + 2 rows = 3; run-transaction RT 1–7 + 2 rows = 9; plan-command PC
+12–14 + 1 row (a TypeScript `--only` cut, ts-rename, is a transaction too) = 4; **25 tests**) → eslint's verdict → full `vitest run` → own git → frozen → untracked.
 
 Judge cards: `probe/<card>/` → `tsc` → `eslint <targets>` → `guard.mjs tests <file> <min> <max> lits<i>.json` (and `==
 names <file>` for a patched file) → `vitest run <targets>` → eslint's verdict → full run → own git → frozen → untracked.
@@ -389,4 +389,60 @@ identity re-cuts against main's binary, claims 6 and 7, the live go-p7b smoke; t
 
 ### Gate (preparation)
 
-(filled at the gate)
+09.10, on the VPS, by the preparing orchestrator (Opus 5.5, fresh context, no sub-agents); no paid run, no model call.
+
+The deck **cut by V2** (main's binary, eeda36f code; data 1b879fa + the gate commit): `plan --component cards --component
+runloop-subset --component builder --component planner-subset --component cli --judge --checks decks/p21c/checks.json
+--only <the 10 ids>` **exit 0**, 10 cards, generations `[transaction-deck] [build-acceptances, run-transaction,
+stub-trees, transaction-deck-judge] [build-acceptances-judge, plan-command, run-transaction-judge, stub-trees-judge]
+[plan-command-judge]`; `scale_tokens.py … 3` (maxTokens: transaction-deck, stub-trees 24 000; plan-command 36 000;
+build-acceptances 42 000; run-transaction 48 000; transaction-deck-judge, build-acceptances-judge, stub-trees-judge 48 000;
+plan-command-judge 60 000; run-transaction-judge 72 000); `deck check` **0 errors, 0 warnings, 0 hazards** (no `_stubs/`
+beside it). Slices (slice + existing targets): 39.6–95.5 KB, the largest plan-command-judge **95 513 B** (two whole test
+files and examples.json); ≤ ≈ 105 KB once generation 1's files exist. Deck 359 650 B.
+
+Scratch worktree `/tmp/p21c-scratch/gate2` from 1b879fa (removed afterwards; no watcher or worker left), the deck's own
+acceptances run as Morph runs them (`/bin/sh -c`, 300 s cap), cards in deck order, each reference committed before the
+next:
+- **Stubs, red per example at the probe**, typed throwing stubs (`stub isTransactionDeck 1`, `stub blameLog …`, `stub
+  buildAcceptances 3true`, `stub stubTrees [9,3,"decks/q9/_stubs",9,3]`, `stub runTransaction …`, `stub planCommand …`;
+  the mark stub `# stub mark`): transaction-deck 7/7, build-acceptances 2/2, stub-trees 3/3, run-transaction 8/9 (all 7
+  examples; the plain-deck row passes on main's deck.ts), plan-command 4/4; judges red at `guard: <file> missing`, the
+  plan-command judge at `guard: tests/cli/planCommand.p20.examples.test.ts does not mention the example literal
+  "TRANSACTION_MARK"`. **stubcheck.mjs exit 0 on all 10 stub logs** (and on the two re-runs after the probe rows below).
+  fullvet does not apply (a TypeScript deck).
+- **References green, chain seconds** (limit 250): transaction-deck 111.6, build-acceptances 116.2, run-transaction 116.6
+  (109.6 after the rows), stub-trees 108.3, transaction-deck-judge 108.2, build-acceptances-judge 107.7, plan-command 109.3
+  (108.3), run-transaction-judge 109.5, stub-trees-judge 112.1, plan-command-judge 109.6 — **max 116.6 s**. Final tree
+  `vitest run` **854 / 854 in 141 files** (834 + the reference judges' 20); ripple 3 of 834 as §1; `git status` clean.
+- **Mutants** (the changed contracts only), each under a 120 s subprocess timeout against its probe: **29 mutants** (9
+  cards/transaction.ts, 4 buildAcceptances.ts, 2 stubTrees.ts, 12 runloop/transaction.ts + deck.ts, 2 planCommand.ts), two
+  passes **1.4 min**, max 2.5 s, 0 timeouts. First pass 24 killed; three survivors were real gaps of the probes (the
+  outside lines' order and joint, the retry context's "\n" joint, a transaction for Go only) and got probe rows (two
+  outside lines; two cards blaming one; a TypeScript `--only` cut of ts-rename); the deck was re-cut (only run-transaction's
+  and plan-command's acceptances changed) and both re-gated. Second pass **27 killed**; survivors: Blame Log without the
+  "#" skip, and without the tab skip — equivalent for every Tree Profiles pattern (all anchored on `^\S`) — DECISIONS
+  known risk.
+- **Demo** (`decks/p21c/demo.sh /tmp/p21c-scratch/bin-ref /tmp/p21c-scratch/bin-main`, 63 s; §1's table): ts-rename main 0/4
+  (to-metres `src/report/line.ts(1,17)` → length-line), transaction **4/4**; go-p7b with control-contract-judge forced red
+  once: main 2/8 (the judge's retries `supervisor/guard.go:20:23: l.Resumes undefined` → runtime-guard: the P21a smoke RED
+  reproduced on stubs), transaction **8/8**, the judge 2 attempts, 9 requests, 8 commits + the archive on the run branch;
+  go-p7b + `mcp/count.go` (r3): exit 3, fault `outside the subset: mcp/count.go:6:52: l.Resumes undefined …`, nothing
+  committed.
+- **Deck check on transaction decks** (the cuts of the demo beside the fixtures' `_stubs/`): go-p7b reference binary 0
+  errors (main's 9, its first-attempt trees); ts-rename reference 0 (main's 6).
+- **Byte identity** (main's binary eeda36f vs the reference binary): go-mini `--checks decks/m1/checks.json` **75 416 B
+  identical**; the P15 deck re-cut from 0365336 (filter, ×3) **398 622 B identical**, equal to the committed deck; go-p7b
+  without `--only` **100 388 B identical**. The session rechecks them with the run's binary.
+- No `src/` file of the reference names P7b, go-p7b, ts-rename, supervisor or Resumes (grep).
+
+**Forecast** on `ds` with every maxTokens × 3: P21b ran 10 cards for $0.2508 with a fix (19 requests); here 15 first
+requests (5 code × 2 variants + 5 judges), 40–105 KB in, answers 1.5–23 KB: **≈ $0.20–0.35**, ≤ $0.60 with a re-cut; ≤ $1.
+**Gate holds.** No split (P21d not needed).
+
+**Run command** (from the repo root, the binary copied first; the deck is already scaled ×3):
+
+```
+npm run build && rm -rf /tmp/v2bin-p21c && mkdir -p /tmp/v2bin-p21c && cp -r dist /tmp/v2bin-p21c/ && ln -s $PWD/node_modules /tmp/v2bin-p21c/node_modules && ln -s $PWD/templates /tmp/v2bin-p21c/templates
+node /tmp/v2bin-p21c/dist/cli.js run --root . --deck decks/p21c/deck.json --processor ds --deadline 2400 > /tmp/p21c-run.json
+```

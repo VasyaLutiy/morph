@@ -81,3 +81,17 @@ test("Plan Command example 14: go-p7b --only, every acceptance marked, nothing h
     expect((planCommand(r.root, a14({ only: ONLY })).document as PlanDocument).cards).toStrictEqual(only.cards);
   } finally { r.rm(); }
 });
+
+test("row: a TypeScript --only cut is a transaction too (ts-rename), without --only it is not", () => {
+  const r = tmpRoot();
+  try {
+    for (const [p, t] of Object.entries(JSON.parse(fixture("ts-rename.json")) as Record<string, string>)) r.write(p, t);
+    r.write("decks/tools/guard.mjs", "// guard\n");
+    r.write("decks/tools/firstdiff.mjs", "// firstdiff\n");
+    const ts = (o: Partial<PlanArgs>): PlanArgs => args({ components: ["units", "report"], checks: "decks/r1/checks.json", out: null, ...o });
+    const only = planCommand(r.root, ts({ only: ["to-metres", "length-line", "to-metres-judge", "length-line-judge"] })).document as PlanDocument;
+    const plain = planCommand(r.root, ts({})).document as PlanDocument;
+    expect([only.cards.length, only.cards.every((c) => (c.acceptance ?? "").startsWith(M)), plain.cards.some((c) => (c.acceptance ?? "").startsWith(M))]).toStrictEqual([4, true, false]);
+    expect(untracked(of(only.cards, "to-metres").acceptance).includes("-e src/units/convert.ts -e src/report/line.ts -e tests/units/convert.examples.test.ts -e tests/report/line.examples.test.ts ||")).toBe(true);
+  } finally { r.rm(); }
+});
