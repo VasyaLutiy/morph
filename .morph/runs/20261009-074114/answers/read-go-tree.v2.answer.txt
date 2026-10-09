@@ -1,0 +1,138 @@
+```
+import fs from "node:fs";
+import path from "node:path";
+import type { GoTree } from "../planner/hideLater.js";
+
+interface DirEntry {
+  readonly name: string;
+  isDirectory(): boolean;
+  isFile(): boolean;
+}
+
+const NOT_A_PACKAGE: ReadonlySet<string> = new Set(["vendor", "testdata"]);
+
+function ignoredName(name: string): boolean {
+  return name.startsWith(".") || name.startsWith("_");
+}
+
+function readModulePath(root: string): string | null {
+  let text: string;
+  try {
+    text = fs.readFileSync(path.join(root, "go.mod"), "utf8");
+  } catch {
+    return null;
+  }
+  const found = /^module\s+(\S+)/m.exec(text);
+  if (found === null) return null;
+  const modulePath = found[1];
+  return modulePath === undefined ? null : modulePath;
+}
+
+function collectFiles(root: string): string[] {
+  const files: string[] = [];
+  const visit = (dir: string, prefix: string): void => {
+    const entries: DirEntry[] = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const name = entry.name;
+      if (ignoredName(name)) continue;
+      const relative = prefix === "" ? name : `${prefix}/${name}`;
+      if (entry.isDirectory()) {
+        if (NOT_A_PACKAGE.has(name)) continue;
+        visit(path.join(dir, name), relative);
+      } else if (entry.isFile() && name.endsWith(".go")) {
+        files.push(relative);
+      }
+    }
+  };
+  visit(root, "");
+  files.sort();
+  return files;
+}
+
+// Drops a trailing `//` comment, ignoring `//` that sits inside a quoted string.
+function withoutComment(line: string): string {
+  let quoted = false;
+  let index = 0;
+  while (index < line.length) {
+    const ch = line.charAt(index);
+    if (ch === "\\") {
+      index += 2;
+      continue;
+    }
+    if (ch === '"') {
+      quoted = !quoted;
+      index += 1;
+      continue;
+    }
+    if (!quoted && ch === "/" && line.charAt(index + 1) === "/") {
+      return line.slice(0, index);
+    }
+    index += 1;
+  }
+  return line;
+}
+
+function quotedPath(line: string): string | null {
+  const start = line.indexOf('"');
+  if (start === -1) return null;
+  const end = line.indexOf('"', start + 1);
+  if (end === -1) return null;
+  return line.slice(start + 1, end);
+}
+
+// The module's own package of an import path, or null when the path is foreign.
+function ownPackage(importPath: string, modulePath: string): string | null {
+  if (importPath === modulePath) return ".";
+  const prefix = `${modulePath}/`;
+  if (!importPath.startsWith(prefix)) return null;
+  const rest = importPath.slice(prefix.length);
+  return rest === "" ? null : rest;
+}
+
+function importsOf(text: string, modulePath: string | null): string[] {
+  const imports: string[] = [];
+  if (modulePath === null) return imports;
+  const seen = new Set<string>();
+  const keep = (importPath: string): void => {
+    const own = ownPackage(importPath, modulePath);
+    if (own === null || seen.has(own)) return;
+    seen.add(own);
+    imports.push(own);
+  };
+  let inBlock = false;
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    if (inBlock) {
+      if (line.startsWith(")")) {
+        inBlock = false;
+        continue;
+      }
+      const quoted = quotedPath(withoutComment(line));
+      if (quoted !== null) keep(quoted);
+      continue;
+    }
+    if (!line.startsWith("import")) continue;
+    const rest = line.slice("import".length);
+    if (rest.startsWith("(")) {
+      inBlock = true;
+      continue;
+    }
+    const first = rest.charAt(0);
+    if (first !== " " && first !== "\t") continue;
+    const quoted = quotedPath(withoutComment(rest));
+    if (quoted !== null) keep(quoted);
+  }
+  return imports;
+}
+
+export function readGoTree(root: string): GoTree {
+  const modulePath = readModulePath(root);
+  const files = collectFiles(root);
+  const imports: Record<string, string[]> = {};
+  for (const file of files) {
+    const text = fs.readFileSync(path.join(root, file), "utf8");
+    imports[file] = importsOf(text, modulePath);
+  }
+  return { files, imports };
+}
+```

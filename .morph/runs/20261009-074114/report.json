@@ -1,0 +1,269 @@
+{
+  "runId": "20261009-074114",
+  "completedAt": 1791532974987,
+  "branch": "morph/20261009-074114",
+  "processor": "ds",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "build-acceptances",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "build-acceptances.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "ef759e85453f0654e81750d4b0abc2c9602da12f",
+      "diffstat": {
+        "files": 2,
+        "insertions": 22,
+        "deletions": 3
+      }
+    },
+    {
+      "customId": "hide-later",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "hide-later.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "d64d7deaebea5aa406812345c84b298c666c783d",
+      "diffstat": {
+        "files": 1,
+        "insertions": 89,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "build-acceptances-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "build-acceptances-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/buildAcceptances.p21.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "52570d376c007b1525a4bdf3edb8ec78c76e4680",
+      "diffstat": {
+        "files": 1,
+        "insertions": 145,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "hide-later-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "hide-later-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/planner/hideLater.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "3564c373bcd3088a21d5340e30789ff80ae45b72",
+      "diffstat": {
+        "files": 1,
+        "insertions": 209,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "read-go-tree",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "read-go-tree.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "a6bcdaef937443d3d42d50e5d15850d4cdcf6f49",
+      "diffstat": {
+        "files": 1,
+        "insertions": 114,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "efacf655ecbbd2f83502b7e2254e9ec26ac46f75",
+      "diffstat": {
+        "files": 1,
+        "insertions": 9,
+        "deletions": 2
+      }
+    },
+    {
+      "customId": "read-go-tree-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "read-go-tree-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/goTree.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "65f3f740c5da7acc504865e023c5c72afe0486a0",
+      "diffstat": {
+        "files": 1,
+        "insertions": 151,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/planCommand.p21.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "19db29e589d03376ea4e28f31e19e93b92f0e798",
+      "diffstat": {
+        "files": 1,
+        "insertions": 116,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 220845,
+    "outputTokens": 116947,
+    "cost": 0.19687854000000002,
+    "requests": 12
+  },
+  "requests": [
+    {
+      "customId": "build-acceptances.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791531675-nL7qCd2AjkwTcKu481Qu",
+      "inputTokens": 21163,
+      "outputTokens": 3003,
+      "cost": 0.0099525,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791531675-A0GWZNDgC5dZro1ATg6F",
+      "inputTokens": 21163,
+      "outputTokens": 2486,
+      "cost": 0.0093321,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "hide-later.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791531675-LWtjVlOINy9HjFb0gHGi",
+      "inputTokens": 15944,
+      "outputTokens": 15675,
+      "cost": 0.0235932,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "hide-later.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791531703-994IwBvLDdK5zcEAyHUL",
+      "inputTokens": 15944,
+      "outputTokens": 24000,
+      "cost": 0.029436,
+      "finishReason": "length",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791532116-lbxkpbR6vHDWUImK8XfV",
+      "inputTokens": 21296,
+      "outputTokens": 8470,
+      "cost": 0.0165528,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "hide-later-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791532116-Y0oKiJMqAC7A4Gtlgwno",
+      "inputTokens": 18294,
+      "outputTokens": 10283,
+      "cost": 0.01447548,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-go-tree.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791532116-B0FKpiSvcY7RGP5B77Lr",
+      "inputTokens": 15477,
+      "outputTokens": 6573,
+      "cost": 0.0125307,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-go-tree.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791532187-1ka4LGHtTXkwEzMFkE62",
+      "inputTokens": 15477,
+      "outputTokens": 11867,
+      "cost": 0.01694814,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791532518-yEozkcnexWvhwse0KQpO",
+      "inputTokens": 19993,
+      "outputTokens": 7742,
+      "cost": 0.0152883,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791532518-jIBFwlvc6lFN7ZIHTyvn",
+      "inputTokens": 19993,
+      "outputTokens": 2830,
+      "cost": 0.0093939,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-go-tree-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791532518-yH7p5gD3xNR4Et0HGdlE",
+      "inputTokens": 17718,
+      "outputTokens": 9964,
+      "cost": 0.0172722,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791532779-Jn5G1fOmq3sITmoRAAc6",
+      "inputTokens": 18383,
+      "outputTokens": 14054,
+      "cost": 0.02210322,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}

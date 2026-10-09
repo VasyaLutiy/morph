@@ -1,0 +1,12 @@
+morph run: build-acceptances.v1 accepted stage 7 frozen finish stop chars 7716
+morph run: build-acceptances.v2 untried stage 0 finish stop chars 7575
+morph run: hide-later.v1 accepted stage 7 frozen finish stop chars 2707
+morph run: hide-later.v2 corrupt stage 0 finish length chars none
+morph run: build-acceptances-judge.v1 accepted stage 7 frozen finish stop chars 3865
+morph run: hide-later-judge.v1 accepted stage 7 frozen finish stop chars 7138
+morph run: read-go-tree.v1 accepted stage 7 frozen finish stop chars 3818
+morph run: read-go-tree.v2 untried stage 0 finish stop chars 3976
+morph run: plan-command.v1 accepted stage 7 frozen finish stop chars 5019
+morph run: plan-command.v2 untried stage 0 finish stop chars 5078
+morph run: read-go-tree-judge.v1 accepted stage 7 frozen finish stop chars 4003
+morph run: plan-command-judge.v1 accepted stage 7 frozen finish stop chars 4787
