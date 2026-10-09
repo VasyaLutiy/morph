@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import { planCommand } from "../../src/cli/planCommand.js";
+import { TRANSACTION_MARK } from "../../src/cards/transaction.js";
 import { fixture, tmpRoot } from "../helpers.js";
 import type { Card } from "../../src/cards/types.js";
 import type { PlanArgs, PlanDocument } from "../../src/cli/types.js";
@@ -20,13 +21,15 @@ function miniRoot(map: string | null): TmpRoot {
 const args = (over: Partial<PlanArgs>): PlanArgs => ({ name: "plan", root: ".", pretty: false, spec: "contour.yaml",
   map: "morph-map.json", components: ["calc", "report"], judge: true, out: "decks/m1/deck.json", checks: "decks/m1/checks.json", ...over });
 
+const UN = /X=\$\(git ls-files[^\n]*\n/;
+
 function cardOf(cards: readonly Card[], id: string): Card {
   const found = cards.find((c) => c.customId === id);
   if (found === undefined) throw new Error("the deck has no card " + id);
   return found;
 }
 
-test("Plan Command example 12: --only recomputes the overlay against the current tree", () => {
+test("Plan Command example 12: --only cuts one card as a subset transaction", () => {
   const r = miniRoot("cli/goMini.sameGen.map.json");
   try {
     const first = planCommand(r.root, args({}));
@@ -47,7 +50,10 @@ test("Plan Command example 12: --only recomputes the overlay against the current
     expect(only.generations).toStrictEqual([["percent-of"]]);
     expect(only.externalDependsOn).toStrictEqual({});
     expect(only.cards).toStrictEqual([
-      { ...percentOf, acceptance: (percentOf.acceptance ?? "").replace(overlay, '{"Replace":{}}') },
+      {
+        ...percentOf,
+        acceptance: TRANSACTION_MARK + "\n" + (percentOf.acceptance ?? "").replace(overlay, '{"Replace":{}}'),
+      },
     ]);
     expect(only.out).toBe("decks/m1/only.json");
     expect(r.read("decks/m1/only.json")).toBe(JSON.stringify(only.cards, null, 2) + "\n");
@@ -56,10 +62,15 @@ test("Plan Command example 12: --only recomputes the overlay against the current
   }
 });
 
-test("Plan Command example 13: --only keeps two siblings that still hide each other", () => {
+test("Plan Command example 13: --only keeps two siblings as one subset transaction", () => {
   const r = miniRoot(null);
   try {
     const fullDeck = JSON.parse(fixture("cli/goMini.deck.json")) as Card[];
+    const U2 = "X=$(git ls-files --others --exclude-standard | grep -vxF -e report/format_share.go -e calc/percent_of_examples_test.go || true); [ -z \"$X\" ] || { echo \"files left in the tree: $X\"; exit 1; }\n";
+    const tx = (c: Card, overlay: string): Card => ({
+      ...c,
+      acceptance: TRANSACTION_MARK + "\n" + (c.acceptance ?? "").replace(overlay, '{"Replace":{}}').replace(UN, () => U2),
+    });
 
     const two = planCommand(r.root, args({ only: ["percent-of-judge", "format-share"], out: "decks/m1/two.json" }));
     expect(two.code).toBe(0);
@@ -69,7 +80,10 @@ test("Plan Command example 13: --only keeps two siblings that still hide each ot
       "format-share": ["percent-of"],
       "percent-of-judge": ["percent-of"],
     });
-    expect(cut.cards).toStrictEqual([cardOf(fullDeck, "format-share"), cardOf(fullDeck, "percent-of-judge")]);
+    expect(cut.cards).toStrictEqual([
+      tx(cardOf(fullDeck, "format-share"), '{"Replace":{"calc/percent_of_examples_test.go":""}}'),
+      tx(cardOf(fullDeck, "percent-of-judge"), '{"Replace":{"report/format_share.go":""}}'),
+    ]);
 
     const bad = planCommand(r.root, args({ only: ["nope", "percent-of", "x.2"], out: "decks/m1/bad.json" }));
     expect(bad.code).toBe(2);

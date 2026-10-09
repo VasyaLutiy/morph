@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import { test, expect } from "vitest";
 import { planCommand } from "../../src/cli/planCommand.js";
+import { TRANSACTION_MARK } from "../../src/cards/transaction.js";
 import { tmpRoot, fixture } from "../helpers.js";
 import type { TmpRoot } from "../helpers.js";
 import type { PlanArgs, PlanDocument } from "../../src/cli/types.js";
@@ -66,6 +67,8 @@ test("Plan Command example 14", () => {
       "daemon-core-judge",
     ];
     const count = (s: string, sub: string): number => s.split(sub).length - 1;
+    const UN = /X=\$\(git ls-files[^\n]*\n/;
+    const U8 = "X=$(git ls-files --others --exclude-standard | grep -vxF -e control/control.go -e supervisor/loop.go -e supervisor/guard.go -e daemon/daemon.go -e control/control_examples_test.go -e supervisor/loop_examples_test.go -e supervisor/guard_examples_test.go -e daemon/daemon_examples_test.go || true); [ -z \"$X\" ] || { echo \"files left in the tree: $X\"; exit 1; }\n";
 
     const resOnly = planCommand(r.root, args({ only }));
     expect(resOnly.code).toBe(0);
@@ -81,13 +84,14 @@ test("Plan Command example 14", () => {
     expect(idsOnly.length).toBe(8);
     expect([...idsOnly].sort()).toStrictEqual([...only].sort());
 
+    for (const card of docOnly.cards) {
+      const acceptance = card.acceptance ?? "";
+      expect(acceptance.startsWith(TRANSACTION_MARK + "\n")).toBe(true);
+      expect(count(acceptance, U8)).toBe(1);
+    }
     const phaseLoopOnly = docOnly.cards.find((c) => c.customId === "phase-loop") as Card;
-    const overlayLong = '{"Replace":{"control/control_examples_test.go":"","supervisor/loop_examples_test.go":"","supervisor/guard.go":"","daemon/daemon.go":"","supervisor/guard_examples_test.go":"","daemon/daemon_examples_test.go":""}}';
-    expect(count(phaseLoopOnly.acceptance ?? "", overlayLong)).toBe(2);
-
-    const controlContractOnly = docOnly.cards.find((c) => c.customId === "control-contract") as Card;
-    const overlayControlOnly = '{"Replace":{"control/control_examples_test.go":"","supervisor/loop_examples_test.go":"","daemon/daemon.go":"","supervisor/guard_examples_test.go":"","daemon/daemon_examples_test.go":""}}';
-    expect(count(controlContractOnly.acceptance ?? "", overlayControlOnly)).toBe(2);
+    expect(count(phaseLoopOnly.acceptance ?? "", '{"Replace":{}}')).toBe(2);
+    expect(count(phaseLoopOnly.acceptance ?? "", '"supervisor/guard.go":""')).toBe(0);
 
     const resPlain = planCommand(r.root, args({}));
     expect(resPlain.code).toBe(0);
@@ -99,17 +103,19 @@ test("Plan Command example 14", () => {
     expect(count(phaseLoopPlain.acceptance ?? "", '{"Replace":{"control/control_examples_test.go":""}}')).toBe(1);
     expect(count(phaseLoopPlain.acceptance ?? "", '{"Replace":{}}')).toBe(1);
 
-    const daemonCoreJudgeOnly = docOnly.cards.find((c) => c.customId === "daemon-core-judge") as Card;
-    const daemonCoreJudgePlain = docPlain.cards.find((c) => c.customId === "daemon-core-judge") as Card;
-    expect(daemonCoreJudgePlain.acceptance).toBe(daemonCoreJudgeOnly.acceptance);
+    for (const plain of docPlain.cards) {
+      const cut = docOnly.cards.find((c) => c.customId === plain.customId) as Card;
+      const expected = TRANSACTION_MARK + "\n" + (plain.acceptance ?? "")
+        .replace(/\{"Replace":\{(?!}})[^}]*}}/, '{"Replace":{}}')
+        .replace(UN, () => U8);
+      expect(cut.acceptance).toBe(expected);
+    }
 
     fs.rmSync(r.path("mcp/session.go"));
     const resNoMcp = planCommand(r.root, args({ only }));
     expect(resNoMcp.code).toBe(0);
     const docNoMcp = resNoMcp.document as PlanDocument;
-    const controlContractNoMcp = docNoMcp.cards.find((c) => c.customId === "control-contract") as Card;
-    const overlayControlNoMcp = '{"Replace":{"control/control_examples_test.go":"","supervisor/loop.go":"","supervisor/loop_examples_test.go":"","supervisor/guard.go":"","daemon/daemon.go":"","supervisor/guard_examples_test.go":"","daemon/daemon_examples_test.go":""}}';
-    expect(count(controlContractNoMcp.acceptance ?? "", overlayControlNoMcp)).toBe(2);
+    expect(docNoMcp.cards).toStrictEqual(docOnly.cards);
   } finally {
     r.rm();
   }
