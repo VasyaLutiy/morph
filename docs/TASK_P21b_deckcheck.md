@@ -460,3 +460,31 @@ run as Morph runs them (`/bin/sh`, 300 s cap), cards in deck order, each referen
 npm run build && rm -rf /tmp/v2bin-p21b && mkdir -p /tmp/v2bin-p21b && cp -r dist /tmp/v2bin-p21b/ && ln -s $PWD/node_modules /tmp/v2bin-p21b/node_modules && ln -s $PWD/templates /tmp/v2bin-p21b/templates
 node /tmp/v2bin-p21b/dist/cli.js run --root . --deck decks/p21b/deck.json --processor ds --deadline 2400 > /tmp/p21b-run.json
 ```
+
+### Run (the session, 09.10)
+
+- **Run 20261009-094451** on ds, binary copy `/tmp/v2bin-p21b` from a9c72da: exit 1, **9/10 written**, $0.2237, 18
+  requests, 28.0 min, 0 answers cut at max_tokens. First attempt: stub-trees, tree-check, tree-profiles, check-builds,
+  tree-check-judge, tree-profiles-judge, deck-check, deck-check-judge (code cards' v2 untried); stub-trees-judge won r1
+  after v1 red at tsc (no vitest import). **check-builds-judge failed**: v1 tsc (no vitest import), r1 and r2 red at
+  `== own` — the 3 record examples passed, its 6 own tests built a deck file `{"cards": [...]}` with cards missing
+  model/maxTokens/reasoning/variants, which `readDeckFile` refuses (`Error: d.json` at its `load`). Class **DATA[spec]**:
+  the spec never said what a deck file is.
+- **One fix** (P1b pattern, a21ed2d): NEW fixture `tests/fixtures/cli/oneCard.deck.json`, §2.1 row and a `writeDeck`
+  skeleton, the fixture in the card's slice; instruction unchanged. Re-cut by AUTONOMY step 3 (`plan --only
+  check-builds-judge`, ×3, deck check 0, bcd4cf1 `decks/p21b/deck-rerun.json`); main merged into the run branch
+  (a119e05) so the re-run sees the run's code and the fix's data.
+- **Run 20261009-101744** (fix): exit 0, **1/1 written** on the first attempt, $0.0271, 1 request, 5.1 min.
+- **Verify** on morph/20261009-101744: `git status` clean; tsc, eslint src tests, npm run build green; **vitest
+  834/834** in 137 files. Own read of the 7 written src files against §2.2: no defect; the build check switches on only
+  when `_stubs/` lies beside the deck (§2.2), a Python or config-less card is a warning note, never a silent skip.
+- **Claims** 1 (no card red on a sibling's file) yes; 2 (no cut answer) yes; 3–5 yes; **6** with the run's binary:
+  go-p7b `decks/b1/deck.p20.json` exit 2, 9 errors, phase-loop `supervisor/guard.go:20:23: l.Resumes undefined`;
+  `deck.p21.json` exit 0; ts-rename exit 2, 5 errors, to-metres `src/report/line.ts(1,17): error TS2724`; **7** grep of
+  p7b/supervisor/ts-rename/Resumes in `src/`: 0 lines.
+- **Byte identity** main's binary (6201b7e) vs the run's binary: go-mini `--checks decks/m1/checks.json` 75 416 B
+  identical; P15 re-cut from 0365336 (filter, ×3) 398 622 B identical and equal to the committed deck; go-p7b without
+  `--only` 100 388 B identical.
+- **Total** $0.2508; running total $5.8358 of $30. Next: **P21c** (the subset transaction, general per language, with
+  MorphStudio 4efde92 §6's forced judge retry after its gen-2 sibling wrote, in the demo and in the live go-p7b smoke),
+  prepared only after the operator's word.

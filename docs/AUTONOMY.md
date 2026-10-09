@@ -6,20 +6,34 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (09.10, operator: next P21b, then a stop)
+## State at handoff (09.10, after P21b: stop for the operator, next P21c after the operator's word)
 
-**Next: P21b, issue #12 (label `P21-breaking-recut`), then 🧪 and a stop for the operator.** Scope = the operator's
-comment https://github.com/VasyaLutiy/morph/issues/12#issuecomment-6077412737 (read it whole: `gh issue view 12
---comments`): (1) item 3.5 in `morph deck check`; (2) a **subset transaction** — direction B widened to the WHOLE `--only`
-subset, not a package (the changed API is called across packages: supervisor and daemon in MorphStudio): cards written by
-generations as today, acceptances deferred until every subset card is written, then each runs on the full new tree; a
-build/vet line blames the card owning that file and only it is retried; a line in a file outside the subset is a record
-break, stop and name it; after every retry all acceptances re-run to a fixed point, rounds bounded; only `--only` decks,
-full cuts byte for byte. The re-hiding alternative is rejected. Acceptance: the P21a go-p7b live smoke on ds goes green
-with no hand edit, plus blame and outside-break fixtures, identity checks green. This changes the run loop: the phase may
-split (P21b = 3.5, P21c = transaction) and says so at the gate. Cap $5 per phase. Every MorphV2 session ends with
-`~/.morph-wait-operator`, never `~/.morph-phase-done` (flag files shared with MorphStudio's session; the cron watchdog is
-MorphStudio's); never touch `/home/morph/MorphStudio` or its tmux session `MorphStudio`.
+**Next: P21c, issue #12 (label `P21-breaking-recut`), prepared ONLY after the operator's word; then 🧪 and a stop.** Scope
+(PLAN row P21c): the subset transaction of comment https://github.com/VasyaLutiy/morph/issues/12#issuecomment-6077412737
+item 2, made general by comment 6077766447 and sharpened by MorphStudio 4efde92 §6 (read all three whole: `gh issue view
+12 --comments`; `gh api "repos/VasyaLutiy/MorphStudio/contents/docs/MORPHV2_REQUEST_breaking-recut.md?ref=4efde92"`):
+language-agnostic, in the run loop — the group is the whole `--only` subset; cards written by generations as today; every
+acceptance stage of every card (build, vet, probe, own, full) deferred until all group cards are written and run on that
+full tree; a red `file:line` (parsed by each language profile — Tree Profiles' `fileLine` exists since P21b) blames the
+card owning the file and only it is retried; a file outside the subset stops the run naming it; after every retry all
+acceptances re-run to a fixed point, rounds bounded; only `--only` decks switch, full cuts and existing decks byte for
+byte; no P7b/go-p7b names in `src/`. Acceptance: go-p7b live smoke on ds green with no hand edit INCLUDING a forced judge
+retry after its gen-2 sibling has written (also in the gate demo); a second fixture of another shape (ts-rename exists
+since P21b, or a Go interface changed in one package and implemented later in another) green under the transaction and
+red with the correct blame without it; identity checks green. Split rather than narrow. Cap $5 per phase. Every
+MorphV2 session ends with `~/.morph-wait-operator`, never `~/.morph-phase-done` (flag files shared with MorphStudio's
+session; the cron watchdog is MorphStudio's); never touch `/home/morph/MorphStudio` or its tmux session `MorphStudio`.
+
+**P21b is merged** (`docs/TASK_P21b_deckcheck.md`, issue #12 item 3.5, general per language): runs 20261009-094451 (9/10,
+check-builds-judge DATA[spec]: its own tests wrote a deck as `{"cards": …}`) and 20261009-101744 (the one fix, 1/1);
+$0.2508, 33 min; vitest 834/834. `morph deck check` on a deck with `<deck dir>/_stubs/` copies the tree of every card's
+first attempt (earlier and own-generation targets as stubs), runs its language's step (NEW Tree Profiles in language:
+Go `go build` + `go vet` with the card's full.json overlay, TypeScript `tsc --noEmit -p tsconfig.card.json`, Python a
+plain note "has no compile or typecheck step: not built"), and counts every `file:line` outside the card's targets as an
+error (`builds` in the document; NEW Stub Trees, Check Builds in planner-subset/cli, Tree Check in acceptance). With the
+run's binary: go-p7b deck.p20 exit 2 naming `supervisor/guard.go:20:23`, deck.p21 exit 0, ts-rename exit 2 naming
+`src/report/line.ts(1,17)`; cuts byte for byte (go-mini 75 416 B, P15 398 622 B, go-p7b 100 388 B). Step 1's fullvet.mjs line is
+unchanged (the operator decides whether `deck check`'s `builds` replaces it). Running total $5.8358 of $30.
 
 **P21a is merged** (`docs/TASK_P21a_breaking.md`, issue #12, request MorphStudio eb52a5a incl. the operator's amendment,
 comment 6075790078): run 20261009-074114 on ds, 8/8 on the first attempt, $0.1969, 21.7 min, no fix; vitest 812/812. A
