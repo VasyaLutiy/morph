@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { Card } from "../cards/types.js";
+import { TRANSACTION_MARK } from "../cards/transaction.js";
 
 export interface TreeLanguage {
   id: string;
@@ -111,14 +112,18 @@ export function stubTrees(
           if (stubSet.has(target)) map[target] = path.posix.join(stubDir, target);
           else missing.push(target);
         };
-        for (let e = 0; e < g; e++) {
+        const wholeDeck = acceptance.startsWith(TRANSACTION_MARK + "\n");
+        const last = wholeDeck ? generations.length : g;
+        for (let e = 0; e < last; e++) {
           for (const otherId of generations[e]) {
             const other = byId.get(otherId);
             if (other === undefined) continue;
             for (const target of other.targets) consider(target);
           }
         }
-        for (const target of card.targets) consider(target);
+        if (!wholeDeck) {
+          for (const target of card.targets) consider(target);
+        }
       }
 
       trees.push({
