@@ -6,7 +6,23 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (09.10, operator: salvage P22a from its fix run, then a stop)
+## State at handoff (09.10, operator: salvage P22a stopped at card 2 of 9 — the order, operator decides)
+
+**Stop: the P22a salvage is red at step 1, card 2 of 9 (operator decides; issue #15 stays open).** Session 09.10 (orchestrator
+opus55 ~70k/27/14 min, $0 processor): the answers were applied by V2's own `parseAnswer` (`/tmp/v2bin-p22a`, = dist) and
+written as `writeAnswerFiles` does; accept ran from `/tmp/v2bin-p22a` with `--model deepseek/deepseek-v4.1-flash` (the run's).
+gate-plan.v1 → `morph accept --commit` exit 0, commit **72e9b2b, kept on the LOCAL branch `salvage/p22a`, not on main, not
+pushed**. parse-command.v1 (generation 0) → red at tsc: `src/cli/main.ts(19,29): error TS2307: Cannot find module
+'../gate/gateCommand.js'` — its main.ts imports gate-command's file (generation 2); the transaction run passed it only
+because every card is written before any acceptance. Not the answer's defect: the card-by-card order of the procedure.
+Stopped by "any red → stop", no retry, no reorder; parse-command's files removed from the tree, main reset to 5d82d9b
+(= origin). Options for the operator: (a) accept in dependency-of-imports order — gate-plan (done), stub-verdict,
+play-gate, gate-command, THEN parse-command, then the judges (gate-command.r1.v1 imports only ../cards and ./gate*, nothing
+of src/cli, so this order should hold); (b) all nine written then accepted card by card — refused by accept's "change
+outside the targets" rule, not viable as is. Then step 2 (parse-command-judge debt by Fable) and step 3 as before.
+Scripts of the attempt: the session's scratchpad (apply.mjs, drive.sh); recreate them if the scratchpad is gone.
+
+**Previous state (the salvage order, unchanged):**
 
 **Next: salvage P22a (operator 09.10, a one-off decision, issue #15), then a stop for the operator.** No new `morph run`.
 The fix run 20261009-175810 (`decks/p22a/deck-fix.json`) wrote 9 cards whose acceptances passed and were rolled back only
