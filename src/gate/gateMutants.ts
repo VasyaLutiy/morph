@@ -1,0 +1,199 @@
+import type { Card } from "../cards/types.js";
+import { isTest, profileForPath } from "../language/paths.js";
+import { planMutants } from "../reviewer/planMutants.js";
+import type { Mutant } from "../reviewer/planMutants.js";
+import { DEFAULT_MUTANT_TIMEOUT_MS, runMutantsUntil } from "../reviewer/runMutants.js";
+
+export const MUTANT_CAP = 30;
+export const MUTANT_STOP_SECONDS = 1200;
+
+export interface GateMutant {
+  card: string;
+  mutant: Mutant;
+}
+
+export interface GateMutantSpot {
+  card: string;
+  path: string;
+  line: number;
+  column: number;
+  rule: string;
+}
+
+export interface GateBaseline {
+  card: string;
+  exit: number | null;
+  timedOut: boolean;
+}
+
+export interface GateMutants {
+  planned: number;
+  tried: number;
+  killed: number;
+  timedOut: number;
+  seconds: number;
+  survivors: GateMutantSpot[];
+  untried: GateMutantSpot[];
+  baselines: GateBaseline[];
+}
+
+export interface GateMutantDeps {
+  env: Record<string, string>;
+  now: () => number;
+  timeoutMs?: number;
+  stopSeconds?: number;
+}
+
+export function killCommand(acceptance: string): string {
+  return acceptance
+    .split("\n")
+    .filter((line) => !line.trimStart().startsWith("echo '== full'"))
+    .join("\n");
+}
+
+export function planGateMutants(
+  cards: readonly Card[],
+  read: (target: string) => string | null,
+  cap: number,
+): GateMutant[] {
+  const n = Math.min(cap, MUTANT_CAP);
+  if (n <= 0) return [];
+  const all: GateMutant[] = [];
+  const seen = new Set<string>();
+  for (const card of cards) {
+    for (const target of card.targets) {
+      if (seen.has(target)) continue;
+      seen.add(target);
+      const profile = profileForPath(target);
+      if (profile === null || isTest(profile, target)) continue;
+      const text = read(target);
+      if (text === null) continue;
+      for (const mutant of planMutants(target, text, n)) {
+        all.push({ card: card.customId, mutant });
+      }
+    }
+  }
+  if (all.length <= n) return all;
+  const out: GateMutant[] = [];
+  for (let i = 0; i < n; i++) {
+    out.push(all[Math.floor((i * all.length) / n)]);
+  }
+  return out;
+}
+
+function mutantSpot(card: string, mutant: Mutant): GateMutantSpot {
+  return {
+    card,
+    path: mutant.path,
+    line: mutant.line,
+    column: mutant.column,
+    rule: mutant.rule,
+  };
+}
+
+function resultSpot(card: string, spot: { path: string; line: number; column: number; rule: string }): GateMutantSpot {
+  return {
+    card,
+    path: spot.path,
+    line: spot.line,
+    column: spot.column,
+    rule: spot.rule,
+  };
+}
+
+interface GateGroup {
+  card: string;
+  mutants: Mutant[];
+}
+
+export async function runGateMutants(
+  root: string,
+  cards: readonly Card[],
+  planned: readonly GateMutant[],
+  deps: GateMutantDeps,
+): Promise<GateMutants> {
+  const start = deps.now();
+  const stopAt = start + (deps.stopSeconds ?? MUTANT_STOP_SECONDS) * 1000;
+
+  const groups: GateGroup[] = [];
+  const byCard = new Map<string, GateGroup>();
+  for (const entry of planned) {
+    let group = byCard.get(entry.card);
+    if (group === undefined) {
+      group = { card: entry.card, mutants: [] };
+      byCard.set(entry.card, group);
+      groups.push(group);
+    }
+    group.mutants.push(entry.mutant);
+  }
+
+  const survivors: GateMutantSpot[] = [];
+  const untried: GateMutantSpot[] = [];
+  const baselines: GateBaseline[] = [];
+  let tried = 0;
+  let killed = 0;
+  let timedOutCount = 0;
+
+  for (const group of groups) {
+    let owner: Card | undefined;
+    for (const card of cards) {
+      if (card.customId === group.card) {
+        owner = card;
+        break;
+      }
+    }
+    if (owner === undefined) {
+      for (const mutant of group.mutants) {
+        untried.push(mutantSpot(group.card, mutant));
+      }
+      continue;
+    }
+    if (deps.now() >= stopAt) {
+      for (const mutant of group.mutants) {
+        untried.push(mutantSpot(group.card, mutant));
+      }
+      continue;
+    }
+    const result = await runMutantsUntil({
+      root,
+      command: killCommand(owner.acceptance ?? ""),
+      mutants: group.mutants,
+      timeoutMs: deps.timeoutMs ?? DEFAULT_MUTANT_TIMEOUT_MS,
+      env: deps.env,
+      now: deps.now,
+      stopAt,
+    });
+    if (result.baseline.exit !== 0) {
+      baselines.push({
+        card: group.card,
+        exit: result.baseline.exit,
+        timedOut: result.baseline.timedOut,
+      });
+    }
+    for (const one of result.results) {
+      tried += 1;
+      if (one.killed) {
+        killed += 1;
+        if (one.timedOut) timedOutCount += 1;
+      } else {
+        survivors.push(resultSpot(group.card, one));
+      }
+    }
+    for (const one of result.untried) {
+      untried.push(resultSpot(group.card, one));
+    }
+  }
+
+  const seconds = Math.round((deps.now() - start) / 100) / 10;
+
+  return {
+    planned: planned.length,
+    tried,
+    killed,
+    timedOut: timedOutCount,
+    seconds,
+    survivors,
+    untried,
+    baselines,
+  };
+}
