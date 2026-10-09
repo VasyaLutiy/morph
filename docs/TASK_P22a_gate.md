@@ -396,7 +396,7 @@ python3 decks/tools/scale_tokens.py decks/p22a/deck.json 3         # processor d
 node dist/cli.js deck check --root . --deck decks/p22a/deck.json   # errors 0 (builds over decks/p22a/_stubs)
 rm -rf /tmp/v2bin-p22a && mkdir -p /tmp/v2bin-p22a && cp -r dist /tmp/v2bin-p22a/ && ln -s $PWD/node_modules /tmp/v2bin-p22a/node_modules \
   && ln -s $PWD/templates /tmp/v2bin-p22a/templates
-node /tmp/v2bin-p22a/dist/cli.js run --root . --deck decks/p22a/deck.json --processor ds --deadline 6000
+node /tmp/v2bin-p22a/dist/cli.js run --root . --deck decks/p22a/deck.json --processor ds --deadline 7200
 ```
 
 ## 9. Pre-registration
@@ -425,4 +425,68 @@ re-cuts against main's binary, claims 6 and 7 (the dogfood gate); then P22b.
 
 ### Gate (preparation)
 
-(filled below by the preparing orchestrator)
+09.10, on the VPS, by the preparing orchestrator (Opus 5.5, fresh context, no sub-agents); no paid run, no model call.
+
+The deck **cut by V2** (main's binary, f214357 code; data 5ff996f, 75880f4, 1c8bc70): `plan --component gate --component
+cli --judge --checks decks/p22a/checks.json --only <the 10 ids>` **exit 0**, 10 cards, generations `[gate-plan,
+parse-command, stub-verdict] [gate-plan-judge, parse-command-judge, play-gate, stub-verdict-judge] [gate-command,
+play-gate-judge] [gate-command-judge]`, every acceptance with the transaction mark; `scale_tokens.py … 3` (maxTokens:
+gate-plan, stub-verdict 24 000; play-gate, gate-command 36 000; parse-command 84 000; gate-plan-judge, parse-command-judge,
+stub-verdict-judge 48 000; play-gate-judge, gate-command-judge 72 000); `deck check` **0 errors, 0 warnings, 0 hazards,
+builds 10 trees over `decks/p22a/_stubs/` (12 stubs each), 0 breaks, 0 missing** (85 s). Slices (slice + existing
+targets): 41.6–71.5 KB, the largest parse-command **71 495 B** (three whole cli files); ≈ 75 KB with the instruction. Deck
+337 624 B.
+
+**Played by hand** (the tool exists after the run): the reference `morph gate` of this preparation (`src/gate/*` and the
+cli patch in a scratch, never committed; the same code as `/tmp/p22/refs`), with a log dump added for this play only, on
+the committed deck: `gate --root . --deck decks/p22a/deck.json --stubs decks/p22a/_stubs --refs /tmp/p22/refs`, a shared
+clone of 1c8bc70, 24.0 min wall; plus `decks/tools/stubcheck.mjs` on every stub log.
+- **Stubs red per example at the expected stage (19/19)**, typed throwing stubs (`stub gatePlan [8,4,…]`, `stub
+  stubVerdict …`, `stub playGate …`, `stub gateCommand …`; parse-command's stubs are main's files): gate-plan 4/4,
+  stub-verdict 4/4, play-gate 4/4, gate-command 4/4 (the verdict's `failures`: 4 FAIL lines each), parse-command 3/3; the
+  five judges red at `== guard <file>` (one-test stubs: "has 1 test/it calls, expected 3..9"). **stubcheck.mjs exit 0 on
+  all 10 stub logs**; the verdict's stub rows all ok, no outside line. Stub chains 9.9–13.1 s.
+- **References green, chain seconds** (limit 250): gate-plan 135.1, parse-command 133.8, stub-verdict 136.0, gate-plan-judge
+  135.1, parse-command-judge 137.5, play-gate 132.6, stub-verdict-judge 131.2, gate-command 147.6, play-gate-judge 132.6,
+  gate-command-judge **152.2** — **max 152.2 s**. The tool caught the preparation's own reference judge for gate-command
+  red at its guard (`own stub "fake" (stubs come from tests/helpers.ts)`, a variable of a probe row copied into it): the
+  reference renamed (the deck unchanged), its acceptance re-run alone in a clone of 1c8bc70: exit 0, 152.2 s. Final tree
+  `vitest run` **881 / 881 in 146 files** (862 + the reference judges' 19), 120 s; **ripple 0 of 862**; `git status` of the
+  repository untouched, no scratch or worker left.
+- **Test time** (§2.2 "Test time"): the first example set (go-p7b transaction/planted/outside plays and ts-rename's TS play)
+  made the full suite 204 s (100 s without the gate files) and every chain > 250 s; the examples were cut to one real Go
+  play before the gate: full suite 120 s.
+- **Mutants** (the changed contracts only; reviewer's `planMutants` over the reference targets, each against its card's
+  probe under a 120 s subprocess timeout): **30 mutants** (6 stubVerdict.ts, 6 gatePlan.ts, 6 playGate.ts, 8
+  gateCommand.ts, 3 parse.ts, 1 main.ts), 32 runs, **3.1 min**, max 21.8 s, 0 timeouts; first pass 26 killed; two gaps got
+  probe rows (gatePlan.ts:31 a target owned twice listed once; gateCommand.ts:125 Check Builds' missing/breaks as errors)
+  and were killed on the re-run: **28 killed**; survivors: stubVerdict.ts:33 a skip joined by `&&` (equivalent: every
+  fileLine is anchored on `^\S`), gateCommand.ts:25 the `ok: true` type literal (no runtime effect; tsc in the acceptance) —
+  DECISIONS known risk.
+- **Issue #13's planted defects and real decks, measured with the reference binary** (§1's table): go-p7b deck.p21.json
+  code 2 naming the P21a smoke RED on the retry row; deck.p21c.json code 0; a green stub, a non-own build line and a
+  caller outside the subset each named; ts-rename old cut code 2 (tsc lines), transaction cut code 0.
+- **Byte identity baseline** (no planner or builder change): main's binary (f214357 code) — go-mini `--checks
+  decks/m1/checks.json` **75 416 B**, the P15 re-cut from 0365336 (filter, ×3) **398 622 B, equal to the committed deck**,
+  go-p7b without `--only` **100 388 B**; the session rechecks them with the run's binary.
+- No `src/` file of the reference names P7b, go-p7b, ts-rename, supervisor or Resumes (grep).
+
+**Forecast** on `ds` with every maxTokens × 3: P21c ran 10 cards for $0.3927 + $0.0557; here 15 first requests (5 code ×
+2 variants + 5 judges), 42–75 KB in, answers 1.6–26 KB: **≈ $0.25–0.40**, ≤ $0.70 with a fix; ≤ $1. **Gate holds.**
+
+**Deadline.** The first MorphV2 deck run as a transaction: the write phase is 4 generations of requests (≈ 4 × 8 min on
+ds), then one round of 10 acceptances one after another (≈ 10 × 140 s ≈ 23 min), and each retry batch adds a generation
+of requests and a full round (≈ 30 min): **`--deadline 7200`** (one write, one round, two retry batches); P21c's 2400 s
+cut its last generation.
+
+**Run command** (from the repo root, the binary copied first; the deck is already scaled ×3):
+
+```
+npm run build && rm -rf /tmp/v2bin-p22a && mkdir -p /tmp/v2bin-p22a && cp -r dist /tmp/v2bin-p22a/ && ln -s $PWD/node_modules /tmp/v2bin-p22a/node_modules && ln -s $PWD/templates /tmp/v2bin-p22a/templates
+node /tmp/v2bin-p22a/dist/cli.js run --root . --deck decks/p22a/deck.json --processor ds --deadline 7200 > /tmp/p22a-run.json
+```
+
+**Post-run dogfood (the session, numbers into this section):** `node dist/cli.js gate --root . --deck decks/p22a/deck.json
+--stubs decks/p22a/_stubs --refs <the run's 12 targets copied out of the run branch>` with the run's binary on main after
+the merge: expected code 0, 20 rows, stubs 19/19 failures at their probes and the judges at their guards, max chain < 250 s;
+and claim 6 on go-p7b.
