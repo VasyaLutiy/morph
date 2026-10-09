@@ -1,0 +1,6 @@
+{
+ "Build Acceptances 9": {
+  "given": "the go profile; cards a ([\"calc/a.go\"]), b ([\"calc/b.go\"], dependsOn [\"a\"]), c ([\"report/c.go\"], dependsOn [\"a\"]), acceptances null; checks phase \"p9\", fullExclude [\"calc/old_test.go\"], cards a, b, c; probes a, b, c \"package calc\\n\"; guard \"// guard\\n\", firstdiff \"// firstdiff\\n\"; hide {\"a\": [\"calc/b.go\", \"report/c.go\"], \"b\": [\"report/c.go\", \"calc/b_test.go\"], \"zz\": [\"x.go\"]}; then the same input without hide",
+  "then": "ok; a's acceptance = goCodeAcceptance(ctx {id \"a\", phase \"p9\", targets [\"calc/a.go\"], siblings [\"calc/b.go\", \"report/c.go\"], frozen DEFAULT_FROZEN, fullExclude [\"calc/old_test.go\", \"calc/b.go\", \"report/c.go\"], ownGit false, go, the texts, allowed [], vendor false}, \"package calc\\n\", null, null); b's with siblings [\"report/c.go\", \"calc/b_test.go\"], fullExclude [\"calc/old_test.go\", \"report/c.go\", \"calc/b_test.go\"]; c's with siblings [\"calc/b.go\"], fullExclude [\"calc/old_test.go\"] (no key); then a's with siblings [], fullExclude [\"calc/old_test.go\"], b's with [\"report/c.go\"], [\"calc/old_test.go\"]"
+ }
+}

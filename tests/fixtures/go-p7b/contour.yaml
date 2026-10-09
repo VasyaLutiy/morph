@@ -1,0 +1,92 @@
+version: 1
+System:
+  name: morphlite
+  description: >
+    A tiny Go module (module path "morphlite", Go 1.22, the standard library only) in the shape of MorphStudio's P7b,
+    already built once and now re-cut (MorphV2 P21, issue #12): the record renames the Loop field Resumes to Restarts and
+    gives Loop.Exited a stderr argument, so the later cards' files (guard.go, daemon.go and the old tests) break on the
+    old API. Packages control, supervisor (imports control), daemon (imports supervisor); mcp/session.go imports
+    supervisor and is no card's target. The tests compare with Equal of morphlite/internal/testhelp.
+  groups:
+    - name: control
+      description: Phase names, package control in control/; no I/O.
+      language: go
+      functions:
+        - name: Control Contract
+          description: A phase id and its title as one Phase.
+          behavior: >
+            Exported in package control: `type Phase string` and `func PhaseName(id, title string) Phase`, returning
+            Phase(id + " · " + title) (a middle dot between two spaces).
+          steps:
+            - produces: Phase
+          examples:
+            - given: id "P7", title "daemon"
+              when: named
+              then: 'Phase("P7 · daemon")'
+            - given: id "P10b", title ""
+              when: named
+              then: 'Phase("P10b · ")'
+    - name: supervisor
+      description: The run loop of one project, package supervisor in supervisor/; imports morphlite/control, no I/O.
+      language: go
+      functions:
+        - name: Phase Loop
+          description: The run state of one project and what an exit of its session does.
+          behavior: >
+            Exported in package supervisor: `var ErrPhaseMismatch = errors.New("phase mismatch")`; `type Loop struct {
+            Phase control.Phase; Restarts []int; Running bool }` (Restarts replaces Resumes); `func (l *Loop) Exited(code
+            int, stderr string, now int) []string` (stderr is new): sets Running false; code 0 → []string{"done"}; any
+            other code appends now to Restarts and returns []string{"restart: " + stderr}.
+          steps:
+            - uses: control
+            - produces: Loop
+          examples:
+            - given: a Loop with Running true; Exited(0, "", 5)
+              when: exited
+              then: '[]string{"done"}; Running false; Restarts nil'
+            - given: a Loop; Exited(2, "boom", 9)
+              when: exited
+              then: '[]string{"restart: boom"}; Restarts [9]'
+            - given: a Loop with Restarts [1]; Exited(1, "x", 4)
+              when: exited
+              then: '[]string{"restart: x"}; Restarts [1, 4]'
+        - name: Runtime Guard
+          description: Whether a loop may restart under a cap of restarts per hour.
+          behavior: >
+            Exported in package supervisor: `const MaxPerHour = 3` and `func (l *Loop) Guard(now, max int) bool`. max <= 0
+            → MaxPerHour. recent = the entries of l.Restarts with now-60 < at <= now. Returns recent < max.
+          steps:
+            - calls: Phase Loop
+            - produces: bool
+          examples:
+            - given: Restarts [1, 50, 70], now 100, max 2
+              when: guarded
+              then: "false — 50 and 70 are recent"
+            - given: Restarts [1, 50, 70], now 100, max 3
+              when: guarded
+              then: "true"
+            - given: Restarts [41, 42, 43], now 101, max 0
+              when: guarded
+              then: "true — the default 3, 41 is not recent"
+            - given: Restarts [], now 0, max 1
+              when: guarded
+              then: "true"
+    - name: daemon
+      description: The process side of a loop, package daemon in daemon/; imports morphlite/supervisor, no I/O.
+      language: go
+      functions:
+        - name: Daemon Core
+          description: A session exit passed to the loop.
+          behavior: >
+            Exported in package daemon: `type Daemon struct { Loop supervisor.Loop }` and `func (d *Daemon) OnExit(code
+            int, stderr string, now int) []string`, returning d.Loop.Exited(code, stderr, now).
+          steps:
+            - uses: supervisor
+            - produces: string
+          examples:
+            - given: a Daemon; OnExit(0, "", 1)
+              when: exited
+              then: '[]string{"done"}'
+            - given: a Daemon; OnExit(3, "oom", 7)
+              when: exited
+              then: '[]string{"restart: oom"}; d.Loop.Restarts [7]'

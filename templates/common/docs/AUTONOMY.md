@@ -59,12 +59,14 @@ preparation agent repeats this line.
    `morph deck check --root . --deck decks/<phase>/deck.json`.
    Every acceptance is run red **per example** on stubs in a scratch worktree, with a readable line, and every stub log
    passes `node decks/tools/stubcheck.mjs <log> <probe|guard> <targets>` (the red at the expected stage, and no
-   build/vet/tsc line naming a file outside the card's targets: a guard count alone misses a vet line). Mutants: only on
+   build/vet/tsc line naming a file outside the card's targets: a guard count alone misses a vet line); a Go deck cut with
+   `--only` also passes `node decks/tools/fullvet.mjs <deck> <card>` on every stub tree (the whole module vetted under
+   the card's `== full` overlay, which a stub run never reaches). Mutants: only on
    the record's examples and the contracts the phase changes, **at most 30 per phase and at most 20 min in total**,
    every mutant run under a 120 s timeout (a timeout counts as killed); survivors beyond the cap go to
    `docs/DECISIONS.md` as a known risk naming the file and the mutation. The data and the deck are committed on `main`.
 2. **Gate without the operator.** The run starts by itself only when ALL hold: `morph plan` exit 0; `morph deck check`
-   errors 0; every probe red per example with a readable line on the stubs and stubcheck.mjs exit 0 on each stub log; every acceptance chain under 250 s; the
+   errors 0; every probe red per example with a readable line on the stubs and stubcheck.mjs exit 0 on each stub log (fullvet.mjs too for a Go `--only` deck); every acceptance chain under 250 s; the
    mutation cap kept; forecast ≤ $1 for the phase; no slice over 200 KB. Otherwise the phase stops with a report in
    `docs/MEASURE.md` (a row "stopped at gate: <reason>"), touches `~/.morph-wait-operator` and stops.
 3. **Run**: from the repository root, the binary copy:

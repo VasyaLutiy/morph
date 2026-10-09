@@ -119,5 +119,6 @@ before/after.
 - Every library the code imports is declared (exact version, `uses`, a 2–5 KB digest) and installed by the scaffold
   phase; nothing is fetched by an acceptance.
 - `morph plan` exit 0; `morph deck check` errors 0; every acceptance red per example on stubs in a scratch worktree,
-  each stub log passing `decks/tools/stubcheck.mjs` (no build/vet/tsc line outside the card's targets);
+  each stub log passing `decks/tools/stubcheck.mjs` (no build/vet/tsc line outside the card's targets), and for a Go
+  `--only` deck each stub tree passing `decks/tools/fullvet.mjs` (the `== full` overlay vetted);
   mutants within the cap killed or recorded; chain under 250 s.

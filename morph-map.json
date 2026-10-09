@@ -1,7 +1,7 @@
 {
   "package": "src",
   "docs": [
-    "docs/TASK_P20_rerun.md"
+    "docs/TASK_P21a_breaking.md"
   ],
   "groups": {
     "card-model": [
@@ -1724,20 +1724,22 @@
         "src/cli/planCommand.ts"
       ],
       "context_slice": [
-        "docs/TASK_P20_rerun.md",
+        "docs/TASK_P21a_breaking.md",
         "docs/CONVENTIONS.md",
         "src/cli/types.ts",
         "src/planner/types.ts",
-        "src/planner/selectCards.ts",
+        "src/planner/hideLater.ts",
+        "src/cli/goTree.ts",
         "src/builder/types.ts"
       ],
       "depends_on": [
-        "parse-command",
-        "select-cards"
+        "read-go-tree",
+        "hide-later",
+        "build-acceptances"
       ],
       "variants": 2,
       "max_tokens": 12000,
-      "instruction": "Read docs/TASK_P20_rerun.md sections 2.2 (src/cli/planCommand.ts: --only) and 4. Patch src/cli/planCommand.ts (its current text follows) and return it WHOLE; change nothing else in it. After Plan Spec, when args.only is given: selectCards(plan, args.only) from \"../planner/selectCards.js\", its error → code 2 DeckError with that message, else its plan replaces Plan Spec's for every later step; with --checks, the checks given to buildAcceptances keep only the cards of that plan. Without --only nothing changes. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P21a_breaking.md sections 2.2 (src/cli/planCommand.ts: hide) and 4. Patch src/cli/planCommand.ts (its current text follows) and return it WHOLE; change nothing else in it. When args.only is given and the resolved profile's id is \"go\", the object passed to buildAcceptances also holds hide: hideLater(plan, readGoTree(root)) — hideLater from \"../planner/hideLater.js\", readGoTree from \"./goTree.js\", plan being the subset plan Select Cards returned; otherwise the object stays exactly as it is (no hide key) and the tree is not read. Without --only nothing changes. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "render-judge": {
       "intent": "generate",
@@ -1827,22 +1829,21 @@
     "plan-command-judge": {
       "intent": "generate",
       "targets": [
-        "tests/cli/planCommand.p20.examples.test.ts"
+        "tests/cli/planCommand.p21.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P20_rerun.md",
+        "docs/TASK_P21a_breaking.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/cli/types.ts",
         "src/cli/planCommand.ts",
-        "src/cards/types.ts",
-        "tests/fixtures/cli/goMini.sameGen.map.json"
+        "src/cards/types.ts"
       ],
       "depends_on": [
         "plan-command"
       ],
       "max_tokens": 20000,
-      "instruction": "You write tests/cli/planCommand.p20.examples.test.ts only, a NEW file with the tests of Plan Command examples 12 and 13 (examples 1-11 are already tested). Read docs/TASK_P20_rerun.md sections 2.1 (the go-mini root, its skeleton verbatim) and 2.2 (Plan Command and its table) and 2.3 (the planCommand.p20 bullet). Import planCommand from \"../../src/cli/planCommand.js\", tmpRoot and fixture from \"../helpers.js\", types with `import type`. Every tmp root is removed in finally. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/cli/planCommand.p21.examples.test.ts only, a NEW file with the test of Plan Command example 14 (examples 1-13 are already tested). Read docs/TASK_P21a_breaking.md sections 2.1 (the go-p7b root, its skeleton verbatim) and 2.2 (Plan Command: hide, and its table) and 2.3 (the planCommand.p21 bullet). Import planCommand from \"../../src/cli/planCommand.js\", tmpRoot and fixture from \"../helpers.js\", types with `import type`. Every tmp root is removed in finally. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "read-checks": {
       "intent": "generate",
@@ -1914,22 +1915,19 @@
     "build-acceptances": {
       "intent": "patch",
       "targets": [
+        "src/builder/types.ts",
         "src/builder/buildAcceptances.ts"
       ],
       "context_slice": [
-        "docs/TASK_P19b_deps.md",
+        "docs/TASK_P21a_breaking.md",
         "docs/CONVENTIONS.md",
-        "src/builder/types.ts",
         "src/builder/compose.ts",
         "src/builder/goAcceptance.ts"
       ],
-      "depends_on": [
-        "go-acceptance",
-        "compose"
-      ],
+      "depends_on": [],
       "variants": 2,
       "max_tokens": 14000,
-      "instruction": "Read docs/TASK_P19b_deps.md sections 2.2 (src/builder/buildAcceptances.ts: uses and vendor into every member's Card Context) and 4. Patch src/builder/buildAcceptances.ts (its current text follows) and return it WHOLE; change nothing else in it. Every member's ctx gains allowed (input.uses[customId] as given when input.uses has that OWN key, else []) and vendor (input.vendor === true); every check, message, order and the rest of the ctx stay exactly as they are. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P21a_breaking.md sections 2.2 (src/builder/types.ts and src/builder/buildAcceptances.ts: hide) and 4. Patch both files (their current texts follow) and return each WHOLE; change nothing else in them. types.ts: BuildInput gains the optional field `hide?: Record<string, string[]>` after vendor. buildAcceptances.ts: a member whose customId is an OWN key of input.hide gets ctx.siblings = its siblings followed by each path of input.hide[customId] the list does not hold yet, and ctx.fullExclude = checks.fullExclude followed by each such path it does not hold yet (new arrays; checks is never changed); every other check, message, order and field stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "steps-judge": {
       "intent": "generate",
@@ -2008,21 +2006,22 @@
     "build-acceptances-judge": {
       "intent": "generate",
       "targets": [
-        "tests/builder/buildAcceptances.p19.examples.test.ts"
+        "tests/builder/buildAcceptances.p21.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P19b_deps.md",
+        "docs/TASK_P21a_breaking.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/builder/types.ts",
         "src/builder/buildAcceptances.ts",
-        "src/builder/goAcceptance.ts"
+        "src/builder/goAcceptance.ts",
+        "tests/fixtures/builder/examples.json"
       ],
       "depends_on": [
         "build-acceptances"
       ],
       "max_tokens": 16000,
-      "instruction": "You write tests/builder/buildAcceptances.p19.examples.test.ts only, a NEW file with the tests of Build Acceptances examples 7 and 8 (examples 1-6 are already tested). Read docs/TASK_P19b_deps.md sections 2.1 (the card, checks and ctx helpers, verbatim; the fixtures) and 2.2 (Build Acceptances) and 2.3 (the buildAcceptances.p19 bullet). Import buildAcceptances from \"../../src/builder/buildAcceptances.js\", codeAcceptance from \"../../src/builder/compose.js\", GO_ENV, GO_ENV_VENDOR and goJudgeAcceptance from \"../../src/builder/goAcceptance.js\", DEFAULT_FROZEN from \"../../src/builder/readChecks.js\", TYPESCRIPT and GO from \"../../src/language/profiles.js\", fixture from \"../helpers.js\", types with `import type`. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/builder/buildAcceptances.p21.examples.test.ts only, a NEW file with the test of Build Acceptances example 9 (examples 1-8 are already tested). Read docs/TASK_P21a_breaking.md sections 2.1 (the Build Acceptances skeleton, verbatim) and 2.2 (Build Acceptances: hide) and 2.3 (the buildAcceptances.p21 bullet). Import buildAcceptances from \"../../src/builder/buildAcceptances.js\", goCodeAcceptance from \"../../src/builder/goAcceptance.js\", DEFAULT_FROZEN from \"../../src/builder/readChecks.js\", GO from \"../../src/language/profiles.js\", types with `import type`. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "read-plan-checks": {
       "intent": "generate",
@@ -3141,6 +3140,80 @@
       ],
       "max_tokens": 16000,
       "instruction": "You write tests/planner/selectCards.examples.test.ts only. Read docs/TASK_P20_rerun.md sections 2.1 (subset.plan.json and the skeleton) and 2.2 (Select Cards and its table) and 2.3 (the selectCards bullet). Import selectCards from \"../../src/planner/selectCards.js\", fixtureJson from \"../helpers.js\", types with `import type`. One test per example of Select Cards (1-4), in record order, named \"Select Cards example <n>: <what>\"; then at most 6 of your own on section 2.2 rows. Every result is a union: compare it whole with toStrictEqual or narrow it (`r.ok ? … : …`) before a field. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+    },
+    "hide-later": {
+      "intent": "generate",
+      "targets": [
+        "src/planner/hideLater.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P21a_breaking.md",
+        "docs/CONVENTIONS.md",
+        "src/cards/types.ts",
+        "src/planner/types.ts"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 8000,
+      "instruction": "Read docs/TASK_P21a_breaking.md sections 2.2 (src/planner/hideLater.ts) and 4. Write one file src/planner/hideLater.ts: `export interface GoTree` and `export function hideLater(plan: Plan, tree: GoTree): Record<string, string[]>` exactly as section 2.2 shows, importing `path` from \"node:path\" (path.posix.dirname only) and `import type { Plan } from \"./types.js\"`. Pure: no process, no console, no Date, no Math.random, no file read, no other node: module; the plan and the tree are never changed. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "read-go-tree": {
+      "intent": "generate",
+      "targets": [
+        "src/cli/goTree.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P21a_breaking.md",
+        "docs/CONVENTIONS.md",
+        "src/planner/hideLater.ts"
+      ],
+      "depends_on": [
+        "hide-later"
+      ],
+      "variants": 2,
+      "max_tokens": 8000,
+      "instruction": "Read docs/TASK_P21a_breaking.md sections 2.2 (src/cli/goTree.ts) and 4. Write one file src/cli/goTree.ts: `export function readGoTree(root: string): GoTree` exactly as section 2.2 shows, importing fs from \"node:fs\", path from \"node:path\" and `import type { GoTree } from \"../planner/hideLater.js\"`. Synchronous reads only (readFileSync, readdirSync with withFileTypes); no process, no console, no child process. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "hide-later-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/planner/hideLater.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P21a_breaking.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/cards/types.ts",
+        "src/planner/types.ts",
+        "src/planner/hideLater.ts",
+        "tests/fixtures/planner/hide.plan.json",
+        "tests/fixtures/planner/hide.tree.json"
+      ],
+      "depends_on": [
+        "hide-later"
+      ],
+      "max_tokens": 20000,
+      "instruction": "You write tests/planner/hideLater.examples.test.ts only, a NEW file. Read docs/TASK_P21a_breaking.md sections 2.1 (hide.plan.json, hide.tree.json and the Hide Later skeleton, verbatim) and 2.2 (Hide Later and its table) and 2.3 (the hideLater bullet). Import hideLater from \"../../src/planner/hideLater.js\", fixtureJson from \"../helpers.js\", types with `import type`. One test per example of Hide Later (1-4), in record order, named \"Hide Later example <n>: <what>\", each expected result written out as a literal; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+    },
+    "read-go-tree-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/cli/goTree.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P21a_breaking.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/planner/hideLater.ts",
+        "src/cli/goTree.ts",
+        "tests/fixtures/cli/goTree.json",
+        "tests/fixtures/cli/goP7b.tree.json"
+      ],
+      "depends_on": [
+        "read-go-tree"
+      ],
+      "max_tokens": 16000,
+      "instruction": "You write tests/cli/goTree.examples.test.ts only, a NEW file. Read docs/TASK_P21a_breaking.md sections 2.1 (the Read Go Tree skeleton, verbatim; the fixtures) and 2.2 (Read Go Tree and its table) and 2.3 (the goTree bullet). Import readGoTree from \"../../src/cli/goTree.js\", tmpRoot, fixture and fixtureJson from \"../helpers.js\", types with `import type`. One test per example of Read Go Tree (1-3), in record order, named \"Read Go Tree example <n>: <what>\"; then at most 6 of your own on section 2.2 rows. Every tmp root is removed in finally. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     }
   }
 }

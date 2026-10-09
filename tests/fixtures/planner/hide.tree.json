@@ -1,0 +1,36 @@
+{
+  "files": [
+    "calc/ratio_of.go",
+    "calc/ratio_of_examples_test.go",
+    "calc/scale_value.go",
+    "calc/scale_value_examples_test.go",
+    "internal/testhelp/testhelp.go",
+    "report/format_line.go",
+    "report/format_line_examples_test.go",
+    "summary/summary.go",
+    "summary/summary_examples_test.go"
+  ],
+  "imports": {
+    "calc/ratio_of.go": [],
+    "calc/ratio_of_examples_test.go": [
+      "internal/testhelp"
+    ],
+    "calc/scale_value.go": [],
+    "calc/scale_value_examples_test.go": [
+      "internal/testhelp"
+    ],
+    "internal/testhelp/testhelp.go": [],
+    "report/format_line.go": [
+      "calc"
+    ],
+    "report/format_line_examples_test.go": [
+      "internal/testhelp"
+    ],
+    "summary/summary.go": [
+      "report"
+    ],
+    "summary/summary_examples_test.go": [
+      "internal/testhelp"
+    ]
+  }
+}

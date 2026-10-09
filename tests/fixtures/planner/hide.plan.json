@@ -1,0 +1,165 @@
+{
+  "spec": "contour.yaml",
+  "components": [
+    "calc",
+    "report",
+    "summary"
+  ],
+  "cards": [
+    {
+      "customId": "s",
+      "intent": "patch",
+      "targets": [
+        "calc/scale_value.go"
+      ],
+      "contextSlice": [
+        "go.mod"
+      ],
+      "instruction": "rewrite calc/scale_value.go",
+      "acceptance": null,
+      "model": null,
+      "maxTokens": 6000,
+      "reasoning": null,
+      "variants": 1,
+      "dependsOn": []
+    },
+    {
+      "customId": "f",
+      "intent": "patch",
+      "targets": [
+        "report/format_line.go"
+      ],
+      "contextSlice": [
+        "go.mod"
+      ],
+      "instruction": "rewrite report/format_line.go",
+      "acceptance": null,
+      "model": null,
+      "maxTokens": 6000,
+      "reasoning": null,
+      "variants": 1,
+      "dependsOn": [
+        "s"
+      ]
+    },
+    {
+      "customId": "r",
+      "intent": "patch",
+      "targets": [
+        "calc/ratio_of.go"
+      ],
+      "contextSlice": [
+        "go.mod"
+      ],
+      "instruction": "rewrite calc/ratio_of.go",
+      "acceptance": null,
+      "model": null,
+      "maxTokens": 6000,
+      "reasoning": null,
+      "variants": 1,
+      "dependsOn": [
+        "s"
+      ]
+    },
+    {
+      "customId": "sj",
+      "intent": "patch",
+      "targets": [
+        "calc/scale_value_examples_test.go"
+      ],
+      "contextSlice": [
+        "go.mod"
+      ],
+      "instruction": "rewrite calc/scale_value_examples_test.go",
+      "acceptance": null,
+      "model": null,
+      "maxTokens": 6000,
+      "reasoning": null,
+      "variants": 1,
+      "dependsOn": [
+        "s"
+      ]
+    },
+    {
+      "customId": "fj",
+      "intent": "patch",
+      "targets": [
+        "report/format_line_examples_test.go"
+      ],
+      "contextSlice": [
+        "go.mod"
+      ],
+      "instruction": "rewrite report/format_line_examples_test.go",
+      "acceptance": null,
+      "model": null,
+      "maxTokens": 6000,
+      "reasoning": null,
+      "variants": 1,
+      "dependsOn": [
+        "f"
+      ]
+    },
+    {
+      "customId": "m",
+      "intent": "patch",
+      "targets": [
+        "summary/summary.go",
+        "summary/README.md"
+      ],
+      "contextSlice": [
+        "go.mod"
+      ],
+      "instruction": "rewrite summary/summary.go",
+      "acceptance": null,
+      "model": null,
+      "maxTokens": 6000,
+      "reasoning": null,
+      "variants": 1,
+      "dependsOn": [
+        "f",
+        "kept"
+      ]
+    },
+    {
+      "customId": "mj",
+      "intent": "patch",
+      "targets": [
+        "summary/summary_examples_test.go"
+      ],
+      "contextSlice": [
+        "go.mod"
+      ],
+      "instruction": "rewrite summary/summary_examples_test.go",
+      "acceptance": null,
+      "model": null,
+      "maxTokens": 6000,
+      "reasoning": null,
+      "variants": 1,
+      "dependsOn": [
+        "m"
+      ]
+    }
+  ],
+  "generations": [
+    [
+      "s"
+    ],
+    [
+      "f",
+      "r",
+      "sj"
+    ],
+    [
+      "fj",
+      "m"
+    ],
+    [
+      "mj"
+    ]
+  ],
+  "externalDependsOn": {
+    "m": [
+      "kept"
+    ]
+  }
+}

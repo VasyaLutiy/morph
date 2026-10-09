@@ -1,0 +1,40 @@
+{
+  "files": [
+    "control/control.go",
+    "control/control_examples_test.go",
+    "daemon/daemon.go",
+    "daemon/daemon_examples_test.go",
+    "internal/testhelp/testhelp.go",
+    "mcp/session.go",
+    "supervisor/guard.go",
+    "supervisor/guard_examples_test.go",
+    "supervisor/loop.go",
+    "supervisor/loop_examples_test.go"
+  ],
+  "imports": {
+    "control/control.go": [],
+    "control/control_examples_test.go": [
+      "internal/testhelp"
+    ],
+    "daemon/daemon.go": [
+      "supervisor"
+    ],
+    "daemon/daemon_examples_test.go": [
+      "internal/testhelp"
+    ],
+    "internal/testhelp/testhelp.go": [],
+    "mcp/session.go": [
+      "supervisor"
+    ],
+    "supervisor/guard.go": [],
+    "supervisor/guard_examples_test.go": [
+      "internal/testhelp"
+    ],
+    "supervisor/loop.go": [
+      "control"
+    ],
+    "supervisor/loop_examples_test.go": [
+      "internal/testhelp"
+    ]
+  }
+}

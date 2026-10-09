@@ -1,0 +1,102 @@
+{
+ "phase": "p21",
+ "ownGit": true,
+ "frozen": [
+  "contour.yaml",
+  "morph-map.json",
+  "docs",
+  "decks",
+  "tests/fixtures",
+  "templates"
+ ],
+ "cards": [
+  {
+   "id": "hide-later"
+  },
+  {
+   "id": "read-go-tree"
+  },
+  {
+   "id": "build-acceptances"
+  },
+  {
+   "id": "plan-command"
+  },
+  {
+   "id": "hide-later-judge",
+   "files": [
+    {
+     "file": "tests/planner/hideLater.examples.test.ts",
+     "min": 4,
+     "max": 10,
+     "new": true,
+     "lits": [
+      "Hide Later example 1",
+      "Hide Later example 2",
+      "Hide Later example 3",
+      "Hide Later example 4",
+      "planner/hide.plan.json",
+      "planner/hide.tree.json",
+      "cmd/tool/main.go",
+      "summary/legacy_test.go"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "read-go-tree-judge",
+   "files": [
+    {
+     "file": "tests/cli/goTree.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": [
+      "Read Go Tree example 1",
+      "Read Go Tree example 2",
+      "Read Go Tree example 3",
+      "cli/goTree.json",
+      "cli/goP7b.tree.json",
+      "y/deep",
+      "brk/calc"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "build-acceptances-judge",
+   "files": [
+    {
+     "file": "tests/builder/buildAcceptances.p21.examples.test.ts",
+     "min": 1,
+     "max": 7,
+     "new": true,
+     "lits": [
+      "Build Acceptances example 9",
+      "calc/b_test.go",
+      "calc/old_test.go",
+      "zz"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "plan-command-judge",
+   "files": [
+    {
+     "file": "tests/cli/planCommand.p21.examples.test.ts",
+     "min": 1,
+     "max": 7,
+     "new": true,
+     "lits": [
+      "Plan Command example 14",
+      "go-p7b/",
+      "mcp/session.go",
+      "daemon-core-judge",
+      "supervisor/guard.go"
+     ]
+    }
+   ]
+  }
+ ]
+}

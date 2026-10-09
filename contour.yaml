@@ -1473,7 +1473,8 @@ System:
             extraCards: []}); an error → 2 DeckError, it. Plan Spec({record, map, spec: args.spec, components: args.components, judge: args.judge, hasFile: a
             path is a regular file under root}); an error → 2 DeckError, it. P20: with args.only, Select Cards(plan, args.only), an error → 2 DeckError, it; its plan
             replaces Plan Spec's from here on, and the checks given to Build Acceptances keep only its cards, so a card outside the subset is never a
-            sibling and its file never blanked. With args.checks: profile = Resolve Profile(the first selected Component's
+            sibling and its file never blanked. P21: with args.only and the go profile, Build Acceptances also gets hide: Hide Later(that plan, Read Go
+            Tree(root)). With args.checks: profile = Resolve Profile(the first selected Component's
             language, map.language) — the Component's wins, as in the cut (P15) — an error → 2 DeckError "the map: " + it; Read Plan Checks(root, args.checks,
             profile) (a failure is the result); Build Acceptances({cards, checks, profile, texts, uses: Plan Spec's uses, vendor: "vendor/modules.txt" is a
             regular file under root} (P19)), errors → 2 DeckError "acceptances not built (<n> error|errors):\n"
@@ -1495,6 +1496,7 @@ System:
             - {given: 'examples.json["Plan Command 11"].given', ref: 'tests/fixtures/planner/deps.yaml, tests/fixtures/planner/deps.map.json', when: planCommand, then: 'examples.json["Plan Command 11"].then'}
             - {given: 'examples.json["Plan Command 12"].given', ref: 'tests/fixtures/go-mini/, tests/fixtures/cli/goMini.sameGen.map.json', when: planCommand, then: 'examples.json["Plan Command 12"].then'}
             - {given: 'examples.json["Plan Command 13"].given', ref: 'tests/fixtures/go-mini/, tests/fixtures/cli/goMini.deck.json', when: planCommand, then: 'examples.json["Plan Command 13"].then'}
+            - {given: 'examples.json["Plan Command 14"].given', ref: 'tests/fixtures/go-p7b/', when: planCommand, then: 'examples.json["Plan Command 14"].then'}
         - name: Read Plan Checks
           description: Files of `plan --checks`.
           behavior: >
@@ -2504,6 +2506,18 @@ System:
         tests/fixtures/planner/subset.plan.json is the Plan of the examples: spec "s.yaml", components ["k"], cards a [],
         e ["outside"], b ["a"], c ["a"], d ["b", "c"] (dependsOn), generations [["a", "e"], ["b", "c"], ["d"]],
         externalDependsOn {"e": ["outside"]}.
+        P21 (issue #12): a Go re-cut whose record renames or re-signs an exported identifier used by cards of LATER
+        generations of the same subset (MorphStudio P7b: `supervisor/guard.go:20:22: l.Resumes undefined`, a gen-3 file
+        in the gen-2 card's build). Hide Later (src/planner/hideLater.ts, layer planner, pure, node:path only) says which
+        Go files of the subset each card hides because the run has not written them yet; Read Go Tree (src/cli/goTree.ts,
+        layer cli, node:fs and node:path) reads the module's Go files and their own-package imports for it.
+        tests/fixtures/planner/hide.plan.json is the Plan of the Hide Later examples: cards s ["calc/scale_value.go"],
+        f ["report/format_line.go"], r ["calc/ratio_of.go"], sj ["calc/scale_value_examples_test.go"],
+        fj ["report/format_line_examples_test.go"], m ["summary/summary.go", "summary/README.md"],
+        mj ["summary/summary_examples_test.go"] (targets), generations [["s"], ["f", "r", "sj"], ["fj", "m"], ["mj"]];
+        tests/fixtures/planner/hide.tree.json its Go Tree (9 files; report/format_line.go imports calc,
+        summary/summary.go imports report, the four _test.go files import internal/testhelp). tests/fixtures/go-p7b is a
+        module in MorphStudio P7b's shape (Loop.Resumes → Restarts, Exited gains stderr; guard.go:20 reads l.Resumes).
       language: typescript
       requirements: [Deterministic Core]
       functions:
@@ -2532,6 +2546,70 @@ System:
             - given: 'subset.plan.json, only ["d", "c", "b", "e", "a"]'
               when: selectCards
               then: '{ok: true, plan} with plan equal to subset.plan.json whole'
+        - name: Hide Later
+          description: The Go files of an --only subset each card hides because the run has not written them yet.
+          behavior: >
+            hideLater(plan, tree), tree = Go Tree. plan.generations shorter than 2 → {} (a one-generation subset keeps
+            P20's acceptances byte for byte). Else for every card c of plan.cards, with g the index of the generation
+            holding c's customId: hide = the targets ending ".go" of every OTHER card of plan.cards whose generation index
+            is >= g (its siblings and every later card), in plan.cards order and then target order, each once. Then,
+            until no directory qualifies: a directory D (path.posix.dirname) of a file in hide qualifies when the
+            non-test files of D in tree.files (dirname D, not ending "_test.go") are at least one and all in hide, and a
+            file of tree.files NOT in hide lies in D or imports D (tree.imports[file] holds D) — a package hidden whole
+            that a visible file still uses; those non-test files are removed from hide (D's test files stay hidden).
+            → {<c.customId>: hide} for every card of plan.cards, an empty list included. The plan and the tree are never
+            changed. A card's own package is never hidden whole: its own target is never in its hide.
+          steps:
+            - reads: Plan
+            - reads: Go Tree
+            - produces: Hide Map
+          examples:
+            - given: 'hide.plan.json, hide.tree.json'
+              when: hideLater
+              then: '{"s": ["report/format_line.go", "calc/ratio_of.go", "calc/scale_value_examples_test.go", "report/format_line_examples_test.go", "summary/summary.go", "summary/summary_examples_test.go"], "f": ["calc/ratio_of.go", "calc/scale_value_examples_test.go", "report/format_line_examples_test.go", "summary/summary.go", "summary/summary_examples_test.go"], "r": ["report/format_line.go", "calc/scale_value_examples_test.go", "report/format_line_examples_test.go", "summary/summary.go", "summary/summary_examples_test.go"], "sj": ["report/format_line.go", "calc/ratio_of.go", "report/format_line_examples_test.go", "summary/summary.go", "summary/summary_examples_test.go"], "fj": ["summary/summary.go", "summary/summary_examples_test.go"], "m": ["report/format_line_examples_test.go", "summary/summary_examples_test.go"], "mj": []}'
+            - given: 'hide.plan.json; hide.tree.json plus "cmd/tool/main.go" (files sorted again) importing ["summary"]'
+              when: hideLater
+              then: '{"s": ["calc/ratio_of.go", "calc/scale_value_examples_test.go", "report/format_line_examples_test.go", "summary/summary_examples_test.go"], "f": ["calc/ratio_of.go", "calc/scale_value_examples_test.go", "report/format_line_examples_test.go", "summary/summary_examples_test.go"], "r": ["calc/scale_value_examples_test.go", "report/format_line_examples_test.go", "summary/summary_examples_test.go"], "sj": ["calc/ratio_of.go", "report/format_line_examples_test.go", "summary/summary_examples_test.go"], "fj": ["summary/summary_examples_test.go"], "m": ["report/format_line_examples_test.go", "summary/summary_examples_test.go"], "mj": []} — summary.go is kept for main.go, then format_line.go for summary.go'
+            - given: 'hide.plan.json; hide.tree.json plus "summary/legacy_test.go" (files sorted again) importing []'
+              when: hideLater
+              then: 'the result of example 2 — a kept test file in summary/ keeps summary.go, then format_line.go'
+            - given: 'hide.plan.json with cards [its s] and generations [["s"]]; then hide.plan.json and hide.tree.json without "summary/summary.go" (the file and its imports key) plus "cmd/tool/main.go" importing ["summary"]'
+              when: hideLater
+              then: '{}; then the result of example 1 — summary/ has no non-test file on disk, so nothing qualifies'
+        - name: Read Go Tree
+          description: The Go files of a module and the module's own packages each imports.
+          behavior: >
+            readGoTree(root). The module path is the first line of root/go.mod matching `module <path>` (no go.mod, or
+            no such line → none). files: every regular file whose name ends ".go" under root, walking directories (a
+            symbolic link is not followed) and skipping every directory named "vendor" or "testdata" or whose name starts
+            with "." or "_", and every file whose name starts with "." or "_" (the go tool's own rules); paths relative
+            to root joined by "/", sorted (JavaScript's default sort). imports: for every file of files, the module's own
+            packages it imports as directories, in first-seen order, each once: an import path equal to the module path
+            → ".", starting with the module path + "/" → the rest; every other import is left out; with no module path
+            every list is []. The paths are the quoted strings of the import declarations: a line starting with `import`
+            followed by an optional name (an identifier, "." or "_") and a quoted path, and each line of an `import (`
+            ... `)` block holding a quoted path once its `//` comment is removed. → {files, imports}.
+          steps:
+            - produces: Go Tree
+          examples:
+            - given: 'a tmp root holding go-p7b''s contour.yaml, morph-map.json, go.mod, internal/testhelp/testhelp.go, decks/b1/checks.json, decks/b1/parts/_phase-loop_probe_test.go, the eight Go files of control/, supervisor/ and daemon/ and mcp/session.go'
+              ref: "tests/fixtures/go-p7b/, tests/fixtures/cli/goP7b.tree.json"
+              when: readGoTree
+              then: 'equal to goP7b.tree.json: 10 files (the probe under decks/ starts with "_"); daemon/daemon.go and mcp/session.go import ["supervisor"], supervisor/loop.go ["control"], the four _test.go files ["internal/testhelp"], the rest []'
+            - given: 'a tmp root holding the files of tests/fixtures/cli/goTree.json (path → text): go.mod "module example.com/m" after a comment line; main.go, x/x.go (a block with fmt, y, a dot import, a blank import of the module itself, a commented import, example.com/mother/q and y again), y/y.go (a named import of y/deep), y/deep/d.go (an import only inside a comment), z/z.go, z/z_test.go; and vendor/…, x/testdata/…, .cache/…, _old/…, x/_draft.go, x/.swap.go, z/notes.txt, decks/p1/parts/_x_probe_test.go'
+              ref: "tests/fixtures/cli/goTree.json"
+              when: readGoTree
+              then: '{files: ["main.go", "x/x.go", "y/deep/d.go", "y/y.go", "z/z.go", "z/z_test.go"], imports: {"main.go": ["x"], "x/x.go": ["y", "z", "."], "y/deep/d.go": [], "y/y.go": ["y/deep"], "z/z.go": [], "z/z_test.go": ["x"]}}'
+            - given: 'a tmp root with no go.mod: a/a.go importing "brk/calc", b.go'
+              when: readGoTree
+              then: '{files: ["a/a.go", "b.go"], imports: {"a/a.go": [], "b.go": []}}'
+      dataObjects:
+        - name: Go Tree
+          description: The Go files of a module (relative, sorted) and, per file, the module's own packages it imports as directories.
+          schema: "{ files: string[]; imports: Record<string, string[]> }"
+        - name: Hide Map
+          description: Per card of a subset, the Go files its acceptance hides beyond its generation's siblings.
+          schema: "Record<string, string[]>"
 
     # ---------------------------------------------------------------- P10b
     - name: builder
@@ -2795,7 +2873,9 @@ System:
             input cards in their order, each member a copy with its acceptance, every other card as
             given. probeFile(profile, id) (exported; cli reads the probe by it) = "_<id>_probe_test.go"
             for the go profile (the leading "_" makes the go tool ignore the file where it is kept,
-            decks/<phase>/parts), else "<id>.probe.ts".
+            decks/<phase>/parts), else "<id>.probe.ts". P21 (#12): the input's optional hide (customId → paths;
+            Plan Command's Hide Later for a Go --only cut) appends hide[customId] (an own key) to a member's ctx siblings
+            and to its ctx fullExclude, each path a list already holds skipped; no hide or no key → as before.
           steps:
             - calls: Code Acceptance
             - calls: Judge Acceptance
@@ -2831,6 +2911,7 @@ System:
               ref: "tests/fixtures/builder/go/code1.txt"
               when: "buildAcceptances"
               then: 'ok; percent-of''s acceptance = code1.txt with "export GOFLAGS=-mod=mod " become "export GOFLAGS=-mod=vendor " and its guard line "node $P/guard.mjs src calc/percent_of.go" ending in " ''github.com/dustin/go-humanize,golang.org/x/text''"; the judge''s = goJudgeAcceptance(its ctx with siblings ["calc/percent_of.go"] and vendor true, files), holding "export GOFLAGS=-mod=vendor " and no "-mod=mod"'
+            - {given: 'examples.json["Build Acceptances 9"].given', ref: "tests/fixtures/builder/examples.json", when: buildAcceptances, then: 'examples.json["Build Acceptances 9"].then'}
       dataObjects:
         - name: Checks
           description: A phase's acceptance knobs, read from its checks document (decks/<phase>/checks.json).

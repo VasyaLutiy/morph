@@ -111,7 +111,10 @@ preparation agent repeats this line.
    named fallback below. Every
    acceptance red per example on stubs in a scratch worktree, and `node decks/tools/stubcheck.mjs <log> <probe|guard>
    <targets>` exit 0 on every stub log (the red at the expected stage, and no build/vet/tsc line naming a file outside
-   the card's targets — a guard count alone missed MorphStudio's vet line, issue #11); mutations killed (**every mutant run
+   the card's targets — a guard count alone missed MorphStudio's vet line, issue #11); for a Go deck cut with `--only`,
+   also `node decks/tools/fullvet.mjs <deck> <card>` exit 0 on every stub tree (the whole module vetted under the card's
+   `== full` overlay, which a stub run never reaches: a file outside the card's targets broken by the record is named
+   before any paid run — P21a, issue #12; P21b moves this check into `morph deck check`); mutations killed (**every mutant run
    under a timeout**, `subprocess.run(..., timeout=120)`, a timeout counted as killed — operator
    07.10, after a mutant made a batch-wait loop infinite and hung the P11b mutation run 28 min).
    **Mutation cap (operator 08.10):** mutants target only the record's examples and the contracts the
@@ -121,8 +124,8 @@ preparation agent repeats this line.
    baseline; record the mutant count and minutes in the MEASURE notes of every phase; the data and the
    deck committed on `main`.
 2. **Gate without the operator.** The run starts by itself only when ALL hold:
-   `morph plan` exit 0; `morph deck check` errors 0; every probe red per example with a readable line on the stubs and stubcheck.mjs exit 0 on each stub log; chain
-   under 250 s each; every mutant run under a timeout and the mutation cap kept (≤ 30 mutants, ≤ 20 min); forecast ≤ $1 for the phase; no slice over 200 KB. Otherwise the phase stops with a report in `docs/MEASURE.md` (row with
+   `morph plan` exit 0; `morph deck check` errors 0; every probe red per example with a readable line on the stubs and stubcheck.mjs exit 0 on each stub log (and
+   fullvet.mjs exit 0 on each stub tree of a Go `--only` deck); chain under 250 s each; every mutant run under a timeout and the mutation cap kept (≤ 30 mutants, ≤ 20 min); forecast ≤ $1 for the phase; no slice over 200 KB. Otherwise the phase stops with a report in `docs/MEASURE.md` (row with
    "stopped at gate: <reason>"), touches `~/.morph-wait-operator` and stops.
 3. **Run** (the session itself or a run agent): from the repo root, the binary copy
    `node /tmp/v2bin-<phase>/dist/cli.js run --root . --deck decks/<phase>/deck.json --processor
