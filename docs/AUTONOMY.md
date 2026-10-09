@@ -16,7 +16,7 @@ MEASURE rows, DECISIONS. Issue #15 is closed by the merge; the missing import ed
 map) is recorded for it, not fixed. The dogfood `morph gate` of this deck was not played (≈ 23 min) — P22b's gate plays it.
 
 **Next: P22b** (issue #13 items 2–3: mutants inside `morph gate` — a stop time for Run Mutants, the killer, the cap — and
-the byte-identity corpus + its test), the operator's word given 09.10 (via the coordinator): prepare and run it by the
+the byte-identity corpus + its test), the operator's word given 09.10 (to the salvage session): prepare and run it by the
 cycle ("The cycle of one phase"), then 🧪 smoke post and a **STOP** for the operator. #13 stays open. Every MorphV2 session
 ends with `~/.morph-wait-operator` (the operator side restarts it); never touch `/home/morph/MorphStudio` or its tmux
 session `MorphStudio`.
