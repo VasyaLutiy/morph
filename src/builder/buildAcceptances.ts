@@ -2,6 +2,8 @@ import { layerGenerations } from "../cards/layer.js";
 import { hasExtension, testTarget } from "../language/paths.js";
 import { codeAcceptance, judgeAcceptance } from "./compose.js";
 import { goCodeAcceptance, goJudgeAcceptance } from "./goAcceptance.js";
+import { untrackedStep } from "./steps.js";
+import { TRANSACTION_MARK } from "../cards/transaction.js";
 import type { Deck } from "../cards/types.js";
 import type { BuildInput, BuildResult, CardContext, Checks } from "./types.js";
 import type { Card } from "../cards/types.js";
@@ -123,6 +125,8 @@ export function buildAcceptances(input: BuildInput): BuildResult {
     siblingsOf.set(member.customId, siblings);
   }
 
+  const isTransaction = input.transaction === true;
+
   const acceptanceOf = new Map<string, string>();
   for (const check of checks.cards) {
     const card = byId.get(check.id);
@@ -135,10 +139,13 @@ export function buildAcceptances(input: BuildInput): BuildResult {
         : [];
     const baseSiblings = siblingsOf.get(card.customId) ?? [];
     const hidden: string[] | undefined =
-      input.hide !== undefined && Object.prototype.hasOwnProperty.call(input.hide, card.customId)
-        ? input.hide[card.customId]
-        : undefined;
-    const ctxSiblings: string[] = hidden === undefined ? baseSiblings : baseSiblings.slice();
+      isTransaction
+        ? undefined
+        : input.hide !== undefined && Object.prototype.hasOwnProperty.call(input.hide, card.customId)
+          ? input.hide[card.customId]
+          : undefined;
+    const ctxSiblings: string[] =
+      isTransaction ? [] : hidden === undefined ? baseSiblings : baseSiblings.slice();
     const ctxFullExclude: string[] = hidden === undefined ? checks.fullExclude : checks.fullExclude.slice();
     if (hidden !== undefined) {
       for (const path of hidden) {
@@ -184,10 +191,34 @@ export function buildAcceptances(input: BuildInput): BuildResult {
     }
   }
 
+  let allTargets: readonly string[] = [];
+  if (isTransaction) {
+    const seen = new Set<string>();
+    const collected: string[] = [];
+    for (const member of members) {
+      for (const t of member.targets) {
+        if (!seen.has(t)) {
+          seen.add(t);
+          collected.push(t);
+        }
+      }
+    }
+    allTargets = collected;
+  }
+
   const cards: Card[] = input.cards.map((card) => {
     const acceptance = acceptanceOf.get(card.customId);
     if (acceptance === undefined) {
       return card;
+    }
+    if (isTransaction) {
+      return {
+        ...card,
+        acceptance:
+          TRANSACTION_MARK +
+          "\n" +
+          acceptance.replace(untrackedStep(card.targets), () => untrackedStep(allTargets)),
+      };
     }
     return { ...card, acceptance };
   });
