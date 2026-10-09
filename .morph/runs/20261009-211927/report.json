@@ -1,0 +1,377 @@
+{
+  "runId": "20261009-211927",
+  "completedAt": 1791583139679,
+  "branch": "morph/20261009-211927",
+  "processor": "ds",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "check-identity",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": null,
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\nsrc/gate/gateCommand.ts(272,36): error TS2339: Property 'baselines' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,14): error TS2339: Property 'survivors' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,46): error TS2339: Property 'untried' does not exist on type 'never'.\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error \n[... 4443 chars clipped; diagnosis lines kept:]\n[...]\nypes/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(206,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(209,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(223,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(240,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(244,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(245,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(248,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(259,7): error TS2304: Cannot find name 'expect'.\n",
+        "== tsc\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "parse-command",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": null,
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\nsrc/gate/gateCommand.ts(272,36): error TS2339: Property 'baselines' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,14): error TS2339: Property 'survivors' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,46): error TS2339: Property 'untried' does not exist on type 'never'.\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error \n[... 4443 chars clipped; diagnosis lines kept:]\n[...]\nypes/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(206,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(209,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(223,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(240,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(244,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(245,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(248,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(259,7): error TS2304: Cannot find name 'expect'.\n",
+        "== tsc\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "run-mutants",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": null,
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\nsrc/gate/gateCommand.ts(272,36): error TS2339: Property 'baselines' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,14): error TS2339: Property 'survivors' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,46): error TS2339: Property 'untried' does not exist on type 'never'.\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error \n[... 4443 chars clipped; diagnosis lines kept:]\n[...]\nypes/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(206,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(209,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(223,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(240,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(244,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(245,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(248,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(259,7): error TS2304: Cannot find name 'expect'.\n",
+        "== tsc\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "check-identity-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": null,
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/gate/identity.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\nsrc/gate/gateCommand.ts(272,36): error TS2339: Property 'baselines' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,14): error TS2339: Property 'survivors' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,46): error TS2339: Property 'untried' does not exist on type 'never'.\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error \n[... 4443 chars clipped; diagnosis lines kept:]\n[...]\nypes/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(206,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(209,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(223,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(240,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(244,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(245,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(248,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(259,7): error TS2304: Cannot find name 'expect'.\n",
+        "== tsc\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "gate-mutants",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": null,
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\nsrc/gate/gateCommand.ts(272,36): error TS2339: Property 'baselines' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,14): error TS2339: Property 'survivors' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,46): error TS2339: Property 'untried' does not exist on type 'never'.\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error \n[... 4443 chars clipped; diagnosis lines kept:]\n[...]\nypes/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(206,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(209,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(223,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(240,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(244,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(245,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(248,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(259,7): error TS2304: Cannot find name 'expect'.\n",
+        "== tsc\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "parse-command-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": null,
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/gate.p22b.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\nsrc/gate/gateCommand.ts(272,36): error TS2339: Property 'baselines' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,14): error TS2339: Property 'survivors' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,46): error TS2339: Property 'untried' does not exist on type 'never'.\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error \n[... 4443 chars clipped; diagnosis lines kept:]\n[...]\nypes/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(206,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(209,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(223,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(240,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(244,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(245,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(248,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(259,7): error TS2304: Cannot find name 'expect'.\n",
+        "== tsc\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "run-mutants-judge",
+      "status": "failed",
+      "reason": "acceptance failed",
+      "attempts": 1,
+      "winningVariant": null,
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/reviewer/runMutants.p22b.examples.test.ts\n== own\n FAIL  tests/reviewer/runMutants.p22b.examples.test.ts > Run Mutants example 5: a far stopAt leaves every mutant tried and none untried\nAssertionError: expected 2 to be 1 // Object.is equality\n\n- Expected\n+ Received\n\n- 1\n+ 2\n\n ❯ tests/reviewer/runMutants.p22b.examples.test.ts:109:36\n    107|     expect(result.results.length).toBe(3);\n    108|     expect(result.untried).toStrictEqual([]);\n    109|     expect(result.findings.length).toBe(1);\n       |                                    ^\n    110|   } finally {\n    111|     r.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 2 passed (3)\n\nfirst difference at char 0 (line 1) of 1/1: expected \"1\" received \"2\"\n",
+      "earlierFailures": [
+        "== tsc\nsrc/gate/gateCommand.ts(272,36): error TS2339: Property 'baselines' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,14): error TS2339: Property 'survivors' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,46): error TS2339: Property 'untried' does not exist on type 'never'.\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error \n[... 4443 chars clipped; diagnosis lines kept:]\n[...]\nypes/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(206,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(209,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(223,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(240,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(244,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(245,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(248,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(259,7): error TS2304: Cannot find name 'expect'.\n",
+        "== tsc\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "gate-command",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 2,
+      "winningVariant": null,
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\nsrc/gate/gateCommand.ts(272,36): error TS2339: Property 'baselines' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,14): error TS2339: Property 'survivors' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,46): error TS2339: Property 'untried' does not exist on type 'never'.\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error \n[... 4443 chars clipped; diagnosis lines kept:]\n[...]\nypes/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(206,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(209,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(223,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(240,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(244,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(245,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(248,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(259,7): error TS2304: Cannot find name 'expect'.\n",
+        "== tsc\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "gate-mutants-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 2,
+      "winningVariant": null,
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/gate/gateMutants.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\nsrc/gate/gateCommand.ts(272,36): error TS2339: Property 'baselines' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,14): error TS2339: Property 'survivors' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,46): error TS2339: Property 'untried' does not exist on type 'never'.\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error \n[... 4443 chars clipped; diagnosis lines kept:]\n[...]\nypes/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(206,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(209,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(223,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(240,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(244,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(245,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(248,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(259,7): error TS2304: Cannot find name 'expect'.\n",
+        "== tsc\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null
+    },
+    {
+      "customId": "gate-command-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 3,
+      "winningVariant": null,
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/gate/gateCommand.p22b.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\nsrc/gate/gateCommand.ts(272,36): error TS2339: Property 'baselines' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,14): error TS2339: Property 'survivors' does not exist on type 'never'.\nsrc/gate/gateCommand.ts(309,46): error TS2339: Property 'untried' does not exist on type 'never'.\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error \n[... 4443 chars clipped; diagnosis lines kept:]\n[...]\nypes/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(206,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(209,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(223,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(240,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(244,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(245,3): error TS2304: Cannot find name 'expect'.\ntests/gate/gateMutants.examples.test.ts(248,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateMutants.examples.test.ts(259,7): error TS2304: Cannot find name 'expect'.\n",
+        "== tsc\ntests/gate/gateCommand.p22b.examples.test.ts(76,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(81,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(84,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(87,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(88,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(95,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(103,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/gate/gateCommand.p22b.examples.test.ts(108,7): error TS2304: Cannot find name 'expect'.\ntests/gate/gateCommand.p22b.examples.test.ts(116,7): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 509270,
+    "outputTokens": 187179,
+    "cost": 0.16752990000000004,
+    "requests": 20
+  },
+  "requests": [
+    {
+      "customId": "check-identity.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791580767-CdJs0uXyMsyaxW1PT7Yw",
+      "inputTokens": 16542,
+      "outputTokens": 2300,
+      "cost": 0.0038613,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "check-identity.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791580767-wW2uYnXYhcmNFuRo4JZR",
+      "inputTokens": 16542,
+      "outputTokens": 2825,
+      "cost": 0.0041763,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791580767-81BbvhMSXD7cofU65hIl",
+      "inputTokens": 24838,
+      "outputTokens": 7302,
+      "cost": 0.0081069,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791580789-6QGBbovljmh5Y17cBOC5",
+      "inputTokens": 24838,
+      "outputTokens": 7850,
+      "cost": 0.00511794,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-mutants.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791580796-UGA4vnrYpt6EDE37Mu3y",
+      "inputTokens": 20826,
+      "outputTokens": 2854,
+      "cost": 0.0048363,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-mutants.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791580807-osfahAQG4aFEfnAG8hvh",
+      "inputTokens": 20826,
+      "outputTokens": 3697,
+      "cost": 0.00254274,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "check-identity-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791580868-psATR9WQRuFLeeKWFQ8j",
+      "inputTokens": 18338,
+      "outputTokens": 8753,
+      "cost": 0.00620538,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "gate-mutants.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791580868-P93n4gbgOOk5kNx9Dl1P",
+      "inputTokens": 20066,
+      "outputTokens": 4290,
+      "cost": 0.00378678,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "gate-mutants.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791580868-QfubNTD41cOkCmCCmqwV",
+      "inputTokens": 20066,
+      "outputTokens": 2913,
+      "cost": 0.00206202,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791580890-HQS5dIuCus3reWN1463t",
+      "inputTokens": 17736,
+      "outputTokens": 24249,
+      "cost": 0.01536084,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-mutants-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791580898-W1cUGOSeXt1cgDHykE0j",
+      "inputTokens": 19336,
+      "outputTokens": 6561,
+      "cost": 0.00503988,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "gate-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791581090-POigLTLR9xUQyjQdSvsY",
+      "inputTokens": 22736,
+      "outputTokens": 12980,
+      "cost": 0.0111984,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "gate-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791581090-5BcC0970NVucMZ9JPeNV",
+      "inputTokens": 22736,
+      "outputTokens": 6888,
+      "cost": 0.00450192,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "gate-mutants-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791581090-KJdWbYiHEgZ7q4pEuGke",
+      "inputTokens": 18836,
+      "outputTokens": 29238,
+      "cost": 0.0203682,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "gate-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791581359-Udt0GHT9UuACbpKCdI2o",
+      "inputTokens": 24324,
+      "outputTokens": 18655,
+      "cost": 0.0148416,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "gate-command.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791581619-0GJi0anVonde6lABT7Dx",
+      "inputTokens": 42887,
+      "outputTokens": 7103,
+      "cost": 0.01069485,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "gate-command.r1.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791581619-cJeYm0sWCeM4iCHcuCsi",
+      "inputTokens": 42887,
+      "outputTokens": 8919,
+      "cost": 0.01178445,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "gate-mutants-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791581619-nkmVc9yVIJBV3X9gMzqg",
+      "inputTokens": 36879,
+      "outputTokens": 19371,
+      "cost": 0.01715445,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "gate-command-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791581678-3gm7SvZnkK39iA7XzRSX",
+      "inputTokens": 41713,
+      "outputTokens": 8365,
+      "cost": 0.00947883,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "gate-command-judge.r2.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791581903-a61iRfkBHJFzOObRlZo0",
+      "inputTokens": 36318,
+      "outputTokens": 2066,
+      "cost": 0.00641082,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}

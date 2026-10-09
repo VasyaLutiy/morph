@@ -1,0 +1,115 @@
+```
+import { expect, test } from "vitest";
+import { planMutants } from "../../src/reviewer/planMutants.js";
+import { runMutants, runMutantsUntil } from "../../src/reviewer/runMutants.js";
+import type { TimedMutantsInput, TimedMutantsResult } from "../../src/reviewer/runMutants.js";
+import { fixtureJson, tmpRoot } from "../helpers.js";
+
+const H = "export const h = (a: number, b: number): boolean => a === b && a > 0;\n";
+
+const env = (): Record<string, string> => ({
+  PATH: process.env.PATH ?? "",
+  HOME: process.env.HOME ?? "",
+});
+
+const clock = (step: number): (() => number) => {
+  let t = 0;
+  return () => (t += step);
+};
+
+const untried = (): Record<string, TimedMutantsResult> =>
+  fixtureJson("reviewer/untried.json") as Record<string, TimedMutantsResult>;
+
+test("Run Mutants example 5: runMutantsUntil stops a green run at its stop time and names the untried mutants", async () => {
+  const r = tmpRoot();
+  try {
+    r.write("lib/h.ts", H);
+    const base: TimedMutantsInput = {
+      root: r.root,
+      command: 'grep -q "a === b" lib/h.ts',
+      mutants: planMutants("lib/h.ts", H, 10),
+      timeoutMs: 5000,
+      env: env(),
+      now: clock(1000),
+      stopAt: 2500,
+    };
+
+    const stopResult = await runMutantsUntil({ ...base, now: clock(1000), stopAt: 2500 });
+    const zeroResult = await runMutantsUntil({ ...base, now: clock(1000), stopAt: 0 });
+
+    let calls = 0;
+    const redResult = await runMutantsUntil({
+      ...base,
+      command: "exit 3",
+      now: () => {
+        calls += 1;
+        return 0;
+      },
+      stopAt: 99,
+    });
+
+    const fixture = untried();
+    expect(stopResult).toStrictEqual(fixture.stop);
+    expect(zeroResult).toStrictEqual(fixture.zero);
+    expect(redResult).toStrictEqual(fixture.red);
+    expect(calls).toBe(0);
+    expect(r.read("lib/h.ts")).toBe(H);
+
+    const plain = await runMutants({
+      root: r.root,
+      command: 'grep -q "a === b" lib/h.ts',
+      mutants: planMutants("lib/h.ts", H, 10),
+      timeoutMs: 5000,
+      env: env(),
+    });
+    expect(Object.keys(plain)).toStrictEqual(["baseline", "results", "findings"]);
+  } finally {
+    r.rm();
+  }
+}, 120000);
+
+test("Run Mutants example 5: a now equal to stopAt leaves the mutant untried", async () => {
+  const r = tmpRoot();
+  try {
+    r.write("lib/h.ts", H);
+    const result = await runMutantsUntil({
+      root: r.root,
+      command: 'grep -q "a === b" lib/h.ts',
+      mutants: planMutants("lib/h.ts", H, 10),
+      timeoutMs: 5000,
+      env: env(),
+      now: clock(1000),
+      stopAt: 2000,
+    });
+    expect(result.results.length).toBe(1);
+    expect(result.untried).toStrictEqual([
+      { path: "lib/h.ts", line: 1, column: 61, rule: "&& \u2192 ||" },
+      { path: "lib/h.ts", line: 1, column: 66, rule: "> \u2192 >=" },
+    ]);
+    expect(result.findings).toStrictEqual([]);
+  } finally {
+    r.rm();
+  }
+}, 120000);
+
+test("Run Mutants example 5: a far stopAt leaves every mutant tried and none untried", async () => {
+  const r = tmpRoot();
+  try {
+    r.write("lib/h.ts", H);
+    const result = await runMutantsUntil({
+      root: r.root,
+      command: 'grep -q "a === b" lib/h.ts',
+      mutants: planMutants("lib/h.ts", H, 10),
+      timeoutMs: 5000,
+      env: env(),
+      now: clock(1000),
+      stopAt: 1000000,
+    });
+    expect(result.results.length).toBe(3);
+    expect(result.untried).toStrictEqual([]);
+    expect(result.findings.length).toBe(1);
+  } finally {
+    r.rm();
+  }
+}, 120000);
+```

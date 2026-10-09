@@ -1,0 +1,102 @@
+```ts
+import crypto from "node:crypto";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { gitOk } from "../git/run.js";
+
+export interface IdentityEntry {
+  name: string;
+  commit: string;
+  dir: string;
+  install: Record<string, string>;
+  argv: string[];
+  bytes: number;
+  sha256: string;
+}
+
+export interface IdentityRow {
+  name: string;
+  code: number;
+  bytes: number;
+  sha256: string;
+  ok: boolean;
+}
+
+export interface IdentityDeps {
+  env: Record<string, string>;
+  plan: (argv: string[]) => Promise<number>;
+}
+
+export interface IdentityResult {
+  rows: IdentityRow[];
+  errors: string[];
+}
+
+export async function checkIdentity(
+  root: string,
+  entries: readonly IdentityEntry[],
+  deps: IdentityDeps,
+): Promise<IdentityResult> {
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), "morph-identity-"));
+  try {
+    const clones = new Map<string, string>();
+    for (const entry of entries) {
+      if (clones.has(entry.commit)) {
+        continue;
+      }
+      const clone = path.join(base, "c" + String(clones.size));
+      gitOk(root, ["clone", "-q", "--shared", "--no-checkout", root, clone], deps.env);
+      gitOk(clone, ["checkout", "-q", "--detach", entry.commit], deps.env);
+      clones.set(entry.commit, clone);
+    }
+
+    const rows: IdentityRow[] = [];
+    const errors: string[] = [];
+    let i = 0;
+    for (const entry of entries) {
+      const clone = clones.get(entry.commit);
+      if (clone === undefined) {
+        throw new Error("no clone for commit " + entry.commit);
+      }
+      const tree = path.join(clone, entry.dir);
+      for (const [dest, source] of Object.entries(entry.install)) {
+        const from = path.join(clone, source);
+        const to = path.join(tree, dest);
+        fs.mkdirSync(path.dirname(to), { recursive: true });
+        fs.copyFileSync(from, to);
+      }
+      const out = path.join(base, "out-" + String(i) + ".json");
+      const code = await deps.plan([...entry.argv, "--root", tree, "--out", out]);
+      let bytes = 0;
+      let sha256 = "";
+      if (fs.existsSync(out)) {
+        const data = fs.readFileSync(out);
+        bytes = data.length;
+        sha256 = crypto.createHash("sha256").update(data).digest("hex");
+      }
+      const ok = code === 0 && bytes === entry.bytes && sha256 === entry.sha256;
+      rows.push({ name: entry.name, code, bytes, sha256, ok });
+      if (code !== 0) {
+        errors.push(entry.name + ": plan exit " + String(code));
+      } else if (!ok) {
+        errors.push(
+          entry.name +
+            ": " +
+            String(bytes) +
+            " B, sha256 " +
+            sha256.slice(0, 12) +
+            "; the corpus has " +
+            String(entry.bytes) +
+            " B, sha256 " +
+            entry.sha256.slice(0, 12),
+        );
+      }
+      i += 1;
+    }
+    return { rows, errors };
+  } finally {
+    fs.rmSync(base, { recursive: true, force: true });
+  }
+}
+```

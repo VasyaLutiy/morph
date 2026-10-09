@@ -1,0 +1,192 @@
+```ts
+import { isTest, profileForPath } from "../language/paths.js";
+import { planMutants } from "../reviewer/planMutants.js";
+import {
+  DEFAULT_MUTANT_TIMEOUT_MS,
+  runMutantsUntil,
+} from "../reviewer/runMutants.js";
+import type { Card } from "../cards/types.js";
+import type { Mutant } from "../reviewer/planMutants.js";
+
+export const MUTANT_CAP = 30;
+export const MUTANT_STOP_SECONDS = 1200;
+
+export interface GateMutant {
+  card: string;
+  mutant: Mutant;
+}
+
+export interface GateMutantSpot {
+  card: string;
+  path: string;
+  line: number;
+  column: number;
+  rule: string;
+}
+
+export interface GateBaseline {
+  card: string;
+  exit: number | null;
+  timedOut: boolean;
+}
+
+export interface GateMutants {
+  planned: number;
+  tried: number;
+  killed: number;
+  timedOut: number;
+  seconds: number;
+  survivors: GateMutantSpot[];
+  untried: GateMutantSpot[];
+  baselines: GateBaseline[];
+}
+
+export interface GateMutantDeps {
+  env: Record<string, string>;
+  now: () => number;
+  timeoutMs?: number;
+  stopSeconds?: number;
+}
+
+export function killCommand(acceptance: string): string {
+  return acceptance
+    .split("\n")
+    .filter((line) => !line.trimStart().startsWith("echo '== full'"))
+    .join("\n");
+}
+
+export function planGateMutants(
+  cards: readonly Card[],
+  read: (target: string) => string | null,
+  cap: number,
+): GateMutant[] {
+  const n = Math.min(cap, MUTANT_CAP);
+  if (n <= 0) return [];
+  const all: GateMutant[] = [];
+  const seen = new Set<string>();
+  for (const card of cards) {
+    for (const target of card.targets) {
+      if (seen.has(target)) continue;
+      seen.add(target);
+      const profile = profileForPath(target);
+      if (profile === null) continue;
+      if (isTest(profile, target)) continue;
+      const text = read(target);
+      if (text === null) continue;
+      for (const mutant of planMutants(target, text, n)) {
+        all.push({ card: card.customId, mutant });
+      }
+    }
+  }
+  if (all.length <= n) return all;
+  const out: GateMutant[] = [];
+  for (let i = 0; i < n; i++) {
+    out.push(all[Math.floor((i * all.length) / n)]);
+  }
+  return out;
+}
+
+function spotOf(card: string, mutant: Mutant): GateMutantSpot {
+  return {
+    card,
+    path: mutant.path,
+    line: mutant.line,
+    column: mutant.column,
+    rule: mutant.rule,
+  };
+}
+
+export async function runGateMutants(
+  root: string,
+  cards: readonly Card[],
+  planned: readonly GateMutant[],
+  deps: GateMutantDeps,
+): Promise<GateMutants> {
+  const start = deps.now();
+  const stopAt =
+    start + (deps.stopSeconds ?? MUTANT_STOP_SECONDS) * 1000;
+  const groups: { card: string; mutants: Mutant[] }[] = [];
+  const index = new Map<string, number>();
+  for (const entry of planned) {
+    let at = index.get(entry.card);
+    if (at === undefined) {
+      at = groups.length;
+      index.set(entry.card, at);
+      groups.push({ card: entry.card, mutants: [] });
+    }
+    groups[at].mutants.push(entry.mutant);
+  }
+  const survivors: GateMutantSpot[] = [];
+  const untried: GateMutantSpot[] = [];
+  const baselines: GateBaseline[] = [];
+  let tried = 0;
+  let killed = 0;
+  let timedOut = 0;
+  for (const group of groups) {
+    const card = cards.find((c) => c.customId === group.card);
+    if (card === undefined) {
+      for (const mutant of group.mutants) {
+        untried.push(spotOf(group.card, mutant));
+      }
+      continue;
+    }
+    if (deps.now() >= stopAt) {
+      for (const mutant of group.mutants) {
+        untried.push(spotOf(group.card, mutant));
+      }
+      continue;
+    }
+    const run = await runMutantsUntil({
+      root,
+      command: killCommand(card.acceptance ?? ""),
+      mutants: group.mutants,
+      timeoutMs: deps.timeoutMs ?? DEFAULT_MUTANT_TIMEOUT_MS,
+      env: deps.env,
+      now: deps.now,
+      stopAt,
+    });
+    if (run.baseline.exit !== 0) {
+      baselines.push({
+        card: group.card,
+        exit: run.baseline.exit,
+        timedOut: run.baseline.timedOut,
+      });
+    }
+    for (const result of run.results) {
+      tried += 1;
+      if (result.killed) {
+        killed += 1;
+        if (result.timedOut) timedOut += 1;
+      } else {
+        survivors.push({
+          card: group.card,
+          path: result.path,
+          line: result.line,
+          column: result.column,
+          rule: result.rule,
+        });
+      }
+    }
+    for (const spot of run.untried) {
+      untried.push({
+        card: group.card,
+        path: spot.path,
+        line: spot.line,
+        column: spot.column,
+        rule: spot.rule,
+      });
+    }
+  }
+  const seconds = Math.round((deps.now() - start) / 100) / 10;
+  return {
+    planned: planned.length,
+    tried,
+    killed,
+    timedOut,
+    seconds,
+    survivors,
+    untried,
+    baselines,
+  };
+}
+```

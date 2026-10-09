@@ -1,0 +1,276 @@
+```
+import type { Card } from "../../src/cards/types.js";
+import {
+  MUTANT_CAP,
+  MUTANT_STOP_SECONDS,
+  killCommand,
+  planGateMutants,
+  runGateMutants,
+} from "../../src/gate/gateMutants.js";
+import type { GateMutant, GateMutantSpot, GateMutants } from "../../src/gate/gateMutants.js";
+import { fixture, fixtureJson, tmpRoot } from "../helpers.js";
+
+const H = "export const h = (a: number, b: number): boolean => a === b && a > 0;\n";
+
+interface MutantsFixture {
+  "only a": GateMutantSpot[];
+  two: GateMutantSpot[];
+  cap: GateMutantSpot[];
+  run: GateMutants;
+  stop: GateMutants;
+  baseline: GateMutants;
+  timeout: GateMutants;
+}
+
+const expected = fixtureJson("gate/gateMutants.json") as MutantsFixture;
+
+const mutantFiles = (): Record<string, string> =>
+  fixtureJson("gate/mutantFiles.json") as Record<string, string>;
+
+const env = (): Record<string, string> => ({
+  PATH: process.env.PATH ?? "",
+  HOME: process.env.HOME ?? "",
+});
+
+const clock = (step: number): (() => number) => {
+  let t = 0;
+  return () => (t += step);
+};
+
+const card = (id: string, targets: string[], acceptance: string | null = null): Card => ({
+  customId: id,
+  intent: "generate",
+  targets,
+  contextSlice: [],
+  instruction: "w",
+  acceptance,
+  model: null,
+  maxTokens: null,
+  reasoning: null,
+  variants: 1,
+  dependsOn: [],
+});
+
+const read = (target: string): string | null => mutantFiles()[target] ?? null;
+const readH = (target: string): string | null => (target === "src/f.ts" ? H : null);
+
+const spots = (list: readonly GateMutant[]): GateMutantSpot[] =>
+  list.map((g) => ({
+    card: g.card,
+    path: g.mutant.path,
+    line: g.mutant.line,
+    column: g.mutant.column,
+    rule: g.mutant.rule,
+  }));
+
+const cardA = card("a", ["src/a.ts", "tests/a.test.ts"]);
+const cardB = card("b", ["src/b.ts", "src/a.ts", "src/c.ts"]);
+const cardJ = card("j", ["tests/j.examples.test.ts"]);
+const cardD = card("d", ["docs/x.md", "lib/q.go"]);
+const cards = [cardA, cardB, cardJ, cardD];
+
+test(
+  "Gate Mutants example 1: killCommand drops the full-suite line and keeps every other line",
+  () => {
+    const ts = fixture("builder/code1.txt");
+    const go = fixture("builder/go/code1.txt");
+    const tsLines = ts.split("\n");
+    const goLines = go.split("\n");
+    expect(tsLines.length).toBe(46);
+    expect(goLines.length).toBe(33);
+    const tsFull = tsLines.findIndex((line) => line.trimStart().startsWith("echo '== full'"));
+    const goFull = goLines.findIndex((line) => line.trimStart().startsWith("echo '== full'"));
+    expect(tsFull).toBeGreaterThanOrEqual(0);
+    expect(goFull).toBeGreaterThanOrEqual(0);
+    const tsKept = [...tsLines.slice(0, tsFull), ...tsLines.slice(tsFull + 1)];
+    const goKept = [...goLines.slice(0, goFull), ...goLines.slice(goFull + 1)];
+    expect(tsKept.length).toBe(45);
+    expect(goKept.length).toBe(32);
+    const tsKilled = killCommand(ts);
+    const goKilled = killCommand(go);
+    expect(tsKilled.split("\n")).toStrictEqual(tsKept);
+    expect(goKilled.split("\n")).toStrictEqual(goKept);
+    expect(tsKilled).toBe(tsKept.join("\n"));
+    expect(goKilled).toBe(goKept.join("\n"));
+    expect(killCommand("a\n echo '== full'; x\nb\necho '== fully'")).toBe("a\nb\necho '== fully'");
+  },
+  120000,
+);
+
+test(
+  "Gate Mutants example 2: planGateMutants picks the owner, the cap and the spread",
+  () => {
+    expect(spots(planGateMutants([cardA], read, 30))).toStrictEqual(expected["only a"]);
+    expect(spots(planGateMutants(cards, read, 2))).toStrictEqual(expected.two);
+    const capped = spots(planGateMutants(cards, read, 99));
+    expect(capped).toStrictEqual(expected.cap);
+    expect(capped.length).toBe(MUTANT_CAP);
+    expect(capped[capped.length - 1]).toStrictEqual({
+      card: "d",
+      path: "lib/q.go",
+      line: 2,
+      column: 39,
+      rule: "&& → ||",
+    });
+    expect(capped.some((spot) => spot.card === "b" && spot.path === "src/a.ts")).toBe(false);
+    expect(
+      capped.some(
+        (spot) =>
+          spot.path.startsWith("tests/") || spot.path === "docs/x.md" || spot.path === "src/c.ts",
+      ),
+    ).toBe(false);
+    expect(spots(planGateMutants(cards, read, 0))).toStrictEqual([]);
+  },
+  120000,
+);
+
+test(
+  "Gate Mutants example 3: runGateMutants runs, stops, baselines and times out",
+  async () => {
+    const r = tmpRoot();
+    try {
+      r.write("src/f.ts", H);
+      const killer = "echo '== probe'\ngrep -q 'a === b' src/f.ts\necho '== full'; exit 7";
+      const red = "echo '== probe'\ntest -f ok.txt";
+      const sleeping =
+        "echo '== probe'\nif grep -q 'a !== b' src/f.ts; then sleep 5; fi\ngrep -q 'a' src/f.ts";
+      const fRun = card("f", ["src/f.ts"], killer);
+      const fRed = card("f", ["src/f.ts"], red);
+      const fSleeping = card("f", ["src/f.ts"], sleeping);
+      const planned = planGateMutants([fRun], readH, 30);
+      expect(spots(planned)).toStrictEqual([
+        { card: "f", path: "src/f.ts", line: 1, column: 55, rule: "=== → !==" },
+        { card: "f", path: "src/f.ts", line: 1, column: 61, rule: "&& → ||" },
+        { card: "f", path: "src/f.ts", line: 1, column: 66, rule: "> → >=" },
+      ]);
+
+      const run = await runGateMutants(r.root, [fRun], planned, {
+        env: env(),
+        now: clock(1000),
+        timeoutMs: 5000,
+        stopSeconds: MUTANT_STOP_SECONDS,
+      });
+      expect(run).toStrictEqual(expected.run);
+      expect(run.seconds).toBe(5);
+      expect(run.survivors).toStrictEqual([
+        { card: "f", path: "src/f.ts", line: 1, column: 61, rule: "&& → ||" },
+        { card: "f", path: "src/f.ts", line: 1, column: 66, rule: "> → >=" },
+      ]);
+
+      const stop = await runGateMutants(r.root, [fRun], planned, {
+        env: env(),
+        now: clock(1000),
+        timeoutMs: 5000,
+        stopSeconds: 3,
+      });
+      expect(stop).toStrictEqual(expected.stop);
+      expect(stop.tried).toBe(1);
+      expect(stop.seconds).toBe(4);
+
+      const baseline = await runGateMutants(r.root, [fRed], planned, {
+        env: env(),
+        now: clock(1000),
+        timeoutMs: 5000,
+      });
+      expect(baseline).toStrictEqual(expected.baseline);
+      expect(baseline.tried).toBe(0);
+      expect(baseline.seconds).toBe(2);
+
+      const timeout = await runGateMutants(r.root, [fSleeping], planned, {
+        env: env(),
+        now: clock(1000),
+        timeoutMs: 400,
+      });
+      expect(timeout).toStrictEqual(expected.timeout);
+      expect(timeout.killed).toBe(1);
+      expect(timeout.timedOut).toBe(1);
+
+      expect(r.read("src/f.ts")).toBe(H);
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test("Gate Mutants: killCommand keeps an acceptance without a full line", () => {
+  const text = "echo '== probe'\ngrep -q 'a === b' src/a.ts\ntrue";
+  expect(killCommand(text)).toBe(text);
+  expect(killCommand("")).toBe("");
+});
+
+test("Gate Mutants: planGateMutants spreads to one spot when the cap is 1", () => {
+  const one = spots(planGateMutants([cardA], read, 1));
+  expect(one).toStrictEqual([
+    { card: "a", path: "src/a.ts", line: 1, column: 55, rule: "=== → !==" },
+  ]);
+  expect(one.length).toBe(1);
+});
+
+test(
+  "Gate Mutants: runGateMutants lists every spot untried when the stop time has passed",
+  async () => {
+    const r = tmpRoot();
+    try {
+      r.write("src/f.ts", H);
+      const f = card("f", ["src/f.ts"], "echo '== probe'\ngrep -q 'a === b' src/f.ts");
+      const planned = planGateMutants([f], readH, 30);
+      const result = await runGateMutants(r.root, [f], planned, {
+        env: env(),
+        now: clock(1000),
+        timeoutMs: 5000,
+        stopSeconds: 0,
+      });
+      expect(result).toStrictEqual({
+        planned: 3,
+        tried: 0,
+        killed: 0,
+        timedOut: 0,
+        seconds: 2,
+        survivors: [],
+        untried: spots(planned),
+        baselines: [],
+      });
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test("Gate Mutants: a path targeted twice belongs to the first card", () => {
+  const first = card("a", ["src/a.ts"]);
+  const second = card("b", ["src/a.ts"]);
+  const result = spots(planGateMutants([first, second], read, 30));
+  expect(result.length).toBe(3);
+  expect(result.every((spot) => spot.card === "a")).toBe(true);
+});
+
+test(
+  "Gate Mutants: a planned card that is gone goes untried without a run",
+  async () => {
+    const r = tmpRoot();
+    try {
+      const planned = planGateMutants([cardA], read, 30);
+      const result = await runGateMutants(r.root, [card("z", ["src/z.ts"])], planned, {
+        env: env(),
+        now: clock(1000),
+        timeoutMs: 5000,
+      });
+      expect(result).toStrictEqual({
+        planned: 3,
+        tried: 0,
+        killed: 0,
+        timedOut: 0,
+        seconds: 1,
+        survivors: [],
+        untried: spots(planned),
+        baselines: [],
+      });
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+```

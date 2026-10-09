@@ -1,0 +1,126 @@
+```ts
+import { checkBuilds } from "../../src/cli/checkBuilds.js";
+import { readDeckFile } from "../../src/cli/document.js";
+import { gateCommand } from "../../src/gate/gateCommand.js";
+import type { GateDeps } from "../../src/gate/gateCommand.js";
+import type { Card } from "../../src/cards/types.js";
+import { fixtureJson, tmpRepo } from "../helpers.js";
+import type { TmpRepo } from "../helpers.js";
+
+const H = "export const h = (a: number, b: number): boolean => a === b && a > 0;\n";
+
+const G = "export const g = (a: number, b: number): boolean => a !== b && a > 0;\n";
+
+const A =
+  "echo '== probe'\ngrep -q 'a === b' src/a.ts || { echo 'FAIL probe/a.probe.ts > A example 1'; exit 1; }\necho '== full'; true";
+
+const BASE =
+  "echo '== probe'\ngrep -q 'a === b' src/a.ts || exit 1\necho '== full'; touch full.txt\necho '== own'; test -f full.txt && rm full.txt";
+
+const env = (): Record<string, string> => ({
+  PATH: process.env.PATH ?? "",
+  HOME: process.env.HOME ?? "",
+});
+
+// The first call returns `step`, every later one another `step`.
+const clock = (step: number): (() => number) => {
+  let t = 0;
+  return () => (t += step);
+};
+
+const card = (id: string, targets: string[], acceptance: string | null = null): Card => ({
+  customId: id,
+  intent: "generate",
+  targets,
+  contextSlice: [],
+  instruction: "w",
+  acceptance,
+  model: null,
+  maxTokens: null,
+  reasoning: null,
+  variants: 1,
+  dependsOn: [],
+});
+
+// One committed tmpRepo per acceptance: the gate plays HEAD, never the worktree.
+function repo(acceptance: string, ref: string): TmpRepo {
+  const r = tmpRepo();
+  r.write(
+    "d.json",
+    JSON.stringify([card("a", ["src/a.ts"], acceptance)], null, 2) + "\n",
+  );
+  r.write("s/src/a.ts", "s\n");
+  r.write("f/src/a.ts", ref);
+  r.git(["add", "-A"]);
+  r.git(["commit", "-q", "-m", "base"]);
+  return r;
+}
+
+const deps = (extra: Partial<GateDeps> = {}): GateDeps => ({
+  env: env(),
+  now: clock(1000),
+  readDeck: readDeckFile,
+  builds: checkBuilds,
+  ...extra,
+});
+
+const args = { deck: "d.json", stubs: "s", refs: "f" };
+
+interface GateCase {
+  code: number;
+  document: unknown;
+}
+
+const cases = (): Record<string, GateCase> =>
+  fixtureJson("gate/gateCommand.p22b.json") as Record<string, GateCase>;
+
+test(
+  "Gate Command example 4: mutants 30 kills one mutant and names the two survivors, mutants 1 kills the first, no flag keeps the P22a document, a zero stop time leaves every spot untried",
+  async () => {
+    const r = repo(A, H);
+    try {
+      expect(await gateCommand(r.root, { ...args, mutants: 30 }, deps())).toStrictEqual(
+        cases()["mutants"],
+      );
+      expect(await gateCommand(r.root, { ...args, mutants: 1 }, deps())).toStrictEqual(
+        cases()["one"],
+      );
+      expect(await gateCommand(r.root, args, deps())).toStrictEqual(cases()["off"]);
+      expect(
+        await gateCommand(
+          r.root,
+          { ...args, mutants: 30 },
+          deps({ mutantStopSeconds: 0 }),
+        ),
+      ).toStrictEqual(cases()["stopped"]);
+      expect(r.git(["status", "--porcelain"])).toBe("");
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test(
+  "Gate Command example 5: a red reference leaves the planned mutants untried, and a killer that needs the dropped full line is a red baseline",
+  async () => {
+    const red = repo(A, G);
+    try {
+      expect(await gateCommand(red.root, { ...args, mutants: 30 }, deps())).toStrictEqual(
+        cases()["ref red"],
+      );
+    } finally {
+      red.rm();
+    }
+    const baseline = repo(BASE, H);
+    try {
+      expect(
+        await gateCommand(baseline.root, { ...args, mutants: 30 }, deps()),
+      ).toStrictEqual(cases()["baseline"]);
+    } finally {
+      baseline.rm();
+    }
+  },
+  120000,
+);
+```

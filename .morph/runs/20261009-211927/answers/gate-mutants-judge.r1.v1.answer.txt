@@ -1,0 +1,244 @@
+```ts
+import { expect, test } from "vitest";
+import type { Card } from "../../src/cards/types.js";
+import {
+  MUTANT_CAP,
+  MUTANT_STOP_SECONDS,
+  killCommand,
+  planGateMutants,
+  runGateMutants,
+} from "../../src/gate/gateMutants.js";
+import type { GateMutant, GateMutantSpot, GateMutants } from "../../src/gate/gateMutants.js";
+import { fixture, fixtureJson, tmpRoot } from "../helpers.js";
+
+const H = "export const h = (a: number, b: number): boolean => a === b && a > 0;\n";
+
+interface GateMutantsFixture {
+  "only a": GateMutantSpot[];
+  two: GateMutantSpot[];
+  cap: GateMutantSpot[];
+  run: GateMutants;
+  stop: GateMutants;
+  baseline: GateMutants;
+  timeout: GateMutants;
+}
+
+const fixtureDoc = (): GateMutantsFixture =>
+  fixtureJson("gate/gateMutants.json") as GateMutantsFixture;
+
+const mutantFiles = (): Record<string, string> =>
+  fixtureJson("gate/mutantFiles.json") as Record<string, string>;
+
+const readMutantFile = (target: string): string | null => mutantFiles()[target] ?? null;
+
+const env = (): Record<string, string> => ({
+  PATH: process.env.PATH ?? "",
+  HOME: process.env.HOME ?? "",
+});
+
+const clock = (step: number): (() => number) => {
+  let t = 0;
+  return () => (t += step);
+};
+
+const card = (id: string, targets: string[], acceptance: string | null = null): Card => ({
+  customId: id,
+  intent: "generate",
+  targets,
+  contextSlice: [],
+  instruction: "w",
+  acceptance,
+  model: null,
+  maxTokens: null,
+  reasoning: null,
+  variants: 1,
+  dependsOn: [],
+});
+
+const spots = (list: readonly GateMutant[]): GateMutantSpot[] =>
+  list.map((entry) => ({
+    card: entry.card,
+    path: entry.mutant.path,
+    line: entry.mutant.line,
+    column: entry.mutant.column,
+    rule: entry.mutant.rule,
+  }));
+
+test("Gate Mutants example 1: killCommand drops the full-suite line and keeps every other line", () => {
+  const tsText = fixture("builder/code1.txt");
+  const goText = fixture("builder/go/code1.txt");
+  const tsLines = tsText.split("\n");
+  const goLines = goText.split("\n");
+  expect(tsLines.length).toBe(46);
+  expect(goLines.length).toBe(33);
+  expect(tsLines.filter((line) => line.trimStart().startsWith("echo '== full'")).length).toBe(1);
+  expect(goLines.filter((line) => line.trimStart().startsWith("echo '== full'")).length).toBe(1);
+
+  const tsKept = killCommand(tsText).split("\n");
+  const goKept = killCommand(goText).split("\n");
+  expect(tsKept.length).toBe(45);
+  expect(goKept.length).toBe(32);
+  expect(tsKept).toStrictEqual(
+    tsLines.filter((line) => !line.trimStart().startsWith("echo '== full'")),
+  );
+  expect(goKept).toStrictEqual(
+    goLines.filter((line) => !line.trimStart().startsWith("echo '== full'")),
+  );
+
+  expect(killCommand("a\n echo '== full'; x\nb\necho '== fully'")).toBe("a\nb\necho '== fully'");
+});
+
+test("Gate Mutants example 2: planGateMutants picks the owner, skips tests and caps the plan", () => {
+  const doc = fixtureDoc();
+  const cardA = card("a", ["src/a.ts", "tests/a.test.ts"]);
+  const cardB = card("b", ["src/b.ts", "src/a.ts", "src/c.ts"]);
+  const cardJ = card("j", ["tests/j.examples.test.ts"]);
+  const cardD = card("d", ["docs/x.md", "lib/q.go"]);
+  const all = [cardA, cardB, cardJ, cardD];
+
+  expect(spots(planGateMutants([cardA], readMutantFile, 30))).toStrictEqual(doc["only a"]);
+  expect(spots(planGateMutants(all, readMutantFile, 2))).toStrictEqual(doc.two);
+
+  const cap = spots(planGateMutants(all, readMutantFile, 99));
+  expect(cap).toStrictEqual(doc.cap);
+  expect(cap.length).toBe(MUTANT_CAP);
+  expect(cap.filter((spot) => spot.path === "src/a.ts").length).toBe(3);
+  expect(cap.filter((spot) => spot.card === "a" && spot.path === "src/a.ts").length).toBe(3);
+  expect(cap.some((spot) => spot.path === "tests/a.test.ts")).toBe(false);
+  expect(cap.some((spot) => spot.path === "tests/j.examples.test.ts")).toBe(false);
+  expect(cap.some((spot) => spot.path === "docs/x.md")).toBe(false);
+  expect(cap.some((spot) => spot.path === "src/c.ts")).toBe(false);
+  expect(cap[cap.length - 1]).toStrictEqual({
+    card: "d",
+    path: "lib/q.go",
+    line: 2,
+    column: 39,
+    rule: "&& → ||",
+  });
+
+  expect(spots(planGateMutants(all, readMutantFile, 0))).toStrictEqual([]);
+});
+
+test(
+  "Gate Mutants example 3: runGateMutants runs the mutants, stops on time and notes red baselines",
+  async () => {
+    const r = tmpRoot();
+    try {
+      r.write("src/f.ts", H);
+      const doc = fixtureDoc();
+      const readH = (target: string): string | null => (target === "src/f.ts" ? H : null);
+      const runText = "echo '== probe'\ngrep -q 'a === b' src/f.ts\necho '== full'; exit 7";
+      const baselineText = "echo '== probe'\ntest -f ok.txt";
+      const timeoutText =
+        "echo '== probe'\nif grep -q 'a !== b' src/f.ts; then sleep 5; fi\ngrep -q 'a' src/f.ts";
+      const fRun = card("f", ["src/f.ts"], runText);
+      const planned = planGateMutants([fRun], readH, 30);
+      expect(planned.length).toBe(3);
+
+      const run = await runGateMutants(r.root, [fRun], planned, {
+        env: env(),
+        now: clock(1000),
+        timeoutMs: 5000,
+      });
+      expect(run).toStrictEqual(doc.run);
+      expect(run.planned).toBe(3);
+      expect(run.tried).toBe(3);
+      expect(run.killed).toBe(1);
+      expect(run.timedOut).toBe(0);
+      expect(run.seconds).toBe(5);
+      expect(r.read("src/f.ts")).toBe(H);
+
+      const stop = await runGateMutants(r.root, [fRun], planned, {
+        env: env(),
+        now: clock(1000),
+        timeoutMs: 5000,
+        stopSeconds: 3,
+      });
+      expect(stop).toStrictEqual(doc.stop);
+      expect(stop.tried).toBe(1);
+      expect(stop.killed).toBe(1);
+      expect(stop.untried.length).toBe(2);
+      expect(stop.seconds).toBe(4);
+      expect(r.read("src/f.ts")).toBe(H);
+
+      const fBaseline = card("f", ["src/f.ts"], baselineText);
+      const baseline = await runGateMutants(r.root, [fBaseline], planned, {
+        env: env(),
+        now: clock(1000),
+        timeoutMs: 5000,
+      });
+      expect(baseline).toStrictEqual(doc.baseline);
+      expect(baseline.baselines).toStrictEqual([{ card: "f", exit: 1, timedOut: false }]);
+      expect(baseline.tried).toBe(0);
+      expect(baseline.untried.length).toBe(3);
+      expect(baseline.seconds).toBe(2);
+      expect(r.read("src/f.ts")).toBe(H);
+
+      const fTimeout = card("f", ["src/f.ts"], timeoutText);
+      const timed = await runGateMutants(r.root, [fTimeout], planned, {
+        env: env(),
+        now: clock(1000),
+        timeoutMs: 400,
+      });
+      expect(timed).toStrictEqual(doc.timeout);
+      expect(timed.killed).toBe(1);
+      expect(timed.timedOut).toBe(1);
+      expect(timed.survivors.length).toBe(2);
+      expect(r.read("src/f.ts")).toBe(H);
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test("Gate Mutants: the cap is 30 and the stop default is 1200 seconds", () => {
+  expect(MUTANT_CAP).toBe(30);
+  expect(MUTANT_STOP_SECONDS).toBe(1200);
+});
+
+test("Gate Mutants: killCommand keeps an acceptance that has no full line", () => {
+  const text = "echo '== probe'\ngrep -q 'a' src/a.ts\ntrue";
+  expect(killCommand(text)).toBe(text);
+  expect(killCommand("")).toBe("");
+});
+
+test("Gate Mutants: a cap of 1 spreads the plan to a single spot", () => {
+  const one = spots(planGateMutants([card("a", ["src/a.ts"])], readMutantFile, 1));
+  expect(one).toStrictEqual([
+    { card: "a", path: "src/a.ts", line: 1, column: 55, rule: "=== → !==" },
+  ]);
+});
+
+test("Gate Mutants: a path a second card targets belongs to the first", () => {
+  const first = card("a", ["src/a.ts"]);
+  const second = card("b", ["src/a.ts"]);
+  const result = spots(planGateMutants([first, second], readMutantFile, 30));
+  expect(result.length).toBe(3);
+  expect(result.every((spot) => spot.card === "a")).toBe(true);
+});
+
+test("Gate Mutants: a planned card missing from the deck is untried without a run", async () => {
+  const r = tmpRoot();
+  try {
+    const planned = planGateMutants([card("a", ["src/a.ts"])], readMutantFile, 30);
+    const result = await runGateMutants(r.root, [card("z", ["src/z.ts"])], planned, {
+      env: env(),
+      now: clock(1000),
+      timeoutMs: 5000,
+    });
+    expect(result).toStrictEqual({
+      planned: 3,
+      tried: 0,
+      killed: 0,
+      timedOut: 0,
+      seconds: 1,
+      survivors: [],
+      untried: spots(planned),
+      baselines: [],
+    });
+  } finally {
+    r.rm();
+  }
+});
+```

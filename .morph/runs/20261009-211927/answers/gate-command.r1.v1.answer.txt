@@ -1,0 +1,490 @@
+FILE: src/gate/playGate.ts
+```
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { runAcceptance } from "../acceptance/run.js";
+import { gitOk } from "../git/run.js";
+import { TREE_PROFILES } from "../language/treeProfiles.js";
+import { expectedStage, stubVerdict } from "./stubVerdict.js";
+import type { Card } from "../cards/types.js";
+import type { GatePhase, GateStep } from "./gatePlan.js";
+
+const FILE_LINES: readonly string[] = TREE_PROFILES.map((profile) => profile.fileLine);
+
+export interface PlayRow {
+  phase: GatePhase;
+  generation: number;
+  card: string;
+  exit: number | null;
+  timedOut: boolean;
+  seconds: number;
+  stage: string | null;
+  expected: string | null;
+  outside: string[];
+  failures: string[];
+  ok: boolean;
+}
+
+export interface PlayInput {
+  root: string;
+  cards: readonly Card[];
+  steps: readonly GateStep[];
+  stubDir: string;
+  refDir: string;
+}
+
+export interface PlayDeps {
+  env: Record<string, string>;
+  now: () => number;
+  timeoutMs?: number;
+  before?: (scratch: string) => void;
+  after?: (scratch: string, rows: readonly PlayRow[]) => Promise<void>;
+}
+
+function copyTarget(from: string, to: string): void {
+  fs.mkdirSync(path.dirname(to), { recursive: true });
+  fs.copyFileSync(from, to);
+}
+
+/**
+ * Plays a gate plan in a scratch clone of HEAD: a shared, no-checkout clone of
+ * `root` under os.tmpdir(), checked out detached at `root`'s committed HEAD —
+ * never a worktree, and `root` is never written. Each step puts its stub or
+ * reference files over the scratch, runs the owning card's acceptance through
+ * Run Acceptance (the environment and the clock are parameters), scores the log
+ * with Stub Verdict, and commits a non-empty step's files in the scratch. One
+ * row per acceptance run; `after`, when given, is awaited with the scratch and
+ * the rows before they are returned; the base directory is removed in a finally.
+ */
+export async function playGate(input: PlayInput, deps: PlayDeps): Promise<PlayRow[]> {
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), "morph-gate-"));
+  const scratch = path.join(base, "w");
+  try {
+    gitOk(input.root, ["clone", "-q", "--shared", "--no-checkout", input.root, scratch], deps.env);
+    const head = gitOk(input.root, ["rev-parse", "HEAD"], deps.env).trim();
+    gitOk(scratch, ["checkout", "-q", "--detach", head], deps.env);
+
+    const nodeModules = path.join(input.root, "node_modules");
+    if (fs.existsSync(nodeModules)) {
+      fs.symlinkSync(fs.realpathSync(nodeModules), path.join(scratch, "node_modules"));
+      const info = path.join(scratch, ".git", "info");
+      fs.mkdirSync(info, { recursive: true });
+      fs.appendFileSync(path.join(info, "exclude"), "/node_modules\n");
+    }
+
+    deps.before?.(scratch);
+
+    const byId = new Map<string, Card>();
+    for (const card of input.cards) {
+      byId.set(card.customId, card);
+    }
+
+    const rows: PlayRow[] = [];
+    for (const step of input.steps) {
+      const card = byId.get(step.card);
+      if (card === undefined) {
+        continue;
+      }
+
+      for (const [target, kind] of Object.entries(step.put)) {
+        const dir = kind === "stub" ? input.stubDir : input.refDir;
+        copyTarget(path.join(dir, target), path.join(scratch, target));
+      }
+
+      const acceptance = card.acceptance ?? "";
+      const start = deps.now();
+      const result = await runAcceptance(acceptance, scratch, {
+        env: deps.env,
+        timeoutMs: deps.timeoutMs,
+      });
+      const seconds = Math.round((deps.now() - start) / 100) / 10;
+
+      let stage: string | null;
+      let expected: string | null;
+      let outside: string[];
+      let failures: string[];
+      let ok: boolean;
+
+      if (step.phase === "stub") {
+        const want = expectedStage(acceptance);
+        const verdict = stubVerdict(result.log, want, card.targets, FILE_LINES);
+        stage = verdict.stage;
+        expected = verdict.expected;
+        outside = verdict.outside;
+        failures = verdict.failures;
+        ok = result.exit !== 0 && verdict.stage === verdict.expected && verdict.outside.length === 0;
+      } else {
+        const verdict = stubVerdict(result.log, "", card.targets, FILE_LINES, null);
+        stage = verdict.stage;
+        expected = null;
+        outside = verdict.outside;
+        failures = verdict.failures;
+        ok = result.exit === 0;
+      }
+
+      rows.push({
+        phase: step.phase,
+        generation: step.generation,
+        card: step.card,
+        exit: result.exit,
+        timedOut: result.timedOut,
+        seconds,
+        stage,
+        expected,
+        outside,
+        failures,
+        ok,
+      });
+
+      if (step.commit.length > 0) {
+        gitOk(scratch, ["add", "-A", "-f", "--", ...step.commit], deps.env);
+        gitOk(
+          scratch,
+          [
+            "-c",
+            "user.name=morph gate",
+            "-c",
+            "user.email=gate@morph.invalid",
+            "commit",
+            "-q",
+            "--allow-empty",
+            "-m",
+            "gate: " + step.card,
+          ],
+          deps.env,
+        );
+      }
+    }
+
+    if (deps.after !== undefined) {
+      await deps.after(scratch, rows);
+    }
+
+    return rows;
+  } finally {
+    fs.rmSync(base, { recursive: true, force: true });
+  }
+}
+```
+
+FILE: src/gate/gateCommand.ts
+```
+import fs from "node:fs";
+import path from "node:path";
+import { layerGenerations } from "../cards/layer.js";
+import { gatePlan } from "./gatePlan.js";
+import { MUTANT_CAP, planGateMutants, runGateMutants } from "./gateMutants.js";
+import { playGate } from "./playGate.js";
+import type { Deck } from "../cards/types.js";
+import type { GateMutants } from "./gateMutants.js";
+import type { PlayDeps, PlayRow } from "./playGate.js";
+
+export const CHAIN_LIMIT_SECONDS = 250;
+
+export interface GateBuild {
+  card: string;
+  generation: number;
+  language: string | null;
+  stubbed: number;
+  missing: string[];
+  breaks: string[];
+  note: string | null;
+}
+
+export interface GateArgs {
+  deck: string;
+  stubs: string;
+  refs: string;
+  mutants?: number;
+}
+
+export type GateDeckRead =
+  | { ok: true; deck: Deck }
+  | { ok: false; result: { code: 0 | 1 | 2 | 3 | 4; document: unknown } };
+
+export interface GateDeps {
+  env: Record<string, string>;
+  now: () => number;
+  timeoutMs?: number;
+  mutantTimeoutMs?: number;
+  mutantStopSeconds?: number;
+  readDeck: (root: string, deckPath: string) => GateDeckRead;
+  builds: (
+    root: string,
+    deckPath: string,
+    deck: Deck,
+    generations: string[][],
+    env: Record<string, string>,
+  ) => GateBuild[] | null;
+}
+
+export interface GateDocument {
+  deck: string;
+  transaction: boolean;
+  cards: number;
+  generations: string[][];
+  missing: string[];
+  builds: GateBuild[] | null;
+  rows: PlayRow[];
+  maxSeconds: number;
+  errors: string[];
+  mutants?: GateMutants | null;
+}
+
+function isDirectory(p: string): boolean {
+  try {
+    return fs.statSync(p).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+function listFiles(dir: string, prefix: string, out: string[]): void {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const rel = prefix === "" ? entry.name : prefix + "/" + entry.name;
+    if (entry.isDirectory()) {
+      listFiles(path.join(dir, entry.name), rel, out);
+    } else if (entry.isFile()) {
+      out.push(rel);
+    }
+  }
+}
+
+function regularFiles(dir: string): string[] {
+  const out: string[] = [];
+  listFiles(dir, "", out);
+  out.sort();
+  return out;
+}
+
+/**
+ * The gate played in one headless command: reads the deck, requires a stub and
+ * a reference directory, fits a Gate Plan over the deck's generations, plays
+ * the plan in a scratch clone of HEAD through Play Gate (which, on the way,
+ * gives Check Builds the stubs at `<deck dir>/_stubs` inside that scratch
+ * only), then folds every finding into one Gate Document and one decision:
+ * code 2 when `errors` is not empty, 0 otherwise. When `args.mutants` is given
+ * the plan's mutants run in the same scratch through Gate Mutants, only when
+ * every reference row is green; a survivor or an untried mutant is code 1. No
+ * clock but `deps.now`, no environment read of its own, no child process of
+ * its own.
+ */
+export async function gateCommand(
+  root: string,
+  args: GateArgs,
+  deps: GateDeps,
+): Promise<{ code: 0 | 1 | 2 | 3 | 4; document: unknown }> {
+  const read = deps.readDeck(root, args.deck);
+  if (!read.ok) {
+    return read.result;
+  }
+  const deck = read.deck;
+
+  const stubDir = path.resolve(root, args.stubs);
+  if (!isDirectory(stubDir)) {
+    return {
+      code: 4,
+      document: {
+        error: {
+          code: 4,
+          kind: "UsageError",
+          message: "stubs directory not found: " + args.stubs,
+        },
+      },
+    };
+  }
+
+  const refDir = path.resolve(root, args.refs);
+  if (!isDirectory(refDir)) {
+    return {
+      code: 4,
+      document: {
+        error: {
+          code: 4,
+          kind: "UsageError",
+          message: "references directory not found: " + args.refs,
+        },
+      },
+    };
+  }
+
+  const generations = layerGenerations(deck);
+  const stubs = regularFiles(stubDir);
+  const refs = regularFiles(refDir);
+  const plan = gatePlan(deck.cards, generations, stubs, refs);
+
+  const box: { builds: GateBuild[] | null } = { builds: null };
+  const mutantsBox: { mutants: GateMutants | null } = { mutants: null };
+  let rows: PlayRow[] = [];
+
+  const playDeps: PlayDeps = {
+    env: deps.env,
+    now: deps.now,
+    timeoutMs: deps.timeoutMs,
+    before: (scratch: string) => {
+      const at = path.join(scratch, path.dirname(args.deck), "_stubs");
+      const kept = at + ".gate-kept";
+      let moved = false;
+      if (fs.existsSync(at)) {
+        fs.renameSync(at, kept);
+        moved = true;
+      }
+      fs.mkdirSync(path.dirname(at), { recursive: true });
+      fs.cpSync(stubDir, at, { recursive: true });
+      try {
+        box.builds = deps.builds(scratch, args.deck, deck, generations, deps.env);
+      } finally {
+        fs.rmSync(at, { recursive: true, force: true });
+        if (moved) {
+          fs.renameSync(kept, at);
+        }
+      }
+    },
+  };
+
+  if (args.mutants !== undefined) {
+    const cap: number = Math.min(args.mutants, MUTANT_CAP);
+    playDeps.after = async (
+      scratch: string,
+      playedRows: readonly PlayRow[],
+    ): Promise<void> => {
+      const readRef = (target: string): string | null => {
+        const p = path.join(refDir, target);
+        try {
+          if (!fs.statSync(p).isFile()) {
+            return null;
+          }
+        } catch {
+          return null;
+        }
+        return fs.readFileSync(p, "utf8");
+      };
+      const planned = planGateMutants(deck.cards, readRef, cap);
+      const clean = playedRows.every((row) => row.phase === "stub" || row.ok);
+      if (clean) {
+        mutantsBox.mutants = await runGateMutants(scratch, deck.cards, planned, {
+          env: deps.env,
+          now: deps.now,
+          timeoutMs: deps.mutantTimeoutMs,
+          stopSeconds: deps.mutantStopSeconds,
+        });
+      } else {
+        mutantsBox.mutants = {
+          planned: planned.length,
+          tried: 0,
+          killed: 0,
+          timedOut: 0,
+          seconds: 0,
+          survivors: [],
+          untried: planned.map((g) => ({
+            card: g.card,
+            path: g.mutant.path,
+            line: g.mutant.line,
+            column: g.mutant.column,
+            rule: g.mutant.rule,
+          })),
+          baselines: [],
+        };
+      }
+    };
+  }
+
+  if (plan.missing.length === 0) {
+    rows = await playGate(
+      { root, cards: deck.cards, steps: plan.steps, stubDir, refDir },
+      playDeps,
+    );
+  }
+
+  const builds: GateBuild[] | null = box.builds;
+  const mutants: GateMutants | null = mutantsBox.mutants;
+  const mutantsGiven: boolean = args.mutants !== undefined;
+
+  const errors: string[] = [];
+
+  for (const m of plan.missing) {
+    errors.push(m);
+  }
+
+  if (builds !== null) {
+    for (const build of builds) {
+      for (const m of build.missing) {
+        errors.push("build " + build.card + ": no stub for " + m);
+      }
+      for (const line of build.breaks) {
+        errors.push("build " + build.card + ": " + line);
+      }
+    }
+  }
+
+  for (const row of rows) {
+    const prefix = row.phase + " " + row.card + ": ";
+    if (row.phase === "stub") {
+      if (row.exit === 0) {
+        errors.push(prefix + "green on its stubs");
+      } else if (row.stage !== row.expected) {
+        errors.push(
+          prefix + "red at " + (row.stage ?? "no stage") + ", expected " + row.expected,
+        );
+      }
+      for (const line of row.outside) {
+        errors.push(prefix + "names a file outside its targets: " + line);
+      }
+    } else if (row.exit !== 0) {
+      const why = row.timedOut ? "timed out" : "red (exit " + row.exit + ")";
+      const at = " at " + (row.stage ?? "no stage");
+      const outside = row.outside.length > 0 ? ": " + row.outside[0] : "";
+      errors.push(prefix + why + at + outside);
+    }
+    if (row.seconds >= CHAIN_LIMIT_SECONDS) {
+      errors.push(prefix + row.seconds + " s, over the " + CHAIN_LIMIT_SECONDS + " s limit");
+    }
+  }
+
+  if (mutants !== null) {
+    for (const baseline of mutants.baselines) {
+      const why = baseline.timedOut ? "timed out" : "red (exit " + baseline.exit + ")";
+      errors.push(
+        "mutants " + baseline.card + ": " + why + " on its references without a mutant",
+      );
+    }
+  }
+
+  let maxSeconds = 0;
+  for (const row of rows) {
+    if (row.seconds > maxSeconds) {
+      maxSeconds = row.seconds;
+    }
+  }
+
+  const document: GateDocument = {
+    deck: args.deck,
+    transaction: plan.transaction,
+    cards: deck.cards.length,
+    generations,
+    missing: plan.missing,
+    builds,
+    rows,
+    maxSeconds,
+    errors,
+  };
+
+  if (mutantsGiven) {
+    document.mutants = mutants;
+  }
+
+  let code: 0 | 1 | 2 | 3 | 4 = 0;
+  if (errors.length > 0) {
+    code = 2;
+  } else if (
+    mutantsGiven &&
+    mutants !== null &&
+    (mutants.survivors.length > 0 || mutants.untried.length > 0)
+  ) {
+    code = 1;
+  }
+
+  return { code, document };
+}
+```
