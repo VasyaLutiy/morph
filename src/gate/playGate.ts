@@ -37,6 +37,7 @@ export interface PlayDeps {
   now: () => number;
   timeoutMs?: number;
   before?: (scratch: string) => void;
+  after?: (scratch: string, rows: readonly PlayRow[]) => Promise<void>;
 }
 
 function copyTarget(from: string, to: string): void {
@@ -51,7 +52,8 @@ function copyTarget(from: string, to: string): void {
  * reference files over the scratch, runs the owning card's acceptance through
  * Run Acceptance (the environment and the clock are parameters), scores the log
  * with Stub Verdict, and commits a non-empty step's files in the scratch. One
- * row per acceptance run; the base directory is removed in a finally.
+ * row per acceptance run; `after`, when given, is awaited with the scratch and
+ * the rows before they are returned; the base directory is removed in a finally.
  */
 export async function playGate(input: PlayInput, deps: PlayDeps): Promise<PlayRow[]> {
   const base = fs.mkdtempSync(path.join(os.tmpdir(), "morph-gate-"));
@@ -151,6 +153,10 @@ export async function playGate(input: PlayInput, deps: PlayDeps): Promise<PlayRo
           deps.env,
         );
       }
+    }
+
+    if (deps.after !== undefined) {
+      await deps.after(scratch, rows);
     }
 
     return rows;

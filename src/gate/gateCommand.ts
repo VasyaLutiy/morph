@@ -2,9 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { layerGenerations } from "../cards/layer.js";
 import { gatePlan } from "./gatePlan.js";
+import { MUTANT_CAP, planGateMutants, runGateMutants } from "./gateMutants.js";
 import { playGate } from "./playGate.js";
 import type { Deck } from "../cards/types.js";
-import type { PlayRow } from "./playGate.js";
+import type { GateMutants } from "./gateMutants.js";
+import type { PlayDeps, PlayRow } from "./playGate.js";
 
 export const CHAIN_LIMIT_SECONDS = 250;
 
@@ -22,6 +24,7 @@ export interface GateArgs {
   deck: string;
   stubs: string;
   refs: string;
+  mutants?: number;
 }
 
 export type GateDeckRead =
@@ -32,6 +35,8 @@ export interface GateDeps {
   env: Record<string, string>;
   now: () => number;
   timeoutMs?: number;
+  mutantTimeoutMs?: number;
+  mutantStopSeconds?: number;
   readDeck: (root: string, deckPath: string) => GateDeckRead;
   builds: (
     root: string,
@@ -52,6 +57,7 @@ export interface GateDocument {
   rows: PlayRow[];
   maxSeconds: number;
   errors: string[];
+  mutants?: GateMutants | null;
 }
 
 function isDirectory(p: string): boolean {
@@ -86,8 +92,11 @@ function regularFiles(dir: string): string[] {
  * the plan in a scratch clone of HEAD through Play Gate (which, on the way,
  * gives Check Builds the stubs at `<deck dir>/_stubs` inside that scratch
  * only), then folds every finding into one Gate Document and one decision:
- * code 2 when `errors` is not empty, 0 otherwise. No clock but `deps.now`, no
- * environment read of its own, no child process of its own.
+ * code 2 when `errors` is not empty, 0 otherwise. When `args.mutants` is given
+ * the plan's mutants run in the same scratch through Gate Mutants, only when
+ * every reference row is green; a survivor or an untried mutant is code 1. No
+ * clock but `deps.now`, no environment read of its own, no child process of
+ * its own.
  */
 export async function gateCommand(
   root: string,
@@ -134,39 +143,91 @@ export async function gateCommand(
   const plan = gatePlan(deck.cards, generations, stubs, refs);
 
   const box: { builds: GateBuild[] | null } = { builds: null };
+  const mutantsBox: { mutants: GateMutants | null } = { mutants: null };
   let rows: PlayRow[] = [];
+
+  const playDeps: PlayDeps = {
+    env: deps.env,
+    now: deps.now,
+    timeoutMs: deps.timeoutMs,
+    before: (scratch: string) => {
+      const at = path.join(scratch, path.dirname(args.deck), "_stubs");
+      const kept = at + ".gate-kept";
+      let moved = false;
+      if (fs.existsSync(at)) {
+        fs.renameSync(at, kept);
+        moved = true;
+      }
+      fs.mkdirSync(path.dirname(at), { recursive: true });
+      fs.cpSync(stubDir, at, { recursive: true });
+      try {
+        box.builds = deps.builds(scratch, args.deck, deck, generations, deps.env);
+      } finally {
+        fs.rmSync(at, { recursive: true, force: true });
+        if (moved) {
+          fs.renameSync(kept, at);
+        }
+      }
+    },
+  };
+
+  if (args.mutants !== undefined) {
+    const cap: number = Math.min(args.mutants, MUTANT_CAP);
+    playDeps.after = async (
+      scratch: string,
+      playedRows: readonly PlayRow[],
+    ): Promise<void> => {
+      const readRef = (target: string): string | null => {
+        const p = path.join(refDir, target);
+        try {
+          if (!fs.statSync(p).isFile()) {
+            return null;
+          }
+        } catch {
+          return null;
+        }
+        return fs.readFileSync(p, "utf8");
+      };
+      const planned = planGateMutants(deck.cards, readRef, cap);
+      const clean = playedRows.every((row) => row.phase === "stub" || row.ok);
+      if (clean) {
+        mutantsBox.mutants = await runGateMutants(scratch, deck.cards, planned, {
+          env: deps.env,
+          now: deps.now,
+          timeoutMs: deps.mutantTimeoutMs,
+          stopSeconds: deps.mutantStopSeconds,
+        });
+      } else {
+        mutantsBox.mutants = {
+          planned: planned.length,
+          tried: 0,
+          killed: 0,
+          timedOut: 0,
+          seconds: 0,
+          survivors: [],
+          untried: planned.map((g) => ({
+            card: g.card,
+            path: g.mutant.path,
+            line: g.mutant.line,
+            column: g.mutant.column,
+            rule: g.mutant.rule,
+          })),
+          baselines: [],
+        };
+      }
+    };
+  }
 
   if (plan.missing.length === 0) {
     rows = await playGate(
       { root, cards: deck.cards, steps: plan.steps, stubDir, refDir },
-      {
-        env: deps.env,
-        now: deps.now,
-        timeoutMs: deps.timeoutMs,
-        before: (scratch: string) => {
-          const at = path.join(scratch, path.dirname(args.deck), "_stubs");
-          const kept = at + ".gate-kept";
-          let moved = false;
-          if (fs.existsSync(at)) {
-            fs.renameSync(at, kept);
-            moved = true;
-          }
-          fs.mkdirSync(path.dirname(at), { recursive: true });
-          fs.cpSync(stubDir, at, { recursive: true });
-          try {
-            box.builds = deps.builds(scratch, args.deck, deck, generations, deps.env);
-          } finally {
-            fs.rmSync(at, { recursive: true, force: true });
-            if (moved) {
-              fs.renameSync(kept, at);
-            }
-          }
-        },
-      },
+      playDeps,
     );
   }
 
   const builds: GateBuild[] | null = box.builds;
+  const mutants: GateMutants | null = mutantsBox.mutants;
+  const mutantsGiven: boolean = args.mutants !== undefined;
 
   const errors: string[] = [];
 
@@ -209,6 +270,15 @@ export async function gateCommand(
     }
   }
 
+  if (mutants !== null) {
+    for (const baseline of mutants.baselines) {
+      const why = baseline.timedOut ? "timed out" : "red (exit " + baseline.exit + ")";
+      errors.push(
+        "mutants " + baseline.card + ": " + why + " on its references without a mutant",
+      );
+    }
+  }
+
   let maxSeconds = 0;
   for (const row of rows) {
     if (row.seconds > maxSeconds) {
@@ -228,5 +298,20 @@ export async function gateCommand(
     errors,
   };
 
-  return { code: errors.length > 0 ? 2 : 0, document };
+  if (mutantsGiven) {
+    document.mutants = mutants;
+  }
+
+  let code: 0 | 1 | 2 | 3 | 4 = 0;
+  if (errors.length > 0) {
+    code = 2;
+  } else if (
+    mutantsGiven &&
+    mutants !== null &&
+    (mutants.survivors.length > 0 || mutants.untried.length > 0)
+  ) {
+    code = 1;
+  }
+
+  return { code, document };
 }
