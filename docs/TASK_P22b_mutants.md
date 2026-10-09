@@ -327,7 +327,7 @@ red stays its own). Every acceptance carries the transaction mark (an `--only` c
 
 Code cards: `probe/<card>/` → `tsc` → `eslint <targets>` → `guard.mjs src <targets>` → the probe
 `decks/p22b/parts/<card>.probe.ts` (run-mutants RM 5 + 1 row = 2; gate-mutants GM 1–3 + 1 row = 4; check-identity CI
-1–3 = 3; gate-command GC 4–5 + 1 row = 3; parse-command PC 24 = 1; **13 tests**) → eslint's verdict → full
+1–3 + 1 row = 4; gate-command GC 4–5 + 1 row = 3; parse-command PC 24 = 1; **14 tests**) → eslint's verdict → full
 `vitest run` → own git → frozen → untracked.
 
 Judge cards: `probe/<card>/` → `tsc` → `eslint <targets>` → `guard.mjs tests <file> <min> <max> lits<i>.json` → `vitest

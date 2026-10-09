@@ -39,6 +39,8 @@ test("rows: no mutant, a stop time never reached equals runMutants plus untried 
     expect(await runMutantsUntil({ ...base, mutants: [], now: () => 0, stopAt: 0 })).toStrictEqual({ baseline: { exit: 0, timedOut: false }, results: [], findings: [], untried: [] });
     const plain = await runMutants(base);
     expect(await runMutantsUntil({ ...base, now: clock(1), stopAt: 1000000 })).toStrictEqual({ ...plain, untried: [] });
+    const at = await runMutantsUntil({ ...base, now: clock(1000), stopAt: 2000 });
+    expect([at.results.length, at.untried.map((u) => u.column)]).toStrictEqual([1, [61, 66]]);
   } finally {
     r.rm();
   }

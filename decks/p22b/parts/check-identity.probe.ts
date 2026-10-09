@@ -1,5 +1,6 @@
 // P22b probe for check-identity by docs/TASK_P22b_mutants.md §2.2 (src/gate/identity.ts) — byte identity of the committed corpus.
 // Record Check Identity examples 1-3, then rows.
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
@@ -40,4 +41,16 @@ test("Check Identity example 3: a tree without its install, an unknown commit", 
     rows: [{ name: "go-mini", code: 4, bytes: 0, sha256: "", ok: false }], errors: ["go-mini: plan exit 4"] });
   await expect(checkIdentity(ROOT, [{ ...goMini(), commit: "0000000000000000000000000000000000000000" }], { env: env(), plan }))
     .rejects.toThrow(/^git checkout failed \(exit /);
+}, 120000);
+
+test("rows: each entry has its own out file; equal bytes with another sha256 are not ok", async () => {
+  let calls = 0;
+  const two = await checkIdentity(ROOT, [goMini(), goMini()], { env: env(), plan: async (argv) => {
+    calls += 1; if (calls === 1) fs.writeFileSync(argv[argv.indexOf("--out") + 1], "x\n"); return calls === 1 ? 0 : 2; } });
+  expect(two.rows.map((x) => [x.code, x.bytes, x.sha256.slice(0, 12)])).toStrictEqual([[0, 2, "73cb3858a687"], [2, 0, ""]]);
+  const same = Buffer.alloc(75416, 120);
+  const sha = crypto.createHash("sha256").update(same).digest("hex");
+  const r = await checkIdentity(ROOT, [goMini()], { env: env(), plan: async (argv) => { fs.writeFileSync(argv[argv.indexOf("--out") + 1], same); return 0; } });
+  expect(r).toStrictEqual({ rows: [{ name: "go-mini", code: 0, bytes: 75416, sha256: sha, ok: false }],
+    errors: ["go-mini: 75416 B, sha256 " + sha.slice(0, 12) + "; the corpus has 75416 B, sha256 3568d65a52ff"] });
 }, 120000);
