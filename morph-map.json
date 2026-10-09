@@ -3281,7 +3281,8 @@
         "src/cards/types.ts",
         "src/cli/document.ts",
         "src/cards/layer.ts",
-        "src/cli/checkBuilds.ts"
+        "src/cli/checkBuilds.ts",
+        "tests/fixtures/cli/oneCard.deck.json"
       ],
       "depends_on": [
         "check-builds"

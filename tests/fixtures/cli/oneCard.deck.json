@@ -1,0 +1,17 @@
+[
+ {
+  "customId": "q",
+  "intent": "generate",
+  "targets": [
+   "pkg/q.go"
+  ],
+  "contextSlice": [],
+  "instruction": "write pkg/q.go",
+  "acceptance": "(\n set -e\n export NO_COLOR=1 CI=1\nexport GOFLAGS=-mod=mod GOPROXY=off\nP=$PWD/probe/q; mkdir -p $P\ncat > $P/full.json <<'MORPH_CONF_EOF'\n{\"Replace\":{}}\nMORPH_CONF_EOF\necho '== full'; go vet -overlay $P/full.json ./...\n)\n",
+  "model": null,
+  "maxTokens": null,
+  "reasoning": null,
+  "variants": 1,
+  "dependsOn": []
+ }
+]
