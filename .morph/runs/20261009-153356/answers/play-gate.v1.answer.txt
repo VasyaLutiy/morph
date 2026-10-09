@@ -1,0 +1,167 @@
+```typescript
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { runAcceptance } from "../acceptance/run.js";
+import { gitOk } from "../git/run.js";
+import { TREE_PROFILES } from "../language/treeProfiles.js";
+import { expectedStage, stubVerdict } from "./stubVerdict.js";
+import type { StubVerdict } from "./stubVerdict.js";
+import type { Card } from "../cards/types.js";
+import type { GatePhase, GateStep } from "./gatePlan.js";
+
+export interface PlayRow {
+  phase: GatePhase;
+  generation: number;
+  card: string;
+  exit: number | null;
+  timedOut: boolean;
+  seconds: number;
+  stage: string | null;
+  expected: string | null;
+  outside: string[];
+  failures: string[];
+  ok: boolean;
+}
+
+export interface PlayInput {
+  root: string;
+  cards: readonly Card[];
+  steps: readonly GateStep[];
+  stubDir: string;
+  refDir: string;
+}
+
+export interface PlayDeps {
+  env: Record<string, string>;
+  now: () => number;
+  timeoutMs?: number;
+  before?: (scratch: string) => void;
+}
+
+/**
+ * Plays a gate on a scratch clone of root's HEAD: per step each put entry is
+ * copied in from the stub or reference directory, the card's acceptance runs
+ * there, and a non-empty commit is committed in the scratch. root's HEAD, refs,
+ * index and working files are never touched; the scratch's base directory is
+ * removed in a finally.
+ */
+export async function playGate(
+  input: PlayInput,
+  deps: PlayDeps,
+): Promise<PlayRow[]> {
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), "morph-gate-"));
+  const scratch = path.join(base, "w");
+  try {
+    gitOk(
+      input.root,
+      ["clone", "-q", "--shared", "--no-checkout", input.root, scratch],
+      deps.env,
+    );
+    const head = gitOk(input.root, ["rev-parse", "HEAD"], deps.env).trim();
+    gitOk(scratch, ["checkout", "-q", "--detach", head], deps.env);
+
+    const nodeModules = path.join(input.root, "node_modules");
+    if (fs.existsSync(nodeModules)) {
+      fs.symlinkSync(
+        fs.realpathSync(nodeModules),
+        path.join(scratch, "node_modules"),
+      );
+      const info = path.join(scratch, ".git", "info");
+      fs.mkdirSync(info, { recursive: true });
+      fs.appendFileSync(path.join(info, "exclude"), "/node_modules\n");
+    }
+
+    deps.before?.(scratch);
+
+    const byId = new Map<string, Card>();
+    for (const card of input.cards) {
+      byId.set(card.customId, card);
+    }
+    const fileLines = TREE_PROFILES.map((profile) => profile.fileLine);
+
+    const rows: PlayRow[] = [];
+
+    for (const step of input.steps) {
+      const card = byId.get(step.card);
+      if (card === undefined) {
+        continue;
+      }
+
+      for (const target of Object.keys(step.put)) {
+        const kind = step.put[target];
+        if (kind === undefined) {
+          continue;
+        }
+        const from = path.join(
+          kind === "stub" ? input.stubDir : input.refDir,
+          target,
+        );
+        const to = path.join(scratch, target);
+        fs.mkdirSync(path.dirname(to), { recursive: true });
+        fs.copyFileSync(from, to);
+      }
+
+      const acceptance = card.acceptance ?? "";
+      const start = deps.now();
+      const result = await runAcceptance(acceptance, scratch, {
+        env: deps.env,
+        timeoutMs: deps.timeoutMs,
+      });
+      const seconds = Math.round((deps.now() - start) / 100) / 10;
+
+      let v: StubVerdict;
+      let ok: boolean;
+      if (step.phase === "stub") {
+        v = stubVerdict(
+          result.log,
+          expectedStage(acceptance),
+          card.targets,
+          fileLines,
+        );
+        ok = result.exit !== 0 && v.stage === v.expected && v.outside.length === 0;
+      } else {
+        v = stubVerdict(result.log, "", card.targets, fileLines, null);
+        ok = result.exit === 0;
+      }
+
+      rows.push({
+        phase: step.phase,
+        generation: step.generation,
+        card: step.card,
+        exit: result.exit,
+        timedOut: result.timedOut,
+        seconds,
+        stage: v.stage,
+        expected: step.phase === "stub" ? v.expected : null,
+        outside: v.outside,
+        failures: v.failures,
+        ok,
+      });
+
+      if (step.commit.length > 0) {
+        gitOk(scratch, ["add", "-A", "-f", "--", ...step.commit], deps.env);
+        gitOk(
+          scratch,
+          [
+            "-c",
+            "user.name=morph gate",
+            "-c",
+            "user.email=gate@morph.invalid",
+            "commit",
+            "-q",
+            "--allow-empty",
+            "-m",
+            "gate: " + step.card,
+          ],
+          deps.env,
+        );
+      }
+    }
+
+    return rows;
+  } finally {
+    fs.rmSync(base, { recursive: true, force: true });
+  }
+}
+```

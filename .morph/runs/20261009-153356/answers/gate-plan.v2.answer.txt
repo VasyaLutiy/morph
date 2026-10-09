@@ -1,0 +1,169 @@
+```ts
+import { isTransactionDeck } from "../cards/transaction.js";
+import type { Card } from "../cards/types.js";
+
+export type GatePhase = "stub" | "ref" | "retry";
+
+export interface GateStep {
+  phase: GatePhase;
+  generation: number;
+  card: string;
+  put: Record<string, "stub" | "ref">;
+  commit: string[];
+}
+
+export interface GatePlan {
+  transaction: boolean;
+  steps: GateStep[];
+  missing: string[];
+}
+
+interface Entry {
+  card: string;
+  generation: number;
+  targets: string[];
+}
+
+interface Group {
+  generation: number;
+  entries: Entry[];
+}
+
+function puts(targets: readonly string[], kind: "stub" | "ref"): Record<string, "stub" | "ref"> {
+  const out: Record<string, "stub" | "ref"> = {};
+  for (const target of targets) out[target] = kind;
+  return out;
+}
+
+export function gatePlan(
+  cards: readonly Card[],
+  generations: string[][],
+  stubs: readonly string[],
+  refs: readonly string[],
+): GatePlan {
+  const byId = new Map<string, Card>();
+  for (const card of cards) byId.set(card.customId, card);
+
+  const groups: Group[] = [];
+  for (let g = 0; g < generations.length; g++) {
+    const ids = generations[g];
+    if (ids === undefined) continue;
+    const entries: Entry[] = [];
+    for (const id of ids) {
+      const card = byId.get(id);
+      if (card === undefined) continue;
+      entries.push({ card: id, generation: g, targets: [...card.targets] });
+    }
+    groups.push({ generation: g, entries });
+  }
+
+  const stubSet = new Set(stubs);
+  const refSet = new Set(refs);
+
+  const missing: string[] = [];
+  const seenMissing = new Set<string>();
+  for (const group of groups) {
+    for (const entry of group.entries) {
+      for (const target of entry.targets) {
+        if (!stubSet.has(target)) {
+          const message = "no stub: " + target;
+          if (!seenMissing.has(message)) {
+            seenMissing.add(message);
+            missing.push(message);
+          }
+        }
+        if (!refSet.has(target)) {
+          const message = "no reference: " + target;
+          if (!seenMissing.has(message)) {
+            seenMissing.add(message);
+            missing.push(message);
+          }
+        }
+      }
+    }
+  }
+
+  const transaction = isTransactionDeck(cards);
+
+  if (missing.length > 0) {
+    return { transaction, steps: [], missing };
+  }
+
+  const steps: GateStep[] = [];
+
+  if (!transaction) {
+    for (const group of groups) {
+      for (const entry of group.entries) {
+        steps.push({
+          phase: "stub",
+          generation: group.generation,
+          card: entry.card,
+          put: puts(entry.targets, "stub"),
+          commit: [],
+        });
+      }
+      for (const entry of group.entries) {
+        steps.push({
+          phase: "ref",
+          generation: group.generation,
+          card: entry.card,
+          put: puts(entry.targets, "ref"),
+          commit: [...entry.targets],
+        });
+      }
+      if (group.entries.length >= 2) {
+        for (const entry of group.entries) {
+          steps.push({
+            phase: "retry",
+            generation: group.generation,
+            card: entry.card,
+            put: {},
+            commit: [],
+          });
+        }
+      }
+    }
+  } else {
+    const flat: Entry[] = [];
+    for (const group of groups) {
+      for (const entry of group.entries) flat.push(entry);
+    }
+
+    const all: string[] = [];
+    const seenAll = new Set<string>();
+    for (const entry of flat) {
+      for (const target of entry.targets) {
+        if (!seenAll.has(target)) {
+          seenAll.add(target);
+          all.push(target);
+        }
+      }
+    }
+
+    for (let i = 0; i < flat.length; i++) {
+      const entry = flat[i];
+      if (entry === undefined) continue;
+      steps.push({
+        phase: "stub",
+        generation: entry.generation,
+        card: entry.card,
+        put: i === 0 ? puts(all, "stub") : {},
+        commit: [],
+      });
+    }
+    for (let i = 0; i < flat.length; i++) {
+      const entry = flat[i];
+      if (entry === undefined) continue;
+      steps.push({
+        phase: "ref",
+        generation: entry.generation,
+        card: entry.card,
+        put: i === 0 ? puts(all, "ref") : {},
+        commit: i === flat.length - 1 ? [...all] : [],
+      });
+    }
+  }
+
+  return { transaction, steps, missing };
+}
+```

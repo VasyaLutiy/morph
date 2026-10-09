@@ -1,0 +1,114 @@
+```
+import { expect, test } from "vitest";
+import {
+  expectedStage,
+  stubVerdict,
+  type StubVerdict,
+} from "../../src/gate/stubVerdict.js";
+import { TREE_PROFILES } from "../../src/language/treeProfiles.js";
+import { fixture, fixtureJson } from "../helpers.js";
+
+const FL = TREE_PROFILES.map((p) => p.fileLine);
+const logs = (): Record<string, string> =>
+  fixtureJson("gate/stubLogs.json") as Record<string, string>;
+const verdict = (k: string): StubVerdict =>
+  (fixtureJson("gate/verdicts.json") as Record<string, StubVerdict>)[k];
+
+function firstAcceptance(): string {
+  const cards = fixtureJson("go-p7b/decks/b1/deck.p21c.json") as {
+    acceptance: string | null;
+  }[];
+  return cards[0].acceptance ?? "";
+}
+
+test("Stub Verdict example 1: the expected stage of a card's acceptance", () => {
+  expect(expectedStage(fixture("builder/go/code1.txt"))).toBe("probe");
+  expect(expectedStage(fixture("builder/go/judge1.txt"))).toBe("guard");
+  expect(expectedStage(firstAcceptance())).toBe("probe");
+  expect(expectedStage("")).toBe("guard");
+  expect(expectedStage(" echo '== probe'; exit 1")).toBe("guard");
+});
+
+test("Stub Verdict example 2: five real acceptance logs", () => {
+  const L = logs();
+  expect(
+    stubVerdict(L["go probe"], "probe", ["control/control.go"], FL),
+  ).toStrictEqual(verdict("go probe"));
+  expect(
+    stubVerdict(L["go judge"], "guard", ["control/control_examples_test.go"], FL),
+  ).toStrictEqual(verdict("go judge"));
+  expect(
+    stubVerdict(L["go vet outside"], "probe", ["supervisor/guard.go"], FL),
+  ).toStrictEqual(verdict("go vet outside"));
+  expect(
+    stubVerdict(L["ts tsc"], "probe", ["src/units/convert.ts"], FL),
+  ).toStrictEqual(verdict("ts tsc"));
+  expect(
+    stubVerdict(L["ts probe"], "probe", ["src/units/convert.ts"], FL),
+  ).toStrictEqual(verdict("ts probe"));
+});
+
+test("Stub Verdict example 3: mixed logs and stages", () => {
+  const L = logs();
+  const targets = ["b/b.go", "src/own.ts"];
+  expect(stubVerdict(L["mixed"], "probe", targets, FL)).toStrictEqual(
+    verdict("mixed"),
+  );
+  expect(
+    stubVerdict(L["mixed"], "probe", targets, FL, null),
+  ).toStrictEqual(verdict("mixed, every stage"));
+  expect(stubVerdict(L["mixed"], "probe", targets, [])).toStrictEqual(
+    verdict("mixed, no pattern"),
+  );
+  expect(stubVerdict(L["none"], "probe", [], FL)).toStrictEqual(
+    verdict("none"),
+  );
+});
+
+test("Stub Verdict: a target's own line is not outside", () => {
+  const log = "== tsc\nsrc/own.ts(1,1): error TS1005: ';' expected.\n";
+  expect(stubVerdict(log, "probe", ["src/own.ts"], FL)).toStrictEqual({
+    stage: "tsc",
+    expected: "probe",
+    outside: [],
+    failures: [],
+  });
+});
+
+test("Stub Verdict: a failure line at another stage is not counted", () => {
+  const log =
+    "== guard\n FAIL  x.ts > y\n--- FAIL: TestGuard\n== probe\n FAIL  x.ts > z\n";
+  expect(stubVerdict(log, "probe", ["x.ts"], FL).failures).toStrictEqual([
+    "FAIL  x.ts > z",
+  ]);
+});
+
+test("Stub Verdict: the held lint verdict is its own stage", () => {
+  const log =
+    "== probe\n== eslint failed (see above); every step between it and here passed\n";
+  expect(stubVerdict(log, "probe", [], FL).stage).toBe("verdict");
+});
+
+test("Stub Verdict: before the first header nothing counts", () => {
+  const log = " FAIL  x.ts > y\nsrc/own.ts(1,1): error\n== build\n";
+  expect(stubVerdict(log, "probe", [], FL)).toStrictEqual({
+    stage: "build",
+    expected: "probe",
+    outside: [],
+    failures: [],
+  });
+});
+
+test("Stub Verdict: a repeated line counts once", () => {
+  const log =
+    "== tsc\nsrc/own.ts(1,1): error\nsrc/own.ts(1,1): error\n== probe\n FAIL  x > y\n FAIL  x > y\n";
+  const v = stubVerdict(log, "probe", [], FL);
+  expect(v.outside).toStrictEqual(["src/own.ts(1,1): error"]);
+  expect(v.failures).toStrictEqual(["FAIL  x > y"]);
+});
+
+test("Stub Verdict: a line naming no file at all is ignored", () => {
+  const log = "== build\nsome line without a file\n";
+  expect(stubVerdict(log, "probe", [], FL).outside).toStrictEqual([]);
+});
+```

@@ -1,0 +1,175 @@
+```ts
+import type { Card } from "../cards/types.js";
+import { isTransactionDeck } from "../cards/transaction.js";
+
+export type GatePhase = "stub" | "ref" | "retry";
+
+export interface GateStep {
+  phase: GatePhase;
+  generation: number;
+  card: string;
+  put: Record<string, "stub" | "ref">;
+  commit: string[];
+}
+
+export interface GatePlan {
+  transaction: boolean;
+  steps: GateStep[];
+  missing: string[];
+}
+
+interface Entry {
+  card: Card;
+  generation: number;
+}
+
+function entriesOf(
+  generation: number,
+  ids: readonly string[],
+  byId: Map<string, Card>,
+): Entry[] {
+  const entries: Entry[] = [];
+  for (const id of ids) {
+    const card = byId.get(id);
+    if (card === undefined) continue;
+    entries.push({ card, generation });
+  }
+  return entries;
+}
+
+export function gatePlan(
+  cards: readonly Card[],
+  generations: string[][],
+  stubs: readonly string[],
+  refs: readonly string[],
+): GatePlan {
+  const byId = new Map<string, Card>();
+  for (const card of cards) {
+    byId.set(card.customId, card);
+  }
+
+  const order: Entry[] = [];
+  const perGeneration: Entry[][] = generations.map((ids, generation) =>
+    entriesOf(generation, ids, byId),
+  );
+  for (const entries of perGeneration) {
+    for (const entry of entries) {
+      order.push(entry);
+    }
+  }
+
+  const stubSet = new Set(stubs);
+  const refSet = new Set(refs);
+
+  const missing: string[] = [];
+  const seen = new Set<string>();
+  for (const entry of order) {
+    for (const target of entry.card.targets) {
+      if (!stubSet.has(target) && !seen.has("no stub: " + target)) {
+        seen.add("no stub: " + target);
+        missing.push("no stub: " + target);
+      }
+      if (!refSet.has(target) && !seen.has("no reference: " + target)) {
+        seen.add("no reference: " + target);
+        missing.push("no reference: " + target);
+      }
+    }
+  }
+
+  const transaction = isTransactionDeck(cards);
+
+  if (missing.length > 0) {
+    return { transaction, steps: [], missing };
+  }
+
+  const steps: GateStep[] = [];
+
+  if (!transaction) {
+    for (const entries of perGeneration) {
+      for (const entry of entries) {
+        const put: Record<string, "stub" | "ref"> = {};
+        for (const target of entry.card.targets) {
+          put[target] = "stub";
+        }
+        steps.push({
+          phase: "stub",
+          generation: entry.generation,
+          card: entry.card.customId,
+          put,
+          commit: [],
+        });
+      }
+      for (const entry of entries) {
+        const put: Record<string, "stub" | "ref"> = {};
+        for (const target of entry.card.targets) {
+          put[target] = "ref";
+        }
+        steps.push({
+          phase: "ref",
+          generation: entry.generation,
+          card: entry.card.customId,
+          put,
+          commit: entry.card.targets.slice(),
+        });
+      }
+      if (entries.length >= 2) {
+        for (const entry of entries) {
+          steps.push({
+            phase: "retry",
+            generation: entry.generation,
+            card: entry.card.customId,
+            put: {},
+            commit: [],
+          });
+        }
+      }
+    }
+  } else {
+    const allTargets: string[] = [];
+    const claimed = new Set<string>();
+    for (const entry of order) {
+      for (const target of entry.card.targets) {
+        if (claimed.has(target)) continue;
+        claimed.add(target);
+        allTargets.push(target);
+      }
+    }
+
+    for (let i = 0; i < order.length; i++) {
+      const entry = order[i] as Entry;
+      const put: Record<string, "stub" | "ref"> = {};
+      if (i === 0) {
+        for (const target of allTargets) {
+          put[target] = "stub";
+        }
+      }
+      steps.push({
+        phase: "stub",
+        generation: entry.generation,
+        card: entry.card.customId,
+        put,
+        commit: [],
+      });
+    }
+
+    for (let i = 0; i < order.length; i++) {
+      const entry = order[i] as Entry;
+      const put: Record<string, "stub" | "ref"> = {};
+      if (i === 0) {
+        for (const target of allTargets) {
+          put[target] = "ref";
+        }
+      }
+      steps.push({
+        phase: "ref",
+        generation: entry.generation,
+        card: entry.card.customId,
+        put,
+        commit: i === order.length - 1 ? allTargets.slice() : [],
+      });
+    }
+  }
+
+  return { transaction, steps, missing };
+}
+```

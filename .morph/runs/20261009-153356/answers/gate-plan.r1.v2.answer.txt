@@ -1,0 +1,182 @@
+```typescript
+import type { Card } from "../cards/types.js";
+import { isTransactionDeck } from "../cards/transaction.js";
+
+export type GatePhase = "stub" | "ref" | "retry";
+
+export interface GateStep {
+  phase: GatePhase;
+  generation: number;
+  card: string;
+  put: Record<string, "stub" | "ref">;
+  commit: string[];
+}
+
+export interface GatePlan {
+  transaction: boolean;
+  steps: GateStep[];
+  missing: string[];
+}
+
+interface Entry {
+  card: Card;
+  generation: number;
+}
+
+function entriesOf(
+  generation: number,
+  ids: readonly string[],
+  byId: Map<string, Card>,
+): Entry[] {
+  const entries: Entry[] = [];
+  for (const id of ids) {
+    const card = byId.get(id);
+    if (card === undefined) continue;
+    entries.push({ card, generation });
+  }
+  return entries;
+}
+
+function putAll(
+  targets: readonly string[],
+  value: "stub" | "ref",
+): Record<string, "stub" | "ref"> {
+  const put: Record<string, "stub" | "ref"> = {};
+  for (const target of targets) {
+    put[target] = value;
+  }
+  return put;
+}
+
+function step(
+  phase: GatePhase,
+  generation: number,
+  card: string,
+  put: Record<string, "stub" | "ref">,
+  commit: string[],
+): GateStep {
+  return { phase, generation, card, put, commit };
+}
+
+export function gatePlan(
+  cards: readonly Card[],
+  generations: string[][],
+  stubs: readonly string[],
+  refs: readonly string[],
+): GatePlan {
+  const byId = new Map<string, Card>();
+  for (const card of cards) {
+    byId.set(card.customId, card);
+  }
+
+  const perGeneration: Entry[][] = generations.map((ids, generation) =>
+    entriesOf(generation, ids, byId),
+  );
+
+  const order: Entry[] = [];
+  for (const entries of perGeneration) {
+    for (const entry of entries) {
+      order.push(entry);
+    }
+  }
+
+  const stubSet = new Set(stubs);
+  const refSet = new Set(refs);
+
+  const missing: string[] = [];
+  const seen = new Set<string>();
+  for (const entry of order) {
+    for (const target of entry.card.targets) {
+      if (!stubSet.has(target) && !seen.has("no stub: " + target)) {
+        seen.add("no stub: " + target);
+        missing.push("no stub: " + target);
+      }
+      if (!refSet.has(target) && !seen.has("no reference: " + target)) {
+        seen.add("no reference: " + target);
+        missing.push("no reference: " + target);
+      }
+    }
+  }
+
+  const transaction = isTransactionDeck(cards);
+
+  if (missing.length > 0) {
+    return { transaction, steps: [], missing };
+  }
+
+  const steps: GateStep[] = [];
+
+  if (!transaction) {
+    for (const entries of perGeneration) {
+      for (const entry of entries) {
+        steps.push(
+          step(
+            "stub",
+            entry.generation,
+            entry.card.customId,
+            putAll(entry.card.targets, "stub"),
+            [],
+          ),
+        );
+        steps.push(
+          step(
+            "ref",
+            entry.generation,
+            entry.card.customId,
+            putAll(entry.card.targets, "ref"),
+            entry.card.targets.slice(),
+          ),
+        );
+      }
+      if (entries.length >= 2) {
+        for (const entry of entries) {
+          steps.push(
+            step("retry", entry.generation, entry.card.customId, {}, []),
+          );
+        }
+      }
+    }
+  } else {
+    const allTargets: string[] = [];
+    const claimed = new Set<string>();
+    for (const entry of order) {
+      for (const target of entry.card.targets) {
+        if (claimed.has(target)) continue;
+        claimed.add(target);
+        allTargets.push(target);
+      }
+    }
+
+    let i = 0;
+    for (const entry of order) {
+      steps.push(
+        step(
+          "stub",
+          entry.generation,
+          entry.card.customId,
+          i === 0 ? putAll(allTargets, "stub") : {},
+          [],
+        ),
+      );
+      i += 1;
+    }
+
+    i = 0;
+    for (const entry of order) {
+      const last = i === order.length - 1;
+      steps.push(
+        step(
+          "ref",
+          entry.generation,
+          entry.card.customId,
+          i === 0 ? putAll(allTargets, "ref") : {},
+          last ? allTargets.slice() : [],
+        ),
+      );
+      i += 1;
+    }
+  }
+
+  return { transaction, steps, missing };
+}
+```

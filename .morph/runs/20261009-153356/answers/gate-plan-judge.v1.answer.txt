@@ -1,0 +1,147 @@
+```ts
+import fs from "node:fs";
+import { layerGenerations } from "../../src/cards/layer.js";
+import { loadDeck } from "../../src/cards/model.js";
+import type { Card, Deck } from "../../src/cards/types.js";
+import { gatePlan } from "../../src/gate/gatePlan.js";
+import type { GatePlan } from "../../src/gate/gatePlan.js";
+import { fixtureJson, fixturePath } from "../helpers.js";
+
+function deck(name: string): Deck {
+  const d = loadDeck(fs.readFileSync(fixturePath("go-p7b/decks/b1/" + name), "utf8"));
+  if (!d.ok) throw new Error(name);
+  return d.deck;
+}
+
+const all = (d: Deck): string[] => d.cards.flatMap((c) => c.targets).sort();
+
+const plan = (k: string): GatePlan =>
+  (fixtureJson("gate/plans.json") as Record<string, GatePlan>)[k];
+
+// a Card has EVERY field (loadDeck refuses a missing one); a deck file is a top-level JSON ARRAY of such cards
+const card = (
+  id: string,
+  targets: string[],
+  acceptance: string | null,
+  dependsOn: string[] = [],
+): Card => ({
+  customId: id,
+  intent: "generate",
+  targets,
+  contextSlice: [],
+  instruction: "w",
+  acceptance,
+  model: null,
+  maxTokens: null,
+  reasoning: null,
+  variants: 1,
+  dependsOn,
+});
+
+test("Gate Plan example 1: the P21a cut has 22 steps with a retry per sibling generation", () => {
+  const d = deck("deck.p21.json");
+  const targets = all(d);
+  expect(gatePlan(d.cards, layerGenerations(d), targets, targets)).toStrictEqual(
+    plan("p21"),
+  );
+});
+
+test("Gate Plan example 2: the transaction cut has 16 steps and one commit", () => {
+  const d = deck("deck.p21c.json");
+  const targets = all(d);
+  expect(gatePlan(d.cards, layerGenerations(d), targets, targets)).toStrictEqual(
+    plan("p21c"),
+  );
+});
+
+test("Gate Plan example 3: missing files stop the plan; a small deck runs with retries", () => {
+  const d = deck("deck.p21.json");
+  const targets = all(d);
+  const stubs = targets.filter((t) => t !== "supervisor/guard.go");
+  const refs = targets.filter(
+    (t) => t !== "daemon/daemon.go" && t !== "control/control.go",
+  );
+  expect(gatePlan(d.cards, layerGenerations(d), stubs, refs)).toStrictEqual(
+    plan("missing"),
+  );
+
+  const k = card("k", ["src/k.ts", "tests/k.test.ts"], null);
+  const m = card("m", ["src/m.ts"], null);
+  const n = card("n", ["src/n.ts"], null, ["k"]);
+  const smallStubs = [
+    "src/k.ts",
+    "tests/k.test.ts",
+    "src/m.ts",
+    "src/n.ts",
+    "extra.ts",
+  ];
+  const smallRefs = ["src/k.ts", "tests/k.test.ts", "src/m.ts", "src/n.ts"];
+  expect(
+    gatePlan([k, m, n], [["k", "zz"], [], ["m", "n"]], smallStubs, smallRefs),
+  ).toStrictEqual(plan("small"));
+});
+
+test("Gate Plan: a stub put keeps the card's target order", () => {
+  const a = card("a", ["z.txt", "a.txt"], null);
+  const p = gatePlan([a], [["a"]], ["a.txt", "z.txt"], ["a.txt", "z.txt"]);
+  const stub = p.steps[0];
+  expect(Object.keys(stub?.put ?? {})).toStrictEqual(["z.txt", "a.txt"]);
+  expect(stub?.put).toStrictEqual({ "z.txt": "stub", "a.txt": "stub" });
+});
+
+test("Gate Plan: a target without a stub stops the plan, named once", () => {
+  const a = card("a", ["x.txt"], null);
+  const b = card("b", ["x.txt"], null);
+  expect(gatePlan([a, b], [["a", "b"]], ["x.txt"], [])).toStrictEqual({
+    transaction: false,
+    steps: [],
+    missing: ["no reference: x.txt"],
+  });
+});
+
+test("Gate Plan: a one-card generation gets no retry", () => {
+  const a = card("a", ["a.txt"], null);
+  expect(gatePlan([a], [["a"]], ["a.txt"], ["a.txt"])).toStrictEqual({
+    transaction: false,
+    steps: [
+      {
+        phase: "stub",
+        generation: 0,
+        card: "a",
+        put: { "a.txt": "stub" },
+        commit: [],
+      },
+      {
+        phase: "ref",
+        generation: 0,
+        card: "a",
+        put: { "a.txt": "ref" },
+        commit: ["a.txt"],
+      },
+    ],
+    missing: [],
+  });
+});
+
+test("Gate Plan: a sibling generation gets a retry per card after its refs", () => {
+  const a = card("a", ["a.txt"], null);
+  const b = card("b", ["b.txt"], null);
+  const p = gatePlan(
+    [a, b],
+    [["a", "b"]],
+    ["a.txt", "b.txt"],
+    ["a.txt", "b.txt"],
+  );
+  const phases = p.steps.map((s) => `${s.phase} ${s.card}`);
+  expect(phases).toStrictEqual([
+    "stub a",
+    "stub b",
+    "ref a",
+    "ref b",
+    "retry a",
+    "retry b",
+  ]);
+  const refs = p.steps.filter((s) => s.phase === "ref");
+  expect(refs.map((s) => s.commit)).toStrictEqual([["a.txt"], ["b.txt"]]);
+});
+```

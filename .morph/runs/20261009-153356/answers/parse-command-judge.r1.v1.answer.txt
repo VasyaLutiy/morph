@@ -1,0 +1,157 @@
+```
+import { test, expect } from "vitest";
+import { parseCommand } from "../../src/cli/parse.js";
+import { main } from "../../src/cli/main.js";
+import { fixtureJson, tmpRoot } from "../helpers.js";
+import type { CliDeps, CliIo } from "../../src/cli/types.js";
+
+const parseArgv = fixtureJson("cli/parseArgv.json") as Record<string, string[][]>;
+const parseResults = fixtureJson("cli/parse.json") as Record<string, unknown>;
+const examples = fixtureJson("cli/examples.json") as Record<string, { given: unknown; then: unknown }>;
+
+interface MainExpectation {
+  code: number;
+  document: unknown;
+  stdout: string | null;
+  stderr: string;
+}
+
+function asRecord(value: unknown, what: string): Record<string, unknown> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error("cli/examples.json: " + what + " is not an object");
+  }
+  return value as Record<string, unknown>;
+}
+
+function asStrings(value: unknown, what: string): string[] {
+  if (!Array.isArray(value) || !value.every((token) => typeof token === "string")) {
+    throw new Error("cli/examples.json: " + what + " is not a list of strings");
+  }
+  return value as string[];
+}
+
+// A Main example gives one invocation, or a sequence of invocations in one root.
+function invocations(given: unknown): string[][] {
+  if (Array.isArray(given)) {
+    if (given.length > 0 && given.every((token) => typeof token === "string")) {
+      return [given as string[]];
+    }
+    return given.map((entry, i) => asStrings(entry, "given[" + i + "]"));
+  }
+  return invocations(asRecord(given, "given").argv);
+}
+
+function expectations(then: unknown): MainExpectation[] {
+  const entries = Array.isArray(then) ? then : [then];
+  return entries.map((entry, i) => {
+    const row = asRecord(entry, "then[" + i + "]");
+    const code = row.code;
+    if (typeof code !== "number") {
+      throw new Error("cli/examples.json: then[" + i + "].code is not a number");
+    }
+    const stderr = row.stderr ?? row.err;
+    if (typeof stderr !== "string") {
+      throw new Error("cli/examples.json: then[" + i + "].stderr is not a string");
+    }
+    const stdout = row.stdout ?? row.out;
+    return { code, document: row.document, stdout: typeof stdout === "string" ? stdout : null, stderr };
+  });
+}
+
+async function playMain(steps: string[][], expected: MainExpectation[], root: string): Promise<void> {
+  const deps: CliDeps = { env: { PATH: process.env.PATH ?? "" }, now: () => 0, cwd: "/", transport: null };
+  expect(steps.length).toBe(expected.length);
+  for (let i = 0; i < steps.length; i++) {
+    const argv = steps[i].map((token) => token.replace(/\$ROOT/g, root));
+    const out: string[] = [];
+    const err: string[] = [];
+    const io: CliIo = {
+      stdout: (text: string): void => {
+        out.push(text);
+      },
+      stderr: (text: string): void => {
+        err.push(text);
+      },
+    };
+    const code = await main(argv, deps, io);
+    expect(code).toBe(expected[i].code);
+    expect(err.join("")).toBe(expected[i].stderr);
+    const printed = out.join("");
+    if (expected[i].stdout !== null) {
+      expect(printed).toBe(expected[i].stdout);
+    } else if (typeof expected[i].document === "string") {
+      expect(printed).toBe(expected[i].document);
+    } else if (expected[i].document !== undefined) {
+      expect(JSON.parse(printed) as unknown).toStrictEqual(expected[i].document);
+    }
+  }
+}
+
+test("Parse Command example 23: gate parses its own flags and refuses the others", () => {
+  const parsed = parseArgv["23"].map((argv) => parseCommand(argv));
+  expect(parsed).toStrictEqual(parseResults["23"]);
+});
+
+test("Main example 17: a missing deck, then a missing --stubs", async () => {
+  const root = tmpRoot();
+  try {
+    const example = examples["Main 17"];
+    await playMain(invocations(example.given), expectations(example.then), root.root);
+  } finally {
+    root.rm();
+  }
+});
+
+test("Parse Command: gate takes --root, --pretty, --deck, --stubs and --refs", () => {
+  expect(
+    parseCommand(["gate", "--root", "r", "--pretty", "--deck", "d", "--stubs", "s", "--refs", "f"]),
+  ).toStrictEqual({
+    ok: true,
+    command: { name: "gate", root: "r", pretty: true, deck: "d", stubs: "s", refs: "f" },
+  });
+});
+
+test("Parse Command: gate without --stubs says missing --stubs", () => {
+  const result = parseCommand(["gate", "--deck", "d", "--refs", "r"]);
+  expect(result.ok).toBe(false);
+  if (result.ok) throw new Error("expected a usage error");
+  expect(result.error.error.code).toBe(4);
+  expect(result.error.error.kind).toBe("UsageError");
+  expect(result.error.error.message).toBe("missing --stubs");
+});
+
+test("Parse Command: gate without --refs says missing --refs", () => {
+  const result = parseCommand(["gate", "--deck", "d", "--stubs", "s"]);
+  expect(result.ok).toBe(false);
+  if (result.ok) throw new Error("expected a usage error");
+  expect(result.error.error.code).toBe(4);
+  expect(result.error.error.message).toBe("missing --refs");
+});
+
+test("Main: a gate run on a missing deck exits 4 and names the file", async () => {
+  const root = tmpRoot();
+  try {
+    const out: string[] = [];
+    const err: string[] = [];
+    const io: CliIo = {
+      stdout: (text: string): void => {
+        out.push(text);
+      },
+      stderr: (text: string): void => {
+        err.push(text);
+      },
+    };
+    const deps: CliDeps = { env: { PATH: process.env.PATH ?? "" }, now: () => 0, cwd: "/", transport: null };
+    const code = await main(
+      ["gate", "--root", root.root, "--deck", "nope.json", "--stubs", "s", "--refs", "r"],
+      deps,
+      io,
+    );
+    expect(code).toBe(4);
+    expect(out.join("")).toContain("deck file not found: nope.json");
+    expect(err.join("")).toBe("morph gate: exit 4\n");
+  } finally {
+    root.rm();
+  }
+});
+```

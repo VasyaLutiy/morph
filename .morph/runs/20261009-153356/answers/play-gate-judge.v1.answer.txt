@@ -1,0 +1,367 @@
+```ts
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { expect, test } from "vitest";
+import { gatePlan } from "../../src/gate/gatePlan.js";
+import { playGate } from "../../src/gate/playGate.js";
+import { fixtureJson, tmpRepo } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+import type { GateStep } from "../../src/gate/gatePlan.js";
+import type { PlayRow } from "../../src/gate/playGate.js";
+import type { TmpRepo } from "../helpers.js";
+
+const env = (): Record<string, string> => ({
+  PATH: process.env.PATH ?? "",
+  HOME: process.env.HOME ?? "",
+});
+
+const clock = (step: number): (() => number) => {
+  let t = 0;
+  return () => (t += step);
+};
+
+function card(
+  id: string,
+  targets: string[],
+  acceptance: string | null,
+  dependsOn: string[] = [],
+): Card {
+  return {
+    customId: id,
+    intent: "generate",
+    targets,
+    contextSlice: [],
+    instruction: "w",
+    acceptance,
+    model: null,
+    maxTokens: null,
+    reasoning: null,
+    variants: 1,
+    dependsOn,
+  };
+}
+
+function repo(files: Record<string, string>): TmpRepo {
+  const r = tmpRepo();
+  for (const [p, t] of Object.entries(files)) {
+    r.write(p, t);
+  }
+  r.git(["add", "-A"]);
+  r.git(["commit", "-q", "-m", "base"]);
+  return r;
+}
+
+function rows(k: string): PlayRow[] {
+  const table = fixtureJson("gate/playGate.json") as Record<string, PlayRow[]>;
+  const found = table[k];
+  if (found === undefined) {
+    throw new Error("no rows fixture: " + k);
+  }
+  return found;
+}
+
+test(
+  "Play Gate example 1: the shell play of two generations, a stub red at tsc and the retry tree",
+  async () => {
+    const r = repo({
+      "d.json": "[]\n",
+      "src/a.txt": "old a\n",
+      "st/src/a.txt": "s\n",
+      "st/src/b.txt": "s\n",
+      "st/tests/c.txt": "s\n",
+      "rf/src/a.txt": "A1\n",
+      "rf/src/b.txt": "B2\n",
+      "rf/tests/c.txt": "C3\n",
+    });
+    try {
+      const cards: Card[] = [
+        card(
+          "a",
+          ["src/a.txt"],
+          "echo '== probe'; grep -q A1 src/a.txt || { echo ' FAIL probe/a.probe.ts > A example 1'; exit 1; }; echo '== frozen'",
+        ),
+        card(
+          "b",
+          ["src/b.txt"],
+          "echo '== tsc'; grep -q B2 src/b.txt || { echo 'src/zz.ts(1,1): error TS2: zz'; exit 2; }\necho '== probe'",
+        ),
+        card(
+          "c",
+          ["tests/c.txt"],
+          "echo '== guard tests/c.txt'; grep -q C3 tests/c.txt || exit 1\necho '== own git'; git log --format=%s -3 | tr '\\n' , | grep -qx 'gate: b,gate: a,base,'",
+          ["a", "b"],
+        ),
+      ];
+      const targets = ["src/a.txt", "src/b.txt", "tests/c.txt"];
+      const steps = gatePlan(cards, [["a", "b"], ["c"]], targets, targets).steps;
+      const head = r.git(["rev-parse", "HEAD"]);
+      const refs = r.git(["for-each-ref", "--format=%(refname)"]);
+      const out = await playGate(
+        { root: r.root, cards, steps, stubDir: r.path("st"), refDir: r.path("rf") },
+        { env: env(), now: clock(1000) },
+      );
+      expect(out).toStrictEqual(rows("shell"));
+      expect(out.length).toBe(8);
+      expect(r.read("src/a.txt")).toBe("old a\n");
+      expect(r.git(["rev-parse", "HEAD"])).toBe(head);
+      expect(r.git(["for-each-ref", "--format=%(refname)"])).toBe(refs);
+      expect(r.git(["status", "--porcelain"])).toBe("");
+      expect(r.git(["worktree", "list"]).split("\n").length).toBe(1);
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test(
+  "Play Gate example 2: node_modules is linked into the clone and excluded there",
+  async () => {
+    const q = repo({
+      ".gitignore": "node_modules/\n",
+      "node_modules/q/index.js": "module.exports = 1;\n",
+      "d.json": "[]\n",
+      "st/src/n.txt": "s\n",
+      "rf/src/n.txt": "N1\n",
+    });
+    try {
+      const seen: { dir: string | null } = { dir: null };
+      const cards: Card[] = [
+        card(
+          "n",
+          ["src/n.txt"],
+          "echo '== probe'; test -L node_modules && test -f node_modules/q/index.js && grep -q N1 src/n.txt && [ -z \"$(git ls-files --others --exclude-standard | grep -vx src/n.txt)\" ]",
+        ),
+      ];
+      const steps = gatePlan(cards, [["n"]], ["src/n.txt"], ["src/n.txt"]).steps;
+      const head = q.git(["rev-parse", "HEAD"]);
+      const out = await playGate(
+        { root: q.root, cards, steps, stubDir: q.path("st"), refDir: q.path("rf") },
+        {
+          env: env(),
+          now: clock(2500),
+          before: (scratch) => {
+            seen.dir = scratch;
+          },
+        },
+      );
+      expect(out).toStrictEqual(rows("node_modules"));
+      expect(seen.dir).not.toBeNull();
+      const scratch = seen.dir ?? "";
+      expect(scratch).not.toBe("");
+      expect(path.basename(scratch)).toBe("w");
+      expect(path.dirname(path.dirname(scratch))).toBe(os.tmpdir());
+      expect(fs.existsSync(path.join(scratch, "d.json"))).toBe(true);
+      expect(fs.lstatSync(path.join(scratch, "node_modules")).isSymbolicLink()).toBe(true);
+      expect(fs.existsSync(path.join(scratch, "node_modules", "q", "index.js"))).toBe(true);
+      expect(fs.existsSync(scratch)).toBe(false);
+      expect(q.git(["rev-parse", "HEAD"])).toBe(head);
+      expect(q.git(["status", "--porcelain"])).toBe("");
+      expect(q.read("node_modules/q/index.js")).toBe("module.exports = 1;\n");
+    } finally {
+      q.rm();
+    }
+  },
+  120000,
+);
+
+test(
+  "Play Gate example 3: a cardless step is skipped, an acceptance-less card runs empty, a step times out",
+  async () => {
+    const r = tmpRepo();
+    try {
+      r.write("st/z.txt", "s\n");
+      r.write("st/s.txt", "s\n");
+      r.write("rf/z.txt", "z\n");
+      r.write("rf/s.txt", "s2\n");
+      r.git(["add", "-A"]);
+      r.git(["commit", "-q", "-m", "base"]);
+      const cards: Card[] = [
+        card("z", ["z.txt"], null),
+        card("s", ["s.txt"], "echo '== probe'; echo started; sleep 5; echo late"),
+      ];
+      const targets = ["s.txt", "z.txt"];
+      const planned = gatePlan(cards, [["z"], ["s"]], targets, targets).steps;
+      const steps: GateStep[] = [
+        { phase: "stub", generation: 0, card: "nope", put: {}, commit: [] },
+        ...planned,
+      ];
+      const out = await playGate(
+        { root: r.root, cards, steps, stubDir: r.path("st"), refDir: r.path("rf") },
+        { env: env(), now: clock(100), timeoutMs: 700 },
+      );
+      expect(out).toStrictEqual(rows("timeout"));
+      expect(out.length).toBe(4);
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test(
+  "Play Gate own 1: a rejected play removes its scratch",
+  async () => {
+    const r = repo({ "st/src/a.txt": "s\n", "rf/src/a.txt": "A1\n" });
+    try {
+      const seen: { dir: string | null } = { dir: null };
+      const cards: Card[] = [card("a", ["src/missing.txt"], null)];
+      const steps: GateStep[] = [
+        { phase: "stub", generation: 0, card: "a", put: { "src/missing.txt": "stub" }, commit: [] },
+      ];
+      await expect(
+        playGate(
+          { root: r.root, cards, steps, stubDir: r.path("st"), refDir: r.path("rf") },
+          {
+            env: env(),
+            now: clock(1000),
+            before: (scratch) => {
+              seen.dir = scratch;
+            },
+          },
+        ),
+      ).rejects.toThrow();
+      expect(seen.dir).not.toBeNull();
+      const scratch = seen.dir ?? "";
+      expect(scratch).not.toBe("");
+      expect(fs.existsSync(scratch)).toBe(false);
+      expect(r.git(["status", "--porcelain"])).toBe("");
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test(
+  "Play Gate own 2: the scratch checks out HEAD, not the root's dirty files",
+  async () => {
+    const r = repo({
+      "src/a.txt": "A1\n",
+      "src/b.txt": "B1\n",
+      "st/src/b.txt": "s\n",
+      "rf/src/b.txt": "B1\n",
+    });
+    try {
+      r.write("src/a.txt", "dirty\n");
+      const head = r.git(["rev-parse", "HEAD"]);
+      const seen: { dir: string | null } = { dir: null };
+      const cards: Card[] = [card("b", ["src/b.txt"], null)];
+      const steps: GateStep[] = [
+        { phase: "stub", generation: 0, card: "b", put: { "src/b.txt": "stub" }, commit: [] },
+      ];
+      const out = await playGate(
+        { root: r.root, cards, steps, stubDir: r.path("st"), refDir: r.path("rf") },
+        {
+          env: env(),
+          now: clock(1000),
+          before: (scratch) => {
+            seen.dir = scratch;
+          },
+        },
+      );
+      expect(out.length).toBe(1);
+      expect(seen.dir).not.toBeNull();
+      const scratch = seen.dir ?? "";
+      expect(scratch).not.toBe("");
+      expect(fs.readFileSync(path.join(scratch, "src/a.txt"), "utf8")).toBe("A1\n");
+      expect(r.read("src/a.txt")).toBe("dirty\n");
+      expect(r.git(["rev-parse", "HEAD"])).toBe(head);
+      expect(r.git(["diff", "--name-only"])).toBe("src/a.txt");
+      expect(fs.existsSync(scratch)).toBe(false);
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test(
+  "Play Gate own 3: a play writes no worktree into the root and links no node_modules",
+  async () => {
+    const r = repo({ "src/a.txt": "A1\n", "st/src/a.txt": "s\n", "rf/src/a.txt": "A1\n" });
+    try {
+      const seen: { dir: string | null } = { dir: null };
+      const cards: Card[] = [card("a", ["src/a.txt"], null)];
+      const steps = gatePlan(cards, [["a"]], ["src/a.txt"], ["src/a.txt"]).steps;
+      const out = await playGate(
+        { root: r.root, cards, steps, stubDir: r.path("st"), refDir: r.path("rf") },
+        {
+          env: env(),
+          now: clock(1000),
+          before: (scratch) => {
+            seen.dir = scratch;
+          },
+        },
+      );
+      expect(out.length).toBe(2);
+      expect(seen.dir).not.toBeNull();
+      const scratch = seen.dir ?? "";
+      expect(scratch).not.toBe("");
+      expect(fs.existsSync(path.join(scratch, "node_modules"))).toBe(false);
+      expect(fs.existsSync(path.join(r.root, ".git", "worktrees"))).toBe(false);
+      expect(fs.existsSync(scratch)).toBe(false);
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test(
+  "Play Gate own 4: a put entry copies from the stub or reference directory its kind names",
+  async () => {
+    const r = repo({ "st/src/a.txt": "s\n", "rf/src/a.txt": "R1\n" });
+    try {
+      const cards: Card[] = [
+        card(
+          "a",
+          ["src/a.txt"],
+          "echo '== probe'; grep -q R1 src/a.txt || { echo ' FAIL probe/a.probe.ts > A example 1'; exit 1; }",
+        ),
+      ];
+      const steps = gatePlan(cards, [["a"]], ["src/a.txt"], ["src/a.txt"]).steps;
+      const out = await playGate(
+        { root: r.root, cards, steps, stubDir: r.path("st"), refDir: r.path("rf") },
+        { env: env(), now: clock(1000) },
+      );
+      expect(
+        out.map((row) => ({
+          phase: row.phase,
+          exit: row.exit,
+          stage: row.stage,
+          ok: row.ok,
+        })),
+      ).toStrictEqual([
+        { phase: "stub", exit: 1, stage: "probe", ok: true },
+        { phase: "ref", exit: 0, stage: "probe", ok: true },
+      ]);
+      expect(out[0]?.failures).toStrictEqual(["FAIL probe/a.probe.ts > A example 1"]);
+      expect(out[0]?.outside).toStrictEqual([]);
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test(
+  "Play Gate own 5: seconds is the clock delta in tenths",
+  async () => {
+    const r = repo({ "st/src/a.txt": "s\n", "rf/src/a.txt": "R1\n" });
+    try {
+      const cards: Card[] = [card("a", ["src/a.txt"], "echo '== probe'; exit 1")];
+      const steps = gatePlan(cards, [["a"]], ["src/a.txt"], ["src/a.txt"]).steps;
+      const out = await playGate(
+        { root: r.root, cards, steps, stubDir: r.path("st"), refDir: r.path("rf") },
+        { env: env(), now: clock(1260) },
+      );
+      expect(out.map((row) => row.seconds)).toStrictEqual([1.3, 1.3]);
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+```

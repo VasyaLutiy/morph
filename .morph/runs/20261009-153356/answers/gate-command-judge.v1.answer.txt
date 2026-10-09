@@ -1,0 +1,204 @@
+```ts
+import fs from "node:fs";
+import { expect, test } from "vitest";
+import { CHAIN_LIMIT_SECONDS, gateCommand } from "../../src/gate/gateCommand.js";
+import { readDeckFile } from "../../src/cli/document.js";
+import { checkBuilds } from "../../src/cli/checkBuilds.js";
+import { TRANSACTION_MARK } from "../../src/cards/transaction.js";
+import { fixtureJson, fixturePath, tmpRepo } from "../helpers.js";
+import type { GateDeps, GateDocument } from "../../src/gate/gateCommand.js";
+import type { Card } from "../../src/cards/types.js";
+import type { TmpRepo } from "../helpers.js";
+
+const env = (): Record<string, string> => ({
+  PATH: process.env.PATH ?? "",
+  HOME: process.env.HOME ?? "",
+});
+
+const clock = (step: number): (() => number) => {
+  let t = 0;
+  return () => (t += step);
+};
+
+const deps = (step = 1000): GateDeps => ({
+  env: env(),
+  now: clock(step),
+  readDeck: readDeckFile,
+  builds: checkBuilds,
+});
+
+function repo(files: Record<string, string>): TmpRepo {
+  const r = tmpRepo();
+  for (const [rel, text] of Object.entries(files)) r.write(rel, text);
+  r.git(["add", "-A"]);
+  r.git(["commit", "-q", "-m", "base"]);
+  return r;
+}
+
+function p7b(): TmpRepo {
+  const r = tmpRepo();
+  fs.cpSync(fixturePath("go-p7b"), r.root, { recursive: true });
+  r.git(["add", "-A"]);
+  r.git(["commit", "-q", "-m", "base"]);
+  return r;
+}
+
+const result = (k: string): { code: number; document: unknown } =>
+  (fixtureJson("gate/gateCommand.json") as Record<string, { code: number; document: unknown }>)[k];
+
+const B1 = {
+  deck: "decks/b1/deck.p21.json",
+  stubs: "decks/b1/_stubs",
+  refs: "decks/b1/_refs",
+};
+
+const card = (
+  id: string,
+  targets: string[],
+  acceptance: string | null,
+  dependsOn: string[] = [],
+): Card => ({
+  customId: id,
+  intent: "generate",
+  targets,
+  contextSlice: [],
+  instruction: "w",
+  acceptance,
+  model: null,
+  maxTokens: null,
+  reasoning: null,
+  variants: 1,
+  dependsOn,
+});
+
+const M = TRANSACTION_MARK + "\n";
+
+test("Gate Command example 1: the P21a cut names the P21a smoke RED", async () => {
+  const r = p7b();
+  try {
+    const got = await gateCommand(r.root, B1, deps());
+    expect(got).toStrictEqual(result("p21"));
+  } finally {
+    r.rm();
+  }
+}, 120000);
+
+test("Gate Command example 2: a transaction deck is green, a planted stub is named", async () => {
+  const t1 =
+    M +
+    "echo '== probe'\ngrep -q T1 src/t1.txt || { echo ' FAIL probe/t1.probe.ts > T1 example 1'; exit 1; }";
+  const t2 =
+    M +
+    "echo '== tsc'\n! grep -q BROKEN src/t2.txt || { echo 'lib/old.ts(3,4): error TS2304: Cannot find name q7.'; exit 2; }\necho '== probe'\ngrep -q T1 src/t1.txt && grep -q T2 src/t2.txt";
+  const r = repo({
+    "d.json": JSON.stringify([
+      card("t1", ["src/t1.txt"], t1),
+      card("t2", ["src/t2.txt"], t2, ["t1"]),
+    ]),
+    "s/src/t1.txt": "s\n",
+    "s/src/t2.txt": "s\n",
+    "f/src/t1.txt": "T1\n",
+    "f/src/t2.txt": "T2\n",
+    "s2/src/t1.txt": "T1\n",
+    "s2/src/t2.txt": "BROKEN\n",
+  });
+  try {
+    const tx = await gateCommand(r.root, { deck: "d.json", stubs: "s", refs: "f" }, deps());
+    expect(tx).toStrictEqual(result("tx"));
+    const planted = await gateCommand(r.root, { deck: "d.json", stubs: "s2", refs: "f" }, deps());
+    expect(planted).toStrictEqual(result("planted"));
+  } finally {
+    r.rm();
+  }
+}, 120000);
+
+test("Gate Command example 3: refusals, missing files and the chain limit", async () => {
+  const d = repo({
+    "d.json": JSON.stringify([
+      card("x", ["src/x.txt"], "echo '== probe'\ngrep -q X1 src/x.txt"),
+    ]),
+    "s/src/x.txt": "s\n",
+    "f/src/x.txt": "X1\n",
+  });
+  try {
+    expect(
+      await gateCommand(d.root, { deck: "nope.json", stubs: "nope", refs: "nope" }, deps()),
+    ).toStrictEqual(result("deck not found"));
+    expect(
+      await gateCommand(d.root, { deck: "d.json", stubs: "nope", refs: "nope" }, deps()),
+    ).toStrictEqual(result("stubs not found"));
+    expect(
+      await gateCommand(d.root, { deck: "d.json", stubs: "s", refs: "nope" }, deps()),
+    ).toStrictEqual(result("refs not found"));
+    expect(
+      await gateCommand(d.root, { deck: "d.json", stubs: "s", refs: "f" }, deps(300000)),
+    ).toStrictEqual(result("slow"));
+  } finally {
+    d.rm();
+  }
+
+  const p = p7b();
+  try {
+    fs.cpSync(p.path("decks/b1/_stubs"), p.path("st3"), { recursive: true });
+    fs.rmSync(p.path("st3/supervisor/guard.go"));
+    fs.cpSync(p.path("decks/b1/_refs"), p.path("rf3"), { recursive: true });
+    fs.rmSync(p.path("rf3/daemon/daemon.go"));
+    expect(
+      await gateCommand(
+        p.root,
+        { deck: "decks/b1/deck.p21.json", stubs: "st3", refs: "rf3" },
+        deps(),
+      ),
+    ).toStrictEqual(result("missing"));
+  } finally {
+    p.rm();
+  }
+}, 120000);
+
+test("Gate Command: a target without a stub stops the plan before any play", async () => {
+  const r = repo({
+    "d.json": JSON.stringify([card("k", ["src/k.txt"], "echo '== probe'")]),
+    "f/src/k.txt": "K1\n",
+  });
+  try {
+    fs.mkdirSync(r.path("s"), { recursive: true });
+    const got = await gateCommand(r.root, { deck: "d.json", stubs: "s", refs: "f" }, deps());
+    expect(got).toStrictEqual({
+      code: 2,
+      document: {
+        deck: "d.json",
+        transaction: false,
+        cards: 1,
+        generations: [["k"]],
+        missing: ["no stub: src/k.txt"],
+        builds: null,
+        rows: [],
+        maxSeconds: 0,
+        errors: ["no stub: src/k.txt"],
+      },
+    });
+  } finally {
+    r.rm();
+  }
+}, 120000);
+
+test("Gate Command: a chain just under the limit is no error", async () => {
+  const r = repo({
+    "d.json": JSON.stringify([
+      card("x", ["src/x.txt"], "echo '== probe'\ngrep -q X1 src/x.txt"),
+    ]),
+    "s/src/x.txt": "s\n",
+    "f/src/x.txt": "X1\n",
+  });
+  try {
+    const got = await gateCommand(r.root, { deck: "d.json", stubs: "s", refs: "f" }, deps(249000));
+    expect(got.code).toBe(0);
+    const doc = got.document as GateDocument;
+    expect(CHAIN_LIMIT_SECONDS).toBe(250);
+    expect(doc.maxSeconds).toBe(249);
+    expect(doc.errors).toStrictEqual([]);
+  } finally {
+    r.rm();
+  }
+}, 120000);
+```
