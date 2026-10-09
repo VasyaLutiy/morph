@@ -407,4 +407,50 @@ is prepared after the operator's word.
 
 ### Gate (preparation)
 
-(filled at the gate)
+09.10, on the VPS, by the preparing orchestrator (Opus 5.5, fresh context, no sub-agents); no paid run, no model call.
+Mid-preparation two operator amendments arrived (MorphStudio 4efde92 §6; issue #12 comment 6077766447): the first,
+Go-only design (Vet Tree, 8 cards, data commit 8c77e09) was replaced by the per-language one (data commit b9057f8) before
+any gate step counted; the numbers below are the second design's.
+
+The deck **cut by V2** (main's binary, 6201b7e code): `plan --component language --component planner-subset --component
+acceptance --component cli --judge --checks decks/p21b/checks.json --only <the 10 ids>` **exit 0**, 10 cards, generations
+`[stub-trees, tree-check, tree-profiles] [check-builds, stub-trees-judge, tree-check-judge, tree-profiles-judge]
+[check-builds-judge, deck-check] [deck-check-judge]`; `scale_tokens.py … 3` (maxTokens: tree-profiles, stub-trees,
+check-builds 24 000; tree-check 30 000; deck-check 42 000; tree-profiles-judge 36 000; stub-trees-judge, tree-check-judge
+48 000; check-builds-judge, deck-check-judge 60 000); `deck check` **0 errors, 0 warnings, 0 hazards** (no `_stubs/`
+beside it: no builds). Slices (slice + existing targets): 40.6–57.8 KB, the largest stub-trees-judge **57 840 B** before
+this section (≈ 61 KB with it).
+
+Scratch worktree `/tmp/p21b/gate` from b9057f8 (removed afterwards; no watcher or worker left), the deck's own acceptances
+run as Morph runs them (`/bin/sh`, 300 s cap), cards in deck order, each reference committed before the next:
+- **Stubs, red per example at the probe (20/20)**, typed throwing stubs (`Error: stub treeProfileFor typescript`, `stub
+  stubTrees [9,3,"decks/q9/_stubs",7,3]`, `stub treeCheck […]`, `stub checkBuilds [true,"decks/b1/deck.p20.json",8,5,["PATH"]]`,
+  `stub deckCheckCommand […]`; Main's row reads `exit 3` against 2): tree-profiles 3/3, stub-trees 5/5, tree-check 5/5,
+  check-builds 3/3, deck-check 4/4; judges red at `guard: <file> missing`. **stubcheck.mjs exit 0 on all 10 stub logs.**
+  fullvet does not apply (a TypeScript deck).
+- **References green, chain seconds** (limit 250): stub-trees 73.8, tree-check 74.9, tree-profiles 72.5, check-builds 85.4,
+  stub-trees-judge 74.2, tree-check-judge 80.6, tree-profiles-judge 76.2, check-builds-judge 104.5, deck-check 106.3,
+  deck-check-judge 116.7 — **max 116.7 s**. Final tree `vitest run` **832 / 832 in 137 files** (812 + the reference
+  judges' 20); ripple **0 of 812**; `git status` clean.
+- **Mutants** (the changed contracts only), each under a 120 s subprocess timeout against its probe: **30 mutants** (3
+  treeProfiles.ts, 8 stubTrees.ts, 10 treeCheck.ts, 5 checkBuilds.ts, 4 deckCheck.ts/main.ts), **3.1 min**, max 16.3 s, 0
+  timeouts; **29 killed**; survivor: stubTrees pushing a missing target twice (equivalent for a valid deck: a target
+  repeats only across two owners, a write-write hazard, or twice in one card) — DECISIONS known risk.
+- **Issue #12 item 3.5, measured with the reference code** (§1's table): go-p7b deck.p20.json code 2, 9 breaks over 5 of
+  8 cards, phase-loop `supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)`;
+  deck.p21.json code 0; ts-rename code 2, 5 breaks (to-metres `src/report/line.ts(1,17): error TS2724 …`); a Python card
+  and two cards with no config named in notes (warnings), never skipped.
+- **Byte identity baseline** (no cut code changes in this phase): main's binary (6201b7e) vs the binary built at this
+  data (8c77e09/b9057f8, same code) — go-mini `--checks decks/m1/checks.json` **75 416 B identical**; the P15 deck re-cut
+  from 0365336 (filter, ×3) **398 622 B identical**, equal to the committed deck; go-p7b without `--only` **100 388 B
+  identical**. These are the references the session rechecks with the run's binary.
+
+**Forecast** on `ds` with every maxTokens × 3: P21a ran 8 cards for $0.1969 (12 requests); here 15 first requests (5 code
+× 2 variants + 5 judges), 41–61 KB in, answers 1–8 KB: **≈ $0.20–0.30**, ≤ $0.60 with a re-cut; ≤ $1. **Gate holds.**
+
+**Run command** (from the repo root, the binary copied first; the deck is already scaled ×3):
+
+```
+npm run build && rm -rf /tmp/v2bin-p21b && mkdir -p /tmp/v2bin-p21b && cp -r dist /tmp/v2bin-p21b/ && ln -s $PWD/node_modules /tmp/v2bin-p21b/node_modules && ln -s $PWD/templates /tmp/v2bin-p21b/templates
+node /tmp/v2bin-p21b/dist/cli.js run --root . --deck decks/p21b/deck.json --processor ds --deadline 2400 > /tmp/p21b-run.json
+```
