@@ -1,0 +1,43 @@
+{
+  "runId": "20261009-101744",
+  "completedAt": 1791541372380,
+  "branch": "morph/20261009-101744",
+  "processor": "ds",
+  "generations": 1,
+  "outcomes": [
+    {
+      "customId": "check-builds-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "check-builds-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/checkBuilds.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "c709518f8fd00ef9d5ac980b01641ef5dfd3f3cb",
+      "diffstat": {
+        "files": 1,
+        "insertions": 158,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 20046,
+    "outputTokens": 17613,
+    "cost": 0.0271494,
+    "requests": 1
+  },
+  "requests": [
+    {
+      "customId": "check-builds-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791541065-gAA30Gp17w9YAMshdm1W",
+      "inputTokens": 20046,
+      "outputTokens": 17613,
+      "cost": 0.0271494,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}
