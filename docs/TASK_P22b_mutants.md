@@ -138,7 +138,7 @@ export async function runMutantsUntil(input: TimedMutantsInput): Promise<TimedMu
 
 | example | given | result |
 |---|---|---|
-| Run Mutants 5 | lib/h.ts = H, 3 mutants, grep command, clock(1000); stopAt 2500; stopAt 0; exit 3 with a counting now | untried.json "stop" (2 results: killed 55, survived 61; untried [66]); "zero" (untried all 3); "red" (baseline {3, false}, untried all 3, 0 calls); runMutants' keys [baseline, results, findings] |
+| Run Mutants 5 | lib/h.ts = H, 3 mutants, grep command, clock(1000); stopAt 2500; stopAt 0; exit 3 with a counting now | untried.json "stop" (2 results: killed 55, survived 61; untried [66]); "zero" (untried all 3); "red" (baseline {3, false}, untried all 3, 0 calls); runMutants' keys [baseline, results, findings]; a far stopAt (1000000): 3 results, findings = the 2 survivors (one finding per survivor), untried [] |
 
 **`src/gate/gateMutants.ts`** (NEW; Component gate-proof, layer gate; imports language's paths, the reviewer's
 planMutants and runMutants, the Card and Mutant types; no Node module) — **Gate Mutants**:
