@@ -553,3 +553,30 @@ and claim 6 on go-p7b.
   so `morph accept --commit` of the judge alone cannot be green — a gap of the regulation, for the operator.
 - Phase spend $0.6351 (0.4599 + 0.1752); orchestrator opus55 prep 476k/166/106 min + fix 514k/27/29 min.
 - **Not done**: the dogfood re-play of this deck by the run's `morph gate` (no run code on main); the merge.
+
+### Salvage (operator 09.10, one-off, issue #15) — GREEN, 10/10 on a local branch
+
+No live run, no processor call: the answers the fix run 20261009-175810 accepted, applied by V2's own `parseAnswer` (the
+run's dist `/tmp/v2bin-p22a`) and written as `writeAnswerFiles` does, each card committed by `morph accept --root .
+--deck decks/p22a/deck-fix.json --id <card> --model deepseek/deepseek-v4.1-flash --commit` (exit 0, every stage green).
+- **Order = the imports, not the generations** (the first attempt in generation order was red at parse-command, TS2307 on
+  `../gate/gateCommand.js`): on `salvage/p22a-2` from 48ff572 — gate-plan (v1; 72e9b2b cherry-picked clean → 065fea3),
+  stub-verdict v1 b9a38ed, play-gate v1 00e48da, gate-command r1.v1 ebad726, parse-command v1 6f64d64, gate-plan-judge
+  r1.v1 194529d, stub-verdict-judge v1 3ccfe58, play-gate-judge v1 88665c7, gate-command-judge r1.v1 7780568; 112–134 s
+  per acceptance. Variant = the run's accepted one (`answers/lines.txt`; r1 where the run took 2 attempts).
+- **Debt** parse-command-judge paid by Fable 5.1 xhigh (`morph-fable-debt`, ≈ 5.3 min, 113k tokens, 17 tool calls): only
+  `tests/cli/gate.examples.test.ts`, 7 tests (Parse Command 23 with all ten argv split per word, Main 17 verbatim, 5 own on
+  §2.2's rows), no defect found in other code; `accept --model claude-fable-5-1 --commit` exit 0 → 1cee67d.
+- Every salvage commit carries `Morph-Debt: true` (accept's own trailer).
+- **Verify** on 1cee67d: `git status` clean; `tsc --noEmit` 0 lines; `eslint src tests` exit 0; **vitest 895 / 895 in
+  146 files** (126.7 s; 862 + the judges' 33); `npm run build` exit 0. Own read of the 7 code targets against §2.2: Stub
+  Verdict, Gate Plan (two steps in a row per entry, retries after a generation of ≥ 2, transaction rounds), Play Gate
+  (shared clone, node_modules link + info/exclude, rows, scratch commit, finally), Gate Command (errors in §2.2's order,
+  code 2/0, `_stubs` kept aside and put back) and the cli patch (value flags, arity 1, missing --stubs/--refs after
+  missing --deck, routing with readDeckFile/checkBuilds) as written; **no defect found**.
+- **Byte identity** (binary built from 1cee67d, `/tmp/v2bin-p22a-salvage`, vs the run's `/tmp/v2bin-p22a`): go-mini
+  `--checks decks/m1/checks.json` **75 416 B identical**; the P15 re-cut from 0365336 (filter, ×3) **398 622 B identical,
+  equal to the committed deck**; go-p7b without `--only` **100 388 B identical**.
+- **Dogfood not played**: `morph gate` on deck-fix.json measured 22.7 min at the re-gate (24.0 min at the gate), over this
+  session's 10 min budget; left to P22b's gate (issue #13).
+- Phase spend unchanged $0.6351; orchestrator opus55 salvage ≈ 130k/45/45 min; Fable debt on the subscription.

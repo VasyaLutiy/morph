@@ -6,6 +6,23 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
+## State at handoff (09.10, P22a is merged (salvage); next: P22b, operator's word given)
+
+**P22a is merged (salvage), 10/10, $0 processor.** The fix run 20261009-175810's accepted answers were applied by V2's
+parseAnswer and committed by `morph accept --commit` card by card in import order on `salvage/p22a-2` (065fea3 …
+7780568), parse-command-judge's debt paid by Fable 5.1 xhigh (1cee67d); vitest 895/895 in 146 files, tsc/eslint/build
+green, byte identity go-mini 75 416 B, P15 398 622 B (= committed deck), go-p7b 100 388 B; TASK_P22a §11 "Salvage",
+MEASURE rows, DECISIONS. Issue #15 is closed by the merge; the missing import edge (parse-command ↛ gate-command in the
+map) is recorded for it, not fixed. The dogfood `morph gate` of this deck was not played (≈ 23 min) — P22b's gate plays it.
+
+**Next: P22b** (issue #13 items 2–3: mutants inside `morph gate` — a stop time for Run Mutants, the killer, the cap — and
+the byte-identity corpus + its test), the operator's word given 09.10 (via the coordinator): prepare and run it by the
+cycle ("The cycle of one phase"), then 🧪 smoke post and a **STOP** for the operator. #13 stays open. Every MorphV2 session
+ends with `~/.morph-wait-operator` (the operator side restarts it); never touch `/home/morph/MorphStudio` or its tmux
+session `MorphStudio`.
+
+**Previous state:**
+
 ## State at handoff (09.10, operator: resume the P22a salvage in import order, then a stop)
 
 **Next: resume the P22a salvage (operator 09.10, option (a) of the stop below).** Same rules as the salvage steps under
