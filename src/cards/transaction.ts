@@ -1,0 +1,67 @@
+import type { Card } from "./types.js";
+
+export const TRANSACTION_MARK = "# morph: subset transaction";
+
+export function isTransactionDeck(cards: readonly Card[]): boolean {
+  const mark = TRANSACTION_MARK + "\n";
+  for (const card of cards) {
+    const acceptance = card.acceptance;
+    if (typeof acceptance === "string" && acceptance.startsWith(mark)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export interface Blame {
+  cards: string[];
+  outside: string[];
+}
+
+export function blameLog(
+  log: string,
+  card: string,
+  owners: Record<string, string>,
+  fileLines: readonly string[],
+  exists: (path: string) => boolean,
+): Blame {
+  const cards = new Set<string>();
+  const outside = new Set<string>();
+  let matchedAny = false;
+
+  for (const raw of log.split("\n")) {
+    const line = raw.trimEnd();
+    if (line === "") continue;
+
+    const first = line.charAt(0);
+    if (first === "#" || first === " " || first === "\t") continue;
+
+    for (const source of fileLines) {
+      const match = new RegExp(source).exec(line);
+      if (match === null) continue;
+
+      matchedAny = true;
+      const path = match[1];
+      if (path === undefined) break;
+
+      const rest = match[2] ?? "";
+      if (Object.prototype.hasOwnProperty.call(owners, path)) {
+        cards.add(owners[path]);
+      } else if (!exists(path)) {
+        cards.add(card);
+      } else {
+        outside.add(path + rest);
+      }
+      break;
+    }
+  }
+
+  if (!matchedAny) {
+    cards.add(card);
+  }
+
+  return {
+    cards: Array.from(cards).sort(),
+    outside: Array.from(outside).sort(),
+  };
+}
