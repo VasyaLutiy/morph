@@ -1,0 +1,234 @@
+FILE: tests/cli/planCommand.p20.examples.test.ts
+```
+import { expect, test } from "vitest";
+import { planCommand } from "../../src/cli/planCommand.js";
+import { TRANSACTION_MARK } from "../../src/cards/transaction.js";
+import { fixture, tmpRoot } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+import type { PlanArgs, PlanDocument } from "../../src/cli/types.js";
+import type { TmpRoot } from "../helpers.js";
+
+const MINI = ["contour.yaml", "morph-map.json", "go.mod", "internal/testhelp/testhelp.go", "decks/m1/checks.json",
+  "decks/m1/parts/_clamp-value_probe_test.go", "decks/m1/parts/_percent-of_probe_test.go", "decks/m1/parts/_format-share_probe_test.go"];
+
+function miniRoot(map: string | null): TmpRoot {
+  const r = tmpRoot();
+  for (const f of MINI) r.write(f, fixture("go-mini/" + f));
+  if (map !== null) r.write("morph-map.json", fixture(map));
+  r.write("decks/tools/guard.mjs", "// guard\n");
+  r.write("decks/tools/firstdiff.mjs", "// firstdiff\n");
+  return r;
+}
+
+const args = (over: Partial<PlanArgs>): PlanArgs => ({ name: "plan", root: ".", pretty: false, spec: "contour.yaml",
+  map: "morph-map.json", components: ["calc", "report"], judge: true, out: "decks/m1/deck.json", checks: "decks/m1/checks.json", ...over });
+
+const UN = /X=\$\(git ls-files[^\n]*\n/;
+
+function cardOf(cards: readonly Card[], id: string): Card {
+  const found = cards.find((c) => c.customId === id);
+  if (found === undefined) throw new Error("the deck has no card " + id);
+  return found;
+}
+
+test("Plan Command example 12: --only cuts one card as a subset transaction", () => {
+  const r = miniRoot("cli/goMini.sameGen.map.json");
+  try {
+    const first = planCommand(r.root, args({}));
+    expect(first.code).toBe(0);
+    const full = first.document as PlanDocument;
+    expect(full.generations).toStrictEqual([
+      ["clamp-value", "percent-of"],
+      ["clamp-value-judge", "format-share", "percent-of-judge"],
+      ["format-share-judge"],
+    ]);
+    const overlay = '{"Replace":{"calc/clamp_value.go":""}}';
+    const percentOf = cardOf(full.cards, "percent-of");
+    expect((percentOf.acceptance ?? "").split(overlay).length - 1).toBe(1);
+
+    const second = planCommand(r.root, args({ only: ["percent-of"], out: "decks/m1/only.json" }));
+    expect(second.code).toBe(0);
+    const only = second.document as PlanDocument;
+    expect(only.generations).toStrictEqual([["percent-of"]]);
+    expect(only.externalDependsOn).toStrictEqual({});
+    expect(only.cards).toStrictEqual([
+      {
+        ...percentOf,
+        acceptance: TRANSACTION_MARK + "\n" + (percentOf.acceptance ?? "").replace(overlay, '{"Replace":{}}'),
+      },
+    ]);
+    expect(only.out).toBe("decks/m1/only.json");
+    expect(r.read("decks/m1/only.json")).toBe(JSON.stringify(only.cards, null, 2) + "\n");
+  } finally {
+    r.rm();
+  }
+});
+
+test("Plan Command example 13: --only keeps two siblings as one subset transaction", () => {
+  const r = miniRoot(null);
+  try {
+    const fullDeck = JSON.parse(fixture("cli/goMini.deck.json")) as Card[];
+    const U2 = "X=$(git ls-files --others --exclude-standard | grep -vxF -e report/format_share.go -e calc/percent_of_examples_test.go || true); [ -z \"$X\" ] || { echo \"files left in the tree: $X\"; exit 1; }\n";
+    const tx = (c: Card, overlay: string): Card => ({
+      ...c,
+      acceptance: TRANSACTION_MARK + "\n" + (c.acceptance ?? "").replace(overlay, '{"Replace":{}}').replace(UN, () => U2),
+    });
+
+    const two = planCommand(r.root, args({ only: ["percent-of-judge", "format-share"], out: "decks/m1/two.json" }));
+    expect(two.code).toBe(0);
+    const cut = two.document as PlanDocument;
+    expect(cut.generations).toStrictEqual([["format-share", "percent-of-judge"]]);
+    expect(cut.externalDependsOn).toStrictEqual({
+      "format-share": ["percent-of"],
+      "percent-of-judge": ["percent-of"],
+    });
+    expect(cut.cards).toStrictEqual([
+      tx(cardOf(fullDeck, "format-share"), '{"Replace":{"calc/percent_of_examples_test.go":""}}'),
+      tx(cardOf(fullDeck, "percent-of-judge"), '{"Replace":{"report/format_share.go":""}}'),
+    ]);
+
+    const bad = planCommand(r.root, args({ only: ["nope", "percent-of", "x.2"], out: "decks/m1/bad.json" }));
+    expect(bad.code).toBe(2);
+    expect(bad.document).toStrictEqual({
+      error: { code: 2, kind: "DeckError", message: "--only names cards the plan does not have: nope, x.2" },
+    });
+    expect(r.exists("decks/m1/bad.json")).toBe(false);
+
+    const base = planCommand(r.root, args({ checks: undefined, out: null }));
+    expect(base.code).toBe(0);
+    const clamp = planCommand(r.root, args({ only: ["clamp-value"], checks: undefined, out: null }));
+    expect(clamp.code).toBe(0);
+    const clampDoc = clamp.document as PlanDocument;
+    expect(clampDoc.generations).toStrictEqual([["clamp-value"]]);
+    expect(clampDoc.cards).toStrictEqual([cardOf((base.document as PlanDocument).cards, "clamp-value")]);
+  } finally {
+    r.rm();
+  }
+});
+```
+
+FILE: tests/cli/planCommand.p21.examples.test.ts
+```
+import fs from "node:fs";
+import { test, expect } from "vitest";
+import { planCommand } from "../../src/cli/planCommand.js";
+import { TRANSACTION_MARK } from "../../src/cards/transaction.js";
+import { tmpRoot, fixture } from "../helpers.js";
+import type { TmpRoot } from "../helpers.js";
+import type { PlanArgs, PlanDocument } from "../../src/cli/types.js";
+import type { Card } from "../../src/cards/types.js";
+
+const P7B1 = [
+  "contour.yaml",
+  "morph-map.json",
+  "go.mod",
+  "internal/testhelp/testhelp.go",
+  "decks/b1/checks.json",
+  "decks/b1/parts/_phase-loop_probe_test.go",
+  "control/control.go",
+  "control/control_examples_test.go",
+  "supervisor/loop.go",
+  "supervisor/guard.go",
+  "supervisor/loop_examples_test.go",
+  "supervisor/guard_examples_test.go",
+  "daemon/daemon.go",
+  "daemon/daemon_examples_test.go",
+  "mcp/session.go",
+];
+
+const P7B = [
+  ...P7B1,
+  "decks/b1/parts/_control-contract_probe_test.go",
+  "decks/b1/parts/_runtime-guard_probe_test.go",
+  "decks/b1/parts/_daemon-core_probe_test.go",
+];
+
+function p7bRoot(): TmpRoot {
+  const r = tmpRoot();
+  for (const f of P7B) r.write(f, fixture("go-p7b/" + f));
+  r.write("decks/tools/guard.mjs", "// guard\n");
+  r.write("decks/tools/firstdiff.mjs", "// firstdiff\n");
+  return r;
+}
+
+const args = (over: Partial<PlanArgs>): PlanArgs => ({
+  name: "plan",
+  root: ".",
+  pretty: false,
+  spec: "contour.yaml",
+  map: "morph-map.json",
+  components: ["control", "supervisor", "daemon"],
+  judge: true,
+  out: null,
+  checks: "decks/b1/checks.json",
+  ...over,
+});
+
+test("Plan Command example 14", () => {
+  const r = p7bRoot();
+  try {
+    const only = [
+      "control-contract",
+      "control-contract-judge",
+      "phase-loop",
+      "phase-loop-judge",
+      "runtime-guard",
+      "runtime-guard-judge",
+      "daemon-core",
+      "daemon-core-judge",
+    ];
+    const count = (s: string, sub: string): number => s.split(sub).length - 1;
+    const UN = /X=\$\(git ls-files[^\n]*\n/;
+    const U8 = "X=$(git ls-files --others --exclude-standard | grep -vxF -e control/control.go -e supervisor/loop.go -e supervisor/guard.go -e daemon/daemon.go -e control/control_examples_test.go -e supervisor/loop_examples_test.go -e supervisor/guard_examples_test.go -e daemon/daemon_examples_test.go || true); [ -z \"$X\" ] || { echo \"files left in the tree: $X\"; exit 1; }\n";
+
+    const resOnly = planCommand(r.root, args({ only }));
+    expect(resOnly.code).toBe(0);
+    const docOnly = resOnly.document as PlanDocument;
+    expect(docOnly.generations).toStrictEqual([
+      ["control-contract"],
+      ["control-contract-judge", "phase-loop"],
+      ["phase-loop-judge", "runtime-guard"],
+      ["daemon-core", "runtime-guard-judge"],
+      ["daemon-core-judge"],
+    ]);
+    const idsOnly = docOnly.cards.map((c) => c.customId);
+    expect(idsOnly.length).toBe(8);
+    expect([...idsOnly].sort()).toStrictEqual([...only].sort());
+
+    for (const card of docOnly.cards) {
+      const acceptance = card.acceptance ?? "";
+      expect(acceptance.startsWith(TRANSACTION_MARK + "\n")).toBe(true);
+      expect(count(acceptance, U8)).toBe(1);
+    }
+    const phaseLoopOnly = docOnly.cards.find((c) => c.customId === "phase-loop") as Card;
+    expect(count(phaseLoopOnly.acceptance ?? "", '{"Replace":{}}')).toBe(2);
+    expect(count(phaseLoopOnly.acceptance ?? "", '"supervisor/guard.go":""')).toBe(0);
+
+    const resPlain = planCommand(r.root, args({}));
+    expect(resPlain.code).toBe(0);
+    const docPlain = resPlain.document as PlanDocument;
+    expect(docPlain.generations).toStrictEqual(docOnly.generations);
+    expect(docPlain.cards.map((c) => c.customId)).toStrictEqual(idsOnly);
+
+    const phaseLoopPlain = docPlain.cards.find((c) => c.customId === "phase-loop") as Card;
+    expect(count(phaseLoopPlain.acceptance ?? "", '{"Replace":{"control/control_examples_test.go":""}}')).toBe(1);
+    expect(count(phaseLoopPlain.acceptance ?? "", '{"Replace":{}}')).toBe(1);
+
+    for (const plain of docPlain.cards) {
+      const cut = docOnly.cards.find((c) => c.customId === plain.customId) as Card;
+      const expected = TRANSACTION_MARK + "\n" + (plain.acceptance ?? "")
+        .replace(/\{"Replace":\{(?!}})[^}]*}}/, '{"Replace":{}}')
+        .replace(UN, () => U8);
+      expect(cut.acceptance).toBe(expected);
+    }
+
+    fs.rmSync(r.path("mcp/session.go"));
+    const resNoMcp = planCommand(r.root, args({ only }));
+    expect(resNoMcp.code).toBe(0);
+    const docNoMcp = resNoMcp.document as PlanDocument;
+    expect(docNoMcp.cards).toStrictEqual(docOnly.cards);
+  } finally {
+    r.rm();
+  }
+});
+```

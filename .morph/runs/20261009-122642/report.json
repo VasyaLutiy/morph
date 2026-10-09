@@ -1,0 +1,43 @@
+{
+  "runId": "20261009-122642",
+  "completedAt": 1791549317035,
+  "branch": "morph/20261009-122642",
+  "processor": "ds",
+  "generations": 1,
+  "outcomes": [
+    {
+      "customId": "plan-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/planCommand.p20.examples.test.ts\n== guard tests/cli/planCommand.p21.examples.test.ts\n== names tests/cli/planCommand.p20.examples.test.ts\n== names tests/cli/planCommand.p21.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "7a42c4f1f5627952fdd0bd5abaf26e0285a577c2",
+      "diffstat": {
+        "files": 2,
+        "insertions": 36,
+        "deletions": 16
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 32593,
+    "outputTokens": 38300,
+    "cost": 0.0557379,
+    "requests": 1
+  },
+  "requests": [
+    {
+      "customId": "plan-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791548802-x6ighgvYbNq0grQGjlnn",
+      "inputTokens": 32593,
+      "outputTokens": 38300,
+      "cost": 0.0557379,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}
