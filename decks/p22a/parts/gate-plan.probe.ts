@@ -42,6 +42,7 @@ test("rows: a shared target is put once in a transaction; one marked card makes 
   expect(p.transaction).toBe(true);
   expect(p.steps.map((s) => s.phase + " " + s.card + " " + Object.keys(s.put).join(",") + " " + s.commit.join(","))).toStrictEqual([
     "stub b y.ts,z.ts,x.ts ", "stub a  ", "ref b y.ts,z.ts,x.ts ", "ref a  y.ts,z.ts,x.ts"]);
+  expect(gatePlan([card("a", ["x.ts"]), card("b", ["x.ts"])], [["a", "b"]], [], []).missing).toStrictEqual(["no stub: x.ts", "no reference: x.ts"]);
   const q = gatePlan([card("a", ["x.ts"]), card("b", ["y.ts"])], [["a", "b"]], ["x.ts"], []);
   expect(q).toStrictEqual({ transaction: false, steps: [], missing: ["no reference: x.ts", "no stub: y.ts", "no reference: y.ts"] });
 });

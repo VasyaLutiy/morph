@@ -73,5 +73,8 @@ test("rows: the limit is 250; a deck-side _stubs directory is put back; a chain 
     expect([got.code, doc.maxSeconds, doc.builds.length]).toStrictEqual([2, 249, 1]);
     expect(doc.errors).toStrictEqual(["ref x: red (exit 1) at probe: lib/y.py:9: old"]);
     expect(q.read("k/_stubs/keep.txt")).toBe("kept\n");
+    const fake = { card: "x", generation: 0, language: "typescript", stubbed: 1, missing: ["m.ts"], breaks: ["src/q.ts(1,1): error TS1: q"], note: null };
+    const two = await gateCommand(q.root, { deck: "k/d.json", stubs: "s", refs: "f" }, { ...deps(1000), builds: () => [fake] });
+    expect((two.document as { errors: string[] }).errors.slice(0, 2)).toStrictEqual(["build x: no stub for m.ts", "build x: src/q.ts(1,1): error TS1: q"]);
   } finally { q.rm(); }
 }, 120000);
