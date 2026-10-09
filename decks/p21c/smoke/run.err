@@ -1,0 +1,10 @@
+morph run: control-contract.v1 accepted stage 0 finish stop chars 220
+morph run: control-contract-judge.v1 accepted stage 0 finish stop chars 338
+morph run: phase-loop.v1 accepted stage 0 finish stop chars 690
+morph run: phase-loop-judge.v1 accepted stage 0 finish stop chars 763
+morph run: runtime-guard.v1 accepted stage 0 finish stop chars 575
+morph run: daemon-core.v1 accepted stage 0 finish stop chars 299
+morph run: runtime-guard-judge.v1 accepted stage 0 finish stop chars 634
+morph run: daemon-core-judge.v1 accepted stage 0 finish stop chars 577
+morph run: control-contract-judge.r1.v1 accepted stage 0 finish stop chars 336
+morph run: exit 0

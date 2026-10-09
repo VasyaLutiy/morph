@@ -6,23 +6,27 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (09.10, after P21b: stop for the operator, operator 09.10: next P21c, then a stop)
+## State at handoff (09.10, after P21c: 🧪 stop for the operator)
 
-**Next: P21c, issue #12 (label `P21-breaking-recut`), the operator gave the word 09.10 ("гоу"): prepare and run it now; then 🧪 and a stop.** Scope
-(PLAN row P21c): the subset transaction of comment https://github.com/VasyaLutiy/morph/issues/12#issuecomment-6077412737
-item 2, made general by comment 6077766447 and sharpened by MorphStudio 4efde92 §6 (read all three whole: `gh issue view
-12 --comments`; `gh api "repos/VasyaLutiy/MorphStudio/contents/docs/MORPHV2_REQUEST_breaking-recut.md?ref=4efde92"`):
-language-agnostic, in the run loop — the group is the whole `--only` subset; cards written by generations as today; every
-acceptance stage of every card (build, vet, probe, own, full) deferred until all group cards are written and run on that
-full tree; a red `file:line` (parsed by each language profile — Tree Profiles' `fileLine` exists since P21b) blames the
-card owning the file and only it is retried; a file outside the subset stops the run naming it; after every retry all
-acceptances re-run to a fixed point, rounds bounded; only `--only` decks switch, full cuts and existing decks byte for
-byte; no P7b/go-p7b names in `src/`. Acceptance: go-p7b live smoke on ds green with no hand edit INCLUDING a forced judge
-retry after its gen-2 sibling has written (also in the gate demo); a second fixture of another shape (ts-rename exists
-since P21b, or a Go interface changed in one package and implemented later in another) green under the transaction and
-red with the correct blame without it; identity checks green. Split rather than narrow. Cap $5 per phase. Every
-MorphV2 session ends with `~/.morph-wait-operator`, never `~/.morph-phase-done` (flag files shared with MorphStudio's
-session; the cron watchdog is MorphStudio's); never touch `/home/morph/MorphStudio` or its tmux session `MorphStudio`.
+**Next: none named. Stop for the operator** (PLAN row P21c: "после мержа — 🧪 стоп оператору"). The session never resumes
+itself; the operator names the next phase here. Every MorphV2 session ends with `~/.morph-wait-operator`, never
+`~/.morph-phase-done` (flag files shared with MorphStudio's session; the cron watchdog is MorphStudio's); never touch
+`/home/morph/MorphStudio` or its tmux session `MorphStudio`. Issue #12 stays open for the operator's check.
+
+**P21c is merged** (`docs/TASK_P21c_transaction.md`, issue #12 item 2, general per language): runs 20261009-114343 (9/10,
+plan-command-judge `budget-exceeded` on the 2400 s deadline, never tried — ENV[time], no re-cut) and 20261009-122642 (the
+plain re-run, 1/1); $0.4484, 49 min; vitest 862/862. An `--only` cut with `--checks` now prefixes every acceptance with
+`# morph: subset transaction` (NEW Transaction Deck, Blame Log in cards; Hide Later no longer applied under the mark); a
+marked deck runs as one transaction (NEW Run Transaction in runloop-subset): every card written by generations with no
+acceptance, then every card's own acceptance on the full tree; a red `file:line` (any Tree Profiles fileLine) retries
+only the owner, ≤ 2 retries per card, all acceptances again to a fixed point; an existing file no card owns stops the run
+`outside the subset: <line>`; all green commits every card, any other end restores every target. `deck check` stubs a
+marked card's tree with the whole subset. Unmarked decks run as before; cuts without `--only` byte for byte (go-mini
+75 416 B, P15 398 622 B, go-p7b 100 388 B, run's binary). Demo (`decks/p21c/demo.sh`): ts-rename 0/4 → 4/4, go-p7b with a
+forced judge red 2/8 (blame `supervisor/guard.go` → runtime-guard) → 8/8, go-p7b + `mcp/count.go` exit 3 outside the
+subset. **Live smoke on ds GREEN** (run 20261009-123941, go-p7b `--only` 8 cards, control-contract-judge forced red once:
+8/8, the judge retried after its gen-2 sibling wrote, $0.0142, no hand edit; `decks/p21c/smoke/`). Running total
+$6.2984 of $30. Lesson: size `--deadline` to a deck's slowest chain (4 generations of large judges on ds overran 2400 s).
 
 **P21b is merged** (`docs/TASK_P21b_deckcheck.md`, issue #12 item 3.5, general per language): runs 20261009-094451 (9/10,
 check-builds-judge DATA[spec]: its own tests wrote a deck as `{"cards": …}`) and 20261009-101744 (the one fix, 1/1);

@@ -1,0 +1,58 @@
+ts-rename-old: exit 1, transaction marks 0/4, written 0/4, requests 3
+    to-metres failed attempts 3 (acceptance failed)
+        red at src/report/line.ts(1,17): error TS2724: '"../units/convert.js"' has no exported member named 'toMeters'. Did y
+        blame: src/report/line.ts -> length-line
+    length-line skipped attempts 0 (dependency to-metres failed)
+    to-metres-judge skipped attempts 0 (dependency to-metres failed)
+    length-line-judge skipped attempts 0 (dependency length-line skipped)
+ts-rename-new: exit 0, transaction marks 4/4, written 4/4, requests 4
+    to-metres written attempts 1
+    length-line written attempts 1
+    to-metres-judge written attempts 1
+    length-line-judge written attempts 1
+go-p7b-old: exit 1, transaction marks 0/8, written 2/8, requests 11
+    control-contract written attempts 1
+    control-contract-judge failed attempts 3 (acceptance failed)
+        red at supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)
+        blame: supervisor/guard.go -> runtime-guard
+    phase-loop written attempts 1
+    phase-loop-judge failed attempts 3 (acceptance failed)
+    runtime-guard failed attempts 3 (acceptance failed)
+    daemon-core skipped attempts 0 (dependency runtime-guard failed)
+    runtime-guard-judge skipped attempts 0 (dependency runtime-guard failed)
+    daemon-core-judge skipped attempts 0 (dependency daemon-core skipped)
+go-p7b-new: exit 0, transaction marks 8/8, written 8/8, requests 9
+    control-contract written attempts 1
+    control-contract-judge written attempts 2
+    phase-loop written attempts 1
+    phase-loop-judge written attempts 1
+    runtime-guard written attempts 1
+    daemon-core written attempts 1
+    runtime-guard-judge written attempts 1
+    daemon-core-judge written attempts 1
+go-p7b-r3-new: exit 3, transaction marks 8/8, written 0/8, requests 8, fault "outside the subset: mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)"
+    control-contract failed attempts 1 (outside the subset)
+        red at mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)
+        blame: mcp/count.go -> outside the subset
+    control-contract-judge failed attempts 1 (outside the subset)
+        red at mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)
+        blame: mcp/count.go -> outside the subset
+    phase-loop failed attempts 1 (outside the subset)
+        red at mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)
+        blame: mcp/count.go -> outside the subset
+    phase-loop-judge failed attempts 1 (outside the subset)
+        red at mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)
+        blame: mcp/count.go -> outside the subset
+    runtime-guard failed attempts 1 (outside the subset)
+        red at mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)
+        blame: mcp/count.go -> outside the subset
+    daemon-core failed attempts 1 (outside the subset)
+        red at mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)
+        blame: mcp/count.go -> outside the subset
+    runtime-guard-judge failed attempts 1 (outside the subset)
+        red at mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)
+        blame: mcp/count.go -> outside the subset
+    daemon-core-judge failed attempts 1 (outside the subset)
+        red at mcp/count.go:6:52: l.Resumes undefined (type supervisor.Loop has no field or method Resumes)
+        blame: mcp/count.go -> outside the subset
+demo seconds: 65

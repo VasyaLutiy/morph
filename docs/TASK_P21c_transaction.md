@@ -446,3 +446,44 @@ requests (5 code × 2 variants + 5 judges), 40–105 KB in, answers 1.5–23 KB:
 npm run build && rm -rf /tmp/v2bin-p21c && mkdir -p /tmp/v2bin-p21c && cp -r dist /tmp/v2bin-p21c/ && ln -s $PWD/node_modules /tmp/v2bin-p21c/node_modules && ln -s $PWD/templates /tmp/v2bin-p21c/templates
 node /tmp/v2bin-p21c/dist/cli.js run --root . --deck decks/p21c/deck.json --processor ds --deadline 2400 > /tmp/p21c-run.json
 ```
+
+### Run (session, 09.10)
+
+- **Run 20261009-114343** (`decks/p21c/deck.json`, binary `/tmp/v2bin-p21c` = main 1912747, `--processor ds --deadline
+  2400`): exit 1 after 2406 s, **9 / 10 written**, 16 requests, **$0.3927**. Every code card and four judges on the
+  first attempt; run-transaction-judge won on r2 (r0 red at `== own`: its own expectation of request ids "a"/"b" against
+  the variant ids "a.v1"/"b.v1"; r1 red at `== own`: its own expectation "failed" where the record says
+  "budget-exceeded" on the deadline — both its own tests, the retry closed them). **plan-command-judge** (generation 3)
+  was never tried: `budget-exceeded`, reason `deadline` (the 2400 s were spent by generations 0–2). Class
+  **environment** (time, not data): no re-cut; ONE plain re-run.
+- **Re-run 20261009-122642** (`decks/p21c/deck-rerun.json`, re-cut on the run branch with the same binary `--only
+  plan-command-judge`, ×3, deck check 0): exit 0, 516 s, **1 / 1** on the first attempt, **$0.0557**.
+- **Phase**: 10 / 10, **$0.4484**, 40 + 9 min.
+- **Verify** on `morph/20261009-122642`: `git status` clean; `tsc --noEmit`, `eslint src tests`, `npm run build` green;
+  **vitest 862 / 862** (141 files). Before the re-run 3 tests were red: Plan Command examples 12–14, exactly the two
+  files plan-command-judge rewrites to the amended contract. Own read of the written code against §2.2: the transaction
+  is entered only by the mark (`isTransactionDeck`), writes every card with acceptance `true` and no commit, runs every
+  card's own acceptance on the full tree, blames by owner through every Tree Profiles `fileLine`, an existing unowned
+  file is the fault `outside the subset: …`, ≤ 2 retries per card and `maxRetryBatches`, all-or-nothing commit in deck
+  order; the plan's `--only` drops Hide Later for the mark; no language, Go, package or fixture name in the new `src/`
+  (grep). No defect found.
+- **Demo with the run's binary** (`decks/p21c/demo.sh /tmp/v2bin-p21c-run /tmp/v2bin-p21c`, 65 s;
+  `decks/p21c/smoke/demo-runbinary.out`): ts-rename without the transaction 0/4, with it **4/4**; go-p7b with
+  control-contract-judge forced red once: without 2/8 (the judge's retries red, blame `supervisor/guard.go` →
+  runtime-guard), with **8/8** (the judge 2 attempts); go-p7b + `mcp/count.go`: exit 3, `outside the subset:
+  mcp/count.go:6:52: l.Resumes undefined …`, nothing committed. Same as the gate.
+- **Byte identity with the run's binary** (vs main's 1912747): go-mini `--checks decks/m1/checks.json` **75 416 B
+  identical**; P15 re-cut from 0365336 (filter, ×3) **398 622 B identical**, equal to the committed deck; go-p7b without
+  `--only` **100 388 B identical**.
+
+### Live smoke on ds (issue #12's acceptance) — GREEN
+
+go-p7b copied to `/tmp/p21csmoke/mod` (goguard/gofirstdiff installed, one base commit); cut with the run's binary `plan
+--component control --component supervisor --component daemon --judge --checks decks/b1/checks.json --only <the 8 ids>`
+exit 0 (every acceptance carries the transaction mark), ×3, `deck check` exit 0; control-contract-judge's acceptance
+given a first step red once ("forced red once", the demo's `force`); `run --processor ds`: run **20261009-123941**, exit
+0, **8 / 8 written**, 131 s, 9 requests, **$0.0142**. control-contract-judge was retried (r1) after its generation-2
+sibling phase-loop had written the new `supervisor/loop.go` — the P21a smoke's RED shape — and the transaction
+committed all eight (judge `control-contract-judge.r1`). No hand edit; the smoke repo's tree is clean and `go build`,
+`go vet`, `go test ./...` are green on it (`Restarts` in supervisor, the old `Resumes` gone). Recipe, deck, plan,
+deck check, report and stderr in `decks/p21c/smoke/`.
