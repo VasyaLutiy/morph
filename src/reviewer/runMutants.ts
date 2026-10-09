@@ -39,6 +39,22 @@ export interface MutantsResult {
   findings: Finding[];
 }
 
+export interface MutantSpot {
+  path: string;
+  line: number;
+  column: number;
+  rule: string;
+}
+
+export interface TimedMutantsInput extends MutantsInput {
+  now: () => number;
+  stopAt: number;
+}
+
+export interface TimedMutantsResult extends MutantsResult {
+  untried: MutantSpot[];
+}
+
 export const DEFAULT_MUTANT_TIMEOUT_MS = 120000;
 export const BASELINE_SOURCE = "mutation baseline";
 
@@ -64,6 +80,40 @@ export function survivorFinding(result: MutantResult): Finding {
   };
 }
 
+function mutantSpot(mutant: Mutant): MutantSpot {
+  return {
+    path: mutant.path,
+    line: mutant.line,
+    column: mutant.column,
+    rule: mutant.rule,
+  };
+}
+
+async function runOneMutant(input: MutantsInput, mutant: Mutant): Promise<MutantResult> {
+  const snapshot = snapshotTargets(input.root, [mutant.path]);
+  try {
+    restoreSnapshot({
+      root: input.root,
+      entries: [{ path: mutant.path, bytes: new TextEncoder().encode(mutant.text) }],
+    });
+    const run = await runAcceptance(input.command, input.root, {
+      env: input.env,
+      timeoutMs: input.timeoutMs,
+    });
+    return {
+      path: mutant.path,
+      line: mutant.line,
+      column: mutant.column,
+      rule: mutant.rule,
+      killed: run.exit !== 0,
+      exit: run.exit,
+      timedOut: run.timedOut,
+    };
+  } finally {
+    restoreSnapshot(snapshot);
+  }
+}
+
 export async function runMutants(input: MutantsInput): Promise<MutantsResult> {
   const baselineRun = await runAcceptance(input.command, input.root, {
     env: input.env,
@@ -80,32 +130,48 @@ export async function runMutants(input: MutantsInput): Promise<MutantsResult> {
   const results: MutantResult[] = [];
   const findings: Finding[] = [];
   for (const mutant of input.mutants) {
-    const snapshot = snapshotTargets(input.root, [mutant.path]);
-    try {
-      restoreSnapshot({
-        root: input.root,
-        entries: [{ path: mutant.path, bytes: new TextEncoder().encode(mutant.text) }],
-      });
-      const run = await runAcceptance(input.command, input.root, {
-        env: input.env,
-        timeoutMs: input.timeoutMs,
-      });
-      const result: MutantResult = {
-        path: mutant.path,
-        line: mutant.line,
-        column: mutant.column,
-        rule: mutant.rule,
-        killed: run.exit !== 0,
-        exit: run.exit,
-        timedOut: run.timedOut,
-      };
-      results.push(result);
-      if (!result.killed) {
-        findings.push(survivorFinding(result));
-      }
-    } finally {
-      restoreSnapshot(snapshot);
+    const result = await runOneMutant(input, mutant);
+    results.push(result);
+    if (!result.killed) {
+      findings.push(survivorFinding(result));
     }
   }
   return { baseline, results, findings };
+}
+
+export async function runMutantsUntil(input: TimedMutantsInput): Promise<TimedMutantsResult> {
+  const baselineRun = await runAcceptance(input.command, input.root, {
+    env: input.env,
+    timeoutMs: input.timeoutMs,
+  });
+  const baseline: Baseline = { exit: baselineRun.exit, timedOut: baselineRun.timedOut };
+  if (baselineRun.exit !== 0) {
+    return {
+      baseline,
+      results: [],
+      findings: [baselineFinding(input.command, baseline, input.timeoutMs)],
+      untried: input.mutants.map(mutantSpot),
+    };
+  }
+  const results: MutantResult[] = [];
+  const findings: Finding[] = [];
+  const untried: MutantSpot[] = [];
+  let stopped = false;
+  for (const mutant of input.mutants) {
+    if (stopped) {
+      untried.push(mutantSpot(mutant));
+      continue;
+    }
+    if (input.now() >= input.stopAt) {
+      stopped = true;
+      untried.push(mutantSpot(mutant));
+      continue;
+    }
+    const result = await runOneMutant(input, mutant);
+    results.push(result);
+    if (!result.killed) {
+      findings.push(survivorFinding(result));
+    }
+  }
+  return { baseline, results, findings, untried };
 }
