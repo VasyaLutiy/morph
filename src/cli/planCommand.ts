@@ -3,11 +3,9 @@ import path from "node:path";
 import { loadContour, loadMap } from "../contour/load.js";
 import { planSpec } from "../planner/plan.js";
 import { selectCards } from "../planner/selectCards.js";
-import { hideLater } from "../planner/hideLater.js";
 import { buildAcceptances } from "../builder/buildAcceptances.js";
 import { resolveProfile } from "../language/profiles.js";
 import { readPlanChecks } from "./readPlanChecks.js";
-import { readGoTree } from "./goTree.js";
 import { errorDocument } from "./document.js";
 import type { ContourMap } from "../contour/types.js";
 import type { PlanResult } from "../planner/types.js";
@@ -115,9 +113,7 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
       vendor: hasFile("vendor/modules.txt"),
     };
     const built = buildAcceptances(
-      args.only !== undefined && profiled.profile.id === "go"
-        ? { ...input, hide: hideLater(plan, readGoTree(root)) }
-        : input,
+      args.only !== undefined ? { ...input, transaction: true } : input,
     );
     if (!built.ok) {
       const n = built.errors.length;
