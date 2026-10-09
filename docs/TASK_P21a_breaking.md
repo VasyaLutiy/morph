@@ -374,7 +374,7 @@ hide-later 24 000, read-go-tree 24 000, build-acceptances 42 000, plan-command 3
 build-acceptances-judge 48 000, hide-later-judge and plan-command-judge 60 000); `deck check` **0 errors, 0 warnings, 0
 hazards**; generations `[build-acceptances, hide-later] [build-acceptances-judge, hide-later-judge, read-go-tree]
 [plan-command, read-go-tree-judge] [plan-command-judge]`. Slices (slice + existing targets): 36.7–57.4 KB, the largest
-build-acceptances-judge **57 408 B**. The same cut by this phase's reference binary is byte-identical (TypeScript).
+build-acceptances-judge **57 408 B** (**62 240 B** with this section in the spec). The same cut by this phase's reference binary is byte-identical (TypeScript).
 
 Scratch worktree `/tmp/p21-gate` from e11edeb (removed afterwards; no watcher or worker left), the deck's own
 acceptances run as Morph runs them (`/bin/sh -c`, 300 s cap), cards in deck order, each accepted reference committed
