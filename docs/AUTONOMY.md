@@ -6,18 +6,26 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (09.10, operator: next P22, then a stop)
+## State at handoff (09.10, EMERGENCY STOP in P22a — wait for the operator)
 
-**Next: P22, issue #13 (label `P22-gate`), then 🧪 and a stop for the operator** (operator 09.10: "после P21c — P22
-morph gate"). Scope = the issue body (read it whole: `gh issue view 13`): one headless `morph gate --deck --stubs --refs`
-with a JSON verdict (stub/ref play per generation, stubcheck/fullvet logic inside, chain times; reuse P21b's stub trees and
-P21c's forced-retry case), mutants inside it through `morph review --mutants` (cap ≤ 30 / ≤ 20 min, survivors listed),
-byte identity as a committed corpus + test; optional `morph report` and `plan --scale-tokens` (may split to P22b);
-AUTONOMY and templates switch the hand gate steps to `morph gate`, and this phase's own gate is the first played by it.
-General per language (Go and TS fixtures), no phase names in `src/`. Cap $5 per phase. Split rather than narrow. Issue #12
-stays open: MorphStudio's PM re-checks P7b. Every MorphV2 session ends with `~/.morph-wait-operator`, never
+**Stop: P22a is red after its one fix, issue #15 (label `debt`).** Nothing of P22a is merged but its data, decks and two
+run archives. P22 was split by the preparation (`docs/TASK_P22a_gate.md`): **P22a** = issue #13 item 1, `morph gate
+--deck --stubs --refs` (NEW Component `gate`, src/gate/, + a cli parse card), 10 cards, an `--only` cut, so one
+transaction; **P22b** = item 2 (mutants inside the gate) + item 3 (byte-identity corpus + test); **P22c** (optional) =
+`morph report`, `plan --scale-tokens`. Runs: 20261009-153356 (`decks/p22a/deck.json`, 0/10, $0.4599, 113 min: four judge
+DATA reds on the record/spec side, three FIX[budget], one ENV[transport], no code defect) and the one fix
+20261009-175810 (`decks/p22a/deck-fix.json`, 9/10 green and all rolled back, $0.1752, 43 min): **parse-command-judge**
+calls `parseCommand(["deck check", …])` with "deck check" as one argv element and expects a flag error — its own
+invented assumption. The debt was NOT paid: a transaction deck rolls the judge's dependencies back with it, so `morph
+accept --commit` of the judge alone cannot be green (a gap of "Paying a debt on a V2 deck"). Options in #15: a plain
+re-run of deck-fix.json; a re-cut `--only` of the nine green cards then the judge's debt; or a second data line for the
+judge. The regulation text of AUTONOMY steps 1–2 and the templates already says `morph gate` takes effect "from the P22a
+merge on": until that merge, the hand gate stays. **Operator 09.10: P22b was approved to start right after P22a only if
+P22a is green (merged, smoke green, no emergency stop, no debt) — it is NOT green, so P22b waits for the operator's word
+too.** Running total $6.9335 of $30. Every MorphV2 session ends with `~/.morph-wait-operator`, never
 `~/.morph-phase-done` (flag files shared with MorphStudio's session; the cron watchdog is MorphStudio's); never touch
-`/home/morph/MorphStudio` or its tmux session `MorphStudio`.
+`/home/morph/MorphStudio` or its tmux session `MorphStudio`. Issue #12 stays open (MorphStudio's PM re-checks P7b);
+issue #13 stays open.
 
 **P21c is merged** (`docs/TASK_P21c_transaction.md`, issue #12 item 2, general per language): runs 20261009-114343 (9/10,
 plan-command-judge `budget-exceeded` on the 2400 s deadline, never tried — ENV[time], no re-cut) and 20261009-122642 (the

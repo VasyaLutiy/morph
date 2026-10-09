@@ -538,3 +538,18 @@ and claim 6 on go-p7b.
   Mutants not re-run: the contracts are unchanged (two probes changed an echoed literal only).
 - **Forecast**: the first 15 requests of the red run cost $0.147; with the budget raised and the blame contained ≈ $0.20–0.35,
   ≤ $0.60 with retries. **Deadline**: `--deadline 7200` (the red run used 6780 s with 19 retry requests).
+
+### Fix run 20261009-175810 (ds, `--deadline 7200`) — RED, emergency stop
+
+- `decks/p22a/deck-fix.json`, 20 requests, **$0.1752**, 42.8 min, exit 1. Nine cards green; the transaction rolled
+  everything back ("transaction rolled back"), so nothing is committed. Retries won: gate-plan-judge, gate-command,
+  gate-command-judge (r1). The blame containment held: no shared red retried the other cards.
+- **parse-command-judge red after the one fix** (v1 and r1 at `== own`, 5 of 6 tests green): its own test calls
+  `parseCommand(["deck check", "--deck", "d.json", "--stubs", …])` — `"deck check"` as ONE argv element — and expects
+  `flag --stubs does not apply to deck check`; the code answers `unknown command: deck check`, which is right for
+  that argv. DATA (a judge's invented assumption, issue #13 "not in scope": stubs and mutants test probes, not those).
+- **Emergency stop** (AUTONOMY "Failure"): issue #15 (label `debt`). The debt is not paid: on a transaction deck the
+  nine green cards were rolled back with the judge, and the judge's acceptance needs parse-command's code on the tree,
+  so `morph accept --commit` of the judge alone cannot be green — a gap of the regulation, for the operator.
+- Phase spend $0.6351 (0.4599 + 0.1752); orchestrator opus55 prep 476k/166/106 min + fix 514k/27/29 min.
+- **Not done**: the dogfood re-play of this deck by the run's `morph gate` (no run code on main); the merge.
