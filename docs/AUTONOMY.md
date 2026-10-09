@@ -6,7 +6,25 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (09.10, EMERGENCY STOP in P22a — wait for the operator)
+## State at handoff (09.10, operator: salvage P22a from its fix run, then a stop)
+
+**Next: salvage P22a (operator 09.10, a one-off decision, issue #15), then a stop for the operator.** No new `morph run`.
+The fix run 20261009-175810 (`decks/p22a/deck-fix.json`) wrote 9 cards whose acceptances passed and were rolled back only
+by the transaction; their answers are archived in `.morph/runs/20261009-175810/answers/`. Steps:
+1. For each of the 9 green cards, in generation order: take the answer variant that PASSED its acceptance in that run
+   (report.json, answers/lines.txt, the run's stderr), write it to the card's targets exactly as the run applies an
+   answer, then `morph accept --deck decks/p22a/deck-fix.json --id <card> --commit`. It must be green on the current tree;
+   any red → stop and report, no retry, no hand edit of code.
+2. parse-command-judge: pay its debt by "Paying a debt on a V2 deck" (`morph card` brief → the morph-fable-debt agent,
+   Fable xhigh → `morph accept --commit`). Its dependencies are now in the tree.
+3. Full suite (vitest), byte identity (go-mini, P15), then TASK_P22a §11, a MEASURE row, DECISIONS (the operator's one-off:
+   accepted archived answers of a rolled-back transaction, no live run; the gap of a debt on a transaction deck, #15),
+   fast-forward merge, push, 🔀. Close #15 if the debt is paid; #13 stays open (P22b, P22c).
+Then stop for the operator (P22b waits for the operator's word). Every MorphV2 session ends with `~/.morph-wait-operator`,
+never `~/.morph-phase-done` (flag files shared with MorphStudio's session; the cron watchdog is MorphStudio's); never touch
+`/home/morph/MorphStudio` or its tmux session `MorphStudio`.
+
+**Previous state (the stop that led here):**
 
 **Stop: P22a is red after its one fix, issue #15 (label `debt`).** Nothing of P22a is merged but its data, decks and two
 run archives. P22 was split by the preparation (`docs/TASK_P22a_gate.md`): **P22a** = issue #13 item 1, `morph gate
