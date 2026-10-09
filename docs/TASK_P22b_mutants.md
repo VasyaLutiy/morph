@@ -480,3 +480,39 @@ and the five judges at the guard, references 10/10 green, maxSeconds 127.2 (P22a
 
 **Post-run dogfood (the session):** the run's binary, `morph gate … --mutants 30` on this deck with the run's targets as
 references: expected code 0 or 1 (the equivalent survivor above), planned ≤ 30, seconds ≤ 1 320; claim 6.
+
+### Run 20261009-211927 (ds, `--deadline 7200`, transaction)
+
+40 min (2 372 s), 20 requests, 509 270 in / 187 179 out tokens, **$0.1675**; exit 1, **0/10 written** — the transaction
+rolled every target back. 9 of 10 cards were green on the final tree (check-identity, parse-command, run-mutants,
+check-identity-judge, gate-mutants, parse-command-judge v1; gate-command r1.v1 after a tsc red `src/gate/gateCommand.ts(272,36):
+Property 'baselines' does not exist on type 'never'` on v1; gate-mutants-judge r1.v1; gate-command-judge r2.v1, r1 stale).
+**run-mutants-judge** red at its own stage: its own third test ("a far stopAt leaves every mutant tried") expected
+`findings.length` 1 where H with `grep -q "a === b"` gives one killed and **two** survivors, so two findings — the judge's
+invented arithmetic, the code right (its first test, the record's fixture, passed). Class **DATA[spec]**. The card was
+not retried by the transaction (attempts 1); the round ended with every target restored.
+
+### Fix data 7cbb85e (P1b pattern)
+
+Run Mutants example 5 in the record (and §2.2's row) pins a far stopAt: results the three spots (55 killed, 61 and 66
+survived), findings the TWO survivor findings (one per survivor), untried []. Re-cut of all ten (`deck-fix.json`) only
+changed run-mutants' and run-mutants-judge's instructions; its `morph gate` was stopped by the operator's change of plan.
+
+### Salvage (operator 09.10) instead of a full re-run
+
+The 9 green answers of run 20261009-211927 applied by V2's parseAnswer (as writeAnswerFiles does), `morph accept --deck
+decks/p22b/deck.json --id <card> --model deepseek/deepseek-v4.1-flash --commit` card by card in IMPORT order (imports
+read from each answer first) on `salvage/p22b`: run-mutants 1ccf9a7, check-identity 07d7a3f, parse-command c86d118,
+gate-mutants 00f4c22, gate-command (r1.v1) 9c208a3, check-identity-judge a107724, gate-mutants-judge (r1.v1) b36b325,
+parse-command-judge 44a4f62, gate-command-judge (r2.v1) 4686e7a — **9/9 green first try**, 131–182 s each, 21 min.
+Then run-mutants-judge alone: `plan … --only run-mutants-judge --out decks/p22b/deck-rerun.json` on 7cbb85e's data, ×3,
+deck check 0 errors / builds 0 breaks, `morph gate` exit 0 (stub red at the guard 11.7 s, reference green 137.2 s), and
+**run 20261009-223812** on ds: 1/1 on v1, 1 request, 19 407 in / 6 574 out, **$0.0069**, 3.2 min. No Fable debt.
+
+### Verify
+
+`tsc --noEmit`, `eslint src tests`, `npm run build` green; **vitest 920/920 in 151 files** (the Check Identity corpus
+test included: go-mini 75 416 B, go-p7b 100 388 B, P15 at 0365336, P21c, P22a byte for byte). Own read of
+gateMutants.ts, gateCommand.ts, runMutants.ts against §2.2: no defect found. The post-run dogfood (`morph gate …
+--mutants 30` with the run's targets as references, claim 6) was not played in this session (≈ 25 min play + ≤ 20 min
+mutants) — left to the operator's smoke check.

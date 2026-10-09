@@ -6,6 +6,24 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
+## State at handoff (09.10, P22b is merged (salvage); stop for the operator)
+
+**P22b is merged (salvage), 10/10, $0.1744.** Run 20261009-211927 (ds, transaction, $0.1675, 40 min) was red and rolled
+back with 9/10 green: run-mutants-judge DATA[spec] (its own test expected one finding for two survivors). Fix data 7cbb85e
+(Run Mutants example 5 pins a far stopAt). By the operator's word (09.10) a salvage replaced the full re-run: the 9 green
+answers accepted card by card in import order on `salvage/p22b` (1ccf9a7 … 4686e7a), then run-mutants-judge re-cut
+`--only` (`decks/p22b/deck-rerun.json`, `morph gate` exit 0) and run alone (20261009-223812, 1/1, $0.0069). vitest 920/920
+in 151 files with the Check Identity corpus test (byte identity now in the suite), tsc/eslint/build green; TASK_P22b §11,
+MEASURE rows, DECISIONS (incl. the gap: after a transaction red Morph regenerates every card instead of keeping the green
+answers). `morph gate --mutants <n>` is the regulation's gate from this merge on (AUTONOMY steps 1–2). Not played: the
+post-run dogfood `morph gate … --mutants 30` (TASK claim 6). Running total $7.1079 of $30.
+
+**Next: none queued — STOP for the operator.** P22c (issue #13 items 4–5, optional) waits for the operator's word; #13
+stays open. Every MorphV2 session ends with `~/.morph-wait-operator`; never touch `/home/morph/MorphStudio` or its tmux
+session `MorphStudio`.
+
+**Previous state:**
+
 ## State at handoff (09.10, P22a is merged (salvage); next: P22b, operator's word given)
 
 **P22a is merged (salvage), 10/10, $0 processor.** The fix run 20261009-175810's accepted answers were applied by V2's
