@@ -6,6 +6,19 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
+## State at handoff (09.10, operator: resume the P22a salvage in import order, then a stop)
+
+**Next: resume the P22a salvage (operator 09.10, option (a) of the stop below).** Same rules as the salvage steps under
+"Previous state": the answers the fix run 20261009-175810 accepted, applied by V2's own parseAnswer/writeAnswerFiles,
+`morph accept --commit` card by card, any red → stop and report, no retry, no hand edit of code. ORDER (the imports, not
+the generations): gate-plan (already green as 72e9b2b on the local branch `salvage/p22a` — reuse it or redo it), stub-verdict,
+play-gate, gate-command, parse-command, then the judges gate-plan-judge, stub-verdict-judge, play-gate-judge,
+gate-command-judge; then parse-command-judge's debt by Fable ("Paying a debt on a V2 deck"); then the full suite, byte
+identity, TASK_P22a §11, MEASURE, DECISIONS (record also: parse-command's map entry has no dependency on gate-command although
+its main.ts imports src/gate/gateCommand.ts — the deck's generations missed an import edge; for #15, not fixed here),
+fast-forward merge, push, 🔀, stop. Every MorphV2 session ends with `~/.morph-wait-operator`; never touch
+`/home/morph/MorphStudio` or its tmux session `MorphStudio`.
+
 ## State at handoff (09.10, operator: salvage P22a stopped at card 2 of 9 — the order, operator decides)
 
 **Stop: the P22a salvage is red at step 1, card 2 of 9 (operator decides; issue #15 stays open).** Session 09.10 (orchestrator
