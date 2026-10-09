@@ -1,0 +1,177 @@
+```ts
+import { isTransactionDeck } from "../cards/transaction.js";
+import type { Card } from "../cards/types.js";
+
+export type GatePhase = "stub" | "ref" | "retry";
+
+export interface GateStep {
+  phase: GatePhase;
+  generation: number;
+  card: string;
+  put: Record<string, "stub" | "ref">;
+  commit: string[];
+}
+
+export interface GatePlan {
+  transaction: boolean;
+  steps: GateStep[];
+  missing: string[];
+}
+
+interface Entry {
+  card: Card;
+  generation: number;
+}
+
+export function gatePlan(
+  cards: readonly Card[],
+  generations: string[][],
+  stubs: readonly string[],
+  refs: readonly string[],
+): GatePlan {
+  const byId = new Map<string, Card>();
+  for (const card of cards) {
+    byId.set(card.customId, card);
+  }
+
+  const order: Entry[] = [];
+  generations.forEach((ids, generation) => {
+    for (const id of ids) {
+      const card = byId.get(id);
+      if (card !== undefined) {
+        order.push({ card, generation });
+      }
+    }
+  });
+
+  const transaction = isTransactionDeck(cards);
+
+  const stubSet = new Set(stubs);
+  const refSet = new Set(refs);
+
+  const missing: string[] = [];
+  const seen = new Set<string>();
+  for (const entry of order) {
+    for (const target of entry.card.targets) {
+      if (!stubSet.has(target)) {
+        const message = "no stub: " + target;
+        if (!seen.has(message)) {
+          seen.add(message);
+          missing.push(message);
+        }
+      }
+      if (!refSet.has(target)) {
+        const message = "no reference: " + target;
+        if (!seen.has(message)) {
+          seen.add(message);
+          missing.push(message);
+        }
+      }
+    }
+  }
+
+  if (missing.length > 0) {
+    return { transaction, steps: [], missing };
+  }
+
+  const steps: GateStep[] = [];
+
+  if (transaction) {
+    const allTargets: string[] = [];
+    const allSeen = new Set<string>();
+    for (const entry of order) {
+      for (const target of entry.card.targets) {
+        if (!allSeen.has(target)) {
+          allSeen.add(target);
+          allTargets.push(target);
+        }
+      }
+    }
+
+    order.forEach((entry, index) => {
+      const put: Record<string, "stub" | "ref"> = {};
+      if (index === 0) {
+        for (const target of allTargets) {
+          put[target] = "stub";
+        }
+      }
+      steps.push({
+        phase: "stub",
+        generation: entry.generation,
+        card: entry.card.customId,
+        put,
+        commit: [],
+      });
+    });
+
+    order.forEach((entry, index) => {
+      const put: Record<string, "stub" | "ref"> = {};
+      if (index === 0) {
+        for (const target of allTargets) {
+          put[target] = "ref";
+        }
+      }
+      const commit = index === order.length - 1 ? allTargets.slice() : [];
+      steps.push({
+        phase: "ref",
+        generation: entry.generation,
+        card: entry.card.customId,
+        put,
+        commit,
+      });
+    });
+
+    return { transaction, steps, missing };
+  }
+
+  const grouped = new Map<number, Entry[]>();
+  for (const entry of order) {
+    const list = grouped.get(entry.generation);
+    if (list === undefined) {
+      grouped.set(entry.generation, [entry]);
+    } else {
+      list.push(entry);
+    }
+  }
+
+  const generationNumbers = Array.from(grouped.keys()).sort((a, b) => a - b);
+  for (const generation of generationNumbers) {
+    const entries = grouped.get(generation) ?? [];
+    for (const entry of entries) {
+      const stubPut: Record<string, "stub" | "ref"> = {};
+      const refPut: Record<string, "stub" | "ref"> = {};
+      for (const target of entry.card.targets) {
+        stubPut[target] = "stub";
+        refPut[target] = "ref";
+      }
+      steps.push({
+        phase: "stub",
+        generation,
+        card: entry.card.customId,
+        put: stubPut,
+        commit: [],
+      });
+      steps.push({
+        phase: "ref",
+        generation,
+        card: entry.card.customId,
+        put: refPut,
+        commit: entry.card.targets.slice(),
+      });
+    }
+    if (entries.length >= 2) {
+      for (const entry of entries) {
+        steps.push({
+          phase: "retry",
+          generation,
+          card: entry.card.customId,
+          put: {},
+          commit: [],
+        });
+      }
+    }
+  }
+
+  return { transaction, steps, missing };
+}
+```

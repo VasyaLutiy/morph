@@ -1,0 +1,911 @@
+FILE: src/cli/types.ts
+```typescript
+import type { Deck, Hazard, SliceWeight } from "../cards/types.js";
+import type { Transport } from "../processor/types.js";
+import type { RunReport } from "../runloop/types.js";
+import type { ArchiveResult } from "../git/types.js";
+import type { Plan } from "../planner/types.js";
+import type { BuildCheck } from "./checkBuilds.js";
+
+export type ExitCode = 0 | 1 | 2 | 3 | 4;
+export type ErrorKind = "UsageError" | "NotYetError" | "DeckError" | "RefusalError" | "RuntimeError";
+export interface ErrorDocument { error: { code: ExitCode; kind: ErrorKind; message: string } }
+export interface CommandResult { code: ExitCode; document: unknown }
+export interface DeckCheckArgs { name: "deck check"; root: string; pretty: boolean; deck: string; sliceCapBytes: number }
+export interface RunArgs {
+  name: "run"; root: string; pretty: boolean; deck: string; processor: string; runId: string | null;
+  deadlineSeconds: number; maxCards: number | null; maxRetryBatches: number;
+}
+export interface PlanArgs {
+  name: "plan"; root: string; pretty: boolean; spec: string; components: string[]; map: string | null;
+  judge: boolean; out: string | null; checks?: string; only?: string[];
+}
+export interface SubmitArgs { name: "submit"; root: string; pretty: boolean; deck: string; processor: string }
+export interface CollectArgs { name: "collect"; root: string; pretty: boolean; batch: string }
+export interface PrimerArgs { name: "primer"; root: string; pretty: boolean; write: boolean }
+export interface ScoutArgs {
+  name: "scout"; root: string; pretty: boolean; processor: string; issue: string; seedFile: string | null; deadlineSeconds: number;
+}
+export interface FromScoutArgs { name: "plan --from-scout"; root: string; pretty: boolean; fromScout: string; out: string | null }
+export interface ReviewArgs {
+  name: "review"; root: string; pretty: boolean; base: string; head: string; spec: string | null; map: string | null;
+  scout: string | null; mutants: number | null; mutantTimeoutSeconds: number; test: string | null; write: boolean;
+}
+export interface CardArgs { name: "card"; root: string; pretty: boolean; deck: string; id: string; md: boolean }
+export interface AcceptArgs {
+  name: "accept"; root: string; pretty: boolean; deck: string; id: string; model: string; commit: boolean;
+}
+export interface InitArgs {
+  name: "init"; root: string; pretty: boolean; project: string; language: "typescript" | "python" | "go";
+  module: string | null; templates: string | null;
+}
+export interface GateArgs { name: "gate"; root: string; pretty: boolean; deck: string; stubs: string; refs: string }
+export type Command =
+  | DeckCheckArgs | RunArgs | PlanArgs | SubmitArgs | CollectArgs | PrimerArgs | ScoutArgs | FromScoutArgs | ReviewArgs
+  | CardArgs | AcceptArgs | InitArgs | GateArgs;
+export type ParseResult = { ok: true; command: Command } | { ok: false; error: ErrorDocument };
+export type DeckFileResult = { ok: true; deck: Deck } | { ok: false; result: CommandResult };
+export interface DeckCheckDocument {
+  deck: string; cards: number; generations: string[][]; errors: number; warnings: number;
+  hazards: Hazard[]; weights: SliceWeight[]; builds?: BuildCheck[];
+}
+export interface RunDocument { runId: string; branch: string; base: string; report: RunReport; archive: ArchiveResult }
+export interface PlanDocument extends Plan { out: string | null }
+export interface CliDeps {
+  env: Record<string, string>; now: () => number; cwd: string; transport: Transport | null;
+  interrupted?: () => string | null;
+}
+export interface CliIo { stdout(text: string): void; stderr(text: string): void }
+```
+
+FILE: src/cli/parse.ts
+```typescript
+import { errorDocument } from "./document.js";
+import type { Command, ParseResult } from "./types.js";
+
+const VALUE_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--deck",
+  "--processor",
+  "--run-id",
+  "--deadline",
+  "--max-cards",
+  "--max-retry-batches",
+  "--slice-cap-bytes",
+  "--spec",
+  "--component",
+  "--map",
+  "--out",
+  "--checks",
+  "--batch",
+  "--issue",
+  "--seed-file",
+  "--from-scout",
+  "--scout",
+  "--mutants",
+  "--mutant-timeout",
+  "--test",
+  "--id",
+  "--model",
+  "--name",
+  "--language",
+  "--module",
+  "--templates",
+  "--only",
+  "--stubs",
+  "--refs",
+]);
+
+const NOT_YET_WORDS: ReadonlySet<string> = new Set([
+  "report",
+]);
+
+const NOT_YET_DECK_WORDS: ReadonlySet<string> = new Set([
+  "add",
+  "status",
+  "reset",
+  "clear",
+]);
+
+const DECK_CHECK_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--deck",
+  "--slice-cap-bytes",
+]);
+
+const RUN_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--deck",
+  "--processor",
+  "--run-id",
+  "--deadline",
+  "--max-cards",
+  "--max-retry-batches",
+]);
+
+const PLAN_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--spec",
+  "--component",
+  "--map",
+  "--judge",
+  "--out",
+  "--checks",
+  "--only",
+]);
+
+const SUBMIT_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--deck",
+  "--processor",
+]);
+
+const COLLECT_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--batch",
+]);
+
+const PRIMER_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--write",
+]);
+
+const SCOUT_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--processor",
+  "--issue",
+  "--seed-file",
+  "--deadline",
+]);
+
+const FROM_SCOUT_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--from-scout",
+  "--out",
+]);
+
+const REVIEW_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--spec",
+  "--map",
+  "--scout",
+  "--mutants",
+  "--mutant-timeout",
+  "--test",
+  "--write",
+]);
+
+const CARD_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--deck",
+  "--id",
+  "--md",
+]);
+
+const ACCEPT_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--deck",
+  "--id",
+  "--model",
+  "--commit",
+]);
+
+const INIT_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--name",
+  "--language",
+  "--module",
+  "--templates",
+]);
+
+const GATE_FLAGS: ReadonlySet<string> = new Set([
+  "--root",
+  "--pretty",
+  "--deck",
+  "--stubs",
+  "--refs",
+]);
+
+function isPositiveInteger(v: string): boolean {
+  return /^[0-9]+$/.test(v) && Number(v) >= 1;
+}
+
+function isNonNegativeInteger(v: string): boolean {
+  return /^[0-9]+$/.test(v) && Number(v) >= 0;
+}
+
+export function parseCommand(argv: string[]): ParseResult {
+  // Check 1: scan argv left to right.
+  const words: string[] = [];
+  const order: string[] = [];
+  const values = new Map<string, string>();
+  const components: string[] = [];
+  const seen = new Set<string>();
+  for (let i = 0; i < argv.length; i++) {
+    const t = argv[i];
+    if (t.startsWith("--")) {
+      if (
+        !VALUE_FLAGS.has(t) &&
+        t !== "--pretty" &&
+        t !== "--judge" &&
+        t !== "--write" &&
+        t !== "--md" &&
+        t !== "--commit"
+      ) {
+        return { ok: false, error: errorDocument(4, "UsageError", "unknown flag: " + t) };
+      }
+      if (t !== "--component" && seen.has(t)) {
+        return { ok: false, error: errorDocument(4, "UsageError", "flag " + t + " given twice") };
+      }
+      seen.add(t);
+      order.push(t);
+      if (VALUE_FLAGS.has(t)) {
+        if (i + 1 >= argv.length) {
+          return { ok: false, error: errorDocument(4, "UsageError", "flag " + t + " needs a value") };
+        }
+        i++;
+        if (t === "--component") {
+          components.push(argv[i]);
+        } else {
+          values.set(t, argv[i]);
+        }
+      }
+    } else {
+      words.push(t);
+    }
+  }
+
+  // Check 2: the command from the words.
+  let name:
+    | "deck check"
+    | "run"
+    | "plan"
+    | "plan --from-scout"
+    | "submit"
+    | "collect"
+    | "primer"
+    | "scout"
+    | "review"
+    | "card"
+    | "accept"
+    | "init"
+    | "gate";
+  let arity: number;
+  if (words.length === 0) {
+    return {
+      ok: false,
+      error: errorDocument(
+        4,
+        "UsageError",
+        "no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept, init)",
+      ),
+    };
+  }
+  const first = words[0];
+  if (first === "run") {
+    name = "run";
+    arity = 1;
+  } else if (first === "plan") {
+    if (seen.has("--from-scout")) {
+      name = "plan --from-scout";
+    } else {
+      name = "plan";
+    }
+    arity = 1;
+  } else if (first === "submit") {
+    name = "submit";
+    arity = 1;
+  } else if (first === "collect") {
+    name = "collect";
+    arity = 1;
+  } else if (first === "primer") {
+    name = "primer";
+    arity = 1;
+  } else if (first === "scout") {
+    name = "scout";
+    arity = 1;
+  } else if (first === "review") {
+    name = "review";
+    arity = 3;
+  } else if (first === "card") {
+    name = "card";
+    arity = 1;
+  } else if (first === "accept") {
+    name = "accept";
+    arity = 1;
+  } else if (first === "init") {
+    name = "init";
+    arity = 1;
+  } else if (first === "gate") {
+    name = "gate";
+    arity = 1;
+  } else if (first === "deck") {
+    if (words.length >= 2 && words[1] === "check") {
+      name = "deck check";
+      arity = 2;
+    } else if (words.length >= 2 && NOT_YET_DECK_WORDS.has(words[1])) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "NotYetError",
+          "command deck " + words[1] + " is not available yet",
+        ),
+      };
+    } else {
+      return {
+        ok: false,
+        error: errorDocument(4, "UsageError", "unknown command: " + words.join(" ")),
+      };
+    }
+  } else if (NOT_YET_WORDS.has(first)) {
+    return {
+      ok: false,
+      error: errorDocument(4, "NotYetError", "command " + first + " is not available yet"),
+    };
+  } else {
+    return {
+      ok: false,
+      error: errorDocument(4, "UsageError", "unknown command: " + words.join(" ")),
+    };
+  }
+
+  // Check 3: extra words.
+  if (words.length > arity) {
+    return {
+      ok: false,
+      error: errorDocument(4, "UsageError", "unexpected argument: " + words[arity]),
+    };
+  }
+
+  // Check 4: a flag the command does not take, in argv order.
+  let allowed: ReadonlySet<string>;
+  if (name === "deck check") {
+    allowed = DECK_CHECK_FLAGS;
+  } else if (name === "run") {
+    allowed = RUN_FLAGS;
+  } else if (name === "plan") {
+    allowed = PLAN_FLAGS;
+  } else if (name === "submit") {
+    allowed = SUBMIT_FLAGS;
+  } else if (name === "collect") {
+    allowed = COLLECT_FLAGS;
+  } else if (name === "primer") {
+    allowed = PRIMER_FLAGS;
+  } else if (name === "scout") {
+    allowed = SCOUT_FLAGS;
+  } else if (name === "review") {
+    allowed = REVIEW_FLAGS;
+  } else if (name === "card") {
+    allowed = CARD_FLAGS;
+  } else if (name === "accept") {
+    allowed = ACCEPT_FLAGS;
+  } else if (name === "init") {
+    allowed = INIT_FLAGS;
+  } else if (name === "gate") {
+    allowed = GATE_FLAGS;
+  } else {
+    allowed = FROM_SCOUT_FLAGS;
+  }
+  for (const f of order) {
+    if (!allowed.has(f)) {
+      return {
+        ok: false,
+        error: errorDocument(4, "UsageError", "flag " + f + " does not apply to " + name),
+      };
+    }
+  }
+
+  const root = values.get("--root") ?? ".";
+  const pretty = seen.has("--pretty");
+  const deck = values.get("--deck") ?? "";
+
+  // Check 4b: card and accept, right after the flag check and before review.
+  if (name === "card" || name === "accept") {
+    if (!values.has("--deck")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --deck") };
+    }
+    if (!values.has("--id")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --id") };
+    }
+    const id = values.get("--id") ?? "";
+    if (!/^[A-Za-z0-9._-]+$/.test(id)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--id must match ^[A-Za-z0-9._-]+$ (got '" + id + "')",
+        ),
+      };
+    }
+    if (name === "card") {
+      const command: Command = {
+        name: "card",
+        root,
+        pretty,
+        deck,
+        id,
+        md: seen.has("--md"),
+      };
+      return { ok: true, command };
+    }
+    if (!values.has("--model")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --model") };
+    }
+    const model = values.get("--model") ?? "";
+    if (!/^[A-Za-z0-9._/:-]+$/.test(model)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--model must match ^[A-Za-z0-9._/:-]+$ (got '" + model + "')",
+        ),
+      };
+    }
+    const command: Command = {
+      name: "accept",
+      root,
+      pretty,
+      deck,
+      id,
+      model,
+      commit: seen.has("--commit"),
+    };
+    return { ok: true, command };
+  }
+
+  // Check 4c: init, right after card and accept and before review.
+  if (name === "init") {
+    if (!values.has("--name")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --name") };
+    }
+    const project = values.get("--name") ?? "";
+    if (!/^[A-Za-z0-9._-]+$/.test(project)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--name must match ^[A-Za-z0-9._-]+$ (got '" + project + "')",
+        ),
+      };
+    }
+    if (!values.has("--language")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --language") };
+    }
+    const languageRaw = values.get("--language") ?? "";
+    if (languageRaw !== "typescript" && languageRaw !== "python" && languageRaw !== "go") {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--language must be one of typescript, python, go (got '" + languageRaw + "')",
+        ),
+      };
+    }
+    const moduleRaw = values.get("--module");
+    if (moduleRaw !== undefined && !/^[A-Za-z0-9._/-]+$/.test(moduleRaw)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--module must match ^[A-Za-z0-9._/-]+$ (got '" + moduleRaw + "')",
+        ),
+      };
+    }
+    const command: Command = {
+      name: "init",
+      root,
+      pretty,
+      project,
+      language: languageRaw,
+      module: moduleRaw ?? null,
+      templates: values.get("--templates") ?? null,
+    };
+    return { ok: true, command };
+  }
+
+  // Review is done right after the flag check, before plan --from-scout.
+  if (name === "review") {
+    if (words.length < 3) {
+      return {
+        ok: false,
+        error: errorDocument(4, "UsageError", "review needs two refs: <base> <head>"),
+      };
+    }
+    const scoutRaw = values.get("--scout");
+    if (scoutRaw !== undefined && !/^[A-Za-z0-9._-]+$/.test(scoutRaw)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--scout must match ^[A-Za-z0-9._-]+$ (got '" + scoutRaw + "')",
+        ),
+      };
+    }
+    const mutantsRaw = values.get("--mutants");
+    if (mutantsRaw !== undefined && !isPositiveInteger(mutantsRaw)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--mutants must be a positive integer (got '" + mutantsRaw + "')",
+        ),
+      };
+    }
+    const mutantTimeoutRaw = values.get("--mutant-timeout");
+    if (mutantTimeoutRaw !== undefined && !isPositiveInteger(mutantTimeoutRaw)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--mutant-timeout must be a positive integer (got '" + mutantTimeoutRaw + "')",
+        ),
+      };
+    }
+    const command: Command = {
+      name: "review",
+      root,
+      pretty,
+      base: words[1],
+      head: words[2],
+      spec: values.get("--spec") ?? null,
+      map: values.get("--map") ?? null,
+      scout: scoutRaw ?? null,
+      mutants: mutantsRaw !== undefined ? Number(mutantsRaw) : null,
+      mutantTimeoutSeconds: mutantTimeoutRaw !== undefined ? Number(mutantTimeoutRaw) : 120,
+      test: values.get("--test") ?? null,
+      write: seen.has("--write"),
+    };
+    return { ok: true, command };
+  }
+
+  // Check 5: plan --from-scout is done here, before plan's missing --spec.
+  if (name === "plan --from-scout") {
+    const fromScout = values.get("--from-scout") ?? "";
+    if (!/^[A-Za-z0-9._-]+$/.test(fromScout)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--from-scout must match ^[A-Za-z0-9._-]+$ (got '" + fromScout + "')",
+        ),
+      };
+    }
+    const command: Command = {
+      name: "plan --from-scout",
+      root,
+      pretty,
+      fromScout,
+      out: values.get("--out") ?? null,
+    };
+    return { ok: true, command };
+  }
+
+  // Check 6: plan needs --spec.
+  if (name === "plan") {
+    if (!values.has("--spec")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --spec") };
+    }
+    const onlyRaw = values.get("--only");
+    let only: string[] | undefined;
+    if (onlyRaw !== undefined) {
+      only = onlyRaw.split(",");
+      const wellFormed = only.every((id) => /^[A-Za-z0-9._-]+$/.test(id));
+      const distinct = new Set(only).size === only.length;
+      if (!wellFormed || !distinct) {
+        return {
+          ok: false,
+          error: errorDocument(
+            4,
+            "UsageError",
+            "--only must be distinct card ids joined by \",\" (got '" + onlyRaw + "')",
+          ),
+        };
+      }
+    }
+    const command: Command = {
+      name: "plan",
+      root,
+      pretty,
+      spec: values.get("--spec") ?? "",
+      components,
+      map: values.get("--map") ?? null,
+      judge: seen.has("--judge"),
+      out: values.get("--out") ?? null,
+      ...(values.has("--checks") ? { checks: values.get("--checks") ?? "" } : {}),
+      ...(only !== undefined ? { only } : {}),
+    };
+    return { ok: true, command };
+  }
+
+  // Check 7: collect needs --batch.
+  if (name === "collect") {
+    if (!values.has("--batch")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --batch") };
+    }
+    const batch = values.get("--batch") ?? "";
+    if (!/^[A-Za-z0-9._-]+$/.test(batch)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--batch must match ^[A-Za-z0-9._-]+$ (got '" + batch + "')",
+        ),
+      };
+    }
+    const command: Command = {
+      name: "collect",
+      root,
+      pretty,
+      batch,
+    };
+    return { ok: true, command };
+  }
+
+  // Check 8: primer is done.
+  if (name === "primer") {
+    const command: Command = {
+      name: "primer",
+      root,
+      pretty,
+      write: seen.has("--write"),
+    };
+    return { ok: true, command };
+  }
+
+  // Check 9: scout is done after primer and before missing --deck.
+  if (name === "scout") {
+    if (!values.has("--processor")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --processor") };
+    }
+    if (!values.has("--issue")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --issue") };
+    }
+    const deadline = values.get("--deadline");
+    if (deadline !== undefined && !isPositiveInteger(deadline)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--deadline must be a positive integer (got '" + deadline + "')",
+        ),
+      };
+    }
+    const command: Command = {
+      name: "scout",
+      root,
+      pretty,
+      processor: values.get("--processor") ?? "",
+      issue: values.get("--issue") ?? "",
+      seedFile: values.has("--seed-file") ? values.get("--seed-file") ?? "" : null,
+      deadlineSeconds: deadline !== undefined ? Number(deadline) : 1800,
+    };
+    return { ok: true, command };
+  }
+
+  // Check 10: missing --deck.
+  if (!values.has("--deck")) {
+    return { ok: false, error: errorDocument(4, "UsageError", "missing --deck") };
+  }
+
+  // Check 10b: gate needs --stubs and --refs.
+  if (name === "gate") {
+    if (!values.has("--stubs")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --stubs") };
+    }
+    if (!values.has("--refs")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --refs") };
+    }
+    const command: Command = {
+      name: "gate",
+      root,
+      pretty,
+      deck,
+      stubs: values.get("--stubs") ?? "",
+      refs: values.get("--refs") ?? "",
+    };
+    return { ok: true, command };
+  }
+
+  // Check 11: run or submit without --processor.
+  if ((name === "run" || name === "submit") && !values.has("--processor")) {
+    return { ok: false, error: errorDocument(4, "UsageError", "missing --processor") };
+  }
+
+  // Check 12: submit is done.
+  if (name === "submit") {
+    const command: Command = {
+      name: "submit",
+      root,
+      pretty,
+      deck,
+      processor: values.get("--processor") ?? "",
+    };
+    return { ok: true, command };
+  }
+
+  // Check 13: the value validations, in the fixed order.
+  if (name === "deck check") {
+    const cap = values.get("--slice-cap-bytes");
+    if (cap !== undefined && !isPositiveInteger(cap)) {
+      return {
+        ok: false,
+        error: errorDocument(
+          4,
+          "UsageError",
+          "--slice-cap-bytes must be a positive integer (got '" + cap + "')",
+        ),
+      };
+    }
+    const command: Command = {
+      name: "deck check",
+      root,
+      pretty,
+      deck,
+      sliceCapBytes: cap !== undefined ? Number(cap) : 500000,
+    };
+    return { ok: true, command };
+  }
+  const runIdRaw = values.get("--run-id");
+  if (runIdRaw !== undefined && !/^[A-Za-z0-9._-]+$/.test(runIdRaw)) {
+    return {
+      ok: false,
+      error: errorDocument(
+        4,
+        "UsageError",
+        "--run-id must match ^[A-Za-z0-9._-]+$ (got '" + runIdRaw + "')",
+      ),
+    };
+  }
+  const deadline = values.get("--deadline");
+  if (deadline !== undefined && !isPositiveInteger(deadline)) {
+    return {
+      ok: false,
+      error: errorDocument(
+        4,
+        "UsageError",
+        "--deadline must be a positive integer (got '" + deadline + "')",
+      ),
+    };
+  }
+  const maxCards = values.get("--max-cards");
+  if (maxCards !== undefined && !isPositiveInteger(maxCards)) {
+    return {
+      ok: false,
+      error: errorDocument(
+        4,
+        "UsageError",
+        "--max-cards must be a positive integer (got '" + maxCards + "')",
+      ),
+    };
+  }
+  const maxRetryBatches = values.get("--max-retry-batches");
+  if (maxRetryBatches !== undefined && !isNonNegativeInteger(maxRetryBatches)) {
+    return {
+      ok: false,
+      error: errorDocument(
+        4,
+        "UsageError",
+        "--max-retry-batches must be a non-negative integer (got '" + maxRetryBatches + "')",
+      ),
+    };
+  }
+
+  // Check 14: success, the keys in the type's order, with the defaults.
+  const command: Command = {
+    name: "run",
+    root,
+    pretty,
+    deck,
+    processor: values.get("--processor") ?? "",
+    runId: runIdRaw !== undefined ? runIdRaw : null,
+    deadlineSeconds: deadline !== undefined ? Number(deadline) : 2400,
+    maxCards: maxCards !== undefined ? Number(maxCards) : null,
+    maxRetryBatches: maxRetryBatches !== undefined ? Number(maxRetryBatches) : 2,
+  };
+  return { ok: true, command };
+}
+```
+
+FILE: src/cli/main.ts
+```typescript
+import path from "node:path";
+import { parseCommand } from "./parse.js";
+import { renderDocument, classifyThrown, readDeckFile } from "./document.js";
+import { checkBuilds } from "./checkBuilds.js";
+import { deckCheckCommand } from "./deckCheck.js";
+import { runCommand } from "./runCommand.js";
+import { planCommand } from "./planCommand.js";
+import { collectBatch } from "../batches/collect.js";
+import { submitDeck } from "../batches/submit.js";
+import type { DetachedDeps } from "../batches/submit.js";
+import { saveBatchAnswers, saveBatchRecord } from "../git/archive.js";
+import { primerCommand } from "../primer/primerCommand.js";
+import { scoutCommand } from "../scout/scoutCommand.js";
+import { planFromScout } from "../scout/planFromScout.js";
+import { reviewCommand } from "../reviewer/reviewCommand.js";
+import { cardBrief } from "../debt/cardBrief.js";
+import { acceptCard } from "../debt/acceptCard.js";
+import { initProject } from "../scaffold/initProject.js";
+import { gateCommand } from "../gate/gateCommand.js";
+import type { CliDeps, CliIo, CommandResult, ExitCode } from "./types.js";
+
+export async function main(argv: string[], deps: CliDeps, io: CliIo): Promise<ExitCode> {
+  const parsed = parseCommand(argv);
+  if (!parsed.ok) {
+    io.stdout(renderDocument(parsed.error, argv.includes("--pretty")));
+    io.stderr("morph: " + parsed.error.error.message + "\n");
+    return 4;
+  }
+  const command = parsed.command;
+  const root = path.resolve(deps.cwd, command.root);
+
+  const detached: DetachedDeps = {
+    env: deps.env,
+    now: deps.now,
+    transport: deps.transport,
+    saveState: (s) => saveBatchRecord(root, s),
+    saveAnswers: (id, a) => saveBatchAnswers(root, id, a),
+  };
+
+  let result: CommandResult;
+  try {
+    if (command.name === "deck check") {
+      result = deckCheckCommand(root, command.deck, command.sliceCapBytes, deps.env);
+    } else if (command.name === "plan") {
+      result = planCommand(root, command);
+    } else if (command.name === "submit") {
+      result = await submitDeck(root, command.deck, command.processor, detached);
+    } else if (command.name === "collect") {
+      result = await collectBatch(root, command.batch, detached);
+    } else if (command.name === "primer") {
+      result = primerCommand(root, command.write, { env: deps.env, now: deps.now });
+    } else if (command.name === "scout") {
+      result = await scoutCommand(root, command, deps);
+    } else if (command.name === "plan --from-scout") {
+      result = planFromScout(root, command);
+    } else if (command.name === "review") {
+      result = await reviewCommand(root, command, deps);
+    } else if (command.name === "card") {
+      result = cardBrief(root, command);
+    } else if (command.name === "accept") {
+      result = await acceptCard(root, command, deps);
+    } else if (command.name === "init") {
+      result = initProject(root, command, deps.cwd);
+    } else if (command.name === "gate") {
+      result = await gateCommand(root, command, { env: deps.env, now: deps.now, readDeck: readDeckFile, builds: checkBuilds });
+    } else {
+      result = await runCommand(root, command, deps, io.stderr);
+    }
+  } catch (e) {
+    result = classifyThrown(e);
+  }
+
+  io.stdout(renderDocument(result.document, command.pretty));
+  io.stderr("morph " + command.name + ": exit " + result.code + "\n");
+  return result.code;
+}
+```

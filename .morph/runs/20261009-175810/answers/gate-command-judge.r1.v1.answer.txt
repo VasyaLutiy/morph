@@ -1,0 +1,269 @@
+```
+import fs from "node:fs";
+import { expect, test } from "vitest";
+import { TRANSACTION_MARK } from "../../src/cards/transaction.js";
+import { checkBuilds } from "../../src/cli/checkBuilds.js";
+import { readDeckFile } from "../../src/cli/document.js";
+import { CHAIN_LIMIT_SECONDS, gateCommand } from "../../src/gate/gateCommand.js";
+import { fixtureJson, fixturePath, tmpRepo } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+import type { GateDeps, GateDocument } from "../../src/gate/gateCommand.js";
+import type { TmpRepo } from "../helpers.js";
+
+const result = (k: string): { code: number; document: unknown } =>
+  (fixtureJson("gate/gateCommand.json") as Record<string, { code: number; document: unknown }>)[k];
+
+const env = (): Record<string, string> => ({
+  PATH: process.env.PATH ?? "",
+  HOME: process.env.HOME ?? "",
+});
+
+// now +step per call
+const clock = (step: number): (() => number) => {
+  let t = 0;
+  return () => (t += step);
+};
+
+const deps = (step = 1000): GateDeps => ({
+  env: env(),
+  now: clock(step),
+  readDeck: readDeckFile,
+  builds: checkBuilds,
+});
+
+const B1 = { deck: "decks/b1/deck.p21.json", stubs: "decks/b1/_stubs", refs: "decks/b1/_refs" };
+
+// history: base, init
+function repo(files: Record<string, string>): TmpRepo {
+  const r = tmpRepo();
+  for (const [p, t] of Object.entries(files)) r.write(p, t);
+  r.git(["add", "-A"]);
+  r.git(["commit", "-q", "-m", "base"]);
+  return r;
+}
+
+function p7b(): TmpRepo {
+  const r = tmpRepo();
+  fs.cpSync(fixturePath("go-p7b"), r.root, { recursive: true });
+  r.git(["add", "-A"]);
+  r.git(["commit", "-q", "-m", "base"]);
+  return r;
+}
+
+// a Card has EVERY field (loadDeck refuses a missing one); a deck file is a
+// top-level JSON ARRAY of such cards
+const card = (
+  id: string,
+  targets: string[],
+  acceptance: string | null,
+  dependsOn: string[] = [],
+): Card => ({
+  customId: id,
+  intent: "generate",
+  targets,
+  contextSlice: [],
+  instruction: "w",
+  acceptance,
+  model: null,
+  maxTokens: null,
+  reasoning: null,
+  variants: 1,
+  dependsOn,
+});
+
+const M = TRANSACTION_MARK + "\n";
+
+const t1 = card(
+  "t1",
+  ["src/t1.txt"],
+  M +
+    "echo '== probe'\ngrep -q T1 src/t1.txt || { echo 'FAIL probe/t1.probe.ts > T1 example 1'; exit 1; }",
+);
+
+const t2 = card(
+  "t2",
+  ["src/t2.txt"],
+  M +
+    "echo '== tsc'\n! grep -q BROKEN src/t2.txt || { echo 'lib/old.ts(3,4): error TS2304: Cannot find name q7.'; exit 2; }\necho '== probe'\ngrep -q T1 src/t1.txt && grep -q T2 src/t2.txt",
+  ["t1"],
+);
+
+const slowX = card("x", ["src/x.txt"], "echo '== probe'\ngrep -q X1 src/x.txt");
+
+test(
+  "Gate Command example 1: the P21a cut red at its retry",
+  async () => {
+    const r = p7b();
+    try {
+      expect(await gateCommand(r.root, B1, deps())).toStrictEqual(result("p21"));
+      expect(r.git(["status", "--porcelain"])).toBe("");
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test(
+  "Gate Command example 2: a transaction deck and a planted stub red",
+  async () => {
+    const r = repo({
+      "d.json": JSON.stringify([t1, t2]),
+      "s/src/t1.txt": "s\n",
+      "s/src/t2.txt": "s\n",
+      "f/src/t1.txt": "T1\n",
+      "f/src/t2.txt": "T2\n",
+      "s2/src/t1.txt": "T1\n",
+      "s2/src/t2.txt": "BROKEN\n",
+    });
+    try {
+      expect(
+        await gateCommand(r.root, { deck: "d.json", stubs: "s", refs: "f" }, deps()),
+      ).toStrictEqual(result("tx"));
+      expect(
+        await gateCommand(r.root, { deck: "d.json", stubs: "s2", refs: "f" }, deps()),
+      ).toStrictEqual(result("planted"));
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test(
+  "Gate Command example 3: usage errors, a missing file and a slow chain",
+  async () => {
+    const p = p7b();
+    try {
+      expect(
+        await gateCommand(p.root, { deck: "nope.json", stubs: "nope", refs: "nope" }, deps()),
+      ).toStrictEqual(result("deck not found"));
+
+      expect(
+        await gateCommand(p.root, { deck: B1.deck, stubs: "nope", refs: "nope" }, deps()),
+      ).toStrictEqual(result("stubs not found"));
+
+      expect(
+        await gateCommand(p.root, { deck: B1.deck, stubs: B1.stubs, refs: "nope" }, deps()),
+      ).toStrictEqual(result("refs not found"));
+
+      fs.cpSync(fixturePath("go-p7b/decks/b1/_stubs"), p.path("st3"), { recursive: true });
+      fs.rmSync(p.path("st3/supervisor/guard.go"));
+      fs.cpSync(fixturePath("go-p7b/decks/b1/_refs"), p.path("rf3"), { recursive: true });
+      fs.rmSync(p.path("rf3/daemon/daemon.go"));
+      expect(
+        await gateCommand(p.root, { deck: B1.deck, stubs: "st3", refs: "rf3" }, deps()),
+      ).toStrictEqual(result("missing"));
+    } finally {
+      p.rm();
+    }
+
+    const r = repo({
+      "d.json": JSON.stringify([slowX]),
+      "s/src/x.txt": "s\n",
+      "f/src/x.txt": "X1\n",
+    });
+    try {
+      expect(
+        await gateCommand(r.root, { deck: "d.json", stubs: "s", refs: "f" }, deps(300000)),
+      ).toStrictEqual(result("slow"));
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test(
+  "Gate Command: a target without a stub stops the plan and builds stay null",
+  async () => {
+    const r = repo({
+      "d.json": JSON.stringify([
+        card("y", ["src/y.txt"], "echo '== probe'\ngrep -q Y1 src/y.txt"),
+      ]),
+      "s/other.txt": "s\n",
+      "f/src/y.txt": "Y1\n",
+    });
+    try {
+      const out = (await gateCommand(
+        r.root,
+        { deck: "d.json", stubs: "s", refs: "f" },
+        deps(),
+      )) as unknown as { code: number; document: GateDocument };
+      expect(out.code).toBe(2);
+      expect(out.document.missing).toStrictEqual(["no stub: src/y.txt"]);
+      expect(out.document.errors).toStrictEqual(["no stub: src/y.txt"]);
+      expect(out.document.rows).toStrictEqual([]);
+      expect(out.document.builds).toBe(null);
+      expect(out.document.maxSeconds).toBe(0);
+      expect(Object.keys(out.document)).toStrictEqual([
+        "deck",
+        "transaction",
+        "cards",
+        "generations",
+        "missing",
+        "builds",
+        "rows",
+        "maxSeconds",
+        "errors",
+      ]);
+      expect(r.git(["status", "--porcelain"])).toBe("");
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test(
+  "Gate Command: a 249 second chain stays under CHAIN_LIMIT_SECONDS",
+  async () => {
+    expect(CHAIN_LIMIT_SECONDS).toBe(250);
+    const r = repo({
+      "d.json": JSON.stringify([slowX]),
+      "s/src/x.txt": "s\n",
+      "f/src/x.txt": "X1\n",
+    });
+    try {
+      const out = (await gateCommand(
+        r.root,
+        { deck: "d.json", stubs: "s", refs: "f" },
+        deps(249000),
+      )) as unknown as { code: number; document: GateDocument };
+      expect(out.code).toBe(0);
+      expect(out.document.errors).toStrictEqual([]);
+      expect(out.document.maxSeconds).toBe(249);
+      expect(out.document.rows.map((row) => row.seconds)).toStrictEqual([249, 249]);
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test(
+  "Gate Command: a 250 second chain is over CHAIN_LIMIT_SECONDS",
+  async () => {
+    const r = repo({
+      "d.json": JSON.stringify([slowX]),
+      "s/src/x.txt": "s\n",
+      "f/src/x.txt": "X1\n",
+    });
+    try {
+      const out = (await gateCommand(
+        r.root,
+        { deck: "d.json", stubs: "s", refs: "f" },
+        deps(250000),
+      )) as unknown as { code: number; document: GateDocument };
+      expect(out.code).toBe(2);
+      expect(out.document.errors).toStrictEqual([
+        "stub x: 250 s, over the 250 s limit",
+        "ref x: 250 s, over the 250 s limit",
+      ]);
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+```

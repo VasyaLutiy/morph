@@ -1,0 +1,138 @@
+```
+import fs from "node:fs";
+import { layerGenerations } from "../../src/cards/layer.js";
+import { loadDeck } from "../../src/cards/model.js";
+import type { Card, Deck } from "../../src/cards/types.js";
+import { gatePlan, type GatePlan } from "../../src/gate/gatePlan.js";
+import { fixtureJson, fixturePath } from "../helpers.js";
+
+function deck(name: string): Deck {
+  const loaded = loadDeck(fs.readFileSync(fixturePath("go-p7b/decks/b1/" + name), "utf8"));
+  if (!loaded.ok) throw new Error(name);
+  return loaded.deck;
+}
+
+const all = (d: Deck): string[] => d.cards.flatMap((c) => c.targets).sort();
+
+const plan = (key: string): GatePlan =>
+  (fixtureJson("gate/plans.json") as Record<string, GatePlan>)[key];
+
+// A Card has EVERY field (loadDeck refuses a missing one).
+const card = (
+  id: string,
+  targets: string[],
+  acceptance: string | null,
+  dependsOn: string[] = [],
+): Card => ({
+  customId: id,
+  intent: "generate",
+  targets,
+  contextSlice: [],
+  instruction: "w",
+  acceptance,
+  model: null,
+  maxTokens: null,
+  reasoning: null,
+  variants: 1,
+  dependsOn,
+});
+
+test("Gate Plan example 1: the P21a cut runs a stub and a reference per card, then a retry per generation", () => {
+  const d = deck("deck.p21.json");
+  const targets = all(d);
+  expect(gatePlan(d.cards, layerGenerations(d), targets, targets)).toStrictEqual(plan("p21"));
+});
+
+test("Gate Plan example 2: the transaction cut plays the whole subset twice and commits it once", () => {
+  const d = deck("deck.p21c.json");
+  const targets = all(d);
+  expect(gatePlan(d.cards, layerGenerations(d), targets, targets)).toStrictEqual(plan("p21c"));
+});
+
+test("Gate Plan example 3: a missing target empties the plan, an unknown id is skipped", () => {
+  const d = deck("deck.p21.json");
+  const targets = all(d);
+  const stubs = targets.filter((t) => t !== "supervisor/guard.go");
+  const refs = targets.filter((t) => t !== "daemon/daemon.go" && t !== "control/control.go");
+  expect(gatePlan(d.cards, layerGenerations(d), stubs, refs)).toStrictEqual(plan("missing"));
+
+  const cards: Card[] = [
+    card("k", ["src/k.ts", "tests/k.test.ts"], null),
+    card("m", ["src/m.ts"], null),
+    card("n", ["src/n.ts"], null, ["k"]),
+  ];
+  const smallStubs = ["src/k.ts", "tests/k.test.ts", "src/m.ts", "src/n.ts", "extra.ts"];
+  const smallRefs = ["src/k.ts", "tests/k.test.ts", "src/m.ts", "src/n.ts"];
+  expect(gatePlan(cards, [["k", "zz"], [], ["m", "n"]], smallStubs, smallRefs)).toStrictEqual(plan("small"));
+});
+
+test("gatePlan: a target owned twice missing twice lists one stub line before one reference line", () => {
+  const cards: Card[] = [
+    card("a", ["src/a.ts", "shared/s.ts"], null),
+    card("b", ["shared/s.ts"], null),
+  ];
+  expect(gatePlan(cards, [["a", "b"]], [], [])).toStrictEqual({
+    transaction: false,
+    steps: [],
+    missing: [
+      "no stub: src/a.ts",
+      "no reference: src/a.ts",
+      "no stub: shared/s.ts",
+      "no reference: shared/s.ts",
+    ],
+  });
+});
+
+test("gatePlan: a present stub with a missing reference still stops the plan", () => {
+  const cards: Card[] = [card("a", ["src/a.ts"], null)];
+  expect(gatePlan(cards, [["a"]], ["src/a.ts"], [])).toStrictEqual({
+    transaction: false,
+    steps: [],
+    missing: ["no reference: src/a.ts"],
+  });
+});
+
+test("gatePlan: an id without a card is skipped and a generation of them adds no step", () => {
+  const cards: Card[] = [card("a", ["src/a.ts"], null)];
+  expect(gatePlan(cards, [["zz"], ["a"], ["zz"]], ["src/a.ts"], ["src/a.ts"])).toStrictEqual({
+    transaction: false,
+    steps: [
+      { phase: "stub", generation: 1, card: "a", put: { "src/a.ts": "stub" }, commit: [] },
+      { phase: "ref", generation: 1, card: "a", put: { "src/a.ts": "ref" }, commit: ["src/a.ts"] },
+    ],
+    missing: [],
+  });
+});
+
+test("gatePlan: retries follow a generation's references, one per entry, and a lone card has none", () => {
+  const cards: Card[] = [
+    card("a", ["src/a.ts"], null),
+    card("b", ["src/b.ts"], null),
+    card("c", ["src/c.ts"], null),
+  ];
+  const stubs = ["src/a.ts", "src/b.ts", "src/c.ts"];
+  const p = gatePlan(cards, [["a", "b"], ["c"]], stubs, stubs);
+  expect(p.steps.map((s) => s.phase)).toStrictEqual([
+    "stub",
+    "ref",
+    "stub",
+    "ref",
+    "retry",
+    "retry",
+    "stub",
+    "ref",
+  ]);
+  expect(p.steps.slice(4, 6)).toStrictEqual([
+    { phase: "retry", generation: 0, card: "a", put: {}, commit: [] },
+    { phase: "retry", generation: 0, card: "b", put: {}, commit: [] },
+  ]);
+});
+
+test("gatePlan: a step keeps the card's own target order, not a sorted one", () => {
+  const cards: Card[] = [card("a", ["zeta.ts", "alpha.ts"], null)];
+  const stubs = ["zeta.ts", "alpha.ts"];
+  const p = gatePlan(cards, [["a"]], stubs, stubs);
+  expect(p.steps[0]?.put).toStrictEqual({ "zeta.ts": "stub", "alpha.ts": "stub" });
+  expect(p.steps[1]?.commit).toStrictEqual(["zeta.ts", "alpha.ts"]);
+});
+```

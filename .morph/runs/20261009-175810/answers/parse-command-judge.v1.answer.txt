@@ -1,0 +1,119 @@
+```typescript
+import { parseCommand } from "../../src/cli/parse.js";
+import { main } from "../../src/cli/main.js";
+import { fixtureJson, tmpRoot } from "../helpers.js";
+import type { CliDeps, CliIo, ParseResult } from "../../src/cli/types.js";
+
+function argvFixture(key: string): string[][] {
+  return (fixtureJson("cli/parseArgv.json") as Record<string, string[][]>)[key];
+}
+
+function parseFixture(key: string): unknown {
+  return (fixtureJson("cli/parse.json") as Record<string, unknown>)[key];
+}
+
+function io(): { io: CliIo; out: string[]; err: string[] } {
+  const out: string[] = [];
+  const err: string[] = [];
+  return {
+    io: {
+      stdout: (t: string) => {
+        out.push(t);
+      },
+      stderr: (t: string) => {
+        err.push(t);
+      },
+    },
+    out,
+    err,
+  };
+}
+
+const cliDeps = (): CliDeps => ({
+  env: { PATH: process.env.PATH ?? "" },
+  now: () => 0,
+  cwd: "/",
+  transport: null,
+});
+
+test("Parse Command example 23: gate's ten argvs and their results", () => {
+  const argvs = argvFixture("23");
+  const results: ParseResult[] = argvs.map((argv) => parseCommand(argv));
+  expect(results).toStrictEqual(parseFixture("23"));
+});
+
+test("Main example 17: the gate route reports a missing deck and a missing --stubs", async () => {
+  const r = tmpRoot();
+  try {
+    const missingDeck = io();
+    const first = await main(
+      ["gate", "--deck", "nope.json", "--stubs", "s", "--refs", "r", "--root", r.root],
+      cliDeps(),
+      missingDeck.io,
+    );
+    expect(first).toBe(4);
+    expect(missingDeck.out).toStrictEqual([
+      '{"error":{"code":4,"kind":"UsageError","message":"deck file not found: nope.json"}}\n',
+    ]);
+    expect(missingDeck.err).toStrictEqual(["morph gate: exit 4\n"]);
+
+    const missingStubs = io();
+    const second = await main(["gate", "--deck", "d.json", "--root", r.root], cliDeps(), missingStubs.io);
+    expect(second).toBe(4);
+    expect(missingStubs.out).toStrictEqual([
+      '{"error":{"code":4,"kind":"UsageError","message":"missing --stubs"}}\n',
+    ]);
+    expect(missingStubs.err).toStrictEqual(["morph: missing --stubs\n"]);
+  } finally {
+    r.rm();
+  }
+});
+
+test("Parse Command: gate builds a gate command from its five flags", () => {
+  expect(
+    parseCommand(["gate", "--deck", "d.json", "--stubs", "s", "--refs", "f", "--root", "x", "--pretty"]),
+  ).toStrictEqual({
+    ok: true,
+    command: { name: "gate", root: "x", pretty: true, deck: "d.json", stubs: "s", refs: "f" },
+  });
+});
+
+test("Parse Command: gate without --deck is a UsageError", () => {
+  expect(parseCommand(["gate", "--stubs", "s", "--refs", "f"])).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "missing --deck" } },
+  });
+});
+
+test("Parse Command: gate without --stubs is a UsageError", () => {
+  expect(parseCommand(["gate", "--deck", "d.json", "--refs", "f"])).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "missing --stubs" } },
+  });
+});
+
+test("Parse Command: gate without --refs is a UsageError", () => {
+  expect(parseCommand(["gate", "--deck", "d.json", "--stubs", "s"])).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "missing --refs" } },
+  });
+});
+
+test("Parse Command: --processor does not apply to gate", () => {
+  expect(
+    parseCommand(["gate", "--deck", "d.json", "--stubs", "s", "--refs", "f", "--processor", "ds"]),
+  ).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "flag --processor does not apply to gate" } },
+  });
+});
+
+test("Parse Command: --refs given twice is a UsageError", () => {
+  expect(
+    parseCommand(["gate", "--deck", "d.json", "--stubs", "s", "--refs", "f", "--refs", "g"]),
+  ).toStrictEqual({
+    ok: false,
+    error: { error: { code: 4, kind: "UsageError", message: "flag --refs given twice" } },
+  });
+});
+```

@@ -1,0 +1,78 @@
+```
+import { expect, test } from "vitest";
+import { expectedStage, stubVerdict, type StubVerdict } from "../../src/gate/stubVerdict.js";
+import { TREE_PROFILES } from "../../src/language/treeProfiles.js";
+import { fixture, fixtureJson } from "../helpers.js";
+
+const FL = TREE_PROFILES.map((p) => p.fileLine);
+
+const logs = (): Record<string, string> =>
+  fixtureJson("gate/stubLogs.json") as Record<string, string>;
+
+const verdict = (k: string): StubVerdict =>
+  (fixtureJson("gate/verdicts.json") as Record<string, StubVerdict>)[k];
+
+function firstAcceptance(name: string): string {
+  const deck = fixtureJson(name) as readonly { acceptance: string | null }[];
+  const acceptance = deck[0]?.acceptance;
+  if (acceptance === undefined || acceptance === null) {
+    throw new Error(name + ": no first acceptance");
+  }
+  return acceptance;
+}
+
+test("Stub Verdict example 1: expectedStage of a code, a judge, a transaction deck, empty and indented", () => {
+  expect(expectedStage(fixture("builder/go/code1.txt"))).toBe("probe");
+  expect(expectedStage(fixture("builder/go/judge1.txt"))).toBe("guard");
+  expect(expectedStage(firstAcceptance("go-p7b/decks/b1/deck.p21c.json"))).toBe("probe");
+  expect(expectedStage("")).toBe("guard");
+  expect(expectedStage("  echo '== probe'; exit 1")).toBe("guard");
+});
+
+test("Stub Verdict example 2: the five real acceptance logs", () => {
+  expect(stubVerdict(logs()["go probe"], "probe", ["control/control.go"], FL)).toStrictEqual(
+    verdict("go probe"),
+  );
+  expect(
+    stubVerdict(logs()["go judge"], "guard", ["control/control_examples_test.go"], FL),
+  ).toStrictEqual(verdict("go judge"));
+  expect(stubVerdict(logs()["go vet outside"], "probe", ["supervisor/guard.go"], FL)).toStrictEqual(
+    verdict("go vet outside"),
+  );
+  expect(stubVerdict(logs()["ts tsc"], "probe", ["src/units/convert.ts"], FL)).toStrictEqual(
+    verdict("ts tsc"),
+  );
+  expect(stubVerdict(logs()["ts probe"], "probe", ["src/units/convert.ts"], FL)).toStrictEqual(
+    verdict("ts probe"),
+  );
+});
+
+test("Stub Verdict example 3: the mixed log, every stage, no pattern and none", () => {
+  const mixed = logs()["mixed"];
+  const targets = ["b/b.go", "src/own.ts"];
+  expect(stubVerdict(mixed, "probe", targets, FL)).toStrictEqual(verdict("mixed"));
+  expect(stubVerdict(mixed, "probe", targets, FL, null)).toStrictEqual(
+    verdict("mixed, every stage"),
+  );
+  expect(stubVerdict(mixed, "probe", targets, [])).toStrictEqual(verdict("mixed, no pattern"));
+  expect(stubVerdict(logs()["none"], "probe", [], FL)).toStrictEqual(verdict("none"));
+});
+
+test("Stub Verdict: an empty log has no stage, no outside line and no failure", () => {
+  expect(stubVerdict("", "probe", [], FL)).toStrictEqual({
+    stage: null,
+    expected: "probe",
+    outside: [],
+    failures: [],
+  });
+});
+
+test("Stub Verdict: a log without a header counts nothing", () => {
+  expect(stubVerdict(logs()["none"], "probe", ["src/q.ts"], FL)).toStrictEqual({
+    stage: null,
+    expected: "probe",
+    outside: [],
+    failures: [],
+  });
+});
+```
