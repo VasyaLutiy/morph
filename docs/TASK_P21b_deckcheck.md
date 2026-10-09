@@ -79,6 +79,7 @@
 | `go-p7b/decks/b1/deck.p20.json`, `deck.p21.json`, `_stubs/` (NEW) | deck files (8 cards each); 8 stub files | the old cut (f6cf44d, 100 388 B) and the P21a cut (main, 102 206 B); the gate's stubs (= `decks/p21/break/stub/`, each stub test renamed `TestStub<File>`: two `TestStub` in one package redeclare, measured) | Check Builds 1, Deck Check 4 |
 | `ts-rename.json` (NEW) | ONE object path → text (19 files) | a TypeScript project of `morph init`: contour.yaml (units: To Metres; report: Length Line), morph-map.json, package.json, tsconfig.json, tests/helpers.ts, tests/setup.ts, the OLD src/units/convert.ts (toMeters), src/report/line.ts, src/shelf/label.ts (no target; uses METRE), two old example tests, decks/r1/checks.json, two probes, decks/r1/deck.json (cut by main, `--only` its 4 cards), decks/r1/_stubs/ (4 stubs) | Check Builds 2, Deck Check 5 |
 | `cli/checkBuilds.json` (NEW) | ONE object "p20", "p21", "p21 without the guard.go stub", "ts-rename", "cards" → `BuildCheck[]` | Check Builds 1–3 measured | Check Builds 1–3; Deck Check 4–6 |
+| `cli/oneCard.deck.json` (NEW) | ONE deck file: a top-level JSON ARRAY holding one `Card` with every field of `src/cards/types.ts` (customId q, intent, targets [pkg/q.go], contextSlice, instruction, acceptance writing `$P/full.json` and a GOFLAGS line, model, maxTokens, reasoning, variants, dependsOn) | the base of every OWN test that writes a deck file: readDeckFile accepts it | — (own tests of Check Builds and Deck Check) |
 | `cli/examples.json` (keys "Deck Check 4", "5", "6" added) | ONE object | given/then of Deck Check 4–6 | — |
 
 - **Harness skeletons** (only `tests/helpers.ts`, node:fs, node:path and the modules named):
@@ -107,6 +108,11 @@ function scriptsRoot(): { r: TmpRoot; env: Record<string, string> } {      // Ch
 }
 function load(r: TmpRoot, deckPath: string): { deck: Deck; generations: string[][] } {
   const l = readDeckFile(r.root, deckPath); if (!l.ok) throw new Error(deckPath); return { deck: l.deck, generations: layerGenerations(l.deck) }; }
+// A deck file is a top-level JSON ARRAY of Cards, each with EVERY field of src/cards/types.ts Card (customId, intent, targets,
+// contextSlice, instruction, acceptance, model, maxTokens, reasoning, variants, dependsOn) — never an object with "cards", never a card
+// missing a field (readDeckFile refuses it). An own test that needs its own deck starts from cli/oneCard.deck.json:
+function writeDeck(r: TmpRoot, rel: string, cards: Partial<Card>[]): void {
+  const base = (fixtureJson("cli/oneCard.deck.json") as Card[])[0]; r.write(rel, JSON.stringify(cards.map((c) => ({ ...base, ...c })))); }
 const builds = (k: string): BuildCheck[] => (fixtureJson("cli/checkBuilds.json") as Record<string, BuildCheck[]>)[k];
 // Deck Check 5: Deck Check 2's document; Deck Check 6: io collecting
 const DC2 = { deck: "d.json", cards: 1, generations: [["a"]], errors: 0, warnings: 1, hazards: [{ kind: "implicit-read", severity: "warning",
