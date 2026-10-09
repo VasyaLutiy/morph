@@ -1,0 +1,226 @@
+{
+ "p20": [
+  {
+   "card": "control-contract",
+   "generation": 0,
+   "hidden": 0,
+   "stubbed": 1,
+   "missing": [],
+   "breaks": []
+  },
+  {
+   "card": "control-contract-judge",
+   "generation": 1,
+   "hidden": 0,
+   "stubbed": 2,
+   "missing": [],
+   "breaks": []
+  },
+  {
+   "card": "phase-loop",
+   "generation": 1,
+   "hidden": 0,
+   "stubbed": 2,
+   "missing": [],
+   "breaks": [
+    "supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)"
+   ]
+  },
+  {
+   "card": "phase-loop-judge",
+   "generation": 2,
+   "hidden": 0,
+   "stubbed": 4,
+   "missing": [],
+   "breaks": [
+    "supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)"
+   ]
+  },
+  {
+   "card": "runtime-guard",
+   "generation": 2,
+   "hidden": 0,
+   "stubbed": 4,
+   "missing": [],
+   "breaks": [
+    "daemon/daemon.go:9:81: not enough arguments in call to d.Loop.Exited",
+    "supervisor/guard_examples_test.go:11:16: not enough arguments in call to l.Exited"
+   ]
+  },
+  {
+   "card": "daemon-core",
+   "generation": 3,
+   "hidden": 0,
+   "stubbed": 6,
+   "missing": [],
+   "breaks": [
+    "daemon/daemon_examples_test.go:11:43: not enough arguments in call to d.OnExit",
+    "supervisor/guard_examples_test.go:11:16: not enough arguments in call to l.Exited"
+   ]
+  },
+  {
+   "card": "runtime-guard-judge",
+   "generation": 3,
+   "hidden": 0,
+   "stubbed": 6,
+   "missing": [],
+   "breaks": [
+    "daemon/daemon.go:9:81: not enough arguments in call to d.Loop.Exited"
+   ]
+  },
+  {
+   "card": "daemon-core-judge",
+   "generation": 4,
+   "hidden": 0,
+   "stubbed": 8,
+   "missing": [],
+   "breaks": []
+  }
+ ],
+ "p21": [
+  {
+   "card": "control-contract",
+   "generation": 0,
+   "hidden": 5,
+   "stubbed": 1,
+   "missing": [],
+   "breaks": []
+  },
+  {
+   "card": "control-contract-judge",
+   "generation": 1,
+   "hidden": 4,
+   "stubbed": 2,
+   "missing": [],
+   "breaks": []
+  },
+  {
+   "card": "phase-loop",
+   "generation": 1,
+   "hidden": 6,
+   "stubbed": 2,
+   "missing": [],
+   "breaks": []
+  },
+  {
+   "card": "phase-loop-judge",
+   "generation": 2,
+   "hidden": 4,
+   "stubbed": 4,
+   "missing": [],
+   "breaks": []
+  },
+  {
+   "card": "runtime-guard",
+   "generation": 2,
+   "hidden": 4,
+   "stubbed": 4,
+   "missing": [],
+   "breaks": []
+  },
+  {
+   "card": "daemon-core",
+   "generation": 3,
+   "hidden": 2,
+   "stubbed": 6,
+   "missing": [],
+   "breaks": []
+  },
+  {
+   "card": "runtime-guard-judge",
+   "generation": 3,
+   "hidden": 2,
+   "stubbed": 6,
+   "missing": [],
+   "breaks": []
+  },
+  {
+   "card": "daemon-core-judge",
+   "generation": 4,
+   "hidden": 0,
+   "stubbed": 8,
+   "missing": [],
+   "breaks": []
+  }
+ ],
+ "p21 without the guard.go stub": [
+  {
+   "card": "control-contract",
+   "generation": 0,
+   "hidden": 5,
+   "stubbed": 1,
+   "missing": [],
+   "breaks": []
+  },
+  {
+   "card": "control-contract-judge",
+   "generation": 1,
+   "hidden": 4,
+   "stubbed": 2,
+   "missing": [],
+   "breaks": []
+  },
+  {
+   "card": "phase-loop",
+   "generation": 1,
+   "hidden": 6,
+   "stubbed": 2,
+   "missing": [],
+   "breaks": []
+  },
+  {
+   "card": "phase-loop-judge",
+   "generation": 2,
+   "hidden": 4,
+   "stubbed": 4,
+   "missing": [],
+   "breaks": []
+  },
+  {
+   "card": "runtime-guard",
+   "generation": 2,
+   "hidden": 4,
+   "stubbed": 3,
+   "missing": [
+    "supervisor/guard.go"
+   ],
+   "breaks": []
+  },
+  {
+   "card": "daemon-core",
+   "generation": 3,
+   "hidden": 2,
+   "stubbed": 5,
+   "missing": [
+    "supervisor/guard.go"
+   ],
+   "breaks": [
+    "supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)"
+   ]
+  },
+  {
+   "card": "runtime-guard-judge",
+   "generation": 3,
+   "hidden": 2,
+   "stubbed": 5,
+   "missing": [
+    "supervisor/guard.go"
+   ],
+   "breaks": [
+    "supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)"
+   ]
+  },
+  {
+   "card": "daemon-core-judge",
+   "generation": 4,
+   "hidden": 0,
+   "stubbed": 7,
+   "missing": [
+    "supervisor/guard.go"
+   ],
+   "breaks": [
+    "supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)"
+   ]
+  }
+ ]
+}

@@ -452,6 +452,34 @@ System:
             - given: 'before {src/c.ts: the 4000 lines "c 0" … "c 3999"}; after the same with the last line "C 3999"'
               when: "diffed"
               then: '"--- a/src/c.ts\n+++ b/src/c.ts\n@@ -3997,4 +3997,4 @@\n c 3996\n c 3997\n c 3998\n-c 3999\n+C 3999\n" (4000 × 4000 is not over the cap)'
+        - name: Vet Tree
+          description: go vet of a whole module under an overlay; the lines that name no file of the card's own.
+          behavior: >
+            vetTree(root, envLine, overlay, own, env, timeoutMs): writes {"Replace": overlay} as JSON to a file in a fresh
+            directory under os.tmpdir(), runs `/bin/sh -c` with the text envLine + "\ngo vet -overlay '<that file>' ./...
+            2>&1", cwd root, environment exactly env, a timeout of timeoutMs, synchronously; removes the directory always.
+            → Vet Result {exit: the status (null when timed out or killed), timedOut, breaks: vetBreaks(the output, overlay,
+            own), followed, when timed out, by "go vet timed out after <timeoutMs> ms"}. vetBreaks(output, overlay, own),
+            pure: for every line of output, skipping a blank line, a line starting with "#" and a line starting with white
+            space (a "have"/"want" continuation): a leading "vet: " removed, the line trimmed; when it reads
+            "<file>.go:<digit>…" (an optional leading "./" dropped from the file): the file, when it equals a non-empty value
+            of overlay, becomes that value's first key (a stub is named by its target); a file in own is skipped; else the
+            break is "<file>:<the rest from the digit>". Any other line is a break as it stands. Breaks once each, sorted
+            (JavaScript's default sort).
+          steps:
+            - produces: Vet Result
+          examples:
+            - given: 'the text of tests/fixtures/acceptance/vetOutput.txt; overlay {"supervisor/guard_examples_test.go": "", "supervisor/loop.go": "decks/q9/_stubs/supervisor/loop.go", "supervisor/loop_examples_test.go": "decks/q9/_stubs/supervisor/loop_examples_test.go"}; own ["supervisor/loop.go"]; then overlay {} and own []'
+              ref: "tests/fixtures/acceptance/vetOutput.txt"
+              when: vetBreaks
+              then: '["daemon/daemon.go:9:81: not enough arguments in call to d.Loop.Exited", "go: updates to go.mod needed; to update it:", "mcp/session.go:6:2: package morphlite/supervisor is not in std", "supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)", "supervisor/loop_examples_test.go:5:6: TestStub redeclared in this block"]; then ["daemon/daemon.go:9:81: not enough arguments in call to d.Loop.Exited", "decks/q9/_stubs/supervisor/loop.go:12:2: declared and not used: x", "decks/q9/_stubs/supervisor/loop_examples_test.go:5:6: TestStub redeclared in this block", "go: updates to go.mod needed; to update it:", "mcp/session.go:6:2: package morphlite/supervisor is not in std", "supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)", "supervisor/loop.go:30: missing return"]'
+            - given: 'a tmp root holding a copy of tests/fixtures/acceptance/vet (module example.com/vq: b/b.go Old, a/a.go calling b.Old, _stubs/b/b.go New); envLine G = "export GOFLAGS=-mod=mod GOPROXY=off GOSUMDB=off GOTOOLCHAIN=local GOWORK=off GOCACHE=\"${GOCACHE:-/tmp/morph/go-build}\" GOPATH=\"${GOPATH:-/tmp/morph/go}\""; env {PATH}; timeout 60000; overlay {"b/b.go": "_stubs/b/b.go"}, own ["b/b.go"]; then own ["a/a.go", "b/b.go"]; then overlay {}'
+              ref: "tests/fixtures/acceptance/vet/"
+              when: vetTree
+              then: '{exit: 1, timedOut: false, breaks: ["a/a.go:6:25: undefined: b.Old"]}; then {exit: 1, timedOut: false, breaks: []}; then {exit: 0, timedOut: false, breaks: []}'
+            - given: 'that root; envLine "export GOFLAGS=-mod=vendor", overlay {}, own [], env {PATH: <root>/bin + ":" + PATH} where bin/go prints "# example.com/fake" and "vet: ./x/fake.go:3:1: fake go ran with $GOFLAGS" and exits 1; then envLine "sleep 3", env {PATH}, timeout 700'
+              when: vetTree
+              then: '{exit: 1, timedOut: false, breaks: ["x/fake.go:3:1: fake go ran with -mod=vendor"]}; then {exit: null, timedOut: true, breaks: ["go vet timed out after 700 ms"]} in under 3000 ms'
       dataObjects:
         - name: Target Snapshot
           description: The bytes of a card's targets before any variant is written.
@@ -459,6 +487,9 @@ System:
         - name: Acceptance Result
           description: What one acceptance command run returned.
           schema: "{ exit: number | null, log: string, timedOut: boolean }"
+        - name: Vet Result
+          description: What one go vet of a stub tree returned.
+          schema: "{ exit: number | null, timedOut: boolean, breaks: string[] }"
         - name: Verify Outcome
           description: The result of best-of-N verification of one card.
           schema: "{ accepted: { variant: string } | null, results: { variant: string, exit: number | null, log: string, diff: string | null }[] }"
@@ -1323,10 +1354,8 @@ System:
     # ---------------------------------------------------------------- P7
     - name: cli
       description: >
-        The `morph` binary: src/cli/*.ts and the entry src/cli.ts (bin dist/cli.js): argv parsed, routed to a command, one JSON document on stdout, log lines on
-        stderr, an exit code per outcome. Only the entry touches the process. Commands: `deck check`, `run`, `plan`; `submit`, `collect` (routed to batches);
-        `primer` (routed to primer); `scout`, `plan --from-scout` (routed to scout-session); `review` (routed to review-session); `card`, `accept` (routed
-        to debt); `init` (routed to scaffold); the rest NotYetError.
+        The `morph` binary: src/cli/*.ts and the entry src/cli.ts (bin dist/cli.js): argv parsed, routed to a command by Main, one JSON document on stdout, log
+        lines on stderr, an exit code per outcome. Only the entry touches the process.
         tests/fixtures/cli/examples.json["<Function> <n>"] holds the given and then of an example that names it.
       language: typescript
       requirements: [One Document Out]
@@ -1346,22 +1375,20 @@ System:
             --out, --checks, --only; review: --root, --pretty, --spec, --map, --scout, --mutants, --mutant-timeout, --test, --write; submit: --root, --pretty, --deck, --processor; collect: --root, --pretty, --batch; primer: --root, --pretty, --write; scout: --root, --pretty,
             --processor, --issue, --seed-file, --deadline; plan --from-scout: --root, --pretty, --from-scout, --out; card: --root, --pretty, --deck, --id, --md;
             accept: --root, --pretty, --deck, --id, --model, --commit; init: --root, --pretty, --name, --language, --module, --templates); card and accept: no --deck → "missing --deck", no --id → "missing --id", an --id not
-            matching ^[A-Za-z0-9._-]+$ → "--id must match ^[A-Za-z0-9._-]+$ (got '<v>')", card done {name, root, pretty, deck, id, md}; accept: no --model →
-            "missing --model", a --model not matching ^[A-Za-z0-9._/:-]+$ → "--model must match ^[A-Za-z0-9._/:-]+$ (got '<v>')", else done {name, root,
-            pretty, deck, id, model, commit}; init: no --name → "missing --name", a --name not matching ^[A-Za-z0-9._-]+$ → "--name must match
+            matching ^[A-Za-z0-9._-]+$ → "--id must match ^[A-Za-z0-9._-]+$ (got '<v>')", card done; accept: no --model →
+            "missing --model", a --model not matching ^[A-Za-z0-9._/:-]+$ → "--model must match ^[A-Za-z0-9._/:-]+$ (got '<v>')", else done; init: no --name → "missing --name", a --name not matching ^[A-Za-z0-9._-]+$ → "--name must match
             ^[A-Za-z0-9._-]+$ (got '<v>')", no --language → "missing --language", a --language not typescript, python or go → "--language must be one of
             typescript, python, go (got '<v>')", a --module not matching ^[A-Za-z0-9._/-]+$ → "--module must match ^[A-Za-z0-9._/-]+$ (got '<v>')", else done
-            {name, root, pretty, project, language, module (null), templates (null)}; review: fewer than two refs → "review
+            (module, templates null when not given); review: fewer than two refs → "review
             needs two refs: <base> <head>", a --scout not matching ^[A-Za-z0-9._-]+$ → "--scout must match ^[A-Za-z0-9._-]+$ (got '<v>')", --mutants then
-            --mutant-timeout not a positive integer, else done {name, root, pretty, base, head, spec, map, scout, mutants (null), mutantTimeoutSeconds (120),
-            test (null), write}; plan --from-scout: a value not matching
-            ^[A-Za-z0-9._-]+$ → "--from-scout must match ^[A-Za-z0-9._-]+$ (got '<v>')", else done {name, root, pretty, fromScout, out: null when not given};
+            --mutant-timeout not a positive integer, else done (mutants null, mutantTimeoutSeconds 120, test null when not given); plan --from-scout: a value not matching
+            ^[A-Za-z0-9._-]+$ → "--from-scout must match ^[A-Za-z0-9._-]+$ (got '<v>')", else done (out null when not given);
             plan without --spec → "missing --spec"; a given --only split on "," must be distinct ids each matching ^[A-Za-z0-9._-]+$, else "--only must be distinct card
-            ids joined by \",\" (got '<v>')" (P20); else plan is done: the plan Command (components [] and map, out null when not given; checks, then only (the ids in order), a key only when given);
+            ids joined by \",\" (got '<v>')"; else plan is done (components [] and map, out null when not given; checks, then only (the ids in order), a key only when given);
             collect without --batch → "missing --batch", a --batch not matching ^[A-Za-z0-9._-]+$ → "--batch must match ^[A-Za-z0-9._-]+$ (got '<v>')", else
-            collect is done; primer is done: {name, root, pretty, write: --write given}; scout without --processor → "missing --processor", without
-            --issue → "missing --issue", a --deadline not a positive integer → "--deadline must be a positive integer (got '<v>')", else done {name, root, pretty,
-            processor, issue, seedFile: null when not given, deadlineSeconds: 1800 when not given}; no --deck → "missing --deck"; run or submit without --processor →
+            collect is done; primer is done (write: --write given); scout without --processor → "missing --processor", without
+            --issue → "missing --issue", a --deadline not a positive integer → "--deadline must be a positive integer (got '<v>')", else done (seedFile null,
+            deadlineSeconds 1800 when not given); no --deck → "missing --deck"; run or submit without --processor →
             "missing --processor"; submit is then done; a run --run-id not matching ^[A-Za-z0-9._-]+$ → "--run-id must match ^[A-Za-z0-9._-]+$ (got '<v>')";
             numbers in the order --slice-cap-bytes (deck check), --deadline, --max-cards, --max-retry-batches (run): digits only, ≥ 1 ("<f> must be a positive
             integer (got '<v>')"), --max-retry-batches ≥ 0 ("must be a non-negative integer"). A failure is {ok: false, error: {error: {code: 4, kind:
@@ -1424,16 +1451,21 @@ System:
             - {given: 'examples.json["Read Deck File 2"].given', when: "readDeckFile(root, \"nope.json\")", then: 'examples.json["Read Deck File 2"].then'}
             - {given: 'examples.json["Read Deck File 3"].given', ref: "tests/fixtures/decks/cycle.json, tests/fixtures/decks/duplicate.json", when: 'read', then: 'examples.json["Read Deck File 3"].then'}
         - name: Deck Check
-          description: "`morph deck check`: generations, hazards, slice weights."
+          description: "`morph deck check`: generations, hazards, slice weights; with a stub tree, each Go card's tree built."
           behavior: >
-            deckCheckCommand(root, deckPath, sliceCapBytes): Read Deck File (its failure is the result); weighing = Weigh Slices(deck, root, sliceCapBytes);
-            hazards = Find Hazards(deck), then the weighing's; document {deck: deckPath as given, cards: the count, generations: Layer Generations(deck), errors
-            and warnings: the hazards of each severity counted, hazards, weights: the weighing's}, keys in that order; code 2 when errors > 0, else 0.
-          steps: [{calls: Read Deck File}, {uses: cards}, {produces: Deck Check Document}]
+            deckCheckCommand(root, deckPath, sliceCapBytes, env = {}): Read Deck File (its failure is the result); weighing = Weigh Slices(deck, root, sliceCapBytes);
+            hazards = Find Hazards(deck), then the weighing's; generations = Layer Generations(deck); document {deck: deckPath as given, cards: the count,
+            generations, errors and warnings: the hazards of each severity counted, hazards, weights: the weighing's}, keys in that order; builds = Check
+            Builds(root, deckPath, deck, generations, env): not null → document.builds = it (a key after weights) and errors also counts every missing
+            and every break of it. Code 2 when errors > 0, else 0.
+          steps: [{calls: Read Deck File}, {uses: cards}, {uses: planner-subset}, {produces: Deck Check Document}]
           examples:
             - {given: 'examples.json["Deck Check 1"].given', ref: "tests/fixtures/decks/hazardsWriteWrite.json, tests/fixtures/cli/deckCheck.writeWrite.json", when: "deckCheckCommand(root, \"d.json\", 500000)", then: 'examples.json["Deck Check 1"].then'}
             - {given: 'examples.json["Deck Check 2"].given', ref: "tests/fixtures/decks/tiny.json", when: 'deckCheckCommand(root, "d.json", 500000)', then: 'examples.json["Deck Check 2"].then'}
             - {given: 'examples.json["Deck Check 3"].given', when: "checked", then: 'examples.json["Deck Check 3"].then'}
+            - {given: 'examples.json["Deck Check 4"].given', ref: "tests/fixtures/go-p7b/", when: 'deckCheckCommand(root, <deck>, 500000, {PATH})', then: 'examples.json["Deck Check 4"].then'}
+            - {given: 'examples.json["Deck Check 5"].given', ref: "tests/fixtures/decks/tiny.json", when: 'deckCheckCommand(root, "d.json", 500000)', then: 'examples.json["Deck Check 5"].then'}
+            - {given: 'examples.json["Deck Check 6"].given', ref: "tests/fixtures/go-p7b/", when: main, then: 'examples.json["Deck Check 6"].then'}
         - name: Run Command
           description: "`morph run`: processor, deck, hazards, run branch, Run Deck, archive; one Run Document."
           behavior: >
@@ -1441,7 +1473,7 @@ System:
             → 4 UsageError "processor <id> is not configured" + (": " + the messages of the faults keyed "MORPH_PROCESSOR_<id>_…", "; "-joined, when any). 2.
             Read Deck File (its failure is the result); no cards → 2 RefusalError "deck has no cards". 3. Find Hazards errors → 2 RefusalError "deck has <n>
             hazard error(s): " + each "<kind> <cards ","-joined>[ <path>]", "; "-joined; then cards whose acceptance is null or blank → 2 RefusalError "deck has
-            <n> card(s) with no acceptance: <ids in deck order, ","-joined>". 4. start = deps.now() (its only call here); runId = args.runId or mintRunId(start)
+            <n> card(s) with no acceptance: <ids in deck order, ","-joined>". 4. start = deps.now(); runId = args.runId or mintRunId(start)
             (UTC "YYYYMMDD-HHMMSS"). 5. Open Run Branch(root, runId, deps.env); a refusal → 2 RefusalError, its error. 6. Run Deck, input {root, runId, branch,
             deck, budget {maxCards: args.maxCards or the card count, maxRetryBatches, deadline: start + deadlineSeconds × 1000}}, deps {config, transport:
             {...(deps.transport or realTransport(config.timeoutMs)), saveBatch: (record) => git's saveBatchRecord(root, record)}, commit: makeCommitHook(root,
@@ -1468,16 +1500,14 @@ System:
           description: "`morph plan --spec`: record and map cut by Plan Spec, the deck to --out; one Plan Document."
           behavior: >
             planCommand(root, args), in order. The spec (path.resolve(root, args.spec)) not a regular file → 4 UsageError "spec file not found: <spec as
-            given>"; a given map not a regular file → 4 UsageError "map file not found: <map as given>". loadContour(the spec's UTF-8 text, args.spec), then
+            given>"; a given map not a regular file → 4 UsageError "map file not found: <map as given>". loadContour(the spec's text, args.spec), then
             loadMap(the map's text, args.map) when given (else the empty map {version: 1, package: null, language: null, docs: [], groups: [], cards: [],
             extraCards: []}); an error → 2 DeckError, it. Plan Spec({record, map, spec: args.spec, components: args.components, judge: args.judge, hasFile: a
-            path is a regular file under root}); an error → 2 DeckError, it. P20: with args.only, Select Cards(plan, args.only), an error → 2 DeckError, it; its plan
-            replaces Plan Spec's from here on, and the checks given to Build Acceptances keep only its cards, so a card outside the subset is never a
-            sibling and its file never blanked. P21: with args.only and the go profile, Build Acceptances also gets hide: Hide Later(that plan, Read Go
-            Tree(root)). With args.checks: profile = Resolve Profile(the first selected Component's
-            language, map.language) — the Component's wins, as in the cut (P15) — an error → 2 DeckError "the map: " + it; Read Plan Checks(root, args.checks,
-            profile) (a failure is the result); Build Acceptances({cards, checks, profile, texts, uses: Plan Spec's uses, vendor: "vendor/modules.txt" is a
-            regular file under root} (P19)), errors → 2 DeckError "acceptances not built (<n> error|errors):\n"
+            path is a regular file under root}); an error → 2 DeckError, it. With args.only, Select Cards(plan, args.only), an error → 2 DeckError, it; its plan
+            replaces Plan Spec's and the checks keep only its cards. With args.checks: profile = Resolve Profile(the first selected Component's
+            language, map.language), an error → 2 DeckError "the map: " + it; Read Plan Checks(root, args.checks, profile) (a failure is the result); Build
+            Acceptances({cards, checks, profile, texts, uses: Plan Spec's uses, vendor: "vendor/modules.txt" is a regular file under root, and with args.only
+            and the go profile hide: Hide Later(plan, Read Go Tree(root))}), errors → 2 DeckError "acceptances not built (<n> error|errors):\n"
             + them "\n"-joined; its cards replace the plan's, except a card the map gives an acceptance (map card by customId ?? id, extra card by customId).
             args.out not null → the cards written to path.resolve(root, args.out) as JSON.stringify(cards, null, 2) + "\n", parents created. → {code: 0,
             document: {spec, components, cards, generations, externalDependsOn, out: args.out}}. Nothing else written; nothing on an error.
@@ -1514,7 +1544,7 @@ System:
           description: Routing, one document, log lines, exit code; src/cli.ts wires the process.
           behavior: >
             main(argv, deps, io) → Promise<ExitCode>. Parse Command; a failure → io.stdout(renderDocument(its error document, pretty = argv holds "--pretty")),
-            io.stderr("morph: <message>\n"), 4. Else root = path.resolve(deps.cwd, command.root); result = Deck Check, Plan Command, await Submit Deck(root,
+            io.stderr("morph: <message>\n"), 4. Else root = path.resolve(deps.cwd, command.root); result = Deck Check (env: deps.env), Plan Command, await Submit Deck(root,
             deck, processor, D), await Collect Batch(root, batch, D), Primer Command(root, write, {env, now of deps}), await Scout Command(root, command, deps), Plan From Scout(root,
             command), await Review Command(root, command, deps), Card Brief(root, command), await Accept Card(root, command, deps), Init Project(root, command, deps.cwd) (D = {env, now, transport of deps,
             saveState: git's saveBatchRecord(root, ·), saveAnswers: git's saveBatchAnswers(root, ·, ·)}) or await Run Command (io.stderr its log) by command, in
@@ -1552,7 +1582,7 @@ System:
           schema: "{ code: 0|1|2|3|4, document: unknown }"
         - name: Deck Check Document
           description: stdout of deck check.
-          schema: "{ deck: string, cards: number, generations: string[][], errors: number, warnings: number, hazards: Hazard[], weights: SliceWeight[] }"
+          schema: "{ deck: string, cards: number, generations: string[][], errors: number, warnings: number, hazards: Hazard[], weights: SliceWeight[], builds?: Build Check[] }"
         - name: Plan Document
           description: stdout of plan.
           schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]>, out: string | null }"
@@ -2518,6 +2548,19 @@ System:
         tests/fixtures/planner/hide.tree.json its Go Tree (9 files; report/format_line.go imports calc,
         summary/summary.go imports report, the four _test.go files import internal/testhelp). tests/fixtures/go-p7b is a
         module in MorphStudio P7b's shape (Loop.Resumes → Restarts, Exited gains stderr; guard.go:20 reads l.Resumes).
+        `morph deck check` builds, for every Go card of a deck that has a stub tree (`<deck's directory>/_stubs/`, the
+        gate's stub files at their targets' paths; the go tool skips a directory starting with "_"), the tree the card's
+        first attempt sees, and names every file:line outside the card's own targets that fails to build or vet: Stub
+        Trees (src/planner/stubTrees.ts, layer planner, pure, node:path only) computes each overlay, Check Builds
+        (src/cli/checkBuilds.ts, layer cli) lists the stubs and vets each tree through acceptance's Vet Tree.
+        tests/fixtures/planner/stub.cards.json holds the Cards of the Stub Trees examples: a ["calc/a.go"], n
+        ["calc/n.go"] (acceptance null), t ["src/t.ts"] (no Go acceptance), b ["calc/b.go", "calc/b_test.go"], c
+        ["report/c.go", "report/NOTES.md"], v ["calc/v.go"] (a GOFLAGS line, no full.json), j ["calc/a_examples_test.go"];
+        the full.json Replace of a {"calc/b.go": "", "report/c.go": ""}, b {"report/c.go": ""}, c {"calc/b.go": "",
+        "calc/b_test.go": ""}, j {"report/c.go": ""}; GOFLAGS lines of a and c "export GOFLAGS=-mod=mod GOPROXY=off", of
+        b and j "export GOFLAGS=-mod=vendor GOPROXY=off GOCACHE=\"${GOCACHE:-/tmp/q9/go-build}\"". go-p7b also holds
+        decks/b1/deck.p20.json (its 8 cards cut by `--only` before Hide Later), deck.p21.json (cut with it) and
+        decks/b1/_stubs/ (the stubs of the 8 targets; each stub test file declares its own TestStub<Name>).
       language: typescript
       requirements: [Deterministic Core]
       functions:
@@ -2603,6 +2646,57 @@ System:
             - given: 'a tmp root with no go.mod: a/a.go importing "brk/calc", b.go'
               when: readGoTree
               then: '{files: ["a/a.go", "b.go"], imports: {"a/a.go": [], "b.go": []}}'
+        - name: Stub Trees
+          description: Per Go card of a deck, the overlay of the tree its first attempt builds on, the gate's stubs in place.
+          behavior: >
+            stubTrees(cards, generations, stubDir, stubs): for every generation index g and every id of generations[g], in
+            order, the card of cards with that customId (none → skipped) whose acceptance is a string holding a $P/full.json
+            heredoc (`cat > $P/full.json <<'MORPH_CONF_EOF'`, a line, the JSON text, a line `MORPH_CONF_EOF`) and a line
+            starting `export GOFLAGS=` (else skipped; a heredoc that is not JSON → skipped). overlay = a copy of the
+            heredoc's Replace object ({} when absent); then for every card of the earlier generations (generations[0..g-1]
+            flattened in order, ids with no card skipped) and then the card itself, every target ending ".go" that is not
+            yet a key of overlay: in stubs → overlay[target] = path.posix.join(stubDir, target); else it goes to missing,
+            once. The card's generation siblings are never stubbed: its first attempt sees them as its overlay hides them,
+            or as on disk. → Stub Tree {card: the customId, generation: g, env: that whole GOFLAGS line, overlay, own: a
+            copy of the card's targets, missing}. The inputs are never changed.
+          steps:
+            - reads: Deck
+            - produces: Stub Tree
+          examples:
+            - given: 'stub.cards.json, generations [["a", "n", "t"], ["b", "c", "v"], ["j"]], stubDir "decks/q9/_stubs", stubs ["calc/a.go", "calc/a_examples_test.go", "calc/b.go", "extra/z.go", "report/c.go"]'
+              ref: "tests/fixtures/planner/stub.cards.json, tests/fixtures/planner/stub.trees.json (key \"1\")"
+              when: stubTrees
+              then: 'equal to stub.trees.json["1"]: trees a (0), b (1), c (1), j (2); b: overlay {"report/c.go": "", "calc/a.go": "decks/q9/_stubs/calc/a.go", "calc/b.go": "decks/q9/_stubs/calc/b.go"}, missing ["calc/n.go", "calc/b_test.go"]; j: overlay {"report/c.go": "", "calc/a.go": …, "calc/b.go": …, "calc/a_examples_test.go": "decks/q9/_stubs/calc/a_examples_test.go"} (report/c.go stays hidden), missing ["calc/n.go", "calc/b_test.go", "calc/v.go"]'
+            - given: 'stub.cards.json, generations [["a"], ["zz", "j"]], stubDir "/abs/st", stubs ["calc/a_examples_test.go"]'
+              when: stubTrees
+              then: 'equal to stub.trees.json["2"]: a (0) overlay {"calc/b.go": "", "report/c.go": ""}, missing ["calc/a.go"]; j (1) overlay {"report/c.go": "", "calc/a_examples_test.go": "/abs/st/calc/a_examples_test.go"}, missing ["calc/a.go"]'
+            - given: 'stub.cards.json, generations []; then generations [["t", "n", "v"]]'
+              when: stubTrees
+              then: '[]; then []'
+        - name: Check Builds
+          description: Every Go card's stub tree of a deck vetted; the lines outside its own targets.
+          behavior: >
+            checkBuilds(root, deckPath, deck, generations, env). stubDir = path.posix.join(path.posix.dirname(deckPath),
+            "_stubs"); not a directory under root (path.resolve(root, stubDir)) → null. Else stubs = every regular file
+            under it, paths relative to it joined by "/" (a symbolic link is not followed), sorted; for every tree of Stub
+            Trees(deck.cards, generations, stubDir, stubs), in order, a Build Check {card, generation, hidden: the overlay
+            values equal to "" counted, stubbed: the other values counted, missing, breaks: Vet Tree(root, the tree's env,
+            overlay, own, env, 120000).breaks}.
+          steps:
+            - calls: Stub Trees
+            - uses: acceptance
+            - produces: Build Check
+          examples:
+            - given: 'a tmp root holding a copy of tests/fixtures/go-p7b; deck and generations of "decks/b1/deck.p20.json" (Read Deck File, Layer Generations); env {PATH}; then the same for "decks/b1/deck.p21.json"'
+              ref: "tests/fixtures/go-p7b/, tests/fixtures/cli/checkBuilds.json"
+              when: checkBuilds
+              then: 'checkBuilds.json["p20"]: 8 checks; phase-loop {generation 1, hidden 0, stubbed 2, missing [], breaks ["supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)"]}; 7 breaks in all over 5 cards; then checkBuilds.json["p21"]: 8 checks, no missing, no break, hidden [5, 4, 6, 4, 4, 2, 2, 0]'
+            - given: 'that root with decks/b1/_stubs/supervisor/guard.go removed; deck.p21.json'
+              when: checkBuilds
+              then: 'checkBuilds.json["p21 without the guard.go stub"]: runtime-guard missing ["supervisor/guard.go"] and no break (its own file); daemon-core, runtime-guard-judge, daemon-core-judge missing it and each breaks ["supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)"]'
+            - given: 'a tmp root with d.json = tests/fixtures/decks/tiny.json and src/a.ts; then _stubs/src/a.ts added; then the go-p7b root with bin/go a script printing "vet: ./x/fake.go:3:1: fake go ran with $GOFLAGS" and exiting 1, deck.p21.json, env {PATH: <root>/bin + ":" + PATH}'
+              when: checkBuilds
+              then: 'null (no _stubs directory); then []; then 8 checks, each breaks ["x/fake.go:3:1: fake go ran with -mod=mod"] (env reaches the child)'
       dataObjects:
         - name: Go Tree
           description: The Go files of a module (relative, sorted) and, per file, the module's own packages it imports as directories.
@@ -2610,6 +2704,12 @@ System:
         - name: Hide Map
           description: Per card of a subset, the Go files its acceptance hides beyond its generation's siblings.
           schema: "Record<string, string[]>"
+        - name: Stub Tree
+          description: One Go card's overlay for the deck check (path → "" hidden, or → its stub file).
+          schema: "{ card: string; generation: number; env: string; overlay: Record<string, string>; own: string[]; missing: string[] }"
+        - name: Build Check
+          description: One Go card's stub tree vetted by deck check.
+          schema: "{ card: string; generation: number; hidden: number; stubbed: number; missing: string[]; breaks: string[] }"
 
     # ---------------------------------------------------------------- P10b
     - name: builder

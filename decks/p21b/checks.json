@@ -1,0 +1,105 @@
+{
+ "phase": "p21b",
+ "ownGit": true,
+ "frozen": [
+  "contour.yaml",
+  "morph-map.json",
+  "docs",
+  "decks",
+  "tests/fixtures",
+  "templates"
+ ],
+ "cards": [
+  {
+   "id": "stub-trees"
+  },
+  {
+   "id": "vet-tree"
+  },
+  {
+   "id": "check-builds"
+  },
+  {
+   "id": "deck-check"
+  },
+  {
+   "id": "stub-trees-judge",
+   "files": [
+    {
+     "file": "tests/planner/stubTrees.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": [
+      "Stub Trees example 1",
+      "Stub Trees example 2",
+      "Stub Trees example 3",
+      "planner/stub.cards.json",
+      "planner/stub.trees.json",
+      "decks/q9/_stubs",
+      "/abs/st"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "vet-tree-judge",
+   "files": [
+    {
+     "file": "tests/acceptance/vetTree.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": [
+      "Vet Tree example 1",
+      "Vet Tree example 2",
+      "Vet Tree example 3",
+      "acceptance/vetOutput.txt",
+      "acceptance/vet",
+      "a/a.go:6:25: undefined: b.Old",
+      "go vet timed out after 700 ms"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "check-builds-judge",
+   "files": [
+    {
+     "file": "tests/cli/checkBuilds.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": [
+      "Check Builds example 1",
+      "Check Builds example 2",
+      "Check Builds example 3",
+      "cli/checkBuilds.json",
+      "decks/b1/deck.p20.json",
+      "p21 without the guard.go stub",
+      "fake go ran with"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "deck-check-judge",
+   "files": [
+    {
+     "file": "tests/cli/deckCheck.p21b.examples.test.ts",
+     "min": 3,
+     "max": 9,
+     "new": true,
+     "lits": [
+      "Deck Check example 4",
+      "Deck Check example 5",
+      "Deck Check example 6",
+      "decks/b1/deck.p20.json",
+      "_stubs/src/a.ts",
+      "morph deck check: exit 2"
+     ]
+    }
+   ]
+  }
+ ]
+}

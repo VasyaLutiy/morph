@@ -1,0 +1,119 @@
+[
+ {
+  "customId": "a",
+  "intent": "generate",
+  "targets": [
+   "calc/a.go"
+  ],
+  "contextSlice": [],
+  "instruction": "write calc/a.go",
+  "acceptance": "set -e\nexport GOFLAGS=-mod=mod GOPROXY=off\nP=$PWD/probe/x\ncat > $P/full.json <<'MORPH_CONF_EOF'\n{\"Replace\":{\"calc/b.go\":\"\",\"report/c.go\":\"\"}}\nMORPH_CONF_EOF\ngo vet -overlay $P/full.json ./...\n",
+  "model": null,
+  "maxTokens": null,
+  "reasoning": null,
+  "variants": 1,
+  "dependsOn": []
+ },
+ {
+  "customId": "n",
+  "intent": "generate",
+  "targets": [
+   "calc/n.go"
+  ],
+  "contextSlice": [],
+  "instruction": "write calc/n.go",
+  "acceptance": null,
+  "model": null,
+  "maxTokens": null,
+  "reasoning": null,
+  "variants": 1,
+  "dependsOn": []
+ },
+ {
+  "customId": "t",
+  "intent": "generate",
+  "targets": [
+   "src/t.ts"
+  ],
+  "contextSlice": [],
+  "instruction": "write src/t.ts",
+  "acceptance": "npx vitest run src/t.test.ts\n",
+  "model": null,
+  "maxTokens": null,
+  "reasoning": null,
+  "variants": 1,
+  "dependsOn": []
+ },
+ {
+  "customId": "b",
+  "intent": "generate",
+  "targets": [
+   "calc/b.go",
+   "calc/b_test.go"
+  ],
+  "contextSlice": [],
+  "instruction": "write calc/b.go",
+  "acceptance": "set -e\nexport GOFLAGS=-mod=vendor GOPROXY=off GOCACHE=\"${GOCACHE:-/tmp/q9/go-build}\"\nP=$PWD/probe/x\ncat > $P/full.json <<'MORPH_CONF_EOF'\n{\"Replace\":{\"report/c.go\":\"\"}}\nMORPH_CONF_EOF\ngo vet -overlay $P/full.json ./...\n",
+  "model": null,
+  "maxTokens": null,
+  "reasoning": null,
+  "variants": 1,
+  "dependsOn": [
+   "a"
+  ]
+ },
+ {
+  "customId": "c",
+  "intent": "generate",
+  "targets": [
+   "report/c.go",
+   "report/NOTES.md"
+  ],
+  "contextSlice": [],
+  "instruction": "write report/c.go",
+  "acceptance": "set -e\nexport GOFLAGS=-mod=mod GOPROXY=off\nP=$PWD/probe/x\ncat > $P/full.json <<'MORPH_CONF_EOF'\n{\"Replace\":{\"calc/b.go\":\"\",\"calc/b_test.go\":\"\"}}\nMORPH_CONF_EOF\ngo vet -overlay $P/full.json ./...\n",
+  "model": null,
+  "maxTokens": null,
+  "reasoning": null,
+  "variants": 1,
+  "dependsOn": [
+   "a",
+   "n"
+  ]
+ },
+ {
+  "customId": "v",
+  "intent": "generate",
+  "targets": [
+   "calc/v.go"
+  ],
+  "contextSlice": [],
+  "instruction": "write calc/v.go",
+  "acceptance": "export GOFLAGS=-mod=mod\ngo vet ./...\n",
+  "model": null,
+  "maxTokens": null,
+  "reasoning": null,
+  "variants": 1,
+  "dependsOn": [
+   "a"
+  ]
+ },
+ {
+  "customId": "j",
+  "intent": "generate",
+  "targets": [
+   "calc/a_examples_test.go"
+  ],
+  "contextSlice": [],
+  "instruction": "write calc/a_examples_test.go",
+  "acceptance": "set -e\nexport GOFLAGS=-mod=vendor GOPROXY=off GOCACHE=\"${GOCACHE:-/tmp/q9/go-build}\"\nP=$PWD/probe/x\ncat > $P/full.json <<'MORPH_CONF_EOF'\n{\"Replace\":{\"report/c.go\":\"\"}}\nMORPH_CONF_EOF\ngo vet -overlay $P/full.json ./...\n",
+  "model": null,
+  "maxTokens": null,
+  "reasoning": null,
+  "variants": 1,
+  "dependsOn": [
+   "b",
+   "c"
+  ]
+ }
+]

@@ -1,0 +1,14 @@
+# morphlite/supervisor
+supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)
+# morphlite/supervisor
+# [morphlite/supervisor]
+vet: supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)
+# morphlite/daemon
+vet: daemon/daemon.go:9:81: not enough arguments in call to d.Loop.Exited
+	have (int, int)
+	want (int, string, int)
+vet: ./decks/q9/_stubs/supervisor/loop_examples_test.go:5:6: TestStub redeclared in this block
+vet: ./decks/q9/_stubs/supervisor/loop.go:12:2: declared and not used: x
+supervisor/loop.go:30: missing return
+mcp/session.go:6:2: package morphlite/supervisor is not in std
+go: updates to go.mod needed; to update it:

@@ -1,0 +1,105 @@
+{
+ "1": [
+  {
+   "card": "a",
+   "generation": 0,
+   "env": "export GOFLAGS=-mod=mod GOPROXY=off",
+   "overlay": {
+    "calc/b.go": "",
+    "report/c.go": "",
+    "calc/a.go": "decks/q9/_stubs/calc/a.go"
+   },
+   "own": [
+    "calc/a.go"
+   ],
+   "missing": []
+  },
+  {
+   "card": "b",
+   "generation": 1,
+   "env": "export GOFLAGS=-mod=vendor GOPROXY=off GOCACHE=\"${GOCACHE:-/tmp/q9/go-build}\"",
+   "overlay": {
+    "report/c.go": "",
+    "calc/a.go": "decks/q9/_stubs/calc/a.go",
+    "calc/b.go": "decks/q9/_stubs/calc/b.go"
+   },
+   "own": [
+    "calc/b.go",
+    "calc/b_test.go"
+   ],
+   "missing": [
+    "calc/n.go",
+    "calc/b_test.go"
+   ]
+  },
+  {
+   "card": "c",
+   "generation": 1,
+   "env": "export GOFLAGS=-mod=mod GOPROXY=off",
+   "overlay": {
+    "calc/b.go": "",
+    "calc/b_test.go": "",
+    "calc/a.go": "decks/q9/_stubs/calc/a.go",
+    "report/c.go": "decks/q9/_stubs/report/c.go"
+   },
+   "own": [
+    "report/c.go",
+    "report/NOTES.md"
+   ],
+   "missing": [
+    "calc/n.go"
+   ]
+  },
+  {
+   "card": "j",
+   "generation": 2,
+   "env": "export GOFLAGS=-mod=vendor GOPROXY=off GOCACHE=\"${GOCACHE:-/tmp/q9/go-build}\"",
+   "overlay": {
+    "report/c.go": "",
+    "calc/a.go": "decks/q9/_stubs/calc/a.go",
+    "calc/b.go": "decks/q9/_stubs/calc/b.go",
+    "calc/a_examples_test.go": "decks/q9/_stubs/calc/a_examples_test.go"
+   },
+   "own": [
+    "calc/a_examples_test.go"
+   ],
+   "missing": [
+    "calc/n.go",
+    "calc/b_test.go",
+    "calc/v.go"
+   ]
+  }
+ ],
+ "2": [
+  {
+   "card": "a",
+   "generation": 0,
+   "env": "export GOFLAGS=-mod=mod GOPROXY=off",
+   "overlay": {
+    "calc/b.go": "",
+    "report/c.go": ""
+   },
+   "own": [
+    "calc/a.go"
+   ],
+   "missing": [
+    "calc/a.go"
+   ]
+  },
+  {
+   "card": "j",
+   "generation": 1,
+   "env": "export GOFLAGS=-mod=vendor GOPROXY=off GOCACHE=\"${GOCACHE:-/tmp/q9/go-build}\"",
+   "overlay": {
+    "report/c.go": "",
+    "calc/a_examples_test.go": "/abs/st/calc/a_examples_test.go"
+   },
+   "own": [
+    "calc/a_examples_test.go"
+   ],
+   "missing": [
+    "calc/a.go"
+   ]
+  }
+ ]
+}
