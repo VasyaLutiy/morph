@@ -6,13 +6,23 @@ the gate. This file is the regulation that replaces the operator at every point 
 human answered during P0–P2. The operator confirms it before the first autonomous phase
 and can change any line; the session reads it at the start of every phase.
 
-## State at handoff (08.10 night, after P20: a stop for the operator)
+## State at handoff (09.10, operator: next P21, then a stop)
 
-**Next: none queued — the session stopped for the operator after P20** (operator 08.10: "P20, then a stop"). The flag
-files are shared with MorphStudio's session on this VPS and the cron watchdog is MorphStudio's
-(`/home/morph/MorphStudio/tools/vps-watchdog.sh`): a MorphV2 session ends with `~/.morph-wait-operator` until the operator
-says otherwise, never `~/.morph-phase-done`. Never touch `/home/morph/MorphStudio` or its tmux session `MorphStudio`
-(read-only at most).
+**Next: P21, issue #12 (label `P21-breaking-recut`), then 🧪 and a stop for the operator.** Request of MorphStudio's PM
+(github.com/VasyaLutiy/MorphStudio `docs/MORPHV2_REQUEST_breaking-recut.md`, read it via `gh api`, never from or in
+`/home/morph/MorphStudio`): an `--only` subset whose record changes an exported Go identifier (rename, removed field,
+changed signature) used by targets of LATER generations of the same subset stops at the gate, because P20's overlay hides
+only the same generation (MorphStudio P7b: `supervisor/guard.go:20:22: l.Resumes undefined`, `not enough arguments in
+call to l.Exited`). Must hold: such a subset passes the gate with no hand edit and no compat names; a card is still judged
+on a compiling tree (no package hidden whole, no stage skips build/vet); files outside the subset never hidden, and a break
+of them is named before any paid run; cuts without `--only` byte for byte (go-mini P15, P20); nice to have: `plan --only`
+warns file:line on kept files outside the subset that use a changed identifier. Directions A/B/C in the issue; the phase
+chooses and measures (the operator side leans to A, "hide every subset target not yet written in this run", measured
+against its risk). Acceptance on a MorphV2 Go fixture (go-mini style, rename + signature change across three generations)
+plus a live smoke on ds; MorphStudio's PM re-checks P7b in a scratch copy itself. Cap $5. May be split (P21a/P21b), but
+every MorphV2 session ends with `~/.morph-wait-operator`, never `~/.morph-phase-done`: the flag files are shared with
+MorphStudio's session on this VPS and the cron watchdog is MorphStudio's. Never touch `/home/morph/MorphStudio` or its
+tmux session `MorphStudio` (read-only at most).
 
 **P20 is closed** (issue #11, label `P20-rerun`; `docs/TASK_P20_rerun.md`): run 20261008-221549 on ds, 6/6 on the first
 attempt, $0.0629, 16 min, no fix. (1) `morph plan … --only <id>,<id>,…` (Parse Command, NEW Select Cards in Component
