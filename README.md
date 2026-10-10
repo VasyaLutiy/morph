@@ -101,7 +101,7 @@ MorphV2 on another project: `docs/OTHER_PROJECT.md`.
 How a phase is prepared and run, under the old-Morph scheme.
 
 
-**Status.** Version 1, final. Built from the replays of P20, P21a and P21b under this scheme on 10.10
+**Status.** Version 1, final. Built from the replays of P20, P21a, P21b and P21c under this scheme on 10.10
 (`/tmp/oldscheme/`, measured against the original phases). Every rule below is a MUST. Where this
 section is silent, `docs/ORCHESTRATOR_REFERENCE.md` (the data and the exit codes) and the
 `morph-orchestrator` skill apply, in that order. Where they disagree with this section, this section wins.
@@ -120,6 +120,7 @@ replaces it with recon by tools, stubs, an auto gate and a live smoke. The repla
 | P20 | 15 / ~30 | 4.8 / 12.3 |
 | P21a | 9.5 / ~87 | 3.0 / 29.6 |
 | P21b | 26 / ~74 | 6.0 / 34 |
+| P21c | 27 / ~75 | 8.0 / n/a |
 
 A paid retry on ds costs cents. Do not add a check whose only gain is fewer retries.
 
