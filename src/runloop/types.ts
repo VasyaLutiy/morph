@@ -25,10 +25,12 @@ export interface RequestUsage {
   finishReason: string | null; error: string | null;
   batchId?: string;
 }
+export interface RoundRed { customId: string; blamed: string[]; log: string }
+export interface TransactionRound { round: number; reds: RoundRed[] }
 export interface RunReport {
   runId: string; completedAt: number; branch: string; processor: string;
   generations: number; outcomes: CardOutcome[]; usageTotals: UsageTotals;
-  requests?: RequestUsage[]; stop?: string; fault?: string;
+  requests?: RequestUsage[]; rounds?: TransactionRound[]; stop?: string; fault?: string;
 }
 export interface RunBudget { maxCards: number; maxRetryBatches: number; deadline: number }
 export interface RunDeps {

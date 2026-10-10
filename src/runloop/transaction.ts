@@ -1,6 +1,7 @@
 // src/runloop/transaction.ts — Run Transaction (TASK_P21c §2.2, Run Transaction;
 // Component runloop-subset; PATCHED by TASK_P24 — per-card retry cap, layered
-// retry batch, kept attempt on rollback).
+// retry batch, kept attempt on rollback; PATCHED by TASK_P24c — unattributed
+// stop and round logs).
 //
 // A deck Transaction Deck marks (a card acceptance starting with
 // TRANSACTION_MARK) is one subset transaction: Run Deck writes every card
@@ -12,8 +13,9 @@
 // is committed (deck order, with the customId of the attempt whose files are
 // on the tree) or every target is restored and nothing is committed. A red
 // line that names an existing file no card owns is outside the subset: a fault
-// naming the whole list of such lines, rolled back. The whole run is
-// all-or-nothing: a value thrown after the first commit leaves the committed
+// naming the whole list of such lines, rolled back. An unattributed red (a
+// test line no card's Blame can name) is a stop with no retry. The whole run
+// is all-or-nothing: a value thrown after the first commit leaves the committed
 // cards written and the rest skipped "fault"; before it, every target is
 // restored and every card is skipped "fault". The report is RETURNED.
 
@@ -24,7 +26,7 @@ import { processGeneration } from "./generation.js";
 import { buildRetry } from "./retry.js";
 import { blameLog } from "../cards/transaction.js";
 import { layerGenerations } from "../cards/layer.js";
-import { TREE_PROFILES } from "../language/treeProfiles.js";
+import { TREE_PROFILES, TEST_LINES } from "../language/treeProfiles.js";
 import { snapshotTargets, restoreSnapshot } from "../acceptance/snapshot.js";
 import { runAcceptance, DEFAULT_TIMEOUT_MS } from "../acceptance/run.js";
 import { buildAttemptDiff } from "../acceptance/diff.js";
@@ -40,6 +42,7 @@ import type {
   RunInput,
   RunReport,
   RunResult,
+  TransactionRound,
   UsageTotals
 } from "./types.js";
 
@@ -143,6 +146,7 @@ export async function runTransaction(
   const requestRows: RequestUsage[] = [];
   const committedInfo = new Map<string, CommitInfo | null>();
   const committedIds: string[] = [];
+  const rounds: TransactionRound[] = [];
   let generations = 0;
   let inputTokens = 0;
   let outputTokens = 0;
@@ -230,6 +234,9 @@ export async function runTransaction(
       usageTotals,
       requests: requestRows
     };
+    if (rounds.length > 0) {
+      report.rounds = rounds;
+    }
     if (stop !== null) {
       report.stop = stop;
     }
@@ -325,8 +332,9 @@ export async function runTransaction(
     });
 
     // --- Rounds: every card's own acceptance on the full tree
+    let round = 0;
     for (;;) {
-      const reds: { log: string; blame: Blame }[] = [];
+      const reds: { customId: string; log: string; blame: Blame }[] = [];
       for (const card of cards) {
         const state = states.get(card.customId);
         if (state === undefined) {
@@ -350,13 +358,23 @@ export async function runTransaction(
           card.customId,
           owners,
           TREE_PROFILES.map((profile) => profile.fileLine),
-          (p) => fs.existsSync(path.join(root, p))
+          (p) => fs.existsSync(path.join(root, p)),
+          TEST_LINES
         );
         state.lastBlamesSelf = blame.cards.includes(card.customId);
         state.lastOutside = blame.outside;
         state.redLogs.push(result.log);
-        reds.push({ log: result.log, blame });
+        reds.push({ customId: card.customId, log: result.log, blame });
       }
+
+      rounds.push({
+        round,
+        reds: reds.map((red) => ({
+          customId: red.customId,
+          blamed: red.blame.cards,
+          log: red.log
+        }))
+      });
 
       if (reds.length === 0) {
         // all green: commit every card in deck order, with the id of the
@@ -390,6 +408,23 @@ export async function runTransaction(
           outcomes.push(rollbackOutcome(card.customId, false));
         }
         return finish(outcomes, fault);
+      }
+
+      // P24c: an unattributed red (a test line no card's Blame could name)
+      // stops the transaction with no retry.
+      const unattributed: string[] = [];
+      for (const red of reds) {
+        if (red.blame.cards.length === 0) {
+          unattributed.push(red.customId);
+        }
+      }
+      if (unattributed.length > 0) {
+        stop = "unattributed red: " + unattributed.join(", ");
+        restoreSnapshot(before);
+        for (const card of cards) {
+          outcomes.push(rollbackOutcome(card.customId, false));
+        }
+        return finish(outcomes, null);
       }
 
       // blamed: every id a red Blame names, deck order
@@ -514,6 +549,8 @@ export async function runTransaction(
           }
         }
       }
+
+      round += 1;
     }
   } catch (value) {
     // a thrown value (an answer write, the interrupt, the commit hook)
