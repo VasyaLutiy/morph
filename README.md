@@ -164,7 +164,9 @@ A paid retry on ds costs cents. Do not add a check whose only gain is fewer retr
    with no answer).
 4. **A scout with no answer, or with `reads 0`:** run it once more with a narrow
    `--seed-file seed.json` (`{"files": [3–5 modules], "notes": [...]}`, outside the tree). Still
-   none: go on by address and say so in the report.
+   none: go on by address and say so in the report. An answer the scout rejected (it named a
+   new or missing file) still points: use its targets as a lead, and count them apart in the
+   report (P24b: a rejected answer named 4 of the 6 deck targets).
 5. **Roles of test files are yours.** Decide target or context from the primer's ownership
    table, not from the scout.
 6. **Read code by address only:** `grep -n` the symbol, then the lines around it. A file over
@@ -188,6 +190,10 @@ A paid retry on ds costs cents. Do not add a check whose only gain is fewer retr
    the record example and the skeleton in the spec. A path built by concatenation is not a literal
    (P21b replay: 1 retry).
 6. **Commit the data before cutting:** `plan`, `deck check` and `run` read the committed tree.
+7. **A Component ≤ 30 KB of record** (PLAN, "Запись не растёт историей"; measured as the raw bytes
+   of its group in `contour.yaml`). A phase that would take one over: the first data commit
+   compacts it — literals to fixtures by `ref`, behaviours reworded with every rule kept, no
+   example's meaning changed — or the new Functions go to a new Component.
 
 ### 4. The deck
 
@@ -256,6 +262,8 @@ morph run --root . --deck decks/<phase>/deck.json --processor <P> --deadline 240
      right after the run, as part of Verify, with the binary or code the run produced.
    - A red smoke counts as a red card (§9).
    - When the task names none, the report says so.
+   - A smoke may force a condition (a red-once step, a stub answer) only in its own copy of the
+     deck, never in the phase's deck; the report names what was forced.
    - The P21a replay passed its own run 4/4, and its smoke went red 0/8. A run without its smoke is not a result.
 
 ### 9. Failure: one fix, one re-run, then stop
@@ -263,7 +271,8 @@ morph run --root . --deck decks/<phase>/deck.json --processor <P> --deadline 240
 1. **Classify each red card** by its attempts' reasons, verbatim:
    - **data**: the spec, a record example, a probe or a lit is wrong;
    - **budget**: an answer cut at maxTokens with the data right: ×1.5;
-   - **environment**: the provider, the network or a timeout: a plain re-run;
+   - **environment**: the provider, the network or a timeout: a plain re-run. A fix of the smoke's
+     own harness (not the product) is environment too, and it is the one fix;
    - **code defect**: re-cut the code card.
 2. **One fix.** Commit it, re-cut the red cards and their dependants with
    `--checks … --only <ids>` into `decks/<phase>/deck-fix.json`, and run once more (`run-2`). The
