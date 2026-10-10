@@ -480,3 +480,88 @@ test("Run Tool example 6: the character cap of one READ", () => {
     p.rm();
   }
 });
+
+test("Run Tool example 7: a tree in three languages, no rule of one language", () => {
+  const p = tmpRoot("morph-tool-");
+  try {
+    p.write("t/app/core.py", "def load_config(path):\n return open(path).read()\n");
+    p.write("t/app/__init__.py", "");
+    p.write("t/cmd/main.go", "package main\n\nfunc main() { loadConfig() }\n");
+    p.write("t/lib/config.ts", "export function loadConfig(): void {}\n");
+    const tree: ScoutTree = {
+      root: p.path("t"),
+      files: ["app/core.py", "app/__init__.py", "cmd/main.go", "lib/config.ts"],
+    };
+
+    expect(
+      runTool({ kind: "list", path: "" }, tree, NODE_FS, DEFAULT_TOOL_CAPS),
+    ).toStrictEqual({
+      text: [
+        "LIST .: 3 entries",
+        "app/ (2 files)",
+        "cmd/ (1 file)",
+        "lib/ (1 file)",
+      ].join("\n"),
+      read: false,
+      error: null,
+    });
+
+    expect(
+      runTool({ kind: "list", path: "app" }, tree, NODE_FS, DEFAULT_TOOL_CAPS),
+    ).toStrictEqual({
+      text: [
+        "LIST app/: 2 entries",
+        "__init__.py (0 lines)",
+        "core.py (2 lines)",
+      ].join("\n"),
+      read: false,
+      error: null,
+    });
+
+    expect(
+      runTool({ kind: "list", path: "cmd" }, tree, NODE_FS, DEFAULT_TOOL_CAPS),
+    ).toStrictEqual({
+      text: ["LIST cmd/: 1 entry", "main.go (3 lines)"].join("\n"),
+      read: false,
+      error: null,
+    });
+
+    expect(
+      runTool(
+        { kind: "grep", pattern: "load_config|loadConfig", path: "" },
+        tree,
+        NODE_FS,
+        DEFAULT_TOOL_CAPS,
+      ),
+    ).toStrictEqual({
+      text: [
+        "GREP /load_config|loadConfig/ in the tree: 3 matches in 3 files",
+        "app/core.py:1: def load_config(path):",
+        "cmd/main.go:3: func main() { loadConfig() }",
+        "lib/config.ts:1: export function loadConfig(): void {}",
+      ].join("\n"),
+      read: false,
+      error: null,
+    });
+
+    expect(
+      runTool(
+        { kind: "read", path: "cmd/main.go", from: null, to: null },
+        tree,
+        NODE_FS,
+        DEFAULT_TOOL_CAPS,
+      ),
+    ).toStrictEqual({
+      text: [
+        "READ cmd/main.go lines 1-3 of 3",
+        "1: package main",
+        "2: ",
+        "3: func main() { loadConfig() }",
+      ].join("\n"),
+      read: true,
+      error: null,
+    });
+  } finally {
+    p.rm();
+  }
+});
