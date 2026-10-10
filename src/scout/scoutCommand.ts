@@ -291,6 +291,13 @@ export async function scoutCommand(
   const head = runGit(root, ["rev-parse", "--verify", "-q", "HEAD"], deps.env);
   const ref = head.code === 0 ? head.stdout.trim() : null;
 
+  const log = runGit(root, ["log", "-n", "10", "--format=%h %s"], deps.env);
+  const logText = log.stdout.trim();
+  const historyText =
+    log.code === 0 && logText !== ""
+      ? "Recent commits (newest first):\n" + logText
+      : "";
+
   const start = deps.now();
   const budgets: ScoutBudgets = {
     ...DEFAULT_BUDGETS,
@@ -303,7 +310,8 @@ export async function scoutCommand(
     seedText,
     budgets,
     caps: DEFAULT_TOOL_CAPS,
-    maxTokens: null
+    maxTokens: null,
+    historyText
   };
   const transport = deps.transport ?? realTransport(config.timeoutMs);
   const scoutDeps: ScoutDeps = { config, transport, now: deps.now };
