@@ -1,7 +1,7 @@
 # MorphV2 on another project (operator 10.10)
 
-The order of work is the skill `morph-v2-orchestrator` (`.claude/skills/morph-v2-orchestrator/`,
-reached from any project through `~/.claude/skills/morph-v2-orchestrator`); the phase's data and the
+The order of work is the skill `morph-v2-orchestrator` (`.claude/skills/morph-v2-orchestrator/` of this repo; delivering it into another project's session
+is MorphStudio's harness, until then the header names its path); the phase's data and the
 exit codes are `docs/ORCHESTRATOR_REFERENCE.md`. This file has the binary, the wrapper, what to change
 in an mrph project's data, and the task header. It was checked dry (no paid call) on a scratch clone
 of ETHSmartChecker (Python, an mrph project with 27 runs) on 10.10.
@@ -48,7 +48,7 @@ Found on ETHSmartChecker. The record and the map were otherwise read as they are
 
 The header gives the goal, the constraints and the processor; the order of work is the skill.
 ```
-/morph-v2-orchestrator
+Order of work: read /home/john/Documents/Work2026/MorphV2/.claude/skills/morph-v2-orchestrator/SKILL.md whole and follow it.
 
 Project: the current folder. Phase: <p>.
 Morph CLI: ~/bin/morphv2 (binary copy at MorphV2 <commit>). Processor: ds (maxTokens x3 after the cut) or glm.

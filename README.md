@@ -105,8 +105,9 @@ one phase in one fresh session — step 0 environment, recon, spec and data, the
 auto gate, the run, verify with the live smoke, salvage from the archive, the report. Its
 receipts are in `references/lessons.md` beside it. The phase data and the exit codes are in
 `docs/ORCHESTRATOR_REFERENCE.md`; another project's binary and wrapper in `docs/OTHER_PROJECT.md`.
-A project outside this repo reaches the skill through `~/.claude/skills/morph-v2-orchestrator`
-(a symlink to this folder). The old mrph cycle stays the skill `morph-orchestrator`.
+Delivering the skill to a project outside this repo is MorphStudio's job (its Go harness runs the
+agent sessions); until then the task header names the skill's path. The old mrph cycle stays the skill
+`morph-orchestrator`.
 
 **Scope.** Every phase prepared and run with the MorphV2 binary: other projects, and MorphV2
 itself (a sandbox clone `/tmp/oldscheme/<phase>`, a fresh agent per phase, merged into `main` by
