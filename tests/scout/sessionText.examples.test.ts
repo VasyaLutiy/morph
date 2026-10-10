@@ -111,3 +111,48 @@ test("Session Text example 3: roundZero finds the task's identifiers", () => {
     p.rm();
   }
 });
+
+test("Session Text example 4: round zero over Python, Go and TypeScript files", () => {
+  const p = tmpRoot();
+  try {
+    p.write("app/core.py", "def load_config(path):\n    return open(path).read()\n");
+    p.write("app/__init__.py", "");
+    p.write("cmd/main.go", "package main\n\nfunc main() { loadConfig() }\n");
+    p.write("lib/config.ts", "export function loadConfig(): void {}\n");
+
+    const tree = {
+      root: p.root,
+      files: ["app/core.py", "app/__init__.py", "cmd/main.go", "lib/config.ts"],
+    };
+    const NODE_FS: ScoutFs = {
+      realpath: (x: string): string => fs.realpathSync(x),
+      readFile: (x: string): string => fs.readFileSync(x, "utf8"),
+    };
+    const skip = [".morph", "decks"];
+    const question =
+      "Rename load_config in app/core.py and the Go twin loadConfig; keep `open(path)`.\n";
+
+    const expectedLines = [
+      ROUND0_HEADER,
+      "\"load_config\": 1 match in 1 file",
+      "app/core.py:1: def load_config(path):",
+      "\"app/core.py\": 0 matches in 0 files",
+      "\"loadConfig\": 2 matches in 2 files",
+      "cmd/main.go:3: func main() { loadConfig() }",
+      "lib/config.ts:1: export function loadConfig(): void {}",
+      "\"open(path)\": 1 match in 1 file",
+      "app/core.py:2:     return open(path).read()",
+    ];
+    const whole = expectedLines.join("\n");
+    expect(taskClues(question)).toStrictEqual([
+      "load_config",
+      "app/core.py",
+      "loadConfig",
+      "open(path)",
+    ]);
+    expect(roundZero(question, tree, NODE_FS, skip, 30000)).toBe(whole);
+    expect(whole.length).toBe(412);
+  } finally {
+    p.rm();
+  }
+});
