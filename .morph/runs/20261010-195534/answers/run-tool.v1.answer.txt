@@ -1,0 +1,336 @@
+```
+/**
+ * Run Tool — one READ, GREP or LIST over the listing through the cage and the
+ * injected file system, its text capped by ToolCaps. Pure of clock, network
+ * and environment: the file system is the ScoutFs parameter.
+ */
+
+import { posix } from "node:path";
+
+import { cagePath } from "./cagePath.js";
+import type { ScoutFs, ScoutTree } from "./cagePath.js";
+import type { ScoutAction } from "./parseTurn.js";
+
+export interface ToolCaps {
+  readLines: number;
+  readChars?: number;
+  grepHits: number;
+  grepLineChars: number;
+  listEntries: number;
+  grepSkip: string[];
+}
+
+export const DEFAULT_TOOL_CAPS: ToolCaps = {
+  readLines: 400,
+  readChars: 12000,
+  grepHits: 200,
+  grepLineChars: 300,
+  listEntries: 300,
+  grepSkip: [".morph", "decks"],
+};
+
+export interface ToolResult {
+  text: string;
+  read: boolean;
+  error: string | null;
+}
+
+interface Outcome {
+  text: string;
+  error: string | null;
+}
+
+function splitLines(body: string): string[] {
+  const parts = body
+    .split("\n")
+    .map((line) => (line.endsWith("\r") ? line.slice(0, -1) : line));
+  if (parts.length > 0 && parts[parts.length - 1] === "") {
+    parts.pop();
+  }
+  return parts;
+}
+
+function plural(n: number, one: string, many: string): string {
+  return n === 1 ? one : many;
+}
+
+function readTool(
+  path: string,
+  from: number | null,
+  to: number | null,
+  tree: ScoutTree,
+  fs: ScoutFs,
+  caps: ToolCaps,
+): Outcome {
+  const caged = cagePath(tree, path, "file", fs);
+  if (!caged.ok) return { text: caged.error, error: caged.error };
+  const c = caged.path;
+
+  let body: string;
+  try {
+    body = fs.readFile(posix.join(tree.root, c));
+  } catch {
+    const error = `unreadable: ${c}`;
+    return { text: error, error };
+  }
+
+  if (body.includes("\0")) {
+    const error = `binary file: ${c}`;
+    return { text: error, error };
+  }
+
+  const lines = splitLines(body);
+  const n = lines.length;
+  if (n === 0) {
+    return { text: `READ ${c}: empty file`, error: null };
+  }
+
+  const first = from ?? 1;
+  const wanted = to ?? n;
+  if (first > n) {
+    const error = `line range ${first}-${wanted} is past the end (${n} lines): ${c}`;
+    return { text: error, error };
+  }
+
+  const end = Math.min(wanted, n);
+  let last = Math.min(end, first + caps.readLines - 1);
+
+  const shown: string[] = [];
+  if (caps.readChars === undefined) {
+    for (let i = first; i <= last; i += 1) {
+      shown.push(`${i}: ${lines[i - 1]}`);
+    }
+  } else {
+    const cap = caps.readChars;
+    let used = 0;
+    let kept = 0;
+    let keptLast = first - 1;
+    for (let i = first; i <= last; i += 1) {
+      const raw = `${i}: ${lines[i - 1]}`;
+      if (kept === 0) {
+        shown.push(
+          raw.length > cap
+            ? raw.slice(0, cap) + `… (+${raw.length - cap} chars)`
+            : raw,
+        );
+        used = raw.length + 1;
+        kept = 1;
+        keptLast = i;
+        continue;
+      }
+      if (used + raw.length + 1 > cap) break;
+      shown.push(raw);
+      used += raw.length + 1;
+      kept += 1;
+      keptLast = i;
+    }
+    last = keptLast;
+  }
+
+  const out: string[] = [`READ ${c} lines ${first}-${last} of ${n}`];
+  for (const line of shown) out.push(line);
+  if (last < end) {
+    out.push(
+      `… ${end - last} more lines; READ ${c} ${last + 1}-${end} for the next`,
+    );
+  }
+  return { text: out.join("\n"), error: null };
+}
+
+function clip(line: string, grepLineChars: number): string {
+  if (line.length <= grepLineChars) return line;
+  return line.slice(0, grepLineChars) + `… (+${line.length - grepLineChars} chars)`;
+}
+
+function grepTool(
+  pattern: string,
+  path: string,
+  tree: ScoutTree,
+  fs: ScoutFs,
+  caps: ToolCaps,
+): Outcome {
+  let re: RegExp;
+  try {
+    re = new RegExp(pattern);
+  } catch {
+    const error = `invalid pattern /${pattern}/`;
+    return { text: error, error };
+  }
+
+  const caged = cagePath(tree, path, "dir", fs);
+  if (!caged.ok) return { text: caged.error, error: caged.error };
+  const c = caged.path;
+
+  const where = c === "" ? "the tree" : `${c}/`;
+  const namedFirst = c === "" ? "" : c.split("/")[0];
+  const skip =
+    c !== "" && caps.grepSkip.includes(namedFirst) ? [] : caps.grepSkip;
+
+  const prefix = c === "" ? "" : `${c}/`;
+  const sorted = [...tree.files].sort();
+
+  let matches = 0;
+  let shown = 0;
+  let refused = 0;
+  const hitFiles = new Set<string>();
+  const shownLines: string[] = [];
+
+  for (const file of sorted) {
+    if (c !== "" && !file.startsWith(prefix)) continue;
+    if (skip.includes(file.split("/")[0])) continue;
+
+    const fileCaged = cagePath(tree, file, "file", fs);
+    if (!fileCaged.ok) {
+      refused += 1;
+      continue;
+    }
+
+    let body: string;
+    try {
+      body = fs.readFile(posix.join(tree.root, fileCaged.path));
+    } catch {
+      refused += 1;
+      continue;
+    }
+    if (body.includes("\0")) continue;
+
+    const fileLines = splitLines(body);
+    for (let i = 0; i < fileLines.length; i += 1) {
+      const line = fileLines[i];
+      if (!re.test(line)) continue;
+      matches += 1;
+      hitFiles.add(file);
+      if (shown < caps.grepHits) {
+        shownLines.push(`${file}:${i + 1}: ${clip(line, caps.grepLineChars)}`);
+        shown += 1;
+      }
+    }
+  }
+
+  const header =
+    `GREP /${pattern}/ in ${where}: ${matches} ` +
+    `${plural(matches, "match", "matches")} in ${hitFiles.size} ` +
+    `${plural(hitFiles.size, "file", "files")}`;
+
+  const out: string[] = [header, ...shownLines];
+  if (matches > shown) {
+    out.push(`… ${matches - shown} more matches`);
+  }
+  if (refused > 0) {
+    out.push(
+      `(${refused} ${plural(refused, "file", "files")} refused by the cage)`,
+    );
+  }
+  return { text: out.join("\n"), error: null };
+}
+
+function listTool(
+  path: string,
+  tree: ScoutTree,
+  fs: ScoutFs,
+  caps: ToolCaps,
+): Outcome {
+  const caged = cagePath(tree, path, "dir", fs);
+  if (!caged.ok) return { text: caged.error, error: caged.error };
+  const c = caged.path;
+
+  const prefix = c === "" ? "" : `${c}/`;
+  const order: string[] = [];
+  const seen = new Set<string>();
+  const dirCounts = new Map<string, number>();
+
+  for (const file of tree.files) {
+    if (c !== "" && !file.startsWith(prefix)) continue;
+    const rest = c === "" ? file : file.slice(prefix.length);
+    const slash = rest.indexOf("/");
+    if (slash < 0) {
+      if (!seen.has(rest)) {
+        seen.add(rest);
+        order.push(rest);
+      }
+    } else {
+      const dir = rest.slice(0, slash + 1);
+      dirCounts.set(dir, (dirCounts.get(dir) ?? 0) + 1);
+      if (!seen.has(dir)) {
+        seen.add(dir);
+        order.push(dir);
+      }
+    }
+  }
+
+  order.sort();
+
+  const total = order.length;
+  const label = c === "" ? "." : `${c}/`;
+  const out: string[] = [
+    `LIST ${label}: ${total} ${plural(total, "entry", "entries")}`,
+  ];
+  const shown = Math.min(total, caps.listEntries);
+  for (let i = 0; i < shown; i += 1) {
+    const name = order[i];
+    const dirCount = dirCounts.get(name);
+    if (dirCount !== undefined) {
+      out.push(`${name} (${dirCount} ${plural(dirCount, "file", "files")})`);
+      continue;
+    }
+
+    const listed = c === "" ? name : `${c}/${name}`;
+    const fileCaged = cagePath(tree, listed, "file", fs);
+    if (!fileCaged.ok) {
+      out.push(name);
+      continue;
+    }
+
+    let body: string;
+    try {
+      body = fs.readFile(posix.join(tree.root, fileCaged.path));
+    } catch {
+      out.push(name);
+      continue;
+    }
+    if (body.includes("\0")) {
+      out.push(`${name} (binary)`);
+      continue;
+    }
+    const lineCount = splitLines(body).length;
+    out.push(
+      `${name} (${lineCount} ${plural(lineCount, "line", "lines")})`,
+    );
+  }
+  if (total > caps.listEntries) {
+    out.push(`… ${total - caps.listEntries} more entries`);
+  }
+  return { text: out.join("\n"), error: null };
+}
+
+export function runTool(
+  action: ScoutAction,
+  tree: ScoutTree,
+  fs: ScoutFs,
+  caps: ToolCaps,
+): ToolResult {
+  const read = action.kind === "read";
+
+  let verb: string;
+  let outcome: Outcome;
+  if (action.kind === "read") {
+    verb = "READ";
+    outcome = readTool(action.path, action.from, action.to, tree, fs, caps);
+  } else if (action.kind === "grep") {
+    verb = "GREP";
+    outcome = grepTool(action.pattern, action.path, tree, fs, caps);
+  } else {
+    verb = "LIST";
+    outcome = listTool(action.path, tree, fs, caps);
+  }
+
+  if (outcome.error !== null) {
+    return {
+      text: `${verb} failed: ${outcome.error}`,
+      read,
+      error: outcome.error,
+    };
+  }
+  return { text: outcome.text, read, error: null };
+}
+```

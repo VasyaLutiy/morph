@@ -1,0 +1,15 @@
+morph run: parse-turn.v1 accepted stage 0 finish stop chars 8159
+morph run: parse-turn.v2 untried stage 0 finish stop chars 7834
+morph run: run-tool.v1 accepted stage 0 finish stop chars 8514
+morph run: run-tool.v2 untried stage 0 finish stop chars 8465
+morph run: session-text.v1 accepted stage 0 finish stop chars 5140
+morph run: session-text.v2 untried stage 0 finish stop chars 5455
+morph run: parse-turn-judge.v1 accepted stage 0 finish stop chars 7823
+morph run: run-scout.v1 accepted stage 0 finish stop chars 17002
+morph run: run-scout.v2 untried stage 0 finish stop chars 16164
+morph run: run-tool-judge.v1 accepted stage 0 finish stop chars 11915
+morph run: session-text-judge.v1 accepted stage 0 finish stop chars 4264
+morph run: run-scout-judge.v1 accepted stage 0 finish stop chars 21041
+morph run: scout-command.v1 accepted stage 0 finish stop chars 10623
+morph run: scout-command.v2 untried stage 0 finish stop chars 10615
+morph run: scout-command-judge.v1 accepted stage 0 finish stop chars 13293
