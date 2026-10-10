@@ -1,6 +1,6 @@
 # MorphV2 on another project, old-Morph scheme (operator 10.10)
 
-The scheme is `docs/OLD_SCHEME.md`; the phase's data (checks.json, probes, _stubs, the transaction, exit codes)
+The scheme is the section Morph-Orchestrator of `README.md`; the phase's data (checks.json, probes, _stubs, the transaction, exit codes)
 is `docs/ORCHESTRATOR_REFERENCE.md` — read it instead of `src/` or `dist/`. This file has the commands, what to change in the
 project's data, and the header of the orchestrator's task. It was checked dry (no paid call)
 on a scratch clone of ETHSmartChecker (Python, an mrph project with 27 runs) on 10.10.
@@ -63,7 +63,7 @@ Found on ETHSmartChecker. The record and the map were otherwise read as they are
 ## 4. The skill
 Keep `morph-orchestrator` (the old order), with four changes, given in the task header:
 - every `<mrph>` command → the right column above;
-- Phase 3 (operator gate) → auto-approve by `docs/OLD_SCHEME.md` §6: plan exit 0, deck check 0
+- Phase 3 (operator gate) → auto-approve by `README.md` Morph-Orchestrator §6: plan exit 0, deck check 0
   errors, stubs red per example, forecast ≤ $5; nothing is waited for;
 - Phase 5 run → as above; a red card: one fix by class, one re-run; still red = stop;
 - Phase 6 stays: verification is not the orchestrator's (merge is yours).
@@ -74,11 +74,11 @@ The spec format (`documentation/TASK_TEMPLATE.md` of mrph) does not change: V2 d
 /morph-orchestrator
 
 Project: the current folder (Scenario B).
-Morph CLI: ~/bin/morphv2 (MorphV2, scheme /home/john/Documents/Work2026/MorphV2/docs/OLD_SCHEME.md;
+Morph CLI: ~/bin/morphv2 (MorphV2, scheme: /home/john/Documents/Work2026/MorphV2/README.md, section Morph-Orchestrator;
 command table: docs/OTHER_PROJECT.md §2 of that repo — use it in place of every mrph command of the skill;
 the phase's data and exit codes: docs/ORCHESTRATOR_REFERENCE.md of that repo — read it, not MorphV2's src/ or dist/).
 Processor: ds (deepseek flash; maxTokens x3 after the cut) or glm.
-Gate: auto-approve by OLD_SCHEME.md §6 — do not wait for me. After the run: verify, then stop; merge is mine.
+Gate: auto-approve by README.md Morph-Orchestrator §6 — do not wait for me. After the run: verify, then stop; merge is mine.
 
 First call is primer, before any code: ~/bin/morphv2 primer --root . --write, then read .morph/primer.md.
 Contour: contour.yaml by outline, the task's groups only.

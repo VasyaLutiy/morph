@@ -121,7 +121,7 @@ All commands print one JSON document on stdout. The exit codes are shared: 0 ok,
 | `morph primer --root . --write` | `.morph/primer.md` (ownership, runs) | 0 |
 | `morph scout --root . --issue <file> --processor <P> [--seed-file f] [--deadline s]` | `.morph/scout/<id>/scout.json` | 0 |
 
-## 7. One phase, end to end (old-Morph scheme, docs/OLD_SCHEME.md)
+## 7. One phase, end to end (old-Morph scheme, README.md Morph-Orchestrator)
 
 ```bash
 morph primer --root . --write                       # read .morph/primer.md
@@ -133,7 +133,7 @@ morph plan --root . --spec contour.yaml --map morph-map.json --component <C> --j
 python3 decks/tools/scale_tokens.py decks/<p>/deck.json 3   # processor ds
 morph deck check --root . --deck decks/<p>/deck.json        # errors 0 (builds checked: _stubs present)
 git add -A && git commit -m "<p> deck"
-# stubs: each acceptance once on its stubs in a scratch worktree — red per example (OLD_SCHEME §5)
+# stubs: each acceptance once on its stubs in a scratch worktree — red per example (README Morph-Orchestrator §5)
 # optional, the full gate: morph gate --root . --deck decks/<p>/deck.json --stubs decks/<p>/_stubs --refs /tmp/<p>/refs
 morph run --root . --deck decks/<p>/deck.json --processor ds --deadline 2400 > /tmp/<p>/run.json 2> /tmp/<p>/run.err
 ```
