@@ -324,7 +324,7 @@ test("Run Tool example 5: LIST the tree, the cap, a directory, a file and a leav
       text: [
         "LIST .: 7 entries",
         ".morph/ (1 file)",
-        "README.md",
+        "README.md (1 line)",
         "… 5 more entries",
       ].join("\n"),
       read: false,
@@ -337,7 +337,7 @@ test("Run Tool example 5: LIST the tree, the cap, a directory, a file and a leav
       text: [
         "LIST .: 7 entries",
         ".morph/ (1 file)",
-        "README.md",
+        "README.md (1 line)",
         "decks/ (1 file)",
         "dirlink",
         "out.txt",
@@ -353,10 +353,10 @@ test("Run Tool example 5: LIST the tree, the cap, a directory, a file and a leav
     ).toStrictEqual({
       text: [
         "LIST src/: 4 entries",
-        "a.ts",
-        "b.ts",
-        "bin.dat",
-        "e.ts",
+        "a.ts (5 lines)",
+        "b.ts (3 lines)",
+        "bin.dat (binary)",
+        "e.ts (0 lines)",
       ].join("\n"),
       read: false,
       error: null,
@@ -381,6 +381,100 @@ test("Run Tool example 5: LIST the tree, the cap, a directory, a file and a leav
       text: "LIST failed: path leaves the root: ../x",
       read: false,
       error: "path leaves the root: ../x",
+    });
+  } finally {
+    p.rm();
+  }
+});
+
+test("Run Tool example 6: the character cap of one READ", () => {
+  const p = tmpRoot("morph-tool-");
+  try {
+    p.write("t/w.txt", ("w".repeat(250) + "\n").repeat(200));
+    p.write("t/long.txt", "x".repeat(13000) + "\n");
+    const tree: ScoutTree = {
+      root: p.path("t"),
+      files: ["long.txt", "w.txt"],
+    };
+
+    const first = runTool(
+      { kind: "read", path: "w.txt", from: null, to: null },
+      tree,
+      NODE_FS,
+      DEFAULT_TOOL_CAPS,
+    );
+    const firstLines = Array.from(
+      { length: 47 },
+      (_, i) => `${i + 1}: ${"w".repeat(250)}`,
+    );
+    expect(first).toStrictEqual({
+      text: [
+        "READ w.txt lines 1-47 of 200",
+        ...firstLines,
+        "… 153 more lines; READ w.txt 48-200 for the next",
+      ].join("\n"),
+      read: true,
+      error: null,
+    });
+    expect(first.text.length).toBe(12053);
+
+    const second = runTool(
+      { kind: "read", path: "w.txt", from: 47, to: 200 },
+      tree,
+      NODE_FS,
+      DEFAULT_TOOL_CAPS,
+    );
+    const secondLines = Array.from(
+      { length: 47 },
+      (_, i) => `${47 + i}: ${"w".repeat(250)}`,
+    );
+    expect(second).toStrictEqual({
+      text: [
+        "READ w.txt lines 47-93 of 200",
+        ...secondLines,
+        "… 107 more lines; READ w.txt 94-200 for the next",
+      ].join("\n"),
+      read: true,
+      error: null,
+    });
+    expect(second.text.length).toBe(12063);
+
+    const third = runTool(
+      { kind: "read", path: "long.txt", from: null, to: null },
+      tree,
+      NODE_FS,
+      DEFAULT_TOOL_CAPS,
+    );
+    expect(third).toStrictEqual({
+      text:
+        "READ long.txt lines 1-1 of 1\n1: " +
+        "x".repeat(11997) +
+        "… (+1003 chars)",
+      read: true,
+      error: null,
+    });
+    expect(third.text.length).toBe(12044);
+
+    const fourth = runTool(
+      { kind: "read", path: "w.txt", from: null, to: null },
+      tree,
+      NODE_FS,
+      {
+        readLines: DEFAULT_TOOL_CAPS.readLines,
+        grepHits: DEFAULT_TOOL_CAPS.grepHits,
+        grepLineChars: DEFAULT_TOOL_CAPS.grepLineChars,
+        listEntries: DEFAULT_TOOL_CAPS.listEntries,
+        grepSkip: DEFAULT_TOOL_CAPS.grepSkip,
+      },
+    );
+    const allLines = Array.from(
+      { length: 200 },
+      (_, i) => `${i + 1}: ${"w".repeat(250)}`,
+    );
+    expect(fourth).toStrictEqual({
+      text: ["READ w.txt lines 1-200 of 200", ...allLines].join("\n"),
+      read: true,
+      error: null,
     });
   } finally {
     p.rm();
