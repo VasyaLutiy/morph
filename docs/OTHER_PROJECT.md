@@ -48,7 +48,8 @@ Found on ETHSmartChecker. The record and the map were otherwise read as they are
 
 The header gives the goal, the constraints and the processor; the order of work is the skill.
 ```
-Order of work: read /home/john/Documents/Work2026/MorphV2/.claude/skills/morph-v2-orchestrator/SKILL.md whole and follow it.
+Order of work: read <MorphV2>/.claude/skills/morph-v2-orchestrator/SKILL.md whole and follow it
+(<MorphV2> = /home/john/Documents/Work2026/MorphV2 on the laptop, /home/morph/MorphV2 on the VPS).
 
 Project: the current folder. Phase: <p>.
 Morph CLI: ~/bin/morphv2 (binary copy at MorphV2 <commit>). Processor: ds (maxTokens x3 after the cut) or glm.
