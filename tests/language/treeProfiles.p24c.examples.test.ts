@@ -1,0 +1,97 @@
+import { expect, test } from "vitest";
+import { TEST_LINES } from "../../src/language/treeProfiles.js";
+
+test("Tree Profiles example 3: TEST_LINES holds the three test profiles", () => {
+  expect(TEST_LINES).toStrictEqual([
+    {
+      id: "typescript",
+      failLine: "^\\s*FAIL\\s+(\\S+?\\.[cm]?[jt]sx?)(?:\\s|$)",
+      locationLine: "^\\s+\\u276f\\s+(?:\\S+\\s+)?(\\S+?\\.[cm]?[jt]sx?):\\d+:\\d+",
+      packageLine: null,
+    },
+    {
+      id: "python",
+      failLine: "^(?:FAILED|ERROR) (\\S+?\\.pyi?)(?:::|\\s|$)",
+      locationLine: null,
+      packageLine: null,
+    },
+    {
+      id: "go",
+      failLine: null,
+      locationLine: "^\\s+(\\S+?\\.go):\\d+",
+      packageLine: "^FAIL\\t(\\S+)",
+    },
+  ]);
+});
+
+test("Tree Profiles example 4: group 1 of each non-null TEST_LINES pattern", () => {
+  const lines = [
+    " FAIL tests/units/len.test.ts > one metre",
+    " ❯ tests/units/len.test.ts:4:21",
+    " ❯ toFeet src/units/len.ts:2:25",
+    "FAILED tests/test_calc.py::test_half - assert 2 == 4",
+    " daemon_examples_test.go:16: OnExit:",
+    "\t/tmp/morphlite/daemon/daemon_examples_test.go:22 +0x2",
+    "FAIL\tmorphlite/daemon\t0.004s",
+    "FAIL",
+    "--- FAIL: TestDaemonCoreExample2 (0.00s)",
+  ];
+
+  const group = (pattern: string | null, line: string): string | null => {
+    if (pattern === null) {
+      return null;
+    }
+    const match = new RegExp(pattern).exec(line);
+    return match === null ? null : match[1] ?? null;
+  };
+
+  expect(group(TEST_LINES[0].failLine, lines[0])).toBe("tests/units/len.test.ts");
+  expect(group(TEST_LINES[0].failLine, lines[1])).toBeNull();
+  expect(group(TEST_LINES[0].failLine, lines[2])).toBeNull();
+  expect(group(TEST_LINES[0].failLine, lines[3])).toBeNull();
+  expect(group(TEST_LINES[0].failLine, lines[4])).toBeNull();
+  expect(group(TEST_LINES[0].failLine, lines[5])).toBeNull();
+  expect(group(TEST_LINES[0].failLine, lines[6])).toBeNull();
+  expect(group(TEST_LINES[0].failLine, lines[7])).toBeNull();
+  expect(group(TEST_LINES[0].failLine, lines[8])).toBeNull();
+
+  expect(group(TEST_LINES[0].locationLine, lines[0])).toBeNull();
+  expect(group(TEST_LINES[0].locationLine, lines[1])).toBe("tests/units/len.test.ts");
+  expect(group(TEST_LINES[0].locationLine, lines[2])).toBe("src/units/len.ts");
+  expect(group(TEST_LINES[0].locationLine, lines[3])).toBeNull();
+  expect(group(TEST_LINES[0].locationLine, lines[4])).toBeNull();
+  expect(group(TEST_LINES[0].locationLine, lines[5])).toBeNull();
+  expect(group(TEST_LINES[0].locationLine, lines[6])).toBeNull();
+  expect(group(TEST_LINES[0].locationLine, lines[7])).toBeNull();
+  expect(group(TEST_LINES[0].locationLine, lines[8])).toBeNull();
+
+  expect(group(TEST_LINES[1].failLine, lines[0])).toBeNull();
+  expect(group(TEST_LINES[1].failLine, lines[1])).toBeNull();
+  expect(group(TEST_LINES[1].failLine, lines[2])).toBeNull();
+  expect(group(TEST_LINES[1].failLine, lines[3])).toBe("tests/test_calc.py");
+  expect(group(TEST_LINES[1].failLine, lines[4])).toBeNull();
+  expect(group(TEST_LINES[1].failLine, lines[5])).toBeNull();
+  expect(group(TEST_LINES[1].failLine, lines[6])).toBeNull();
+  expect(group(TEST_LINES[1].failLine, lines[7])).toBeNull();
+  expect(group(TEST_LINES[1].failLine, lines[8])).toBeNull();
+
+  expect(group(TEST_LINES[2].locationLine, lines[0])).toBeNull();
+  expect(group(TEST_LINES[2].locationLine, lines[1])).toBeNull();
+  expect(group(TEST_LINES[2].locationLine, lines[2])).toBeNull();
+  expect(group(TEST_LINES[2].locationLine, lines[3])).toBeNull();
+  expect(group(TEST_LINES[2].locationLine, lines[4])).toBe("daemon_examples_test.go");
+  expect(group(TEST_LINES[2].locationLine, lines[5])).toBe("/tmp/morphlite/daemon/daemon_examples_test.go");
+  expect(group(TEST_LINES[2].locationLine, lines[6])).toBeNull();
+  expect(group(TEST_LINES[2].locationLine, lines[7])).toBeNull();
+  expect(group(TEST_LINES[2].locationLine, lines[8])).toBeNull();
+
+  expect(group(TEST_LINES[2].packageLine, lines[0])).toBeNull();
+  expect(group(TEST_LINES[2].packageLine, lines[1])).toBeNull();
+  expect(group(TEST_LINES[2].packageLine, lines[2])).toBeNull();
+  expect(group(TEST_LINES[2].packageLine, lines[3])).toBeNull();
+  expect(group(TEST_LINES[2].packageLine, lines[4])).toBeNull();
+  expect(group(TEST_LINES[2].packageLine, lines[5])).toBeNull();
+  expect(group(TEST_LINES[2].packageLine, lines[6])).toBe("morphlite/daemon");
+  expect(group(TEST_LINES[2].packageLine, lines[7])).toBeNull();
+  expect(group(TEST_LINES[2].packageLine, lines[8])).toBeNull();
+});
