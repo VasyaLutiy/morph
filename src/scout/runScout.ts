@@ -24,24 +24,34 @@ import type {
   ScoutBudgets,
   ScoutSpent
 } from "./spendBudget.js";
+import {
+  ANSWER_SHAPE,
+  afterClose,
+  budgetLeft,
+  budgetSentence,
+  notRun,
+  roundZero
+} from "./sessionText.js";
 
 /** The system message of every session: the scout protocol, line by line. */
 export const PROTOCOL: string = [
-  "You are the scout of a code repository: you find the files a task must change by reading the repository with tools, one tool per turn, and you answer with those files.",
-  "Each of your turns holds exactly ONE line that starts with a verb in upper case; prose before that line is allowed:",
-  "READ <path> [<from>-<to>]  the file's lines, 1-based and inclusive; a long file comes in pieces and the reply names the next range",
-  "GREP <pattern> [-- <dir>]  a JavaScript regular expression tested on every line of the tree, or of the files under <dir>; a|b works",
-  "LIST [<dir>]  the entries of a directory of the tree; no <dir> is the root",
+  "You are the scout of a code repository: you find the files a task must change by reading the repository with tools, and you answer with those files.",
+  "Each turn holds ONE action line that starts with a verb in upper case; prose before it is allowed. Only the first action line of a turn runs (equal lines count once) and the reply names the lines not run:",
+  "READ <path> [<from>-<to>]  the file's lines, 1-based and inclusive; a long file comes in pieces and the reply names the next range; more pieces of a file you read cost no read",
+  "GREP <pattern> [-- <dir>]  a JavaScript regular expression written bare, without /…/ around it, tested on every line of the tree, or of the files under <dir>; a|b works",
+  "LIST [<dir>]  the entries of a directory of the tree, each file with its line count; no <dir> is the root",
   'ANSWER {"targets": [...], "context_slice": [...], "reasoning": "..."}  your final answer, the JSON object last',
   "targets: the files that must change; context_slice: the files whose definitions the change needs, read and not changed; reasoning: why, in a few sentences.",
   'Every path is relative to the repository root, with "/", and names a file of the tree as LIST shows it: no directories, globs or line ranges in the answer.',
-  "Your calls, reads, characters and rounds are counted; when a budget closes you get one last turn: send ANSWER in it."
+  "Your calls, reads, characters and rounds are counted: the numbers follow, and every reply ends with what is left."
 ].join("\n");
 
 /** The sentence appended to a malformed turn's reply. */
 export const REMINDER: string =
-  "One line per turn: READ <path> [<from>-<to>], GREP <pattern> [-- <dir>], " +
-  "LIST [<dir>] or ANSWER {json}.";
+  "One action line per turn: READ <path> [<from>-<to>], GREP <pattern> [-- <dir>] " +
+  "or LIST [<dir>]; to answer: ANSWER " +
+  ANSWER_SHAPE +
+  ".";
 
 /** What one session reads: the task, the tree, the seed and its budgets. */
 export interface ScoutSession {
@@ -52,6 +62,7 @@ export interface ScoutSession {
   budgets: ScoutBudgets;
   caps: ToolCaps;
   maxTokens: number | null;
+  historyText?: string;
 }
 
 /** What a session needs besides itself: the model, the transport, the clock. */
@@ -102,8 +113,9 @@ export type CheckedAnswer =
   | { ok: false; error: string };
 
 /**
- * Round 0: the protocol as the system message, and the seed (when there is
- * one), the tree's root listing and the task as the user message. Not charged.
+ * Round 0: the protocol and the budget as the system message, and the seed
+ * (when there is one), the tree's root listing, round zero and the recent
+ * commits (when there are any) and the task as the user message. Not charged.
  */
 export function openingMessages(session: ScoutSession): Message[] {
   const listing = runTool(
@@ -113,11 +125,32 @@ export function openingMessages(session: ScoutSession): Message[] {
     session.caps
   ).text;
   const seed = session.seedText === "" ? "" : session.seedText + "\n";
+  const zero = roundZero(
+    session.question,
+    session.tree,
+    session.fs,
+    session.caps.grepSkip,
+    Math.floor(session.budgets.chars / 4)
+  );
+  const zeroPart = zero === "" ? "" : zero + "\n\n";
+  const history = session.historyText;
+  const historyPart =
+    history === undefined || history === "" ? "" : history + "\n\n";
   return [
-    { role: "system", content: PROTOCOL },
+    {
+      role: "system",
+      content: PROTOCOL + "\n" + budgetSentence(session.budgets)
+    },
     {
       role: "user",
-      content: seed + listing + "\n\nTask:\n" + session.question
+      content:
+        seed +
+        listing +
+        "\n\n" +
+        zeroPart +
+        historyPart +
+        "Task:\n" +
+        session.question
     }
   ];
 }
@@ -184,25 +217,35 @@ export async function runScout(
     cost: null
   };
   const journal: JournalEntry[] = [];
+  const readFiles = new Set<string>();
 
   let closed: BudgetName | null = null;
   let why: string | null = null;
   let final = false;
   let corrected = false;
+  let finalCorrected = false;
 
   let status: ScoutStatus = "no_answer";
   let answer: ScoutAnswer | null = null;
   let stop = "";
 
-  // Step 7: the charged turn's text becomes the next user message; a close of
-  // deadline or rounds ends the session, a close of calls, reads or chars
-  // grants one final answer-only turn. Returns true when the session ends.
-  const advance = (charged: Charged): boolean => {
+  // The charged turn's text becomes the next user message (with the lines not
+  // run and the budget left); a close of deadline or rounds ends the session, a
+  // close of calls, reads or chars grants one final answer-only turn. Returns
+  // true when the session ends.
+  const advance = (
+    charged: Charged,
+    skipped: string[] | undefined
+  ): boolean => {
     if (charged.closed !== null) {
       closed = charged.closed;
       why = charged.why;
     }
     let body = charged.text;
+    if (skipped !== undefined && skipped.length > 0) {
+      body += "\n\n" + notRun(skipped);
+    }
+    body += "\n\n" + budgetLeft(session.budgets, charged.spent);
     if (charged.closed === "deadline" || charged.closed === "rounds") {
       messages.push({ role: "user", content: body });
       status = "no_answer";
@@ -214,7 +257,9 @@ export async function runScout(
       body +=
         "\n\nThe budget is closed: " +
         (charged.why ?? "") +
-        ". No more tools will run: send ANSWER now, the JSON object last.";
+        ". No more tools will run: send ANSWER " +
+        ANSWER_SHAPE +
+        " now, the JSON object last.";
     }
     messages.push({ role: "user", content: body });
     return false;
@@ -299,7 +344,57 @@ export async function runScout(
 
       const error = checked.error;
 
-      if (final || corrected) {
+      if (final) {
+        if (finalCorrected) {
+          const charged = spendTurn(
+            session.budgets,
+            spent,
+            { call: false, read: false, text: "" },
+            elapsed
+          );
+          spent = charged.spent;
+          journal.push({
+            round,
+            turn: "answer",
+            action: null,
+            chars: 0,
+            error,
+            inputTokens: used.inputTokens,
+            outputTokens: used.outputTokens,
+            cost: used.cost
+          });
+          status = "invalid_answer";
+          stop =
+            "no answer: the answer after the budget closed was rejected twice: " +
+            error;
+          break;
+        }
+        finalCorrected = true;
+        const charged = spendTurn(
+          session.budgets,
+          spent,
+          { call: false, read: false, text: "" },
+          elapsed
+        );
+        spent = charged.spent;
+        journal.push({
+          round,
+          turn: "answer",
+          action: null,
+          chars: 0,
+          error,
+          inputTokens: used.inputTokens,
+          outputTokens: used.outputTokens,
+          cost: used.cost
+        });
+        messages.push({
+          role: "user",
+          content: afterClose("ANSWER rejected: " + error)
+        });
+        continue;
+      }
+
+      if (corrected) {
         const charged = spendTurn(
           session.budgets,
           spent,
@@ -319,10 +414,7 @@ export async function runScout(
         });
         status = "invalid_answer";
         answer = null;
-        stop = final
-          ? "no answer: the answer after the budget closed was rejected: " +
-            error
-          : "no answer: the corrected answer was rejected: " + error;
+        stop = "no answer: the corrected answer was rejected: " + error;
         break;
       }
 
@@ -348,19 +440,19 @@ export async function runScout(
         outputTokens: used.outputTokens,
         cost: used.cost
       });
-      if (advance(charged)) break;
+      if (advance(charged, undefined)) break;
       continue;
     }
 
     if (final) {
-      const charged = spendTurn(
-        session.budgets,
-        spent,
-        { call: false, read: false, text: "" },
-        elapsed
-      );
-      spent = charged.spent;
       if (turn.kind === "action") {
+        const charged = spendTurn(
+          session.budgets,
+          spent,
+          { call: false, read: false, text: "" },
+          elapsed
+        );
+        spent = charged.spent;
         journal.push({
           round,
           turn: "action",
@@ -371,7 +463,21 @@ export async function runScout(
           outputTokens: used.outputTokens,
           cost: used.cost
         });
-      } else {
+        status = "no_answer";
+        stop =
+          "no answer: the model did not answer after the budget closed: " +
+          (why ?? "");
+        break;
+      }
+
+      if (finalCorrected) {
+        const charged = spendTurn(
+          session.budgets,
+          spent,
+          { call: false, read: false, text: "" },
+          elapsed
+        );
+        spent = charged.spent;
         journal.push({
           round,
           turn: "malformed",
@@ -382,12 +488,35 @@ export async function runScout(
           outputTokens: used.outputTokens,
           cost: used.cost
         });
+        status = "invalid_answer";
+        stop =
+          "no answer: the answer after the budget closed was rejected twice: " +
+          turn.reason;
+        break;
       }
-      status = "no_answer";
-      stop =
-        "no answer: the model did not answer after the budget closed: " +
-        (why ?? "");
-      break;
+      finalCorrected = true;
+      const charged = spendTurn(
+        session.budgets,
+        spent,
+        { call: false, read: false, text: "" },
+        elapsed
+      );
+      spent = charged.spent;
+      journal.push({
+        round,
+        turn: "malformed",
+        action: null,
+        chars: 0,
+        error: turn.reason,
+        inputTokens: used.inputTokens,
+        outputTokens: used.outputTokens,
+        cost: used.cost
+      });
+      messages.push({
+        role: "user",
+        content: afterClose("Turn not understood: " + turn.reason)
+      });
+      continue;
     }
 
     if (turn.kind === "action") {
@@ -397,10 +526,24 @@ export async function runScout(
         session.fs,
         session.caps
       );
+      let read = false;
+      if (turn.action.kind === "read") {
+        const caged = cagePath(
+          session.tree,
+          turn.action.path,
+          "file",
+          session.fs
+        );
+        const key = caged.ok ? caged.path : turn.action.path;
+        if (!readFiles.has(key)) {
+          readFiles.add(key);
+          read = true;
+        }
+      }
       const charged = spendTurn(
         session.budgets,
         spent,
-        { call: true, read: tool.read, text: tool.text },
+        { call: true, read, text: tool.text },
         elapsed
       );
       spent = charged.spent;
@@ -414,7 +557,7 @@ export async function runScout(
         outputTokens: used.outputTokens,
         cost: used.cost
       });
-      if (advance(charged)) break;
+      if (advance(charged, turn.skipped)) break;
       continue;
     }
 
@@ -436,7 +579,7 @@ export async function runScout(
       outputTokens: used.outputTokens,
       cost: used.cost
     });
-    if (advance(charged)) break;
+    if (advance(charged, undefined)) break;
   }
 
   return {
