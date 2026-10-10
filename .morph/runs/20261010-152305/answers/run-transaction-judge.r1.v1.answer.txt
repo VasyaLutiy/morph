@@ -1,0 +1,211 @@
+```ts
+import { expect, test } from "vitest";
+import { runTransaction } from "../../src/runloop/transaction.js";
+import { TRANSACTION_MARK } from "../../src/cards/transaction.js";
+import { fakeFetch, tmpRoot } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+import type { RunDeps, RunInput } from "../../src/runloop/types.js";
+
+const M = TRANSACTION_MARK + "\n";
+const fence = (body: string): string => "```ts\n" + body + "```\n";
+
+function card(
+  customId: string,
+  target: string,
+  acceptance: string,
+  dependsOn: string[] = [],
+  contextSlice: string[] = [],
+): Card {
+  return {
+    customId,
+    intent: "generate",
+    targets: [target],
+    contextSlice,
+    instruction: "write " + target,
+    acceptance,
+    model: null,
+    maxTokens: null,
+    reasoning: null,
+    variants: 1,
+    dependsOn,
+  };
+}
+
+const once = (mark: string, line: string): string =>
+  `[ -f ${mark} ] || { touch ${mark}; echo "${line}"; exit 1; }`;
+
+function makeDeps(root: string, commits: string[]): RunDeps {
+  return {
+    config: {
+      id: "stub",
+      type: "stub",
+      model: "stub",
+      apiKey: null,
+      baseUrl: "https://openrouter.ai/api/v1",
+      route: "sync",
+      concurrency: 4,
+      providerOrder: null,
+      reasoning: null,
+      timeoutMs: 600000,
+      maxRetries: 0,
+      answersDir: root,
+    },
+    transport: { fetch: fakeFetch().fetch, sleep: async () => {} },
+    commit: (id, targets) => {
+      commits.push(id);
+      return {
+        commit: "sha-" + id,
+        diffstat: { files: targets.length, insertions: 1, deletions: 0 },
+      };
+    },
+    now: () => 0,
+    env: { PATH: process.env.PATH ?? "" },
+  };
+}
+
+function makeInput(root: string, cards: Card[], maxRetryBatches = 2): RunInput {
+  return {
+    root,
+    runId: "t1",
+    branch: "morph/t1",
+    deck: { cards, externalDependsOn: [] },
+    budget: { maxCards: 99, maxRetryBatches, deadline: 1e12 },
+  };
+}
+
+test("Run Transaction example 12: a red test line blames the owner of the test file, not the card that printed it", async () => {
+  const r = tmpRoot("morph-tx-");
+  try {
+    r.write("a.md", fence('export const a = "A1";\n'));
+    r.write("c.md", fence('export const c = "C3";\n'));
+    r.write("j.md", fence('export const j = "J1";\n'));
+    r.write("j.r1.md", fence('export const j = "J2";\n'));
+    const T = " FAIL  out/j.test.ts > j";
+    const commits: string[] = [];
+    const cards: Card[] = [
+      card("a", "out/a.ts", M + "exit 0"),
+      card("c", "out/c.ts", M + once("c.once", T)),
+      card("j", "out/j.test.ts", M + once("j.once", T), ["a"]),
+    ];
+    const result = await runTransaction(
+      makeInput(r.root, cards),
+      makeDeps(r.root, commits),
+    );
+
+    const a = result.outcomes[0];
+    expect(a.status).toBe("written");
+    expect(a.reason).toBe(null);
+    expect(a.attempts).toBe(1);
+    expect(a.winningVariant).toBe("a.v1");
+    expect(a.lastRound).toBeUndefined();
+    expect(a.acceptanceLog).toBe("");
+    expect(a.earlierFailures).toStrictEqual([]);
+
+    const c = result.outcomes[1];
+    expect(c.status).toBe("written");
+    expect(c.reason).toBe(null);
+    expect(c.attempts).toBe(1);
+    expect(c.winningVariant).toBe("c.v1");
+    expect(c.lastRound).toBeUndefined();
+    expect(c.acceptanceLog).toBe("");
+    expect(c.earlierFailures).toStrictEqual([" FAIL  out/j.test.ts > j\n"]);
+
+    const j = result.outcomes[2];
+    expect(j.status).toBe("written");
+    expect(j.reason).toBe(null);
+    expect(j.attempts).toBe(2);
+    expect(j.winningVariant).toBe("j.r1.v1");
+    expect(j.lastRound).toBeUndefined();
+    expect(j.acceptanceLog).toBe("");
+    expect(j.earlierFailures).toStrictEqual([" FAIL  out/j.test.ts > j\n"]);
+
+    expect(result.report.requests?.map((row) => row.customId)).toStrictEqual([
+      "a.v1",
+      "c.v1",
+      "j.v1",
+      "j.r1.v1",
+    ]);
+    expect(commits).toStrictEqual(["a", "c", "j.r1"]);
+    expect(result.report.rounds).toStrictEqual([
+      {
+        round: 0,
+        reds: [
+          { customId: "c", blamed: ["j"], log: " FAIL  out/j.test.ts > j\n" },
+          { customId: "j", blamed: ["j"], log: " FAIL  out/j.test.ts > j\n" },
+        ],
+      },
+      { round: 1, reds: [] },
+    ]);
+    expect(result.report.stop).toBeUndefined();
+    expect(result.report.fault).toBeUndefined();
+  } finally {
+    r.rm();
+  }
+});
+
+test("Run Transaction example 13: an unattributed red stops the transaction with no retry", async () => {
+  const r = tmpRoot("morph-tx-");
+  try {
+    r.write("a.md", fence('export const a = "A1";\n'));
+    r.write("b.md", fence('export const b = "B2";\n'));
+    const commits: string[] = [];
+    const cards: Card[] = [
+      card("a", "out/a.ts", M + "exit 0"),
+      card(
+        "b",
+        "out/b.ts",
+        M + 'touch out/zz.test.ts; echo " FAIL  out/zz.test.ts > zz"; exit 1',
+      ),
+    ];
+    const result = await runTransaction(
+      makeInput(r.root, cards),
+      makeDeps(r.root, commits),
+    );
+
+    expect(result.report.stop).toBe("unattributed red: b");
+    expect(Object.keys(result.report).pop()).toBe("stop");
+    expect(Object.keys(result.report).slice(-2)).toStrictEqual(["rounds", "stop"]);
+    expect(result.report.fault).toBeUndefined();
+    expect(result.report.rounds).toStrictEqual([
+      {
+        round: 0,
+        reds: [
+          {
+            customId: "b",
+            blamed: [],
+            log: " FAIL  out/zz.test.ts > zz\n",
+          },
+        ],
+      },
+    ]);
+
+    const a = result.outcomes[0];
+    expect(a.status).toBe("failed");
+    expect(a.reason).toBe("transaction rolled back");
+    expect(a.attempts).toBe(1);
+    expect(a.winningVariant).toBe("a.v1");
+    expect(a.lastRound).toBe("green");
+    expect(a.acceptanceLog).toBe("");
+    expect(a.earlierFailures).toStrictEqual([]);
+
+    const b = result.outcomes[1];
+    expect(b.status).toBe("failed");
+    expect(b.reason).toBe("transaction rolled back");
+    expect(b.attempts).toBe(1);
+    expect(b.winningVariant).toBe("b.v1");
+    expect(b.lastRound).toBe("red");
+    expect(b.acceptanceLog).toBe(" FAIL  out/zz.test.ts > zz\n");
+    expect(b.earlierFailures).toStrictEqual([]);
+
+    expect(result.report.requests?.map((row) => row.customId)).toStrictEqual([
+      "a.v1",
+      "b.v1",
+    ]);
+    expect(commits).toStrictEqual([]);
+    expect(r.exists("out/a.ts")).toBe(false);
+    expect(r.exists("out/b.ts")).toBe(false);
+  } finally {
+    r.rm();
+  }
+});
+```
