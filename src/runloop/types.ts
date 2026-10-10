@@ -16,6 +16,7 @@ export interface CardOutcome {
   earlierFailures: string[];
   commit: string | null;
   diffstat: Diffstat | null;
+  lastRound?: "green" | "red";
 }
 export interface UsageTotals { inputTokens: number; outputTokens: number; cost: number | null; requests: number }
 export interface RequestUsage {
@@ -27,7 +28,7 @@ export interface RequestUsage {
 export interface RunReport {
   runId: string; completedAt: number; branch: string; processor: string;
   generations: number; outcomes: CardOutcome[]; usageTotals: UsageTotals;
-  requests?: RequestUsage[]; fault?: string;
+  requests?: RequestUsage[]; stop?: string; fault?: string;
 }
 export interface RunBudget { maxCards: number; maxRetryBatches: number; deadline: number }
 export interface RunDeps {

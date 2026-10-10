@@ -1,17 +1,17 @@
 // src/runloop/transaction.ts — Run Transaction (TASK_P21c §2.2, Run Transaction;
-// Component runloop-subset).
+// Component runloop-subset; PATCHED by TASK_P24 — per-card retry cap, layered
+// retry batch, kept attempt on rollback).
 //
 // A deck Transaction Deck marks (a card acceptance starting with
 // TRANSACTION_MARK) is one subset transaction: Run Deck writes every card
 // first (each card's acceptance replaced by "true", a null commit hook), then
 // every card's OWN acceptance runs on the full tree (so a card whose
 // acceptance names a later card's file sees it written), the owners of the red
-// lines are retried to a fixed point (up to 2 retries per card, capped by
-// input.budget.maxRetryBatches, each retry carrying the blame of the round and
-// its diff against the run's starting tree), and either every card is
-// committed (deck order, with the customId of the attempt whose files are on
-// the tree) or every target is restored and nothing is committed. A red line
-// that names an existing file no card owns is outside the subset: a fault
+// lines are retried to a fixed point (P24: the cap is per card, the retry
+// batch runs by layers of the deck's dependency graph), and either every card
+// is committed (deck order, with the customId of the attempt whose files are
+// on the tree) or every target is restored and nothing is committed. A red
+// line that names an existing file no card owns is outside the subset: a fault
 // naming the whole list of such lines, rolled back. The whole run is
 // all-or-nothing: a value thrown after the first commit leaves the committed
 // cards written and the rest skipped "fault"; before it, every target is
@@ -23,6 +23,7 @@ import { runDeck } from "./deck.js";
 import { processGeneration } from "./generation.js";
 import { buildRetry } from "./retry.js";
 import { blameLog } from "../cards/transaction.js";
+import { layerGenerations } from "../cards/layer.js";
 import { TREE_PROFILES } from "../language/treeProfiles.js";
 import { snapshotTargets, restoreSnapshot } from "../acceptance/snapshot.js";
 import { runAcceptance, DEFAULT_TIMEOUT_MS } from "../acceptance/run.js";
@@ -48,6 +49,7 @@ interface TxState {
   attempt: string;            // the customId of the attempt whose files are on the tree
   variant: string | null;     // its winning variant
   retries: number;            // W's retries plus the transaction's own
+  txRetries: number;          // only this transaction's retries (P24)
   wLog: string;               // W's acceptanceLog
   wFailures: string[];        // W's earlierFailures
   redLogs: string[];          // this run's red round logs, in order
@@ -55,6 +57,7 @@ interface TxState {
   lastRed: boolean;           // the last round was red
   lastBlamesSelf: boolean;    // the last round's Blame names the card itself
   lastOutside: string[];      // the last round's outside lines for this card
+  hadRound: boolean;          // at least one round ran for this card (P24)
 }
 
 function skippedFault(customId: string): CardOutcome {
@@ -145,6 +148,7 @@ export async function runTransaction(
   let outputTokens = 0;
   let cost: number | null = null;
   let fault: string | null = null;
+  let stop: string | null = null;
   const outcomes: CardOutcome[] = [];
 
   const addUsage = (usage: readonly Usage[]): void => {
@@ -192,17 +196,21 @@ export async function runTransaction(
     const earlier = state.lastRed
       ? state.redLogs.slice(0, state.redLogs.length - 1)
       : state.redLogs.slice();
-    return {
+    const result: CardOutcome = {
       customId,
       status: overBudget ? "budget-exceeded" : "failed",
       reason: overBudget ? "deadline" : reason,
       attempts: 1 + state.retries,
-      winningVariant: null,
+      winningVariant: state.variant,
       acceptanceLog: state.lastLog,
       earlierFailures: [...state.wFailures, ...earlier],
       commit: null,
       diffstat: null
     };
+    if (state.hadRound) {
+      result.lastRound = state.lastRed ? "red" : "green";
+    }
+    return result;
   };
 
   const finish = (list: CardOutcome[], f: string | null): RunResult => {
@@ -222,6 +230,9 @@ export async function runTransaction(
       usageTotals,
       requests: requestRows
     };
+    if (stop !== null) {
+      report.stop = stop;
+    }
     if (f !== null) {
       report.fault = f;
     }
@@ -274,13 +285,15 @@ export async function runTransaction(
           : card.customId,
         variant: isWritten ? outcome.winningVariant : null,
         retries: outcome.attempts > 1 ? outcome.attempts - 1 : 0,
+        txRetries: 0,
         wLog: outcome.acceptanceLog,
         wFailures: outcome.earlierFailures.slice(),
         redLogs: [],
         lastLog: outcome.acceptanceLog,
         lastRed: false,
         lastBlamesSelf: false,
-        lastOutside: []
+        lastOutside: [],
+        hadRound: false
       });
     }
 
@@ -300,8 +313,18 @@ export async function runTransaction(
       return finish(outcomes, wFault);
     }
 
+    // P24: the deck's layers, so a retry batch runs one processGeneration
+    // per generation of the graph and a dependant's retry compiles after
+    // its dependency's retry wrote
+    const layers = layerGenerations(input.deck);
+    const layerOf = new Map<string, number>();
+    layers.forEach((ids, i) => {
+      for (const id of ids) {
+        layerOf.set(id, i);
+      }
+    });
+
     // --- Rounds: every card's own acceptance on the full tree
-    let batches = 0;
     for (;;) {
       const reds: { log: string; blame: Blame }[] = [];
       for (const card of cards) {
@@ -309,6 +332,7 @@ export async function runTransaction(
         if (state === undefined) {
           continue;
         }
+        state.hadRound = true;
         const result = await runAcceptance(card.acceptance ?? "", root, {
           env: deps.env,
           timeoutMs: deps.acceptanceTimeoutMs ?? DEFAULT_TIMEOUT_MS
@@ -382,14 +406,23 @@ export async function runTransaction(
         }
       }
 
-      let stop = batches >= input.budget.maxRetryBatches;
+      // P24: per-card cap. A blamed card is capped when its retries (W's
+      // included) are 2 ("2 retries"), else when its retries of THIS
+      // transaction are >= maxRetryBatches ("maxRetryBatches <m>").
+      const cappedTexts: string[] = [];
       for (const id of blamed) {
         const state = states.get(id);
-        if (state !== undefined && state.retries >= 2) {
-          stop = true;
+        if (state === undefined) {
+          continue;
+        }
+        if (state.retries >= 2) {
+          cappedTexts.push(id + " (2 retries)");
+        } else if (state.txRetries >= input.budget.maxRetryBatches) {
+          cappedTexts.push(id + " (maxRetryBatches " + input.budget.maxRetryBatches + ")");
         }
       }
-      if (stop) {
+      if (cappedTexts.length > 0) {
+        stop = "retry cap: " + cappedTexts.join(", ");
         restoreSnapshot(before);
         for (const card of cards) {
           outcomes.push(rollbackOutcome(card.customId, false));
@@ -411,10 +444,10 @@ export async function runTransaction(
         return finish(outcomes, null);
       }
 
-      // --- one retry batch for every blamed card
-      batches += 1;
+      // --- one retry batch, by layers of the deck's dependency graph
       const retryCards: Card[] = [];
       const retryIds: string[] = [];
+      const retryLayers: number[] = [];
       for (const id of blamed) {
         const state = states.get(id);
         if (state === undefined) {
@@ -422,6 +455,7 @@ export async function runTransaction(
         }
         const n = state.retries + 1;
         state.retries = n;
+        state.txRetries += 1;
         const parts: string[] = [];
         for (const red of reds) {
           if (red.blame.cards.includes(id)) {
@@ -439,26 +473,45 @@ export async function runTransaction(
         );
         retryCards.push({ ...retryCard, acceptance: "true" });
         retryIds.push(id);
+        retryLayers.push(layerOf.get(id) ?? 0);
       }
 
-      const generation = await processGeneration(
-        retryCards,
-        { ...deps, commit: () => null },
-        root
-      );
-      addUsage(generation.usage);
-      for (const row of generation.requests) {
-        requestRows.push(row);
-      }
+      const byLayer = new Map<number, { cards: Card[]; ids: string[] }>();
       for (let i = 0; i < retryCards.length; i++) {
-        const state = states.get(retryIds[i]);
-        const outcome = generation.outcomes[i];
-        if (state === undefined || outcome === undefined) {
+        const l = retryLayers[i];
+        let group = byLayer.get(l);
+        if (group === undefined) {
+          group = { cards: [], ids: [] };
+          byLayer.set(l, group);
+        }
+        group.cards.push(retryCards[i]);
+        group.ids.push(retryIds[i]);
+      }
+      const layerKeys = Array.from(byLayer.keys()).sort((a, b) => a - b);
+      for (const l of layerKeys) {
+        const group = byLayer.get(l);
+        if (group === undefined || group.cards.length === 0) {
           continue;
         }
-        if (outcome.status === "written") {
-          state.attempt = retryCards[i].customId;
-          state.variant = outcome.winningVariant;
+        const generation = await processGeneration(
+          group.cards,
+          { ...deps, commit: () => null },
+          root
+        );
+        addUsage(generation.usage);
+        for (const row of generation.requests) {
+          requestRows.push(row);
+        }
+        for (let i = 0; i < group.cards.length; i++) {
+          const state = states.get(group.ids[i]);
+          const outcome = generation.outcomes[i];
+          if (state === undefined || outcome === undefined) {
+            continue;
+          }
+          if (outcome.status === "written") {
+            state.attempt = group.cards[i].customId;
+            state.variant = outcome.winningVariant;
+          }
         }
       }
     }
