@@ -110,8 +110,10 @@ the judge's new file.
 
 ## 7. Out of scope
 
-- **Issue #16 items 4–5 → the next phase (P24b):** `morph run` resuming a transaction from archived answers (Morph-Model
-  kept, no Morph-Debt), the explicit `--transaction` flag, and `deck check` naming an import between subset targets that
-  is no dependsOn edge.
+- **Issue #16 items 4–5 (operator 10.10, after this phase ran).** The next phase, P24b, is a group `morph accept --id
+  a,b,c`. It writes all the answers, runs their acceptances on that tree, and commits per card with the real model and
+  variant, never Morph-Debt. Its live acceptance is MorphStudio P7b's archived answers, 12/12. The group accept replaces
+  `morph run` resuming a transaction from archived answers. **Dropped, not deferred:** that resume, the explicit
+  `--transaction` flag, and `deck check` naming an import between subset targets that is no dependsOn edge.
 - Run Deck (unmarked decks) and its per-generation cap; best-of-N inside a transaction; a smarter blame; a stop key for the
   deadline (its outcomes' reason "deadline" names it).
