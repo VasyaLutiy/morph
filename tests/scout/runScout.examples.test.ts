@@ -6,6 +6,11 @@ import { PROTOCOL, REMINDER, runScout } from "../../src/scout/runScout.js";
 import type { ScoutSession } from "../../src/scout/runScout.js";
 import { DEFAULT_TOOL_CAPS, runTool } from "../../src/scout/runTool.js";
 import { DEFAULT_BUDGETS } from "../../src/scout/spendBudget.js";
+import {
+  ANSWER_SHAPE,
+  ROUND0_HEADER,
+  budgetSentence,
+} from "../../src/scout/sessionText.js";
 import { fakeClock, fakeFetch, fixture, tmpRoot } from "../helpers.js";
 import type { TmpRoot } from "../helpers.js";
 import { expect, test } from "vitest";
@@ -19,8 +24,8 @@ const clock = fakeClock(0);
 const NO_NET: Transport = { fetch: fakeFetch().fetch, sleep: clock.sleep };
 
 const QUESTION = "Make b twice a.\n";
-const LIST_ROOT = "LIST .: 2 entries\nREADME.md\nsrc/ (2 files)";
-const LIST_SRC = "LIST src/: 2 entries\na.ts\nb.ts";
+const LIST_ROOT = "LIST .: 2 entries\nREADME.md (1 line)\nsrc/ (2 files)";
+const LIST_SRC = "LIST src/: 2 entries\na.ts (1 line)\nb.ts (2 lines)";
 const READ_A = "READ src/a.ts lines 1-1 of 1\n1: export const a = 1;";
 const READ_B =
   "READ src/b.ts lines 1-2 of 2\n1: import { a } from \"./a.js\";\n2: export const b = a + 1;";
@@ -81,7 +86,7 @@ test("Run Scout example 1: a listing, a read and a caged answer", async () => {
         reasoning: "b uses a",
       },
       stopReason: "the model answered on its own",
-      spent: { calls: 2, reads: 1, chars: 116, rounds: 3 },
+      spent: { calls: 2, reads: 1, chars: 135, rounds: 3 },
       elapsedMs: 0,
       usage: { requests: 3, inputTokens: 0, outputTokens: 0, cost: 0 },
       journal: [
@@ -89,7 +94,7 @@ test("Run Scout example 1: a listing, a read and a caged answer", async () => {
           round: 1,
           turn: "action",
           action: { kind: "list", path: "src" },
-          chars: 30,
+          chars: 49,
           error: null,
           inputTokens: 0,
           outputTokens: 0,
@@ -117,15 +122,28 @@ test("Run Scout example 1: a listing, a read and a caged answer", async () => {
         },
       ],
       messages: [
-        { role: "system", content: PROTOCOL },
+        {
+          role: "system",
+          content: PROTOCOL + "\n" + budgetSentence(DEFAULT_BUDGETS),
+        },
         {
           role: "user",
           content: "Seed: one\n\n" + LIST_ROOT + "\n\nTask:\n" + QUESTION,
         },
         { role: "assistant", content: "LIST src" },
-        { role: "user", content: LIST_SRC },
+        {
+          role: "user",
+          content:
+            LIST_SRC +
+            "\n\nBudget left: 29 calls, 12 file reads, 119951 chars, 39 rounds.",
+        },
         { role: "assistant", content: "Reading b.\nREAD src/b.ts" },
-        { role: "user", content: READ_B },
+        {
+          role: "user",
+          content:
+            READ_B +
+            "\n\nBudget left: 28 calls, 11 file reads, 119865 chars, 38 rounds.",
+        },
         {
           role: "assistant",
           content:
@@ -252,7 +270,9 @@ test("Run Scout example 3: the call budget closes and one last answer comes", as
       deadlineMs: 600000,
     };
     const close =
-      "\n\nThe budget is closed: the call budget is spent (2 of 2 calls). No more tools will run: send ANSWER now, the JSON object last.";
+      "\n\nThe budget is closed: the call budget is spent (2 of 2 calls). No more tools will run: send ANSWER " +
+      ANSWER_SHAPE +
+      " now, the JSON object last.";
     const answers = ["GREP export const a -- src", "READ src/a.ts", ANSWER_A];
     const outcome = await runScout(session(tree, { budgets }), {
       config: stub(p, "ans", answers),
@@ -275,8 +295,14 @@ test("Run Scout example 3: the call budget closes and one last answer comes", as
       chars: GREP_A.length + READ_A.length,
       rounds: 3,
     });
-    expect(outcome.messages[3].content).toBe(GREP_A);
-    expect(outcome.messages[5].content).toBe(READ_A + close);
+    expect(outcome.messages[3].content).toBe(
+      GREP_A + "\n\nBudget left: 1 calls, 5 file reads, 99920 chars, 9 rounds.",
+    );
+    expect(outcome.messages[5].content).toBe(
+      READ_A +
+        "\n\nBudget left: 0 calls, 4 file reads, 99869 chars, 8 rounds." +
+        close,
+    );
 
     const second = await runScout(session(tree, { budgets }), {
       config: stub(p, "ans2", ["GREP export const a -- src", "READ src/a.ts", "LIST"]),
@@ -327,7 +353,12 @@ test("Run Scout example 4: the round budget and the deadline end a session", asy
     );
     expect(outcome.usage.requests).toBe(2);
     expect(outcome.messages.length).toBe(6);
-    expect(outcome.messages[5]).toStrictEqual({ role: "user", content: LIST_SRC });
+    expect(outcome.messages[5]).toStrictEqual({
+      role: "user",
+      content:
+        LIST_SRC +
+        "\n\nBudget left: 28 calls, 12 file reads, 119900 chars, 0 rounds.",
+    });
     expect(outcome.spent).toStrictEqual({
       calls: 2,
       reads: 0,
@@ -438,10 +469,13 @@ test("Run Scout example 5: a failed model call and an openrouter session", async
     const body = JSON.parse(net.calls[2].body ?? "{}") as {
       model?: unknown;
       max_tokens?: unknown;
+      messages?: unknown[];
     };
     expect(body.model).toBe("m/x");
     expect(body.max_tokens).toBe(777);
+    expect(body.messages?.length).toBe(6);
     expect(outcome.messages.length).toBe(7);
+    expect(outcome.spent.reads).toBe(1);
     expect(outcome.journal.map((entry) => entry.cost)).toStrictEqual([
       0.25, 0.25, 0.25,
     ]);
@@ -455,6 +489,188 @@ test("Run Scout example 5: a failed model call and an openrouter session", async
       outputTokens: 50,
       cost: 0.25,
     });
+  } finally {
+    p.rm();
+  }
+});
+
+test("Run Scout example 6: the final turn reads a bare answer and grants one correction", async () => {
+  const p = tmpRoot();
+  try {
+    const tree = writeTree(p);
+    const budgets = {
+      calls: 1,
+      reads: 5,
+      chars: 100000,
+      rounds: 10,
+      deadlineMs: 600000,
+    };
+
+    const a = await runScout(session(tree, { budgets }), {
+      config: stub(p, "ans6a", [
+        "LIST src",
+        "{\"targets\": [\"src/b.ts\"], \"context_slice\": [\"src/a.ts\"], \"reasoning\": \"b\"}",
+      ]),
+      transport: NO_NET,
+      now: () => 5,
+    });
+    expect(a.status).toBe("ok");
+    expect(a.answer).toStrictEqual({
+      targets: ["src/b.ts"],
+      context_slice: ["src/a.ts"],
+      reasoning: "b",
+    });
+    expect(a.stopReason).toBe(
+      "the model answered after the budget closed: the call budget is spent (1 of 1 calls)",
+    );
+    expect(a.spent).toStrictEqual({ calls: 1, reads: 0, chars: 49, rounds: 2 });
+
+    const b = await runScout(session(tree, { budgets }), {
+      config: stub(p, "ans6b", [
+        "LIST src",
+        "ANSWER {\"targets\": [\"src/b.ts\"], \"reasoning\": \"the \"b\" file\"}",
+        "ANSWER {\"targets\": [\"src/b.ts\"]}",
+      ]),
+      transport: NO_NET,
+      now: () => 5,
+    });
+    expect(b.status).toBe("ok");
+    expect(b.answer).toStrictEqual({
+      targets: ["src/b.ts"],
+      context_slice: [],
+      reasoning: "",
+    });
+    expect(b.stopReason).toBe(
+      "the model answered after the budget closed: the call budget is spent (1 of 1 calls)",
+    );
+    expect(b.journal.map((entry) => entry.turn)).toStrictEqual([
+      "action",
+      "malformed",
+      "answer",
+    ]);
+    expect(b.journal[1].error).toBe("ANSWER: the JSON does not parse");
+    expect(b.journal[1].chars).toBe(0);
+    expect(b.spent).toStrictEqual({ calls: 1, reads: 0, chars: 49, rounds: 3 });
+    expect(b.messages[5].content).toBe(
+      "Turn not understood: ANSWER: the JSON does not parse. No more tools will run: send ANSWER " +
+        ANSWER_SHAPE +
+        " now, every path a file of the tree, the JSON object last.",
+    );
+
+    const c = await runScout(session(tree, { budgets }), {
+      config: stub(p, "ans6c", [
+        "LIST src",
+        "ANSWER {\"targets\": [\"src/c.ts\"]}",
+        "ANSWER {\"targets\": [\"src\"]}",
+      ]),
+      transport: NO_NET,
+      now: () => 5,
+    });
+    expect(c.status).toBe("invalid_answer");
+    expect(c.answer).toBe(null);
+    expect(c.stopReason).toBe(
+      "no answer: the answer after the budget closed was rejected twice: targets: not in the tree (missing, ignored or a directory): src",
+    );
+    expect(c.journal.map((entry) => entry.turn)).toStrictEqual([
+      "action",
+      "answer",
+      "answer",
+    ]);
+    expect(c.journal[1].error).toBe(
+      "targets: not in the tree (missing, ignored or a directory): src/c.ts",
+    );
+    expect(c.journal[2].error).toBe(
+      "targets: not in the tree (missing, ignored or a directory): src",
+    );
+    expect(c.spent).toStrictEqual({ calls: 1, reads: 0, chars: 49, rounds: 3 });
+  } finally {
+    p.rm();
+  }
+});
+
+test("Run Scout example 7: repeated lines, a line not run, the budget left, a file read once", async () => {
+  const p = tmpRoot();
+  try {
+    const tree = writeTree(p);
+    const outcome = await runScout(session(tree), {
+      config: stub(p, "ans", [
+        "GREP export const a -- src\nGREP export const a -- src",
+        "READ src/a.ts\nLIST\nLIST",
+        "READ src/a.ts 1-1",
+        "ANSWER {\"targets\": [\"src/a.ts\"]}",
+      ]),
+      transport: NO_NET,
+      now: () => 5,
+    });
+
+    expect(outcome.status).toBe("ok");
+    expect(outcome.answer).toStrictEqual({
+      targets: ["src/a.ts"],
+      context_slice: [],
+      reasoning: "",
+    });
+    expect(outcome.stopReason).toBe("the model answered on its own");
+    expect(outcome.spent).toStrictEqual({
+      calls: 3,
+      reads: 1,
+      chars: 182,
+      rounds: 4,
+    });
+    expect(outcome.journal.map((entry) => entry.turn)).toStrictEqual([
+      "action",
+      "action",
+      "action",
+      "answer",
+    ]);
+    expect(outcome.journal.map((entry) => entry.chars)).toStrictEqual([
+      80, 51, 51, 0,
+    ]);
+    expect(outcome.messages[3].content).toBe(
+      GREP_A +
+        "\n\nBudget left: 29 calls, 12 file reads, 119920 chars, 39 rounds.",
+    );
+    expect(outcome.messages[5].content).toBe(
+      READ_A +
+        "\n\nNot run: LIST. One action line per turn; equal lines count once.\n\nBudget left: 28 calls, 11 file reads, 119869 chars, 38 rounds.",
+    );
+    expect(outcome.messages[7].content).toBe(
+      READ_A +
+        "\n\nBudget left: 27 calls, 11 file reads, 119818 chars, 37 rounds.",
+    );
+  } finally {
+    p.rm();
+  }
+});
+
+test("Run Scout example 8: round zero and the recent commits in the first message", async () => {
+  const p = tmpRoot();
+  try {
+    const tree = writeTree(p);
+    const outcome = await runScout(
+      session(tree, {
+        question: "Double `export const a` in src/a.ts.\n",
+        seedText: "",
+        historyText: "Recent commits (newest first):\nabc1234 files",
+      }),
+      {
+        config: stub(p, "ans", ['ANSWER {"targets": ["src/a.ts"]}']),
+        transport: NO_NET,
+        now: () => 5,
+      },
+    );
+
+    expect(outcome.status).toBe("ok");
+    expect(outcome.spent).toStrictEqual({
+      calls: 0,
+      reads: 0,
+      chars: 0,
+      rounds: 1,
+    });
+    expect(outcome.messages[1].content).toBe(
+      "LIST .: 2 entries\nREADME.md (1 line)\nsrc/ (2 files)\n\n" +
+        ROUND0_HEADER +
+        "\n\"export const a\": 1 match in 1 file\nsrc/a.ts:1: export const a = 1;\n\"src/a.ts\": 0 matches in 0 files\n\nRecent commits (newest first):\nabc1234 files\n\nTask:\nDouble `export const a` in src/a.ts.\n",
+    );
   } finally {
     p.rm();
   }
