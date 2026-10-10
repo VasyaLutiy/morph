@@ -1,0 +1,80 @@
+{
+  "runId": "20261010-122203",
+  "completedAt": 1791635352303,
+  "branch": "morph/20261010-122203",
+  "processor": "ds",
+  "generations": 2,
+  "outcomes": [
+    {
+      "customId": "run-transaction",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-transaction.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "918259679c502d1f418f986910912c167924acb5",
+      "diffstat": {
+        "files": 2,
+        "insertions": 87,
+        "deletions": 33
+      }
+    },
+    {
+      "customId": "run-transaction-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-transaction-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/runloop/transaction.p24.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "5a1799fd5cd4cf2964a273ccaae5b120733b5f22",
+      "diffstat": {
+        "files": 1,
+        "insertions": 422,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 56557,
+    "outputTokens": 64330,
+    "cost": 0.0941631,
+    "requests": 3
+  },
+  "requests": [
+    {
+      "customId": "run-transaction.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791634925-X8wMFajUq8fXfiUv2dmD",
+      "inputTokens": 20800,
+      "outputTokens": 17749,
+      "cost": 0.0275388,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-transaction.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791634925-gZITqNiIPpnmZNUnSS1C",
+      "inputTokens": 20800,
+      "outputTokens": 24239,
+      "cost": 0.0353268,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-transaction-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791635145-MRsBeM2Y9mB6mquF25Di",
+      "inputTokens": 14957,
+      "outputTokens": 22342,
+      "cost": 0.0312975,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}
