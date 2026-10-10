@@ -3635,35 +3635,45 @@ System:
       requirements: [Deterministic Core]
       functions:
         - name: Parse Turn
-          description: One model turn of the scout protocol read as one action, one final answer or a malformed turn with its reason.
+          description: One model turn of the scout protocol read as one action (the lines not run named), one final answer (with or without the verb) or a malformed turn with its reason.
           behavior: >
             parseTurn(text: string | null) → Turn. VERBS = ["READ", "GREP", "LIST", "ANSWER"]. 1. null, or a text whose
             trim is "" → malformed "empty turn". 2. lines = text split on "\n", one trailing "\r" removed from each; an
             action line is a line whose trimStart matches /^(READ|GREP|LIST|ANSWER)(?=\s|$)/ (upper case only; prose and
-            fence lines around it are ignored). None → malformed "no action: one line must start with READ, GREP, LIST
-            or ANSWER"; more than one → malformed "<n> actions in one turn (<their verbs in order, ", "-joined>): send
-            one per turn". 3. args = the action line trimmed, without its verb, trimmed. READ: args "" → "READ needs a
-            path"; args matching /^(.*\S)\s+(\d+)-(\d+)$/ → path = group 1, from and to = Number of groups 2 and 3, from
-            < 1 or to < from → "READ: bad line range <from>-<to>"; else path = args, from and to null. GREP: split args
-            at its LAST " -- ": pattern = the part before, trimmed, path = the part after, trimmed; without " -- " the
-            pattern is args and the path "". pattern "" → "GREP needs a pattern"; new RegExp(pattern) throws → "GREP:
-            invalid pattern /<pattern>/". LIST: path = args ("" is the root). 4. ANSWER: rest = the action line (trimStart)
-            after its verb, then every following line, "\n"-joined; the JSON is rest from its first "{" to its last "}"
-            (no "{", or the last "}" before it → "ANSWER: no JSON object"); JSON.parse throws → "ANSWER: the JSON does
-            not parse"; targets must be an array of non-empty strings with at least one ("ANSWER: targets must be a
-            non-empty list of paths"); context_slice absent → [], else an array of non-empty strings ("ANSWER:
-            context_slice must be a list of paths"); reasoning absent → "", else a string ("ANSWER: reasoning must be a
-            string"); the answer carries only targets, context_slice, reasoning, in that order, the lists as given.
-            Results: {kind "action", action: {kind "read", path, from, to} | {kind "grep", pattern, path} | {kind
-            "list", path}}, {kind "answer", answer}, {kind "malformed", reason}; keys in these orders.
+            fence lines around it are ignored). 3. Some action line is an ANSWER line → the answer of the first one (step
+            6); the other action lines are ignored. 4. No action line: the whole text read as step 6 reads rest gives a
+            JSON object with the key "targets" → that answer, checked as in step 6 (a bare or fenced JSON answer); else
+            malformed "no action: one line must start with READ, GREP, LIST or ANSWER". 5. Else the action lines, each
+            trimmed, repeats dropped (the first of equal lines kept, in order): the first is the action, read below (a
+            malformed first line → that malformed turn); the others are skipped: {kind "action", action, skipped: their
+            lines} when there are any, no key skipped when there are none. args = the action line trimmed, without its
+            verb, trimmed. READ: args "" → "READ needs a path"; args matching /^(.*\S)\s+(\d+)-(\d+)$/ → path = group 1,
+            from and to = Number of groups 2 and 3, from < 1 or to < from → "READ: bad line range <from>-<to>"; else path
+            = args, from and to null. GREP: split args at its LAST " -- ": pattern = the part before, trimmed, path = the
+            part after, trimmed; without " -- " the pattern is args and the path "". A pattern matching
+            /^\/(.+)\/[a-z]*$/ becomes its group 1 (a /…/ literal's slashes and flags dropped). pattern "" → "GREP needs a
+            pattern"; new RegExp(pattern) throws → "GREP: invalid pattern /<pattern>/". LIST: path = args ("" is the
+            root). 6. ANSWER: rest = the ANSWER line (trimStart) after its verb, then every following line, "\n"-joined.
+            From rest's first "{": the text up to the "}" that closes it, braces counted outside JSON strings (a string
+            runs from a '"' to the next '"' not escaped by "\"); when none closes it or that text does not parse, the text
+            up to rest's last "}". No "{", or no "}" after it → "ANSWER: no JSON object"; neither text parses → "ANSWER:
+            the JSON does not parse"; not an object, or targets not an array of non-empty strings with at least one →
+            "ANSWER: targets must be a non-empty list of paths"; context_slice absent → [], else an array of non-empty
+            strings ("ANSWER: context_slice must be a list of paths"); reasoning absent → "", else a string ("ANSWER:
+            reasoning must be a string"); the answer carries only targets, context_slice, reasoning, in that order, the
+            lists as given. Results: {kind "action", action: {kind "read", path, from, to} | {kind "grep", pattern, path}
+            | {kind "list", path}, skipped?}, {kind "answer", answer}, {kind "malformed", reason}; keys in these orders.
           steps: [{reads: Model Turn}, {produces: Turn}]
           examples:
             - {given: '"I will check the cage first.\nREAD src/scout/cagePath.ts"; "READ lib/b one.ts 12-40"; "  READ src/a.ts 7-7\r\n"', when: parseTurn, then: 'actions read {path "src/scout/cagePath.ts", from null, to null}; {path "lib/b one.ts", from 12, to 40}; {path "src/a.ts", from 7, to 7}'}
             - {given: '"GREP readOwnership|readMorphLog -- src/git"; "GREP a -- b -- tests"; "GREP export function"', when: parseTurn, then: 'actions grep {pattern "readOwnership|readMorphLog", path "src/git"}; {pattern "a -- b", path "tests"}; {pattern "export function", path ""}'}
             - {given: '"LIST"; "```\nLIST tests/fixtures\n```"', when: parseTurn, then: 'actions list {path ""}; {path "tests/fixtures"}'}
             - {given: '"Done.\nANSWER\n```json\n{\"targets\": [\"src/x.ts\"], \"reasoning\": \"GREP found it\", \"acceptance\": \"npm test\"}\n```"; then "ANSWER {\"context_slice\": [\"c.ts\"], \"reasoning\": \"r\", \"targets\": [\"a.ts\", \"b.ts\"]}"', when: parseTurn, then: 'answer {targets ["src/x.ts"], context_slice [], reasoning "GREP found it"} (acceptance dropped); answer {targets ["a.ts", "b.ts"], context_slice ["c.ts"], reasoning "r"}, JSON.stringify of the turn exactly {"kind":"answer","answer":{"targets":["a.ts","b.ts"],"context_slice":["c.ts"],"reasoning":"r"}}'}
-            - {given: 'null; " \n\t"; "The change is in src/a.ts"; "Read src/a.ts"; "READX a"; "READ src/a.ts\nGREP x"; "READ"; "READ a.ts 9-3"; "READ a.ts 0-3"; "GREP ( -- src"; "GREP"', when: parseTurn, then: 'malformed "empty turn" twice; "no action: one line must start with READ, GREP, LIST or ANSWER" three times; "2 actions in one turn (READ, GREP): send one per turn"; "READ needs a path"; "READ: bad line range 9-3"; "READ: bad line range 0-3"; "GREP: invalid pattern /(/"; "GREP needs a pattern"'}
+            - {given: 'null; " \n\t"; "The change is in src/a.ts"; "Read src/a.ts"; "READX a"; "{\"files\": [\"a\"]}"; "READ"; "READ a.ts 9-3"; "READ a.ts 0-3"; "GREP ( -- src"; "GREP"', when: parseTurn, then: 'malformed "empty turn" twice; "no action: one line must start with READ, GREP, LIST or ANSWER" four times; "READ needs a path"; "READ: bad line range 9-3"; "READ: bad line range 0-3"; "GREP: invalid pattern /(/"; "GREP needs a pattern"'}
             - {given: '"ANSWER the cage"; "ANSWER {targets: [a]}"; "ANSWER {\"targets\": []}"; "ANSWER {\"targets\": [\"a\", \"\"]}"; "ANSWER {\"targets\": [\"a\"], \"context_slice\": \"b\"}"; "ANSWER {\"targets\": [\"a\"], \"reasoning\": 5}"', when: parseTurn, then: 'malformed "ANSWER: no JSON object"; "ANSWER: the JSON does not parse"; "ANSWER: targets must be a non-empty list of paths" twice; "ANSWER: context_slice must be a list of paths"; "ANSWER: reasoning must be a string"'}
+            - {given: '"{\"targets\": [\"a.ts\"], \"reasoning\": \"r\"}"; "Here it is:\n```json\n{\"targets\": [\"a.ts\"], \"context_slice\": [\"b.ts\"]}\n```"; "{\"targets\": []}"; "{\"targets\": [\"a.ts\"], \"reasoning\": \"the \"x\" key\"}"', when: parseTurn, then: 'answer {targets ["a.ts"], context_slice [], reasoning "r"}; answer {["a.ts"], ["b.ts"], ""}; malformed "ANSWER: targets must be a non-empty list of paths"; malformed "no action: one line must start with READ, GREP, LIST or ANSWER" (its JSON does not parse)'}
+            - {given: '"GREP DoneWait -- .\nGREP DoneWait -- ."; "LIST a\nLIST b\nLIST a\n  LIST b  "; "READ a.ts 9-3\nLIST"; "READ x.ts\nANSWER {\"targets\": [\"x.ts\"]}"', when: parseTurn, then: 'action grep {pattern "DoneWait", path "."} with no key skipped, JSON.stringify exactly {"kind":"action","action":{"kind":"grep","pattern":"DoneWait","path":"."}}; action list {path "a"} with skipped ["LIST b"], JSON.stringify exactly {"kind":"action","action":{"kind":"list","path":"a"},"skipped":["LIST b"]}; malformed "READ: bad line range 9-3"; answer {["x.ts"], [], ""}'}
+            - {given: '"GREP /Exited\\(/"; "GREP /LimitsUnknown/i -- src"; "GREP a/b"; "GREP //"; "ANSWER {\"targets\": [\"a.ts\"]}\nANSWER {\"targets\": [\"a.ts\"]}"; "ANSWER {\"targets\": [\"a.ts\"], \"reasoning\": \"uses } and {\"}"', when: parseTurn, then: 'actions grep {pattern "Exited\\(", path ""}; {pattern "LimitsUnknown", path "src"}; {pattern "a/b", path ""}; {pattern "//", path ""}; answer {["a.ts"], [], ""} (the first of the two objects); answer {["a.ts"], [], "uses } and {"}'}
         - name: Cage Path
           description: A path the model wrote, admitted only when it names a listed file (or a directory of listed files) whose real path stays inside the root and outside .git.
           behavior: >
@@ -3685,38 +3695,44 @@ System:
             - {given: 'the same tree and fs', when: 'cagePath file "", "/etc/passwd", "C:\\x.ts", "../etc/passwd"; dir "src/../../x"; file ".git/config", "src/b.ts", "src"; dir "docs/n.md", "lib/b"', then: 'errors "empty path"; "absolute path refused: /etc/passwd"; "absolute path refused: C:\\x.ts"; "path leaves the root: ../etc/passwd"; "path leaves the root: src/../../x"; "inside .git: .git/config"; "not in the tree (missing, ignored or a directory): src/b.ts" and "…: src"; "no such directory in the tree: docs/n.md"; "no such directory in the tree: lib/b"'}
             - {given: 'a real tmp dir p: p/t/src/a.ts, p/t/.git/config, p/t-out/secret.txt; symlinks p/t/out.txt → p/t-out/secret.txt, p/t/in.txt → src/a.ts, p/t/gitcfg → .git/config, p/t/gone.ts → nowhere.ts, p/link → p/t; files ["src/a.ts", "out.txt", "in.txt", "gitcfg", "gone.ts"]; fs = node fs (realpathSync, readFileSync utf8)', when: 'cagePath file with root p/t: out.txt, in.txt, gitcfg, gone.ts; then with root p/link: src/a.ts, out.txt', then: '"symlink out of the root refused: out.txt"; ok "in.txt"; "inside .git: gitcfg"; "no such file: gone.ts"; then ok "src/a.ts"; "symlink out of the root refused: out.txt"'}
         - name: Run Tool
-          description: One READ, GREP or LIST executed over the listing through the cage and the injected file system, its text capped.
+          description: One READ, GREP or LIST executed over the listing through the cage and the injected file system, its text capped in lines and characters; LIST shows each file's line count.
           behavior: >
-            runTool(action, tree, fs, caps {readLines, grepHits, grepLineChars, listEntries, grepSkip: string[]}) →
-            {text, read: action is a READ, error: string | null}. DEFAULT_TOOL_CAPS = {readLines 400, grepHits 200,
-            grepLineChars 300, listEntries 300, grepSkip [".morph", "decks"]}. A failure: error = its message, text =
-            "<READ|GREP|LIST> failed: <error>"; else error null and text = its lines "\n"-joined, no final newline. A
-            file's lines: its text split on "\n", one trailing "\r" removed from each, the last piece dropped when it is
-            "". The listing is walked in code-unit order. READ: Cage Path (file) refused → its error; fs.readFile(posix
-            join of root and the caged path) throws → "unreadable: <path>"; a "\0" in it → "binary file: <path>"; 0 lines
-            → the one line "READ <path>: empty file"; from = action.from ?? 1, from > n lines → "line range
-            <from>-<action.to ?? n> is past the end (<n> lines): <path>"; to = min(action.to ?? n, n), last = min(to,
-            from + readLines − 1): "READ <path> lines <from>-<last> of <n>", then "<i>: <line i>" for i from..last, then
-            when last < to "… <to − last> more lines; READ <path> <last + 1>-<to> for the next". GREP: new
-            RegExp(pattern) (no flags) throws → "invalid pattern /<pattern>/"; Cage Path (dir) refused → its error; skip =
-            grepSkip, or none when the caged path's first segment is in grepSkip; each listed file under the caged path
-            whose first segment is not skipped: Cage Path (file) refused or readFile throws → counted refused; a "\0" →
-            passed over silently; each line i that the pattern tests true is a match, shown while fewer than grepHits
-            are shown as "<file>:<i>: <line>", a line longer than grepLineChars as its first grepLineChars chars + "…
-            (+<the rest's length> chars)". Lines: "GREP /<pattern>/ in <'the tree' or the caged path + '/'>: <m>
-            match|matches in <f> file|files" (f = files with a match), the shown matches, "… <m − shown> more matches"
-            when any left, "(<r> file|files refused by the cage)" when r > 0. LIST: Cage Path (dir) refused → its error;
-            entries = the next segment of each listed file under the caged path: a file name, or a directory name + "/"
-            with the count of its files; entries in code-unit order: "LIST <'.' or the caged path + '/'>: <k>
-            entry|entries", the first listEntries as "<name>" or "<dir>/ (<c> file|files)", "… <k − listEntries> more
-            entries" when more. LIST and GREP never read a directory; LIST reads no file.
+            runTool(action, tree, fs, caps {readLines, readChars?, grepHits, grepLineChars, listEntries, grepSkip:
+            string[]}) → {text, read: action is a READ, error: string | null}. DEFAULT_TOOL_CAPS = {readLines 400,
+            readChars 12000, grepHits 200, grepLineChars 300, listEntries 300, grepSkip [".morph", "decks"]}. A failure:
+            error = its message, text = "<READ|GREP|LIST> failed: <error>"; else error null and text = its lines
+            "\n"-joined, no final newline. A file's lines: its text split on "\n", one trailing "\r" removed from each,
+            the last piece dropped when it is "". The listing is walked in code-unit order. READ: Cage Path (file) refused
+            → its error; fs.readFile(posix join of root and the caged path) throws → "unreadable: <path>"; a "\0" in it →
+            "binary file: <path>"; 0 lines → the one line "READ <path>: empty file"; from = action.from ?? 1, from > n
+            lines → "line range <from>-<action.to ?? n> is past the end (<n> lines): <path>"; to = min(action.to ?? n,
+            n), last = min(to, from + readLines − 1); when caps.readChars is set, the shown lines "<i>: <line i>" from
+            `from` on are kept while the sum of their lengths, each + 1, stays ≤ readChars, at least one, and last = the
+            last kept (a first shown line longer than readChars is its first readChars chars + "… (+<the rest's length>
+            chars)"): "READ <path> lines <from>-<last> of <n>", then the shown lines, then when last < to "… <to − last>
+            more lines; READ <path> <last + 1>-<to> for the next". GREP: new RegExp(pattern) (no flags) throws →
+            "invalid pattern /<pattern>/"; Cage Path (dir) refused → its error; skip = grepSkip, or none when the caged
+            path's first segment is in grepSkip; each listed file under the caged path whose first segment is not
+            skipped: Cage Path (file) refused or readFile throws → counted refused; a "\0" → passed over silently; each
+            line i that the pattern tests true is a match, shown while fewer than grepHits are shown as "<file>:<i>:
+            <line>", a line longer than grepLineChars as its first grepLineChars chars + "… (+<the rest's length>
+            chars)". Lines: "GREP /<pattern>/ in <'the tree' or the caged path + '/'>: <m> match|matches in <f>
+            file|files" (f = files with a match), the shown matches, "… <m − shown> more matches" when any left, "(<r>
+            file|files refused by the cage)" when r > 0. LIST: Cage Path (dir) refused → its error; entries = the next
+            segment of each listed file under the caged path: a file name, or a directory name + "/" with the count of
+            its files; entries in code-unit order: "LIST <'.' or the caged path + '/'>: <k> entry|entries", the first
+            listEntries as "<dir>/ (<c> file|files)" or, for a file, "<name> (<n> line|lines)" with n its lines read
+            through Cage Path (file) and fs.readFile of its listed path, "<name> (binary)" for a "\0", the name alone
+            when refused or unreadable; "… <k − listEntries> more entries" when more. LIST and GREP never read a
+            directory; LIST reads only the files it shows.
           steps: [{calls: Cage Path}, {reads: Scout Action}, {reads: Tool Caps}, {produces: Tool Result}]
           examples:
             - {given: 'the §2.1 tree of docs/TASK_P13a_scout.md (a real tmp dir: src/a.ts "l1\nl2\nl3\nl4\nl5\n", src/e.ts "", src/bin.dat "a\0alpha", src/b.ts, README.md, decks/p1/deck.json, .morph/runs/r/report.json, tests/a.test.ts, out.txt → a sibling secret, dirlink → src); caps D = DEFAULT_TOOL_CAPS, C = {readLines 2, grepHits 3, grepLineChars 12, listEntries 2, grepSkip [".morph", "decks"]}', when: 'READ src/a.ts (D); 2-3 (D); whole (C); "./src/a.ts" 4-9 (D)', then: '"READ src/a.ts lines 1-5 of 5\n1: l1\n2: l2\n3: l3\n4: l4\n5: l5"; "READ src/a.ts lines 2-3 of 5\n2: l2\n3: l3"; "READ src/a.ts lines 1-2 of 5\n1: l1\n2: l2\n… 3 more lines; READ src/a.ts 3-5 for the next"; "READ src/a.ts lines 4-5 of 5\n4: l4\n5: l5"; read true, error null'}
             - {given: 'the same tree, D', when: 'READ src/a.ts 6-7; src/e.ts; src/bin.dat; out.txt; dirlink; src/zz.ts', then: 'errors "line range 6-7 is past the end (5 lines): src/a.ts", text "READ failed: " + it; text "READ src/e.ts: empty file" with error null; "binary file: src/bin.dat"; "symlink out of the root refused: out.txt"; "unreadable: dirlink"; "not in the tree (missing, ignored or a directory): src/zz.ts"; read true on every one'}
             - {given: 'the same tree, C', when: 'GREP "alpha|beta" in ""', then: 'text "GREP /alpha|beta/ in the tree: 5 matches in 3 files\nREADME.md:1: alpha here\nsrc/b.ts:1: const alpha … (+4 chars)\nsrc/b.ts:2: const beta =… (+3 chars)\n… 2 more matches\n(2 files refused by the cage)", read false'}
             - {given: 'the same tree', when: 'GREP "alpha" in "decks" (D); "alpha" in "" with D and grepSkip []; "zzz" in "src"; "x" in "nope"; "(" in ""', then: '"GREP /alpha/ in decks/: 1 match in 1 file\ndecks/p1/deck.json:1: alpha in a deck"; "GREP /alpha/ in the tree: 5 matches in 4 files" then .morph/runs/r/report.json:1, README.md:1, decks/p1/deck.json:1, src/b.ts:1, src/b.ts:3 and "(2 files refused by the cage)"; "GREP /zzz/ in src/: 0 matches in 0 files"; "GREP failed: no such directory in the tree: nope"; "GREP failed: invalid pattern /(/"'}
-            - {given: 'the same tree', when: 'LIST "" (C); LIST "" (D); "src/"; "src/a.ts"; "../x"', then: '"LIST .: 7 entries\n.morph/ (1 file)\nREADME.md\n… 5 more entries"; "LIST .: 7 entries\n.morph/ (1 file)\nREADME.md\ndecks/ (1 file)\ndirlink\nout.txt\nsrc/ (4 files)\ntests/ (1 file)"; "LIST src/: 4 entries\na.ts\nb.ts\nbin.dat\ne.ts"; "LIST failed: no such directory in the tree: src/a.ts"; "LIST failed: path leaves the root: ../x"; read false'}
+            - {given: 'the same tree', when: 'LIST "" (C); LIST "" (D); "src/"; "src/a.ts"; "../x"', then: '"LIST .: 7 entries\n.morph/ (1 file)\nREADME.md (1 line)\n… 5 more entries"; "LIST .: 7 entries\n.morph/ (1 file)\nREADME.md (1 line)\ndecks/ (1 file)\ndirlink\nout.txt\nsrc/ (4 files)\ntests/ (1 file)" (dirlink unreadable, out.txt refused: names alone); "LIST src/: 4 entries\na.ts (5 lines)\nb.ts (3 lines)\nbin.dat (binary)\ne.ts (0 lines)"; "LIST failed: no such directory in the tree: src/a.ts"; "LIST failed: path leaves the root: ../x"; read false'}
+            - {given: 'a real tmp dir with w.txt = 200 lines of 250 × "w" each + "\n", long.txt = 13000 × "x" + "\n"; files ["long.txt", "w.txt"]; D', when: 'READ w.txt; w.txt 47-200; long.txt; and w.txt with D without readChars', then: '"READ w.txt lines 1-47 of 200", 47 lines "<i>: " + 250 × "w", "… 153 more lines; READ w.txt 48-200 for the next" (12 053 chars); "READ w.txt lines 47-93 of 200" … "… 107 more lines; READ w.txt 94-200 for the next" (12 063 chars); "READ long.txt lines 1-1 of 1\n1: " + 11 997 × "x" + "… (+1003 chars)" (12 044 chars); "READ w.txt lines 1-200 of 200" and every line, read true, error null'}
         - name: Spend Budget
           description: One turn charged against the five budgets; the first closed budget and its sentence; the stop_reason.
           behavior: >
@@ -3766,7 +3782,7 @@ System:
           schema: "string | null"
         - name: Turn
           description: What Parse Turn returns.
-          schema: "{ kind: 'action', action: Scout Action } | { kind: 'answer', answer: { targets: string[], context_slice: string[], reasoning: string } } | { kind: 'malformed', reason: string }"
+          schema: "{ kind: 'action', action: Scout Action, skipped?: string[] } | { kind: 'answer', answer: { targets: string[], context_slice: string[], reasoning: string } } | { kind: 'malformed', reason: string }"
         - name: Scout Action
           description: One tool call of the protocol.
           schema: "{ kind: 'read', path, from: number | null, to: number | null } | { kind: 'grep', pattern, path } | { kind: 'list', path }"
@@ -3778,7 +3794,7 @@ System:
           schema: "{ ok: true, path: string } | { ok: false, error: string }"
         - name: Tool Caps
           description: Caps on one tool answer, not budgets.
-          schema: "{ readLines, grepHits, grepLineChars, listEntries: number, grepSkip: string[] }"
+          schema: "{ readLines, readChars?, grepHits, grepLineChars, listEntries: number, grepSkip: string[] }"
         - name: Tool Result
           description: What Run Tool returns.
           schema: "{ text: string, read: boolean, error: string | null }"
@@ -3798,7 +3814,7 @@ System:
     - name: scout-session
       description: >
         The scout's second Component (src/scout/, layer scout; the 30 000-byte rule): the round loop of one recon session
-        over P13a's pure pieces, `morph scout` (the processor, the issue, the git listing, the seed, the node:fs adapter,
+        over P13a's pure pieces and the texts it adds (src/scout/sessionText.ts, P27: budgets shown, round zero), `morph scout` (the processor, the issue, the git listing, the seed, the node:fs adapter,
         .morph/scout/<id>/scout.json with provenance and spend) and `morph plan --from-scout` (one session's answer → one
         patch card on the files it names). The model is reached only through the processor's Send Generation, the clock only
         through deps.now; scoutCommand.ts and planFromScout.ts are the layer's only node:fs files.
@@ -3806,42 +3822,81 @@ System:
       requirements: [Deterministic Core, One Document Out]
       functions:
         - name: Run Scout
-          description: One recon session — round 0, then one model turn per round through the processor, read as an action or an answer, until an answer, a closed budget or a failed call.
+          description: One recon session — round 0, then one model turn per round through the processor, read as an action or an answer, until an answer, a closed budget or a failed call; one correction of a refused answer before the close and one after it.
           behavior: >
-            runScout(session {question, tree, fs, seedText, budgets, caps, maxTokens}, deps {config, transport, now}) →
-            Promise of {status "ok" | "no_answer" | "invalid_answer", answer | null, stopReason, spent, elapsedMs, usage
-            {requests, inputTokens, outputTokens, cost}, journal, messages}. PROTOCOL = the text of
-            tests/fixtures/scout/protocol.txt exactly; REMINDER = "One line per turn: READ <path> [<from>-<to>], GREP
-            <pattern> [-- <dir>], LIST [<dir>] or ANSWER {json}.". openingMessages(session) = [{system, PROTOCOL}, {user,
-            (seedText + "\n" unless "") + Run Tool's LIST "" text (session caps) + "\n\nTask:\n" + question}]; round 0 is not
-            charged. start = now(); spent zero; usage {0, 0, 0, cost null}. Round r = spent.rounds + 1: one request
-            {customId "scout.t<r>", model null, maxTokens, reasoning null, messages: a copy} through processor Send
-            Generation(config, [request], transport); usage adds its tokens and its cost (null until one request reports a
-            cost); every round one journal entry {round, turn "action"|"answer"|"malformed"|"failed", action | null, chars,
-            error | null, inputTokens, outputTokens, cost} of that request. An answer error → turn failed, no_answer "no
-            answer: the model call failed in round <r>: <error>". Else its text (null → "") is the next assistant message,
-            Parse Turn reads it, elapsed = now() − start. An ANSWER → checkAnswer(answer, tree, fs): each target, then each
-            context_slice path through Cage Path (file), the first refusal → {ok false, error "targets: " | "context_slice: "
-            + its error}; else the caged paths, repeats dropped, slice paths that are targets dropped, reasoning kept. Valid →
-            charged (call false, read false, text ""), chars 0, ok, Spend Budget's stopReason(true, closed, why) of the
-            budget closed before. Rejected after the final turn → invalid_answer "no answer: the answer after the budget
-            closed was rejected: <error>"; rejected again after a correction → invalid_answer "no answer: the corrected
-            answer was rejected: <error>" (both charged with ""); the first rejection is charged with the reply "ANSWER
-            rejected: <error>. Name only files of the tree and send ANSWER again." After the final turn an action or a
-            malformed turn → charged with "", chars 0, no_answer "no answer: the model did not answer after the budget
-            closed: <why>". An action → Run Tool, charged (call true, read, its text), error = its error; a malformed turn →
-            charged (false, false, "Turn not understood: <reason>. " + REMINDER), error = the reason. The delivered text is
-            the next user message and the entry's chars. A budget the turn closed: deadline or rounds → no_answer
-            stopReason(false, closed, why) after that message; calls, reads or chars → the message gains "\n\nThe budget is
-            closed: <why>. No more tools will run: send ANSWER now, the JSON object last." and the next turn is the final
-            one. now() is called at the start, after each reply without an error, and once at the end (elapsedMs).
-          steps: [{uses: scout}, {uses: processor}, {reads: Scout Session}, {produces: Scout Outcome}]
+            runScout(session {question, tree, fs, seedText, budgets, caps, maxTokens, historyText?}, deps {config,
+            transport, now}) → Promise of {status "ok" | "no_answer" | "invalid_answer", answer | null, stopReason, spent,
+            elapsedMs, usage {requests, inputTokens, outputTokens, cost}, journal, messages}. PROTOCOL = the text of
+            tests/fixtures/scout/protocol.txt exactly; REMINDER = "One action line per turn: READ <path> [<from>-<to>],
+            GREP <pattern> [-- <dir>] or LIST [<dir>]; to answer: ANSWER " + Session Text's ANSWER_SHAPE + ".".
+            openingMessages(session) = [{system, PROTOCOL + "\n" + budgetSentence(budgets)}, {user, (seedText + "\n"
+            unless "") + Run Tool's LIST "" text (session caps) + "\n\n" + (Z + "\n\n" unless Z is "") + (historyText +
+            "\n\n" unless absent or "") + "Task:\n" + question}], Z = roundZero(question, tree, fs, caps.grepSkip,
+            floor(budgets.chars / 4)); round 0 is not charged. start = now(); spent zero; usage {0, 0, 0, cost null}.
+            Round r = spent.rounds + 1: one request {customId "scout.t<r>", model null, maxTokens, reasoning null,
+            messages: a copy} through processor Send Generation(config, [request], transport); usage adds its tokens and
+            its cost (null until one request reports a cost); every round one journal entry {round, turn
+            "action"|"answer"|"malformed"|"failed", action | null, chars, error | null, inputTokens, outputTokens, cost}
+            of that request. An answer error → turn failed, no_answer "no answer: the model call failed in round <r>:
+            <error>". Else its text (null → "") is the next assistant message, Parse Turn reads it, elapsed = now() −
+            start. An ANSWER → checkAnswer(answer, tree, fs): each target, then each context_slice path through Cage Path
+            (file), the first refusal → {ok false, error "targets: " | "context_slice: " + its error}; else the caged
+            paths, repeats dropped, slice paths that are targets dropped, reasoning kept. Valid → charged (call false,
+            read false, text ""), chars 0, ok, Spend Budget's stopReason(true, closed, why) of the budget closed before.
+            Before the close: rejected → charged with "ANSWER rejected: <error>. Name only files of the tree and send
+            ANSWER again."; rejected again → invalid_answer "no answer: the corrected answer was rejected: <error>",
+            charged with "". An action → Run Tool, charged (call true, read: true only for a READ of a file not read
+            before in the session — the Cage Path (file) path, or the path as written when refused —, its text), error =
+            its error; a malformed turn → charged (false, false, "Turn not understood: <reason>. " + REMINDER), error =
+            the reason. The entry's chars = the delivered text's length; the next user message = the delivered text +
+            ("\n\n" + notRun(skipped) when the turn has skipped) + "\n\n" + budgetLeft(budgets, the new spent). A budget
+            the turn closed: deadline or rounds → no_answer stopReason(false, closed, why) after that message; calls,
+            reads or chars → the message gains "\n\nThe budget is closed: <why>. No more tools will run: send ANSWER " +
+            ANSWER_SHAPE + " now, the JSON object last." and every later turn is final. A final turn: a valid answer → ok;
+            an action → charged with "", chars 0, no_answer "no answer: the model did not answer after the budget closed:
+            <why>"; a malformed turn or a rejected answer, the first time → charged with "" (a budget it closes
+            ignored), chars 0, error the reason or the error, the next user message afterClose("Turn not understood:
+            <reason>" or "ANSWER rejected: <error>"); the second time → invalid_answer "no answer: the answer after the
+            budget closed was rejected twice: <reason or error>", charged with "". now() is called at the start, after
+            each reply without an error, and once at the end (elapsedMs).
+          steps: [{uses: scout}, {uses: processor}, {calls: Session Text}, {reads: Scout Session}, {produces: Scout Outcome}]
           examples:
-            - {given: 'the §2.1 tree of docs/TASK_P13b_scout.md (README.md, src/a.ts, src/b.ts) with the node fs; the stub processor answering scout.t1 "LIST src", t2 "Reading b.\nREAD src/b.ts", t3 ANSWER {"targets": ["src/b.ts"], "context_slice": ["./src/a.ts", "src/b.ts"], "reasoning": "b uses a"}; seedText "Seed: one\n", question "Make b twice a.\n", DEFAULT_BUDGETS, DEFAULT_TOOL_CAPS, maxTokens null, now always 5', when: runScout, then: 'ok, answer {["src/b.ts"], ["src/a.ts"], "b uses a"}, "the model answered on its own", spent {2, 1, 116, 3}, elapsedMs 0, usage {3, 0, 0, 0}, journal list 30, read 86, answer 0; 7 messages: system PROTOCOL, user "Seed: one\n\nLIST .: 2 entries\nREADME.md\nsrc/ (2 files)\n\nTask:\nMake b twice a.\n", then the three turns and two tool texts'}
-            - {given: 'the same tree, caps with listEntries 1; answers "I think it is b.", ANSWER {"targets": ["src/c.ts"]}, ANSWER {"targets": ["src"]}; then a fresh session answering ANSWER {"targets": ["src/c.ts"]}, ANSWER {"targets": ["src/a.ts"], "reasoning": "a"}', when: runScout, then: 'invalid_answer, "no answer: the corrected answer was rejected: targets: not in the tree (missing, ignored or a directory): src", spent {0, 0, <the two replies'' length>, 3}, round 0 "LIST .: 2 entries\nREADME.md\n… 1 more entries\n\nTask:\n…"; then ok "the model answered on its own" with {["src/a.ts"], [], "a"} in 2 rounds'}
-            - {given: 'budgets {calls 2, reads 5, chars 100000, rounds 10, deadlineMs 600000}; answers "GREP export const a -- src", "READ src/a.ts", ANSWER {"targets": ["src/a.ts"]}; then the same with "LIST" third', when: runScout, then: 'ok "the model answered after the budget closed: the call budget is spent (2 of 2 calls)", the READ reply + the final-turn sentence; then no_answer "no answer: the model did not answer after the budget closed: the call budget is spent (2 of 2 calls)", journal 3 action list "" chars 0'}
-            - {given: 'DEFAULT_BUDGETS with rounds 2, answers "LIST", "LIST src", ANSWER; then deadlineMs 1500 with now adding 1000 per call', when: runScout, then: 'no_answer "no answer: the round budget is spent (2 of 2 rounds)", 2 requests, the last message the LIST src text; then "no answer: the deadline (1.5 s) passed", elapsedMs 3000, spent {2, 0, <both LIST texts>, 2}'}
-            - {given: 'an empty answers dir; then an openrouter config (MAX_RETRIES 0) and a fakeFetch answering every request "READ src/a.ts" with usage {prompt_tokens 1000, completion_tokens 50, cost 0.25}, budgets calls 2, maxTokens 777', when: runScout, then: 'no_answer "no answer: the model call failed in round 1: stub has no answer: <dir>/scout.t1.md", journal [failed], 2 messages; then usage {3, 3000, 150, 0.75}, the third request body model "m/x", max_tokens 777, 6 messages, every entry cost 0.25'}
+            - {given: 'the §2.1 tree of docs/TASK_P13b_scout.md (README.md, src/a.ts, src/b.ts) with the node fs; the stub processor answering scout.t1 "LIST src", t2 "Reading b.\nREAD src/b.ts", t3 ANSWER {"targets": ["src/b.ts"], "context_slice": ["./src/a.ts", "src/b.ts"], "reasoning": "b uses a"}; seedText "Seed: one\n", question "Make b twice a.\n", DEFAULT_BUDGETS, DEFAULT_TOOL_CAPS, maxTokens null, now always 5', when: runScout, then: 'ok, answer {["src/b.ts"], ["src/a.ts"], "b uses a"}, "the model answered on its own", spent {2, 1, 135, 3}, elapsedMs 0, usage {3, 0, 0, 0}, journal list 49, read 86, answer 0; 7 messages: system PROTOCOL + "\n" + budgetSentence(DEFAULT_BUDGETS), user "Seed: one\n\nLIST .: 2 entries\nREADME.md (1 line)\nsrc/ (2 files)\n\nTask:\nMake b twice a.\n", then the three turns and the two tool texts: "LIST src/: 2 entries\na.ts (1 line)\nb.ts (2 lines)\n\nBudget left: 29 calls, 12 file reads, 119951 chars, 39 rounds." and the READ text + "\n\nBudget left: 28 calls, 11 file reads, 119865 chars, 38 rounds."'}
+            - {given: 'the same tree, caps with listEntries 1; answers "I think it is b.", ANSWER {"targets": ["src/c.ts"]}, ANSWER {"targets": ["src"]}; then a fresh session answering ANSWER {"targets": ["src/c.ts"]}, ANSWER {"targets": ["src/a.ts"], "reasoning": "a"}', when: runScout, then: 'invalid_answer, "no answer: the corrected answer was rejected: targets: not in the tree (missing, ignored or a directory): src", spent {0, 0, <the two replies'' length>, 3}, round 0 "LIST .: 2 entries\nREADME.md (1 line)\n… 1 more entries\n\nTask:\n…"; then ok "the model answered on its own" with {["src/a.ts"], [], "a"} in 2 rounds'}
+            - {given: 'budgets {calls 2, reads 5, chars 100000, rounds 10, deadlineMs 600000}; answers "GREP export const a -- src", "READ src/a.ts", ANSWER {"targets": ["src/a.ts"]}; then the same with "LIST" third', when: runScout, then: 'ok "the model answered after the budget closed: the call budget is spent (2 of 2 calls)", messages[5] the READ text + "\n\nBudget left: 0 calls, 4 file reads, 99869 chars, 8 rounds.\n\nThe budget is closed: the call budget is spent (2 of 2 calls). No more tools will run: send ANSWER " + ANSWER_SHAPE + " now, the JSON object last."; then no_answer "no answer: the model did not answer after the budget closed: the call budget is spent (2 of 2 calls)", journal 3 action list "" chars 0'}
+            - {given: 'DEFAULT_BUDGETS with rounds 2, answers "LIST", "LIST src", ANSWER; then deadlineMs 1500 with now adding 1000 per call', when: runScout, then: 'no_answer "no answer: the round budget is spent (2 of 2 rounds)", 2 requests, the last message "LIST src/: 2 entries\na.ts (1 line)\nb.ts (2 lines)\n\nBudget left: 28 calls, 12 file reads, 119900 chars, 0 rounds."; then "no answer: the deadline (1.5 s) passed", elapsedMs 3000, spent {2, 0, 100, 2}'}
+            - {given: 'an empty answers dir; then an openrouter config (MAX_RETRIES 0) and a fakeFetch answering every request "READ src/a.ts" with usage {prompt_tokens 1000, completion_tokens 50, cost 0.25}, budgets calls 2, maxTokens 777', when: runScout, then: 'no_answer "no answer: the model call failed in round 1: stub has no answer: <dir>/scout.t1.md", journal [failed], 2 messages; then usage {3, 3000, 150, 0.75}, the third request body model "m/x", max_tokens 777, 6 messages, every entry cost 0.25, spent.reads 1 (one file read twice)'}
+            - {given: 'the tree of example 1, budgets {calls 1, reads 5, chars 100000, rounds 10, deadlineMs 600000}, t1 "LIST src", then (a) t2 {"targets": ["src/b.ts"], "context_slice": ["src/a.ts"], "reasoning": "b"} with no verb; (b) t2 ANSWER {"targets": ["src/b.ts"], "reasoning": "the "b" file"}, t3 ANSWER {"targets": ["src/b.ts"]}; (c) t2 ANSWER {"targets": ["src/c.ts"]}, t3 ANSWER {"targets": ["src"]}', when: runScout, then: '(a) ok "the model answered after the budget closed: the call budget is spent (1 of 1 calls)", answer {["src/b.ts"], ["src/a.ts"], "b"}, spent {1, 0, 49, 2}; (b) ok, the same stopReason, answer {["src/b.ts"], [], ""}, journal turns action, malformed (error "ANSWER: the JSON does not parse", chars 0), answer; spent {1, 0, 49, 3}; messages[5] "Turn not understood: ANSWER: the JSON does not parse. No more tools will run: send ANSWER " + ANSWER_SHAPE + " now, every path a file of the tree, the JSON object last."; (c) invalid_answer "no answer: the answer after the budget closed was rejected twice: targets: not in the tree (missing, ignored or a directory): src", journal turns action, answer (error "targets: not in the tree (missing, ignored or a directory): src/c.ts"), answer, spent {1, 0, 49, 3}'}
+            - {given: 'the tree of example 1, DEFAULT_BUDGETS; answers "GREP export const a -- src\nGREP export const a -- src", "READ src/a.ts\nLIST\nLIST", "READ src/a.ts 1-1", ANSWER {"targets": ["src/a.ts"]}', when: runScout, then: 'ok "the model answered on its own", spent {3, 1, 182, 4}, journal turns action (grep, chars 80), action (read, 51), action (read, 51), answer; messages[3] the GREP text + "\n\nBudget left: 29 calls, 12 file reads, 119920 chars, 39 rounds."; messages[5] the READ text + "\n\nNot run: LIST. One action line per turn; equal lines count once.\n\nBudget left: 28 calls, 11 file reads, 119869 chars, 38 rounds."; messages[7] the READ 1-1 text + "\n\nBudget left: 27 calls, 11 file reads, 119818 chars, 37 rounds."'}
+            - {given: 'the tree of example 1, seedText "", question "Double `export const a` in src/a.ts.\n", historyText "Recent commits (newest first):\nabc1234 files", answer t1 ANSWER {"targets": ["src/a.ts"]}', when: runScout, then: 'ok, spent {0, 0, 0, 1}; messages[1] "LIST .: 2 entries\nREADME.md (1 line)\nsrc/ (2 files)\n\n" + ROUND0_HEADER + "\n\"export const a\": 1 match in 1 file\nsrc/a.ts:1: export const a = 1;\n\"src/a.ts\": 0 matches in 0 files\n\nRecent commits (newest first):\nabc1234 files\n\nTask:\nDouble `export const a` in src/a.ts.\n"'}
+        - name: Session Text
+          description: The texts Run Scout adds to a session — the budget sentence, the budget left, the lines not run, the correction after the close, and round zero (the task's identifiers found in the tree before the first turn).
+          behavior: >
+            src/scout/sessionText.ts, pure (Cage Path and the injected fs only). ANSWER_SHAPE = '{"targets": [...],
+            "context_slice": [...], "reasoning": "..."}'. budgetSentence(budgets) = "Your budget: <calls> tool calls,
+            <reads> files read, <chars> characters of tool replies, <rounds> rounds. When the calls, reads or characters
+            run out you get one last turn: send ANSWER in it; an answer refused there gets one correction."
+            budgetLeft(budgets, spent) = "Budget left: <c> calls, <r> file reads, <ch> chars, <ro> rounds.", each max(0,
+            budget − spent). notRun(skipped) = "Not run: " + skipped " | "-joined + ". One action line per turn; equal
+            lines count once." afterClose(problem) = problem + ". No more tools will run: send ANSWER " + ANSWER_SHAPE +
+            " now, every path a file of the tree, the JSON object last." taskClues(question) → at most ROUND0_CLUES (8)
+            strings: the matches of CAMEL /\b[A-Za-z][a-z0-9]*(?:[A-Z][a-z0-9]*)+\b/g, SNAKE
+            /\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+\b/g, QUOTED /["`]([^"`\n]+)["`]/g (its group 1) and FILE
+            /\b\w+(?:\/\w+)+\.\w+\b/g, ordered by the match's index (ties: that pattern order); a clue shorter than 3
+            chars, all digits, or a repeat is dropped. roundZero(question, tree, fs, skip: string[], maxChars) → "" when
+            taskClues is []; else the lines ROUND0_HEADER ("Round zero: the task's identifiers in the tree, found before
+            your first turn (no budget spent):"), then per clue "\"<clue>\": <m> match|matches in <f> file|files", its
+            first ROUND0_HITS (20) hits "<file>:<i>: <line>" (a line over 200 chars: its first 200 + "… (+<rest>
+            chars)"), "… <m − 20> more matches" when more. A hit is a line i (Run Tool's lines of a file) holding the clue
+            as a substring, case-sensitive; files: tree.files in code-unit order, passing over a file whose first segment
+            is in skip, refused by Cage Path (file), unreadable or holding "\0". The lines are "\n"-joined while the text
+            stays ≤ maxChars; the first line that does not fit and every later one are left out and "… round zero cut at
+            <maxChars> chars" is appended as the last line.
+          steps: [{calls: Cage Path}, {reads: Scout Tree}, {reads: Scout Budgets}, {produces: Session Texts}]
+          examples:
+            - {given: 'DEFAULT_BUDGETS; spent {calls 2, reads 1, chars 50000, rounds 3}; spent {31, 12, 120086, 40}; skipped ["LIST b", "GREP x -- src"]; problem "ANSWER rejected: targets: not in the tree (missing, ignored or a directory): src/c.ts"', when: 'budgetSentence; budgetLeft twice; notRun; afterClose', then: '"Your budget: 30 tool calls, 12 files read, 120000 characters of tool replies, 40 rounds. When the calls, reads or characters run out you get one last turn: send ANSWER in it; an answer refused there gets one correction."; "Budget left: 28 calls, 11 file reads, 70000 chars, 37 rounds."; "Budget left: 0 calls, 0 file reads, 0 chars, 0 rounds."; "Not run: LIST b | GREP x -- src. One action line per turn; equal lines count once."; the problem + ". No more tools will run: send ANSWER {\"targets\": [...], \"context_slice\": [...], \"reasoning\": \"...\"} now, every path a file of the tree, the JSON object last."'}
+            - {given: 'the questions "Fix `Exited(` when LimitsUnknown is set in a/run.go.\n"; "Use parseTurn, run_scout and \"the final turn\" in src/scout/runScout.ts; ab_c, `x`, `2026`, LimitsUnknown again"; "AaBb CcDd EeFf GgHh IiJj KkLl MmNn OoPp QqRr"; "Make b twice a.\n"', when: taskClues, then: '["Exited(", "LimitsUnknown", "a/run.go"]; ["parseTurn", "run_scout", "the final turn", "src/scout/runScout.ts", "runScout", "ab_c", "LimitsUnknown"]; the first 8 ("AaBb" … "OoPp"); []'}
+            - {given: 'a real tmp dir: .morph/x.md "LimitsUnknown\n", a/run.go "func (s *S) Exited() bool {\n\treturn s.LimitsUnknown\n}\n", b/doc.md "Exited( here\nExited( " + 250 × "z" + "\n", c/many.txt 22 × "LimitsUnknown\n"; files those four; node fs; skip [".morph", "decks"]; the first question of example 2', when: 'roundZero with maxChars 30000; with 150; roundZero of "Make b twice a.\n"', then: 'ROUND0_HEADER, "\"Exited(\": 3 matches in 2 files", "a/run.go:1: func (s *S) Exited() bool {", "b/doc.md:1: Exited( here", "b/doc.md:2: Exited( " + 192 × "z" + "… (+58 chars)", "\"LimitsUnknown\": 23 matches in 2 files", "a/run.go:2: \treturn s.LimitsUnknown", "c/many.txt:1: LimitsUnknown" … "c/many.txt:19: LimitsUnknown", "… 3 more matches", "\"a/run.go\": 0 matches in 0 files", "\n"-joined (1085 chars); ROUND0_HEADER + "\n\"Exited(\": 3 matches in 2 files\n… round zero cut at 150 chars"; ""'}
         - name: Scout Command
           description: "`morph scout`: one session on the working tree, its record written to .morph/scout/<id>/."
           behavior: >
@@ -3859,9 +3914,11 @@ System:
             (--seed-file):") + "\n", "- <file>\n" each, "Note: <note>\n" each; seed {source "file", path seedFile, files,
             chars}. Else seedFromOwnership(readOwnership(readMorphLog(root, env)), listing, SEED_FILES), rendered with
             SEED_CHARS; seed {source "primer", path null, files, chars: the text's length}. 5. ref = git rev-parse --verify
-            -q HEAD trimmed when exit 0, else null. 6. start = now(); Run Scout({question, tree {root, files: listing},
-            NODE_SCOUT_FS (realpathSync; readFileSync utf8), seedText, DEFAULT_BUDGETS with deadlineMs = deadlineSeconds ×
-            1000, DEFAULT_TOOL_CAPS, maxTokens null}, {config, deps.transport or realTransport(config.timeoutMs), now}). 7.
+            -q HEAD trimmed when exit 0, else null; historyText = "Recent commits (newest first):\n" + the stdout of git
+            log -n 10 --format=%h %s (runGit) trimmed when exit 0 and that is not "", else "". 6. start = now(); Run
+            Scout({question, tree {root, files: listing}, NODE_SCOUT_FS (realpathSync; readFileSync utf8), seedText,
+            DEFAULT_BUDGETS with deadlineMs = deadlineSeconds × 1000, DEFAULT_TOOL_CAPS, maxTokens null, historyText},
+            {config, deps.transport or realTransport(config.timeoutMs), now}). 7.
             id = scoutId(start, sha256(question)) = the UTC "YYYYMMDD-HHMMSS" of start + "-" + the hex sha256's first 8
             chars; SCOUT_DIR ".morph/scout"/<id>/ created under root, scout.json = JSON.stringify(record, null, 2) + "\n",
             record {schema 1, scoutId, createdAt (ISO of start), root, ref, question, questionSha256, protocolSha256 (of
@@ -3870,7 +3927,7 @@ System:
             {scoutId, scout ".morph/scout/<id>/scout.json", status, answer, stopReason, spent, elapsedMs, usage}}.
           steps: [{calls: Run Scout}, {uses: processor}, {uses: git}, {uses: scout}, {produces: Scout Record}]
           examples:
-            - {given: 'a tmpRepo: README.md and src/a.ts committed, then src/b.ts in a commit with the trailers Morph-Card b, Morph-Model m/b; a side root s (cwd): task.txt "Make b twice a.\n", the stub answering "READ src/b.ts", then ANSWER {"targets": ["src/b.ts"], "context_slice": ["src/a.ts"], "reasoning": "b reads a"}; now 1791500000000; {processor s, issue task.txt, seedFile null, deadlineSeconds 60}', when: scoutCommand, then: 'code 0, document {scoutId "20261008-225320-74e423b1", scout ".morph/scout/20261008-225320-74e423b1/scout.json", ok, the answer, "the model answered on its own", spent {1, 1, 86, 2}, 0, usage {2, 0, 0, 0}}; scout.json the record exactly (createdAt "2026-10-08T22:53:20.000Z", ref HEAD, seed {primer, null, ["src/b.ts"], chars}, budgets deadlineMs 60000); transcript.json 5 messages; git status "?? .morph/"'}
+            - {given: 'a tmpRepo: README.md and src/a.ts committed, then src/b.ts in a commit with the trailers Morph-Card b, Morph-Model m/b; a side root s (cwd): task.txt "Make b twice a.\n", the stub answering "READ src/b.ts", then ANSWER {"targets": ["src/b.ts"], "context_slice": ["src/a.ts"], "reasoning": "b reads a"}; now 1791500000000; {processor s, issue task.txt, seedFile null, deadlineSeconds 60}', when: scoutCommand, then: 'code 0, document {scoutId "20261008-225320-74e423b1", scout ".morph/scout/20261008-225320-74e423b1/scout.json", ok, the answer, "the model answered on its own", spent {1, 1, 86, 2}, 0, usage {2, 0, 0, 0}}; scout.json the record exactly (createdAt "2026-10-08T22:53:20.000Z", ref HEAD, seed {primer, null, ["src/b.ts"], chars}, budgets deadlineMs 60000); transcript.json 5 messages: system PROTOCOL + "\n" + budgetSentence(DEFAULT_BUDGETS); user the seed text + "\n" + "LIST .: 2 entries\nREADME.md (1 line)\nsrc/ (2 files)" + "\n\nRecent commits (newest first):\n" + git log -n 10 --format=%h %s of the tmpRepo trimmed (2 lines, "<h> morph b: src/b.ts" then "<h> files") + "\n\nTask:\n" + the question; the READ src/b.ts text + "\n\nBudget left: 29 calls, 11 file reads, 119914 chars, 39 rounds."; git status "?? .morph/"'}
             - {given: 'the same with seedFile seed.json = {"files": ["src/a.ts"], "notes": ["a is the base"]}; then nope.json, bad.json "{", z.json files ["src/z.ts"], e.json files [], n.json notes [1]', when: scoutCommand, then: 'code 0, seed {file, "seed.json", ["src/a.ts"], chars} and round 0 starting with its text; then 4 "seed file not found: nope.json", "seed file bad.json: the JSON does not parse", "…: not in the tree: src/z.ts", "…: files must be a non-empty list of paths", "…: notes must be a list of strings"'}
             - {given: 'processor nope; processor bad with MORPH_PROCESSOR_bad_TYPE x; issue none.txt; issue blank.txt "  \n"; a root outside git', when: scoutCommand, then: '4 "processor nope is not configured"; "processor bad is not configured: MORPH_PROCESSOR_bad_TYPE must be one of openrouter, stub (got ''x'')"; "issue file not found: none.txt"; "issue file is empty: blank.txt"; no .morph; then a rejection "git ls-files failed (exit 128): …"'}
             - {given: 'an empty answers dir, deadlineSeconds 5', when: scoutCommand, then: 'code 1, status no_answer, answer null, "no answer: the model call failed in round 1: stub has no answer: <s>/ans/scout.t1.md", usage.requests 1; scout.json written with that status, deadlineMs 5000, 1 journal entry'}
@@ -3907,7 +3964,10 @@ System:
       dataObjects:
         - name: Scout Session
           description: What one session reads (Run Scout's first parameter) and its deps.
-          schema: "{ question, tree: Scout Tree, fs: ScoutFs, seedText, budgets: Scout Budgets, caps: Tool Caps, maxTokens: number | null } + deps { config: ProcessorConfig, transport: Transport, now(): number }"
+          schema: "{ question, tree: Scout Tree, fs: ScoutFs, seedText, budgets: Scout Budgets, caps: Tool Caps, maxTokens: number | null, historyText?: string } + deps { config: ProcessorConfig, transport: Transport, now(): number }"
+        - name: Session Texts
+          description: What Session Text's functions return.
+          schema: "string (budgetSentence, budgetLeft, notRun, afterClose, roundZero); string[] (taskClues)"
         - name: Scout Outcome
           description: What Run Scout resolves to.
           schema: "{ status: 'ok' | 'no_answer' | 'invalid_answer', answer: { targets, context_slice, reasoning } | null, stopReason, spent: { calls, reads, chars, rounds }, elapsedMs, usage: { requests, inputTokens, outputTokens, cost: number | null }, journal: { round, turn: 'action' | 'answer' | 'malformed' | 'failed', action: Scout Action | null, chars, error: string | null, inputTokens, outputTokens, cost: number | null }[], messages: Message[] }"

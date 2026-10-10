@@ -1,7 +1,7 @@
 {
   "package": "src",
   "docs": [
-    "docs/TASK_P24b_group.md"
+    "docs/TASK_P27_scout.md"
   ],
   "groups": {
     "card-model": [
@@ -2461,18 +2461,18 @@
       "instruction": "You write tests/git/ownership.examples.test.ts only, a NEW file with the tests of Read Ownership examples 1-2. Read docs/TASK_P12b_primer.md sections 2.2 (Read Ownership) and 2.3 (the ownership.examples bullet). Import readOwnership and its types from \"../../src/git/ownership.js\". Each test compares the whole result with toStrictEqual against the record's literal, every write written out as {card, model, run}."
     },
     "parse-turn": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "src/scout/parseTurn.ts"
       ],
       "context_slice": [
-        "docs/TASK_P13a_scout.md",
+        "docs/TASK_P27_scout.md",
         "docs/CONVENTIONS.md"
       ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 10000,
-      "instruction": "Read docs/TASK_P13a_scout.md sections 2.2 (src/scout/parseTurn.ts, Parse Turn and its table) and 4. Write src/scout/parseTurn.ts, a NEW pure file of the layer scout that imports nothing. It exports, in this order, ScoutAction, ScoutAnswer, Turn, VERBS and parseTurn(text) exactly as section 2.2 shows: one action line per turn found by the verb regex on each line's trimStart (upper case only), READ's optional trailing range, GREP split at the last \" -- \" and its pattern compiled once to reject an invalid one, LIST's path, ANSWER's JSON from the first \"{\" to the last \"}\" checked key by key, every malformed reason exactly as pinned. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P27_scout.md sections 2.2 (src/scout/parseTurn.ts and its table) and 4, and the Parse Turn behaviour below. Patch src/scout/parseTurn.ts (its current text follows) and return it WHOLE. (1) Turn's action variant gains `skipped?: string[]`. (2) An ANSWER line anywhere wins: the answer is read from the first ANSWER line. (3) With no action line, the whole text is read for an answer's JSON as step 6 reads rest; an object holding the key \"targets\" is checked like an ANSWER, otherwise the turn stays malformed \"no action: one line must start with READ, GREP, LIST or ANSWER\". (4) Several action lines: trim each, drop repeats keeping the first, read the first as today and put the other trimmed lines in `skipped`; omit the key when there are none. (5) A GREP pattern matching /^\\/(.+)\\/[a-z]*$/ becomes its group 1 before the empty and RegExp checks. (6) The ANSWER JSON: first the text from the first \"{\" to the \"}\" that closes it, counting braces only outside JSON strings (a '\"' not escaped by a backslash opens or closes a string); if none closes it or JSON.parse throws on it, the text up to the last \"}\" as today; the reasons stay word for word. Still a pure file that imports nothing. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "cage-path": {
       "intent": "generate",
@@ -2489,23 +2489,19 @@
       "instruction": "Read docs/TASK_P13a_scout.md sections 2.2 (src/scout/cagePath.ts, Cage Path and its table) and 4. Write src/scout/cagePath.ts, a NEW file of the layer scout whose only import is posix from \"node:path\". It exports, in this order, ScoutFs, ScoutTree, Caged and cagePath(tree, path, kind, fs) exactly as section 2.2 shows: the checks in the stated order, the listing decides what exists (directories by a listed file under them, never resolved), a file's real path through fs.realpath compared with the root's real path plus \"/\", every error message exactly as pinned. The file system is only the fs parameter. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "run-tool": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "src/scout/runTool.ts"
       ],
       "context_slice": [
-        "docs/TASK_P13a_scout.md",
+        "docs/TASK_P27_scout.md",
         "docs/CONVENTIONS.md",
-        "src/scout/parseTurn.ts",
         "src/scout/cagePath.ts"
       ],
-      "depends_on": [
-        "parse-turn",
-        "cage-path"
-      ],
+      "depends_on": [],
       "variants": 2,
-      "max_tokens": 14000,
-      "instruction": "Read docs/TASK_P13a_scout.md sections 2.1 (the tree of the examples), 2.2 (src/scout/runTool.ts, Run Tool and its table) and 4; src/scout/parseTurn.ts and src/scout/cagePath.ts follow (import their types and cagePath, do not change them). Write src/scout/runTool.ts, a NEW file of the layer scout importing only posix from \"node:path\", \"./cagePath.js\" and types from \"./parseTurn.js\". It exports ToolCaps, DEFAULT_TOOL_CAPS, ToolResult and runTool(action, tree, fs, caps) exactly as section 2.2 shows: READ through cagePath (file) with its range and the readLines cap, GREP over the sorted listing with the skip list, the per-file cage, the hit cap and the line clip, LIST of one directory level; every line format and failure text exactly as pinned, caps read only from the caps parameter. Write no test file: a probe tests you and a judge writes the example tests."
+      "max_tokens": 12000,
+      "instruction": "Read docs/TASK_P27_scout.md sections 2.2 (src/scout/runTool.ts) and 4, and the Run Tool behaviour below; src/scout/cagePath.ts follows (do not change it). Patch src/scout/runTool.ts (its current text follows) and return it WHOLE. (1) ToolCaps gains `readChars?: number` right after readLines; DEFAULT_TOOL_CAPS gains `readChars: 12000` right after readLines. (2) READ: after last = min(to, from + readLines - 1), when caps.readChars is not undefined keep the shown lines `<i>: <line>` from `from` on while the sum of their lengths, each plus 1, stays <= readChars, at least one line; a first line longer than readChars is shown as its first readChars characters + \"… (+<rest> chars)\"; last becomes the last kept line, and the header and the \"… more lines; READ <path> <last+1>-<to> for the next\" trailer use it. (3) LIST: a shown file entry becomes `<name> (<n> line|lines)` with n its lines (splitLines of fs.readFile of the entry's listed path, after cagePath file), `<name> (binary)` when it holds \"\\0\", the name alone when cagePath refuses or readFile throws; only the shown entries are read; directory entries unchanged. GREP and everything else unchanged. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "spend-budget": {
       "intent": "generate",
@@ -2537,21 +2533,20 @@
       "instruction": "Read docs/TASK_P13a_scout.md sections 2.2 (src/scout/seedFromOwnership.ts, Seed From Ownership and its table) and 4; src/language/paths.ts follows (import profileForPath and isTest from \"../language/paths.js\", do not change it). Write src/scout/seedFromOwnership.ts, a NEW pure file of the layer scout. It exports, in this order, SeedOwnership, ScoutSeed, SEED_FILES, SEED_CHARS, SEED_WRITES, SEED_HEADER, seedFromOwnership(ownership, files, limit) and renderSeed(seed, maxChars) exactly as section 2.2 shows: the ownership order kept, code files of a profile that are not tests and still listed, up to limit, each note with its first SEED_WRITES writes; the rendered text cut by whole lines with the pinned tail. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "parse-turn-judge": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "tests/scout/parseTurn.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P13a_scout.md",
+        "docs/TASK_P27_scout.md",
         "docs/CONVENTIONS.md",
-        "tests/helpers.ts",
         "src/scout/parseTurn.ts"
       ],
       "depends_on": [
         "parse-turn"
       ],
       "max_tokens": 16000,
-      "instruction": "You write tests/scout/parseTurn.examples.test.ts only, a NEW file with the tests of Parse Turn examples 1-6. Read docs/TASK_P13a_scout.md sections 2.2 (Parse Turn) and 2.3 (the parseTurn.examples bullet). Import parseTurn and its types from \"../../src/scout/parseTurn.js\". Each test compares every whole Turn with toStrictEqual against the record's literal, the inputs written as TypeScript string literals exactly as the record's (\\n, \\r, \\t and the JSON quotes escaped)."
+      "instruction": "Read docs/TASK_P27_scout.md section 2.3 and the Parse Turn examples below. Patch tests/scout/parseTurn.examples.test.ts (its current text follows) and return it WHOLE: in the test of example 5 the sixth input becomes the text {\"files\": [\"a\"]} and its expected turn malformed \"no action: one line must start with READ, GREP, LIST or ANSWER\" (four no-action turns); append three tests named \"Parse Turn example 7: a bare or fenced JSON answer\", \"Parse Turn example 8: repeated and several action lines\", \"Parse Turn example 9: slash-delimited GREP and the first balanced object\", each comparing every whole Turn with toStrictEqual against the record's literal and, where the record says JSON.stringify exactly, that string with toBe; inputs as TypeScript string literals exactly as the record's (\\n and the JSON quotes escaped; the GREP text /Exited\\(/ is the TS literal \"GREP /Exited\\\\(/\"). Every other test stays byte for byte, its name included; keep the file's imports and helpers, add an import only for what the new tests use. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "cage-path-judge": {
       "intent": "generate",
@@ -2571,14 +2566,13 @@
       "instruction": "You write tests/scout/cagePath.examples.test.ts only, a NEW file with the tests of Cage Path examples 1-3. Read docs/TASK_P13a_scout.md sections 2.1 (the harness skeleton: MEM, NODE_FS, the symlink tree) and 2.2 (Cage Path) and 2.3 (the cagePath.examples bullet). Import cagePath and its types from \"../../src/scout/cagePath.js\", tmpRoot from \"../helpers.js\", fs from \"node:fs\". Examples 1-2 run on the in-memory tree with MEM; example 3 builds its tree under one tmpRoot with fs.symlinkSync, calls cagePath with NODE_FS and removes the tmp dir in finally. Every result compared with toStrictEqual."
     },
     "run-tool-judge": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "tests/scout/runTool.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P13a_scout.md",
+        "docs/TASK_P27_scout.md",
         "docs/CONVENTIONS.md",
-        "tests/helpers.ts",
         "src/scout/runTool.ts",
         "src/scout/cagePath.ts"
       ],
@@ -2586,7 +2580,7 @@
         "run-tool"
       ],
       "max_tokens": 20000,
-      "instruction": "You write tests/scout/runTool.examples.test.ts only, a NEW file with the tests of Run Tool examples 1-5. Read docs/TASK_P13a_scout.md sections 2.1 (the tree of the examples and its build skeleton) and 2.2 (Run Tool and its table) and 2.3 (the runTool.examples bullet). Import runTool, DEFAULT_TOOL_CAPS and the types from \"../../src/scout/runTool.js\", the ScoutFs and ScoutTree types from \"../../src/scout/cagePath.js\", tmpRoot from \"../helpers.js\", fs from \"node:fs\". Each test builds the §2.1 tree under its own tmpRoot (the skeleton's build), removes it in finally, and compares every whole ToolResult {text, read, error} with toStrictEqual, the texts written out line by line as the table gives them."
+      "instruction": "Read docs/TASK_P27_scout.md sections 2.1 (the trees and Run Tool example 6's) and 2.3 and the Run Tool examples below. Patch tests/scout/runTool.examples.test.ts (its current text follows) and return it WHOLE: in the test of example 5 every LIST text gets the line counts of the record (README.md (1 line); a.ts (5 lines), b.ts (3 lines), bin.dat (binary), e.ts (0 lines); dirlink and out.txt alone); append the test \"Run Tool example 6: the character cap of one READ\" on its own tmpRoot with w.txt and long.txt (build them with \"w\".repeat(250) and \"x\".repeat(13000)), comparing each whole ToolResult with toStrictEqual where the expected text is built in the test from the record's lines (Array.from with the line numbers, joined with \"\\n\") and also its length with toBe (12053, 12063, 12044); the last call uses caps without readChars (an object literal of the other five keys). Every other test stays byte for byte, its name included; keep the file's imports and helpers, add an import only for what the new tests use. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "spend-budget-judge": {
       "intent": "generate",
@@ -2623,93 +2617,82 @@
       "instruction": "You write tests/scout/seedFromOwnership.examples.test.ts only, a NEW file with the tests of Seed From Ownership examples 1-3. Read docs/TASK_P13a_scout.md sections 2.2 (Seed From Ownership and its table) and 2.3 (the seedFromOwnership.examples bullet). Import seedFromOwnership, renderSeed, SEED_HEADER and the types from \"../../src/scout/seedFromOwnership.js\". Build the ownership literal of example 1 once, compare every whole seed with toStrictEqual and every rendered text with toBe, the notes written out in full."
     },
     "run-scout": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "src/scout/runScout.ts"
       ],
       "context_slice": [
-        "docs/TASK_P13b_scout.md",
+        "docs/TASK_P27_scout.md",
         "docs/CONVENTIONS.md",
         "tests/fixtures/scout/protocol.txt",
         "src/scout/parseTurn.ts",
         "src/scout/cagePath.ts",
         "src/scout/runTool.ts",
         "src/scout/spendBudget.ts",
-        "src/processor/send.ts",
-        "src/processor/types.ts",
-        "src/compiler/types.ts"
+        "src/scout/sessionText.ts"
       ],
-      "depends_on": [],
+      "depends_on": [
+        "parse-turn",
+        "run-tool",
+        "session-text"
+      ],
       "variants": 2,
-      "max_tokens": 20000,
-      "instruction": "Read docs/TASK_P13b_scout.md sections 2.1 (the functions you call), 2.2 (src/scout/runScout.ts, PROTOCOL, Run Scout steps 1-8 and its table) and 4; tests/fixtures/scout/protocol.txt is PROTOCOL's exact text (no final newline: write it as a string constant, nine lines joined with \"\\n\"); src/scout/parseTurn.ts, cagePath.ts, runTool.ts, spendBudget.ts, src/processor/send.ts and the two types files follow (import from them, do not change them). Write src/scout/runScout.ts, a NEW file of the layer scout that imports no node module: the exports of section 2.2 in that order. Each round is one request through sendGeneration(config, [request], transport); the delivered text of Spend Budget is the next user message; one correction of a rejected answer; after a calls, reads or chars close the close sentence is appended to that same user message and the next turn is the final one; deadline and rounds end at once. Write no test file: a probe tests you and a judge writes the example tests."
+      "max_tokens": 16000,
+      "instruction": "Read docs/TASK_P27_scout.md sections 2.2 (src/scout/runScout.ts and its table) and 4, and the Run Scout behaviour below; tests/fixtures/scout/protocol.txt is PROTOCOL's exact new text (nine lines joined with \"\\n\", no final newline); the scout files follow (import from them, do not change them). Patch src/scout/runScout.ts (its current text follows) and return it WHOLE. (1) PROTOCOL = the fixture's nine lines; REMINDER = \"One action line per turn: READ <path> [<from>-<to>], GREP <pattern> [-- <dir>] or LIST [<dir>]; to answer: ANSWER \" + ANSWER_SHAPE + \".\". (2) ScoutSession gains `historyText?: string` after maxTokens. (3) openingMessages: system PROTOCOL + \"\\n\" + budgetSentence(session.budgets); user seed + LIST text + \"\\n\\n\" + (roundZero(question, tree, fs, caps.grepSkip, Math.floor(budgets.chars / 4)) + \"\\n\\n\" when not \"\") + (historyText + \"\\n\\n\" when given and not \"\") + \"Task:\\n\" + question. (4) A Set of the files READ so far: a READ is charged read true only when its key (cagePath file ok → its path, else the path as written) is new. (5) advance() builds the user message: charged.text, then \"\\n\\n\" + notRun(turn.skipped) when the action turn has skipped, then \"\\n\\n\" + budgetLeft(budgets, charged.spent), then the close sentence \"\\n\\nThe budget is closed: <why>. No more tools will run: send ANSWER \" + ANSWER_SHAPE + \" now, the JSON object last.\" when calls, reads or chars closed; neither added text is charged. (6) A final turn (after the close): an action ends as today (no_answer); a malformed turn or an answer checkAnswer rejects, the first time after the close, is charged with \"\" (ignore what it closes), journaled with chars 0 and its reason or error, and the next user message is afterClose(\"Turn not understood: \" + reason or \"ANSWER rejected: \" + error) with final still true; the second time it ends invalid_answer \"no answer: the answer after the budget closed was rejected twice: \" + the reason or error. The correction before the close is unchanged and separate. Every other behaviour stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "run-scout-judge": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "tests/scout/runScout.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P13b_scout.md",
+        "docs/TASK_P27_scout.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/scout/runScout.ts",
-        "src/scout/cagePath.ts",
-        "src/processor/registry.ts"
+        "src/scout/sessionText.ts"
       ],
       "depends_on": [
         "run-scout"
       ],
       "max_tokens": 24000,
-      "instruction": "You write tests/scout/runScout.examples.test.ts only, a NEW file with the tests of Run Scout examples 1-5. Read docs/TASK_P13b_scout.md sections 2.1 (the tree, the stub processor and the harness skeleton: NODE_FS, NO_NET, stub(), the session) and 2.2 (Run Scout and its table) and 2.3 (the runScout.examples bullet). Import runScout, PROTOCOL, REMINDER and the types from \"../../src/scout/runScout.js\", readRegistry from \"../../src/processor/registry.js\", DEFAULT_TOOL_CAPS from \"../../src/scout/runTool.js\", DEFAULT_BUDGETS from \"../../src/scout/spendBudget.js\", the ScoutFs type from \"../../src/scout/cagePath.js\", the Transport and ProcessorConfig types from \"../../src/processor/types.js\", tmpRoot, fakeFetch, fakeClock and fixture from \"../helpers.js\", fs from \"node:fs\". Every model turn is a file scout.t<n>.md of an answers dir (the stub) or the fakeFetch route of example 5; compare PROTOCOL with fixture(\"scout/protocol.txt\"). Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "Read docs/TASK_P27_scout.md sections 2.1 (the tree's tool texts now) and 2.3 and the Run Scout examples below. Patch tests/scout/runScout.examples.test.ts (its current text follows) and return it WHOLE: examples 1-5 keep their names and setup and take the record's new values (the system message PROTOCOL + \"\\n\" + budgetSentence(DEFAULT_BUDGETS) or of the test's budgets, the LIST texts with line counts, the \"Budget left: …\" lines, the close sentence with ANSWER_SHAPE, spent and journal chars as the record writes them); append the tests \"Run Scout example 6: the final turn reads a bare answer and grants one correction\", \"Run Scout example 7: repeated lines, a line not run, the budget left, a file read once\", \"Run Scout example 8: round zero and the recent commits in the first message\" with the same stub(), session and NO_NET helpers. Import budgetSentence, ANSWER_SHAPE and ROUND0_HEADER from \"../../src/scout/sessionText.js\"; the other expected texts are literals as the record writes them. Every other test stays byte for byte, its name included; keep the file's imports and helpers, add an import only for what the new tests use. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "scout-command": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "src/scout/scoutCommand.ts"
       ],
       "context_slice": [
-        "docs/TASK_P13b_scout.md",
+        "docs/TASK_P27_scout.md",
         "docs/CONVENTIONS.md",
         "src/scout/runScout.ts",
-        "src/scout/cagePath.ts",
-        "src/scout/parseTurn.ts",
-        "src/scout/runTool.ts",
-        "src/scout/spendBudget.ts",
-        "src/scout/seedFromOwnership.ts",
-        "src/git/run.ts",
-        "src/git/log.ts",
-        "src/git/ownership.ts",
-        "src/processor/registry.ts",
-        "src/processor/send.ts",
-        "src/processor/types.ts"
+        "src/git/run.ts"
       ],
       "depends_on": [
         "run-scout"
       ],
       "variants": 2,
-      "max_tokens": 20000,
-      "instruction": "Read docs/TASK_P13b_scout.md sections 2.1 (the functions you call), 2.2 (src/scout/scoutCommand.ts, Scout Command and its table, the ScoutRecord keys) and 4; src/scout/runScout.ts, the P13a scout files, the git and processor files follow (import from them, do not change them). Write src/scout/scoutCommand.ts, a NEW file of the layer scout and one of its two node:fs files (node:fs, node:crypto, node:path): the exports of section 2.2 in that order. The refusals in the record's order before any model call or write; the listing from gitOk(root, [\"ls-files\", \"-z\", \"--cached\", \"--others\", \"--exclude-standard\"], env); the clock only as deps.now(), called once before runScout (its value gives the id and createdAt); scout.json and transcript.json as JSON.stringify(value, null, 2) + \"\\n\" under .morph/scout/<id>/. Write no test file: a probe tests you and a judge writes the example tests."
+      "max_tokens": 16000,
+      "instruction": "Read docs/TASK_P27_scout.md section 2.2 (src/scout/scoutCommand.ts) and the Scout Command behaviour below; src/scout/runScout.ts (its ScoutSession now has historyText?) and src/git/run.ts follow (do not change them). Patch src/scout/scoutCommand.ts (its current text follows) and return it WHOLE: right after ref, `const log = runGit(root, [\"log\", \"-n\", \"10\", \"--format=%h %s\"], deps.env)`; historyText = \"Recent commits (newest first):\\n\" + log.stdout.trim() when log.code is 0 and that trimmed stdout is not \"\", else \"\"; pass historyText in the session given to runScout, after maxTokens. Nothing else changes: the refusals, the record, the ids, the files written. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "scout-command-judge": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "tests/scout/scoutCommand.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P13b_scout.md",
+        "docs/TASK_P27_scout.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/scout/scoutCommand.ts",
-        "src/scout/runScout.ts",
-        "src/scout/seedFromOwnership.ts",
-        "src/scout/runTool.ts"
+        "src/scout/sessionText.ts"
       ],
       "depends_on": [
         "scout-command"
       ],
-      "max_tokens": 24000,
-      "instruction": "You write tests/scout/scoutCommand.examples.test.ts only, a NEW file with the tests of Scout Command examples 1-5. Read docs/TASK_P13b_scout.md sections 2.1 (the Scout Command harness: the tmpRepo with the Morph-Card: b commit, the side root, the deps and args) and 2.2 (Scout Command and its table, the ScoutRecord keys) and 2.3 (the scoutCommand.examples bullet). Import from \"../../src/scout/scoutCommand.js\", PROTOCOL from \"../../src/scout/runScout.js\", SEED_HEADER from \"../../src/scout/seedFromOwnership.js\", DEFAULT_TOOL_CAPS from \"../../src/scout/runTool.js\", tmpRepo and tmpRoot from \"../helpers.js\", fs from \"node:fs\". scoutCommand is async: await it; a root outside git makes its promise reject. Read scout.json with the tmpRepo's read and JSON.parse. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "max_tokens": 20000,
+      "instruction": "Read docs/TASK_P27_scout.md sections 2.1 and 2.3 and the Scout Command example 1 below. Patch tests/scout/scoutCommand.examples.test.ts (its current text follows) and return it WHOLE: in the test of example 1, transcript[0] is {role \"system\", content PROTOCOL + \"\\n\" + budgetSentence(DEFAULT_BUDGETS)}; LIST_ROOT becomes \"LIST .: 2 entries\\nREADME.md (1 line)\\nsrc/ (2 files)\"; transcript[1] gains \"\\n\\nRecent commits (newest first):\\n\" + t.git([\"log\", \"-n\", \"10\", \"--format=%h %s\"]).trim() between LIST_ROOT and \"\\n\\nTask:\\n\"; transcript[3] is READ_B + \"\\n\\nBudget left: 29 calls, 11 file reads, 119914 chars, 39 rounds.\". Import budgetSentence from \"../../src/scout/sessionText.js\" and DEFAULT_BUDGETS from \"../../src/scout/spendBudget.js\". Every other test stays byte for byte, its name included; keep the file's imports and helpers, add an import only for what the new tests use. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "plan-from-scout": {
       "intent": "generate",
@@ -3731,6 +3714,41 @@
       ],
       "max_tokens": 24000,
       "instruction": "You write tests/debt/acceptGroup.examples.test.ts only, a NEW file with the tests of Accept Group examples 1-6. Read docs/TASK_P24b_group.md sections 2.1 (the Accept Group harness: the tmpRepo with its commit \"base\", the archive written under .morph/runs/r1/, the env) and 2.2 and 2.3 (the acceptGroup.examples bullet). Import acceptGroup from \"../../src/debt/acceptGroup.js\", tmpRepo, fixture and fixtureJson from \"../helpers.js\"; await acceptGroup. Read a commit with t.git([\"rev-parse\", ref]) and a message with t.git([\"log\", \"-1\", \"--format=%B\", ref]). Six tests in record order named \"Accept Group example <n>: <what>\", each on its own tmpRepo removed in finally. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+    },
+    "session-text": {
+      "intent": "generate",
+      "targets": [
+        "src/scout/sessionText.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P27_scout.md",
+        "docs/CONVENTIONS.md",
+        "src/scout/cagePath.ts",
+        "src/scout/spendBudget.ts"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 12000,
+      "instruction": "Read docs/TASK_P27_scout.md sections 2.1 (Session Text example 3's tree) and 2.2 (src/scout/sessionText.ts) and 4, and the Session Text behaviour below; src/scout/cagePath.ts and src/scout/spendBudget.ts follow (import cagePath and the ScoutFs, ScoutTree, ScoutBudgets, ScoutSpent types, do not change them). Write src/scout/sessionText.ts, a NEW pure file of the layer scout importing only posix from \"node:path\", \"./cagePath.js\" and types from \"./spendBudget.js\". Export, in this order, ANSWER_SHAPE, ROUND0_CLUES = 8, ROUND0_HITS = 20, ROUND0_HEADER, budgetSentence, budgetLeft, notRun, afterClose, taskClues and roundZero, every sentence character for character as the behaviour writes it. taskClues: the four global regexes CAMEL, SNAKE, QUOTED (group 1), FILE, every match with its index, sorted by index then pattern order (a stable sort), dropping clues shorter than 3, all-digit ones and repeats, at most ROUND0_CLUES. roundZero: a file's lines are its text split on \"\\n\", one trailing \"\\r\" removed, the last empty piece dropped; files in code-unit order ([...tree.files].sort()); the clue found with String.prototype.includes; lines joined while the text stays <= maxChars, then the cut line. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "session-text-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/scout/sessionText.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P27_scout.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/scout/sessionText.ts",
+        "src/scout/spendBudget.ts",
+        "src/scout/cagePath.ts"
+      ],
+      "depends_on": [
+        "session-text"
+      ],
+      "max_tokens": 16000,
+      "instruction": "You write tests/scout/sessionText.examples.test.ts only, a NEW file with the tests of Session Text examples 1-3, named \"Session Text example <n>: <what>\". Read docs/TASK_P27_scout.md sections 2.1 (example 3's tree) and 2.2 and the Session Text examples below. Import from \"../../src/scout/sessionText.js\", DEFAULT_BUDGETS from \"../../src/scout/spendBudget.js\", the ScoutFs type from \"../../src/scout/cagePath.js\", tmpRoot from \"../helpers.js\", fs from \"node:fs\". Example 3 builds its tree under one tmpRoot with p.write, uses NODE_FS = {realpath: (x) => fs.realpathSync(x), readFile: (x) => fs.readFileSync(x, \"utf8\")} and root p.root, and compares the whole text with toBe against the record's lines joined with \"\\n\" (c/many.txt:1 … :19 built with Array.from) and its length 1085. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     }
   }
 }

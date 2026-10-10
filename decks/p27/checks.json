@@ -1,0 +1,26 @@
+{
+  "phase": "p27",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates"],
+  "fullExclude": ["tests/scout/parseTurn.examples.test.ts", "tests/scout/runTool.examples.test.ts", "tests/scout/sessionText.examples.test.ts",
+    "tests/scout/runScout.examples.test.ts", "tests/scout/scoutCommand.examples.test.ts"],
+  "cards": [
+    { "id": "parse-turn" },
+    { "id": "run-tool" },
+    { "id": "session-text" },
+    { "id": "run-scout" },
+    { "id": "scout-command" },
+    { "id": "parse-turn-judge", "files": [{ "file": "tests/scout/parseTurn.examples.test.ts", "min": 9, "max": 12, "new": false,
+      "lits": ["Parse Turn example 7", "Parse Turn example 8", "Parse Turn example 9", "DoneWait", "uses } and {", "LIST b", "skipped"] }] },
+    { "id": "run-tool-judge", "files": [{ "file": "tests/scout/runTool.examples.test.ts", "min": 6, "max": 9, "new": false,
+      "lits": ["Run Tool example 6", "README.md (1 line)", "bin.dat (binary)", "e.ts (0 lines)", "12053", "12063", "12044", "… (+1003 chars)"] }] },
+    { "id": "session-text-judge", "files": [{ "file": "tests/scout/sessionText.examples.test.ts", "min": 3, "max": 6, "new": true,
+      "lits": ["Session Text example 1", "Session Text example 2", "Session Text example 3", "Budget left: 28 calls, 11 file reads, 70000 chars, 37 rounds.",
+        "… 3 more matches", "1085", "the final turn"] }] },
+    { "id": "run-scout-judge", "files": [{ "file": "tests/scout/runScout.examples.test.ts", "min": 8, "max": 11, "new": false,
+      "lits": ["Run Scout example 6", "Run Scout example 7", "Run Scout example 8", "the answer after the budget closed was rejected twice",
+        "Budget left: 29 calls, 12 file reads, 119951 chars, 39 rounds.", "Not run: LIST. One action line per turn; equal lines count once.", "abc1234 files"] }] },
+    { "id": "scout-command-judge", "files": [{ "file": "tests/scout/scoutCommand.examples.test.ts", "min": 5, "max": 7, "new": false,
+      "lits": ["Recent commits (newest first):", "README.md (1 line)", "Budget left: 29 calls, 11 file reads, 119914 chars, 39 rounds."] }] }
+  ]
+}
