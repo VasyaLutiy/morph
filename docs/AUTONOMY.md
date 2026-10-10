@@ -224,6 +224,15 @@ preparation agent repeats this line.
 ## The cycle of one phase
 
 1. **Prepare** (an orchestrator agent, fresh context, the brief in the form of P10a/P10b1):
+   **Recon first, before any code is read** (operator 10.10, the order of the old mrph orchestrator, which prepared
+   phases fast): `node dist/cli.js primer --root . --write` and read `.morph/primer.md` (its ownership table names the
+   test files and the cards that write them, judges included; the scout does not see them); then `contour.yaml` by its
+   outline, the phase's groups only (a new Component or group: the record edit comes before the spec); then the scout,
+   the question in a file outside the tree: `node dist/cli.js scout --root . --processor ds --issue /tmp/<phase>-issue.md`
+   (3–6 lines: what changes, where the contract is — group, Function, commit —, what does not change, what is out of
+   scope; round zero is seeded from git's ownership; it stops by itself at `--deadline`, 1800 s). The roles of test files
+   (target or context) are the orchestrator's, read off the primer's ownership table, not the scout's. Code is read
+   where the primer and the scout point. §11 records two numbers apart: deck targets the scout named, roles changed.
    spec by `docs/TASK_TEMPLATE.md`, fixtures, map entries, probes, the phase's acceptances
    (`build.py p<N>` with `"locate": True, "full_report": True` until P10b2 landed; since 07.10 it is in `decks/tools/archive/`: the
    phase's `checks.json` and `morph plan --checks`, as P10b2 defines). **The cut is V2's**:

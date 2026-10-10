@@ -49,7 +49,17 @@ preparation agent repeats this line.
 
 ## The cycle of one phase
 
-1. **Prepare** (an orchestrator agent with a fresh context): the spec by `docs/TASK_TEMPLATE.md`; the record and the map
+1. **Prepare** (an orchestrator agent with a fresh context):
+   **Recon first, before any code is read** (operator 10.10, the order of the old mrph orchestrator, which prepared
+   phases fast): `morph primer --root . --write` and read `.morph/primer.md` (its ownership table names the
+   test files and the cards that write them, judges included; the scout does not see them); then `contour.yaml` by its
+   outline, the phase's groups only (a new Component or group: the record edit comes before the spec); then the scout,
+   the question in a file outside the tree: `morph scout --root . --processor <the project's processor> --issue /tmp/<phase>-issue.md`
+   (3–6 lines: what changes, where the contract is — group, Function, commit —, what does not change, what is out of
+   scope; round zero is seeded from git's ownership; it stops by itself at `--deadline`, 1800 s). The roles of test files
+   (target or context) are the orchestrator's, read off the primer's ownership table, not the scout's. Code is read
+   where the primer and the scout point. §11 records two numbers apart: deck targets the scout named, roles changed.
+   Then: the spec by `docs/TASK_TEMPLATE.md`; the record and the map
    entries (a new file needs `"intent": "generate"`); fixtures; `decks/<phase>/checks.json` and the probes
    `decks/<phase>/parts/<card>.probe.*`; the cut:
    `morph plan --root . --spec contour.yaml --map morph-map.json --component <C>… --judge --checks
