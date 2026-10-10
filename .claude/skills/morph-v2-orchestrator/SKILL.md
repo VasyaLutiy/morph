@@ -157,8 +157,14 @@ or record the departure (§1.3).
 
 1. **Each card's acceptance runs once** in a scratch worktree, stubs in place of its targets:
    - a new code file: its typed exports, every body throwing `stub <name>`;
-   - a patch target: the current file plus only the declarations the probe needs to compile
-     (a new optional key or type), no behaviour;
+   - a patch target (intent `patch`): the current file plus only the declarations the probe needs
+     to compile (a new optional key or type), no behaviour;
+   - **an existing file re-cut with intent `generate`** (rewritten from the record, the card never
+     sees the old text): ONLY the names the record gives that file, typed, every body throwing —
+     never the current file. Its kept neighbours (same package/module, not in the deck) then build
+     against it in `deck check`; a break naming a kept file is a name the record does not hold (a
+     private helper, an unrecorded export): add it to the record's Function, or put the neighbour
+     in the card's slice with "keep these names", before the run (#22);
    - a judge's test file: one passing test.
    Earlier generations' stubs stay in place for later cards.
 2. **The verdict, per probe:** each example red with a readable line (not a crash at import);

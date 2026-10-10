@@ -38,6 +38,7 @@ P24c, P24b. PM = the MorphStudio PM's live phases P7b, P7c, P8a (10.10).
 | §4.7 judge lits verbatim; literal list and value types in the judge instruction | P21b replay, P24c; PM P7b | a concatenated path as a lit: 1 retry; P24c guard lits too strict: 1 retry; P7b: almost every red was a judge (missing lit, `int` vs `float64`, unused import, `undefined: context`), code passed its probes in every run |
 | §5.2 `--only` forced; transaction named | P24, P24c, P24b | all three phases had to cut with `--only`; the old "not for new code" rule could not be kept |
 | §6.1 patch stub = file + declarations | P21a, P21c replays | the bare current file stops at `tsc`, not per example |
+| §6.1 generate re-cut stub = record names only | PM MorphStudio P8b, 10.10 (#22) | stub = current pm.go kept `jsonResult`/`errorResult`: `deck check` 0 errors, then the run's package build red on the kept `session.go`, transaction fault "outside", 9 cards rolled back; with a record-only stub `deck check` exits 2 naming `session.go:66…98` (Fable repro) |
 | §6.3 `node_modules` as per-entry symlinks | P21a replay | a symlinked `node_modules` showed untracked; `.git/info/exclude` edited — shared with the repo |
 | §8.1 deadline from the deck | PM P7b | a 7-generation transaction fit neither 2400 nor 4800 s |
 | §8.3 no polling | PM P7b | 18 polls of 4–10 min, each rereading ~280k context: ≈ 4.9M tokens for nothing |

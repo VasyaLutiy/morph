@@ -89,7 +89,8 @@ example. Rules that cost runs:
 
 `decks/<phase>/_stubs/` mirrors the targets' paths:
 - a new code file: the typed exports, every body `throw new Error("stub <name> …")`;
-- a patch target: the current file, plus only the declarations the probe needs to compile (no behaviour);
+- a patch target (intent `patch`): the current file, plus only the declarations the probe needs to compile (no behaviour);
+- an existing file re-cut with intent `generate`: only the names the record gives that file, typed, bodies throwing — never the current file, which hides what kept neighbours use (#22);
 - a judge's test file: one passing test (`test("stub", () => { expect(1).toBe(1); })`).
 Real: `decks/p22b/_stubs/`. Every target needs its stub: a missing one is an error of
 `deck check` (builds) and of `gate`.
