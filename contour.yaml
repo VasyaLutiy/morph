@@ -146,15 +146,33 @@ System:
         - name: Blame Log
           description: The cards a red acceptance log blames by the files its lines name, and the lines naming files outside them.
           behavior: >
-            blameLog(log, card, owners, fileLines, exists) in src/cards/transaction.ts, pure: log the red acceptance's output; card
-            the customId whose acceptance it is; owners a Record target path → owning customId; fileLines regular-expression
-            sources (Tree Profiles' fileLine, in order: group 1 the path, group 2 the rest); exists(path) whether the path is on
-            disk. For every line of log.split("\n"), its trailing white space removed (trimEnd): a line that is "" or starts with
-            "#", " " or "\t" is skipped; else the FIRST of fileLines (new RegExp, in order) that matches it gives p = group 1 and
-            rest = group 2 (none matches → the line is ignored); p an own key of owners → owners[p] is blamed; else exists(p)
-            false → card is blamed (a file of the acceptance itself, gone when it ends: a probe); else p + rest is an outside line.
-            No line matched any of fileLines → card is blamed. → Blame {cards: the blamed ids, outside: the outside lines}, each
-            once, sorted (JavaScript's default sort). The inputs are never changed.
+            blameLog(log, card, owners, fileLines, exists, testLines = []) in src/cards/transaction.ts, pure: log the red
+            acceptance's output; card the customId whose acceptance it is; owners a Record target path → owning customId;
+            fileLines regular-expression sources (Tree Profiles' fileLine, in order: group 1 the path, group 2 the rest);
+            exists(path) whether the path is on disk; testLines (P24c, issue #19) the Test Lines of Tree Profiles' TEST_LINES
+            in order, each {failLine, locationLine, packageLine}, a regular-expression source or null, group 1 of each the
+            path. `export interface TestLines { failLine: string | null; locationLine: string | null; packageLine: string |
+            null }` lives in src/cards/transaction.ts next to Blame. For every line of log.split("\n"), its trailing white
+            space removed (trimEnd): a line that is "" or starts with "#" is skipped. A line that does not start with " " or
+            "\t" goes to fileLines first: the FIRST of fileLines that matches it (new RegExp, in order) gives p = group 1 and
+            rest = group 2; p an own key of owners → owners[p] is blamed; else exists(p) false → card is blamed (a file of
+            the acceptance itself, gone when it ends: a probe); else p + rest is an outside line. A line no fileLine matched
+            (an indented line always) goes to testLines: the first pattern that matches it, entry by entry in order and in
+            each entry failLine, then locationLine, then packageLine (null ones skipped). A packageLine match blames
+            nothing: its group 1 is the package of the bare file names around it. A failLine or locationLine match gives
+            P = group 1, resolved as follows. (1) A P with no "/" from a locationLine is joined to its package: K + "/" + P,
+            K = group 1 of the first packageLine match on a LATER line of the log (go test prints a package's failures
+            before its FAIL line), else of the last one on an earlier line; no packageLine match anywhere → P as it is.
+            (2) The candidates: P without a leading "/", then the same with its leading path segments dropped one at a
+            time ("m/a/b_test.go", "a/b_test.go", "b_test.go"). (3) The candidates are walked in order to the first that is
+            an own key of owners (→ that owner is blamed) or that exists (→ nothing: a file no card owns; a test line is
+            never an outside line). (4) No candidate owned or existing → card is blamed when P does not start with "/" (a
+            file of the acceptance itself, gone: a probe), nothing when it does (a frame of the toolchain). After the walk,
+            no card blamed and no outside line: some line matched a pattern of testLines → no card is blamed (an
+            unattributed red, Blame {cards: [], outside: []}; P24c, issue #19 item 2: a red nobody owns does not blame every
+            card that saw it); else → card is blamed (a red naming no file: a guard, a message). → Blame {cards: the blamed
+            ids, outside: the outside lines}, each once, sorted (JavaScript's default sort). The inputs are never changed.
+            testLines [] (the default) gives the result before P24c: no indented line is read.
           steps:
             - produces: Blame
           examples:
@@ -174,6 +192,22 @@ System:
               ref: "tests/fixtures/cards/blameLogs.json"
               when: blameLog
               then: '{cards: ["p2"], outside: ["cmd/tool/main.go:6:2: m.Old undefined (type *rate.Meter has no field or method Old)", "rate/k7_probe_test.go:9:2: undefined: rate.Mid", "rate/rate.go:3:1: missing return"]}'
+            - given: 'P24c, issue #19 acceptance. blameTestLogs.json["go"] (go test ./... of morphlite, two packages red on an assertion each); card "cc"; owners O5 = {"control/control.go": "cc", "daemon/daemon.go": "dc", "daemon/daemon_examples_test.go": "dcj", "supervisor/guard.go": "rg", "supervisor/guard_examples_test.go": "rgj"}; exists true for those five paths only; the three fileLines; testLines TEST_LINES; then the same call without testLines; then owners O5 without the two _test.go keys (exists unchanged); then that owners and exists always false'
+              ref: "tests/fixtures/cards/blameTestLogs.json"
+              when: blameLog
+              then: '{cards: ["dcj", "rgj"], outside: []} (daemon_examples_test.go joined to morphlite/daemon, the FAIL line after it, guard_examples_test.go to morphlite/supervisor; "cc" not blamed); then {cards: ["cc"], outside: []} (before P24c: every indented line skipped, the card blames itself); then {cards: [], outside: []} (the test files exist, no card owns them: unattributed); then {cards: ["cc"], outside: []} (gone files: the card itself)'
+            - given: 'blameTestLogs.json["goPanic"] (a nil dereference in TestDaemonCorePanic, the trace with absolute paths); card "cc"; owners O5; exists true for the five paths only; the three fileLines; TEST_LINES'
+              ref: "tests/fixtures/cards/blameTestLogs.json"
+              when: blameLog
+              then: '{cards: ["dcj"], outside: []} ("/tmp/morphlite/daemon/daemon_examples_test.go:22" by its candidate "daemon/daemon_examples_test.go"; the /usr/lib/go-1.22 frames blame nothing)'
+            - given: 'blameTestLogs.json["typescript"] (vitest --reporter=dot from the first " FAIL " line: an assertion red and a throw from src/units/len.ts); card "rt"; owners {"src/units/len.ts": "lc", "tests/units/len.test.ts": "lj"}; exists true for those two only; the three fileLines; TEST_LINES; then owners {}; then owners {} and exists always false'
+              ref: "tests/fixtures/cards/blameTestLogs.json"
+              when: blameLog
+              then: '{cards: ["lc", "lj"], outside: []} (" FAIL  tests/units/len.test.ts > …" and " ❯ tests/units/len.test.ts:4:21" → lj, " ❯ toFeet src/units/len.ts:2:25" → lc); then {cards: [], outside: []}; then {cards: ["rt"], outside: []}'
+            - given: 'blameTestLogs.json["python"] (pytest -q --tb=short); card "pc"; owners {"src/calc.py": "pc", "tests/test_calc.py": "pj"}; exists true for those two only; the three fileLines; TEST_LINES; then owners {"src/calc.py": "pc"}; then the first owners on the log's FAILED line alone ("FAILED tests/test_calc.py::test_half - assert 2 == 4\n", as -q --tb=no prints it)'
+              ref: "tests/fixtures/cards/blameTestLogs.json"
+              when: blameLog
+              then: '{cards: ["pj"], outside: []} ("tests/test_calc.py:5: in test_half" by the python fileLine, "FAILED tests/test_calc.py::test_half - assert 2 == 4" by its failLine); then {cards: [], outside: ["tests/test_calc.py:5: in test_half"]} (a column-0 line keeps its outside rule); then {cards: ["pj"], outside: []} (before P24c: ["pc"])'
       dataObjects:
         - name: Blame
           description: What one red acceptance log blames.
@@ -1151,7 +1185,7 @@ System:
           schema: "{ customId: string, status: 'written'|'failed'|'skipped'|'budget-exceeded', reason: string | null, attempts: number, winningVariant: string | null, acceptanceLog: string, earlierFailures: string[], commit: string | null, diffstat: { files: number, insertions: number, deletions: number } | null }"
         - name: Run Report
           description: The summary of one run (its schema and archive layout are runloop's; the file write and commit are P6 git's).
-          schema: "{ runId: string, completedAt: number, branch: string, processor: string, generations: number, outcomes: CardOutcome[], usageTotals: { inputTokens: number, outputTokens: number, cost: number | null, requests: number }, requests?: RequestUsage[], fault?: string } — fault only when the run stopped on a fault; requests always set by Run Deck (optional for report literals built elsewhere)"
+          schema: "{ runId: string, completedAt: number, branch: string, processor: string, generations: number, outcomes: CardOutcome[], usageTotals: { inputTokens: number, outputTokens: number, cost: number | null, requests: number }, requests?: RequestUsage[], rounds?: TransactionRound[], stop?: string, fault?: string } — rounds only from Run Transaction (P24c), stop only from Run Transaction's stops; fault only when the run stopped on a fault; requests always set by Run Deck (optional for report literals built elsewhere)"
         - name: Request Usage
           description: One request a run sent, as the processor answered it (one row per variant, retries included).
           schema: "{ customId: string, model: string, provider: string | null, generationId: string | null, inputTokens: number, outputTokens: number, cost: number | null, finishReason: string | null, error: string | null, batchId?: string }"
@@ -1194,11 +1228,14 @@ System:
             on the tree. W.report.fault set, or some W outcome not "written" → rollback (below), no acceptance run.
             Else rounds r = 0, 1, …: every card in deck order runs ITS acceptance (Run Acceptance(card.acceptance, root, {env:
             deps.env, timeoutMs: deps.acceptanceTimeoutMs ?? DEFAULT_TIMEOUT_MS})); exit 0 green, else red with Blame Log(its
-            log, its customId, owners, TREE_PROFILES' fileLine in order, p → a file or directory exists at root/p). All
+            log, its customId, owners, TREE_PROFILES' fileLine in order, p → a file or directory exists at root/p,
+            TEST_LINES; P24c). All
             green → deps.commit(id, targets) per card in deck order, id = the customId of the attempt whose files are on the
             tree (the card's, or "<customId>.r<n>" of its last written retry); done. Some red: any outside line → fault
-            "outside the subset: " + every red card's outside lines (each once, sorted) joined ", ", then rollback. Else
-            blamed = every id some red card's Blame names, in deck order. A card's retries are its own (P24, issue #16 item 1;
+            "outside the subset: " + every red card's outside lines (each once, sorted) joined ", ", then rollback. Some
+            red card's Blame names no card (an unattributed red; P24c, issue #19 item 2) → the report's stop =
+            "unattributed red: " + every such card's customId, deck order, joined ", ", then rollback (no retry: a red no
+            card owns is not paid for by the cards that saw it). Else blamed = every id some red card's Blame names, in deck order. A card's retries are its own (P24, issue #16 item 1;
             no run-wide count of retry batches, a round that blames other cards costs this card nothing): a blamed card is
             capped when its retries (W's included) are 2, cap "2 retries", or else when its retries of this transaction are
             >= input.budget.maxRetryBatches, cap "maxRetryBatches <m>" (m that number); some blamed card capped → the
@@ -1223,13 +1260,18 @@ System:
             issue #16 item 3), acceptanceLog its last round's log (W's when no round ran), earlierFailures W's + its red
             logs of rounds before the last, commit null, diffstat null, then lastRound "green" or "red" (its last round)
             when a round ran — absent when none ran}. CardOutcome gains the optional last key `lastRound?: "green" |
-            "red"`, set only here; RunReport gains the optional key `stop?: string`, between requests and fault. A value thrown (an answer write, the interrupt, the
+            "red"`, set only here; RunReport gains the optional key `stop?: string`, between requests and fault. Rounds (P24c, issue #19 item 3):
+            every round that ran, in order, is kept as {round: r, reds: one {customId, blamed: its Blame's cards, log} per
+            red card of the round, deck order} (a green round: reds []); RunReport gains the optional key `rounds?:
+            TransactionRound[]` between requests and stop, set when at least one round ran (`export interface RoundRed {
+            customId: string; blamed: string[]; log: string }`, `export interface TransactionRound { round: number; reds:
+            RoundRed[] }` in src/runloop/types.ts). A value thrown (an answer write, the interrupt, the
             hook): before the first commit → before restored and every card {status "skipped", reason "fault", attempts 0,
             winningVariant null, acceptanceLog "", earlierFailures [], commit null, diffstat null}; after → the committed
             keep "written", the rest that outcome, nothing restored; fault = the Error's message. The Run Report: runId,
             completedAt deps.now(), branch, processor deps.config.id, generations W's, outcomes in deck order, usageTotals
             W's plus every retry request's (cost null when none), requests W's rows then the retries' in send order, then
-            stop and fault, each when set (fault the last key). deps.onVariant sees every request (W's verdicts are those of the "true" acceptance).
+            rounds, stop and fault, each when set (fault the last key). deps.onVariant sees every request (W's verdicts are those of the "true" acceptance).
           steps:
             - uses: runloop
             - uses: cards
@@ -1270,6 +1312,12 @@ System:
             - given: 'example 10''s answers, a → out/a.ts M + "echo red-a9; exit 1", b → out/b.ts M + "exit 0"; maxRetryBatches 1'
               when: runTransaction
               then: 'round 0 blames a, a retried once; round 1 blames a with 1 retry of this transaction: rollback; report stop "retry cap: a (maxRetryBatches 1)"; a "failed" "acceptance failed" attempts 2 winningVariant "a.r1.v1" lastRound "red" acceptanceLog "red-a9\n" earlierFailures ["red-a9\n"]; b "failed" "transaction rolled back" attempts 1 winningVariant "b.v1" lastRound "green" acceptanceLog "" earlierFailures []; requests a.v1, b.v1, a.r1.v1; no commit'
+            - given: 'P24c, issue #19 acceptance in the stub. The stub, maxRetryBatches 2; fenced a.md ''export const a = "A1";\n'', c.md ''export const c = "C3";\n'', j.md ''export const j = "J1";\n'', j.r1.md ''export const j = "J2";\n''; T = " FAIL  out/j.test.ts > j"; cards a → out/a.ts M + "exit 0"; c → out/c.ts M + once(c.once, T); j → out/j.test.ts dependsOn [a], M + once(j.once, T)'
+              when: runTransaction
+              then: 'round 0: c and j red with the same log, both blaming j (the owner of out/j.test.ts), c not; only j retried; round 1 green: a "written" attempts 1 winningVariant "a.v1" earlierFailures []; c "written" attempts 1 winningVariant "c.v1" earlierFailures [" FAIL  out/j.test.ts > j\n"]; j "written" attempts 2 winningVariant "j.r1.v1" earlierFailures [" FAIL  out/j.test.ts > j\n"]; acceptanceLog "" each; requests a.v1, c.v1, j.v1, j.r1.v1; the hook fired a, c, j.r1; report.rounds [{round: 0, reds: [{customId: "c", blamed: ["j"], log: " FAIL  out/j.test.ts > j\n"}, {customId: "j", blamed: ["j"], log: " FAIL  out/j.test.ts > j\n"}]}, {round: 1, reds: []}]; no stop key, no fault key'
+            - given: 'P24c, issue #19 item 2. The stub; fenced a.md ''export const a = "A1";\n'', b.md ''export const b = "B2";\n''; cards a → out/a.ts M + "exit 0"; b → out/b.ts M + "touch out/zz.test.ts; echo \" FAIL  out/zz.test.ts > zz\"; exit 1"'
+              when: runTransaction
+              then: 'round 0: b red on a test file that exists and no card owns, its Blame {cards: [], outside: []}: no retry; rollback; report.stop "unattributed red: b", the last key; report.rounds [{round: 0, reds: [{customId: "b", blamed: [], log: " FAIL  out/zz.test.ts > zz\n"}]}], the key before stop; a "failed" "transaction rolled back" attempts 1 winningVariant "a.v1" lastRound "green" acceptanceLog "" earlierFailures []; b "failed" "transaction rolled back" attempts 1 winningVariant "b.v1" lastRound "red" acceptanceLog " FAIL  out/zz.test.ts > zz\n" earlierFailures []; requests a.v1, b.v1; no commit; out/a.ts and out/b.ts absent'
 
     # ---------------------------------------------------------------- P6
     - name: git
@@ -2109,7 +2157,16 @@ System:
             "go build -overlay {config} ./... ; go vet -overlay {config} ./...", fileLine
             "^(?:vet: )?(?:\\./)?(\\S+?\\.go)(:\\d+.*)$". config is the file a card's acceptance writes into $P that sets
             what its compile stage sees; {config} is that file's path; group 1 of fileLine is the file, group 2 the rest
-            of the line from the position on. Text only, never run here.
+            of the line from the position on. Text only, never run here. TEST_LINES (P24c, issue #19): `export const
+            TEST_LINES: readonly TestProfile[]`, `export interface TestProfile { id: string; failLine: string | null;
+            locationLine: string | null; packageLine: string | null }`, one per profile of PROFILES in the same order, pure
+            data (no import), read by Blame Log: failLine a line naming a failing test file, locationLine a failure's
+            location line (any indent), packageLine a line naming the package of a test failure; group 1 of each the path.
+            typescript: failLine "^\\s*FAIL\\s+(\\S+?\\.[cm]?[jt]sx?)(?:\\s|$)", locationLine
+            "^\\s+\\u276f\\s+(?:\\S+\\s+)?(\\S+?\\.[cm]?[jt]sx?):\\d+:\\d+", packageLine null; python: failLine
+            "^(?:FAILED|ERROR) (\\S+?\\.pyi?)(?:::|\\s|$)", locationLine null (pytest prints its locations at column 0:
+            fileLine reads them), packageLine null; go: failLine null, locationLine "^\\s+(\\S+?\\.go):\\d+", packageLine
+            "^FAIL\\t(\\S+)". TREE_PROFILES and treeProfileFor are unchanged.
           steps:
             - produces: Tree Profile
           examples:
@@ -2119,10 +2176,19 @@ System:
             - given: 'new RegExp(each fileLine) on "src/a/b.ts(12,5): error TS2304: x", "vet: ./pkg/q.go:3:7: y", "pkg/q.go:3: z", "tests/test_a.py:9: AssertionError", "  src/a.ts(1,1): continuation"'
               when: matched
               then: 'typescript: ["src/a/b.ts", "(12,5): error TS2304: x"] on the first only; go: ["pkg/q.go", ":3:7: y"] and ["pkg/q.go", ":3: z"]; python: ["tests/test_a.py", ":9: AssertionError"]; no fileLine matches the indented line'
+            - given: 'TEST_LINES'
+              when: read
+              then: 'three entries, ids "typescript", "python", "go" (PROFILES order), each string exactly as the behavior writes it'
+            - given: 'new RegExp(each non-null pattern of TEST_LINES) on " FAIL  tests/units/len.test.ts > one metre", " ❯ tests/units/len.test.ts:4:21", " ❯ toFeet src/units/len.ts:2:25", "FAILED tests/test_calc.py::test_half - assert 2 == 4", "    daemon_examples_test.go:16: OnExit:", "\t/tmp/morphlite/daemon/daemon_examples_test.go:22 +0x2", "FAIL\tmorphlite/daemon\t0.004s", "FAIL", "--- FAIL: TestDaemonCoreExample2 (0.00s)"'
+              when: matched
+              then: 'group 1: typescript failLine "tests/units/len.test.ts" on the first only; typescript locationLine "tests/units/len.test.ts" and "src/units/len.ts" on the second and third only; python failLine "tests/test_calc.py" on the fourth only; go locationLine "daemon_examples_test.go" and "/tmp/morphlite/daemon/daemon_examples_test.go" on the fifth and sixth only; go packageLine "morphlite/daemon" on the seventh only; nothing matches "FAIL" or the "--- FAIL" line'
       dataObjects:
         - name: Tree Profile
           description: How deck check compiles a stub tree in one language.
           schema: "{ id: string; fileLine: string; config: string | null; command: string | null }"
+        - name: Test Profile
+          description: Per language, how a failing test's lines read (P24c, issue #19); Blame Log reads them.
+          schema: "{ id: string; failLine: string | null; locationLine: string | null; packageLine: string | null }"
         - name: Language Profile
           description: Everything the planner and the acceptance need to know about one language; templates hold {component}, {name}, {files}, {test}, {module}, {docs}.
           schema: "{ id: \"typescript\" | \"python\" | \"go\", extensions: string[], testDirs: string[], testFilePattern: string, nameCase: \"camel\" | \"snake\", codeTarget: string, testTarget: string, judgeTarget: string, parseLine: string, parseTakesFiles: boolean, lintLine: string, ownTestLine: string, fullRunLine: string, finale: string, judgeInstruction: string, helpersModule: string }"

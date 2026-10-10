@@ -1,0 +1,21 @@
+{
+  "phase": "p24c",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates"],
+  "fullExclude": ["tests/cards/transaction.p24c.examples.test.ts", "tests/language/treeProfiles.p24c.examples.test.ts",
+    "tests/runloop/transaction.p24c.examples.test.ts"],
+  "cards": [
+    { "id": "transaction-deck" },
+    { "id": "tree-profiles" },
+    { "id": "run-transaction" },
+    { "id": "transaction-deck-judge", "files": [{ "file": "tests/cards/transaction.p24c.examples.test.ts", "min": 4, "max": 10, "new": true,
+      "lits": ["Blame Log example 5", "Blame Log example 6", "Blame Log example 7", "Blame Log example 8", "cards/blameTestLogs.json",
+        "TEST_LINES", "dcj", "rgj", "lj", "pj", "tests/test_calc.py:5: in test_half"] }] },
+    { "id": "tree-profiles-judge", "files": [{ "file": "tests/language/treeProfiles.p24c.examples.test.ts", "min": 2, "max": 8, "new": true,
+      "lits": ["Tree Profiles example 3", "Tree Profiles example 4", "morphlite/daemon", "src/units/len.ts",
+        "/tmp/morphlite/daemon/daemon_examples_test.go", "tests/test_calc.py"] }] },
+    { "id": "run-transaction-judge", "files": [{ "file": "tests/runloop/transaction.p24c.examples.test.ts", "min": 2, "max": 8, "new": true,
+      "lits": ["Run Transaction example 12", "Run Transaction example 13", "unattributed red: b", "j.r1.v1", " FAIL  out/j.test.ts > j",
+        " FAIL  out/zz.test.ts > zz"] }] }
+  ]
+}

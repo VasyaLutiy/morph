@@ -1,7 +1,7 @@
 {
   "package": "src",
   "docs": [
-    "docs/TASK_P24_transaction.md"
+    "docs/TASK_P24c_blame.md"
   ],
   "groups": {
     "card-model": [
@@ -3301,36 +3301,35 @@
       "instruction": "You write tests/cli/checkBuilds.examples.test.ts only, a NEW file. Read docs/TASK_P21b_deckcheck.md sections 2.1 (go-p7b's decks and _stubs, ts-rename.json, stub.cards.json, checkBuilds.json and the skeleton: copyOf, rootOf, pathEnv, scriptsRoot, load, builds, verbatim) and 2.2 (Check Builds and its table) and 2.3. Import checkBuilds from \"../../src/cli/checkBuilds.js\", readDeckFile from \"../../src/cli/document.js\", layerGenerations from \"../../src/cards/layer.js\", tmpRoot, fixture, fixtureJson and fixturePath from \"../helpers.js\", fs from \"node:fs\", path from \"node:path\", types with `import type`. One test per example of Check Builds (1-3), in record order, named \"Check Builds example <n>: <what>\", each result compared whole with toStrictEqual against builds(<key>); every test that runs a child process gets 120000 as the third argument of test(...); every tmp root is removed in finally; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "tree-profiles": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "src/language/treeProfiles.ts"
       ],
       "context_slice": [
-        "docs/TASK_P21b_deckcheck.md",
+        "docs/TASK_P24c_blame.md",
         "docs/CONVENTIONS.md",
         "src/language/profiles.ts"
       ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000,
-      "instruction": "Read docs/TASK_P21b_deckcheck.md sections 2.2 (src/language/treeProfiles.ts) and 4. Write one file src/language/treeProfiles.ts: `export interface TreeProfile`, `export const TREE_PROFILES: readonly TreeProfile[]` and `export function treeProfileFor(id: string): TreeProfile | null` exactly as section 2.2 shows, the three entries' strings character for character. Pure data: no import at all, no process, no console. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P24c_blame.md sections 2.2 (src/language/treeProfiles.ts) and 4. Patch src/language/treeProfiles.ts (its current text follows) and return it WHOLE: append `export interface TestProfile { id: string; failLine: string | null; locationLine: string | null; packageLine: string | null }` and `export const TEST_LINES: readonly TestProfile[]`, three entries in the order typescript, python, go, every pattern string exactly as the Tree Profiles behaviour below writes it (they are JavaScript string literals: copy them character for character, the double backslashes included). TreeProfile, TREE_PROFILES and treeProfileFor stay exactly as they are. Pure data: no import at all, no process, no console. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "tree-profiles-judge": {
       "intent": "generate",
       "targets": [
-        "tests/language/treeProfiles.examples.test.ts"
+        "tests/language/treeProfiles.p24c.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P21b_deckcheck.md",
+        "docs/TASK_P24c_blame.md",
         "docs/CONVENTIONS.md",
-        "src/language/profiles.ts",
         "src/language/treeProfiles.ts"
       ],
       "depends_on": [
         "tree-profiles"
       ],
       "max_tokens": 12000,
-      "instruction": "You write tests/language/treeProfiles.examples.test.ts only, a NEW file. Read docs/TASK_P21b_deckcheck.md sections 2.2 (Tree Profiles and its table) and 2.3. Import TREE_PROFILES and treeProfileFor from \"../../src/language/treeProfiles.js\" and PROFILES from \"../../src/language/profiles.js\". One test per example of Tree Profiles (1-2), in record order, named \"Tree Profiles example <n>: <what>\", every expected entry and match written out as a literal; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/language/treeProfiles.p24c.examples.test.ts only, a NEW file with the tests of Tree Profiles examples 3 and 4 (examples 1-2 are already tested in tests/language/treeProfiles.examples.test.ts, which you do not touch). Read docs/TASK_P24c_blame.md sections 2.2 and 2.3. Import TEST_LINES from \"../../src/language/treeProfiles.js\". Two tests in record order, named \"Tree Profiles example 3: <what>\" and \"Tree Profiles example 4: <what>\": example 3 checks TEST_LINES with one toStrictEqual against the three entries written out as literals; example 4 checks group 1 (or null) of new RegExp(pattern).exec(line) for every non-null pattern on every line its `given` names; a line holding a tab is written with \\t. Then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole result or list with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "tree-check": {
       "intent": "generate",
@@ -3369,39 +3368,40 @@
       "instruction": "You write tests/acceptance/treeCheck.examples.test.ts only, a NEW file. Read docs/TASK_P21b_deckcheck.md sections 2.1 (treeOutput.json, acceptance/tree and the skeleton: copyOf, G, GO_LINE, TS_LINE, GO_CMD, pathEnv, verbatim) and 2.2 (Tree Check and its table) and 2.3. Import findBreaks and treeCheck from \"../../src/acceptance/treeCheck.js\", tmpRoot, fixtureJson and fixturePath from \"../helpers.js\", fs from \"node:fs\", types with `import type`. One test per example of Tree Check (1-3), in record order, named \"Tree Check example <n>: <what>\", every expected result written out as a literal; every test that runs a child process gets 120000 as the third argument of test(...); every tmp root is removed in finally; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "transaction-deck": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "src/cards/transaction.ts"
       ],
       "context_slice": [
-        "docs/TASK_P21c_transaction.md",
+        "docs/TASK_P24c_blame.md",
         "docs/CONVENTIONS.md",
-        "src/cards/types.ts"
+        "src/cards/types.ts",
+        "tests/fixtures/cards/blameTestLogs.json"
       ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000,
-      "instruction": "Read docs/TASK_P21c_transaction.md sections 2.2 (src/cards/transaction.ts: Transaction Deck and Blame Log) and 4. Write one file src/cards/transaction.ts: `export const TRANSACTION_MARK`, `export function isTransactionDeck(cards: readonly Card[]): boolean`, `export interface Blame` and `export function blameLog(log: string, card: string, owners: Record<string, string>, fileLines: readonly string[], exists: (path: string) => boolean): Blame` exactly as section 2.2 shows, with `import type { Card } from \"./types.js\"` and no other import. Pure: no process, no console, no Date, no Math.random, no file read, no node: module; the inputs are never changed. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P24c_blame.md sections 2.1 (the logs) and 2.2 (src/cards/transaction.ts and its table) and 4. Patch src/cards/transaction.ts (its current text follows) and return it WHOLE: add `export interface TestLines { failLine: string | null; locationLine: string | null; packageLine: string | null }` next to Blame, and give blameLog a sixth parameter `testLines: readonly TestLines[] = []` with the behaviour of Blame Log below: indented lines and lines no fileLine matched go to the testLines patterns; a bare location name is joined to the package of the first packageLine match on a LATER line (else the last earlier one); candidates are the path without a leading \"/\" and then with its leading segments dropped one at a time, walked to the first owned (blame its owner) or existing (blame nothing); none: a relative path blames card, an absolute one nothing; at the end, nothing blamed and nothing outside → cards [] when some testLines pattern matched, else [card]. With testLines [] every result is exactly main's. TRANSACTION_MARK, isTransactionDeck and Blame are unchanged; keep `import type { Card } from \"./types.js\"` as the only import. Pure: no process, no console, no file read, no node: module; the inputs are never changed. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "transaction-deck-judge": {
       "intent": "generate",
       "targets": [
-        "tests/cards/transaction.examples.test.ts"
+        "tests/cards/transaction.p24c.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P21c_transaction.md",
+        "docs/TASK_P24c_blame.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
-        "src/cards/types.ts",
         "src/cards/transaction.ts",
         "src/language/treeProfiles.ts",
-        "tests/fixtures/cards/blameLogs.json"
+        "tests/fixtures/cards/blameTestLogs.json"
       ],
       "depends_on": [
-        "transaction-deck"
+        "transaction-deck",
+        "tree-profiles"
       ],
       "max_tokens": 16000,
-      "instruction": "You write tests/cards/transaction.examples.test.ts only, a NEW file. Read docs/TASK_P21c_transaction.md sections 2.1 (blameLogs.json and the Transaction Deck / Blame Log skeleton, verbatim) and 2.2 (Transaction Deck, Blame Log and their tables) and 2.3. Import TRANSACTION_MARK, isTransactionDeck and blameLog from \"../../src/cards/transaction.js\", TREE_PROFILES from \"../../src/language/treeProfiles.js\", fixtureJson from \"../helpers.js\", types with `import type`. One test per example, in record order: Transaction Deck 1-2, then Blame Log 1-4, named \"<Function> example <n>: <what>\"; then at most 6 of your own on section 2.2 rows (e.g. the inputs unchanged, a tab-indented line skipped). Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/cards/transaction.p24c.examples.test.ts only, a NEW file with the tests of Blame Log examples 5 to 8 (examples 1-4 are already tested in tests/cards/transaction.examples.test.ts, which you do not touch). Read docs/TASK_P24c_blame.md sections 2.1 (the logs and the Blame Log harness) and 2.2 and 2.3. Import blameLog from \"../../src/cards/transaction.js\", TREE_PROFILES and TEST_LINES from \"../../src/language/treeProfiles.js\", fixtureJson from \"../helpers.js\". Four tests in record order, named \"Blame Log example 5: <what>\" … \"Blame Log example 8: <what>\", the log read with fixtureJson(\"cards/blameTestLogs.json\"), every call of the example's `given` checked with toStrictEqual against the whole Blame its `then` names; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole result or list with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "run-transaction": {
       "intent": "patch",
@@ -3410,7 +3410,7 @@
         "src/runloop/types.ts"
       ],
       "context_slice": [
-        "docs/TASK_P24_transaction.md",
+        "docs/TASK_P24c_blame.md",
         "docs/CONVENTIONS.md",
         "src/cards/types.ts",
         "src/cards/layer.ts",
@@ -3422,20 +3422,24 @@
         "src/acceptance/snapshot.ts",
         "src/acceptance/run.ts"
       ],
-      "depends_on": [],
+      "depends_on": [
+        "transaction-deck",
+        "tree-profiles"
+      ],
       "variants": 2,
       "max_tokens": 16000,
-      "instruction": "Read docs/TASK_P24_transaction.md sections 2.1 and 2.2 (the table: what changes against main) and 4. Patch src/runloop/transaction.ts and src/runloop/types.ts (their current texts follow) and return both WHOLE. types.ts: CardOutcome gains the optional LAST member `lastRound?: \"green\" | \"red\"`; RunReport gains `stop?: string` between `requests?` and `fault?`; nothing else changes. transaction.ts: (1) drop the run-wide `batches` counter; keep per card its retries of this transaction; before a retry batch a blamed card is capped when its retries (W's included) are 2 (cap text \"2 retries\") or else its retries of this transaction are >= input.budget.maxRetryBatches (cap text \"maxRetryBatches \" + that number); any capped blamed card → stop = \"retry cap: \" + the capped blamed cards in deck order as \"<customId> (<cap>)\" joined \", \", then the rollback as now; (2) the retry batch runs by layers: import { layerGenerations } from \"../cards/layer.js\"; for each generation of layerGenerations(input.deck), in order, the blamed cards in it (skip an empty one) go to ONE processGeneration call, so a dependant's retry is compiled after its dependency's retry wrote; requests and usage in send order; (3) a rollback outcome's winningVariant is the state's variant (the attempt on the tree), and its last key is lastRound: \"red\" when its last round was red, \"green\" when green, the key absent when no round ran (W's rollback); (4) finish() sets report.stop (when set) before report.fault, so fault stays the last key. Every other behaviour (deadline, outside the subset, interrupt, thrown values, reasons, attempts, earlierFailures, written outcomes) stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P24c_blame.md sections 2.2 (src/runloop/types.ts and src/runloop/transaction.ts: the table, what changes against main) and 4. Patch src/runloop/transaction.ts and src/runloop/types.ts (their current texts follow) and return both WHOLE. types.ts: add `export interface RoundRed { customId: string; blamed: string[]; log: string }` and `export interface TransactionRound { round: number; reds: RoundRed[] }`; RunReport gains `rounds?: TransactionRound[]` between `requests?` and `stop?`; nothing else changes. transaction.ts: (1) import TEST_LINES with TREE_PROFILES from \"../language/treeProfiles.js\" and pass it as blameLog's sixth argument; (2) every round that runs pushes {round: r, reds: [{customId, blamed: blame.cards, log}] for its red cards in deck order} (reds [] when green); (3) after the outside-the-subset check and before the caps: some red card whose Blame has no card → stop = \"unattributed red: \" + those cards' customIds in deck order joined \", \", then the rollback exactly as a cap stop does; (4) finish() sets report.rounds (when at least one round ran) after requests and before stop and fault. Every other behaviour (outside fault, caps, deadline, layers, interrupt, thrown values, reasons, attempts, earlierFailures, written outcomes) stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "run-transaction-judge": {
       "intent": "generate",
       "targets": [
-        "tests/runloop/transaction.p24.examples.test.ts"
+        "tests/runloop/transaction.p24c.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P24_transaction.md",
+        "docs/TASK_P24c_blame.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
+        "tests/runloop/transaction.p24.examples.test.ts",
         "src/cards/types.ts",
         "src/cards/transaction.ts",
         "src/processor/types.ts",
@@ -3446,7 +3450,7 @@
         "run-transaction"
       ],
       "max_tokens": 24000,
-      "instruction": "You write tests/runloop/transaction.p24.examples.test.ts only, a NEW file with the tests of Run Transaction examples 8 to 11 (examples 1-7 are already tested in tests/runloop/transaction.examples.test.ts, which you do not touch). Read docs/TASK_P24_transaction.md sections 2.1 (the harness skeleton, verbatim: copy the helpers you use) and 2.2 and 2.3. Import runTransaction from \"../../src/runloop/transaction.js\", TRANSACTION_MARK from \"../../src/cards/transaction.js\", fakeFetch and tmpRoot from \"../helpers.js\", types with `import type`. Four tests in record order, named \"Run Transaction example 8: <what>\", \"Run Transaction example 9: <what>\", \"Run Transaction example 10: <what>\", \"Run Transaction example 11: <what>\", each on its own tmp root (the stub's answersDir), removed in finally, checking every value its `then` names: status, reason, attempts, winningVariant, lastRound, acceptanceLog, earlierFailures, the request customIds, the hook's ids, report.stop (example 10: \"retry cap: a (2 retries)\" and Object.keys(report).pop() \"stop\"; example 11: \"retry cap: a (maxRetryBatches 1)\"), report.fault undefined, and in example 9 the records' customId and verdict (\"j.r1.v1\" accepted); then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole result or list with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/runloop/transaction.p24c.examples.test.ts only, a NEW file with the tests of Run Transaction examples 12 and 13 (examples 1-11 are already tested in tests/runloop/transaction.examples.test.ts and tests/runloop/transaction.p24.examples.test.ts, which you do not touch). Read docs/TASK_P24c_blame.md sections 2.1 (the Run Transaction harness) and 2.2 and 2.3; copy the helpers you use (M, fence, card, once, deps, input) from tests/runloop/transaction.p24.examples.test.ts. Import runTransaction from \"../../src/runloop/transaction.js\", TRANSACTION_MARK from \"../../src/cards/transaction.js\", fakeFetch and tmpRoot from \"../helpers.js\", types with `import type`. Two tests in record order, named \"Run Transaction example 12: <what>\" and \"Run Transaction example 13: <what>\", each on its own tmp root (the stub's answersDir), removed in finally, checking every value its `then` names: status, reason, attempts, winningVariant, lastRound, acceptanceLog, earlierFailures, the request customIds, the hook's ids, report.rounds with one toStrictEqual, report.stop (example 13: \"unattributed red: b\" and Object.keys(report).pop() \"stop\"; example 12: undefined), report.fault undefined; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole result or list with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "stub-verdict": {
       "intent": "generate",
