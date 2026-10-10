@@ -1575,7 +1575,7 @@ System:
           behavior: >
             parseCommand(argv) scans argv left to right. A token starting with "--" is a flag: --pretty, --judge, --write, --md and --commit take no value; --root,
             --deck, --processor, --run-id, --deadline, --max-cards, --max-retry-batches, --slice-cap-bytes, --spec, --component, --map, --out, --checks, --batch, --issue,
-            --seed-file, --from-scout, --scout, --mutants, --mutant-timeout, --test, --id, --model, --name, --language, --module, --templates, --only, --stubs, --refs
+            --seed-file, --from-scout, --scout, --mutants, --mutant-timeout, --test, --id, --model, --from-run, --pick, --name, --language, --module, --templates, --only, --stubs, --refs
             take the next token whatever it is; any other flag (--x=y too) → "unknown flag: <t>"; a value flag last → "flag <t> needs a value"; a flag twice → "flag <t>
             given twice", but --component repeats, its values in argv order (the first error by argv wins). Other tokens are words, giving the command: none → "no command
             (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept, init)"; "run"; "plan" ("plan --from-scout" when --from-scout is
@@ -1585,10 +1585,14 @@ System:
             does not apply to <command>", in argv order (every command takes --root and --pretty, and: deck check --deck, --slice-cap-bytes; run --deck, --processor,
             --run-id, --deadline, --max-cards, --max-retry-batches; plan --spec, --component, --map, --judge, --out, --checks, --only; review --spec, --map, --scout,
             --mutants, --mutant-timeout, --test, --write; submit --deck, --processor; collect --batch; primer --write; scout --processor, --issue, --seed-file,
-            --deadline; plan --from-scout --from-scout, --out; card --deck, --id, --md; accept --deck, --id, --model, --commit; init --name, --language, --module,
+            --deadline; plan --from-scout --from-scout, --out; card --deck, --id, --md; accept --deck, --id, --model, --commit, --from-run, --pick; init --name, --language, --module,
             --templates; gate --deck, --stubs, --refs, --mutants); card and accept: no --deck → "missing --deck", no --id → "missing --id", an --id not matching ^[A-Za-z0-9._-]+$ →
-            "--id must match ^[A-Za-z0-9._-]+$ (got '<v>')", card done; accept: no --model → "missing --model", a --model not matching ^[A-Za-z0-9._/:-]+$ → "--model must
-            match ^[A-Za-z0-9._/:-]+$ (got '<v>')", else done; init: no --name → "missing --name", a --name not matching ^[A-Za-z0-9._-]+$ → "--name must match
+            "--id must match ^[A-Za-z0-9._-]+$ (got '<v>')" (accept: an --id holding "," must be distinct ids joined by ",", each matching it, else "--id must be
+            distinct card ids joined by \",\" (got '<v>')"), card done; accept: a --from-run not matching ^[A-Za-z0-9._-]+$ → "--from-run must match ^[A-Za-z0-9._-]+$
+            (got '<v>')", --model with --from-run → "--model does not apply with --from-run", --pick without it → "--pick needs --from-run"; without --from-run no
+            --model → "missing --model", a --model not matching ^[A-Za-z0-9._/:-]+$ → "--model must match ^[A-Za-z0-9._/:-]+$ (got '<v>')"; a --pick not distinct
+            names joined by ",", each matching ^[A-Za-z0-9._-]+$ → "--pick must be distinct answer names joined by \",\" (got '<v>')"; else done (model null with
+            --from-run; fromRun, then pick (the names in order), a key only when given); init: no --name → "missing --name", a --name not matching ^[A-Za-z0-9._-]+$ → "--name must match
             ^[A-Za-z0-9._-]+$ (got '<v>')", no --language → "missing --language", a --language not typescript, python or go → "--language must be one of typescript,
             python, go (got '<v>')", a --module not matching ^[A-Za-z0-9._/-]+$ → "--module must match ^[A-Za-z0-9._/-]+$ (got '<v>')", else done (module, templates null
             when not given); review: fewer than two refs → "review needs two refs: <base> <head>", a --scout not matching ^[A-Za-z0-9._-]+$ → "--scout must match
@@ -1630,6 +1634,7 @@ System:
             - {given: 'parseArgv.json["22"]', when: parsed, then: 'parse.json["22"]'}
             - {given: 'parseArgv.json["23"]', when: parsed, then: 'parse.json["23"]'}
             - {given: 'parseArgv.json["24"]', when: parsed, then: 'parse.json["24"]'}
+            - {given: 'parseArgv.json["25"]', when: parsed, then: 'parse.json["25"]'}
         - name: Emit Document
           description: One JSON document + newline on stdout; --pretty indents by 2.
           behavior: >
@@ -1756,7 +1761,7 @@ System:
             main(argv, deps, io) → Promise<ExitCode>. Parse Command; a failure → io.stdout(renderDocument(its error document, pretty = argv holds "--pretty")),
             io.stderr("morph: <message>\n"), 4. Else root = path.resolve(deps.cwd, command.root); result = Deck Check (env: deps.env), Plan Command, await Submit
             Deck(root, deck, processor, D), await Collect Batch(root, batch, D), Primer Command(root, write, {env, now of deps}), await Scout Command(root, command,
-            deps), Plan From Scout(root, command), await Review Command(root, command, deps), Card Brief(root, command), await Accept Card(root, command, deps), Init
+            deps), Plan From Scout(root, command), await Review Command(root, command, deps), Card Brief(root, command), accept: await Accept Group(root, {deck, ids: id split on ",", model, fromRun or null, pick or [], commit}, deps) when --id holds "," or fromRun is given, else await Accept Card(root, command, deps), Init
             Project(root, command, deps.cwd), await Gate Command(root, command, {env, now, readDeck: Read Deck File, builds: Check Builds}) (D = {env, now, transport of
             deps, saveState: git's saveBatchRecord(root, ·), saveAnswers: git's saveBatchAnswers(root, ·, ·)}) or await Run Command (io.stderr its log) by command, in
             try/catch, a thrown value → classifyThrown. Then one io.stdout(renderDocument(result.document, command.pretty)), one io.stderr("morph <command name>: exit
@@ -1782,10 +1787,11 @@ System:
             - {given: 'examples.json["Main 15"].given', ref: "tests/fixtures/debt/accept.deck.json", when: 'main', then: 'examples.json["Main 15"].then'}
             - {given: 'examples.json["Main 16"].given', ref: "tests/fixtures/scaffold/tpl/", when: 'main', then: 'examples.json["Main 16"].then'}
             - {given: 'examples.json["Main 17"].given', when: 'main', then: 'examples.json["Main 17"].then'}
+            - {given: 'examples.json["Main 18"].given', ref: "tests/fixtures/debt/group.deck.json, tests/fixtures/debt/group.run.json", when: 'main', then: 'examples.json["Main 18"].then'}
       dataObjects:
         - name: Command
           description: One parsed invocation.
-          schema: "every variant also has root: string, pretty: boolean; {name: 'deck check', deck, sliceCapBytes}|{name: 'run', deck, processor, runId: string|null, deadlineSeconds, maxCards: number|null, maxRetryBatches}|{name: 'plan', spec, components: string[], map: string|null, judge: boolean, out: string|null, checks?: string, only?: string[]}|{name: 'submit', deck, processor}|{name: 'collect', batch}|{name: 'primer', write: boolean}|{name: 'scout', processor, issue, seedFile: string|null, deadlineSeconds}|{name: 'plan --from-scout', fromScout, out: string|null}|{name: 'review', base, head, spec: string|null, map: string|null, scout: string|null, mutants: number|null, mutantTimeoutSeconds, test: string|null, write: boolean}|{name: 'card', deck, id, md: boolean}|{name: 'accept', deck, id, model, commit: boolean}|{name: 'init', project, language: 'typescript' | 'python' | 'go', module: string|null, templates: string|null}|{name: 'gate', deck, stubs, refs, mutants?: number}"
+          schema: "every variant also has root: string, pretty: boolean; {name: 'deck check', deck, sliceCapBytes}|{name: 'run', deck, processor, runId: string|null, deadlineSeconds, maxCards: number|null, maxRetryBatches}|{name: 'plan', spec, components: string[], map: string|null, judge: boolean, out: string|null, checks?: string, only?: string[]}|{name: 'submit', deck, processor}|{name: 'collect', batch}|{name: 'primer', write: boolean}|{name: 'scout', processor, issue, seedFile: string|null, deadlineSeconds}|{name: 'plan --from-scout', fromScout, out: string|null}|{name: 'review', base, head, spec: string|null, map: string|null, scout: string|null, mutants: number|null, mutantTimeoutSeconds, test: string|null, write: boolean}|{name: 'card', deck, id, md: boolean}|{name: 'accept', deck, id, model: string|null, commit: boolean, fromRun?: string, pick?: string[]}|{name: 'init', project, language: 'typescript' | 'python' | 'go', module: string|null, templates: string|null}|{name: 'gate', deck, stubs, refs, mutants?: number}"
         - name: Error Document
           description: The document of every non-result exit.
           schema: "{ error: { code: 0|1|2|3|4, kind: 'UsageError'|'NotYetError'|'DeckError'|'RefusalError'|'RuntimeError', message: string } }"
@@ -4157,8 +4163,10 @@ System:
         Paying a debt on a V2 deck without the operator (issue #8): `morph card` gives one card of a deck file as its
         executor saw it plus the last run's verdict on it (the debt brief), `morph accept` runs that card's acceptance on
         the current tree exactly as the runner runs it and, with --commit, commits only the card's targets with the Morph
-        trailers and Morph-Debt: true. src/debt/*.ts, layer debt (cards, acceptance, git). No model call, no clock; the
-        environment is a parameter; it spawns only through acceptance's Run Acceptance and git's Run Git.
+        trailers and Morph-Debt: true; `morph accept --id a,b,c` (Accept Group, P24b, issue #16) accepts several cards on one
+        tree, their answers written by the payer or taken from a run's archive, and commits them all or none. src/debt/*.ts,
+        layer debt (cards, compiler, acceptance, git). No model call, no clock; the environment is a parameter; it spawns
+        only through acceptance's Run Acceptance and git's Run Git.
       language: typescript
       requirements: [Deterministic Core, One Document Out]
       functions:
@@ -4226,6 +4234,50 @@ System:
             - {given: 'the same base; src/a.ts "fixed again\n", README.md "r2\n", notes/n.txt "n\n" (untracked); then src/a.ts "broken!\n"', when: 'acceptCard with commit true, twice', then: 'code 1, green true, outside ["README.md", "notes/n.txt"], commit null, reason "changed outside the targets: README.md, notes/n.txt"; then code 1, exit 1, reason "acceptance failed (exit 1); changed outside the targets: README.md, notes/n.txt"; HEAD is "base" after both'}
             - {given: 'a tmpRoot r (no git) holding d.json, src/b.ts "b\n", out/g.ts "g\n"; id fix-two, commit false, env {PATH, MARK "k7", GH_TOKEN "t"}; then MARK "k8"; then id slow with deps.timeoutMs 300', when: acceptCard, then: 'code 0, exit 0, green true, log "", outside null, commit null, diffstat null, reason null (GH_TOKEN never reaches the shell); then code 1, exit 1, reason "acceptance failed (exit 1)"; then code 1, exit null, timedOut true, log "started\nacceptance timed out after 300 ms\n", reason "acceptance failed (exit null)"'}
             - {given: 'a tmpRepo g, one commit "base" of d.json and .gitignore "out/\n"; src/b.ts "b\n" and out/g.ts "g\n" written; id fix-two, model "acme/m:free", commit true, env {PATH, MARK "k7"}; then ids none, blank, zz and deck "x.json" on g; then fix-a with commit true on the tmpRoot r of example 4', when: acceptCard, then: 'code 0, outside [], diffstat {files 2, insertions 2, deletions 0}, HEAD message "morph fix-two: src/b.ts, out/g.ts\n\nMorph-Card: fix-two\nMorph-Model: acme/m:free\nMorph-Acceptance-Exit: 0\nMorph-Debt: true", `git show --name-only --format= HEAD` "out/g.ts\nsrc/b.ts" (the ignored target committed); then 2 RefusalError "card none has no acceptance", "card blank has no acceptance", 4 UsageError "no card ''zz'' in d.json (have: fix-a, fix-two, slow, none, blank)", "deck file not found: x.json"; then the promise rejects with an Error beginning "git status failed (exit 128): "'}
+        - name: Accept Group
+          description: "`morph accept --deck <deck> --id <a,b,…> [--model <name> | --from-run <run> [--pick <answers>]] [--commit]`: several cards' acceptances on ONE tree; with --commit and every card green, one commit per card in dependency order, else none."
+          behavior: >
+            acceptGroup(root, args {deck, ids, model: string | null, fromRun: string | null, pick: string[], commit}, deps {env,
+            timeoutMs?}) → Promise of {code, document}. Checks first, in this order, the first failure is the result and
+            nothing is written: 1. per id in ids order, Card Brief's findCard (its failure); 2. per id, an acceptance null or
+            blank after trim → 2 RefusalError "card <id> has no acceptance"; 3. a target path of two listed cards → 2
+            RefusalError "target <path> is in cards <a> and <b>" (a the earlier in ids order, the first such pair). order = the
+            deck's generations (cards' Layer Generations of the loaded deck) flattened, kept to the listed ids: a card comes
+            after every listed card it depends on, else in deck order. 4. With fromRun: dir = RUNS_DIR + "/" + fromRun; not a
+            directory under root → 4 UsageError "no run <fromRun> under .morph/runs". Per pick p in order: its card = p with
+            a final /\.v[0-9]+$/ removed (none → no card), then a final /\.r[0-9]+$/ removed; not one of ids → 4 UsageError
+            "--pick <p> names no card of --id"; a card picked before → 4 UsageError "--pick names <card> twice". The variant
+            of a card is its pick, else "<id>.v1". report = JSON.parse of dir/report.json (not a regular file or not JSON →
+            no requests). Per card in ids order: model = the string model of the first report.requests entry whose customId is
+            the variant, none → 2 RefusalError "no request <variant> in <dir>/report.json"; dir/answers/<variant>.answer.txt
+            not a regular file → 2 RefusalError "no answer <that path>"; compiler's parseAnswer(its UTF-8 text, the card's
+            targets) {corrupt: m} → 2 RefusalError "answer <variant> is corrupt: <m>", {truncated} → 2 RefusalError "answer
+            <variant> is truncated". Without fromRun: variant null, model args.model for every card. 5. With commit only:
+            outside = Accept Card's changedOutside(root, the listed targets, env), taken before any write; else null. 6. With
+            fromRun: snapshot = acceptance's snapshotTargets(root, the listed targets in order); every parsed file written
+            under root (parent directories made, UTF-8), cards in order. Without fromRun nothing is written: the tree is the
+            payer's. 7. Per card in order, runAcceptance(acceptance, root, {env: deps.env, timeoutMs: deps.timeoutMs or
+            DEFAULT_TIMEOUT_MS}) on that one tree; every card runs, a red one stops nothing; green = exit 0. 8. Every card green,
+            outside null or empty, and commit: per card in order git's commitPaths(root, targets, "morph <id>: <targets ",
+            "-joined>", trailers, env, force true), trailers with fromRun [Morph-Card <id>, Morph-Model <model>, Morph-Variant
+            <variant>, Morph-Run <fromRun>, Morph-Acceptance-Exit 0], without [Morph-Card <id>, Morph-Model <model>,
+            Morph-Acceptance-Exit 0, Morph-Debt true]; a null commit → that card's reason "nothing to commit: the targets equal
+            HEAD". 9. With fromRun and no commit made → restoreSnapshot(snapshot): every target back to its bytes (or absence)
+            before step 6; restored true. Else restored false (a payer's tree is never touched). Each card entry {card,
+            variant, model, exit, timedOut, green, log, commit: sha or null, diffstat or null, reason: "acceptance failed
+            (exit <exit, or null>)" when red, the nothing-to-commit text, or null}, keys in that order. document {deck, run:
+            fromRun or null, cards (in order), outside, green: every card green, committed: the number of commits made,
+            restored, reason}, keys in that order; reason = the parts "red: <red ids in order, ", "-joined>" and "changed
+            outside the targets: <outside ", "-joined>" that apply, "; "-joined, or null. code 0 when every card is green,
+            outside is null or empty and (not commit, or committed equals the number of cards), else 1.
+          steps: [{calls: Card Brief}, {calls: Accept Card}, {uses: compiler}, {uses: acceptance}, {uses: git}, {produces: Accept Group Document}]
+          examples:
+            - {given: 'a tmpRepo t, one commit "base" of d.json = debt/group.deck.json (use-judge, use, two, lib, none, dup), src/lib.ts "export const lib = 1;\n", src/use.ts "export const use = 1;\n", README.md "r\n"; then the run archive debt/group.run.json written untracked: its report as .morph/runs/r1/report.json (JSON.stringify), each of its answers as .morph/runs/r1/answers/<key>.answer.txt; env {PATH}', ref: "tests/fixtures/debt/group.deck.json, tests/fixtures/debt/group.run.json", when: 'acceptGroup(t, {deck: "d.json", ids: ["use-judge", "use", "two", "lib"], model: null, fromRun: "r1", pick: [], commit: true}, {env})', then: 'code 0; document {deck "d.json", run "r1", cards in the order two, lib, use, use-judge: {two, "two.v1", "deepseek/deepseek-v4.1-flash", exit 0, timedOut false, green true, log "", commit, diffstat {files 2, insertions 3, deletions 0}, reason null}, {lib, "lib.v1", "deepseek/deepseek-v4.1-flash", 0, false, true, "", commit, {1, 1, 1}, null}, {use, "use.v1", "deepseek/deepseek-v4.1-flash", 0, false, true, "", commit, {1, 2, 1}, null}, {use-judge, "use-judge.v1", "z-ai/glm-5.3", 0, false, true, "", commit, {1, 2, 0}, null}, outside [], green true, committed 4, restored false, reason null}, each commit the sha of `git rev-list --reverse HEAD~4..HEAD` in that order; the message of HEAD~2 "morph lib: src/lib.ts\n\nMorph-Card: lib\nMorph-Model: deepseek/deepseek-v4.1-flash\nMorph-Variant: lib.v1\nMorph-Run: r1\nMorph-Acceptance-Exit: 0", of HEAD "morph use-judge: tests/use.test.ts\n\nMorph-Card: use-judge\nMorph-Model: z-ai/glm-5.3\nMorph-Variant: use-judge.v1\nMorph-Run: r1\nMorph-Acceptance-Exit: 0", of HEAD~3 subject "morph two: src/x.ts, src/y.ts"; src/lib.ts reads "export const lib = (n: number): number => n;\n", src/y.ts "export const y = 2;\nexport const z = 3;\n"; `git status --porcelain` holds only "?? .morph/" (use was green only because lib''s answer was on the same tree)'}
+            - {given: 'the same base and archive', when: 'acceptGroup with ids ["lib", "use"], fromRun "r1", pick ["use.v2"], commit true; then ids ["lib", "use"], pick [], commit false', then: 'code 1; document {deck "d.json", run "r1", cards [{lib, "lib.v1", "deepseek/deepseek-v4.1-flash", 0, false, true, "", null, null, null}, {use, "use.v2", "deepseek/deepseek-v4.1-flash", 1, false, false, "FAIL: src/use.ts needs the new lib\n", null, null, "acceptance failed (exit 1)"}], outside [], green false, committed 0, restored true, reason "red: use"}; HEAD is "base"; src/lib.ts reads "export const lib = 1;\n" and src/use.ts "export const use = 1;\n" again; then code 0, both green, outside null, committed 0, restored true, reason null, HEAD "base", src/lib.ts "export const lib = 1;\n" again'}
+            - {given: 'the same base and archive', when: 'acceptGroup with ids ["lib", "use"], fromRun "r1", pick ["lib.r1.v1"], commit true', then: 'code 0, committed 2; cards[0] {lib, "lib.r1.v1", "deepseek/deepseek-v4.1-flash", 0, false, true, "", HEAD~1, {1, 1, 1}, null}; the message of HEAD~1 "morph lib: src/lib.ts\n\nMorph-Card: lib\nMorph-Model: deepseek/deepseek-v4.1-flash\nMorph-Variant: lib.r1.v1\nMorph-Run: r1\nMorph-Acceptance-Exit: 0"; src/lib.ts reads "export const lib = (n: number): number => n * 1;\n"'}
+            - {given: 'the same base and archive; commit true, fromRun "r1" unless named', when: 'acceptGroup, pick [] unless named, with ids ["lib", "zz"]; ids ["lib", "none"]; ids ["lib", "dup"]; ids ["lib"] and fromRun "nope"; ids ["lib"] and pick ["zz.v1"]; ["lib"]; ["lib.v1", "lib.r1.v1"]; ["lib.v9"]; ["lib.r2.v1"]; ids ["two"] and pick ["two.v2"]', then: '4 UsageError "no card ''zz'' in d.json (have: use-judge, use, two, lib, none, dup)"; 2 RefusalError "card none has no acceptance"; 2 "target src/lib.ts is in cards lib and dup"; 4 "no run nope under .morph/runs"; 4 "--pick zz.v1 names no card of --id"; 4 "--pick lib names no card of --id"; 4 "--pick names lib twice"; 2 "no request lib.v9 in .morph/runs/r1/report.json"; 2 "no answer .morph/runs/r1/answers/lib.r2.v1.answer.txt"; 2 "answer two.v2 is truncated"; after each HEAD is "base" and `git status --porcelain` holds only "?? .morph/"'}
+            - {given: 'the same base, no archive; src/lib.ts written "export const lib = (n: number): number => n;\n" and src/use.ts "export const use = 1; // lib(2)\n"; then README.md written "r2\n"; then README.md back to "r\n" and src/use.ts "export const use = 1;\n"', when: 'acceptGroup with ids ["use", "lib"], model "claude-fable-5-1", fromRun null, pick [], commit true, once at each step', then: 'code 1, cards lib then use both green with variant null and model "claude-fable-5-1", outside ["README.md"], committed 0, restored false, reason "changed outside the targets: README.md", HEAD "base"; then code 1, outside [], use {exit 1, green false, log "FAIL: src/use.ts needs the new lib\n", reason "acceptance failed (exit 1)"}, committed 0, restored false, reason "red: use", src/lib.ts still "export const lib = (n: number): number => n;\n" (nothing rolled back), HEAD "base"'}
+            - {given: 'the same base, no archive; src/lib.ts written "export const lib = (n: number): number => n;\n", src/use.ts "export const use = 1; // lib(2)\n"', when: 'acceptGroup with ids ["use", "lib"], model "claude-fable-5-1", fromRun null, pick [], commit true', then: 'code 0, committed 2, restored false, run null; the message of HEAD "morph use: src/use.ts\n\nMorph-Card: use\nMorph-Model: claude-fable-5-1\nMorph-Acceptance-Exit: 0\nMorph-Debt: true", of HEAD~1 subject "morph lib: src/lib.ts"'}
       dataObjects:
         - name: Card Brief Document
           description: stdout of morph card.
@@ -4233,6 +4285,9 @@ System:
         - name: Accept Document
           description: stdout of morph accept.
           schema: "{ deck, card, model, exit: number | null, timedOut: boolean, green: boolean, log: string, outside: string[] | null, commit: string | null, diffstat: { files, insertions, deletions } | null, reason: string | null }"
+        - name: Accept Group Document
+          description: stdout of morph accept with a list of ids or --from-run.
+          schema: "{ deck, run: string | null, cards: { card, variant: string | null, model, exit: number | null, timedOut: boolean, green: boolean, log: string, commit: string | null, diffstat: { files, insertions, deletions } | null, reason: string | null }[], outside: string[] | null, green: boolean, committed: number, restored: boolean, reason: string | null }"
 
     - name: scaffold
       description: >

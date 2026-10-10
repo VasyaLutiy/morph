@@ -242,5 +242,9 @@
   "Main 17": {
     "given": "a tmp root r (empty); deps {env {PATH}, now () => 0, cwd \"/\", transport null}; argv [gate, --deck, nope.json, --stubs, s, --refs, r, --root, r]; then [gate, --deck, d.json, --root, r]",
     "then": "4, one stdout document {\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"deck file not found: nope.json\"}} + \"\\n\" (Gate Command through Read Deck File), stderr [\"morph gate: exit 4\\n\"]; then 4, {\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"missing --stubs\"}} + \"\\n\", stderr [\"morph: missing --stubs\\n\"]"
+  },
+  "Main 18": {
+    "given": "a tmpRepo t as in Accept Group example 1 (one commit \"base\" of d.json = debt/group.deck.json, src/lib.ts, src/use.ts, README.md; the archive debt/group.run.json written untracked under .morph/runs/r1/); deps {env {PATH}, now () => 0, cwd t, transport null}; argv [accept, --deck, d.json, --id, use,lib, --from-run, r1, --commit]; then [accept, --deck, d.json, --id, lib, --from-run, r1, --pick, lib.v2]",
+    "then": "0, one stdout document {deck \"d.json\", run \"r1\", cards: lib then use, each green with its variant lib.v1, use.v1, outside [], green true, committed 2, restored false, reason null}, the HEAD message \"morph use: src/use.ts\\n\\nMorph-Card: use\\nMorph-Model: deepseek/deepseek-v4.1-flash\\nMorph-Variant: use.v1\\nMorph-Run: r1\\nMorph-Acceptance-Exit: 0\", stderr [\"morph accept: exit 0\\n\"]; then 2, stdout {error {code 2, kind \"RefusalError\", message \"no request lib.v2 in .morph/runs/r1/report.json\"}}, stderr [\"morph accept: exit 2\\n\"] (a single --id with --from-run is a group)"
   }
 }

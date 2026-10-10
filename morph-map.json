@@ -1,7 +1,7 @@
 {
   "package": "src",
   "docs": [
-    "docs/TASK_P24c_blame.md"
+    "docs/TASK_P24b_group.md"
   ],
   "groups": {
     "card-model": [
@@ -155,6 +155,9 @@
     "transaction-deck": [
       "Transaction Deck",
       "Blame Log"
+    ],
+    "accept-group": [
+      "Accept Group"
     ]
   },
   "cards": {
@@ -1073,17 +1076,22 @@
       "intent": "patch",
       "targets": [
         "src/cli/types.ts",
-        "src/cli/parse.ts"
+        "src/cli/parse.ts",
+        "src/cli/main.ts"
       ],
       "context_slice": [
-        "docs/TASK_P22b_mutants.md",
+        "docs/TASK_P24b_group.md",
         "docs/CONVENTIONS.md",
-        "src/cli/document.ts"
+        "src/cli/document.ts",
+        "src/debt/acceptCard.ts",
+        "src/debt/acceptGroup.ts"
       ],
-      "depends_on": [],
+      "depends_on": [
+        "accept-group"
+      ],
       "variants": 2,
-      "max_tokens": 28000,
-      "instruction": "Read docs/TASK_P22b_mutants.md sections 2.1 (Parse Command 24's argv, per word) and 2.2 (src/cli/types.ts, parse.ts: Parse Command) and 4. Patch the two files (their current texts follow) and return each WHOLE; change nothing else in them. types.ts: `GateArgs` gains `mutants?: number` as its last field. parse.ts: \"--mutants\" joins GATE_FLAGS; right after gate's \"missing --refs\" check, a given --mutants that is not a positive integer (isPositiveInteger) gives the UsageError \"--mutants must be a positive integer (got '<v>')\"; the gate command is {name, root, pretty, deck, stubs, refs} with `mutants: Number(v)` added as the LAST key only when --mutants is given (no key at all otherwise, never undefined). main.ts is not yours and does not change. Every other check, message, default and key stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
+      "max_tokens": 30000,
+      "instruction": "Read docs/TASK_P24b_group.md sections 2.1 (Parse Command 25's argv, per word) and 2.2 (src/cli/types.ts, parse.ts and main.ts: AcceptArgs, the accept checks table, the accept route) and 4. Patch the three files (their current texts follow) and return each WHOLE; change nothing else in them. types.ts: AcceptArgs exactly as section 2.2 shows. parse.ts: \"--from-run\" and \"--pick\" join ACCEPT_FLAGS (both take a value); accept's checks of the table, in its order, right after \"missing --id\"; card keeps its own --id rule and its command; the accept command keys in the order name, root, pretty, deck, id, model, commit, then fromRun and pick only when given (no key at all otherwise, never undefined). main.ts: the accept route of section 2.2 and its import; every other route stays as it is. Every other check, message, default and key stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "deck-check": {
       "intent": "patch",
@@ -1171,19 +1179,21 @@
     "parse-command-judge": {
       "intent": "generate",
       "targets": [
-        "tests/cli/gate.p22b.examples.test.ts"
+        "tests/cli/accept.p24b.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P22b_mutants.md",
+        "docs/TASK_P24b_group.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
-        "src/cli/types.ts"
+        "src/cli/types.ts",
+        "src/cli/main.ts",
+        "tests/fixtures/cli/examples.json"
       ],
       "depends_on": [
         "parse-command"
       ],
-      "max_tokens": 16000,
-      "instruction": "You write tests/cli/gate.p22b.examples.test.ts only, a NEW file with the test of Parse Command example 24 (the earlier examples are already tested). Read docs/TASK_P22b_mutants.md sections 2.1 (Parse Command 24's argv, per word: each argv is a JSON array of single words, exactly as listed) and 2.2 (Parse Command and its table) and 2.3. Import parseCommand from \"../../src/cli/parse.js\", fixtureJson from \"../helpers.js\", the ParseResult type with `import type` from \"../../src/cli/types.js\". Test \"Parse Command example 24: <what>\" maps parseArgv.json[\"24\"] through parseCommand and compares the list whole with parse.json[\"24\"]; then at most 6 of your own on section 2.2 rows, each argv a JSON array of single words (a command word like \"deck check\" is two elements, never one). Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "max_tokens": 20000,
+      "instruction": "You write tests/cli/accept.p24b.examples.test.ts only, a NEW file with the tests of Parse Command example 25 and Main example 18 (the earlier examples are already tested). Read docs/TASK_P24b_group.md sections 2.1 (Parse Command 25's argv, per word; the Main 18 harness) and 2.2 and 2.3. Import parseCommand from \"../../src/cli/parse.js\", main from \"../../src/cli/main.js\", tmpRepo, fixture and fixtureJson from \"../helpers.js\", types with `import type` from \"../../src/cli/types.js\". Test \"Parse Command example 25: <what>\" maps parseArgv.json[\"25\"] through parseCommand and compares the list whole with parse.json[\"25\"]; test \"Main example 18: <what>\" on its own tmpRepo removed in finally, checking every value examples.json[\"Main 18\"].then names; then at most 4 of your own on section 2.2 rows, each argv a JSON array of single words. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "deck-check-judge": {
       "intent": "generate",
@@ -3676,6 +3686,51 @@
       ],
       "max_tokens": 24000,
       "instruction": "You write tests/gate/gateMutants.examples.test.ts only, a NEW file. Read docs/TASK_P22b_mutants.md sections 2.1 (the text H, the fixtures and the harness skeleton, verbatim: copy the helpers you use) and 2.2 (Gate Mutants and its table) and 2.3. Import killCommand, planGateMutants, runGateMutants, MUTANT_CAP and MUTANT_STOP_SECONDS (and the types you need) from \"../../src/gate/gateMutants.js\", the Card type, fixture, fixtureJson and tmpRoot from \"../helpers.js\", node:fs and node:path as you use them. One test per example of Gate Mutants (1-3), in record order, named \"Gate Mutants example <n>: <what>\": 1 killCommand on fixture(\"builder/code1.txt\") and fixture(\"builder/go/code1.txt\") (46 and 33 lines by split(\"\\n\"), one line fewer after, the full line gone) and on the literal of the record; 2 planGateMutants over gate/mutantFiles.json with the cards a, b, j, d of the record, each mapped to its spot and compared whole with gate/gateMutants.json \"only a\", \"two\", \"cap\", and cap 0 → []; 3 runGateMutants on a tmpRoot holding src/f.ts = H (removed in finally) with the four acceptances of the record, compared whole with \"run\", \"stop\", \"baseline\", \"timeout\" (literally `timeoutMs: 400` for the last), src/f.ts H at the end; every test that runs a child process gets 120000 as the third argument of test(...); then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+    },
+    "accept-group": {
+      "intent": "generate",
+      "targets": [
+        "src/debt/acceptGroup.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P24b_group.md",
+        "docs/CONVENTIONS.md",
+        "src/debt/acceptCard.ts",
+        "src/debt/cardBrief.ts",
+        "src/cards/types.ts",
+        "src/cards/layer.ts",
+        "src/compiler/types.ts",
+        "src/compiler/parse.ts",
+        "src/acceptance/types.ts",
+        "src/acceptance/snapshot.ts",
+        "src/acceptance/run.ts",
+        "src/git/commit.ts",
+        "src/git/types.ts"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 14000,
+      "instruction": "Read docs/TASK_P24b_group.md sections 2.1 (the functions you call) and 2.2 (src/debt/acceptGroup.ts: the exports, the steps table, the trailers) and 4. Write src/debt/acceptGroup.ts, a NEW file of the layer debt: the four exports of section 2.2 in that order, the interfaces exactly as shown. findCard and RUNS_DIR from \"./cardBrief.js\", changedOutside and the AcceptDeps type from \"./acceptCard.js\", layerGenerations from \"../cards/layer.js\" over the deck that findCard loaded (read the deck once more with loadDeck from \"../cards/model.js\" when you need the whole deck), parseAnswer from \"../compiler/parse.js\", snapshotTargets and restoreSnapshot from \"../acceptance/snapshot.js\", runAcceptance and DEFAULT_TIMEOUT_MS from \"../acceptance/run.js\", commitPaths from \"../git/commit.js\" (force true); of Node only node:fs and node:path. Every refusal of steps 1-4 is checked before anything is written; the acceptances run one after another (await each), all of them. src/debt/acceptCard.ts and cardBrief.ts are not yours and do not change. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "accept-group-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/debt/acceptGroup.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P24b_group.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/debt/acceptGroup.ts",
+        "src/debt/cardBrief.ts",
+        "tests/fixtures/debt/group.deck.json",
+        "tests/fixtures/debt/group.run.json"
+      ],
+      "depends_on": [
+        "accept-group"
+      ],
+      "max_tokens": 24000,
+      "instruction": "You write tests/debt/acceptGroup.examples.test.ts only, a NEW file with the tests of Accept Group examples 1-6. Read docs/TASK_P24b_group.md sections 2.1 (the Accept Group harness: the tmpRepo with its commit \"base\", the archive written under .morph/runs/r1/, the env) and 2.2 and 2.3 (the acceptGroup.examples bullet). Import acceptGroup from \"../../src/debt/acceptGroup.js\", tmpRepo, fixture and fixtureJson from \"../helpers.js\"; await acceptGroup. Read a commit with t.git([\"rev-parse\", ref]) and a message with t.git([\"log\", \"-1\", \"--format=%B\", ref]). Six tests in record order named \"Accept Group example <n>: <what>\", each on its own tmpRepo removed in finally. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     }
   }
 }

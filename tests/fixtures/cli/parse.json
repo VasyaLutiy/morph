@@ -1323,5 +1323,141 @@
         "refs": "r"
       }
     }
+  ],
+  "25": [
+    {
+      "ok": true,
+      "command": {
+        "name": "accept",
+        "root": ".",
+        "pretty": false,
+        "deck": "d.json",
+        "id": "a,b,c",
+        "model": "m",
+        "commit": true
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "accept",
+        "root": ".",
+        "pretty": false,
+        "deck": "d.json",
+        "id": "a,b",
+        "model": null,
+        "commit": false,
+        "fromRun": "20261009-211927",
+        "pick": [
+          "b.r2.v1",
+          "a.r1.v1"
+        ]
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--id must be distinct card ids joined by \",\" (got 'a,a')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--id must be distinct card ids joined by \",\" (got 'a,')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--model does not apply with --from-run"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--pick needs --from-run"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--from-run must match ^[A-Za-z0-9._-]+$ (got 'r 1')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--pick must be distinct answer names joined by \",\" (got 'a.v1,a.v1')"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "accept",
+        "root": ".",
+        "pretty": false,
+        "deck": "d.json",
+        "id": "a",
+        "model": null,
+        "commit": true,
+        "fromRun": "r1"
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--id must match ^[A-Za-z0-9._-]+$ (got 'a,b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --from-run does not apply to card"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "accept",
+        "root": ".",
+        "pretty": false,
+        "deck": "d.json",
+        "id": "a",
+        "model": "m",
+        "commit": false
+      }
+    }
   ]
 }

@@ -29,7 +29,9 @@ const LAYERS = {
   batches: ["cards", "wait", "compiler", "processor"],
   // P17: the debt commands (morph card / morph accept, issue #8) read the deck through cards, run the card's acceptance
   // through acceptance and commit through git (docs/TASK_P17_debt.md §4)
-  debt: ["cards", "acceptance", "git"],
+  // P24b: the group accept (issue #16) writes archived answers parsed by compiler's parseAnswer, as the run does
+  // (docs/TASK_P24b_group.md §4)
+  debt: ["cards", "compiler", "acceptance", "git"],
   // P18: morph init (issue #9) copies the template folders into a new project: no other layer (docs/TASK_P18_template.md §4)
   scaffold: [],
   // P22a: morph gate (issue #13) plays a deck's stubs and references in a scratch clone: the deck through cards, the

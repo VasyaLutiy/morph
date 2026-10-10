@@ -1,0 +1,16 @@
+{
+  "phase": "p24b",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates"],
+  "fullExclude": ["tests/debt/acceptGroup.examples.test.ts", "tests/cli/accept.p24b.examples.test.ts"],
+  "cards": [
+    { "id": "accept-group" },
+    { "id": "parse-command" },
+    { "id": "accept-group-judge", "files": [{ "file": "tests/debt/acceptGroup.examples.test.ts", "min": 6, "max": 10, "new": true,
+      "lits": ["Accept Group example 1", "Accept Group example 2", "Accept Group example 3", "Accept Group example 4",
+        "Accept Group example 5", "Accept Group example 6", "debt/group.deck.json", "debt/group.run.json", "Morph-Run: r1",
+        "Morph-Variant: lib.r1.v1", "red: use", "answer two.v2 is truncated", "Morph-Debt: true"] }] },
+    { "id": "parse-command-judge", "files": [{ "file": "tests/cli/accept.p24b.examples.test.ts", "min": 2, "max": 6, "new": true,
+      "lits": ["Parse Command example 25", "Main example 18", "use,lib", "lib.v2"] }] }
+  ]
+}
