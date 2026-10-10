@@ -1,9 +1,10 @@
-# MorphV2 on another project, old-Morph scheme (operator 10.10)
+# MorphV2 on another project (operator 10.10)
 
-The scheme is the section Morph-Orchestrator of `README.md`; the phase's data (checks.json, probes, _stubs, the transaction, exit codes)
-is `docs/ORCHESTRATOR_REFERENCE.md` — read it instead of `src/` or `dist/`. This file has the commands, what to change in the
-project's data, and the header of the orchestrator's task. It was checked dry (no paid call)
-on a scratch clone of ETHSmartChecker (Python, an mrph project with 27 runs) on 10.10.
+The order of work is the skill `morph-v2-orchestrator` (`.claude/skills/morph-v2-orchestrator/`,
+reached from any project through `~/.claude/skills/morph-v2-orchestrator`); the phase's data and the
+exit codes are `docs/ORCHESTRATOR_REFERENCE.md`. This file has the binary, the wrapper, what to change
+in an mrph project's data, and the task header. It was checked dry (no paid call) on a scratch clone
+of ETHSmartChecker (Python, an mrph project with 27 runs) on 10.10.
 
 ## 1. The binary
 
@@ -31,24 +32,7 @@ The wrapper maps them from morph-lab's `.env` by indirection and never prints th
 A Claude Code session needs the permission `Bash(~/bin/morphv2:*)`, or the auto-mode classifier
 denies scout and run ("Create Unsafe Agents").
 
-## 2. mrph → V2, command by command
-
-| step | old mrph | MorphV2 |
-|---|---|---|
-| primer | `mrph primer --root . --write` | `morphv2 primer --root . --write` (it reads mrph's `.morph/runs` too) |
-| scout | `mrph scout --root . --issue - --processor glm --seed-from-primer <<'TASK'` | `morphv2 scout --root . --issue /tmp/<p>/issue.md --processor <P>`. `--issue` is a FILE outside the tree, not stdin. There is no `--seed-from-primer`: round zero is seeded from git ownership by default; `--seed-file seed.json` narrows it. Result: `.morph/scout/<id>/scout.json` |
-| dry plan | `mrph plan --spec contour.yaml --map morph-map.json --component X` | `morphv2 plan --root . --spec contour.yaml --map morph-map.json --component X --judge --out /tmp/dry.json` |
-| cut | `… --judge --add` → `.morph/deck.json` (a backlog) | `… --judge --out decks/<phase>/deck.json`. A file per phase: no backlog, so no `deck status / clear / reset`. Cards outside the phase: `--only id,id` |
-| acceptances | from the map (`cards.<id>.acceptance`) | without `--checks` the map's acceptances are used as they are, but **an `--only` cut without `--checks` is NOT a transaction**: the acceptances are built, and marked as a transaction, only on the `--checks` path (`src/cli/planCommand.ts`). Any re-cut with `--only` needs `--checks decks/<phase>/checks.json`. `deck check` checks builds only when it gets the stubs (`decks/<phase>/_stubs/`). Details: `docs/ORCHESTRATOR_REFERENCE.md` §2–§5. `--checks` builds acceptances for TypeScript and Go only: a Python project keeps the map's acceptances and has no transaction |
-| budget | `max_tokens` from the cut | for `ds`: `python3 /home/john/Documents/Work2026/MorphV2/decks/tools/scale_tokens.py decks/<phase>/deck.json 3` after the cut |
-| check | `mrph deck check` | `morphv2 deck check --root . --deck decks/<phase>/deck.json` (errors 0; weights per card) |
-| run | `mrph run --processor glm` | `morphv2 run --root . --deck decks/<phase>/deck.json --processor <P> --deadline 2400 > /tmp/<p>/run.json 2> /tmp/<p>/run.err` (stdout is the Run Document; progress lines are `morph run:` on stderr) |
-| after the run | branch `morph/<id>`; `git checkout master` | the same |
-| one card again | `/morph-agent-run` | `morphv2 card` / `morphv2 accept --commit` on a deck re-cut with `--only` |
-
-Commit the data and the deck first: `plan` and `run` read the committed tree.
-
-## 3. The project's data: what V2 requires that mrph did not
+## 2. The project's data: what V2 requires that mrph did not
 Found on ETHSmartChecker. The record and the map were otherwise read as they are, and plan, deck check and primer gave exit 0:
 1. **Every Function needs `behavior:`.** mrph accepted `steps` alone; V2 refuses the record
    with `System.groups[i].functions[j].behavior: required` (3 Functions in ethsc).
@@ -60,33 +44,16 @@ Found on ETHSmartChecker. The record and the map were otherwise read as they are
    gets two contradicting lines. The finale comes last, after the map's instruction. This is
    a V2 finding, not fixed here: it goes to a Fable review, as all bugs do.
 
-## 4. The skill
-Keep `morph-orchestrator` (the old order), with four changes, given in the task header:
-- every `<mrph>` command → the right column above;
-- Phase 3 (operator gate) → auto-approve by `README.md` Morph-Orchestrator §6: plan exit 0, deck check 0
-  errors, stubs red per example, forecast ≤ $5; nothing is waited for;
-- Phase 5 run → as above; a red card: one fix by class, one re-run; still red = stop;
-- Phase 6 stays: verification is not the orchestrator's (merge is yours).
-The spec format (`documentation/TASK_TEMPLATE.md` of mrph) does not change: V2 does not read the spec.
+## 3. The task header
 
-## 5. The task header (in place of the mrph lines of the old prompt)
+The header gives the goal, the constraints and the processor; the order of work is the skill.
 ```
-/morph-orchestrator
+/morph-v2-orchestrator
 
-Project: the current folder (Scenario B).
-Morph CLI: ~/bin/morphv2 (MorphV2, scheme: /home/john/Documents/Work2026/MorphV2/README.md, section Morph-Orchestrator;
-command table: docs/OTHER_PROJECT.md §2 of that repo — use it in place of every mrph command of the skill;
-the phase's data and exit codes: docs/ORCHESTRATOR_REFERENCE.md of that repo — read it, not MorphV2's src/ or dist/).
-Processor: ds (deepseek flash; maxTokens x3 after the cut) or glm.
-Gate: auto-approve by README.md Morph-Orchestrator §6 — do not wait for me. After the run: verify, then stop; merge is mine.
+Project: the current folder. Phase: <p>.
+Morph CLI: ~/bin/morphv2 (binary copy at MorphV2 <commit>). Processor: ds (maxTokens x3 after the cut) or glm.
+Constraints: <budget, what not to touch, merge: mine / fast-forward allowed>.
 
-First call is primer, before any code: ~/bin/morphv2 primer --root . --write, then read .morph/primer.md.
-Contour: contour.yaml by outline, the task's groups only.
-Scout: the task in /tmp/<phase>/issue.md (3–6 lines), ~/bin/morphv2 scout --root . --issue /tmp/<phase>/issue.md --processor ds
-Deck: ~/bin/morphv2 plan --root . --spec contour.yaml --map morph-map.json --component <C> --judge --checks decks/<phase>/checks.json --out decks/<phase>/deck.json
-(TypeScript/Go; --only for a re-cut of code on main = a transaction), then scale x3 (ds), deck check (with decks/<phase>/_stubs), stubs, run.
-In the report: deck targets the scout named and roles you changed — two numbers.
-
-<the phase text, as before>
+<the phase text: goal, items, the live smoke it must pass>
 ```
 Untested so far: a paid V2 run and a V2 scout on a Python project. The first phase is that test.

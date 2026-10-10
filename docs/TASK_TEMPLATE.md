@@ -149,5 +149,5 @@ Filled after the run; a re-cut gets its own sub-section with every spec change b
   with every `mutants.survivors` / `mutants.untried` spot given a probe row or a DECISIONS known-risk line; §11 quotes
   planned/tried/killed/seconds), and the corpus test `tests/gate/identity.examples.test.ts` (in the full suite) in place
   of the hand byte-identity re-cuts. A phase does not add its deck to `tests/fixtures/identity/corpus.json`
-  (README "Morph-Orchestrator" §1.3 drops byte identity from preparation, 10.10); the corpus changes only when
+  (skill `morph-v2-orchestrator` §1.5 drops byte identity from preparation, 10.10); the corpus changes only when
   the planner's output changes on purpose.

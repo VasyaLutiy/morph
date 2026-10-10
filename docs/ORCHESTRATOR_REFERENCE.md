@@ -89,7 +89,7 @@ example. Rules that cost runs:
 
 `decks/<phase>/_stubs/` mirrors the targets' paths:
 - a new code file: the typed exports, every body `throw new Error("stub <name> …")`;
-- a patch target: the current file as it is;
+- a patch target: the current file, plus only the declarations the probe needs to compile (no behaviour);
 - a judge's test file: one passing test (`test("stub", () => { expect(1).toBe(1); })`).
 Real: `decks/p22b/_stubs/`. Every target needs its stub: a missing one is an error of
 `deck check` (builds) and of `gate`.
@@ -105,7 +105,7 @@ runs the deck as one transaction. Every card is written first. Then every accept
 the full tree, no file is hidden from siblings, and a red line is blamed on the owner of the
 `file:line` it names. A red card is retried alone (P24, issue #16); a red after its retries rolls the whole
 subset back. `--only` marks a cut of new code too. It is required when the phase's Components hold
-Functions outside the phase (README "Morph-Orchestrator" §4.1); otherwise cut by `--component` alone.
+Functions outside the phase (skill `morph-v2-orchestrator` §5.2); otherwise cut by `--component` alone.
 
 ## 6. Commands and exit codes
 
@@ -122,21 +122,21 @@ All commands print one JSON document on stdout. The exit codes are shared: 0 ok,
 | `morph primer --root . --write` | `.morph/primer.md` (ownership, runs) | 0 |
 | `morph scout --root . --issue <file> --processor <P> [--seed-file f] [--deadline s]` | `.morph/scout/<id>/scout.json` | 0 |
 
-## 7. One phase, end to end (old-Morph scheme, README.md Morph-Orchestrator)
+## 7. One phase, end to end (skill `morph-v2-orchestrator`)
 
 ```bash
 morph primer --root . --write                       # read .morph/primer.md
 morph scout --root . --issue /tmp/<p>/issue.md --processor ds
 # write: record/map edits, docs/TASK_<p>.md, fixtures, decks/<p>/checks.json, parts/*.probe.ts, _stubs/
-git add -A && git commit -m "<p> data"
+git add <the data paths> && git commit -m "<p> data"     # explicit paths, never -A
 morph plan --root . --spec contour.yaml --map morph-map.json --component <C> --judge \
   --checks decks/<p>/checks.json [--only <ids>] --out decks/<p>/deck.json
 python3 decks/tools/scale_tokens.py decks/<p>/deck.json 3   # processor ds
 morph deck check --root . --deck decks/<p>/deck.json        # errors 0 (builds checked: _stubs present)
-git add -A && git commit -m "<p> deck"
-# stubs: each acceptance once on its stubs in a scratch worktree — red per example (README Morph-Orchestrator §5)
+git add decks/<p> && git commit -m "<p> deck"
+# stubs: each acceptance once on its stubs in a scratch worktree — red per example (skill §6)
 # optional, the full gate: morph gate --root . --deck decks/<p>/deck.json --stubs decks/<p>/_stubs --refs /tmp/<p>/refs
-morph run --root . --deck decks/<p>/deck.json --processor ds --deadline 2400 > /tmp/<p>/run.json 2> /tmp/<p>/run.err
+morph run --root . --deck decks/<p>/deck.json --processor ds --deadline <from the deck, skill §8.1> > /tmp/<p>/run.json 2> /tmp/<p>/run.err
 ```
-A red card: one fix by class, a re-cut with `--checks … --only <red ids>` into
+A red run: salvage from the archive first (`morph accept --from-run`, skill §10.1); then one fix by class, a re-cut with `--checks … --only <red ids>` into
 `decks/<p>/deck-fix.json`, one re-run.
