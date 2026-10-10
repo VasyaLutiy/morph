@@ -1,7 +1,8 @@
 /**
- * Parse Turn — one model turn of the scout protocol read as one action, one
- * final answer or a malformed turn with its reason. Pure: imports nothing,
- * touches no clock, no environment, no file system.
+ * Parse Turn — one model turn of the scout protocol read as one action (the
+ * lines not run named), one final answer (with or without the verb) or a
+ * malformed turn with its reason. Pure: imports nothing, touches no clock, no
+ * environment, no file system.
  */
 
 export type ScoutAction =
@@ -16,7 +17,7 @@ export interface ScoutAnswer {
 }
 
 export type Turn =
-  | { kind: "action"; action: ScoutAction }
+  | { kind: "action"; action: ScoutAction; skipped?: string[] }
   | { kind: "answer"; answer: ScoutAnswer }
   | { kind: "malformed"; reason: string };
 
@@ -24,6 +25,9 @@ export const VERBS: readonly string[] = ["READ", "GREP", "LIST", "ANSWER"];
 
 const ACTION_LINE = /^(READ|GREP|LIST|ANSWER)(?=\s|$)/;
 const READ_RANGE = /^(.*\S)\s+(\d+)-(\d+)$/;
+const GREP_LITERAL = /^\/(.+)\/[a-z]*$/;
+const NO_ACTION =
+  "no action: one line must start with READ, GREP, LIST or ANSWER";
 
 function malformed(reason: string): Turn {
   return { kind: "malformed", reason };
@@ -37,23 +41,66 @@ function isPathList(value: unknown): value is string[] {
   return Array.isArray(value) && value.every(isNonEmptyString);
 }
 
-function parseAnswer(rest: string): Turn {
-  const a = rest.indexOf("{");
-  const b = rest.lastIndexOf("}");
-  if (a < 0 || b < a) {
-    return malformed("ANSWER: no JSON object");
+/**
+ * From the given text, return the JSON object text: from the first "{", the
+ * text up to the "}" that closes it, counting braces only outside JSON
+ * strings (a '"' not escaped by a backslash opens or closes a string); when
+ * none closes it or that text does not parse, the text up to the last "}".
+ * Null when there is no "{" or no "}" after it.
+ */
+function extractJson(text: string): string | null {
+  const a = text.indexOf("{");
+  if (a < 0) {
+    return null;
   }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(rest.slice(a, b + 1)) as unknown;
-  } catch {
-    return malformed("ANSWER: the JSON does not parse");
-  }
-  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-    return malformed("ANSWER: targets must be a non-empty list of paths");
-  }
-  const obj = parsed as Record<string, unknown>;
 
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  let end = -1;
+  for (let i = a; i < text.length; i += 1) {
+    const ch = text[i];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === "\\") {
+        escaped = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+    } else if (ch === "{") {
+      depth += 1;
+    } else if (ch === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        end = i;
+        break;
+      }
+    }
+  }
+
+  if (end >= 0) {
+    const balanced = text.slice(a, end + 1);
+    try {
+      JSON.parse(balanced);
+      return balanced;
+    } catch {
+      // fall through to the last-brace slice
+    }
+  }
+
+  const b = text.lastIndexOf("}");
+  if (b < a) {
+    return null;
+  }
+  return text.slice(a, b + 1);
+}
+
+function checkAnswerObject(obj: Record<string, unknown>): Turn {
   const rawTargets = obj["targets"];
   if (!isPathList(rawTargets) || rawTargets.length < 1) {
     return malformed("ANSWER: targets must be a non-empty list of paths");
@@ -85,50 +132,66 @@ function parseAnswer(rest: string): Turn {
   };
 }
 
-export function parseTurn(text: string | null): Turn {
-  if (text === null || text.trim() === "") {
-    return malformed("empty turn");
+function parseAnswer(rest: string): Turn {
+  const json = extractJson(rest);
+  if (json === null) {
+    return malformed("ANSWER: no JSON object");
   }
-
-  const lines = text
-    .split("\n")
-    .map((line) => (line.endsWith("\r") ? line.slice(0, -1) : line));
-
-  const found: { verb: string; index: number; line: string }[] = [];
-  lines.forEach((raw, index) => {
-    const match = ACTION_LINE.exec(raw.trimStart());
-    if (match !== null) {
-      found.push({ verb: match[1], index, line: raw });
-    }
-  });
-
-  if (found.length === 0) {
-    return malformed(
-      "no action: one line must start with READ, GREP, LIST or ANSWER",
-    );
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json) as unknown;
+  } catch {
+    return malformed("ANSWER: the JSON does not parse");
   }
-  if (found.length > 1) {
-    const verbs = found.map((entry) => entry.verb).join(", ");
-    return malformed(
-      `${found.length} actions in one turn (${verbs}): send one per turn`,
-    );
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return malformed("ANSWER: targets must be a non-empty list of paths");
   }
+  return checkAnswerObject(parsed as Record<string, unknown>);
+}
 
-  const { verb, index, line } = found[0];
-
-  if (verb === "ANSWER") {
-    const rest = [
-      line.trimStart().slice(verb.length),
-      ...lines.slice(index + 1),
-    ].join("\n");
-    return parseAnswer(rest);
+/**
+ * Step 4: with no action line, the whole text read as the answer's JSON: an
+ * object holding the key "targets" is checked like an ANSWER, anything else
+ * leaves the turn malformed for want of an action line.
+ */
+function parseImplicit(text: string): Turn {
+  const json = extractJson(text);
+  if (json === null) {
+    return malformed(NO_ACTION);
   }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json) as unknown;
+  } catch {
+    return malformed(NO_ACTION);
+  }
+  if (
+    parsed === null ||
+    typeof parsed !== "object" ||
+    Array.isArray(parsed) ||
+    !Object.prototype.hasOwnProperty.call(parsed, "targets")
+  ) {
+    return malformed(NO_ACTION);
+  }
+  return checkAnswerObject(parsed as Record<string, unknown>);
+}
 
-  const args = line.trim().slice(verb.length).trim();
+type ParsedAction =
+  | { kind: "malformed"; reason: string }
+  | { kind: "action"; action: ScoutAction };
+
+function parseActionLine(line: string): ParsedAction {
+  const trimmed = line.trim();
+  const match = ACTION_LINE.exec(trimmed);
+  if (match === null) {
+    return { kind: "malformed", reason: NO_ACTION };
+  }
+  const verb = match[1];
+  const args = trimmed.slice(verb.length).trim();
 
   if (verb === "READ") {
     if (args === "") {
-      return malformed("READ needs a path");
+      return { kind: "malformed", reason: "READ needs a path" };
     }
     const range = READ_RANGE.exec(args);
     if (range !== null) {
@@ -136,7 +199,10 @@ export function parseTurn(text: string | null): Turn {
       const from = Number(range[2]);
       const to = Number(range[3]);
       if (from < 1 || to < from) {
-        return malformed(`READ: bad line range ${from}-${to}`);
+        return {
+          kind: "malformed",
+          reason: `READ: bad line range ${from}-${to}`,
+        };
       }
       return { kind: "action", action: { kind: "read", path, from, to } };
     }
@@ -157,16 +223,75 @@ export function parseTurn(text: string | null): Turn {
       pattern = args;
       path = "";
     }
+    const literal = GREP_LITERAL.exec(pattern);
+    if (literal !== null) {
+      pattern = literal[1];
+    }
     if (pattern === "") {
-      return malformed("GREP needs a pattern");
+      return { kind: "malformed", reason: "GREP needs a pattern" };
     }
     try {
       new RegExp(pattern);
     } catch {
-      return malformed(`GREP: invalid pattern /${pattern}/`);
+      return {
+        kind: "malformed",
+        reason: `GREP: invalid pattern /${pattern}/`,
+      };
     }
     return { kind: "action", action: { kind: "grep", pattern, path } };
   }
 
   return { kind: "action", action: { kind: "list", path: args } };
+}
+
+export function parseTurn(text: string | null): Turn {
+  if (text === null || text.trim() === "") {
+    return malformed("empty turn");
+  }
+
+  const lines = text
+    .split("\n")
+    .map((line) => (line.endsWith("\r") ? line.slice(0, -1) : line));
+
+  const found: { verb: string; index: number; line: string }[] = [];
+  lines.forEach((raw, index) => {
+    const match = ACTION_LINE.exec(raw.trimStart());
+    if (match !== null) {
+      found.push({ verb: match[1], index, line: raw });
+    }
+  });
+
+  const firstAnswer = found.find((entry) => entry.verb === "ANSWER");
+  if (firstAnswer !== undefined) {
+    const rest = [
+      firstAnswer.line.trimStart().slice("ANSWER".length),
+      ...lines.slice(firstAnswer.index + 1),
+    ].join("\n");
+    return parseAnswer(rest);
+  }
+
+  if (found.length === 0) {
+    return parseImplicit(text);
+  }
+
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const entry of found) {
+    const trimmed = entry.line.trim();
+    if (!seen.has(trimmed)) {
+      seen.add(trimmed);
+      unique.push(trimmed);
+    }
+  }
+
+  const head = unique[0];
+  const skipped = unique.slice(1);
+  const parsed = parseActionLine(head);
+  if (parsed.kind === "malformed") {
+    return { kind: "malformed", reason: parsed.reason };
+  }
+  if (skipped.length === 0) {
+    return { kind: "action", action: parsed.action };
+  }
+  return { kind: "action", action: parsed.action, skipped };
 }
