@@ -1,7 +1,7 @@
 {
   "package": "src",
   "docs": [
-    "docs/TASK_P22b_mutants.md"
+    "docs/TASK_P24_transaction.md"
   ],
   "groups": {
     "card-model": [
@@ -3407,35 +3407,33 @@
       "intent": "patch",
       "targets": [
         "src/runloop/transaction.ts",
-        "src/runloop/deck.ts"
+        "src/runloop/types.ts"
       ],
       "context_slice": [
-        "docs/TASK_P21c_transaction.md",
+        "docs/TASK_P24_transaction.md",
         "docs/CONVENTIONS.md",
         "src/cards/types.ts",
+        "src/cards/layer.ts",
         "src/cards/transaction.ts",
         "src/language/treeProfiles.ts",
-        "src/runloop/types.ts",
         "src/runloop/generation.ts",
         "src/runloop/retry.ts",
         "src/acceptance/types.ts",
         "src/acceptance/snapshot.ts",
         "src/acceptance/run.ts"
       ],
-      "depends_on": [
-        "transaction-deck"
-      ],
+      "depends_on": [],
       "variants": 2,
       "max_tokens": 16000,
-      "instruction": "Read docs/TASK_P21c_transaction.md sections 2.1 (the shapes it calls) and 2.2 (src/runloop/transaction.ts and src/runloop/deck.ts: Run Transaction) and 4. Write src/runloop/transaction.ts, a NEW file exporting `async function runTransaction(input: RunInput, deps: RunDeps): Promise<RunResult>` exactly as section 2.2 says, and patch src/runloop/deck.ts (its current text follows): its ONE change is the first statement of runDeck, `if (isTransactionDeck(input.deck.cards)) return runTransaction(input, deps);`, with `import { runTransaction } from \"./transaction.js\";` and `import { isTransactionDeck } from \"../cards/transaction.js\";` — return deck.ts WHOLE, every other line exactly as it is. transaction.ts imports node:fs, node:path, runDeck from \"./deck.js\", processGeneration from \"./generation.js\", buildRetry from \"./retry.js\", blameLog from \"../cards/transaction.js\", TREE_PROFILES from \"../language/treeProfiles.js\", snapshotTargets and restoreSnapshot from \"../acceptance/snapshot.js\", runAcceptance and DEFAULT_TIMEOUT_MS from \"../acceptance/run.js\", buildAttemptDiff from \"../acceptance/diff.js\" (buildAttemptDiff(before: Record<string, string | null>, after: Record<string, string>): string), types with `import type`. It runs no git, reads no clock but deps.now, no process.env. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P24_transaction.md sections 2.1 and 2.2 (the table: what changes against main) and 4. Patch src/runloop/transaction.ts and src/runloop/types.ts (their current texts follow) and return both WHOLE. types.ts: CardOutcome gains the optional LAST member `lastRound?: \"green\" | \"red\"`; RunReport gains `stop?: string` between `requests?` and `fault?`; nothing else changes. transaction.ts: (1) drop the run-wide `batches` counter; keep per card its retries of this transaction; before a retry batch a blamed card is capped when its retries (W's included) are 2 (cap text \"2 retries\") or else its retries of this transaction are >= input.budget.maxRetryBatches (cap text \"maxRetryBatches \" + that number); any capped blamed card → stop = \"retry cap: \" + the capped blamed cards in deck order as \"<customId> (<cap>)\" joined \", \", then the rollback as now; (2) the retry batch runs by layers: import { layerGenerations } from \"../cards/layer.js\"; for each generation of layerGenerations(input.deck), in order, the blamed cards in it (skip an empty one) go to ONE processGeneration call, so a dependant's retry is compiled after its dependency's retry wrote; requests and usage in send order; (3) a rollback outcome's winningVariant is the state's variant (the attempt on the tree), and its last key is lastRound: \"red\" when its last round was red, \"green\" when green, the key absent when no round ran (W's rollback); (4) finish() sets report.stop (when set) before report.fault, so fault stays the last key. Every other behaviour (deadline, outside the subset, interrupt, thrown values, reasons, attempts, earlierFailures, written outcomes) stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "run-transaction-judge": {
       "intent": "generate",
       "targets": [
-        "tests/runloop/transaction.examples.test.ts"
+        "tests/runloop/transaction.p24.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P21c_transaction.md",
+        "docs/TASK_P24_transaction.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/cards/types.ts",
@@ -3448,7 +3446,7 @@
         "run-transaction"
       ],
       "max_tokens": 24000,
-      "instruction": "You write tests/runloop/transaction.examples.test.ts only, a NEW file. Read docs/TASK_P21c_transaction.md sections 2.1 (the Run Transaction harness skeleton, verbatim) and 2.2 (Run Transaction and its table) and 2.3. Import runTransaction from \"../../src/runloop/transaction.js\", runDeck from \"../../src/runloop/deck.js\", TRANSACTION_MARK from \"../../src/cards/transaction.js\", fakeFetch and tmpRoot from \"../helpers.js\", node:fs and node:path only if you use them, types with `import type`. One test per example of Run Transaction (1-7), in record order, named \"Run Transaction example <n>: <what>\", each on its own tmp root (the stub's answersDir), removed in finally; then at most 6 of your own on section 2.2 rows. Every acceptance of a transaction card starts with TRANSACTION_MARK + \"\\n\". Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/runloop/transaction.p24.examples.test.ts only, a NEW file with the tests of Run Transaction examples 8 to 11 (examples 1-7 are already tested in tests/runloop/transaction.examples.test.ts, which you do not touch). Read docs/TASK_P24_transaction.md sections 2.1 (the harness skeleton, verbatim: copy the helpers you use) and 2.2 and 2.3. Import runTransaction from \"../../src/runloop/transaction.js\", TRANSACTION_MARK from \"../../src/cards/transaction.js\", fakeFetch and tmpRoot from \"../helpers.js\", types with `import type`. Four tests in record order, named \"Run Transaction example 8: <what>\", \"Run Transaction example 9: <what>\", \"Run Transaction example 10: <what>\", \"Run Transaction example 11: <what>\", each on its own tmp root (the stub's answersDir), removed in finally, checking every value its `then` names: status, reason, attempts, winningVariant, lastRound, acceptanceLog, earlierFailures, the request customIds, the hook's ids, report.stop (example 10: \"retry cap: a (2 retries)\" and Object.keys(report).pop() \"stop\"; example 11: \"retry cap: a (maxRetryBatches 1)\"), report.fault undefined, and in example 9 the records' customId and verdict (\"j.r1.v1\" accepted); then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole result or list with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "stub-verdict": {
       "intent": "generate",

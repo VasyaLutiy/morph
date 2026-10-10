@@ -1,0 +1,12 @@
+{
+  "phase": "p24",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates"],
+  "fullExclude": ["tests/runloop/transaction.p24.examples.test.ts"],
+  "cards": [
+    { "id": "run-transaction" },
+    { "id": "run-transaction-judge", "files": [{ "file": "tests/runloop/transaction.p24.examples.test.ts", "min": 4, "max": 10, "new": true,
+      "lits": ["Run Transaction example 8", "Run Transaction example 9", "Run Transaction example 10", "Run Transaction example 11",
+        "retry cap: a (2 retries)", "retry cap: a (maxRetryBatches 1)", "j.r1.v1"] }] }
+  ]
+}

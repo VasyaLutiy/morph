@@ -1198,28 +1198,38 @@ System:
             green → deps.commit(id, targets) per card in deck order, id = the customId of the attempt whose files are on the
             tree (the card's, or "<customId>.r<n>" of its last written retry); done. Some red: any outside line → fault
             "outside the subset: " + every red card's outside lines (each once, sorted) joined ", ", then rollback. Else
-            blamed = every id some red card's Blame names, in deck order; a blamed card with 2 retries done (W's included),
-            or batches (0 at the first round) >= input.budget.maxRetryBatches → rollback; deps.interrupted?.() a string s
+            blamed = every id some red card's Blame names, in deck order. A card's retries are its own (P24, issue #16 item 1;
+            no run-wide count of retry batches, a round that blames other cards costs this card nothing): a blamed card is
+            capped when its retries (W's included) are 2, cap "2 retries", or else when its retries of this transaction are
+            >= input.budget.maxRetryBatches, cap "maxRetryBatches <m>" (m that number); some blamed card capped → the
+            report's stop = "retry cap: " + every capped blamed card, deck order, as "<customId> (<cap>)", joined ", ",
+            then rollback; deps.interrupted?.() a string s
             → throws Error "interrupted by <s>"; deps.now() >= input.budget.deadline → rollback, the blamed cards
-            "budget-exceeded" reason "deadline". Else batches += 1 and per blamed card, n its retries + 1:
+            "budget-exceeded" reason "deadline" (no stop key: the reason names it). Else per blamed card, n its retries + 1:
             {...buildRetry(card, n, acceptanceOutput, previousDiff), acceptance: "true"}, acceptanceOutput = the logs of
             this round's red cards whose Blame names it, deck order, "\n"-joined; previousDiff = Build Attempt Diff(before's
-            text of its targets (null when absent), the targets' text on disk now ("" when absent)); processGeneration(those
-            cards, deps with commit () => null, root); a written retry's files are on the tree, a retry not written leaves
-            them; then round r + 1. Outcomes: written → {customId, status "written", reason null, attempts: 1 + its retries
+            text of its targets (null when absent), the targets' text on disk now ("" when absent)); the retry batch runs by
+            layers (P24, issue #16 item 2): the generations of Layer Generations(input.deck) in order, each restricted to the
+            blamed cards, empty ones skipped, one processGeneration(that layer's retry cards, deps with commit () => null,
+            root) per layer, so a dependant's retry is compiled after its dependency's retry wrote and is not stale; requests
+            and usage in send order; a written retry's files are on the tree, a retry not written leaves them; then round
+            r + 1. Outcomes: written → {customId, status "written", reason null, attempts: 1 + its retries
             (W's and these), winningVariant its last written attempt's, acceptanceLog its last round's log, earlierFailures:
             W's + its red round logs in order, commit and diffstat from the hook}. Rollback: before restored (Restore
             Snapshot); a card W did not write keeps W's outcome; every other → {status "failed" (or "budget-exceeded"
             above), reason: "outside the subset" when its last log named an outside line, else "acceptance failed" when its
             last round was red and its Blame names itself, else "transaction rolled back"; attempts 1 + its retries,
-            winningVariant null, acceptanceLog its last round's log (W's when no round ran), earlierFailures W's + its red
-            logs of rounds before the last, commit null, diffstat null}. A value thrown (an answer write, the interrupt, the
+            winningVariant the variant whose files are on the tree at the rollback (W's, or its last written retry's; P24,
+            issue #16 item 3), acceptanceLog its last round's log (W's when no round ran), earlierFailures W's + its red
+            logs of rounds before the last, commit null, diffstat null, then lastRound "green" or "red" (its last round)
+            when a round ran — absent when none ran}. CardOutcome gains the optional last key `lastRound?: "green" |
+            "red"`, set only here; RunReport gains the optional key `stop?: string`, between requests and fault. A value thrown (an answer write, the interrupt, the
             hook): before the first commit → before restored and every card {status "skipped", reason "fault", attempts 0,
             winningVariant null, acceptanceLog "", earlierFailures [], commit null, diffstat null}; after → the committed
             keep "written", the rest that outcome, nothing restored; fault = the Error's message. The Run Report: runId,
             completedAt deps.now(), branch, processor deps.config.id, generations W's, outcomes in deck order, usageTotals
-            W's plus every retry request's (cost null when none), requests W's rows then the retries' in send order, fault
-            the last key when set. deps.onVariant sees every request (W's verdicts are those of the "true" acceptance).
+            W's plus every retry request's (cost null when none), requests W's rows then the retries' in send order, then
+            stop and fault, each when set (fault the last key). deps.onVariant sees every request (W's verdicts are those of the "true" acceptance).
           steps:
             - uses: runloop
             - uses: cards
@@ -1248,6 +1258,18 @@ System:
             - given: 'the stub with a.md fenced only (no b.md, b.r1.md, b.r2.md); a → out/a.ts M + "touch ran-a; exit 0", b → out/b.ts dependsOn [a] M + "exit 0"; maxRetryBatches 2'
               when: runTransaction
               then: 'a "failed" "transaction rolled back" attempts 1; b W''s outcome: "failed" "acceptance failed" attempts 3, acceptanceLog "answer corrupt: stub has no answer: <answersDir>/b.r2.v1.md"; requests a.v1, b.v1, b.r1.v1, b.r2.v1; out/a.ts absent; ran-a absent (no acceptance of the deck ran); no commit'
+            - given: 'P24, issue #16 acceptance 1. The stub; maxRetryBatches 2 (the default); answers fenced: a.md ''export const a = "A1";\n'', b.md ''export const b = "B2";\n'', c.md ''export const c = "C3";\n'', a.r1.md ''export const a = "A4";\n'', b.r1.md ''export const b = "B5";\n'', c.r1.md ''export const c = "C6";\n''; once(f, s) = `[ -f f ] || { touch f; echo "s"; exit 1; }`; cards a → out/a.ts M + "exit 0", b → out/b.ts M + "exit 0", c → out/c.ts dependsOn [a, b] M + once(r0.once, out/a.ts(1,14): error TS2305: a is old) + "; " + once(r1.once, out/b.ts(1,14): error TS2305: b is old) + "; " + once(r2.once, c red once)'
+              when: runTransaction
+              then: 'generations 2; round 0 red blames a, round 1 red blames b, round 2 red blames c, round 3 green: a, b, c "written", attempts 2 each, winningVariant "a.r1.v1", "b.r1.v1", "c.r1.v1", acceptanceLog "" each; earlierFailures a [], b [], c ["out/a.ts(1,14): error TS2305: a is old\n", "out/b.ts(1,14): error TS2305: b is old\n", "c red once\n"]; requests a.v1, b.v1, c.v1, a.r1.v1, b.r1.v1, c.r1.v1; the hook fired a.r1, b.r1, c.r1; no stop key, no fault key; out/c.ts holds C6'
+            - given: 'P24, issue #16 acceptance 2. The stub, maxRetryBatches 2; a.md ''export const a = "A7";\n'', a.r1.md ''export const a = "A8";\n'', j.md ''export const j = "J1";\n'', j.r1.md ''export const j = "J2";\n'' fenced; a → out/a.ts M + once(a.once, a red once); j → out/j.ts dependsOn [a], contextSlice [out/a.ts], M + once(j.once, j red once); deps.onVariant pushes each record'
+              when: runTransaction
+              then: 'round 0 red on a and on j, each blaming itself; one retry batch, two layers: a.r1 is written first, then j.r1 is compiled, sent and written — not stale; a "written" attempts 2 winningVariant "a.r1.v1" earlierFailures ["a red once\n"]; j "written" attempts 2 winningVariant "j.r1.v1" earlierFailures ["j red once\n"]; records a.v1, j.v1, a.r1.v1, j.r1.v1, every verdict "accepted"; the hook fired a.r1, j.r1; out/j.ts holds J2'
+            - given: 'P24, issue #16 acceptance 3 (the 175810 shape). The stub, maxRetryBatches 2; fenced a.md ''export const a = "A2";\n'', a.r1.md ''export const a = "A3";\n'', a.r2.md ''export const a = "A5";\n'', b.md ''export const b = "B7";\n'', b.r1.md ''export const b = "B8";\n''; a → out/a.ts M + "echo red-a9; exit 1"; b → out/b.ts M + once(b.once, b red once) (one generation)'
+              when: runTransaction
+              then: 'round 0 blames a and b, round 1 blames a (b green), round 2 blames a with its 2 retries done: rollback; report stop "retry cap: a (2 retries)", its last key, no fault key; a "failed" "acceptance failed" attempts 3 winningVariant "a.r2.v1" lastRound "red" acceptanceLog "red-a9\n" earlierFailures ["red-a9\n", "red-a9\n"]; b "failed" "transaction rolled back" attempts 2 winningVariant "b.r1.v1" lastRound "green" acceptanceLog "" earlierFailures ["b red once\n"]; requests a.v1, b.v1, a.r1.v1, b.r1.v1, a.r2.v1; no commit; out/a.ts and out/b.ts absent'
+            - given: 'example 10''s answers, a → out/a.ts M + "echo red-a9; exit 1", b → out/b.ts M + "exit 0"; maxRetryBatches 1'
+              when: runTransaction
+              then: 'round 0 blames a, a retried once; round 1 blames a with 1 retry of this transaction: rollback; report stop "retry cap: a (maxRetryBatches 1)"; a "failed" "acceptance failed" attempts 2 winningVariant "a.r1.v1" lastRound "red" acceptanceLog "red-a9\n" earlierFailures ["red-a9\n"]; b "failed" "transaction rolled back" attempts 1 winningVariant "b.v1" lastRound "green" acceptanceLog "" earlierFailures []; requests a.v1, b.v1, a.r1.v1; no commit'
 
     # ---------------------------------------------------------------- P6
     - name: git
