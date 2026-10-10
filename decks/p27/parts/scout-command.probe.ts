@@ -30,7 +30,7 @@ test("Scout Command example 1: the transcript carries the budget, the line count
       { env, now: () => 1791500000000, cwd: s.root, transport: null });
     expect(result.code).toBe(0);
     const log = t.git(["log", "-n", "10", "--format=%h %s"]).trim();
-    expect(log.split("\n").map((l) => l.replace(/^\S+ /, ""))).toStrictEqual(["morph b: src/b.ts", "files"]);
+    expect(log.split("\n").map((l) => l.replace(/^\S+ /, ""))).toStrictEqual(["morph b: src/b.ts", "files", "init"]);
     const transcript = JSON.parse(t.read(".morph/scout/20261008-225320-74e423b1/transcript.json")) as { role: string; content: string }[];
     expect(transcript.map((m) => m.content)).toStrictEqual([
       PROTOCOL + "\n" + SENTENCE,
