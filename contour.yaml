@@ -204,7 +204,7 @@ System:
               ref: "tests/fixtures/cards/blameTestLogs.json"
               when: blameLog
               then: '{cards: ["lc", "lj"], outside: []} (" FAIL  tests/units/len.test.ts > …" and " ❯ tests/units/len.test.ts:4:21" → lj, " ❯ toFeet src/units/len.ts:2:25" → lc); then {cards: [], outside: []}; then {cards: ["rt"], outside: []}'
-            - given: 'blameTestLogs.json["python"] (pytest -q --tb=short); card "pc"; owners {"src/calc.py": "pc", "tests/test_calc.py": "pj"}; exists true for those two only; the three fileLines; TEST_LINES; then owners {"src/calc.py": "pc"}; then the first owners on the log's FAILED line alone ("FAILED tests/test_calc.py::test_half - assert 2 == 4\n", as -q --tb=no prints it)'
+            - given: 'blameTestLogs.json["python"] (pytest -q --tb=short); card "pc"; owners {"src/calc.py": "pc", "tests/test_calc.py": "pj"}; exists true for those two only; the three fileLines; TEST_LINES; then owners {"src/calc.py": "pc"}; then the first owners on the log''s FAILED line alone ("FAILED tests/test_calc.py::test_half - assert 2 == 4\n", as -q --tb=no prints it)'
               ref: "tests/fixtures/cards/blameTestLogs.json"
               when: blameLog
               then: '{cards: ["pj"], outside: []} ("tests/test_calc.py:5: in test_half" by the python fileLine, "FAILED tests/test_calc.py::test_half - assert 2 == 4" by its failLine); then {cards: [], outside: ["tests/test_calc.py:5: in test_half"]} (a column-0 line keeps its outside rule); then {cards: ["pj"], outside: []} (before P24c: ["pc"])'
