@@ -1,0 +1,175 @@
+import { expect, test } from "vitest";
+
+import { blameLog } from "../../src/cards/transaction.js";
+import { TEST_LINES, TREE_PROFILES } from "../../src/language/treeProfiles.js";
+import { fixtureJson } from "../helpers.js";
+
+const logs = fixtureJson("cards/blameTestLogs.json") as Record<string, string>;
+const FL = TREE_PROFILES.map((p) => p.fileLine);
+const on = (paths: string[]) => (p: string) => paths.includes(p);
+
+const O5 = {
+  "control/control.go": "cc",
+  "daemon/daemon.go": "dc",
+  "daemon/daemon_examples_test.go": "dcj",
+  "supervisor/guard.go": "rg",
+  "supervisor/guard_examples_test.go": "rgj",
+};
+const O5_PATHS = [
+  "control/control.go",
+  "daemon/daemon.go",
+  "daemon/daemon_examples_test.go",
+  "supervisor/guard.go",
+  "supervisor/guard_examples_test.go",
+];
+
+test("Blame Log example 5: a go assertion red blames the test owner, no testLines blames the card, an unowned test file is unattributed, a gone one blames the card", () => {
+  const exists = on(O5_PATHS);
+  expect(blameLog(logs["go"], "cc", O5, FL, exists, TEST_LINES)).toStrictEqual({
+    cards: ["dcj", "rgj"],
+    outside: [],
+  });
+  expect(blameLog(logs["go"], "cc", O5, FL, exists)).toStrictEqual({
+    cards: ["cc"],
+    outside: [],
+  });
+  const noTests = {
+    "control/control.go": "cc",
+    "daemon/daemon.go": "dc",
+    "supervisor/guard.go": "rg",
+  };
+  expect(blameLog(logs["go"], "cc", noTests, FL, exists, TEST_LINES)).toStrictEqual({
+    cards: [],
+    outside: [],
+  });
+  expect(
+    blameLog(logs["go"], "cc", noTests, FL, () => false, TEST_LINES),
+  ).toStrictEqual({ cards: ["cc"], outside: [] });
+});
+
+test("Blame Log example 6: a go panic trace blames the test owner through the trailing candidate of an absolute path", () => {
+  expect(
+    blameLog(logs["goPanic"], "cc", O5, FL, on(O5_PATHS), TEST_LINES),
+  ).toStrictEqual({ cards: ["dcj"], outside: [] });
+});
+
+test("Blame Log example 7: a vitest dot red blames the test and the source owners, an existing file nothing, a gone file the card", () => {
+  const owners = {
+    "src/units/len.ts": "lc",
+    "tests/units/len.test.ts": "lj",
+  };
+  const exists = on(Object.keys(owners));
+  expect(
+    blameLog(logs["typescript"], "rt", owners, FL, exists, TEST_LINES),
+  ).toStrictEqual({ cards: ["lc", "lj"], outside: [] });
+  expect(
+    blameLog(logs["typescript"], "rt", {}, FL, exists, TEST_LINES),
+  ).toStrictEqual({ cards: [], outside: [] });
+  expect(
+    blameLog(logs["typescript"], "rt", {}, FL, () => false, TEST_LINES),
+  ).toStrictEqual({ cards: ["rt"], outside: [] });
+});
+
+test("Blame Log example 8: a pytest red blames the test owner, a column-0 location with no owner is outside, the FAILED line alone blames the owner", () => {
+  const owners = {
+    "src/calc.py": "pc",
+    "tests/test_calc.py": "pj",
+  };
+  const exists = on(Object.keys(owners));
+  expect(
+    blameLog(logs["python"], "pc", owners, FL, exists, TEST_LINES),
+  ).toStrictEqual({ cards: ["pj"], outside: [] });
+  expect(
+    blameLog(logs["python"], "pc", { "src/calc.py": "pc" }, FL, exists, TEST_LINES),
+  ).toStrictEqual({
+    cards: [],
+    outside: ["tests/test_calc.py:5: in test_half"],
+  });
+  expect(
+    blameLog(
+      "FAILED tests/test_calc.py::test_half - assert 2 == 4\n",
+      "pc",
+      owners,
+      FL,
+      exists,
+      TEST_LINES,
+    ),
+  ).toStrictEqual({ cards: ["pj"], outside: [] });
+});
+
+test("Blame Log: a # line and an empty line are skipped", () => {
+  expect(
+    blameLog("# src/a.ts(1,1): error TS1: x\n\n", "x", {}, FL, () => false),
+  ).toStrictEqual({ cards: ["x"], outside: [] });
+  expect(
+    blameLog("src/a.ts(1,1): error TS1: x\n", "x", {}, FL, () => true),
+  ).toStrictEqual({ cards: [], outside: ["src/a.ts(1,1): error TS1: x"] });
+});
+
+test("Blame Log: a packageLine match blames nothing", () => {
+  expect(
+    blameLog(
+      "FAIL\tmorphlite/daemon\t0.004s\n",
+      "x",
+      {},
+      FL,
+      () => false,
+      TEST_LINES,
+    ),
+  ).toStrictEqual({ cards: [], outside: [] });
+});
+
+test("Blame Log: a bare test name joins its package even when the package line comes first", () => {
+  expect(
+    blameLog(
+      "FAIL\tmorphlite/daemon\t0.005s\n    daemon_examples_test.go:22: OnExit:\n",
+      "cc",
+      { "daemon/daemon_examples_test.go": "dcj" },
+      FL,
+      () => false,
+      TEST_LINES,
+    ),
+  ).toStrictEqual({ cards: ["dcj"], outside: [] });
+});
+
+test("Blame Log: test path candidates try owned then existing, else the card or nothing", () => {
+  expect(
+    blameLog(
+      " FAIL  tests/units/a.test.ts > x\n",
+      "rt",
+      {},
+      FL,
+      () => false,
+      TEST_LINES,
+    ),
+  ).toStrictEqual({ cards: ["rt"], outside: [] });
+  expect(
+    blameLog(" ❯ /tmp/x/a.test.ts:1:1\n", "rt", {}, FL, () => false, TEST_LINES),
+  ).toStrictEqual({ cards: [], outside: [] });
+  expect(
+    blameLog(
+      " FAIL  tests/units/a.test.ts > x\n",
+      "rt",
+      {},
+      FL,
+      (p) => p === "units/a.test.ts",
+      TEST_LINES,
+    ),
+  ).toStrictEqual({ cards: [], outside: [] });
+});
+
+test("Blame Log: a matched test pattern with nothing blamed leaves no blame, else the card blames itself", () => {
+  expect(
+    blameLog(
+      " FAIL  tests/units/a.test.ts > x\n",
+      "rt",
+      {},
+      FL,
+      (p) => p === "tests/units/a.test.ts",
+      TEST_LINES,
+    ),
+  ).toStrictEqual({ cards: [], outside: [] });
+  expect(
+    blameLog("nothing to see here\n", "rt", {}, FL, () => false, TEST_LINES),
+  ).toStrictEqual({ cards: ["rt"], outside: [] });
+});
