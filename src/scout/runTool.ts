@@ -12,6 +12,7 @@ import type { ScoutAction } from "./parseTurn.js";
 
 export interface ToolCaps {
   readLines: number;
+  readChars?: number;
   grepHits: number;
   grepLineChars: number;
   listEntries: number;
@@ -20,6 +21,7 @@ export interface ToolCaps {
 
 export const DEFAULT_TOOL_CAPS: ToolCaps = {
   readLines: 400,
+  readChars: 12000,
   grepHits: 200,
   grepLineChars: 300,
   listEntries: 300,
@@ -90,12 +92,42 @@ function readTool(
   }
 
   const end = Math.min(wanted, n);
-  const last = Math.min(end, first + caps.readLines - 1);
+  let last = Math.min(end, first + caps.readLines - 1);
+
+  const shown: string[] = [];
+  if (caps.readChars === undefined) {
+    for (let i = first; i <= last; i += 1) {
+      shown.push(`${i}: ${lines[i - 1]}`);
+    }
+  } else {
+    const cap = caps.readChars;
+    let used = 0;
+    let kept = 0;
+    let keptLast = first - 1;
+    for (let i = first; i <= last; i += 1) {
+      const raw = `${i}: ${lines[i - 1]}`;
+      if (kept === 0) {
+        shown.push(
+          raw.length > cap
+            ? raw.slice(0, cap) + `… (+${raw.length - cap} chars)`
+            : raw,
+        );
+        used = raw.length + 1;
+        kept = 1;
+        keptLast = i;
+        continue;
+      }
+      if (used + raw.length + 1 > cap) break;
+      shown.push(raw);
+      used += raw.length + 1;
+      kept += 1;
+      keptLast = i;
+    }
+    last = keptLast;
+  }
 
   const out: string[] = [`READ ${c} lines ${first}-${last} of ${n}`];
-  for (let i = first; i <= last; i += 1) {
-    out.push(`${i}: ${lines[i - 1]}`);
-  }
+  for (const line of shown) out.push(line);
   if (last < end) {
     out.push(
       `… ${end - last} more lines; READ ${c} ${last + 1}-${end} for the next`,
@@ -235,12 +267,34 @@ function listTool(
   const shown = Math.min(total, caps.listEntries);
   for (let i = 0; i < shown; i += 1) {
     const name = order[i];
-    const count = dirCounts.get(name);
-    if (count === undefined) {
-      out.push(name);
-    } else {
-      out.push(`${name} (${count} ${plural(count, "file", "files")})`);
+    const dirCount = dirCounts.get(name);
+    if (dirCount !== undefined) {
+      out.push(`${name} (${dirCount} ${plural(dirCount, "file", "files")})`);
+      continue;
     }
+
+    const listed = c === "" ? name : `${c}/${name}`;
+    const fileCaged = cagePath(tree, listed, "file", fs);
+    if (!fileCaged.ok) {
+      out.push(name);
+      continue;
+    }
+
+    let body: string;
+    try {
+      body = fs.readFile(posix.join(tree.root, fileCaged.path));
+    } catch {
+      out.push(name);
+      continue;
+    }
+    if (body.includes("\0")) {
+      out.push(`${name} (binary)`);
+      continue;
+    }
+    const lineCount = splitLines(body).length;
+    out.push(
+      `${name} (${lineCount} ${plural(lineCount, "line", "lines")})`,
+    );
   }
   if (total > caps.listEntries) {
     out.push(`… ${total - caps.listEntries} more entries`);
