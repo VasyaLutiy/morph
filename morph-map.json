@@ -2573,14 +2573,12 @@
       "context_slice": [
         "docs/TASK_P27_scout.md",
         "docs/CONVENTIONS.md",
-        "src/scout/runTool.ts",
-        "src/scout/cagePath.ts"
+        "tests/helpers.ts",
+        "src/scout/runTool.ts"
       ],
-      "depends_on": [
-        "run-tool"
-      ],
+      "depends_on": [],
       "max_tokens": 20000,
-      "instruction": "Read docs/TASK_P27_scout.md sections 2.1 (the trees and Run Tool example 6's) and 2.3 and the Run Tool examples below. Patch tests/scout/runTool.examples.test.ts (its current text follows) and return it WHOLE: in the test of example 5 every LIST text gets the line counts of the record (README.md (1 line); a.ts (5 lines), b.ts (3 lines), bin.dat (binary), e.ts (0 lines); dirlink and out.txt alone); append the test \"Run Tool example 6: the character cap of one READ\" on its own tmpRoot with w.txt and long.txt (build them with \"w\".repeat(250) and \"x\".repeat(13000)), comparing each whole ToolResult with toStrictEqual where the expected text is built in the test from the record's lines (Array.from with the line numbers, joined with \"\\n\") and also its length with toBe (12053, 12063, 12044); the last call uses caps without readChars (an object literal of the other five keys). Every other test stays byte for byte, its name included; keep the file's imports and helpers, add an import only for what the new tests use. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "Read docs/TASK_P27_scout.md section 2.5 (language neutrality) and the Run Tool examples below. Patch tests/scout/runTool.examples.test.ts (its current text follows) and return it WHOLE with ONE test appended: \"Run Tool example 7: a tree in three languages, no rule of one language\". It builds under its own tmpRoot the tree t/app/core.py, t/app/__init__.py, t/cmd/main.go, t/lib/config.ts with the record's contents, tree {root: p.path(\"t\"), files: [\"app/core.py\", \"app/__init__.py\", \"cmd/main.go\", \"lib/config.ts\"]}, runs the five actions with DEFAULT_TOOL_CAPS and compares each whole ToolResult with toStrictEqual: the texts as the record writes them, read false for LIST and GREP, true for READ, error null. Every existing test stays byte for byte, its name included; keep the file's imports and helpers, add an import only for what the new test uses. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "spend-budget-judge": {
       "intent": "generate",
@@ -3732,7 +3730,7 @@
       "instruction": "Read docs/TASK_P27_scout.md sections 2.1 (Session Text example 3's tree) and 2.2 (src/scout/sessionText.ts) and 4, and the Session Text behaviour below; src/scout/cagePath.ts and src/scout/spendBudget.ts follow (import cagePath and the ScoutFs, ScoutTree, ScoutBudgets, ScoutSpent types, do not change them). Write src/scout/sessionText.ts, a NEW pure file of the layer scout importing only posix from \"node:path\", \"./cagePath.js\" and types from \"./spendBudget.js\". Export, in this order, ANSWER_SHAPE, ROUND0_CLUES = 8, ROUND0_HITS = 20, ROUND0_HEADER, budgetSentence, budgetLeft, notRun, afterClose, taskClues and roundZero, every sentence character for character as the behaviour writes it. taskClues: the four global regexes CAMEL, SNAKE, QUOTED (group 1), FILE, every match with its index, sorted by index then pattern order (a stable sort), dropping clues shorter than 3, all-digit ones and repeats, at most ROUND0_CLUES. roundZero: a file's lines are its text split on \"\\n\", one trailing \"\\r\" removed, the last empty piece dropped; files in code-unit order ([...tree.files].sort()); the clue found with String.prototype.includes; lines joined while the text stays <= maxChars, then the cut line. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "session-text-judge": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "tests/scout/sessionText.examples.test.ts"
       ],
@@ -3740,15 +3738,11 @@
         "docs/TASK_P27_scout.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
-        "src/scout/sessionText.ts",
-        "src/scout/spendBudget.ts",
-        "src/scout/cagePath.ts"
+        "src/scout/sessionText.ts"
       ],
-      "depends_on": [
-        "session-text"
-      ],
+      "depends_on": [],
       "max_tokens": 16000,
-      "instruction": "You write tests/scout/sessionText.examples.test.ts only, a NEW file with the tests of Session Text examples 1-3, named \"Session Text example <n>: <what>\". Read docs/TASK_P27_scout.md sections 2.1 (example 3's tree) and 2.2 and the Session Text examples below. Import from \"../../src/scout/sessionText.js\", DEFAULT_BUDGETS from \"../../src/scout/spendBudget.js\", the ScoutFs type from \"../../src/scout/cagePath.js\", tmpRoot from \"../helpers.js\", fs from \"node:fs\". Example 3 builds its tree under one tmpRoot with p.write, uses NODE_FS = {realpath: (x) => fs.realpathSync(x), readFile: (x) => fs.readFileSync(x, \"utf8\")} and root p.root, and compares the whole text with toBe against the record's lines joined with \"\\n\" (c/many.txt:1 … :19 built with Array.from) and its length 1085. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "Read docs/TASK_P27_scout.md section 2.5 (language neutrality) and the Session Text examples below. Patch tests/scout/sessionText.examples.test.ts (its current text follows) and return it WHOLE with ONE test appended: \"Session Text example 4: round zero over Python, Go and TypeScript files\". It builds under its own tmpRoot the tree of Run Tool example 7 (app/core.py, app/__init__.py, cmd/main.go, lib/config.ts with the record's contents, root p.root, files in that order), checks taskClues of the question with toStrictEqual and roundZero(question, tree, NODE_FS, [\".morph\", \"decks\"], 30000) with toBe against ROUND0_HEADER + the record's lines joined with \"\\n\", and its length 412. Every existing test stays byte for byte, its name included; keep the file's imports and helpers, add an import only for what the new test uses. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     }
   }
 }

@@ -111,6 +111,17 @@ new values, the names stay; the new examples are appended in record order; every
   From Ownership, Plan From Scout and their tests unchanged; `scout.json` keys unchanged (caps gain `readChars`).
 - 950 tests in 157 files on main (measured with the old protocol fixture); after the run 950 + the new tests.
 
+### 2.5. Language neutrality (operator, 10.10, after run 20261010-195534) — deck `decks/p27b`
+
+The scout reads plain text and lines: no file-extension list, no keyword or comment rule of one language, no test-file
+naming in `src/scout` (checked on the P27 code: none). Round zero's clues come from the task text by generic patterns
+(CamelCase/camelCase, snake_case, quoted text, slash paths); greps run over every listed text file except the tool's own
+`.morph`/`decks` (grepSkip) and binary files. Shown by two new examples on a tree in three languages, values measured with
+the run's build: Run Tool example 7 (LIST line counts of `.py`, `.go`, `.ts`; GREP across them; READ of a Go file) and
+Session Text example 4 (clues `load_config` from Python, `loadConfig` from Go/TS; hits in all three; 412 chars). The two
+judges append them to their test files; no code card (the code is unchanged). The live smoke is on a Go project
+(MorphStudio, four sessions).
+
 ## 3. Acceptance
 
 Built by `morph plan --checks decks/p27/checks.json`. `ownGit: true`, `frozen` the defaults + `templates`, `fullExclude`

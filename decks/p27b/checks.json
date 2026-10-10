@@ -1,0 +1,12 @@
+{
+  "phase": "p27b",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates"],
+  "fullExclude": ["tests/scout/runTool.examples.test.ts", "tests/scout/sessionText.examples.test.ts"],
+  "cards": [
+    { "id": "run-tool-judge", "files": [{ "file": "tests/scout/runTool.examples.test.ts", "min": 7, "max": 10, "new": false,
+      "lits": ["Run Tool example 7", "__init__.py (0 lines)", "main.go (3 lines)", "def load_config(path):", "export function loadConfig(): void {}"] }] },
+    { "id": "session-text-judge", "files": [{ "file": "tests/scout/sessionText.examples.test.ts", "min": 4, "max": 7, "new": false,
+      "lits": ["Session Text example 4", "load_config", "open(path)", "412", "lib/config.ts:1: export function loadConfig(): void {}"] }] }
+  ]
+}
