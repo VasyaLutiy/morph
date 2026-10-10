@@ -101,15 +101,16 @@ MorphV2 on another project: `docs/OTHER_PROJECT.md`.
 How a phase is prepared and run, under the old-Morph scheme.
 
 
-**Status.** Version 1, final. Built from the replays of P20, P21a, P21b and P21c under this scheme on 10.10
-(`/tmp/oldscheme/`, measured against the original phases). Every rule below is a MUST. Where this
+**Status.** Version 2 (10.10). Version 1 was built from the replays of P20, P21a, P21b and P21c under this scheme on 10.10
+(`/tmp/oldscheme/`, measured against the original phases); version 2 adds the remarks of the P24, P24c and
+P24b agents (MorphV2's own `src/`, a forced `--only`). Every rule below is a MUST. Where this
 section is silent, `docs/ORCHESTRATOR_REFERENCE.md` (the data and the exit codes) and the
 `morph-orchestrator` skill apply, in that order. Where they disagree with this section, this section wins.
 
 **Scope.** Every phase prepared and run with the MorphV2 binary under this scheme: other
-projects (`docs/OTHER_PROJECT.md` has the commands and the task header), and MorphV2 itself on the
-local branch `old-scheme`. On `main`, MorphV2's own `docs/AUTONOMY.md` cycle is unchanged until the
-operator switches it.
+projects (`docs/OTHER_PROJECT.md` has the commands and the task header), and MorphV2 itself: a
+sandbox clone `/tmp/oldscheme/<phase>`, a fresh agent per phase, merged into `main` by the operator.
+MorphV2's own `docs/AUTONOMY.md` cycle (the VPS session) is unchanged until the operator switches it.
 
 **Why this scheme.** The heavy gate (reference code, mutants, chain timing, byte identity) did not
 catch what mattered: the original P21a passed it, and its live smoke still went red. The scheme
@@ -132,6 +133,8 @@ A paid retry on ds costs cents. Do not add a check whose only gain is fewer retr
    Code (`src/`, test files) comes from cards only. A hand edit of code breaks the experiment.
 2. **Never read Morph's source or build** (`MorphV2/src/`, `dist/`, `--help` runs): the
    data format and the exit codes are in `docs/ORCHESTRATOR_REFERENCE.md` (issue #17).
+   **Exception: MorphV2's own phase.** There `src/` is the product, so reading it by address (§2.6) is
+   recon. `dist/` and `--help` runs stay forbidden.
 3. **Not in this scheme, never during preparation:**
    - reference implementations;
    - mutants;
@@ -194,8 +197,11 @@ A paid retry on ds costs cents. Do not add a check whose only gain is fewer retr
      --checks decks/<phase>/checks.json --out decks/<phase>/deck.json
    ```
    - `--checks` builds the acceptances, for TypeScript and Go only. A Python project uses the map's own acceptances.
-   - Cards outside the phase: `--only <ids>`. With `--checks`, that makes a **transaction**: everything is rolled back on one red.
-   - Use `--only` for a re-cut of code already on `main`, not for a first cut of new code.
+   - Cards outside the phase: `--only <ids>`. With `--checks`, that makes a **transaction**: every card is
+     written first, a red card is retried alone (#16), and a red after its retries rolls the subset back.
+   - `--only` is required whenever the phase's Components hold Functions outside the phase, for new code
+     too (P24, P24c, P24b were all cut so). Name the transaction in the report. Without such
+     Functions, cut by `--component` alone.
 2. For processor `ds`: every card's maxTokens ×3, `scale_tokens.py <deck> 3`, committed with the deck.
 3. `morph deck check --root . --deck <deck>`. It must report **errors 0**. With `_stubs/` beside the
    deck it also compiles each card's stub tree. A break it names is a data defect: fix it before
@@ -274,7 +280,8 @@ morph run --root . --deck decks/<phase>/deck.json --processor <P> --deadline 240
 2. **Scout:** $ and minutes; the deck targets it named, out of the total; the roles you changed. Two numbers, never one merged.
 3. **Deck:** cards, generations, largest slice.
 4. **Stubs:** reds per example, out of the total; the exceptions.
-5. **Run:** cards written out of the total; attempts; $ from the run document; minutes; exit code.
+5. **Run:** cards written out of the total; attempts; $ from the run document; minutes for the whole run
+   (the report has no per-card time yet, issue #20); exit code.
 6. **Verify:** the counts. **Smoke:** what ran, and the result.
 7. **Red cards:** class and reasons, verbatim.
 8. **The split**, if any, as the first line.

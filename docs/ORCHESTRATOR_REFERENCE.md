@@ -103,9 +103,9 @@ It is written by `morph plan … --checks <file> --only <ids>`, and only then: `
 `--checks` keeps the map's acceptances as they are, unmarked (`src/cli/planCommand.ts`). When the mark is there, `morph run`
 runs the deck as one transaction. Every card is written first. Then every acceptance runs on
 the full tree, no file is hidden from siblings, and a red line is blamed on the owner of the
-`file:line` it names. A red after the retries rolls the whole subset back. It is meant for a re-cut of code that is already on `main` (a rename across generations).
-`--only` marks a cut of new code too (P22a, 09.10: one red judge rolled back 9 green cards),
-so cut new code without `--only` when the deck holds only the phase's cards.
+`file:line` it names. A red card is retried alone (P24, issue #16); a red after its retries rolls the whole
+subset back. `--only` marks a cut of new code too. It is required when the phase's Components hold
+Functions outside the phase (README "Morph-Orchestrator" §4.1); otherwise cut by `--component` alone.
 
 ## 6. Commands and exit codes
 

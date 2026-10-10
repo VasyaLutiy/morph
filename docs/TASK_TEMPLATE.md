@@ -148,5 +148,6 @@ Filled after the run; a re-cut gets its own sub-section with every spec change b
 - From the P22b merge on (issue #13 items 2–3): `morph gate … --mutants 30` in place of the hand mutants (code 0, or 1
   with every `mutants.survivors` / `mutants.untried` spot given a probe row or a DECISIONS known-risk line; §11 quotes
   planned/tried/killed/seconds), and the corpus test `tests/gate/identity.examples.test.ts` (in the full suite) in place
-  of the hand byte-identity re-cuts; a phase that cuts a new deck of MorphV2 adds its entry to
-  `tests/fixtures/identity/corpus.json` as data.
+  of the hand byte-identity re-cuts. A phase does not add its deck to `tests/fixtures/identity/corpus.json`
+  (README "Morph-Orchestrator" §1.3 drops byte identity from preparation, 10.10); the corpus changes only when
+  the planner's output changes on purpose.
