@@ -1,0 +1,2 @@
+morph run: run-tool-judge.v1 accepted stage 0 finish stop chars 14223
+morph run: session-text-judge.v1 accepted stage 0 finish stop chars 5871

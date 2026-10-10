@@ -1,0 +1,160 @@
+```ts
+import fs from "node:fs";
+
+import { expect, test } from "vitest";
+
+import type { ScoutFs } from "../../src/scout/cagePath.js";
+import {
+  afterClose,
+  budgetLeft,
+  budgetSentence,
+  notRun,
+  ROUND0_HEADER,
+  roundZero,
+  taskClues,
+} from "../../src/scout/sessionText.js";
+import { DEFAULT_BUDGETS } from "../../src/scout/spendBudget.js";
+import { tmpRoot } from "../helpers.js";
+
+test("Session Text example 1: budget sentences, budget left, not run and after close", () => {
+  const spent = { calls: 2, reads: 1, chars: 50000, rounds: 3 };
+  const spentOut = { calls: 31, reads: 12, chars: 120086, rounds: 40 };
+  const skipped = ["LIST b", "GREP x -- src"];
+  const problem =
+    "ANSWER rejected: targets: not in the tree (missing, ignored or a directory): src/c.ts";
+
+  expect(budgetSentence(DEFAULT_BUDGETS)).toBe(
+    "Your budget: 30 tool calls, 12 files read, 120000 characters of tool replies, 40 rounds. When the calls, reads or characters run out you get one last turn: send ANSWER in it; an answer refused there gets one correction.",
+  );
+  expect(budgetLeft(DEFAULT_BUDGETS, spent)).toBe(
+    "Budget left: 28 calls, 11 file reads, 70000 chars, 37 rounds.",
+  );
+  expect(budgetLeft(DEFAULT_BUDGETS, spentOut)).toBe(
+    "Budget left: 0 calls, 0 file reads, 0 chars, 0 rounds.",
+  );
+  expect(notRun(skipped)).toBe(
+    "Not run: LIST b | GREP x -- src. One action line per turn; equal lines count once.",
+  );
+  expect(afterClose(problem)).toBe(
+    "ANSWER rejected: targets: not in the tree (missing, ignored or a directory): src/c.ts. No more tools will run: send ANSWER {\"targets\": [...], \"context_slice\": [...], \"reasoning\": \"...\"} now, every path a file of the tree, the JSON object last.",
+  );
+});
+
+test("Session Text example 2: taskClues extracts identifiers", () => {
+  expect(
+    taskClues("Fix `Exited(` when LimitsUnknown is set in a/run.go.\n"),
+  ).toStrictEqual(["Exited(", "LimitsUnknown", "a/run.go"]);
+  expect(
+    taskClues(
+      'Use parseTurn, run_scout and "the final turn" in src/scout/runScout.ts; ab_c, `x`, `2026`, LimitsUnknown again',
+    ),
+  ).toStrictEqual([
+    "parseTurn",
+    "run_scout",
+    "the final turn",
+    "src/scout/runScout.ts",
+    "runScout",
+    "ab_c",
+    "LimitsUnknown",
+  ]);
+  expect(
+    taskClues("AaBb CcDd EeFf GgHh IiJj KkLl MmNn OoPp QqRr"),
+  ).toStrictEqual(["AaBb", "CcDd", "EeFf", "GgHh", "IiJj", "KkLl", "MmNn", "OoPp"]);
+  expect(taskClues("Make b twice a.\n")).toStrictEqual([]);
+});
+
+test("Session Text example 3: roundZero finds the task's identifiers", () => {
+  const p = tmpRoot();
+  try {
+    p.write(".morph/x.md", "LimitsUnknown\n");
+    p.write(
+      "a/run.go",
+      "func (s *S) Exited() bool {\n\treturn s.LimitsUnknown\n}\n",
+    );
+    p.write("b/doc.md", "Exited( here\nExited( " + "z".repeat(250) + "\n");
+    p.write("c/many.txt", "LimitsUnknown\n".repeat(22));
+
+    const tree = {
+      root: p.root,
+      files: [".morph/x.md", "a/run.go", "b/doc.md", "c/many.txt"],
+    };
+    const NODE_FS: ScoutFs = {
+      realpath: (x: string): string => fs.realpathSync(x),
+      readFile: (x: string): string => fs.readFileSync(x, "utf8"),
+    };
+    const skip = [".morph", "decks"];
+    const question = "Fix `Exited(` when LimitsUnknown is set in a/run.go.\n";
+
+    const expectedLines = [
+      ROUND0_HEADER,
+      "\"Exited(\": 3 matches in 2 files",
+      "a/run.go:1: func (s *S) Exited() bool {",
+      "b/doc.md:1: Exited( here",
+      "b/doc.md:2: Exited( " + "z".repeat(192) + "… (+58 chars)",
+      "\"LimitsUnknown\": 23 matches in 2 files",
+      "a/run.go:2: \treturn s.LimitsUnknown",
+      ...Array.from(
+        { length: 19 },
+        (_, i) => "c/many.txt:" + (i + 1) + ": LimitsUnknown",
+      ),
+      "… 3 more matches",
+      "\"a/run.go\": 0 matches in 0 files",
+    ];
+    const whole = expectedLines.join("\n");
+    expect(roundZero(question, tree, NODE_FS, skip, 30000)).toBe(whole);
+    expect(whole.length).toBe(1085);
+    expect(roundZero(question, tree, NODE_FS, skip, 150)).toBe(
+      ROUND0_HEADER +
+        "\n\"Exited(\": 3 matches in 2 files\n… round zero cut at 150 chars",
+    );
+    expect(roundZero("Make b twice a.\n", tree, NODE_FS, skip, 30000)).toBe("");
+  } finally {
+    p.rm();
+  }
+});
+
+test("Session Text example 4: round zero over Python, Go and TypeScript files", () => {
+  const p = tmpRoot();
+  try {
+    p.write("app/core.py", "def load_config(path):\n    return open(path).read()\n");
+    p.write("app/__init__.py", "");
+    p.write("cmd/main.go", "package main\n\nfunc main() { loadConfig() }\n");
+    p.write("lib/config.ts", "export function loadConfig(): void {}\n");
+
+    const tree = {
+      root: p.root,
+      files: ["app/core.py", "app/__init__.py", "cmd/main.go", "lib/config.ts"],
+    };
+    const NODE_FS: ScoutFs = {
+      realpath: (x: string): string => fs.realpathSync(x),
+      readFile: (x: string): string => fs.readFileSync(x, "utf8"),
+    };
+    const skip = [".morph", "decks"];
+    const question =
+      "Rename load_config in app/core.py and the Go twin loadConfig; keep `open(path)`.\n";
+
+    const expectedLines = [
+      ROUND0_HEADER,
+      "\"load_config\": 1 match in 1 file",
+      "app/core.py:1: def load_config(path):",
+      "\"app/core.py\": 0 matches in 0 files",
+      "\"loadConfig\": 2 matches in 2 files",
+      "cmd/main.go:3: func main() { loadConfig() }",
+      "lib/config.ts:1: export function loadConfig(): void {}",
+      "\"open(path)\": 1 match in 1 file",
+      "app/core.py:2:     return open(path).read()",
+    ];
+    const whole = expectedLines.join("\n");
+    expect(taskClues(question)).toStrictEqual([
+      "load_config",
+      "app/core.py",
+      "loadConfig",
+      "open(path)",
+    ]);
+    expect(roundZero(question, tree, NODE_FS, skip, 30000)).toBe(whole);
+    expect(whole.length).toBe(412);
+  } finally {
+    p.rm();
+  }
+});
+```

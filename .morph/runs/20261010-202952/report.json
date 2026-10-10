@@ -1,0 +1,75 @@
+{
+  "runId": "20261010-202952",
+  "completedAt": 1791664367037,
+  "branch": "morph/20261010-202952",
+  "processor": "ds",
+  "generations": 1,
+  "outcomes": [
+    {
+      "customId": "run-tool-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-tool-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/scout/runTool.examples.test.ts\n== names tests/scout/runTool.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "5e9e4afdd3f6d8ba3cb40b100a9c1db5646ead3c",
+      "diffstat": {
+        "files": 1,
+        "insertions": 85,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "session-text-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "session-text-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/scout/sessionText.examples.test.ts\n== names tests/scout/sessionText.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "5dfe667e2a81903138ff8b28d61bd15a85c35546",
+      "diffstat": {
+        "files": 1,
+        "insertions": 45,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 25398,
+    "outputTokens": 28306,
+    "cost": 0.020516819999999998,
+    "requests": 2
+  },
+  "requests": [
+    {
+      "customId": "run-tool-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791664197-8oJdo0fWyVtq9tXfyxV5",
+      "inputTokens": 14825,
+      "outputTokens": 11572,
+      "cost": 0.00889047,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "session-text-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791664197-6EsvEjMO4S9v11XJUSuH",
+      "inputTokens": 10573,
+      "outputTokens": 16734,
+      "cost": 0.01162635,
+      "finishReason": "stop",
+      "error": null
+    }
+  ],
+  "rounds": [
+    {
+      "round": 0,
+      "reds": []
+    }
+  ]
+}
