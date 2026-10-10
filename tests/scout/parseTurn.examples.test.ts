@@ -82,11 +82,7 @@ test("Parse Turn example 5: the eleven malformed turns of the record, in order",
   expect(parseTurn("The change is in src/a.ts")).toStrictEqual(noAction);
   expect(parseTurn("Read src/a.ts")).toStrictEqual(noAction);
   expect(parseTurn("READX a")).toStrictEqual(noAction);
-
-  expect(parseTurn("READ src/a.ts\nGREP x")).toStrictEqual({
-    kind: "malformed",
-    reason: "2 actions in one turn (READ, GREP): send one per turn",
-  });
+  expect(parseTurn("{\"files\": [\"a\"]}")).toStrictEqual(noAction);
 
   expect(parseTurn("READ")).toStrictEqual({
     kind: "malformed",
@@ -136,5 +132,104 @@ test("Parse Turn example 6: ANSWER without an object, not parsing, and bad keys"
   expect(parseTurn("ANSWER {\"targets\": [\"a\"], \"reasoning\": 5}")).toStrictEqual({
     kind: "malformed",
     reason: "ANSWER: reasoning must be a string",
+  });
+});
+
+test("Parse Turn example 7: a bare or fenced JSON answer", () => {
+  expect(
+    parseTurn("{\"targets\": [\"a.ts\"], \"reasoning\": \"r\"}"),
+  ).toStrictEqual({
+    kind: "answer",
+    answer: { targets: ["a.ts"], context_slice: [], reasoning: "r" },
+  });
+
+  expect(
+    parseTurn(
+      "Here it is:\n```json\n{\"targets\": [\"a.ts\"], \"context_slice\": [\"b.ts\"]}\n```",
+    ),
+  ).toStrictEqual({
+    kind: "answer",
+    answer: { targets: ["a.ts"], context_slice: ["b.ts"], reasoning: "" },
+  });
+
+  expect(parseTurn("{\"targets\": []}")).toStrictEqual({
+    kind: "malformed",
+    reason: "ANSWER: targets must be a non-empty list of paths",
+  });
+
+  expect(
+    parseTurn("{\"targets\": [\"a.ts\"], \"reasoning\": \"the \"x\" key\"}"),
+  ).toStrictEqual({
+    kind: "malformed",
+    reason: "no action: one line must start with READ, GREP, LIST or ANSWER",
+  });
+});
+
+test("Parse Turn example 8: repeated and several action lines", () => {
+  const repeated = parseTurn("GREP DoneWait -- .\nGREP DoneWait -- .");
+  expect(repeated).toStrictEqual({
+    kind: "action",
+    action: { kind: "grep", pattern: "DoneWait", path: "." },
+  });
+  expect(JSON.stringify(repeated)).toBe(
+    "{\"kind\":\"action\",\"action\":{\"kind\":\"grep\",\"pattern\":\"DoneWait\",\"path\":\".\"}}",
+  );
+
+  const several = parseTurn("LIST a\nLIST b\nLIST a\n LIST b ");
+  expect(several).toStrictEqual({
+    kind: "action",
+    action: { kind: "list", path: "a" },
+    skipped: ["LIST b"],
+  });
+  expect(JSON.stringify(several)).toBe(
+    "{\"kind\":\"action\",\"action\":{\"kind\":\"list\",\"path\":\"a\"},\"skipped\":[\"LIST b\"]}",
+  );
+
+  expect(parseTurn("READ a.ts 9-3\nLIST")).toStrictEqual({
+    kind: "malformed",
+    reason: "READ: bad line range 9-3",
+  });
+
+  expect(
+    parseTurn("READ x.ts\nANSWER {\"targets\": [\"x.ts\"]}"),
+  ).toStrictEqual({
+    kind: "answer",
+    answer: { targets: ["x.ts"], context_slice: [], reasoning: "" },
+  });
+});
+
+test("Parse Turn example 9: slash-delimited GREP and the first balanced object", () => {
+  expect(parseTurn("GREP /Exited\\(/")).toStrictEqual({
+    kind: "action",
+    action: { kind: "grep", pattern: "Exited\\(", path: "" },
+  });
+
+  expect(parseTurn("GREP /LimitsUnknown/i -- src")).toStrictEqual({
+    kind: "action",
+    action: { kind: "grep", pattern: "LimitsUnknown", path: "src" },
+  });
+
+  expect(parseTurn("GREP a/b")).toStrictEqual({
+    kind: "action",
+    action: { kind: "grep", pattern: "a/b", path: "" },
+  });
+
+  expect(parseTurn("GREP //")).toStrictEqual({
+    kind: "action",
+    action: { kind: "grep", pattern: "//", path: "" },
+  });
+
+  expect(
+    parseTurn("ANSWER {\"targets\": [\"a.ts\"]}\nANSWER {\"targets\": [\"a.ts\"]}"),
+  ).toStrictEqual({
+    kind: "answer",
+    answer: { targets: ["a.ts"], context_slice: [], reasoning: "" },
+  });
+
+  expect(
+    parseTurn("ANSWER {\"targets\": [\"a.ts\"], \"reasoning\": \"uses } and {\"}"),
+  ).toStrictEqual({
+    kind: "answer",
+    answer: { targets: ["a.ts"], context_slice: [], reasoning: "uses } and {" },
   });
 });
