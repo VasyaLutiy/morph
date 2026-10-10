@@ -1,0 +1,174 @@
+import { posix } from "node:path";
+
+import { cagePath } from "./cagePath.js";
+import type { ScoutFs, ScoutTree } from "./cagePath.js";
+import type { ScoutBudgets, ScoutSpent } from "./spendBudget.js";
+
+export const ANSWER_SHAPE =
+  '{"targets": [...], "context_slice": [...], "reasoning": "..."}';
+
+export const ROUND0_CLUES = 8;
+
+export const ROUND0_HITS = 20;
+
+export const ROUND0_HEADER =
+  "Round zero: the task's identifiers in the tree, found before your first turn (no budget spent):";
+
+export function budgetSentence(budgets: ScoutBudgets): string {
+  return `Your budget: ${budgets.calls} tool calls, ${budgets.reads} files read, ${budgets.chars} characters of tool replies, ${budgets.rounds} rounds. When the calls, reads or characters run out you get one last turn: send ANSWER in it; an answer refused there gets one correction.`;
+}
+
+export function budgetLeft(budgets: ScoutBudgets, spent: ScoutSpent): string {
+  const calls = Math.max(0, budgets.calls - spent.calls);
+  const reads = Math.max(0, budgets.reads - spent.reads);
+  const chars = Math.max(0, budgets.chars - spent.chars);
+  const rounds = Math.max(0, budgets.rounds - spent.rounds);
+  return `Budget left: ${calls} calls, ${reads} file reads, ${chars} chars, ${rounds} rounds.`;
+}
+
+export function notRun(skipped: string[]): string {
+  return (
+    "Not run: " +
+    skipped.join(" | ") +
+    ". One action line per turn; equal lines count once."
+  );
+}
+
+export function afterClose(problem: string): string {
+  return (
+    problem +
+    ". No more tools will run: send ANSWER " +
+    ANSWER_SHAPE +
+    " now, every path a file of the tree, the JSON object last."
+  );
+}
+
+interface Clue {
+  value: string;
+  index: number;
+  order: number;
+}
+
+export function taskClues(question: string): string[] {
+  const camel = /\b[A-Za-z][a-z0-9]*(?:[A-Z][a-z0-9]*)+\b/g;
+  const snake = /\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+\b/g;
+  const quoted = /["`]([^"`\n]+)["`]/g;
+  const file = /\b\w+(?:\/\w+)+\.\w+\b/g;
+
+  const found: Clue[] = [];
+  const collect = (re: RegExp, group: number, order: number): void => {
+    for (const match of question.matchAll(re)) {
+      const value = group === 0 ? match[0] : match[group];
+      if (value === undefined) continue;
+      found.push({ value, index: match.index ?? 0, order });
+    }
+  };
+
+  collect(camel, 0, 0);
+  collect(snake, 0, 1);
+  collect(quoted, 1, 2);
+  collect(file, 0, 3);
+
+  found.sort((a, b) => a.index - b.index || a.order - b.order);
+
+  const clues: string[] = [];
+  const seen = new Set<string>();
+  for (const clue of found) {
+    if (clue.value.length < 3) continue;
+    if (/^\d+$/.test(clue.value)) continue;
+    if (seen.has(clue.value)) continue;
+    seen.add(clue.value);
+    clues.push(clue.value);
+    if (clues.length >= ROUND0_CLUES) break;
+  }
+  return clues;
+}
+
+interface Hit {
+  file: string;
+  line: number;
+  text: string;
+}
+
+function splitFileLines(text: string): string[] {
+  const pieces = text
+    .split("\n")
+    .map((piece) => (piece.endsWith("\r") ? piece.slice(0, -1) : piece));
+  if (pieces.length > 0 && pieces[pieces.length - 1] === "") pieces.pop();
+  return pieces;
+}
+
+function clipLine(line: string): string {
+  if (line.length <= 200) return line;
+  const rest = line.length - 200;
+  return line.slice(0, 200) + "… (+" + rest + " chars)";
+}
+
+export function roundZero(
+  question: string,
+  tree: ScoutTree,
+  fs: ScoutFs,
+  skip: string[],
+  maxChars: number,
+): string {
+  const clues = taskClues(question);
+  if (clues.length === 0) return "";
+
+  const out: string[] = [ROUND0_HEADER];
+  const files = [...tree.files].sort();
+
+  for (const clue of clues) {
+    const hits: Hit[] = [];
+    for (const file of files) {
+      const first = file.split("/")[0] ?? "";
+      if (skip.includes(first)) continue;
+      const caged = cagePath(tree, file, "file", fs);
+      if (!caged.ok) continue;
+      let text: string;
+      try {
+        text = fs.readFile(posix.join(tree.root, caged.path));
+      } catch {
+        continue;
+      }
+      if (text.includes("\0")) continue;
+      let lineNo = 0;
+      for (const line of splitFileLines(text)) {
+        lineNo += 1;
+        if (line.includes(clue)) {
+          hits.push({ file, line: lineNo, text: line });
+        }
+      }
+    }
+
+    const matches = hits.length;
+    const fileCount = new Set(hits.map((hit) => hit.file)).size;
+    out.push(
+      `"${clue}": ${matches} ${
+        matches === 1 ? "match" : "matches"
+      } in ${fileCount} ${fileCount === 1 ? "file" : "files"}`,
+    );
+    for (const hit of hits.slice(0, ROUND0_HITS)) {
+      out.push(`${hit.file}:${hit.line}: ${clipLine(hit.text)}`);
+    }
+    if (matches > ROUND0_HITS) {
+      out.push(`… ${matches - ROUND0_HITS} more matches`);
+    }
+  }
+
+  let text = "";
+  let cut = false;
+  for (const line of out) {
+    const candidate = text === "" ? line : text + "\n" + line;
+    if (candidate.length <= maxChars) {
+      text = candidate;
+    } else {
+      cut = true;
+      break;
+    }
+  }
+  if (cut) {
+    const marker = `… round zero cut at ${maxChars} chars`;
+    text = text === "" ? marker : text + "\n" + marker;
+  }
+  return text;
+}
