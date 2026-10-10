@@ -51,3 +51,9 @@ asked; nothing is waited for.
 Step 4 Verify of AUTONOMY (tsc, eslint, vitest, build on the run branch). A red card: one fix by
 its class (data / budget / environment), re-cut with `--only`, one re-run. Still red: stop and
 report it — no Fable debt.
+
+**Live reproduction (operator 10.10).** When the task names a live reproduction (a smoke, a demo,
+a scenario on a real or fixture project), it runs right after the run, as part of Verify, with
+the binary or code the run produced. A red smoke counts as a red card: one fix by its class,
+one re-run (of the cards and then of the smoke); still red — stop and report. A task that names
+no live reproduction says so in the report.
