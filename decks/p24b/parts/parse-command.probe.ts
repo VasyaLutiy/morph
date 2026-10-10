@@ -30,7 +30,7 @@ test("Main example 18: an id list with --from-run is a group; a single id with -
     const code = await main(["accept", "--deck", "d.json", "--id", "use,lib", "--from-run", "r1", "--commit"], deps, io);
     const doc = JSON.parse(out[0]) as { run: string; cards: { card: string; variant: string; green: boolean }[];
       outside: string[]; green: boolean; committed: number; restored: boolean; reason: string | null };
-    expect([code, out.length, doc.run, doc.cards.map((c) => [c.card, c.variant, c.green]), doc.outside, doc.green,
+    expect([code, out.length, doc.run, (doc.cards ?? []).map((c) => [c.card, c.variant, c.green]), doc.outside, doc.green,
       doc.committed, doc.restored, doc.reason, err]).toStrictEqual([0, 1, "r1", [["lib", "lib.v1", true], ["use", "use.v1", true]],
       [], true, 2, false, null, ["morph accept: exit 0\n"]]);
     expect(t.git(["log", "-1", "--format=%B"])).toBe("morph use: src/use.ts\n\nMorph-Card: use\n" +
