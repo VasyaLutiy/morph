@@ -31,7 +31,8 @@ export interface ReviewArgs {
 }
 export interface CardArgs { name: "card"; root: string; pretty: boolean; deck: string; id: string; md: boolean }
 export interface AcceptArgs {
-  name: "accept"; root: string; pretty: boolean; deck: string; id: string; model: string; commit: boolean;
+  name: "accept"; root: string; pretty: boolean; deck: string; id: string; model: string | null; commit: boolean;
+  fromRun?: string; pick?: string[];
 }
 export interface InitArgs {
   name: "init"; root: string; pretty: boolean; project: string; language: "typescript" | "python" | "go";

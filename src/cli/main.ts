@@ -15,6 +15,7 @@ import { planFromScout } from "../scout/planFromScout.js";
 import { reviewCommand } from "../reviewer/reviewCommand.js";
 import { cardBrief } from "../debt/cardBrief.js";
 import { acceptCard } from "../debt/acceptCard.js";
+import { acceptGroup } from "../debt/acceptGroup.js";
 import { initProject } from "../scaffold/initProject.js";
 import { gateCommand } from "../gate/gateCommand.js";
 import type { CliDeps, CliIo, CommandResult, ExitCode } from "./types.js";
@@ -58,7 +59,25 @@ export async function main(argv: string[], deps: CliDeps, io: CliIo): Promise<Ex
     } else if (command.name === "card") {
       result = cardBrief(root, command);
     } else if (command.name === "accept") {
-      result = await acceptCard(root, command, deps);
+      result =
+        command.fromRun !== undefined || command.id.includes(",")
+          ? await acceptGroup(
+              root,
+              {
+                deck: command.deck,
+                ids: command.id.split(","),
+                model: command.model,
+                fromRun: command.fromRun ?? null,
+                pick: command.pick ?? [],
+                commit: command.commit,
+              },
+              deps,
+            )
+          : await acceptCard(
+              root,
+              { deck: command.deck, id: command.id, model: command.model ?? "", commit: command.commit },
+              deps,
+            );
     } else if (command.name === "init") {
       result = initProject(root, command, deps.cwd);
     } else if (command.name === "gate") {

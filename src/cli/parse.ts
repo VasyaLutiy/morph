@@ -25,6 +25,8 @@ const VALUE_FLAGS: ReadonlySet<string> = new Set([
   "--test",
   "--id",
   "--model",
+  "--from-run",
+  "--pick",
   "--name",
   "--language",
   "--module",
@@ -137,6 +139,8 @@ const ACCEPT_FLAGS: ReadonlySet<string> = new Set([
   "--id",
   "--model",
   "--commit",
+  "--from-run",
+  "--pick",
 ]);
 
 const INIT_FLAGS: ReadonlySet<string> = new Set([
@@ -352,7 +356,7 @@ export function parseCommand(argv: string[]): ParseResult {
   const deck = values.get("--deck") ?? "";
 
   // Check 4b: card and accept, right after the flag check and before review.
-  if (name === "card" || name === "accept") {
+  if (name === "card") {
     if (!values.has("--deck")) {
       return { ok: false, error: errorDocument(4, "UsageError", "missing --deck") };
     }
@@ -370,39 +374,116 @@ export function parseCommand(argv: string[]): ParseResult {
         ),
       };
     }
-    if (name === "card") {
-      const command: Command = {
-        name: "card",
-        root,
-        pretty,
-        deck,
-        id,
-        md: seen.has("--md"),
-      };
-      return { ok: true, command };
+    const command: Command = {
+      name: "card",
+      root,
+      pretty,
+      deck,
+      id,
+      md: seen.has("--md"),
+    };
+    return { ok: true, command };
+  }
+
+  if (name === "accept") {
+    if (!values.has("--deck")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --deck") };
     }
-    if (!values.has("--model")) {
-      return { ok: false, error: errorDocument(4, "UsageError", "missing --model") };
+    if (!values.has("--id")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "missing --id") };
     }
-    const model = values.get("--model") ?? "";
-    if (!/^[A-Za-z0-9._/:-]+$/.test(model)) {
+    const idRaw = values.get("--id") ?? "";
+    if (!idRaw.includes(",")) {
+      if (!/^[A-Za-z0-9._-]+$/.test(idRaw)) {
+        return {
+          ok: false,
+          error: errorDocument(
+            4,
+            "UsageError",
+            "--id must match ^[A-Za-z0-9._-]+$ (got '" + idRaw + "')",
+          ),
+        };
+      }
+    } else {
+      const ids = idRaw.split(",");
+      const wellFormed = ids.every((x) => /^[A-Za-z0-9._-]+$/.test(x));
+      const distinct = new Set(ids).size === ids.length;
+      if (!wellFormed || !distinct) {
+        return {
+          ok: false,
+          error: errorDocument(
+            4,
+            "UsageError",
+            "--id must be distinct card ids joined by \",\" (got '" + idRaw + "')",
+          ),
+        };
+      }
+    }
+    const fromRunRaw = values.get("--from-run");
+    if (fromRunRaw !== undefined && !/^[A-Za-z0-9._-]+$/.test(fromRunRaw)) {
       return {
         ok: false,
         error: errorDocument(
           4,
           "UsageError",
-          "--model must match ^[A-Za-z0-9._/:-]+$ (got '" + model + "')",
+          "--from-run must match ^[A-Za-z0-9._-]+$ (got '" + fromRunRaw + "')",
         ),
       };
+    }
+    const modelRaw = values.get("--model");
+    if (fromRunRaw !== undefined && modelRaw !== undefined) {
+      return {
+        ok: false,
+        error: errorDocument(4, "UsageError", "--model does not apply with --from-run"),
+      };
+    }
+    const pickRaw = values.get("--pick");
+    if (fromRunRaw === undefined && pickRaw !== undefined) {
+      return { ok: false, error: errorDocument(4, "UsageError", "--pick needs --from-run") };
+    }
+    let model: string | null = null;
+    if (fromRunRaw === undefined) {
+      if (modelRaw === undefined) {
+        return { ok: false, error: errorDocument(4, "UsageError", "missing --model") };
+      }
+      if (!/^[A-Za-z0-9._/:-]+$/.test(modelRaw)) {
+        return {
+          ok: false,
+          error: errorDocument(
+            4,
+            "UsageError",
+            "--model must match ^[A-Za-z0-9._/:-]+$ (got '" + modelRaw + "')",
+          ),
+        };
+      }
+      model = modelRaw;
+    }
+    let pick: string[] | undefined;
+    if (pickRaw !== undefined) {
+      pick = pickRaw.split(",");
+      const wellFormed = pick.every((x) => /^[A-Za-z0-9._-]+$/.test(x));
+      const distinct = new Set(pick).size === pick.length;
+      if (!wellFormed || !distinct) {
+        return {
+          ok: false,
+          error: errorDocument(
+            4,
+            "UsageError",
+            "--pick must be distinct answer names joined by \",\" (got '" + pickRaw + "')",
+          ),
+        };
+      }
     }
     const command: Command = {
       name: "accept",
       root,
       pretty,
       deck,
-      id,
+      id: idRaw,
       model,
       commit: seen.has("--commit"),
+      ...(fromRunRaw !== undefined ? { fromRun: fromRunRaw } : {}),
+      ...(pick !== undefined ? { pick } : {}),
     };
     return { ok: true, command };
   }
