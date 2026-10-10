@@ -1,0 +1,512 @@
+```ts
+import { expect, test } from "vitest";
+import { acceptGroup } from "../../src/debt/acceptGroup.js";
+import { fixture, fixtureJson, tmpRepo } from "../helpers.js";
+import type { TmpRepo } from "../helpers.js";
+
+const env = { PATH: process.env.PATH ?? "" };
+
+function baseRepo(t: TmpRepo): void {
+  t.write("d.json", fixture("debt/group.deck.json"));
+  t.write("src/lib.ts", "export const lib = 1;\n");
+  t.write("src/use.ts", "export const use = 1;\n");
+  t.write("README.md", "r\n");
+  t.git(["add", "."]);
+  t.git(["commit", "-q", "-m", "base"]);
+}
+
+function writeArchive(t: TmpRepo): void {
+  const g = fixtureJson("debt/group.run.json") as {
+    report: unknown;
+    answers: Record<string, string>;
+  };
+  t.write(".morph/runs/r1/report.json", JSON.stringify(g.report));
+  for (const [k, v] of Object.entries(g.answers)) {
+    t.write(".morph/runs/r1/answers/" + k + ".answer.txt", v);
+  }
+}
+
+test("Accept Group example 1: four cards from a run archive commit in layer order", async () => {
+  const t = tmpRepo();
+  try {
+    baseRepo(t);
+    writeArchive(t);
+    const result = await acceptGroup(
+      t.root,
+      {
+        deck: "d.json",
+        ids: ["use-judge", "use", "two", "lib"],
+        model: null,
+        fromRun: "r1",
+        pick: [],
+        commit: true,
+      },
+      { env },
+    );
+    expect(result.code).toBe(0);
+    const commits = t.git(["rev-list", "--reverse", "HEAD~4..HEAD"]).split("\n");
+    expect(result.document).toStrictEqual({
+      deck: "d.json",
+      run: "r1",
+      cards: [
+        {
+          card: "two",
+          variant: "two.v1",
+          model: "deepseek/deepseek-v4.1-flash",
+          exit: 0,
+          timedOut: false,
+          green: true,
+          log: "",
+          commit: commits[0],
+          diffstat: { files: 2, insertions: 3, deletions: 0 },
+          reason: null,
+        },
+        {
+          card: "lib",
+          variant: "lib.v1",
+          model: "deepseek/deepseek-v4.1-flash",
+          exit: 0,
+          timedOut: false,
+          green: true,
+          log: "",
+          commit: commits[1],
+          diffstat: { files: 1, insertions: 1, deletions: 1 },
+          reason: null,
+        },
+        {
+          card: "use",
+          variant: "use.v1",
+          model: "deepseek/deepseek-v4.1-flash",
+          exit: 0,
+          timedOut: false,
+          green: true,
+          log: "",
+          commit: commits[2],
+          diffstat: { files: 1, insertions: 2, deletions: 1 },
+          reason: null,
+        },
+        {
+          card: "use-judge",
+          variant: "use-judge.v1",
+          model: "z-ai/glm-5.3",
+          exit: 0,
+          timedOut: false,
+          green: true,
+          log: "",
+          commit: commits[3],
+          diffstat: { files: 1, insertions: 2, deletions: 0 },
+          reason: null,
+        },
+      ],
+      outside: [],
+      green: true,
+      committed: 4,
+      restored: false,
+      reason: null,
+    });
+    expect(t.git(["log", "-1", "--format=%B", "HEAD~2"])).toBe(
+      "morph lib: src/lib.ts\n\nMorph-Card: lib\nMorph-Model: deepseek/deepseek-v4.1-flash\nMorph-Variant: lib.v1\nMorph-Run: r1\nMorph-Acceptance-Exit: 0",
+    );
+    expect(t.git(["log", "-1", "--format=%B", "HEAD"])).toBe(
+      "morph use-judge: tests/use.test.ts\n\nMorph-Card: use-judge\nMorph-Model: z-ai/glm-5.3\nMorph-Variant: use-judge.v1\nMorph-Run: r1\nMorph-Acceptance-Exit: 0",
+    );
+    expect(t.git(["log", "-1", "--format=%s", "HEAD~3"])).toBe(
+      "morph two: src/x.ts, src/y.ts",
+    );
+    expect(t.read("src/lib.ts")).toBe("export const lib = (n: number): number => n;\n");
+    expect(t.read("src/y.ts")).toBe("export const y = 2;\nexport const z = 3;\n");
+    expect(t.git(["status", "--porcelain"])).toBe("?? .morph/");
+  } finally {
+    t.rm();
+  }
+});
+
+test("Accept Group example 2: a red card restores the tree and commits nothing", async () => {
+  const t = tmpRepo();
+  try {
+    baseRepo(t);
+    writeArchive(t);
+    const first = await acceptGroup(
+      t.root,
+      {
+        deck: "d.json",
+        ids: ["lib", "use"],
+        model: null,
+        fromRun: "r1",
+        pick: ["use.v2"],
+        commit: true,
+      },
+      { env },
+    );
+    expect(first.code).toBe(1);
+    expect(first.document).toStrictEqual({
+      deck: "d.json",
+      run: "r1",
+      cards: [
+        {
+          card: "lib",
+          variant: "lib.v1",
+          model: "deepseek/deepseek-v4.1-flash",
+          exit: 0,
+          timedOut: false,
+          green: true,
+          log: "",
+          commit: null,
+          diffstat: null,
+          reason: null,
+        },
+        {
+          card: "use",
+          variant: "use.v2",
+          model: "deepseek/deepseek-v4.1-flash",
+          exit: 1,
+          timedOut: false,
+          green: false,
+          log: "FAIL: src/use.ts needs the new lib\n",
+          commit: null,
+          diffstat: null,
+          reason: "acceptance failed (exit 1)",
+        },
+      ],
+      outside: [],
+      green: false,
+      committed: 0,
+      restored: true,
+      reason: "red: use",
+    });
+    expect(t.git(["log", "-1", "--format=%s"])).toBe("base");
+    expect(t.read("src/lib.ts")).toBe("export const lib = 1;\n");
+    expect(t.read("src/use.ts")).toBe("export const use = 1;\n");
+
+    const second = await acceptGroup(
+      t.root,
+      {
+        deck: "d.json",
+        ids: ["lib", "use"],
+        model: null,
+        fromRun: "r1",
+        pick: [],
+        commit: false,
+      },
+      { env },
+    );
+    expect(second.code).toBe(0);
+    const secondDoc = second.document as {
+      cards: Array<{ green: boolean }>;
+      outside: string[] | null;
+      committed: number;
+      restored: boolean;
+      reason: string | null;
+    };
+    expect(secondDoc.cards.every((c) => c.green)).toBe(true);
+    expect(secondDoc.outside).toBe(null);
+    expect(secondDoc.committed).toBe(0);
+    expect(secondDoc.restored).toBe(true);
+    expect(secondDoc.reason).toBe(null);
+    expect(t.git(["log", "-1", "--format=%s"])).toBe("base");
+    expect(t.read("src/lib.ts")).toBe("export const lib = 1;\n");
+  } finally {
+    t.rm();
+  }
+});
+
+test("Accept Group example 3: a picked round answer commits", async () => {
+  const t = tmpRepo();
+  try {
+    baseRepo(t);
+    writeArchive(t);
+    const result = await acceptGroup(
+      t.root,
+      {
+        deck: "d.json",
+        ids: ["lib", "use"],
+        model: null,
+        fromRun: "r1",
+        pick: ["lib.r1.v1"],
+        commit: true,
+      },
+      { env },
+    );
+    expect(result.code).toBe(0);
+    const doc = result.document as {
+      committed: number;
+      cards: Array<{
+        card: string;
+        variant: string | null;
+        model: string;
+        exit: number | null;
+        timedOut: boolean;
+        green: boolean;
+        log: string;
+        commit: string | null;
+        diffstat: unknown;
+        reason: string | null;
+      }>;
+    };
+    expect(doc.committed).toBe(2);
+    expect(doc.cards[0]).toStrictEqual({
+      card: "lib",
+      variant: "lib.r1.v1",
+      model: "deepseek/deepseek-v4.1-flash",
+      exit: 0,
+      timedOut: false,
+      green: true,
+      log: "",
+      commit: t.git(["rev-parse", "HEAD~1"]),
+      diffstat: { files: 1, insertions: 1, deletions: 1 },
+      reason: null,
+    });
+    expect(t.git(["log", "-1", "--format=%B", "HEAD~1"])).toBe(
+      "morph lib: src/lib.ts\n\nMorph-Card: lib\nMorph-Model: deepseek/deepseek-v4.1-flash\nMorph-Variant: lib.r1.v1\nMorph-Run: r1\nMorph-Acceptance-Exit: 0",
+    );
+    expect(t.read("src/lib.ts")).toBe(
+      "export const lib = (n: number): number => n * 1;\n",
+    );
+  } finally {
+    t.rm();
+  }
+});
+
+test("Accept Group example 4: refusals and usage errors write nothing", async () => {
+  const t = tmpRepo();
+  try {
+    baseRepo(t);
+    writeArchive(t);
+    const cases: Array<{
+      ids: string[];
+      fromRun: string;
+      pick: string[];
+      code: 2 | 4;
+      kind: string;
+      message: string;
+    }> = [
+      {
+        ids: ["lib", "zz"],
+        fromRun: "r1",
+        pick: [],
+        code: 4,
+        kind: "UsageError",
+        message: "no card 'zz' in d.json (have: use-judge, use, two, lib, none, dup)",
+      },
+      {
+        ids: ["lib", "none"],
+        fromRun: "r1",
+        pick: [],
+        code: 2,
+        kind: "RefusalError",
+        message: "card none has no acceptance",
+      },
+      {
+        ids: ["lib", "dup"],
+        fromRun: "r1",
+        pick: [],
+        code: 2,
+        kind: "RefusalError",
+        message: "target src/lib.ts is in cards lib and dup",
+      },
+      {
+        ids: ["lib"],
+        fromRun: "nope",
+        pick: [],
+        code: 4,
+        kind: "UsageError",
+        message: "no run nope under .morph/runs",
+      },
+      {
+        ids: ["lib"],
+        fromRun: "r1",
+        pick: ["zz.v1"],
+        code: 4,
+        kind: "UsageError",
+        message: "--pick zz.v1 names no card of --id",
+      },
+      {
+        ids: ["lib"],
+        fromRun: "r1",
+        pick: ["lib"],
+        code: 4,
+        kind: "UsageError",
+        message: "--pick lib names no card of --id",
+      },
+      {
+        ids: ["lib"],
+        fromRun: "r1",
+        pick: ["lib.v1", "lib.r1.v1"],
+        code: 4,
+        kind: "UsageError",
+        message: "--pick names lib twice",
+      },
+      {
+        ids: ["lib"],
+        fromRun: "r1",
+        pick: ["lib.v9"],
+        code: 2,
+        kind: "RefusalError",
+        message: "no request lib.v9 in .morph/runs/r1/report.json",
+      },
+      {
+        ids: ["lib"],
+        fromRun: "r1",
+        pick: ["lib.r2.v1"],
+        code: 2,
+        kind: "RefusalError",
+        message: "no answer .morph/runs/r1/answers/lib.r2.v1.answer.txt",
+      },
+      {
+        ids: ["two"],
+        fromRun: "r1",
+        pick: ["two.v2"],
+        code: 2,
+        kind: "RefusalError",
+        message: "answer two.v2 is truncated",
+      },
+    ];
+    for (const c of cases) {
+      const result = await acceptGroup(
+        t.root,
+        {
+          deck: "d.json",
+          ids: c.ids,
+          model: null,
+          fromRun: c.fromRun,
+          pick: c.pick,
+          commit: true,
+        },
+        { env },
+      );
+      expect(result.code).toBe(c.code);
+      expect(result.document).toStrictEqual({
+        error: { code: c.code, kind: c.kind, message: c.message },
+      });
+      expect(t.git(["log", "-1", "--format=%s"])).toBe("base");
+      expect(t.git(["status", "--porcelain"])).toBe("?? .morph/");
+    }
+  } finally {
+    t.rm();
+  }
+});
+
+test("Accept Group example 5: changed outside and a red card leave the tree", async () => {
+  const t = tmpRepo();
+  try {
+    baseRepo(t);
+    t.write("src/lib.ts", "export const lib = (n: number): number => n;\n");
+    t.write("src/use.ts", "export const use = 1; // lib(2)\n");
+    t.write("README.md", "r2\n");
+
+    const first = await acceptGroup(
+      t.root,
+      {
+        deck: "d.json",
+        ids: ["use", "lib"],
+        model: "claude-fable-5-1",
+        fromRun: null,
+        pick: [],
+        commit: true,
+      },
+      { env },
+    );
+    expect(first.code).toBe(1);
+    const firstDoc = first.document as {
+      cards: Array<{ card: string; variant: string | null; model: string; green: boolean }>;
+      outside: string[] | null;
+      committed: number;
+      restored: boolean;
+      reason: string | null;
+    };
+    expect(firstDoc.cards.map((c) => c.card)).toStrictEqual(["lib", "use"]);
+    expect(firstDoc.cards.map((c) => c.variant)).toStrictEqual([null, null]);
+    expect(firstDoc.cards.map((c) => c.model)).toStrictEqual([
+      "claude-fable-5-1",
+      "claude-fable-5-1",
+    ]);
+    expect(firstDoc.cards.map((c) => c.green)).toStrictEqual([true, true]);
+    expect(firstDoc.outside).toStrictEqual(["README.md"]);
+    expect(firstDoc.committed).toBe(0);
+    expect(firstDoc.restored).toBe(false);
+    expect(firstDoc.reason).toBe("changed outside the targets: README.md");
+    expect(t.git(["log", "-1", "--format=%s"])).toBe("base");
+
+    t.write("README.md", "r\n");
+    t.write("src/use.ts", "export const use = 1;\n");
+
+    const second = await acceptGroup(
+      t.root,
+      {
+        deck: "d.json",
+        ids: ["use", "lib"],
+        model: "claude-fable-5-1",
+        fromRun: null,
+        pick: [],
+        commit: true,
+      },
+      { env },
+    );
+    expect(second.code).toBe(1);
+    const secondDoc = second.document as {
+      cards: Array<{
+        card: string;
+        exit: number | null;
+        green: boolean;
+        log: string;
+        reason: string | null;
+      }>;
+      outside: string[] | null;
+      committed: number;
+      restored: boolean;
+      reason: string | null;
+    };
+    expect(secondDoc.outside).toStrictEqual([]);
+    expect(secondDoc.cards[1]).toMatchObject({
+      card: "use",
+      exit: 1,
+      green: false,
+      log: "FAIL: src/use.ts needs the new lib\n",
+      reason: "acceptance failed (exit 1)",
+    });
+    expect(secondDoc.committed).toBe(0);
+    expect(secondDoc.restored).toBe(false);
+    expect(secondDoc.reason).toBe("red: use");
+    expect(t.read("src/lib.ts")).toBe("export const lib = (n: number): number => n;\n");
+    expect(t.git(["log", "-1", "--format=%s"])).toBe("base");
+  } finally {
+    t.rm();
+  }
+});
+
+test("Accept Group example 6: the payer's own tree commits with Morph-Debt", async () => {
+  const t = tmpRepo();
+  try {
+    baseRepo(t);
+    t.write("src/lib.ts", "export const lib = (n: number): number => n;\n");
+    t.write("src/use.ts", "export const use = 1; // lib(2)\n");
+    const result = await acceptGroup(
+      t.root,
+      {
+        deck: "d.json",
+        ids: ["use", "lib"],
+        model: "claude-fable-5-1",
+        fromRun: null,
+        pick: [],
+        commit: true,
+      },
+      { env },
+    );
+    expect(result.code).toBe(0);
+    const doc = result.document as {
+      committed: number;
+      restored: boolean;
+      run: string | null;
+    };
+    expect(doc.committed).toBe(2);
+    expect(doc.restored).toBe(false);
+    expect(doc.run).toBe(null);
+    expect(t.git(["log", "-1", "--format=%B", "HEAD"])).toBe(
+      "morph use: src/use.ts\n\nMorph-Card: use\nMorph-Model: claude-fable-5-1\nMorph-Acceptance-Exit: 0\nMorph-Debt: true",
+    );
+    expect(t.git(["log", "-1", "--format=%s", "HEAD~1"])).toBe("morph lib: src/lib.ts");
+  } finally {
+    t.rm();
+  }
+});
+```

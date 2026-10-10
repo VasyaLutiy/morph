@@ -1,0 +1,100 @@
+```
+import { expect, test } from "vitest";
+import { parseCommand } from "../../src/cli/parse.js";
+import { main } from "../../src/cli/main.js";
+import { fixture, fixtureJson, tmpRepo } from "../helpers.js";
+import type { CliDeps, CliIo } from "../../src/cli/types.js";
+
+test("Parse Command example 25: the accept group flags (--from-run, --pick, --id a,b,c) and their UsageErrors", () => {
+  const argvs = (fixtureJson("cli/parseArgv.json") as Record<string, string[][]>)["25"];
+  const expected = (fixtureJson("cli/parse.json") as Record<string, unknown>)["25"];
+  expect(argvs.map((argv) => parseCommand(argv))).toStrictEqual(expected);
+});
+
+test("Main example 18: accept --id use,lib --from-run r1 --commit, then a lone --id with --from-run is a group", async () => {
+  const t = tmpRepo();
+  try {
+    t.write("d.json", fixture("debt/group.deck.json"));
+    t.write("src/lib.ts", "export const lib = 1;\n");
+    t.write("src/use.ts", "export const use = 1;\n");
+    t.write("README.md", "r\n");
+    t.git(["add", "."]);
+    t.git(["commit", "-q", "-m", "base"]);
+    const g = fixtureJson("debt/group.run.json") as { report: unknown; answers: Record<string, string> };
+    t.write(".morph/runs/r1/report.json", JSON.stringify(g.report));
+    for (const [k, v] of Object.entries(g.answers)) {
+      t.write(".morph/runs/r1/answers/" + k + ".answer.txt", v);
+    }
+    const env = { PATH: process.env.PATH ?? "" };
+    const deps: CliDeps = { env, now: () => 0, cwd: t.root, transport: null };
+
+    const out1: string[] = [];
+    const err1: string[] = [];
+    const io1: CliIo = { stdout: (s) => out1.push(s), stderr: (s) => err1.push(s) };
+    const code1 = await main(
+      ["accept", "--deck", "d.json", "--id", "use,lib", "--from-run", "r1", "--commit"],
+      deps,
+      io1,
+    );
+    expect(code1).toBe(0);
+    expect(out1).toHaveLength(1);
+    const doc1 = JSON.parse(out1[0]) as {
+      deck: string;
+      run: string | null;
+      cards: { card: string; variant: string | null; green: boolean }[];
+      outside: string[] | null;
+      green: boolean;
+      committed: number;
+      restored: boolean;
+      reason: string | null;
+    };
+    expect(doc1.deck).toBe("d.json");
+    expect(doc1.run).toBe("r1");
+    expect(doc1.cards.map((c) => c.card)).toStrictEqual(["lib", "use"]);
+    expect(doc1.cards.map((c) => c.variant)).toStrictEqual(["lib.v1", "use.v1"]);
+    expect(doc1.cards.every((c) => c.green)).toBe(true);
+    expect(doc1.outside).toStrictEqual([]);
+    expect(doc1.green).toBe(true);
+    expect(doc1.committed).toBe(2);
+    expect(doc1.restored).toBe(false);
+    expect(doc1.reason).toBe(null);
+    expect(t.git(["log", "-1", "--format=%B"])).toBe(
+      "morph use: src/use.ts\n\nMorph-Card: use\nMorph-Model: deepseek/deepseek-v4.1-flash\nMorph-Variant: use.v1\nMorph-Run: r1\nMorph-Acceptance-Exit: 0",
+    );
+    expect(err1).toStrictEqual(["morph accept: exit 0\n"]);
+
+    const out2: string[] = [];
+    const err2: string[] = [];
+    const io2: CliIo = { stdout: (s) => out2.push(s), stderr: (s) => err2.push(s) };
+    const code2 = await main(
+      ["accept", "--deck", "d.json", "--id", "lib", "--from-run", "r1", "--pick", "lib.v2"],
+      deps,
+      io2,
+    );
+    expect(code2).toBe(2);
+    expect(out2).toHaveLength(1);
+    expect(JSON.parse(out2[0])).toStrictEqual({
+      error: { code: 2, kind: "RefusalError", message: "no request lib.v2 in .morph/runs/r1/report.json" },
+    });
+    expect(err2).toStrictEqual(["morph accept: exit 2\n"]);
+  } finally {
+    t.rm();
+  }
+});
+
+test("Parse Command: --model does not apply with --from-run", () => {
+  const r = parseCommand(["accept", "--deck", "d.json", "--id", "a", "--from-run", "r1", "--model", "m"]);
+  if (r.ok) throw new Error("expected a UsageError");
+  expect(r.error.error.code).toBe(4);
+  expect(r.error.error.kind).toBe("UsageError");
+  expect(r.error.error.message).toBe("--model does not apply with --from-run");
+});
+
+test("Parse Command: --pick needs --from-run", () => {
+  const r = parseCommand(["accept", "--deck", "d.json", "--id", "a", "--pick", "a.v2"]);
+  if (r.ok) throw new Error("expected a UsageError");
+  expect(r.error.error.code).toBe(4);
+  expect(r.error.error.kind).toBe("UsageError");
+  expect(r.error.error.message).toBe("--pick needs --from-run");
+});
+```

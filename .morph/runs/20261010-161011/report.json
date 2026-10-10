@@ -1,0 +1,149 @@
+{
+  "runId": "20261010-161011",
+  "completedAt": 1791649232076,
+  "branch": "morph/20261010-161011",
+  "processor": "ds",
+  "generations": 3,
+  "outcomes": [
+    {
+      "customId": "accept-group",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "accept-group.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "8ee63cc01949f7db185b69f16aa0c4aa736b395f",
+      "diffstat": {
+        "files": 1,
+        "insertions": 355,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "accept-group-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "accept-group-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/debt/acceptGroup.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "128d198369f4199eda4e11e0204ac9bdf012b103",
+      "diffstat": {
+        "files": 1,
+        "insertions": 510,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "parse-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "50e891428076511ec0f455ef103c2665b3ccb8ab",
+      "diffstat": {
+        "files": 3,
+        "insertions": 120,
+        "deletions": 19
+      }
+    },
+    {
+      "customId": "parse-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/accept.p24b.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "3a994e16ccc62f9891ba7849fdf9d9dd28680b02",
+      "diffstat": {
+        "files": 1,
+        "insertions": 98,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 114737,
+    "outputTokens": 128598,
+    "cost": 0.09091335,
+    "requests": 6
+  },
+  "requests": [
+    {
+      "customId": "accept-group.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791648611-4mNINXLG5vDIgzGGevtw",
+      "inputTokens": 17763,
+      "outputTokens": 24463,
+      "cost": 0.01499217,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "accept-group.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791648611-Kq3VIwVL6kCAKtSxdmeE",
+      "inputTokens": 17763,
+      "outputTokens": 27307,
+      "cost": 0.01904865,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "accept-group-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791648806-Cztfp06u7TjbmxswjXlg",
+      "inputTokens": 16699,
+      "outputTokens": 33980,
+      "cost": 0.02233989,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791648806-WpmRNiOqehCZjB63gfs7",
+      "inputTokens": 20925,
+      "outputTokens": 10455,
+      "cost": 0.00941175,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791648806-9Cz43qDeqKQZXC0E7Kuc",
+      "inputTokens": 20925,
+      "outputTokens": 15609,
+      "cost": 0.01250415,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791649013-Z0gVZBTj5LZqhQFPqZZx",
+      "inputTokens": 20662,
+      "outputTokens": 16784,
+      "cost": 0.01261674,
+      "finishReason": "stop",
+      "error": null
+    }
+  ],
+  "rounds": [
+    {
+      "round": 0,
+      "reds": []
+    }
+  ]
+}

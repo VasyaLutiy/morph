@@ -1,0 +1,368 @@
+```ts
+import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { findCard, RUNS_DIR } from "./cardBrief.js";
+import type { DebtResult } from "./cardBrief.js";
+import { changedOutside } from "./acceptCard.js";
+import type { AcceptDeps } from "./acceptCard.js";
+import { layerGenerations } from "../cards/layer.js";
+import { loadDeck } from "../cards/model.js";
+import { parseAnswer } from "../compiler/parse.js";
+import { snapshotTargets, restoreSnapshot } from "../acceptance/snapshot.js";
+import { runAcceptance, DEFAULT_TIMEOUT_MS } from "../acceptance/run.js";
+import { commitPaths } from "../git/commit.js";
+import type { Diffstat, Trailer } from "../git/types.js";
+import type { Card } from "../cards/types.js";
+import type { AcceptanceResult, TargetSnapshot } from "../acceptance/types.js";
+
+export interface GroupOptions {
+  deck: string;
+  ids: string[];
+  model: string | null;
+  fromRun: string | null;
+  pick: string[];
+  commit: boolean;
+}
+
+export interface GroupCard {
+  card: string;
+  variant: string | null;
+  model: string;
+  exit: number | null;
+  timedOut: boolean;
+  green: boolean;
+  log: string;
+  commit: string | null;
+  diffstat: Diffstat | null;
+  reason: string | null;
+}
+
+export interface AcceptGroupDocument {
+  deck: string;
+  run: string | null;
+  cards: GroupCard[];
+  outside: string[] | null;
+  green: boolean;
+  committed: number;
+  restored: boolean;
+  reason: string | null;
+}
+
+interface CardState {
+  id: string;
+  variant: string | null;
+  model: string;
+  files: Record<string, string>;
+}
+
+/**
+ * `morph accept --deck <deck> --id <a,b,...> [--model <m> | --from-run <r> [--pick
+ * <answers>]] [--commit]`: runs several cards' acceptances on ONE tree. With
+ * --commit and every card green (and nothing changed outside the targets), it
+ * writes one commit per card in dependency (generation) order; otherwise none.
+ *
+ * Checks of steps 1-4 run before anything is written; the first failure is the
+ * result. `--from-run` reads the run's archive, snapshots the targets, writes the
+ * parsed answers onto the tree, runs every acceptance in order, and - when no
+ * commit was made - restores the targets to their earlier bytes. Without it the
+ * payer's tree is neither written nor restored.
+ */
+export async function acceptGroup(
+  root: string,
+  args: GroupOptions,
+  deps: AcceptDeps,
+): Promise<DebtResult> {
+  const cards = new Map<string, Card>();
+
+  // Step 1: findCard per id, in ids order.
+  for (const id of args.ids) {
+    const found = findCard(root, args.deck, id);
+    if (!found.ok) return found.result;
+    cards.set(id, found.card);
+  }
+
+  // Step 2: a listed card without an acceptance refuses the whole group.
+  for (const id of args.ids) {
+    const card = cards.get(id);
+    if (card === undefined) continue;
+    if (card.acceptance === null || card.acceptance.trim() === "") {
+      return refusal(`card ${id} has no acceptance`);
+    }
+  }
+
+  // Step 3: two listed cards sharing a target refuse the whole group.
+  for (let i = 0; i < args.ids.length; i++) {
+    const a = cards.get(args.ids[i]);
+    if (a === undefined) continue;
+    for (let j = i + 1; j < args.ids.length; j++) {
+      const b = cards.get(args.ids[j]);
+      if (b === undefined) continue;
+      for (const target of a.targets) {
+        if (b.targets.includes(target)) {
+          return refusal(
+            `target ${target} is in cards ${args.ids[i]} and ${args.ids[j]}`,
+          );
+        }
+      }
+    }
+  }
+
+  // The deck's generations flattened and kept to the listed ids.
+  const deckFull = path.resolve(root, args.deck);
+  const loaded = loadDeck(readFileSync(deckFull, "utf8"));
+  if (!loaded.ok) {
+    const message =
+      "invalid deck: " + loaded.faults.map((f) => `${f.key}: ${f.message}`).join("; ");
+    return { code: 2, document: { error: { code: 2, kind: "DeckError", message } } };
+  }
+
+  const idSet = new Set(args.ids);
+  const order: string[] = [];
+  for (const layer of layerGenerations(loaded.deck)) {
+    for (const id of layer) {
+      if (idSet.has(id)) order.push(id);
+    }
+  }
+
+  const allTargets: string[] = [];
+  for (const id of order) {
+    const card = cards.get(id);
+    if (card !== undefined) allTargets.push(...card.targets);
+  }
+
+  const stateById = new Map<string, CardState>();
+
+  if (args.fromRun !== null) {
+    const runRel = `${RUNS_DIR}/${args.fromRun}`;
+    const runAbs = path.resolve(root, RUNS_DIR, args.fromRun);
+    if (!isDirectory(runAbs)) {
+      return usage(`no run ${args.fromRun} under ${RUNS_DIR}`);
+    }
+
+    // Step 4: every pick must name a listed card, at most once.
+    const pickedBy = new Map<string, string>();
+    for (const pick of args.pick) {
+      const cardId = pickCard(pick);
+      if (cardId === "" || !idSet.has(cardId)) {
+        return usage(`--pick ${pick} names no card of --id`);
+      }
+      if (pickedBy.has(cardId)) {
+        return usage(`--pick names ${cardId} twice`);
+      }
+      pickedBy.set(cardId, pick);
+    }
+
+    const report = readReport(path.resolve(runAbs, "report.json"));
+
+    // Per card in ids order: its variant, its request's model, its parsed answer.
+    for (const id of args.ids) {
+      const card = cards.get(id);
+      if (card === undefined) continue;
+
+      const variant = pickedBy.get(id) ?? `${id}.v1`;
+      const model = requestModel(report, variant);
+      if (model === undefined) {
+        return refusal(`no request ${variant} in ${runRel}/report.json`);
+      }
+
+      const answerRel = `${runRel}/answers/${variant}.answer.txt`;
+      const answerAbs = path.resolve(root, answerRel);
+      if (!isRegularFile(answerAbs)) {
+        return refusal(`no answer ${answerRel}`);
+      }
+
+      const parsed = parseAnswer(readFileSync(answerAbs, "utf8"), card.targets);
+      if ("corrupt" in parsed) {
+        return refusal(`answer ${variant} is corrupt: ${parsed.corrupt}`);
+      }
+      if ("truncated" in parsed) {
+        return refusal(`answer ${variant} is truncated`);
+      }
+
+      stateById.set(id, { id, variant, model, files: parsed.files });
+    }
+  } else {
+    const model = args.model ?? "";
+    for (const id of args.ids) {
+      stateById.set(id, { id, variant: null, model, files: {} });
+    }
+  }
+
+  const states: CardState[] = [];
+  for (const id of order) {
+    const state = stateById.get(id);
+    if (state !== undefined) states.push(state);
+  }
+
+  // Step 5: with --commit, look outside the targets BEFORE any write.
+  let outside: string[] | null = null;
+  if (args.commit) {
+    outside = changedOutside(root, allTargets, deps.env);
+  }
+
+  // Step 6: with --from-run, snapshot the targets and write every parsed file.
+  let snapshot: TargetSnapshot | null = null;
+  if (args.fromRun !== null) {
+    snapshot = snapshotTargets(root, allTargets);
+    for (const state of states) {
+      for (const [filePath, text] of Object.entries(state.files)) {
+        const abs = path.resolve(root, filePath);
+        mkdirSync(path.dirname(abs), { recursive: true });
+        writeFileSync(abs, text, "utf8");
+      }
+    }
+  }
+
+  // Step 7: every acceptance on that one tree, in order; a red one stops nothing.
+  const results = new Map<string, AcceptanceResult>();
+  for (const state of states) {
+    const card = cards.get(state.id);
+    if (card === undefined) continue;
+    const result = await runAcceptance(card.acceptance ?? "", root, {
+      env: deps.env,
+      timeoutMs: deps.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+    });
+    results.set(state.id, result);
+  }
+
+  const cardDocs: GroupCard[] = [];
+  for (const state of states) {
+    const result = results.get(state.id);
+    if (result === undefined) continue;
+    const green = result.exit === 0;
+    cardDocs.push({
+      card: state.id,
+      variant: state.variant,
+      model: state.model,
+      exit: result.exit,
+      timedOut: result.timedOut,
+      green,
+      log: result.log,
+      commit: null,
+      diffstat: null,
+      reason: green ? null : `acceptance failed (exit ${String(result.exit)})`,
+    });
+  }
+
+  const allGreen = cardDocs.every((c) => c.green);
+  const outsideOk = outside === null || outside.length === 0;
+
+  // Step 8: every card green, nothing outside, --commit: one commit per card.
+  let committed = 0;
+  if (args.commit && allGreen && outsideOk) {
+    for (const doc of cardDocs) {
+      const card = cards.get(doc.card);
+      if (card === undefined) continue;
+      const subject = `morph ${doc.card}: ${card.targets.join(", ")}`;
+      const trailers: Trailer[] =
+        args.fromRun !== null
+          ? [
+              ["Morph-Card", doc.card],
+              ["Morph-Model", doc.model],
+              ["Morph-Variant", doc.variant ?? ""],
+              ["Morph-Run", args.fromRun],
+              ["Morph-Acceptance-Exit", "0"],
+            ]
+          : [
+              ["Morph-Card", doc.card],
+              ["Morph-Model", doc.model],
+              ["Morph-Acceptance-Exit", "0"],
+              ["Morph-Debt", "true"],
+            ];
+      const info = commitPaths(root, card.targets, subject, trailers, deps.env, true);
+      if (info === null) {
+        doc.reason = "nothing to commit: the targets equal HEAD";
+      } else {
+        doc.commit = info.commit;
+        doc.diffstat = info.diffstat;
+        committed += 1;
+      }
+    }
+  }
+
+  // Step 9: --from-run and no commit made: every target back before step 6.
+  let restored = false;
+  if (args.fromRun !== null && committed === 0) {
+    if (snapshot !== null) restoreSnapshot(snapshot);
+    restored = true;
+  }
+
+  const reasons: string[] = [];
+  const red = cardDocs.filter((c) => !c.green).map((c) => c.card);
+  if (red.length > 0) {
+    reasons.push(`red: ${red.join(", ")}`);
+  }
+  if (outside !== null && outside.length > 0) {
+    reasons.push(`changed outside the targets: ${outside.join(", ")}`);
+  }
+
+  const commitsOk = !args.commit || committed === cardDocs.length;
+  const code = allGreen && outsideOk && commitsOk ? 0 : 1;
+
+  const document: AcceptGroupDocument = {
+    deck: args.deck,
+    run: args.fromRun,
+    cards: cardDocs,
+    outside,
+    green: allGreen,
+    committed,
+    restored,
+    reason: reasons.length === 0 ? null : reasons.join("; "),
+  };
+
+  return { code, document };
+}
+
+function refusal(message: string): DebtResult {
+  return { code: 2, document: { error: { code: 2, kind: "RefusalError", message } } };
+}
+
+function usage(message: string): DebtResult {
+  return { code: 4, document: { error: { code: 4, kind: "UsageError", message } } };
+}
+
+function isDirectory(p: string): boolean {
+  const st = statSync(p, { throwIfNoEntry: false });
+  return st?.isDirectory() ?? false;
+}
+
+function isRegularFile(p: string): boolean {
+  const st = statSync(p, { throwIfNoEntry: false });
+  return st?.isFile() ?? false;
+}
+
+/**
+ * The card an answer name belongs to: the name minus a final `.v<n>`, then minus
+ * a final `.r<n>`. A name without a final `.v<n>` names no card ("").
+ */
+function pickCard(pick: string): string {
+  const withoutV = pick.replace(/\.v[0-9]+$/, "");
+  if (withoutV === pick) return "";
+  return withoutV.replace(/\.r[0-9]+$/, "");
+}
+
+function readReport(p: string): unknown {
+  if (!isRegularFile(p)) return undefined;
+  try {
+    return JSON.parse(readFileSync(p, "utf8")) as unknown;
+  } catch {
+    return undefined;
+  }
+}
+
+/** The string model of the first request whose customId matches, else undefined. */
+function requestModel(report: unknown, customId: string): string | undefined {
+  if (typeof report !== "object" || report === null) return undefined;
+  const rec = report as Record<string, unknown>;
+  const requests = rec.requests;
+  if (!Array.isArray(requests)) return undefined;
+  for (const entry of requests) {
+    if (typeof entry !== "object" || entry === null) continue;
+    const request = entry as Record<string, unknown>;
+    if (request.customId === customId) {
+      return typeof request.model === "string" ? request.model : "";
+    }
+  }
+  return undefined;
+}
+```

@@ -1,0 +1,6 @@
+morph run: accept-group.v1 accepted stage 0 finish stop chars 10678
+morph run: accept-group.v2 untried stage 0 finish stop chars 11941
+morph run: accept-group-judge.v1 accepted stage 0 finish stop chars 14359
+morph run: parse-command.v1 accepted stage 0 finish stop chars 30274
+morph run: parse-command.v2 untried stage 0 finish stop chars 30170
+morph run: parse-command-judge.v1 accepted stage 0 finish stop chars 4287
