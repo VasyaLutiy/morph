@@ -5,6 +5,8 @@ import { expect, test } from "vitest";
 import { PROTOCOL } from "../../src/scout/runScout.js";
 import { DEFAULT_TOOL_CAPS } from "../../src/scout/runTool.js";
 import { SEED_HEADER } from "../../src/scout/seedFromOwnership.js";
+import { budgetSentence } from "../../src/scout/sessionText.js";
+import { DEFAULT_BUDGETS } from "../../src/scout/spendBudget.js";
 import {
   FILE_SEED_HEADER,
   NODE_SCOUT_FS,
@@ -31,7 +33,7 @@ const B_TS = 'import { a } from "./a.js";\nexport const b = a + 1;\n';
 
 const READ_B =
   'READ src/b.ts lines 1-2 of 2\n1: import { a } from "./a.js";\n2: export const b = a + 1;';
-const LIST_ROOT = "LIST .: 2 entries\nREADME.md\nsrc/ (2 files)";
+const LIST_ROOT = "LIST .: 2 entries\nREADME.md (1 line)\nsrc/ (2 files)";
 
 function seedRepo(t: TmpRepo): void {
   t.write("README.md", README);
@@ -184,7 +186,10 @@ test("Scout Command example 1: a session writes its record and transcript", asyn
       t.read(".morph/scout/" + SCOUT_ID + "/transcript.json"),
     ) as { role: string; content: string }[];
     expect(transcript).toHaveLength(5);
-    expect(transcript[0]).toStrictEqual({ role: "system", content: PROTOCOL });
+    expect(transcript[0]).toStrictEqual({
+      role: "system",
+      content: PROTOCOL + "\n" + budgetSentence(DEFAULT_BUDGETS),
+    });
     expect(transcript[1]).toStrictEqual({
       role: "user",
       content:
@@ -192,6 +197,8 @@ test("Scout Command example 1: a session writes its record and transcript", asyn
         "\n- src/b.ts: written by b (m/b, run —)\n" +
         "\n" +
         LIST_ROOT +
+        "\n\nRecent commits (newest first):\n" +
+        t.git(["log", "-n", "10", "--format=%h %s"]) +
         "\n\nTask:\n" +
         QUESTION,
     });
@@ -199,7 +206,12 @@ test("Scout Command example 1: a session writes its record and transcript", asyn
       role: "assistant",
       content: "READ src/b.ts",
     });
-    expect(transcript[3]).toStrictEqual({ role: "user", content: READ_B });
+    expect(transcript[3]).toStrictEqual({
+      role: "user",
+      content:
+        READ_B +
+        "\n\nBudget left: 29 calls, 11 file reads, 119914 chars, 39 rounds.",
+    });
     expect(transcript[4]).toStrictEqual({
       role: "assistant",
       content:
