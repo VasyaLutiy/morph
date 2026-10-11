@@ -1,0 +1,403 @@
+FILE: src/builder/types.ts
+```ts
+import type { Card } from "../cards/types.js";
+import type { LanguageProfile } from "../language/types.js";
+
+export interface JudgeFile { file: string; min: number; max: number; lits: string[]; drop: string[]; new: boolean }
+export interface CheckCard { id: string; smoke: number | null; extra: string | null; files: JudgeFile[] | null }
+export interface OverrideFile { file: string; min: number | null; max: number | null; lits: string[] | null; drop: string[] | null; new: boolean | null }
+export interface CheckOverride { id: string; smoke: number | null; extra: string | null; files: OverrideFile[] | null }
+export interface Checks {
+  version: 1; phase: string; parts: string; frozen: string[]; fullExclude: string[]; ownGit: boolean;
+  cards: CheckCard[];
+  overrides?: CheckOverride[];
+}
+export type ChecksResult = { ok: true; checks: Checks } | { ok: false; problems: string[] };
+export interface CardContext {
+  id: string; phase: string; targets: string[]; siblings: string[]; frozen: string[];
+  fullExclude: string[]; ownGit: boolean; profile: LanguageProfile; guard: string; firstdiff: string;
+  allowed?: string[]; vendor?: boolean; layers?: Record<string, string[]>;
+  rules?: Record<string, Record<string, string>>;
+}
+export interface BuildTexts { guard: string; firstdiff: string; probes: Record<string, string> }
+export interface BuildInput {
+  cards: Card[]; checks: Checks; profile: LanguageProfile; texts: BuildTexts;
+  uses?: Record<string, string[]>; vendor?: boolean; hide?: Record<string, string[]>;
+  transaction?: boolean; layers?: Record<string, string[]>;
+  rules?: Record<string, Record<string, string>>;
+}
+export type BuildResult = { ok: true; cards: Card[] } | { ok: false; errors: string[] };
+```
+
+FILE: src/builder/readChecks.ts
+```ts
+import type { CheckCard, CheckOverride, Checks, ChecksResult, JudgeFile, OverrideFile } from "./types.js";
+
+export const DEFAULT_FROZEN: string[] = [
+  "contour.yaml",
+  "morph-map.json",
+  "docs",
+  "decks",
+  "tests/fixtures",
+];
+
+const ID_RE = /^[A-Za-z0-9._-]+$/;
+
+const ROOT_KEYS: readonly string[] = ["version", "phase", "parts", "frozen", "fullExclude", "ownGit", "cards", "overrides"];
+const CARD_KEYS: readonly string[] = ["id", "smoke", "extra", "files"];
+const FILE_KEYS: readonly string[] = ["file", "min", "max", "lits", "drop", "new"];
+
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+function has(obj: Record<string, unknown>, key: string): boolean {
+  return key in obj && obj[key] !== undefined && obj[key] !== null;
+}
+
+function unknownKeys(
+  obj: Record<string, unknown>,
+  known: readonly string[],
+  path: string,
+  problems: string[],
+): void {
+  const table = known.join(", ");
+  for (const k of Object.keys(obj)) {
+    if (!known.includes(k)) {
+      problems.push(`${path}: unknown key '${k}' (known: ${table})`);
+    }
+  }
+}
+
+function nonEmptyString(prefix: string, key: string, v: unknown, problems: string[]): string | null {
+  if (typeof v !== "string" || v.length === 0) {
+    problems.push(`${prefix}${key}: must be a non-empty string`);
+    return null;
+  }
+  return v;
+}
+
+function stringList(prefix: string, key: string, v: unknown, problems: string[]): string[] | null {
+  if (!Array.isArray(v)) {
+    problems.push(`${prefix}${key}: must be a list`);
+    return null;
+  }
+  const out: string[] = [];
+  let ok = true;
+  for (let j = 0; j < v.length; j++) {
+    const item: unknown = v[j];
+    if (typeof item !== "string" || item.length === 0) {
+      problems.push(`${prefix}${key}[${j}]: must be a non-empty string`);
+      ok = false;
+    } else {
+      out.push(item);
+    }
+  }
+  return ok ? out : null;
+}
+
+function integer(
+  prefix: string,
+  key: string,
+  v: unknown,
+  problems: string[],
+  positive: boolean,
+): number | null {
+  if (typeof v !== "number" || !Number.isInteger(v) || (positive ? v < 1 : v < 0)) {
+    problems.push(`${prefix}${key}: must be a ${positive ? "positive" : "non-negative"} integer`);
+    return null;
+  }
+  return v;
+}
+
+function checkFile(obj: Record<string, unknown>, path: string, problems: string[]): JudgeFile | null {
+  unknownKeys(obj, FILE_KEYS, path, problems);
+  const prefix = `${path}.`;
+  let file: string | null = null;
+  if (!has(obj, "file")) {
+    problems.push(`${prefix}file: required`);
+  } else {
+    file = nonEmptyString(prefix, "file", obj.file, problems);
+  }
+  let min: number | null = null;
+  if (!has(obj, "min")) {
+    problems.push(`${prefix}min: required`);
+  } else {
+    min = integer(prefix, "min", obj.min, problems, false);
+  }
+  let max: number | null = null;
+  if (!has(obj, "max")) {
+    problems.push(`${prefix}max: required`);
+  } else {
+    max = integer(prefix, "max", obj.max, problems, false);
+  }
+  let lits: string[] | null = [];
+  if (has(obj, "lits")) {
+    lits = stringList(prefix, "lits", obj.lits, problems);
+  }
+  let drop: string[] | null = [];
+  if (has(obj, "drop")) {
+    drop = stringList(prefix, "drop", obj.drop, problems);
+  }
+  let isNew = false;
+  if (has(obj, "new")) {
+    if (typeof obj.new !== "boolean") {
+      problems.push(`${prefix}new: must be true or false`);
+    } else {
+      isNew = obj.new;
+    }
+  }
+  if (min !== null && max !== null && min > max) {
+    problems.push(`${path}: min ${min} exceeds max ${max}`);
+  }
+  if (file !== null && min !== null && max !== null && lits !== null && drop !== null) {
+    return { file, min, max, lits, drop, new: isNew };
+  }
+  return null;
+}
+
+function checkOverrideFile(obj: Record<string, unknown>, path: string, problems: string[]): OverrideFile | null {
+  unknownKeys(obj, FILE_KEYS, path, problems);
+  const prefix = `${path}.`;
+  let file: string | null = null;
+  if (!has(obj, "file")) {
+    problems.push(`${prefix}file: required`);
+  } else {
+    file = nonEmptyString(prefix, "file", obj.file, problems);
+  }
+  let min: number | null = null;
+  if (has(obj, "min")) {
+    min = integer(prefix, "min", obj.min, problems, false);
+  }
+  let max: number | null = null;
+  if (has(obj, "max")) {
+    max = integer(prefix, "max", obj.max, problems, false);
+  }
+  let lits: string[] | null = null;
+  if (has(obj, "lits")) {
+    lits = stringList(prefix, "lits", obj.lits, problems);
+  }
+  let drop: string[] | null = null;
+  if (has(obj, "drop")) {
+    drop = stringList(prefix, "drop", obj.drop, problems);
+  }
+  let isNew: boolean | null = null;
+  if (has(obj, "new")) {
+    if (typeof obj.new !== "boolean") {
+      problems.push(`${prefix}new: must be true or false`);
+    } else {
+      isNew = obj.new;
+    }
+  }
+  if (min !== null && max !== null && min > max) {
+    problems.push(`${path}: min ${min} exceeds max ${max}`);
+  }
+  if (file !== null) {
+    return { file, min, max, lits, drop, new: isNew };
+  }
+  return null;
+}
+
+interface CardEntry {
+  id: string;
+  smoke: number | null;
+  extra: string | null;
+  files: JudgeFile[] | OverrideFile[] | null;
+}
+
+function checkCardEntry(
+  c: Record<string, unknown>,
+  cpath: string,
+  problems: string[],
+  seen: Set<string>,
+  override: boolean,
+): CardEntry {
+  unknownKeys(c, CARD_KEYS, cpath, problems);
+  const prefix = `${cpath}.`;
+
+  let id: string | null = null;
+  if (!has(c, "id")) {
+    problems.push(`${cpath}.id: required`);
+  } else if (typeof c.id !== "string" || !ID_RE.test(c.id)) {
+    problems.push(`${cpath}.id: must match ^[A-Za-z0-9._-]+$`);
+  } else {
+    id = c.id;
+    if (seen.has(id)) {
+      problems.push(`${cpath}.id: duplicate id '${id}'`);
+    } else {
+      seen.add(id);
+    }
+  }
+
+  let smoke: number | null = null;
+  if (has(c, "smoke")) {
+    const s = integer(prefix, "smoke", c.smoke, problems, true);
+    if (s !== null) {
+      smoke = s;
+    }
+  }
+
+  let extra: string | null = null;
+  if (has(c, "extra")) {
+    extra = nonEmptyString(prefix, "extra", c.extra, problems);
+  }
+
+  const filesPresent = has(c, "files");
+  let files: JudgeFile[] | OverrideFile[] | null = null;
+  if (filesPresent) {
+    const f: unknown = c.files;
+    if (!Array.isArray(f) || f.length === 0) {
+      problems.push(`${cpath}.files: must be a non-empty list`);
+    } else {
+      const jfs: (JudgeFile | OverrideFile)[] = [];
+      for (let j = 0; j < f.length; j++) {
+        const fj: unknown = f[j];
+        const fpath = `${cpath}.files[${j}]`;
+        if (!isPlainObject(fj)) {
+          problems.push(`${fpath}: must be an object`);
+          continue;
+        }
+        const jf: JudgeFile | OverrideFile | null = override
+          ? checkOverrideFile(fj, fpath, problems)
+          : checkFile(fj, fpath, problems);
+        if (jf !== null) {
+          jfs.push(jf);
+        }
+      }
+      if (jfs.length === f.length) {
+        files = jfs;
+      }
+    }
+  }
+
+  if (filesPresent && (has(c, "smoke") || has(c, "extra"))) {
+    problems.push(`${cpath}: a judge card (files) takes no smoke or extra`);
+  }
+
+  return { id: id ?? "", smoke, extra, files };
+}
+
+export function validateChecks(doc: unknown): ChecksResult {
+  const problems: string[] = [];
+  if (!isPlainObject(doc)) {
+    return { ok: false, problems: ["(root): checks must be an object"] };
+  }
+  const root: Record<string, unknown> = doc;
+  unknownKeys(root, ROOT_KEYS, "(root)", problems);
+
+  if (has(root, "version") && root.version !== 1) {
+    problems.push("version: must be 1");
+  }
+
+  let phase: string | null = null;
+  if (!has(root, "phase")) {
+    problems.push("phase: required");
+  } else if (typeof root.phase !== "string" || !ID_RE.test(root.phase)) {
+    problems.push("phase: must match ^[A-Za-z0-9._-]+$");
+  } else {
+    phase = root.phase;
+  }
+
+  let parts: string | null = null;
+  if (has(root, "parts")) {
+    parts = nonEmptyString("", "parts", root.parts, problems);
+  }
+
+  let frozen: string[] | null = null;
+  if (has(root, "frozen")) {
+    frozen = stringList("", "frozen", root.frozen, problems);
+  }
+
+  let fullExclude: string[] | null = null;
+  if (has(root, "fullExclude")) {
+    fullExclude = stringList("", "fullExclude", root.fullExclude, problems);
+  }
+
+  let ownGit = false;
+  if (has(root, "ownGit")) {
+    if (typeof root.ownGit !== "boolean") {
+      problems.push("ownGit: must be true or false");
+    } else {
+      ownGit = root.ownGit;
+    }
+  }
+
+  const cardsGiven = has(root, "cards");
+  const overridesGiven = has(root, "overrides");
+
+  const outCards: CheckCard[] = [];
+  if (cardsGiven) {
+    const cardsRaw: unknown = root.cards;
+    if (!Array.isArray(cardsRaw) || cardsRaw.length === 0) {
+      problems.push("cards: must be a non-empty list");
+    } else {
+      const seen: Set<string> = new Set();
+      for (let i = 0; i < cardsRaw.length; i++) {
+        const c: unknown = cardsRaw[i];
+        const cpath = `cards[${i}]`;
+        if (!isPlainObject(c)) {
+          problems.push(`${cpath}: must be an object`);
+          continue;
+        }
+        const e = checkCardEntry(c, cpath, problems, seen, false);
+        outCards.push({ id: e.id, smoke: e.smoke, extra: e.extra, files: e.files as JudgeFile[] | null });
+      }
+    }
+  }
+
+  const outOverrides: CheckOverride[] = [];
+  if (overridesGiven) {
+    const ovRaw: unknown = root.overrides;
+    if (!Array.isArray(ovRaw)) {
+      problems.push("overrides: must be a list");
+    } else {
+      const seenOv: Set<string> = new Set();
+      for (let i = 0; i < ovRaw.length; i++) {
+        const c: unknown = ovRaw[i];
+        const cpath = `overrides[${i}]`;
+        if (!isPlainObject(c)) {
+          problems.push(`${cpath}: must be an object`);
+          continue;
+        }
+        const e = checkCardEntry(c, cpath, problems, seenOv, true);
+        outOverrides.push({ id: e.id, smoke: e.smoke, extra: e.extra, files: e.files as OverrideFile[] | null });
+      }
+    }
+  }
+
+  if (cardsGiven && overridesGiven) {
+    problems.push(
+      "(root): cards and overrides exclude each other: cards lists every card, overrides only the cut's cards that differ",
+    );
+  }
+
+  if (problems.length > 0) {
+    return { ok: false, problems };
+  }
+
+  if (cardsGiven) {
+    const checks: Checks = {
+      version: 1,
+      phase: phase ?? "",
+      parts: parts ?? `decks/${phase ?? ""}/parts`,
+      frozen: frozen ?? DEFAULT_FROZEN.slice(),
+      fullExclude: fullExclude ?? [],
+      ownGit,
+      cards: outCards,
+    };
+    return { ok: true, checks };
+  }
+
+  const checks: Checks = {
+    version: 1,
+    phase: phase ?? "",
+    parts: parts ?? `decks/${phase ?? ""}/parts`,
+    frozen: frozen ?? DEFAULT_FROZEN.slice(),
+    fullExclude: fullExclude ?? [],
+    ownGit,
+    cards: [],
+    overrides: outOverrides,
+  };
+  return { ok: true, checks };
+}
+```

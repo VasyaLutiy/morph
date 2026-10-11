@@ -1,0 +1,532 @@
+```ts
+import { test, expect } from "vitest";
+import { defaultChecks, thenLiterals } from "../../src/criterion/defaultChecks.js";
+import { validateChecks, DEFAULT_FROZEN } from "../../src/builder/readChecks.js";
+import { GO, TYPESCRIPT } from "../../src/language/profiles.js";
+import { fixture, fixtureJson } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+import type { Checks, CheckOverride } from "../../src/builder/types.js";
+import type { CardCriterion } from "../../src/planner/types.js";
+import type { Example } from "../../src/contour/types.js";
+
+test("Default Checks example 1: the cut form builds the cards, the probes and the fullExclude", () => {
+  const cards = fixtureJson("cli/goMini.deck.json") as Card[];
+  const criteria = fixtureJson("criterion/goMini.criteria.json") as Record<string, CardCriterion>;
+  const C: Checks = {
+    version: 1,
+    phase: "m1",
+    parts: "decks/m1/parts",
+    frozen: ["contour.yaml", "morph-map.json", "decks", "go.mod", "internal"],
+    fullExclude: [],
+    ownGit: false,
+    cards: [],
+    overrides: [],
+  };
+  const record = [
+    { name: "Clamp Value", count: 4 },
+    { name: "Percent Of", count: 5 },
+    { name: "Format Share", count: 3 },
+  ];
+
+  const result = defaultChecks({
+    checks: C,
+    cards,
+    all: cards.map((c) => c.customId),
+    criteria,
+    profile: GO,
+    mapAcceptance: [],
+    hasFile: () => false,
+    record,
+    probes: {},
+    readProbe: (id) => fixture(`go-mini/decks/m1/parts/_${id}_probe_test.go`),
+  });
+
+  expect(result).toStrictEqual({
+    ok: true,
+    checks: {
+      ...C,
+      cards: [
+        { id: "clamp-value", smoke: null, extra: null, files: null },
+        {
+          id: "clamp-value-judge",
+          smoke: null,
+          extra: null,
+          files: [
+            {
+              file: "calc/clamp_value_examples_test.go",
+              min: 4,
+              max: 10,
+              lits: [],
+              drop: [],
+              new: true,
+            },
+          ],
+        },
+        { id: "percent-of", smoke: null, extra: null, files: null },
+        { id: "format-share", smoke: null, extra: null, files: null },
+        {
+          id: "percent-of-judge",
+          smoke: null,
+          extra: null,
+          files: [
+            {
+              file: "calc/percent_of_examples_test.go",
+              min: 5,
+              max: 11,
+              lits: [],
+              drop: [],
+              new: true,
+            },
+          ],
+        },
+        {
+          id: "format-share-judge",
+          smoke: null,
+          extra: null,
+          files: [
+            {
+              file: "report/format_share_examples_test.go",
+              min: 3,
+              max: 9,
+              lits: ["cpu: 33% (1 of 3)", "total: 100% (5 of 4)", "disk: 0% (0 of 0)"],
+              drop: [],
+              new: true,
+            },
+          ],
+        },
+      ],
+      fullExclude: [
+        "calc/clamp_value_examples_test.go",
+        "calc/percent_of_examples_test.go",
+        "report/format_share_examples_test.go",
+      ],
+    },
+    probes: {
+      "clamp-value": fixture("go-mini/decks/m1/parts/_clamp-value_probe_test.go"),
+      "percent-of": fixture("go-mini/decks/m1/parts/_percent-of_probe_test.go"),
+      "format-share": fixture("go-mini/decks/m1/parts/_format-share_probe_test.go"),
+    },
+    overrides: [],
+  });
+});
+
+test("Default Checks example 2: overrides and a card of all only", () => {
+  const cards = fixtureJson("cli/goMini.deck.json") as Card[];
+  const criteria = fixtureJson("criterion/goMini.criteria.json") as Record<string, CardCriterion>;
+  const O2: CheckOverride[] = [
+    {
+      smoke: null,
+      extra: null,
+      files: [
+        {
+          min: null,
+          max: 7,
+          lits: ["TestPercentOfExample1"],
+          drop: null,
+          new: false,
+          file: "calc/percent_of_examples_test.go",
+        },
+      ],
+      id: "percent-of-judge",
+    },
+    { smoke: null, extra: "echo hi\n", files: null, id: "clamp-value" },
+    { smoke: null, extra: null, files: null, id: "dropped-card" },
+  ];
+  const C: Checks = {
+    version: 1,
+    phase: "m1",
+    parts: "decks/m1/parts",
+    frozen: ["contour.yaml", "morph-map.json", "decks", "go.mod", "internal"],
+    fullExclude: ["internal"],
+    ownGit: false,
+    cards: [],
+    overrides: O2,
+  };
+  const record = [
+    { name: "Clamp Value", count: 4 },
+    { name: "Percent Of", count: 5 },
+    { name: "Format Share", count: 3 },
+  ];
+  const all = [...cards.map((c) => c.customId), "dropped-card"];
+
+  const result = defaultChecks({
+    checks: C,
+    cards,
+    all,
+    criteria,
+    profile: GO,
+    mapAcceptance: [],
+    hasFile: () => false,
+    record,
+    probes: {},
+    readProbe: (id) => fixture(`go-mini/decks/m1/parts/_${id}_probe_test.go`),
+  });
+
+  expect(result).toStrictEqual({
+    ok: true,
+    checks: {
+      ...C,
+      cards: [
+        { id: "clamp-value", smoke: null, extra: "echo hi\n", files: null },
+        {
+          id: "clamp-value-judge",
+          smoke: null,
+          extra: null,
+          files: [
+            {
+              file: "calc/clamp_value_examples_test.go",
+              min: 4,
+              max: 10,
+              lits: [],
+              drop: [],
+              new: true,
+            },
+          ],
+        },
+        { id: "percent-of", smoke: null, extra: null, files: null },
+        { id: "format-share", smoke: null, extra: null, files: null },
+        {
+          id: "percent-of-judge",
+          smoke: null,
+          extra: null,
+          files: [
+            {
+              file: "calc/percent_of_examples_test.go",
+              min: 5,
+              max: 7,
+              lits: ["TestPercentOfExample1"],
+              drop: [],
+              new: false,
+            },
+          ],
+        },
+        {
+          id: "format-share-judge",
+          smoke: null,
+          extra: null,
+          files: [
+            {
+              file: "report/format_share_examples_test.go",
+              min: 3,
+              max: 9,
+              lits: ["cpu: 33% (1 of 3)", "total: 100% (5 of 4)", "disk: 0% (0 of 0)"],
+              drop: [],
+              new: true,
+            },
+          ],
+        },
+      ],
+      fullExclude: [
+        "internal",
+        "calc/clamp_value_examples_test.go",
+        "calc/percent_of_examples_test.go",
+        "report/format_share_examples_test.go",
+      ],
+    },
+    probes: {
+      "clamp-value": fixture("go-mini/decks/m1/parts/_clamp-value_probe_test.go"),
+      "percent-of": fixture("go-mini/decks/m1/parts/_percent-of_probe_test.go"),
+      "format-share": fixture("go-mini/decks/m1/parts/_format-share_probe_test.go"),
+    },
+    overrides: [
+      "percent-of-judge: max from checks.json",
+      "percent-of-judge: lits from checks.json",
+    ],
+  });
+});
+
+test("Default Checks example 3: five errors, then a probe name drift", () => {
+  const cards = fixtureJson("cli/goMini.deck.json") as Card[];
+  const criteria = fixtureJson("criterion/goMini.criteria.json") as Record<string, CardCriterion>;
+  const O3: CheckOverride[] = [
+    { smoke: null, extra: null, files: null, id: "nope" },
+    {
+      smoke: null,
+      extra: null,
+      files: [
+        {
+          min: 1,
+          max: null,
+          lits: null,
+          drop: null,
+          new: null,
+          file: "calc/clamp_value_examples_test.go",
+        },
+      ],
+      id: "clamp-value",
+    },
+    {
+      smoke: null,
+      extra: null,
+      files: [
+        {
+          min: null,
+          max: 2,
+          lits: null,
+          drop: null,
+          new: null,
+          file: "calc/clamp_value_examples_test.go",
+        },
+      ],
+      id: "clamp-value-judge",
+    },
+    { smoke: 3, extra: null, files: null, id: "percent-of-judge" },
+    {
+      smoke: null,
+      extra: null,
+      files: [
+        {
+          min: null,
+          max: null,
+          lits: null,
+          drop: null,
+          new: null,
+          file: "report/other_test.go",
+        },
+      ],
+      id: "format-share-judge",
+    },
+  ];
+  const C: Checks = {
+    version: 1,
+    phase: "m1",
+    parts: "decks/m1/parts",
+    frozen: ["contour.yaml", "morph-map.json", "decks", "go.mod", "internal"],
+    fullExclude: [],
+    ownGit: false,
+    cards: [],
+    overrides: O3,
+  };
+  const record = [
+    { name: "Clamp Value", count: 4 },
+    { name: "Percent Of", count: 5 },
+    { name: "Format Share", count: 3 },
+  ];
+
+  const first = defaultChecks({
+    checks: C,
+    cards,
+    all: cards.map((c) => c.customId),
+    criteria,
+    profile: GO,
+    mapAcceptance: [],
+    hasFile: () => false,
+    record,
+    probes: {},
+    readProbe: (id) => fixture(`go-mini/decks/m1/parts/_${id}_probe_test.go`),
+  });
+
+  expect(first).toStrictEqual({
+    ok: false,
+    message:
+      "checks defaults not built (5 errors):\nchecks override 'nope' is not a card of the cut\nchecks override 'clamp-value': files given for a code card\njudge 'clamp-value-judge' calc/clamp_value_examples_test.go: min 4 exceeds max 2\nchecks override 'percent-of-judge': smoke or extra given for a judge\nchecks override 'format-share-judge': report/other_test.go is not a target of the judge",
+  });
+
+  const C2: Checks = { ...C, overrides: [] };
+  const readProbe = (id: string): string | null => {
+    if (id === "clamp-value") {
+      return fixture("cli/clampValue.drift.probe.txt");
+    }
+    return fixture(`go-mini/decks/m1/parts/_${id}_probe_test.go`);
+  };
+
+  const second = defaultChecks({
+    checks: C2,
+    cards,
+    all: cards.map((c) => c.customId),
+    criteria,
+    profile: GO,
+    mapAcceptance: [],
+    hasFile: () => false,
+    record,
+    probes: {},
+    readProbe,
+  });
+
+  expect(second).toStrictEqual({
+    ok: false,
+    message:
+      "probe names differ from the record (2 problems):\ncard 'clamp-value': probe decks/m1/parts/_clamp-value_probe_test.go lacks Clamp Value example 4 (the record gives 4)\ncard 'clamp-value': probe decks/m1/parts/_clamp-value_probe_test.go names Clamp Value example 5, not an example of its Functions (Clamp Value)",
+  });
+});
+
+test("Default Checks example 4: the old form is untouched, the cut form defaults and overrides", () => {
+  const goMiniCards = fixtureJson("cli/goMini.deck.json") as Card[];
+  const goMiniCriteria = fixtureJson("criterion/goMini.criteria.json") as Record<string, CardCriterion>;
+  const goMiniRecord = [
+    { name: "Clamp Value", count: 4 },
+    { name: "Percent Of", count: 5 },
+    { name: "Format Share", count: 3 },
+  ];
+
+  const oldResult = validateChecks(fixtureJson("go-mini/decks/m1/checks.json"));
+  if (!oldResult.ok) {
+    throw new Error(oldResult.problems.join("; "));
+  }
+  const oldChecks = oldResult.checks;
+
+  const old = defaultChecks({
+    checks: oldChecks,
+    cards: goMiniCards,
+    all: goMiniCards.map((c) => c.customId),
+    criteria: goMiniCriteria,
+    profile: GO,
+    mapAcceptance: [],
+    hasFile: () => false,
+    record: goMiniRecord,
+    probes: { "clamp-value": fixture("cli/clampValue.short.probe.txt") },
+    readProbe: () => null,
+  });
+
+  expect(old).toStrictEqual({
+    ok: true,
+    checks: oldChecks,
+    probes: { "clamp-value": fixture("cli/clampValue.short.probe.txt") },
+    overrides: [],
+  });
+
+  const tsInput = fixtureJson("criterion/ts.input.json") as {
+    cards: Card[];
+    criteria: Record<string, CardCriterion>;
+  };
+  const T: Checks = {
+    version: 1,
+    phase: "t",
+    parts: "decks/t/parts",
+    frozen: DEFAULT_FROZEN,
+    fullExclude: [],
+    ownGit: false,
+    cards: [],
+    overrides: [],
+  };
+  const tsAll = tsInput.cards.map((c) => c.customId);
+  const tsRecord = [{ name: "A B", count: 1 }];
+  const tsReadProbe = (id: string): string | null => {
+    if (id === "ab") {
+      return 'test("A B example 1: one", () => {});\n';
+    }
+    if (id === "cd") {
+      return "// cd\n";
+    }
+    return null;
+  };
+
+  const cutNoOverrides = defaultChecks({
+    checks: T,
+    cards: tsInput.cards,
+    all: tsAll,
+    criteria: tsInput.criteria,
+    profile: TYPESCRIPT,
+    mapAcceptance: ["ef"],
+    hasFile: () => false,
+    record: tsRecord,
+    probes: {},
+    readProbe: tsReadProbe,
+  });
+
+  expect(cutNoOverrides).toStrictEqual({
+    ok: false,
+    message:
+      "checks defaults not built (2 errors):\njudge 'ab-judge' writes 2 test files: give min and max of tests/a.examples.test.ts in checks.json overrides\njudge 'ab-judge' writes 2 test files: give min and max of tests/b.examples.test.ts in checks.json overrides",
+  });
+
+  const OT: CheckOverride[] = [
+    {
+      smoke: null,
+      extra: null,
+      files: [
+        {
+          min: 1,
+          max: 3,
+          lits: null,
+          drop: null,
+          new: null,
+          file: "tests/a.examples.test.ts",
+        },
+        {
+          min: 2,
+          max: 2,
+          lits: ["y"],
+          drop: null,
+          new: null,
+          file: "tests/b.examples.test.ts",
+        },
+      ],
+      id: "ab-judge",
+    },
+  ];
+  const TWithOverrides: Checks = { ...T, overrides: OT };
+
+  const cutWithOverrides = defaultChecks({
+    checks: TWithOverrides,
+    cards: tsInput.cards,
+    all: tsAll,
+    criteria: tsInput.criteria,
+    profile: TYPESCRIPT,
+    mapAcceptance: ["ef"],
+    hasFile: () => false,
+    record: tsRecord,
+    probes: {},
+    readProbe: tsReadProbe,
+  });
+
+  expect(cutWithOverrides).toStrictEqual({
+    ok: true,
+    checks: {
+      ...T,
+      overrides: OT,
+      fullExclude: ["tests/a.examples.test.ts", "tests/b.examples.test.ts"],
+      cards: [
+        { id: "ab", smoke: null, extra: null, files: null },
+        {
+          id: "ab-judge",
+          smoke: null,
+          extra: null,
+          files: [
+            {
+              file: "tests/a.examples.test.ts",
+              min: 1,
+              max: 3,
+              lits: [],
+              drop: [],
+              new: true,
+            },
+            {
+              file: "tests/b.examples.test.ts",
+              min: 2,
+              max: 2,
+              lits: ["y"],
+              drop: [],
+              new: true,
+            },
+          ],
+        },
+        { id: "cd", smoke: 5, extra: null, files: null },
+      ],
+    },
+    probes: {
+      ab: 'test("A B example 1: one", () => {});\n',
+      cd: "// cd\n",
+    },
+    overrides: [
+      "ab-judge tests/a.examples.test.ts: min from checks.json",
+      "ab-judge tests/a.examples.test.ts: max from checks.json",
+      "ab-judge tests/b.examples.test.ts: min from checks.json",
+      "ab-judge tests/b.examples.test.ts: max from checks.json",
+      "ab-judge tests/b.examples.test.ts: lits from checks.json",
+    ],
+  });
+});
+
+test("Default Checks example 5: thenLiterals keeps, collapses and drops literals", () => {
+  const examples: Example[] = [
+    { given: "g", when: "w", then: "\"a b\"  and \"c\\\"d\"", ref: null },
+    { given: "g", when: "w", then: "none", ref: null },
+    { given: "g", when: "w", then: "\"a  b\" \"  x   y  \" \"\" \"open", ref: null },
+  ];
+
+  const result = thenLiterals(examples);
+
+  expect(result).toStrictEqual(["a b", "c\\\"d", "x y"]);
+});
+```

@@ -1,0 +1,201 @@
+```
+import { expect, test } from "vitest";
+import { planCommand } from "../../src/cli/planCommand.js";
+import { fixture, tmpRoot } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+import type { PlanArgs, PlanDocument } from "../../src/cli/types.js";
+
+const MINI = [
+  "contour.yaml",
+  "morph-map.json",
+  "go.mod",
+  "internal/testhelp/testhelp.go",
+  "decks/m1/parts/_clamp-value_probe_test.go",
+  "decks/m1/parts/_percent-of_probe_test.go",
+  "decks/m1/parts/_format-share_probe_test.go",
+];
+
+const W = [
+  "calc/Clamp Value: step produces 'int' names no Data Object or Event of the record",
+  "calc/Percent Of: step produces 'int' names no Data Object or Event of the record",
+  "report/Format Share: step produces 'string' names no Data Object or Event of the record",
+];
+
+type Doc = PlanDocument & { overrides?: string[]; warnings?: string[] };
+
+function writeMini(r: ReturnType<typeof tmpRoot>, checks: string): void {
+  for (const f of MINI) {
+    r.write(f, fixture("go-mini/" + f));
+  }
+  r.write("decks/tools/guard.mjs", "// guard\n");
+  r.write("decks/tools/firstdiff.mjs", "// firstdiff\n");
+  r.write("decks/m1/checks.json", checks);
+}
+
+function args(out: string | null, only?: string[]): PlanArgs {
+  return {
+    name: "plan",
+    root: ".",
+    pretty: false,
+    spec: "contour.yaml",
+    components: ["calc", "report"],
+    map: "morph-map.json",
+    judge: true,
+    checks: "decks/m1/checks.json",
+    out,
+    ...(only === undefined ? {} : { only }),
+  };
+}
+
+test("Plan Command example 21: the cut form builds the defaults of the old form", () => {
+  const r = tmpRoot();
+  try {
+    writeMini(r, fixture("cli/goMini.cut.checks.json"));
+
+    const first = planCommand(r.root, args("decks/m1/deck.json"));
+    expect(first.code).toBe(0);
+    const document = first.document as Doc;
+    expect(Object.keys(document)).toStrictEqual([
+      "spec",
+      "components",
+      "cards",
+      "generations",
+      "externalDependsOn",
+      "out",
+      "warnings",
+    ]);
+    expect(document.warnings).toStrictEqual(W);
+
+    r.write("decks/m1/checks.json", fixture("cli/goMini.defaults.checks.json"));
+    const old = planCommand(r.root, args("decks/m1/old.json"));
+    expect(old.code).toBe(0);
+    expect(r.read("decks/m1/old.json")).toBe(r.read("decks/m1/deck.json"));
+
+    r.write("decks/m1/checks.json", fixture("cli/goMini.override.checks.json"));
+    const over = planCommand(r.root, args("decks/m1/over.json"));
+    expect(over.code).toBe(0);
+    const overDoc = over.document as Doc;
+    expect(Object.keys(overDoc)).toStrictEqual([
+      "spec",
+      "components",
+      "cards",
+      "generations",
+      "externalDependsOn",
+      "out",
+      "overrides",
+      "warnings",
+    ]);
+    expect(overDoc.overrides).toStrictEqual(["percent-of-judge: lits from checks.json"]);
+
+    const deckCards = JSON.parse(r.read("decks/m1/deck.json")) as Card[];
+    const overCards = JSON.parse(r.read("decks/m1/over.json")) as Card[];
+    const fromDeck = deckCards.find((c) => c.customId === "percent-of-judge") as Card;
+    const fromOver = overCards.find((c) => c.customId === "percent-of-judge") as Card;
+    expect(fromDeck.acceptance).toContain(
+      "cat > $P/lits0.json <<'MORPH_LITS_EOF'\n[]\nMORPH_LITS_EOF\n",
+    );
+    expect(fromOver.acceptance).toContain(
+      "cat > $P/lits0.json <<'MORPH_LITS_EOF'\n[\"TestPercentOfExample1\"]\nMORPH_LITS_EOF\n",
+    );
+    expect(overCards.filter((c) => c.customId !== "percent-of-judge")).toStrictEqual(
+      deckCards.filter((c) => c.customId !== "percent-of-judge"),
+    );
+  } finally {
+    r.rm();
+  }
+});
+
+test("Plan Command example 22: probe names differ from the record", () => {
+  const r = tmpRoot();
+  try {
+    writeMini(r, fixture("cli/goMini.cut.checks.json"));
+    r.write(
+      "decks/m1/parts/_clamp-value_probe_test.go",
+      fixture("cli/clampValue.drift.probe.txt"),
+    );
+
+    const drift = planCommand(r.root, args("decks/m1/deck.json"));
+    expect(drift.code).toBe(2);
+    expect(drift.document).toStrictEqual({
+      error: {
+        code: 2,
+        kind: "DeckError",
+        message:
+          "probe names differ from the record (2 problems):\n" +
+          "card 'clamp-value': probe decks/m1/parts/_clamp-value_probe_test.go lacks Clamp Value example 4 (the record gives 4)\n" +
+          "card 'clamp-value': probe decks/m1/parts/_clamp-value_probe_test.go names Clamp Value example 5, not an example of its Functions (Clamp Value)",
+      },
+    });
+    expect(r.exists("decks/m1/deck.json")).toBe(false);
+
+    r.write("decks/m1/checks.json", fixture("go-mini/decks/m1/checks.json"));
+    const old = planCommand(r.root, args("decks/m1/deck.json"));
+    expect(old.code).toBe(2);
+    expect(old.document).toStrictEqual({
+      error: {
+        code: 2,
+        kind: "DeckError",
+        message:
+          "probe names differ from the record (1 problem):\n" +
+          "card 'clamp-value': probe decks/m1/parts/_clamp-value_probe_test.go names Clamp Value example 5, which the record does not give",
+      },
+    });
+
+    r.write(
+      "decks/m1/parts/_clamp-value_probe_test.go",
+      fixture("cli/clampValue.short.probe.txt"),
+    );
+    const short = planCommand(r.root, args("decks/m1/short.json"));
+    expect(short.code).toBe(0);
+    expect(r.exists("decks/m1/short.json")).toBe(true);
+
+    r.write("decks/m1/checks.json", fixture("cli/goMini.cut.checks.json"));
+    const cut = planCommand(r.root, args("decks/m1/short.json"));
+    expect(cut.code).toBe(2);
+    expect(cut.document).toStrictEqual({
+      error: {
+        code: 2,
+        kind: "DeckError",
+        message:
+          "probe names differ from the record (1 problem):\n" +
+          "card 'clamp-value': probe decks/m1/parts/_clamp-value_probe_test.go lacks Clamp Value example 3, 4 (the record gives 4)",
+      },
+    });
+  } finally {
+    r.rm();
+  }
+});
+
+test("Plan Command example 23: the cut form with --only", () => {
+  const r = tmpRoot();
+  try {
+    writeMini(r, fixture("cli/goMini.only.checks.json"));
+    const onlyArgs = args("decks/m1/only.json", ["percent-of", "percent-of-judge"]);
+    const first = planCommand(r.root, onlyArgs);
+    expect(first.code).toBe(0);
+    const document = first.document as Doc;
+    expect(document.overrides).toStrictEqual(["percent-of-judge: lits from checks.json"]);
+    const onlyCards = JSON.parse(r.read("decks/m1/only.json")) as Card[];
+    expect(onlyCards.map((c) => c.customId)).toStrictEqual(["percent-of", "percent-of-judge"]);
+    for (const c of onlyCards) {
+      expect(c.acceptance).toContain("# morph: subset transaction");
+    }
+
+    const before = r.read("decks/m1/only.json");
+    r.write("decks/m1/checks.json", fixture("cli/goMini.nope.checks.json"));
+    const second = planCommand(r.root, onlyArgs);
+    expect(second.code).toBe(2);
+    expect(second.document).toStrictEqual({
+      error: {
+        code: 2,
+        kind: "DeckError",
+        message:
+          "checks defaults not built (1 error):\nchecks override 'nope' is not a card of the cut",
+      },
+    });
+    expect(r.read("decks/m1/only.json")).toBe(before);
+  } finally {
+    r.rm();
+  }
+});
+```

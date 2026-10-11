@@ -1,0 +1,153 @@
+```
+import { nameWords } from "../language/naming.js";
+import type { LanguageProfile } from "../language/types.js";
+
+export interface ExampleCount {
+  name: string;
+  count: number;
+}
+
+export interface ProbeTitle {
+  function: string;
+  n: number;
+}
+
+export interface ProbeNamesInput {
+  id: string;
+  path: string;
+  profile: LanguageProfile;
+  text: string;
+  own: ExampleCount[];
+  record: ExampleCount[];
+  strict: boolean;
+}
+
+const TS_TEST_LINE = /^[ \t]*(?:test|it)\(\s*(["'`])(.*?)\1/;
+const TS_EXAMPLE_TITLE = /^(.+) example (\d+)(?::.*)?$/;
+const GO_TEST_LINE = /^func TestProbe([A-Za-z0-9_]+)Example(\d+)\(/;
+
+export function pascalName(name: string): string {
+  return nameWords(name)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join("");
+}
+
+export function probeTitles(profile: LanguageProfile, text: string, names: readonly string[]): ProbeTitle[] {
+  const titles: ProbeTitle[] = [];
+  for (const line of text.split("\n")) {
+    if (profile.id === "go") {
+      const m = GO_TEST_LINE.exec(line);
+      if (m === null) {
+        continue;
+      }
+      const captured = m[1] ?? "";
+      const lower = captured.toLowerCase();
+      let fn = captured;
+      for (const name of names) {
+        if (pascalName(name).toLowerCase() === lower) {
+          fn = name;
+          break;
+        }
+      }
+      titles.push({ function: fn, n: Number(m[2] ?? "") });
+    } else {
+      const m = TS_TEST_LINE.exec(line);
+      if (m === null) {
+        continue;
+      }
+      const title = m[2] ?? "";
+      const t = TS_EXAMPLE_TITLE.exec(title);
+      if (t === null) {
+        continue;
+      }
+      titles.push({ function: t[1] ?? "", n: Number(t[2] ?? "") });
+    }
+  }
+  return titles;
+}
+
+export function checkProbeNames(input: ProbeNamesInput): string[] {
+  const { id, path, profile, text, own, record, strict } = input;
+  const names = [...record.map((e) => e.name), ...own.map((e) => e.name)];
+
+  const seen = new Set<string>();
+  const titles: ProbeTitle[] = [];
+  for (const title of probeTitles(profile, text, names)) {
+    const key = title.function + "\u0000" + String(title.n);
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    titles.push(title);
+  }
+
+  const lines: string[] = [];
+
+  if (strict) {
+    for (const entry of own) {
+      const given = new Set<number>();
+      for (const title of titles) {
+        if (title.function === entry.name) {
+          given.add(title.n);
+        }
+      }
+      const missing: number[] = [];
+      for (let i = 1; i <= entry.count; i += 1) {
+        if (!given.has(i)) {
+          missing.push(i);
+        }
+      }
+      if (missing.length > 0) {
+        lines.push(
+          `card '${id}': probe ${path} lacks ${entry.name} example ${missing.join(", ")} (the record gives ${entry.count})`,
+        );
+      }
+    }
+  }
+
+  const order: string[] = [];
+  const grouped = new Map<string, number[]>();
+  for (const title of titles) {
+    let outside: boolean;
+    if (strict) {
+      const ownEntry = own.find((e) => e.name === title.function);
+      outside = ownEntry === undefined || title.n < 1 || title.n > ownEntry.count;
+    } else {
+      const recordEntry = record.find((e) => e.name === title.function);
+      outside = recordEntry === undefined || title.n < 1 || title.n > recordEntry.count;
+    }
+    if (!outside) {
+      continue;
+    }
+    let numbers = grouped.get(title.function);
+    if (numbers === undefined) {
+      numbers = [];
+      grouped.set(title.function, numbers);
+      order.push(title.function);
+    }
+    if (!numbers.includes(title.n)) {
+      numbers.push(title.n);
+    }
+  }
+
+  for (const fn of order) {
+    const numbers = grouped.get(fn);
+    if (numbers === undefined) {
+      continue;
+    }
+    const ascending = [...numbers].sort((a, b) => a - b);
+    if (strict) {
+      const ownNames = own.length === 0 ? "none" : own.map((e) => e.name).join(", ");
+      lines.push(
+        `card '${id}': probe ${path} names ${fn} example ${ascending.join(", ")}, not an example of its Functions (${ownNames})`,
+      );
+    } else {
+      lines.push(
+        `card '${id}': probe ${path} names ${fn} example ${ascending.join(", ")}, which the record does not give`,
+      );
+    }
+  }
+
+  return lines;
+}
+```

@@ -1,0 +1,394 @@
+{
+  "runId": "20261011-193541",
+  "completedAt": 1791749749252,
+  "branch": "morph/20261011-193541",
+  "processor": "ds",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "plan-spec",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-spec.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "ba2b8593466976c0b8051c67ce948eb1c9477356",
+      "diffstat": {
+        "files": 2,
+        "insertions": 30,
+        "deletions": 3
+      }
+    },
+    {
+      "customId": "probe-names",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "probe-names.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "15019e0096684b5bc0f810cf86fb8c4b302df243",
+      "diffstat": {
+        "files": 1,
+        "insertions": 154,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "read-checks",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "read-checks.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "a376a3d2efdd4cb435e39c560215377596cb6132",
+      "diffstat": {
+        "files": 2,
+        "insertions": 180,
+        "deletions": 74
+      }
+    },
+    {
+      "customId": "default-checks",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "default-checks.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/default-checks/default-checks.probe.ts > Default Checks example 5: thenLiterals\nAssertionError: expected [ 'a b', 'c\\\"d', 'x y', 'open' ] to strictly equal [ 'a b', 'c\\\"d', 'x y' ]\n\n- Expected\n+ Received\n\n  [\n    \"a b\",\n    \"c\\\\\\\"d\",\n    \"x y\",\n+   \"open\",\n  ]\n\n ❯ probe/default-checks/default-checks.probe.ts:150:99\n    148| test(\"Default Checks example 5: thenLiterals\", () => {\n    149|   const ex = (then: string) => ({ given: \"g\", when: \"w\", then, ref: nu…\n    150|   expect(thenLiterals([ex('\"a b\"  and \"c\\\\\"d\"'), ex(\"none\"), ex('\"a  b…\n       |                                                                                                   ^\n    151|     \"a b\", 'c\\\\\"d', \"x y\",\n    152|   ]);\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 4 passed (5)\n\nfirst difference at char 32 (line 5) of 33/43: expected \"[\\n  \\\"a b\\\",\\n  \\\"c\\\\\\\\\\\\\\\"d\\\",\\n  \\\"x y\\\",\\n]\" received \"[\\n  \\\"a b\\\",\\n  \\\"c\\\\\\\\\\\\\\\"d\\\",\\n  \\\"x y\\\",\\n  \\\"open\\\",\\n]\"\n"
+      ],
+      "commit": "ecba1a9755767554d0bc10e616ecd61a9c196317",
+      "diffstat": {
+        "files": 1,
+        "insertions": 284,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-spec-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-spec-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/planner/plan.p35.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "c81cc712aa3eda63186c9a7893532027aabebf50",
+      "diffstat": {
+        "files": 1,
+        "insertions": 112,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "probe-names-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "probe-names-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/criterion/probeNames.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "da6b424aab9de8608fc86338e37728740e59739c",
+      "diffstat": {
+        "files": 1,
+        "insertions": 162,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "read-checks-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "read-checks-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/readChecks.examples.test.ts\n== guard tests/builder/readChecks.p35.examples.test.ts\n== names tests/builder/readChecks.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "88ca8430070da062232033a12f2b9447ade2f298",
+      "diffstat": {
+        "files": 2,
+        "insertions": 95,
+        "deletions": 1
+      }
+    },
+    {
+      "customId": "default-checks-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "default-checks-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/criterion/defaultChecks.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard tests/criterion/defaultChecks.examples.test.ts\n== own\n FAIL  tests/criterion/defaultChecks.examples.test.ts > Default Checks example 5: thenLiterals keeps, collapses and drops literals\nAssertionError: expected [ 'a b', 'c\\\"d', 'x y', 'open' ] to strictly equal [ 'a b', 'c\\\"d', 'x y' ]\n\n- Expected\n+ Received\n\n  [\n    \"a b\",\n    \"c\\\\\\\"d\",\n    \"x y\",\n+   \"open\",\n  ]\n\n ❯ tests/criterion/defaultChecks.examples.test.ts:529:18\n    527|   const result = thenLiterals(examples);\n    528| \n    529|   expect(result).toStrictEqual([\"a b\", \"c\\\\\\\"d\", \"x y\"]);\n       |                  ^\n    530| });\n    531| \n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 4 passed (5)\n\nfirst difference at char 32 (line 5) of 33/43: expected \"[\\n  \\\"a b\\\",\\n  \\\"c\\\\\\\\\\\\\\\"d\\\",\\n  \\\"x y\\\",\\n]\" received \"[\\n  \\\"a b\\\",\\n  \\\"c\\\\\\\\\\\\\\\"d\\\",\\n  \\\"x y\\\",\\n  \\\"open\\\",\\n]\"\n"
+      ],
+      "commit": "986fd22ed7ba749786ab330d046dd7a83fbb78cb",
+      "diffstat": {
+        "files": 1,
+        "insertions": 530,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "db7a7b6deff90a79a54f6f9d06c0c8320309ca6e",
+      "diffstat": {
+        "files": 1,
+        "insertions": 35,
+        "deletions": 8
+      }
+    },
+    {
+      "customId": "plan-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/planCommand.p35.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "55d579742ee4042242eff030f9a914461edf6708",
+      "diffstat": {
+        "files": 1,
+        "insertions": 199,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 281774,
+    "outputTokens": 239559,
+    "cost": 0.17293782,
+    "requests": 18
+  },
+  "requests": [
+    {
+      "customId": "plan-spec.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791747341-UGclch8oGD5dGVjtbeSz",
+      "inputTokens": 12412,
+      "outputTokens": 4617,
+      "cost": 0.004632,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791747341-rJsDFRQyywwElOnCRMM5",
+      "inputTokens": 12412,
+      "outputTokens": 4896,
+      "cost": 0.00314052,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "probe-names.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791747341-fDZEiJrYg34HeOK2zZqO",
+      "inputTokens": 8104,
+      "outputTokens": 5219,
+      "cost": 0.004347,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "probe-names.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791747376-5DHKh0u5tLZYAJeFYEAx",
+      "inputTokens": 8104,
+      "outputTokens": 6910,
+      "cost": 0.0043248,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-checks.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791747382-P1b1iQczzYOkYM09l3Bi",
+      "inputTokens": 10818,
+      "outputTokens": 13980,
+      "cost": 0.0100107,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-checks.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791747395-AQEAHyOlWhagg9IfiHFl",
+      "inputTokens": 10818,
+      "outputTokens": 10701,
+      "cost": 0.0066609,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "default-checks.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791747512-0XO6J0BAD2HSM21CdS4w",
+      "inputTokens": 12285,
+      "outputTokens": 22563,
+      "cost": 0.01468935,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "default-checks.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791747515-Oy4UyjdvVeVc2f0aQyfR",
+      "inputTokens": 12285,
+      "outputTokens": 17232,
+      "cost": 0.01059219,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791747512-a9cTFageYl0le8VHMm3m",
+      "inputTokens": 19238,
+      "outputTokens": 2536,
+      "cost": 0.0037161,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "probe-names-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791747534-u4guGZ2L3PsKppPt3xOI",
+      "inputTokens": 12985,
+      "outputTokens": 5585,
+      "cost": 0.00460755,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "read-checks-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791747583-jWR7JmxZYVNPXLMOLBmw",
+      "inputTokens": 16909,
+      "outputTokens": 4674,
+      "cost": 0.00534075,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "default-checks-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791747764-OXWZTTmDjvCPgKahmKot",
+      "inputTokens": 15230,
+      "outputTokens": 26205,
+      "cost": 0.01724718,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791747767-01S5wcwzbDzgoQhzrQHx",
+      "inputTokens": 14204,
+      "outputTokens": 4679,
+      "cost": 0.004938,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791747767-AhPOqBWu32VFnAvHZrc9",
+      "inputTokens": 14204,
+      "outputTokens": 7509,
+      "cost": 0.006636,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791748042-gEyTr2uqxySFnZn0U8Is",
+      "inputTokens": 28582,
+      "outputTokens": 19486,
+      "cost": 0.0152877,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "default-checks.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791748582-XI690tkXH8FxJjCscIfP",
+      "inputTokens": 24290,
+      "outputTokens": 17006,
+      "cost": 0.01225734,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "default-checks.r1.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791748582-BpkIpOtCh9luF7aFjrVu",
+      "inputTokens": 24290,
+      "outputTokens": 17761,
+      "cost": 0.01271034,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "default-checks-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791748788-QekHQjAKQNCxiH3iWIID",
+      "inputTokens": 24604,
+      "outputTokens": 48000,
+      "cost": 0.0317994,
+      "finishReason": "length",
+      "error": null
+    }
+  ],
+  "rounds": [
+    {
+      "round": 0,
+      "reds": [
+        {
+          "customId": "default-checks",
+          "blamed": [
+            "default-checks"
+          ],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/default-checks/default-checks.probe.ts > Default Checks example 5: thenLiterals\nAssertionError: expected [ 'a b', 'c\\\"d', 'x y', 'open' ] to strictly equal [ 'a b', 'c\\\"d', 'x y' ]\n\n- Expected\n+ Received\n\n  [\n    \"a b\",\n    \"c\\\\\\\"d\",\n    \"x y\",\n+   \"open\",\n  ]\n\n ❯ probe/default-checks/default-checks.probe.ts:150:99\n    148| test(\"Default Checks example 5: thenLiterals\", () => {\n    149|   const ex = (then: string) => ({ given: \"g\", when: \"w\", then, ref: nu…\n    150|   expect(thenLiterals([ex('\"a b\"  and \"c\\\\\"d\"'), ex(\"none\"), ex('\"a  b…\n       |                                                                                                   ^\n    151|     \"a b\", 'c\\\\\"d', \"x y\",\n    152|   ]);\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 4 passed (5)\n\nfirst difference at char 32 (line 5) of 33/43: expected \"[\\n  \\\"a b\\\",\\n  \\\"c\\\\\\\\\\\\\\\"d\\\",\\n  \\\"x y\\\",\\n]\" received \"[\\n  \\\"a b\\\",\\n  \\\"c\\\\\\\\\\\\\\\"d\\\",\\n  \\\"x y\\\",\\n  \\\"open\\\",\\n]\"\n"
+        },
+        {
+          "customId": "default-checks-judge",
+          "blamed": [
+            "default-checks-judge"
+          ],
+          "log": "== tsc\n== eslint\n== guard tests/criterion/defaultChecks.examples.test.ts\n== own\n FAIL  tests/criterion/defaultChecks.examples.test.ts > Default Checks example 5: thenLiterals keeps, collapses and drops literals\nAssertionError: expected [ 'a b', 'c\\\"d', 'x y', 'open' ] to strictly equal [ 'a b', 'c\\\"d', 'x y' ]\n\n- Expected\n+ Received\n\n  [\n    \"a b\",\n    \"c\\\\\\\"d\",\n    \"x y\",\n+   \"open\",\n  ]\n\n ❯ tests/criterion/defaultChecks.examples.test.ts:529:18\n    527|   const result = thenLiterals(examples);\n    528| \n    529|   expect(result).toStrictEqual([\"a b\", \"c\\\\\\\"d\", \"x y\"]);\n       |                  ^\n    530| });\n    531| \n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 4 passed (5)\n\nfirst difference at char 32 (line 5) of 33/43: expected \"[\\n  \\\"a b\\\",\\n  \\\"c\\\\\\\\\\\\\\\"d\\\",\\n  \\\"x y\\\",\\n]\" received \"[\\n  \\\"a b\\\",\\n  \\\"c\\\\\\\\\\\\\\\"d\\\",\\n  \\\"x y\\\",\\n  \\\"open\\\",\\n]\"\n"
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "reds": []
+    }
+  ]
+}
