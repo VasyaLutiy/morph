@@ -1750,12 +1750,13 @@ System:
             components: args.components, judge: args.judge, hasFile: a path is a regular file under root}); an error → 2 DeckError, it. With args.only, Select
             Cards(plan, args.only), an error → 2 DeckError, it; its plan replaces Plan Spec's, the checks keep only its cards. With args.checks: profile = Resolve
             Profile(the first selected Component's language, map.language), an error → 2 DeckError "the map: " + it; Read Plan Checks(root, args.checks, profile) (a
-            failure is the result); Build Acceptances({cards, checks, profile, texts, uses: Plan Spec's uses, vendor: "vendor/modules.txt" is a regular file under
-            root, and with args.only transaction: true}), errors → 2 DeckError "acceptances not built (<n> error|errors):\n" + them "\n"-joined; its cards replace
+            failure is the result); Plan Layers(the record, the map, "decks/tools/layers.json" is a regular file under root, texts.guard, profile.id) (P30, rules),
+            an error → 2 DeckError, it; Build Acceptances({cards, checks, profile, texts, uses: Plan Spec's uses, vendor: "vendor/modules.txt" is a regular file under
+            root, its layers when not null, and with args.only transaction: true}), errors → 2 DeckError "acceptances not built (<n> error|errors):\n" + them "\n"-joined; its cards replace
             the plan's, except a card the map gives an acceptance (map card by customId ?? id, extra card by customId). args.out not null → the cards written to
             path.resolve(root, args.out) as JSON.stringify(cards, null, 2) + "\n", parents created. → {code: 0, document: {spec, components, cards, generations,
             externalDependsOn, out: args.out}}. Nothing else written; nothing on an error.
-          steps: [{uses: contour}, {uses: planner}, {calls: Read Plan Checks}, {uses: builder}, {produces: Plan Document}]
+          steps: [{uses: contour}, {uses: planner}, {calls: Read Plan Checks}, {uses: rules}, {uses: builder}, {produces: Plan Document}]
           examples:
             - {given: 'examples.json["Plan Command 1"].given', when: 'planCommand', then: 'examples.json["Plan Command 1"].then'}
             - {given: 'examples.json["Plan Command 2"].given', when: 'planCommand', then: 'examples.json["Plan Command 2"].then'}
@@ -1771,6 +1772,7 @@ System:
             - {given: 'examples.json["Plan Command 12"].given', when: planCommand, then: 'examples.json["Plan Command 12"].then'}
             - {given: 'examples.json["Plan Command 13"].given', when: planCommand, then: 'examples.json["Plan Command 13"].then'}
             - {given: 'examples.json["Plan Command 14"].given', when: planCommand, then: 'examples.json["Plan Command 14"].then'}
+            - {given: 'examples.json["Plan Command 15"].given', when: planCommand, then: 'examples.json["Plan Command 15"].then'}
         - name: Read Plan Checks
           description: Files of `plan --checks`.
           behavior: >
@@ -3250,7 +3252,7 @@ System:
             profile, test = testTarget when smoke is not null, else none. The body, in order: Probe Dir
             with the probe and ctx.siblings; OWN_GIT_BEFORE when ctx.ownGit; tscStep; eslintStep over
             ctx.targets; "echo '== guard'; node $P/guard.mjs src <code joined by ','>" + allowArg(ctx.allowed
-            ?? []) plus "; node $P/guard.mjs tests <test> 1 <smoke>" with a test, then "\n"; "echo '== probe'; " + vitestStep
+            ?? []) + rules' Layers Arg(ctx.allowed ?? [], ctx.layers) (P30) plus "; node $P/guard.mjs tests <test> 1 <smoke>" with a test, then "\n"; "echo '== probe'; " + vitestStep
             with "--config $P/probe.config.mts"; with a test "echo '== own'; " + vitestStep with the test;
             ESLINT_VERDICT; extra when not null; "echo '== full'; " + vitestStep with fullArgs of
             ctx.fullExclude; OWN_GIT_AFTER when ctx.ownGit; frozenStep of ctx.frozen; untrackedStep of
@@ -3263,6 +3265,7 @@ System:
             - calls: Tree Steps
             - calls: Probe Dir
             - reads: Card Context
+            - uses: rules
             - produces: string
           examples:
             - given: 'ctx {id "a", phase "p1", targets ["src/x/a.ts"], siblings ["src/x/b.ts"], frozen DEFAULT_FROZEN, fullExclude [], ownGit false, the typescript profile, guard "// guard\n", firstdiff "// firstdiff\n"}; probe "// probe\n", smoke null, extra null'
@@ -3277,6 +3280,7 @@ System:
               ref: "tests/fixtures/builder/code1.txt, tests/fixtures/builder/code2.txt"
               when: "written"
               then: '""; " ''zod''"; " ''yaml,@scope/pkg''"; code1.txt with its line "echo ''== guard''; node $P/guard.mjs src src/x/a.ts" ending in " ''yaml,@scope/pkg''", nothing else changed; code2.txt with "guard.mjs src src/x/a.ts; node" become "guard.mjs src src/x/a.ts ''ajv''; node", nothing else changed; exactly code1.txt'
+            - {given: 'examples.json["Code Acceptance 4"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/code1.txt, tests/fixtures/builder/code2.txt", when: codeAcceptance, then: 'examples.json["Code Acceptance 4"].then'}
         - name: Judge Acceptance
           description: The acceptance of a judge card — per test file its bounds, literals and kept names, then the files run together.
           behavior: >
@@ -3384,12 +3388,15 @@ System:
             key → as before. P21c (#12): an optional transaction (Plan Command's for --only) true → every member's ctx siblings
             [], hide ignored, and its acceptance = TRANSACTION_MARK (Transaction Deck) + "\n" + its script with the exact text
             untrackedStep(its targets) replaced once by untrackedStep(every member's targets, checks' order, each once).
+            P30 (#41): an optional layers (Plan Command's, directory → allowed directories) gives every member's ctx
+            layers = rules' Card Layers(profile, its targets, layers); without it no ctx has the key.
           steps:
             - calls: Code Acceptance
             - calls: Judge Acceptance
             - reads: Checks
             - uses: cards
             - uses: builder-go
+            - uses: rules
             - produces: Build Result
           examples:
             - given: 'the P10a deck file decks/p10/v2deck.json (12 cards) with every acceptance set to null; checks p10.checks.typed.json; the typescript profile; texts guard.p10.txt, firstdiff.p10.txt and probes {<id>: decks/p10/parts/<id>.probe.ts} for the six code cards'
@@ -3416,6 +3423,7 @@ System:
             - {given: 'examples.json["Build Acceptances 8"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/go/code1.txt", when: buildAcceptances, then: 'examples.json["Build Acceptances 8"].then'}
             - {given: 'examples.json["Build Acceptances 9"].given', ref: "tests/fixtures/builder/examples.json", when: buildAcceptances, then: 'examples.json["Build Acceptances 9"].then'}
             - {given: 'examples.json["Build Acceptances 10"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/go/code1.txt", when: buildAcceptances, then: 'examples.json["Build Acceptances 10"].then'}
+            - {given: 'examples.json["Build Acceptances 11"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/go/code1.txt", when: buildAcceptances, then: 'examples.json["Build Acceptances 11"].then'}
       dataObjects:
         - name: Checks
           description: A phase's acceptance knobs, read from its checks document (decks/<phase>/checks.json).
@@ -3428,7 +3436,7 @@ System:
           schema: "{ ok: true, checks: Checks } | { ok: false, problems: string[] }"
         - name: Card Context
           description: What one card's acceptance is built from.
-          schema: "{ id: string, phase: string, targets: string[], siblings: string[], frozen: string[], fullExclude: string[], ownGit: boolean, profile: LanguageProfile, guard: string, firstdiff: string, allowed?: string[], vendor?: boolean }"
+          schema: "{ id: string, phase: string, targets: string[], siblings: string[], frozen: string[], fullExclude: string[], ownGit: boolean, profile: LanguageProfile, guard: string, firstdiff: string, allowed?: string[], vendor?: boolean, layers?: Record<string, string[]> }"
         - name: Build Result
           description: The cards with their acceptances, or every error.
           schema: "{ ok: true, cards: Card[] } | { ok: false, errors: string[] }"
@@ -3486,10 +3494,12 @@ System:
             P19: GO_ENV_VENDOR = GO_ENV with "-mod=mod" become "-mod=vendor", nothing else; goEnv(vendor) = GO_ENV_VENDOR
             when vendor, else GO_ENV; both acceptances begin with goEnv(ctx.vendor === true) in place of GO_ENV; the code
             card's guard line is "node $P/guard.mjs src <code joined by ','>" + builder's allowArg(ctx.allowed ?? []) before
-            the tests part. The judge's reads no allowed.
+            the tests part. The judge's reads no allowed. P30 (#41): right after allowArg the code card's guard line gets
+            rules' Layers Arg(ctx.allowed ?? [], ctx.layers); the judge's reads no layers.
           steps:
             - uses: builder
             - uses: language
+            - uses: rules
             - reads: Card Context
             - reads: Judge File
             - produces: string
@@ -3521,6 +3531,133 @@ System:
               ref: "tests/fixtures/builder/go/code1.txt, judge1.txt, code2.txt"
               when: "goCodeAcceptance; goJudgeAcceptance"
               then: 'code1.txt with its GO_ENV line become GO_ENV_VENDOR''s and its guard line ending in " ''github.com/dustin/go-humanize''", nothing else changed; judge1.txt with only its GO_ENV line become GO_ENV_VENDOR''s; code2.txt with "guard.mjs src report/a.go; node" become "guard.mjs src report/a.go ''golang.org/x/mod''; node", nothing else changed; exactly code1.txt'
+            - given: 'goCodeAcceptance of the ctx of example 1 with layers {"calc": []}; with allowed ["github.com/dustin/go-humanize"] and layers {"calc": ["report"]}; of the ctx of example 2 with layers {"report": ["calc"]} (probe, smoke 5, extra as there); goJudgeAcceptance of the ctx and files of example 3 with layers {"calc": []}'
+              ref: "tests/fixtures/builder/go/code1.txt, code2.txt, judge1.txt"
+              when: "goCodeAcceptance; goJudgeAcceptance"
+              then: 'code1.txt with its guard line "echo ''== guard''; node $P/guard.mjs src calc/percent_of.go" ending in " '''' ''{\"calc\":[]}''", nothing else changed; code1.txt with that line ending in " ''github.com/dustin/go-humanize'' ''{\"calc\":[\"report\"]}''"; code2.txt with "guard.mjs src report/a.go; node" become "guard.mjs src report/a.go '''' ''{\"report\":[\"calc\"]}''; node"; exactly judge1.txt'
+
+    # ---------------------------------------------------------------- P30
+    - name: rules
+      description: >
+        The acceptance rules the record states (P30, issue #41): src/rules/layers.ts, pure (node:path only; no file
+        read, no clock, no environment), importing contour and language only. The layer rule — which directories a
+        card's code may import — is read off the record: a Function step `uses: <Component>` lets the directories of
+        that Function's code targets import the used Component's directories, so the guard reads no hand copy
+        (decks/tools/layers.json "layers"). cli's Plan Command calls Plan Layers; builder writes Card Layers through
+        Layers Arg into the guard line of every code card; the template guards (data, contract 2) read that argument.
+      language: typescript
+      requirements: [Deterministic Core]
+      functions:
+        - name: Layer Edges
+          description: For every code directory of the record, the directories it may import.
+          behavior: >
+            layerEdges(record, map) → Layer Edges Result, over the WHOLE record and map (never a cut's subset). Per
+            Component C in record order: profile = Resolve Profile(C.language, map.language), an error → "Component
+            '<C>': <it>". Per Function F of C: its unit is the first map group whose functions hold F's name, else F; the
+            unit name is that group's name, else F's name; targets = the targets of the map card whose id is
+            slugName(unit name) when that card gives targets, else [code, test] of Name Targets(profile, C.name, unit
+            name) (an error → "Component '<C>': <it>"); dirs(F) = path.posix.dirname of each of codeTargets(profile,
+            targets) (test files and other extensions left out; "." for a root file), distinct. C's directories = the
+            union of dirs(F) over its Functions. Every directory of every dirs(F) is a key of edges. Per step `uses: X` of
+            a Function F (of any Component): X names a Component when X equals its name or componentSlug(X) equals
+            componentSlug(its name); X is a dependency when a System dependency is named exactly X. Both → the error
+            "Function '<F>': 'uses: <X>' names the Component '<that Component's name>' and the dependency '<X>'". A
+            Component only → for each d of dirs(F), every directory of that Component but d itself joins edges[d]. A
+            dependency or neither → nothing (a module: Component.uses and the guard's module argument). Any error →
+            {ok: false, errors} (record order, each text once); else {ok: true, edges}: the keys and each list sorted
+            ascending by code unit, no duplicates; a directory whose Functions use no Component maps to [].
+          steps:
+            - reads: Contour Record
+            - reads: Contour Map
+            - uses: contour
+            - uses: language
+            - produces: Layer Edges Result
+          examples:
+            - given: 'the record and the map of tests/fixtures/ts-rename.json (its "contour.yaml" and "morph-map.json" texts through Load Spec and Load Map)'
+              ref: "tests/fixtures/ts-rename.json"
+              when: layerEdges
+              then: '{ok: true, edges: {"src/report": ["src/units"], "src/units": []}} — Length Line uses units'
+            - given: 'the trimmed MorphStudio record and map (tests/fixtures/rules/morphstudio/contour.yaml and morph-map.json: 19 Components, 33 Functions, f85a8e7''s steps and targets; pump''s targets are in daemon/)'
+              ref: "tests/fixtures/rules/morphstudio.edges.json (the whole edges), tests/fixtures/rules/morphstudio/layers.json (f85a8e7's hand table, no users key)"
+              when: layerEdges
+              then: '{ok: true, edges} with edges equal to morphstudio.edges.json: 18 directories, 30 allowed pairs, users [] and registry []; for every key but users, each directory of its list is in the layers.json "layers" entry of that key'
+            - given: 'the record and the map of tests/fixtures/rules/union/ (contour.yaml, morph-map.json): alpha (Alpha Step, pkg/a.go, uses x and the dependency golang.org/x/text), beta (Beta Step, pkg/b.go + pkg/b_test.go, uses y and "the shell"), x (x/x.go), y (y/y.go), gamma (map group gamma-pair of Gamma One — uses alpha — and Gamma Two, card targets gamma/pair.go + gamma/pair_test.go; Gamma Three, no map card, uses gamma)'
+              ref: "tests/fixtures/rules/union/contour.yaml, tests/fixtures/rules/union/morph-map.json"
+              when: layerEdges
+              then: '{ok: true, edges: {"gamma": ["pkg"], "pkg": ["x", "y"], "x": [], "y": []}} — pkg is the union of alpha''s and beta''s uses; the dependency and the free word add nothing; Gamma Three''s default target gamma/gamma_three.go shares gamma; a step using its own Component adds nothing'
+            - given: 'the record tests/fixtures/rules/both.yaml (Component yaml; Component config whose Read Config has the step uses: yaml; the dependency yaml) and the empty map (EMPTY_MAP of src/cli/planCommand.ts)'
+              ref: "tests/fixtures/rules/both.yaml"
+              when: layerEdges
+              then: "{ok: false, errors: [\"Function 'Read Config': 'uses: yaml' names the Component 'yaml' and the dependency 'yaml'\"]}"
+        - name: Card Layers
+          description: The part of the edges one card's guard gets — its code directories.
+          behavior: >
+            cardLayers(profile, targets, edges) → an object: for each directory d of codeTargets(profile, targets)
+            (path.posix.dirname, "." for a root file; distinct, first seen first, so the keys keep that order) the
+            entry d → edges[d] when edges has the own key d, else []. No code target → {}.
+          steps:
+            - reads: Layer Edges Result
+            - produces: Record<string, string[]>
+          examples:
+            - given: 'E = the edges of tests/fixtures/rules/morphstudio.edges.json; cardLayers(go, ["users/registry.go"], E); cardLayers(go, ["daemon/pump.go", "daemon/pump_test.go"], E); cardLayers(typescript, ["src/report/line.ts", "tests/report/line.test.ts"], {"src/report": ["src/units"], "src/units": []}); cardLayers(go, ["new/a.go", "new/b.go", "main.go"], {}); cardLayers(go, ["users/registry_examples_test.go"], E)'
+              ref: "tests/fixtures/rules/morphstudio.edges.json"
+              when: cardLayers
+              then: '{"users": []}; {"daemon": E["daemon"]} (the 11 directories); {"src/report": ["src/units"]}; {"new": [], ".": []} with the keys in that order; {}'
+        - name: Layers Arg
+          description: The guard's layers argument, after the module argument of builder's allowArg.
+          behavior: >
+            layersArg(allowed, layers) → string. layers undefined → "" (the guard line stays byte for byte). Else the
+            module argument's placeholder " ''" when allowed is empty (allowArg wrote nothing there), then " '" +
+            JSON.stringify(layers) + "'". The guards of contract 2 (templates/go and templates/typescript
+            decks/tools/guard.mjs, the line "// morph-guard-contract: 2") read it as the fourth argument of `src`: given,
+            the "layers" key of layers.json is not read; Go keys a package by its directory, TypeScript a file by its
+            first folder under src/ (the argument's directories mapped the same way); an import of another key not in
+            the importing key's list is red: Go "guard: package <dir> imports <import path>: the record has no 'uses'
+            from <dir> to <target dir> (allowed: <list joined by ', '> or none)", TypeScript "guard: <file>:<line> layer
+            <layer> imports layer <layer2>: the record has no 'uses' from <layer> to <layer2> (allowed: … or none)".
+          steps:
+            - produces: string
+          examples:
+            - given: 'layersArg([], undefined); layersArg(["zod"], undefined); layersArg([], {"users": []}); layersArg(["github.com/x/y"], {"pkg": ["x", "y"], ".": []})'
+              when: layersArg
+              then: '""; ""; " '''' ''{\"users\":[]}''"; " ''{\"pkg\":[\"x\",\"y\"],\".\":[]}''"'
+            - given: 'a tmp Go module "m" (go.mod "module m\n\ngo 1.22\n"; packages x, y, queue, users each one const; pkg/a.go imports m/x, pkg/b.go imports m/y; registry/x.go imports m/queue and m/users; decks/tools/layers.json {"layers": {"registry": ["queue", "users"]}, "pure": []}); node templates/go/decks/tools/guard.mjs src with the file and the two arguments allowArg([]) + layersArg([], L) write: pkg/a.go and pkg/b.go with L {"pkg": ["x", "y"]}; registry/x.go with L {"registry": ["queue"]}'
+              ref: "templates/go/decks/tools/guard.mjs"
+              when: the guard runs in the module (GOFLAGS=-mod=mod GOPROXY=off GOTOOLCHAIN=local GOWORK=off)
+              then: 'exit 0 and no output for both pkg files (the union of alpha''s and beta''s uses, F5); exit 1 and the one line "guard: package registry imports m/users: the record has no ''uses'' from registry to users (allowed: queue)" — layers.json''s "layers" entry, which allows users, is not read (F3)'
+            - given: 'a tmp tree src/units/convert.ts (export const METRE = "m";) and src/report/line.ts (line 1 imports METRE from "../units/convert.js"); node templates/typescript/decks/tools/guard.mjs src src/report/line.ts with allowArg([]) + layersArg([], L): L {"src/report": ["src/units"]}; L {"src/report": []}'
+              ref: "templates/typescript/decks/tools/guard.mjs"
+              when: the guard runs in the tree
+              then: 'exit 0 and no output; exit 1 and the one line "guard: src/report/line.ts:1 layer report imports layer units: the record has no ''uses'' from report to units (allowed: none)" (F6)'
+        - name: Plan Layers
+          description: What `plan --checks` gives the builder — the edges when the project keeps decks/tools/layers.json and its guard speaks contract 2.
+          behavior: >
+            planLayers(record, map, layersFile, guard, language) → Plan Layers Result. layersFile false → {ok: true,
+            layers: null}, nothing else read (no layers.json: no argument, every deck byte for byte). Else Layer Edges(
+            record, map): errors → {ok: false, error: the errors joined by "\n"}; edges with at least one key and a guard
+            text that does not contain GUARD_CONTRACT = "morph-guard-contract: 2" (exported) → {ok: false, error:
+            "decks/tools/guard.mjs speaks contract 1: copy templates/<language>/decks/tools/guard.mjs from MorphV2"} (an
+            old copy would ignore the argument); else {ok: true, layers: the edges}.
+          steps:
+            - calls: Layer Edges
+            - produces: Plan Layers Result
+          examples:
+            - given: 'R, M = the ts-rename record and map (Layer Edges example 1); planLayers(R, M, false, "// guard\n", "typescript"); planLayers(the both.yaml record, EMPTY_MAP, false, "// guard\n", "typescript")'
+              when: planLayers
+              then: '{ok: true, layers: null}; {ok: true, layers: null}'
+            - given: 'planLayers(R, M, true, "// guard\n", "typescript"); planLayers(R, M, true, "// morph-guard-contract: 2\n", "typescript"); planLayers(the both.yaml record, EMPTY_MAP, true, "// morph-guard-contract: 2\n", "typescript")'
+              when: planLayers
+              then: "{ok: false, error: \"decks/tools/guard.mjs speaks contract 1: copy templates/typescript/decks/tools/guard.mjs from MorphV2\"}; {ok: true, layers: {\"src/report\": [\"src/units\"], \"src/units\": []}}; {ok: false, error: \"Function 'Read Config': 'uses: yaml' names the Component 'yaml' and the dependency 'yaml'\"}"
+            - given: 'R with the map {"language": "typescript", "cards": {"to-metres": {"targets": ["docs/a.md"]}, "length-line": {"targets": ["docs/b.md"]}}} (no code target); planLayers(R, that map, true, "// guard\n", "go")'
+              when: planLayers
+              then: '{ok: true, layers: {}} — no directory to emit, so the old guard is not refused'
+      dataObjects:
+        - name: Layer Edges Result
+          description: Every code directory of the record with the directories it may import, or every error.
+          schema: "{ ok: true, edges: Record<string, string[]> } | { ok: false, errors: string[] }"
+        - name: Plan Layers Result
+          description: The edges for the builder (null without decks/tools/layers.json), or the one error.
+          schema: "{ ok: true, layers: Record<string, string[]> | null } | { ok: false, error: string }"
 
     # ---------------------------------------------------------------- P12a
     - name: primer

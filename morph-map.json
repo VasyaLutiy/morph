@@ -158,6 +158,12 @@
     ],
     "accept-group": [
       "Accept Group"
+    ],
+    "layer-edges": [
+      "Layer Edges",
+      "Card Layers",
+      "Layers Arg",
+      "Plan Layers"
     ]
   },
   "cards": {
@@ -1704,18 +1710,18 @@
         "src/cli/planCommand.ts"
       ],
       "context_slice": [
-        "docs/TASK_P21c_transaction.md",
+        "docs/TASK_P30_rules.md",
         "docs/CONVENTIONS.md",
         "src/cli/types.ts",
-        "src/planner/types.ts",
-        "src/builder/types.ts"
+        "src/builder/types.ts",
+        "src/rules/layers.ts"
       ],
       "depends_on": [
         "build-acceptances"
       ],
       "variants": 2,
       "max_tokens": 12000,
-      "instruction": "Read docs/TASK_P21c_transaction.md sections 2.2 (src/cli/planCommand.ts: transaction) and 4. Patch src/cli/planCommand.ts (its current text follows) and return it WHOLE; change nothing else in it. When args.only is given, the object passed to buildAcceptances is the same input plus `transaction: true` (no hide key: hideLater and readGoTree are no longer called, and their two imports go — eslint rejects an unused import); without args.only the object stays exactly as it is. Every other step, message and order stays as it is. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P30_rules.md sections 2.2 (src/cli/planCommand.ts) and 4. Patch src/cli/planCommand.ts (its current text follows) and return it WHOLE; change nothing else in it. `import { planLayers } from \"../rules/layers.js\";`. In the args.checks branch, right after `if (!read.ok) { return read.result; }`: `const layers = planLayers(record, map, hasFile(\"decks/tools/layers.json\"), read.texts.guard, profiled.profile.id);` and, when !layers.ok, return `{ code: 2, document: errorDocument(2, \"DeckError\", layers.error) }`; the input object passed to buildAcceptances gains `...(layers.layers !== null ? { layers: layers.layers } : {})` right after vendor. Without decks/tools/layers.json the input is exactly as now. Every other step, message and order stays as it is. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "render-judge": {
       "intent": "generate",
@@ -1803,26 +1809,25 @@
       "instruction": "You patch tests/planner/plan.examples.test.ts and return it WHOLE (its current text follows). Read docs/TASK_P19a_deps.md sections 2.1 (the deps fixtures) and 2.2 (Plan Spec and its table) and 2.3 (the plan.examples bullet). Four changes only: \"Plan Spec example 1\" also expects r.uses toStrictEqual {}; in \"Plan Spec example 5\" a card's acceptance is compared only when its map entry sets one (not null); after the last test add \"Plan Spec example 6: dependency docs ride in the slices of the Components that use them\" and \"Plan Spec example 7: a missing dependency doc is a plan fault\", every expected slice, uses and error written out as a literal. Keep every other test, its name and every other line exactly as it is. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "plan-command-judge": {
-      "intent": "patch",
+      "intent": "generate",
       "targets": [
-        "tests/cli/planCommand.p20.examples.test.ts",
-        "tests/cli/planCommand.p21.examples.test.ts"
+        "tests/cli/planCommand.p30.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P21c_transaction.md",
+        "docs/TASK_P30_rules.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/cards/types.ts",
-        "src/cards/transaction.ts",
         "src/cli/types.ts",
         "src/cli/planCommand.ts",
+        "tests/cli/planCommand.p15.examples.test.ts",
         "tests/fixtures/cli/examples.json"
       ],
       "depends_on": [
         "plan-command"
       ],
-      "max_tokens": 20000,
-      "instruction": "You patch tests/cli/planCommand.p20.examples.test.ts and tests/cli/planCommand.p21.examples.test.ts (their current texts follow) and return each WHOLE. Read docs/TASK_P21c_transaction.md sections 2.1 (the Plan Command roots, verbatim) and 2.2 (Plan Command: transaction, and examples.json \"Plan Command 12\", \"13\", \"14\" as amended) and 2.3. Rewrite ONLY the three tests of Plan Command examples 12 and 13 (p20 file) and 14 (p21 file) to the amended contract, each still named \"Plan Command example <n>…\"; keep every other line, helper and import that is still used; add `import { TRANSACTION_MARK } from \"../../src/cards/transaction.js\";` where used. Every tmp root is removed in finally. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "max_tokens": 16000,
+      "instruction": "You write tests/cli/planCommand.p30.examples.test.ts only, a NEW file with the test of Plan Command example 15 (examples 1-14 are already tested). Read docs/TASK_P30_rules.md sections 2.1 (the Plan Command 15 root) and 2.2 (src/cli/planCommand.ts), and tests/fixtures/cli/examples.json \"Plan Command 15\". Build the root as tests/cli/planCommand.p15.examples.test.ts does (in your slice: copy its MINI list and args verbatim) plus r.write(\"decks/tools/layers.json\", \"{\\\"pure\\\": []}\\n\"). The expected cards are JSON.parse(fixture(\"cli/goMini.deck.json\")) as Card[] with each acceptance changed by String.replace: the guard heredoc's \"\\n// guard\\n\" become \"\\n// morph-guard-contract: 2\\n\" in every card, and the guard line of each code card written out as a literal. Import planCommand from \"../../src/cli/planCommand.js\", fixture and tmpRoot from \"../helpers.js\", types with `import type` (Card from \"../../src/cards/types.js\", PlanArgs and PlanDocument from \"../../src/cli/types.js\"). One test named \"Plan Command example 15: <what>\"; every tmp root removed in finally. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "read-checks": {
       "intent": "generate",
@@ -1878,18 +1883,20 @@
     "compose": {
       "intent": "patch",
       "targets": [
-        "src/builder/types.ts",
         "src/builder/compose.ts"
       ],
       "context_slice": [
-        "docs/TASK_P19b_deps.md",
+        "docs/TASK_P30_rules.md",
         "docs/CONVENTIONS.md",
-        "src/language/types.ts"
+        "src/builder/types.ts",
+        "src/rules/layers.ts"
       ],
-      "depends_on": [],
+      "depends_on": [
+        "build-acceptances"
+      ],
       "variants": 2,
       "max_tokens": 12000,
-      "instruction": "Read docs/TASK_P19b_deps.md sections 2.2 (src/builder/types.ts and src/builder/compose.ts: the two optional fields, allowArg, the guard line) and 4. Patch two files (their current texts follow) and return each WHOLE; change nothing else in them. src/builder/types.ts: CardContext gains `allowed?: string[]; vendor?: boolean;` and BuildInput gains `uses?: Record<string, string[]>; vendor?: boolean;`, exactly as section 2.2 shows. src/builder/compose.ts: export allowArg; codeAcceptance's guard line appends allowArg(ctx.allowed ?? []) right after the code files, before the tests part; judgeAcceptance and litsJson stay exactly as they are. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P30_rules.md sections 2.2 (src/builder/compose.ts) and 4. Patch src/builder/compose.ts (its current text follows) and return it WHOLE; change nothing else in it. `import { layersArg } from \"../rules/layers.js\";`; codeAcceptance's guard line appends layersArg(ctx.allowed ?? [], ctx.layers) right after allowArg(ctx.allowed ?? []), before the tests part (ctx.layers is CardContext's new optional field, src/builder/types.ts in your slice). judgeAcceptance, allowArg and litsJson stay exactly as they are. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "build-acceptances": {
       "intent": "patch",
@@ -1898,17 +1905,16 @@
         "src/builder/buildAcceptances.ts"
       ],
       "context_slice": [
-        "docs/TASK_P21c_transaction.md",
+        "docs/TASK_P30_rules.md",
         "docs/CONVENTIONS.md",
-        "src/builder/steps.ts",
-        "src/cards/transaction.ts"
+        "src/rules/layers.ts"
       ],
       "depends_on": [
-        "transaction-deck"
+        "layer-edges"
       ],
       "variants": 2,
       "max_tokens": 14000,
-      "instruction": "Read docs/TASK_P21c_transaction.md sections 2.2 (src/builder/types.ts and src/builder/buildAcceptances.ts: transaction) and 4. Patch both files (their current texts follow) and return each WHOLE; change nothing else in them. types.ts: BuildInput gains the optional LAST field `transaction?: boolean` after hide. buildAcceptances.ts: when input.transaction === true every member's ctx.siblings is [] and input.hide is not read; after all acceptances are built, each member's acceptance becomes TRANSACTION_MARK + \"\\n\" + its script with the exact text untrackedStep(member.targets) replaced ONCE by untrackedStep(every member's targets in the checks' order, each once) — use String.prototype.replace with a function as the replacement (the step holds `$`), untrackedStep from \"./steps.js\", TRANSACTION_MARK from \"../cards/transaction.js\"; when transaction is absent or false nothing changes, byte for byte. Every other check, message, order and field stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P30_rules.md sections 2.2 (src/builder/types.ts and src/builder/buildAcceptances.ts) and 4. Patch both files (their current texts follow) and return each WHOLE; change nothing else in them. types.ts: CardContext gains `layers?: Record<string, string[]>` right after `vendor?: boolean`; BuildInput gains `layers?: Record<string, string[]>` as its LAST field, after `transaction?: boolean`. buildAcceptances.ts: `import { cardLayers } from \"../rules/layers.js\";`; when input.layers !== undefined every member's ctx object ends with `layers: cardLayers(input.profile, card.targets, input.layers)`; when it is undefined the ctx is built exactly as now, with no layers key. Every other check, message, order and field stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "steps-judge": {
       "intent": "generate",
@@ -1969,42 +1975,45 @@
     "compose-judge": {
       "intent": "generate",
       "targets": [
-        "tests/builder/compose.p19.examples.test.ts"
+        "tests/builder/compose.p30.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P19b_deps.md",
+        "docs/TASK_P30_rules.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/builder/types.ts",
-        "src/builder/compose.ts"
+        "src/builder/compose.ts",
+        "tests/builder/compose.p19.examples.test.ts",
+        "tests/fixtures/builder/examples.json"
       ],
       "depends_on": [
         "compose"
       ],
-      "max_tokens": 16000,
-      "instruction": "You write tests/builder/compose.p19.examples.test.ts only, a NEW file with the tests of Code Acceptance example 3 and Judge Acceptance example 4 (the other examples are already tested). Read docs/TASK_P19b_deps.md sections 2.1 (the ctx helper, verbatim; the fixtures) and 2.2 (Code Acceptance, allowArg) and 2.3 (the compose.p19 bullet). Import allowArg, codeAcceptance, judgeAcceptance from \"../../src/builder/compose.js\", DEFAULT_FROZEN from \"../../src/builder/readChecks.js\", TYPESCRIPT from \"../../src/language/profiles.js\", fixture from \"../helpers.js\", types with `import type`. Each expected script is the fixture text with the one line section 2.2 names changed by String.replace, the changed line written out as a literal. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "max_tokens": 12000,
+      "instruction": "You write tests/builder/compose.p30.examples.test.ts only, a NEW file with the test of Code Acceptance example 4 (the other examples are already tested). Read docs/TASK_P30_rules.md sections 2.2 (the examples table: Code Acceptance 4) and 2.3, and tests/fixtures/builder/examples.json \"Code Acceptance 4\". Copy the ctx(over) helper of tests/builder/compose.p19.examples.test.ts (in your slice) verbatim; example 2's ctx is the one that file builds for Code Acceptance example 3's second call. Import codeAcceptance from \"../../src/builder/compose.js\", DEFAULT_FROZEN from \"../../src/builder/readChecks.js\", TYPESCRIPT from \"../../src/language/profiles.js\", fixture from \"../helpers.js\", types with `import type`. Each expected script is the fixture text with its one line changed by String.replace, the changed line written out as a literal. One test named \"Code Acceptance example 4: <what>\". Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "build-acceptances-judge": {
       "intent": "generate",
       "targets": [
-        "tests/builder/buildAcceptances.p21c.examples.test.ts"
+        "tests/builder/buildAcceptances.p30.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P21c_transaction.md",
+        "docs/TASK_P30_rules.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/builder/types.ts",
         "src/builder/buildAcceptances.ts",
         "src/builder/compose.ts",
-        "src/builder/steps.ts",
-        "src/cards/transaction.ts",
+        "src/rules/layers.ts",
         "tests/fixtures/builder/examples.json"
       ],
       "depends_on": [
-        "build-acceptances"
+        "build-acceptances",
+        "compose",
+        "go-acceptance"
       ],
       "max_tokens": 16000,
-      "instruction": "You write tests/builder/buildAcceptances.p21c.examples.test.ts only, a NEW file with the test of Build Acceptances example 10 (examples 1-9 are already tested). Read docs/TASK_P21c_transaction.md sections 2.1 (the Build Acceptances skeleton, verbatim) and 2.2 (Build Acceptances: transaction) and 2.3. Import buildAcceptances from \"../../src/builder/buildAcceptances.js\", codeAcceptance and judgeAcceptance from \"../../src/builder/compose.js\", untrackedStep from \"../../src/builder/steps.js\", DEFAULT_FROZEN from \"../../src/builder/readChecks.js\", GO and TYPESCRIPT from \"../../src/language/profiles.js\", TRANSACTION_MARK from \"../../src/cards/transaction.js\", fixture from \"../helpers.js\", types with `import type`. One test named \"Build Acceptances example 10: <what>\"; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/builder/buildAcceptances.p30.examples.test.ts only, a NEW file with the test of Build Acceptances example 11 (examples 1-10 are already tested). Read docs/TASK_P30_rules.md sections 2.2 (Build Acceptances and the examples table) and 2.3, and tests/fixtures/builder/examples.json \"Build Acceptances 11\"; its go input is the one of Build Acceptances example 5 below. Import buildAcceptances from \"../../src/builder/buildAcceptances.js\", codeAcceptance and judgeAcceptance from \"../../src/builder/compose.js\", DEFAULT_FROZEN from \"../../src/builder/readChecks.js\", GO and TYPESCRIPT from \"../../src/language/profiles.js\", fixture from \"../helpers.js\", types with `import type`. The expected percent-of script is fixture(\"builder/go/code1.txt\") with its guard line changed by String.replace, the changed line written out as a literal. One test named \"Build Acceptances example 11: <what>\"; then at most 4 of your own on section 2.2. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "read-plan-checks": {
       "intent": "generate",
@@ -2965,35 +2974,36 @@
         "src/builder/goAcceptance.ts"
       ],
       "context_slice": [
-        "docs/TASK_P19b_deps.md",
+        "docs/TASK_P30_rules.md",
         "docs/CONVENTIONS.md",
         "src/builder/types.ts",
-        "src/builder/compose.ts"
+        "src/rules/layers.ts"
       ],
       "depends_on": [
-        "compose"
+        "build-acceptances"
       ],
       "variants": 2,
       "max_tokens": 16000,
-      "instruction": "Read docs/TASK_P19b_deps.md sections 2.2 (src/builder/goAcceptance.ts: GO_ENV_VENDOR, goEnv, the guard line) and 4. Patch src/builder/goAcceptance.ts (its current text follows) and return it WHOLE; change nothing else in it. GO_ENV stays byte for byte; add GO_ENV_VENDOR and goEnv right after it; goCodeAcceptance and goJudgeAcceptance begin with goEnv(ctx.vendor === true) instead of GO_ENV; goCodeAcceptance's guard line appends allowArg(ctx.allowed ?? []) (allowArg from \"./compose.js\") right after the code files, before the tests part. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P30_rules.md sections 2.2 (src/builder/goAcceptance.ts) and 4. Patch src/builder/goAcceptance.ts (its current text follows) and return it WHOLE; change nothing else in it. `import { layersArg } from \"../rules/layers.js\";`; goCodeAcceptance's guard line appends layersArg(ctx.allowed ?? [], ctx.layers) right after allowArg(ctx.allowed ?? []), before the tests part (ctx.layers is CardContext's new optional field, src/builder/types.ts in your slice). goJudgeAcceptance and everything else stay exactly as they are. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "go-acceptance-judge": {
       "intent": "generate",
       "targets": [
-        "tests/builder/goAcceptance.p19.examples.test.ts"
+        "tests/builder/goAcceptance.p30.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P19b_deps.md",
+        "docs/TASK_P30_rules.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/builder/types.ts",
-        "src/builder/goAcceptance.ts"
+        "src/builder/goAcceptance.ts",
+        "tests/builder/goAcceptance.p19.examples.test.ts"
       ],
       "depends_on": [
         "go-acceptance"
       ],
-      "max_tokens": 16000,
-      "instruction": "You write tests/builder/goAcceptance.p19.examples.test.ts only, a NEW file with the tests of Go Acceptance examples 6 and 7 (examples 1-5 are already tested). Read docs/TASK_P19b_deps.md sections 2.1 (the go ctx helpers, verbatim; the fixtures) and 2.2 (Go Acceptance) and 2.3 (the goAcceptance.p19 bullet). Import from \"../../src/builder/goAcceptance.js\", GO from \"../../src/language/profiles.js\", DEFAULT_FROZEN from \"../../src/builder/readChecks.js\", fixture from \"../helpers.js\", types with `import type`. Write GO_ENV_VENDOR's whole line out as a literal; each expected script is the fixture text with the lines section 2.2 names changed by String.replace. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "max_tokens": 12000,
+      "instruction": "You write tests/builder/goAcceptance.p30.examples.test.ts only, a NEW file with the test of Go Acceptance example 8 (examples 1-7 are already tested). Read docs/TASK_P30_rules.md sections 2.2 (the examples table: Go Acceptance 8) and 2.3. Copy the go ctx and files helpers of tests/builder/goAcceptance.p19.examples.test.ts (in your slice) verbatim. Import from \"../../src/builder/goAcceptance.js\", GO from \"../../src/language/profiles.js\", DEFAULT_FROZEN from \"../../src/builder/readChecks.js\", fixture from \"../helpers.js\", types with `import type`. Each expected script is the fixture text (builder/go/code1.txt, code2.txt, judge1.txt) with its one line changed by String.replace, the changed line written out as a literal. One test named \"Go Acceptance example 8: <what>\". Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "init-project": {
       "intent": "generate",
@@ -3773,6 +3783,49 @@
       ],
       "max_tokens": 12000,
       "instruction": "You write tests/cli/unprovenStubs.examples.test.ts only, a NEW file with the test of Unproven Stubs example 1. Read docs/TASK_P28b_unproven.md sections 2.1 (the fixture and the harness) and 2.2 and 2.3. Import unprovenStubs from \"../../src/cli/unprovenStubs.js\", readDeckFile from \"../../src/cli/document.js\", fixtureJson and tmpRoot from \"../helpers.js\". One test named \"Unproven Stubs example 1: <what>\": a tmpRoot holding the fixture's files, readDeckFile(root, deckPath) for \"decks/q/deck.json\", \"decks/t/deck.json\" and \"decks/u/deck.json\" (throw when not ok), each unprovenStubs result checked with toStrictEqual against the whole list its `then` names, reasons written out; the root removed in finally. Then at most 6 of your own on section 2.2's table rows, each on its own tmpRoot (for example a missing target file, a stub dir with no stub for an existing target). Strings with toBe, a whole result or list with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+    },
+    "layer-edges": {
+      "intent": "generate",
+      "targets": [
+        "src/rules/layers.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P30_rules.md",
+        "docs/CONVENTIONS.md",
+        "src/contour/types.ts",
+        "src/contour/select.ts",
+        "src/language/types.ts",
+        "src/language/naming.ts",
+        "src/language/paths.ts",
+        "src/language/profiles.ts"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 12000,
+      "instruction": "You write src/rules/layers.ts, a NEW file of the new layer rules. Read docs/TASK_P30_rules.md sections 2.1 (the shapes you read) and 2.2 (src/rules/layers.ts: the exports, verbatim, and the pinned texts) and 4. Export exactly GUARD_CONTRACT, LayerEdgesResult, PlanLayersResult, layerEdges, cardLayers, layersArg and planLayers with the signatures of section 2.2; the four Functions below are their behaviour. Imports: `import { posix } from \"node:path\";` (posix.dirname), componentSlug from \"../contour/select.js\", resolveProfile from \"../language/profiles.js\", cutTargets and slugName from \"../language/naming.js\", codeTargets from \"../language/paths.js\", and `import type` for ContourRecord and ContourMap (\"../contour/types.js\") and LanguageProfile (\"../language/types.js\"). No other module: no node:fs, no process, no Date, no console. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "layer-edges-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/rules/layers.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P30_rules.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/rules/layers.ts",
+        "src/contour/load.ts",
+        "src/contour/types.ts",
+        "tests/fixtures/rules/morphstudio.edges.json",
+        "tests/fixtures/rules/union/contour.yaml",
+        "tests/fixtures/rules/union/morph-map.json",
+        "tests/fixtures/rules/both.yaml"
+      ],
+      "depends_on": [
+        "layer-edges"
+      ],
+      "max_tokens": 20000,
+      "instruction": "You write tests/rules/layers.examples.test.ts only, a NEW file with one test per example of Layer Edges (1-4), Card Layers (1), Layers Arg (1-3) and Plan Layers (1-3): 11 tests in that order, each named \"<Function> example <N>: <what>\". Read docs/TASK_P30_rules.md sections 2.1 (the fixtures table and the harnesses, verbatim) and 2.2 and 2.3. Import layerEdges, cardLayers, layersArg and planLayers from \"../../src/rules/layers.js\", loadContour and loadMap from \"../../src/contour/load.js\", EMPTY_MAP from \"../../src/cli/planCommand.js\", GO and TYPESCRIPT from \"../../src/language/profiles.js\", fixture, fixtureJson, fixturePath and tmpRoot from \"../helpers.js\", spawnSync from \"node:child_process\", path from \"node:path\". Load each record and map with the harness of section 2.1. The two guard examples (Layers Arg 2 and 3) write the trees of section 2.1 on a tmpRoot() with r.write(path, text), run the guard with the harness's run(r.root, \"go\" or \"typescript\", args), compare status and stdout with toBe (a red's stdout is its one line + \"\\n\", a green's \"\"), remove the root in finally and take 60000 as the test's third argument (a timeout). Layer Edges example 2 also checks, for every key of the edges but users, that each listed directory is in that key's \"layers\" entry of fixtureJson(\"rules/morphstudio/layers.json\"). Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     }
   }
 }

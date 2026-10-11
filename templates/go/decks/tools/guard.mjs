@@ -1,12 +1,17 @@
-// Guard of a Go module: the layer rules of decks/tools/layers.json and the test-file rules. `morph plan --checks`
-// inlines this file into every acceptance. Imports are read by the go tool (`go list`), never by grep: a word in a
-// comment is not an import. Node's standard library only.
-//   node guard.mjs src <file,file,...> [mod,mod,...]      the packages of these Go files; the module paths the card's
-//                                                         Component declares (`uses`): a path or a path + "/..."
+// Guard of a Go module: the layer rules of the record and the test-file rules. `morph plan --checks` inlines this file
+// into every acceptance. Imports are read by the go tool (`go list`), never by grep: a word in a comment is not an
+// import. Node's standard library only.
+// morph-guard-contract: 2
+//   node guard.mjs src <file,file,...> [mod,mod,...] [layers]  the packages of these Go files; the module paths the
+//                                                         card's Component declares (`uses`): a path or a path + "/...";
+//                                                         layers = JSON {"<package dir>": ["<dir it may import>", ...]},
+//                                                         written by `morph plan` from the record's `uses: <Component>`
+//                                                         steps (contract 2); given, the "layers" key of layers.json is
+//                                                         not read and a package dir it lacks may import no other
 //   node guard.mjs tests <file> <min> <max> [lits.json]   one Go test file; lits = strings it must hold; it may import
 //                                                         the module's packages and go.mod's direct requirements
-// decks/tools/layers.json: {"layers": {"<dir>": ["<dir it may import>", ...]}, "pure": ["<dir>", ...]};
-// "layers" null or the file absent → every package of the module may import every other; no package is pure.
+// decks/tools/layers.json: {"pure": ["<dir>", ...]}; with no layers argument (contract 1) also {"layers": {"<dir>":
+// ["<dir it may import>", ...]}}, "layers" null or absent → every package may import every other.
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -36,16 +41,18 @@ function goImports(dir) {
   });
   return out.split("\n").filter(Boolean);
 }
-function checkSrc(files, allowed) {
+function checkSrc(files, allowed, edges) {
   const mod = modulePath();
-  const { layers, pure } = readLayers();
+  const read = readLayers();
+  const layers = edges ?? read.layers;
+  const pure = read.pure;
   const dirs = [];
   for (const f of files) {
     const d = path.posix.dirname(f.split(path.sep).join("/"));
     if (!dirs.includes(d)) dirs.push(d);
   }
   for (const dir of dirs) {
-    if (layers !== null && !(dir in layers)) {
+    if (edges === null && layers !== null && !(dir in layers)) {
       bad.push(`guard: ${dir} is not a package of decks/tools/layers.json (have: ${Object.keys(layers).join(", ")})`);
       continue;
     }
@@ -53,8 +60,11 @@ function checkSrc(files, allowed) {
       if (imp === mod || imp.startsWith(mod + "/")) {
         const target = imp === mod ? "." : imp.slice(mod.length + 1);
         if (target === dir) continue;
-        if (layers !== null && !layers[dir].includes(target))
-          bad.push(`guard: package ${dir} imports ${imp} (allowed: ${layers[dir].join(", ") || "none"})`);
+        const may = layers === null ? null : layers[dir] ?? [];
+        if (may !== null && !may.includes(target))
+          bad.push(edges === null
+            ? `guard: package ${dir} imports ${imp} (allowed: ${may.join(", ") || "none"})`
+            : `guard: package ${dir} imports ${imp}: the record has no 'uses' from ${dir} to ${target} (allowed: ${may.join(", ") || "none"})`);
         continue;
       }
       if (!isStd(imp)) {
@@ -110,7 +120,7 @@ function checkTest(file, min, max, lits) {
 }
 
 const [mode, a, b, c, d] = process.argv.slice(2);
-if (mode === "src") checkSrc((a ?? "").split(",").filter(Boolean), (b ?? "").split(",").filter(Boolean));
+if (mode === "src") checkSrc((a ?? "").split(",").filter(Boolean), (b ?? "").split(",").filter(Boolean), c ? JSON.parse(c) : null);
 else if (mode === "tests") checkTest(a, Number(b), Number(c), d ? JSON.parse(fs.readFileSync(d, "utf8")) : []);
 else bad.push(`guard: unknown mode ${mode}`);
 for (const x of bad) console.log(x);

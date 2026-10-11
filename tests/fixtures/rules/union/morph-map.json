@@ -1,0 +1,10 @@
+{
+  "groups": { "gamma-pair": ["Gamma One", "Gamma Two"] },
+  "cards": {
+    "alpha-step": { "targets": ["pkg/a.go"] },
+    "beta-step": { "targets": ["pkg/b.go", "pkg/b_test.go"] },
+    "x-value": { "targets": ["x/x.go"] },
+    "y-value": { "targets": ["y/y.go"] },
+    "gamma-pair": { "targets": ["gamma/pair.go", "gamma/pair_test.go"] }
+  }
+}

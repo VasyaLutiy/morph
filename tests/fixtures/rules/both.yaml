@@ -1,0 +1,26 @@
+version: 1
+System:
+  name: both
+  description: P30 fixture (Layer Edges) — a Component and a declared dependency with one name, used by a step.
+  groups:
+    - name: yaml
+      description: A Component named like the dependency.
+      language: typescript
+      functions:
+        - name: Parse Yaml
+          description: Parses.
+          behavior: Returns the text.
+          steps: [{produces: string}]
+          examples: [{given: '"a"', when: parsed, then: '"a"'}]
+    - name: config
+      description: Reads the config.
+      language: typescript
+      uses: [yaml]
+      functions:
+        - name: Read Config
+          description: Reads.
+          behavior: Uses yaml.
+          steps: [{uses: yaml}, {produces: string}]
+          examples: [{given: '"a"', when: read, then: '"a"'}]
+  dependencies:
+    - {name: yaml, version: "2.9.1", language: typescript}

@@ -1,17 +1,23 @@
-// Guard of a TypeScript project: the layer rules of decks/tools/layers.json and the test-file rules, checked on the
-// TypeScript syntax tree (never by grep: a word in a comment is not an import). `morph plan --checks` inlines this file
-// into every acceptance.
-//   node guard.mjs src [file,file,...] [pkg,pkg,...]     every .ts under src/, or only these; the packages the card's
-//                                                        Component declares (`uses`), allowed in these files only
+// Guard of a TypeScript project: the layer rules of the record and the test-file rules, checked on the TypeScript
+// syntax tree (never by grep: a word in a comment is not an import). `morph plan --checks` inlines this file into every
+// acceptance.
+// morph-guard-contract: 2
+//   node guard.mjs src [file,file,...] [pkg,pkg,...] [layers]  every .ts under src/, or only these; the packages the
+//                                                        card's Component declares (`uses`), allowed in these files
+//                                                        only; layers = JSON {"<dir>": ["<dir it may import>", ...]},
+//                                                        written by `morph plan` from the record's `uses: <Component>`
+//                                                        steps (contract 2); a dir's layer is its first folder under
+//                                                        src/; given, the "layers" key of layers.json is not read
 //   node guard.mjs helpers <file> <name,name,...>        the stub module: node:* only, these exports
 //   node guard.mjs tests <file> <min> <max> [lits.json]  one test file; lits = strings it must hold; it may import
 //                                                        vitest, node:*, relative paths and package.json's dependencies
 // decks/tools/layers.json:
-//   "layers":   {"<dir under src/>": ["<dir it may import>", ...] or "*"}; null → every folder may import every other
 //   "pure":     folders with no clock, randomness, environment, network, console or process; of node:* only node:path
 //   "entry":    the one file that touches process (argv, env, exit code) and console, e.g. "src/cli.ts"; null → none
 //   "packages": npm packages every file of src/ may import (node:* is always allowed outside the pure folders); a
 //               package one Component uses is declared in contour.yaml instead and reaches the guard per card
+//   "layers":   read only with no layers argument (contract 1): {"<dir under src/>": ["<dir it may import>", ...] or
+//               "*"}; null → every folder may import every other
 import ts from "typescript";
 import fs from "node:fs";
 import path from "node:path";
@@ -78,13 +84,29 @@ function layerOf(rel) {
   return parts.length >= 3 && parts[0] === "src" ? parts[1] : null;
 }
 
-function checkSrc(files, allowed) {
+// the layers argument keyed by layer: a dir's layer is the first folder under src/ (src/report/x → report)
+function edgeLayers(edges) {
+  const out = {};
+  for (const [dir, dirs] of Object.entries(edges)) {
+    const key = layerOf(dir + "/_");
+    if (key === null) continue;
+    out[key] ??= [];
+    for (const d of dirs) {
+      const k = layerOf(d + "/_");
+      if (k !== null && !out[key].includes(k)) out[key].push(k);
+    }
+  }
+  return out;
+}
+
+function checkSrc(files, allowed, edges) {
   const packages = [...PACKAGES, ...allowed];
+  const layers = edges === null ? LAYERS : edgeLayers(edges);
   for (const file of files ?? tsFiles("src")) {
     const sf = parse(file);
     const rel = file.split(path.sep).join("/");
     const layer = layerOf(rel);
-    if (LAYERS !== null && layer !== null && !(layer in LAYERS)) {
+    if (edges === null && LAYERS !== null && layer !== null && !(layer in LAYERS)) {
       bad.push(`guard: ${rel} is in an unknown layer "${layer}" (have: ${Object.keys(LAYERS).join(", ") || "none"})`);
       continue;
     }
@@ -101,10 +123,12 @@ function checkSrc(files, allowed) {
       }
       const target = path.posix.normalize(path.posix.join(path.posix.dirname(rel), spec));
       const tl = layerOf(target);
-      if (LAYERS === null || layer === null || tl === null || tl === layer) continue;
-      const allowed = LAYERS[layer];
-      if (allowed !== "*" && !allowed.includes(tl))
-        report(sf, node, `layer ${layer} imports layer ${tl} (allowed: ${allowed.join(", ") || "none"})`);
+      if (layers === null || layer === null || tl === null || tl === layer) continue;
+      const may = layers[layer] ?? [];
+      if (may !== "*" && !may.includes(tl))
+        report(sf, node, edges === null
+          ? `layer ${layer} imports layer ${tl} (allowed: ${may.join(", ") || "none"})`
+          : `layer ${layer} imports layer ${tl}: the record has no 'uses' from ${layer} to ${tl} (allowed: ${may.join(", ") || "none"})`);
     }
     walk(sf, (node) => {
       if (node.kind === ts.SyntaxKind.AnyKeyword) report(sf, node, "explicit any");
@@ -178,7 +202,7 @@ function checkTest(file, min, max, lits) {
 }
 
 const [mode, a, b, c, d] = process.argv.slice(2);
-if (mode === "src") checkSrc(a ? a.split(",").filter(Boolean) : null, (b ?? "").split(",").filter(Boolean));
+if (mode === "src") checkSrc(a ? a.split(",").filter(Boolean) : null, (b ?? "").split(",").filter(Boolean), c ? JSON.parse(c) : null);
 else if (mode === "helpers") checkHelpers(a, (b ?? "").split(",").filter(Boolean));
 else if (mode === "tests") checkTest(a, Number(b), Number(c), d ? JSON.parse(fs.readFileSync(d, "utf8")) : []);
 else bad.push(`guard: unknown mode ${mode}`);

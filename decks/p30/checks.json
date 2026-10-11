@@ -1,0 +1,31 @@
+{
+  "phase": "p30",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates"],
+  "fullExclude": ["tests/rules/layers.examples.test.ts", "tests/builder/buildAcceptances.p30.examples.test.ts",
+    "tests/builder/compose.p30.examples.test.ts", "tests/builder/goAcceptance.p30.examples.test.ts", "tests/cli/planCommand.p30.examples.test.ts"],
+  "cards": [
+    { "id": "layer-edges" },
+    { "id": "build-acceptances" },
+    { "id": "compose" },
+    { "id": "go-acceptance" },
+    { "id": "plan-command" },
+    { "id": "layer-edges-judge", "files": [{ "file": "tests/rules/layers.examples.test.ts", "min": 11, "max": 23, "new": true,
+      "lits": ["Layer Edges example 1", "Layer Edges example 2", "Layer Edges example 3", "Layer Edges example 4", "Card Layers example 1",
+        "Layers Arg example 1", "Layers Arg example 2", "Layers Arg example 3", "Plan Layers example 1", "Plan Layers example 2", "Plan Layers example 3",
+        "ts-rename.json", "rules/morphstudio.edges.json", "rules/morphstudio/layers.json", "rules/union/contour.yaml", "rules/both.yaml",
+        "morph-guard-contract: 2", "the record has no 'uses' from registry to users (allowed: queue)",
+        "the record has no 'uses' from report to units (allowed: none)",
+        "decks/tools/guard.mjs speaks contract 1: copy templates/typescript/decks/tools/guard.mjs from MorphV2",
+        "names the Component 'yaml' and the dependency 'yaml'"] }] },
+    { "id": "build-acceptances-judge", "files": [{ "file": "tests/builder/buildAcceptances.p30.examples.test.ts", "min": 1, "max": 5, "new": true,
+      "lits": ["Build Acceptances example 11", "p30", "src/y", "zod", "builder/go/code1.txt", "report"] }] },
+    { "id": "compose-judge", "files": [{ "file": "tests/builder/compose.p30.examples.test.ts", "min": 1, "max": 5, "new": true,
+      "lits": ["Code Acceptance example 4", "builder/code1.txt", "builder/code2.txt", "src/y", "zod"] }] },
+    { "id": "go-acceptance-judge", "files": [{ "file": "tests/builder/goAcceptance.p30.examples.test.ts", "min": 1, "max": 5, "new": true,
+      "lits": ["Go Acceptance example 8", "builder/go/code1.txt", "builder/go/code2.txt", "builder/go/judge1.txt", "github.com/dustin/go-humanize"] }] },
+    { "id": "plan-command-judge", "files": [{ "file": "tests/cli/planCommand.p30.examples.test.ts", "min": 1, "max": 5, "new": true,
+      "lits": ["Plan Command example 15", "cli/goMini.deck.json", "morph-guard-contract: 2", "decks/tools/layers.json", "format-share",
+        "speaks contract 1: copy templates/go/decks/tools/guard.mjs from MorphV2", "names the Component 'calc' and the dependency 'calc'"] }] }
+  ]
+}

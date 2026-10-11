@@ -1,0 +1,377 @@
+version: 1
+System:
+  name: morphd
+  description: 'MorphStudio f85a8e7 (morphd), trimmed for P30: every Component and Function with its steps; behaviours, examples
+    and Data Objects cut.'
+  groups:
+  - name: stream
+    description: Component stream of MorphStudio f85a8e7 (trimmed).
+    language: go
+    functions:
+    - name: Parse Event
+      description: One output line of the claude stream decoded into the Event the rest of morphd reads.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {produces: Event}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+    - name: Encode Lines
+      description: The input lines morphd writes to claude, each one JSON object ending with a newline.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {produces: json line}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  - name: session
+    description: Component session of MorphStudio f85a8e7 (trimmed).
+    language: go
+    functions:
+    - name: Session Machine
+      description: The session state and its transition on every parsed event.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {uses: stream}
+      - {produces: Action}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+    - name: Order Queue
+      description: The three commands of the PM on a machine — order, answer, interrupt — and what each writes.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {calls: Session Machine}
+      - {uses: stream}
+      - {produces: OrderResult}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  - name: eventlog
+    description: Component eventlog of MorphStudio f85a8e7 (trimmed).
+    language: go
+    functions:
+    - name: Event Log
+      description: Open or continue a session log file, append numbered entries, read entries after a sequence number.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {produces: Entry}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  - name: telegram
+    description: Component telegram of MorphStudio f85a8e7 (trimmed).
+    language: go
+    functions:
+    - name: Milestone Post
+      description: Format a milestone line with its icon and project prefix and post it with sendMessage.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {produces: Status}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  - name: runner
+    description: Component runner of MorphStudio f85a8e7 (trimmed).
+    language: go
+    functions:
+    - name: Exec Runner
+      description: The command interface, its os/exec implementation and the scripted fake.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {produces: Result}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  - name: queue
+    description: Component queue of MorphStudio f85a8e7 (trimmed).
+    language: go
+    functions:
+    - name: Phase Queue
+      description: Load a plan with defaults, walk it phase by phase, stop and continue by the plan's marks.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {produces: Plan}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  - name: claude
+    description: Component claude of MorphStudio f85a8e7 (trimmed).
+    language: go
+    functions:
+    - name: Launch Args
+      description: The argv of a claude session and the MCP config file it is given.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {produces: argv}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+    - name: Process
+      description: A running claude process with line-delimited stdin and stdout, its exit status, and the Fake.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {produces: ExitStatus}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  - name: github
+    description: Component github of MorphStudio f85a8e7 (trimmed).
+    language: go
+    functions:
+    - name: Repo Access
+      description: Parse a GitHub repository URL, build the credential forms and check that a token reaches the repo with
+        push access.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {produces: Access}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  - name: bootstrap
+    description: Component bootstrap of MorphStudio f85a8e7 (trimmed).
+    language: go
+    functions:
+    - name: Project Create
+      description: Validate the request, run the create sequence through the runner, report every step; push once the token
+        is there.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {uses: runner}
+      - {uses: github}
+      - {produces: Report}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+    - name: Project Adopt
+      description: Check that an existing directory is the named GitHub repository on main with a record, and wire only the
+        credential helper into it.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {calls: Project Create}
+      - {uses: runner}
+      - {uses: github}
+      - {produces: Report}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  - name: users
+    description: Component users of MorphStudio f85a8e7 (trimmed).
+    language: go
+    functions:
+    - name: User Registry
+      description: The registry of users in one JSON file, rewritten whole and atomically; a user's token is stored as its
+        SHA-256 hash.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {produces: User}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+    - name: User Secrets
+      description: Secrets stored per user as files of mode 0600 under the state dir, never returned to an HTTP or MCP caller,
+        never in an error text.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {calls: User Registry}
+      - {produces: user secret file}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+    - name: Token Lookup
+      description: A bearer token resolves to the one user it belongs to by a constant-time compare of its hash; the operator's
+        admin token authorizes all.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {calls: User Registry}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  - name: registry
+    description: Component registry of MorphStudio f85a8e7 (trimmed).
+    language: go
+    functions:
+    - name: Project Registry
+      description: The registry of projects in one JSON file, rewritten whole and atomically, and a JSON state blob per project.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {produces: Project}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+    - name: Secret Files
+      description: Secrets stored per project as files of mode 0600 that are never returned by the API.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {calls: Project Registry}
+      - {produces: secret file}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  - name: gitrules
+    description: Component gitrules of MorphStudio f85a8e7 (trimmed).
+    language: go
+    functions:
+    - name: Phase Start Check
+      description: fetch, then decide fresh, resume, pull or diverged from main and origin/main.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {uses: runner}
+      - {produces: Start}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+    - name: Phase End Check
+      description: After phase_done — main pushed, tree clean, no run branch left unmerged, the MEASURE row present.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {uses: runner}
+      - {produces: End}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  - name: control
+    description: Component control of MorphStudio f85a8e7 (trimmed).
+    language: go
+    functions:
+    - name: Control Contract
+      description: The views, the Control interface and the mapping of errors to HTTP status and code.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {uses: queue}
+      - {uses: github}
+      - {uses: eventlog}
+      - {uses: session}
+      - {produces: Status}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+    - name: Adopt Contract
+      description: The optional Adopter a Control may implement, and the one call the HTTP API and the MCP server make to
+        it.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {calls: Control Contract}
+      - {produces: ProjectView}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+    - name: Event View
+      description: The compact, bounded view of session log entries a PM reads over MCP — type, short text, tool names, cost,
+        exit.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {calls: Control Contract}
+      - {uses: eventlog}
+      - {uses: stream}
+      - {produces: EventsView}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  - name: supervisor
+    description: Component supervisor of MorphStudio f85a8e7 (trimmed).
+    language: go
+    functions:
+    - name: Phase Loop
+      description: The state of one project's phase loop and the transitions the PM and the session drive.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {uses: queue}
+      - {uses: gitrules}
+      - {uses: control}
+      - {produces: Loop Action}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+    - name: Runtime Guard
+      description: What the loop does on its own between the session's reports — exits, limits, stalls and caps.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {calls: Phase Loop}
+      - {uses: stream}
+      - {produces: Loop Action}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  - name: daemon
+    description: Component daemon of MorphStudio f85a8e7 (trimmed).
+    language: go
+    functions:
+    - name: Daemon Core
+      description: The daemon over its dependencies, implementing control.Control and executing loop actions.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {uses: supervisor}
+      - {uses: session}
+      - {uses: gitrules}
+      - {uses: registry}
+      - {uses: claude}
+      - {uses: eventlog}
+      - {uses: bootstrap}
+      - {uses: github}
+      - {uses: telegram}
+      - {uses: control}
+      - {produces: Status}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  - name: pump
+    description: Component pump of MorphStudio f85a8e7 (trimmed).
+    language: go
+    functions:
+    - name: Pump
+      description: The goroutine that reads the process, logs every line, feeds the machine and the loop, and executes what
+        they return.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {uses: daemon}
+      - {uses: session}
+      - {uses: supervisor}
+      - {uses: eventlog}
+      - {uses: claude}
+      - {uses: stream}
+      - {produces: log entries}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  - name: api
+    description: Component api of MorphStudio f85a8e7 (trimmed).
+    language: go
+    functions:
+    - name: HTTP Handlers
+      description: The handlers of every route, with the JSON reading rules and the error body.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {uses: control}
+      - {produces: http.Handler}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+    - name: Router
+      description: The routes on http.ServeMux, the bearer token in front of everything but /healthz, and the MCP mount.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {calls: HTTP Handlers}
+      - {produces: http.Handler}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  - name: mcpserver
+    description: Component mcpserver of MorphStudio f85a8e7 (trimmed).
+    language: go
+    uses: [github.com/modelcontextprotocol/go-sdk]
+    functions:
+    - name: PM Tools
+      description: The user-level and per-project MCP servers whose tools call the Control.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {uses: control}
+      - {produces: mcp.Server}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+    - name: Session Tools
+      description: The per-session MCP server the VPS session reports through — phase_done, wait_operator, milestone.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {calls: PM Tools}
+      - {uses: control}
+      - {produces: mcp.Server}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+    - name: MCP Mount
+      description: The HTTP mount of the three MCP endpoints with their tokens, over the SDK's streamable HTTP handler.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {calls: PM Tools}
+      - {calls: Session Tools}
+      - {produces: http.Handler}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  - name: cmd
+    description: Component cmd of MorphStudio f85a8e7 (trimmed).
+    language: go
+    functions:
+    - name: Config And Main
+      description: The configuration keys with their defaults, the .env parser, and main.
+      behavior: 'Trimmed: MorphStudio f85a8e7.'
+      steps:
+      - {uses: daemon}
+      - {uses: api}
+      - {uses: mcpserver}
+      - {uses: queue}
+      - {produces: Config}
+      examples:
+      - {given: trimmed, when: called, then: see MorphStudio f85a8e7}
+  dependencies:
+  - {name: github.com/modelcontextprotocol/go-sdk, version: v1.8.0, language: go, doc: docs/deps/go-sdk.md}

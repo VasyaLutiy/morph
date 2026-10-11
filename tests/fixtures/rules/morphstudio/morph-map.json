@@ -1,0 +1,171 @@
+{
+  "language": "go",
+  "cards": {
+    "parse-event": {
+      "targets": [
+        "stream/parse.go"
+      ]
+    },
+    "encode-lines": {
+      "targets": [
+        "stream/encode.go"
+      ]
+    },
+    "exec-runner": {
+      "targets": [
+        "runner/runner.go"
+      ]
+    },
+    "phase-queue": {
+      "targets": [
+        "queue/queue.go"
+      ]
+    },
+    "session-machine": {
+      "targets": [
+        "session/machine.go"
+      ]
+    },
+    "order-queue": {
+      "targets": [
+        "session/orders.go"
+      ]
+    },
+    "event-log": {
+      "targets": [
+        "eventlog/log.go"
+      ]
+    },
+    "milestone-post": {
+      "targets": [
+        "telegram/post.go"
+      ]
+    },
+    "launch-args": {
+      "targets": [
+        "claude/args.go"
+      ]
+    },
+    "process": {
+      "targets": [
+        "claude/process.go"
+      ]
+    },
+    "repo-access": {
+      "targets": [
+        "github/access.go"
+      ]
+    },
+    "project-create": {
+      "targets": [
+        "bootstrap/create.go"
+      ]
+    },
+    "project-adopt": {
+      "targets": [
+        "bootstrap/adopt.go"
+      ]
+    },
+    "user-registry": {
+      "targets": [
+        "users/registry.go"
+      ]
+    },
+    "user-secrets": {
+      "targets": [
+        "users/secrets.go"
+      ]
+    },
+    "token-lookup": {
+      "targets": [
+        "users/tokens.go"
+      ]
+    },
+    "project-registry": {
+      "targets": [
+        "registry/registry.go"
+      ]
+    },
+    "secret-files": {
+      "targets": [
+        "registry/secrets.go"
+      ]
+    },
+    "phase-start-check": {
+      "targets": [
+        "gitrules/start.go"
+      ]
+    },
+    "phase-end-check": {
+      "targets": [
+        "gitrules/end.go"
+      ]
+    },
+    "control-contract": {
+      "targets": [
+        "control/control.go"
+      ]
+    },
+    "adopt-contract": {
+      "targets": [
+        "control/adopt.go"
+      ]
+    },
+    "event-view": {
+      "targets": [
+        "control/events.go"
+      ]
+    },
+    "phase-loop": {
+      "targets": [
+        "supervisor/loop.go"
+      ]
+    },
+    "runtime-guard": {
+      "targets": [
+        "supervisor/guard.go"
+      ]
+    },
+    "http-handlers": {
+      "targets": [
+        "api/handlers.go"
+      ]
+    },
+    "router": {
+      "targets": [
+        "api/router.go"
+      ]
+    },
+    "daemon-core": {
+      "targets": [
+        "daemon/daemon.go"
+      ]
+    },
+    "pump": {
+      "targets": [
+        "daemon/pump.go"
+      ]
+    },
+    "config-and-main": {
+      "targets": [
+        "cmd/morphd/config.go",
+        "cmd/morphd/main.go"
+      ]
+    },
+    "pm-tools": {
+      "targets": [
+        "mcpserver/pm.go"
+      ]
+    },
+    "session-tools": {
+      "targets": [
+        "mcpserver/session.go"
+      ]
+    },
+    "mcp-mount": {
+      "targets": [
+        "mcpserver/mount.go"
+      ]
+    }
+  }
+}
