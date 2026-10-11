@@ -1,0 +1,42 @@
+import { expect, test } from "vitest";
+import { planNotes } from "../../src/rules/notes.js";
+import type { NoteCard } from "../../src/rules/notes.js";
+
+const CARDS: NoteCard[] = [
+  { id: "user-registry", extra: "echo '== imports'; go list ./users\n", targets: ["users/registry.go"] },
+  { id: "user-registry-judge", extra: null, targets: ["users/registry_examples_test.go"] },
+  { id: "user-secrets", extra: "echo '== clock'; true\n", targets: ["users/secrets.go"] },
+  { id: "root-main", extra: "echo '== imports'; true\n", targets: [] },
+];
+
+const REGISTRY_NOTE =
+  "user-registry: checks.json extra 'imports' checks users against a hand list; the record's rules and dependencies already govern imports per file: remove it";
+const ROOT_MAIN_NOTE =
+  "root-main: checks.json extra 'imports' checks . against a hand list; the record's rules and dependencies already govern imports per file: remove it";
+const A_NOTE =
+  "a: checks.json extra 'imports' checks a against a hand list; the record's rules and dependencies already govern imports per file: remove it";
+
+test("Plan Notes example 1: notes for a layers.json beside the record and for each hand imports extra", () => {
+  const withLayers = planNotes(CARDS, true, "// morph-guard-contract: 3\n");
+  expect(withLayers).toStrictEqual([
+    "decks/tools/layers.json is not read: the record is the source; delete it",
+    REGISTRY_NOTE,
+    ROOT_MAIN_NOTE,
+  ]);
+
+  const withoutLayers = planNotes(CARDS, false, "x\n// morph-guard-contract: 4\n");
+  expect(withoutLayers).toStrictEqual([REGISTRY_NOTE, ROOT_MAIN_NOTE]);
+});
+
+test("Plan Notes example 2: no note without contract 3, an empty card list, and a bare imports extra", () => {
+  expect(planNotes(CARDS, true, "// morph-guard-contract: 2\n")).toStrictEqual([]);
+  expect(planNotes(CARDS, true, "// guard\n")).toStrictEqual([]);
+  expect(planNotes([], false, "// morph-guard-contract: 3\n")).toStrictEqual([]);
+  expect(
+    planNotes(
+      [{ id: "a", extra: "echo '== imports'\n", targets: ["a/a.go"] }],
+      false,
+      "// morph-guard-contract: 3\n",
+    ),
+  ).toStrictEqual([A_NOTE]);
+});
