@@ -153,6 +153,16 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
     fs.writeFileSync(outAbs, JSON.stringify(cards, null, 2) + "\n", "utf8");
   }
 
+  const warnings: string[] = [...(loadedRecord.warnings ?? [])];
+  for (const name of plan.components) {
+    const component = record.system.groups.find((g) => g.name === name);
+    if (component !== undefined && component.language === null && map.language === null) {
+      warnings.push(
+        "no language on Component " + name + " and none in the map: typescript assumed",
+      );
+    }
+  }
+
   return {
     code: 0,
     document: {
@@ -162,6 +172,7 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
       generations: plan.generations,
       externalDependsOn: plan.externalDependsOn,
       out: args.out,
+      ...(warnings.length > 0 ? { warnings } : {}),
     },
   };
 }
