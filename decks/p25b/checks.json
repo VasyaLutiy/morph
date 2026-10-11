@@ -1,0 +1,15 @@
+{
+  "phase": "p25b",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates", "morph.config.yaml"],
+  "fullExclude": ["tests/scout/sessionText.examples.test.ts", "tests/cli/projectConfig.examples.test.ts"],
+  "cards": [
+    { "id": "session-text" },
+    { "id": "load-config" },
+    { "id": "session-text-judge", "files": [{ "file": "tests/scout/sessionText.examples.test.ts", "min": 5, "max": 5, "new": false,
+      "lits": ["Session Text example 5", "widgetFoo lives here (", "Rename widgetFoo everywhere.", "docs/TASK_", "scout/examples.json", "225", "281", "411"] }] },
+    { "id": "load-config-judge", "files": [{ "file": "tests/cli/projectConfig.examples.test.ts", "min": 6, "max": 6, "new": false,
+      "lits": ["Load Config example 5", "Load Config example 6", "# all commented out", "version: must be 1",
+        "morph.config.yaml cannot be read: ELOOP", "morph.config.yaml cannot be read: EACCES", "symlinkSync", "0o000"] }] }
+  ]
+}

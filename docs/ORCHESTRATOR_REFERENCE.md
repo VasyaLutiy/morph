@@ -147,16 +147,18 @@ A red run: salvage from the archive first (`morph accept --from-run`, skill §10
 `<root>/morph.config.yaml` is read by every command right after `--root` is resolved, before anything runs (no
 parent-directory search, no cwd, no environment). Absent, empty or `{}` = the built-in values below. Every key is
 optional; a given key replaces only its default (`grepSkip` as a whole list). Precedence: a flag (`morph scout
---deadline`), then the config, then the built-in. An invalid file stops every command with exit 2, DeckError
-"morph.config.yaml is not a valid config (<n> problems): <path>: …; …" — unknown keys are refused (version 1 knows only
-`version` and `scout`; the other sections of the issue come in later generations).
+--deadline`), then the config, then the built-in. A file of only blank and `#` lines is empty. An invalid file stops
+every command with exit 2, DeckError "morph.config.yaml is not a valid config (<n> problems): <path>: …; …" — unknown
+keys are refused (version 1 knows only `version` and `scout`; the other sections of the issue come in later
+generations). A file that cannot be read (EACCES, ELOOP) stops every command with exit 2, DeckError "morph.config.yaml
+cannot be read: <errno code>".
 
 <!-- refcheck: config-keys -->
 Scout keys: `grepSkip`, `budgets`, `caps`, `seed`.
 
 `grepSkip` entries are path prefixes; a bare name (`decks`) is a top directory (`decks/`). A GREP whose `-- <dir>` is at
-or under an entry, or above it (`-- docs` for `docs/TASK_`), lifts that entry. Round zero keeps the first-segment rule
-(`docs/TASK_` does not skip its hits). scout.json `caps.grepSkip` shows what applied.
+or under an entry, or above it (`-- docs` for `docs/TASK_`), lifts that entry. Round zero skips by the same prefixes
+(P25b, issue #23). scout.json `caps.grepSkip` shows what applied.
 
 <!-- refcheck: config -->
 ```yaml

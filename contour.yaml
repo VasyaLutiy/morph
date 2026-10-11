@@ -1845,8 +1845,11 @@ System:
             DEFAULT_CONFIG's order. Any problem → {ok: false, problems} in document order. loadConfig(text: string |
             null, name = CONFIG_FILE): null, or a text that is blank after trim → {ok: true, config: DEFAULT_CONFIG};
             else contour's Parse Document(text, name) error → {ok: false, problems: [its error]}; else
-            validateConfig(doc). readProjectConfig(root) → {ok: true, config} | {ok: false, result}: path.join(root,
-            CONFIG_FILE) a regular file → loadConfig(its UTF-8 text), else loadConfig(null); problems → result {code 2,
+            validateConfig(doc); a text whose every line is blank or a comment (first non-blank char "#") is blank.
+            readProjectConfig(root) → {ok: true, config} | {ok: false, result}: path.join(root, CONFIG_FILE) a regular
+            file → loadConfig(its UTF-8 text), else loadConfig(null); the stat or the read throwing e → result {code 2,
+            document errorDocument(2, "DeckError", "morph.config.yaml cannot be read: " + e.code)} (String(e) when e
+            has no string code); problems → result {code 2,
             document errorDocument(2, "DeckError", "morph.config.yaml is not a valid config (<n> problem|problems): " +
             the problems "; "-joined)} (Emit Document's shape: {error: {code, kind, message}}). Nothing is written.
           steps: [{uses: scout-session}, {uses: contour}, {produces: Project Config}]
@@ -1855,6 +1858,8 @@ System:
             - {given: 'the text "scout:\n  seed: {files: 3}\n  budgets: {deadlineSeconds: 600, calls: 10}\n  grepSkip: [.morph/, decks/, docs/TASK_]\n"', when: loadConfig, then: '{ok: true, config: {version: 1, scout: {grepSkip: [".morph/", "decks/", "docs/TASK_"], budgets: {calls: 10, reads: 12, chars: 120000, rounds: 40, deadlineSeconds: 600}, caps: DEFAULT_CONFIG.scout.caps, seed: {files: 3, chars: 8000}}}}, JSON.stringify of it equal to that of the literal (keys in DEFAULT_CONFIG''s order)'}
             - {given: 'the text "version: 2\nscuot: 1\nscout:\n  caps: []\n  budgets: {calls: \"30\", reads: 0, call: 1}\n  grepSkip: [\"\", 3]\n"; validateConfig([]); validateConfig({scout: null}); validateConfig({scout: {grepSkip: "decks", seed: {chars: 1.5}}}); loadConfig("a: [\n"); loadConfig("- 1\n")', when: 'loadConfig, validateConfig', then: '{ok: false, problems: ["(root): unknown key ''scuot'' (known: version, scout)", "version: must be 1", "scout.grepSkip[0]: must be a non-empty string", "scout.grepSkip[1]: must be a non-empty string", "scout.budgets: unknown key ''call'' (known: calls, reads, chars, rounds, deadlineSeconds)", "scout.budgets.calls: must be a positive integer", "scout.budgets.reads: must be a positive integer", "scout.caps: must be an object"]}; ["(root): config must be an object"]; ["scout: must be an object"]; ["scout.grepSkip: must be a list", "scout.seed.chars: must be a positive integer"]; one problem starting "cannot parse morph.config.yaml: "; ["morph.config.yaml is not a mapping at the top level"]'}
             - {given: 'a tmpRoot r: no morph.config.yaml; then morph.config.yaml "scout:\n  grepSkip: [docs/TASK_]\n"; then "scout: {budgets: {calls: x}, cap: 1}\n"; then a directory r2 holding a directory named morph.config.yaml, and r2''s parent holding an invalid morph.config.yaml', when: readProjectConfig, then: '{ok: true, config: DEFAULT_CONFIG}; {ok: true, config} with scout.grepSkip ["docs/TASK_"], the rest DEFAULT_CONFIG; {ok: false, result: {code: 2, document: {error: {code: 2, kind: "DeckError", message: "morph.config.yaml is not a valid config (2 problems): scout: unknown key ''cap'' (known: grepSkip, budgets, caps, seed); scout.budgets.calls: must be a positive integer"}}}}; {ok: true, config: DEFAULT_CONFIG} (not a regular file; the parent is never read)'}
+            - {given: 'loadConfig("# all commented out\n# scout:\n#   grepSkip: []\n"); loadConfig("\n  # x\n\n"); loadConfig("# c\nversion: 2\n")', when: loadConfig, then: '{ok: true, config: DEFAULT_CONFIG} twice; {ok: false, problems: ["version: must be 1"]}'}
+            - {given: 'a tmpRoot r: morph.config.yaml a symlink to itself; then a regular file "version: 1\n" with mode 0o000 (not as uid 0)', when: readProjectConfig, then: '{ok: false, result: {code: 2, document: {error: {code: 2, kind: "DeckError", message: "morph.config.yaml cannot be read: ELOOP"}}}}; the same with "morph.config.yaml cannot be read: EACCES"'}
       dataObjects:
         - name: Project Config
           description: What Load Config gives; every key present.
@@ -3936,8 +3941,9 @@ System:
             your first turn (no budget spent):"), then per clue "\"<clue>\": <m> match|matches in <f> file|files", its
             first ROUND0_HITS (20) hits "<file>:<i>: <line>" (a line over 200 chars: its first 200 + "… (+<rest>
             chars)"), "… <m − 20> more matches" when more. A hit is a line i (Run Tool's lines of a file) holding the clue
-            as a substring, case-sensitive; files: tree.files in code-unit order, passing over a file whose first segment
-            is in skip, refused by Cage Path (file), unreadable or holding "\0". The lines are "\n"-joined while the text
+            as a substring, case-sensitive; files: tree.files in code-unit order, passing over a file that starts with an
+            entry of skip (Run Tool's grepSkip rule: an entry with no "/" is "<entry>/"), refused by Cage Path (file),
+            unreadable or holding "\0". The lines are "\n"-joined while the text
             stays ≤ maxChars; the first line that does not fit and every later one are left out and "… round zero cut at
             <maxChars> chars" is appended as the last line.
           steps: [{uses: scout}, {produces: Session Texts}]
@@ -3946,6 +3952,7 @@ System:
             - {given: 'the questions "Fix `Exited(` when LimitsUnknown is set in a/run.go.\n"; "Use parseTurn, run_scout and \"the final turn\" in src/scout/runScout.ts; ab_c, `x`, `2026`, LimitsUnknown again"; "AaBb CcDd EeFf GgHh IiJj KkLl MmNn OoPp QqRr"; "Make b twice a.\n"', when: taskClues, then: '["Exited(", "LimitsUnknown", "a/run.go"]; ["parseTurn", "run_scout", "the final turn", "src/scout/runScout.ts", "runScout", "ab_c", "LimitsUnknown"]; the first 8 ("AaBb" … "OoPp"); []'}
             - {given: 'a real tmp dir: .morph/x.md "LimitsUnknown\n", a/run.go "func (s *S) Exited() bool {\n\treturn s.LimitsUnknown\n}\n", b/doc.md "Exited( here\nExited( " + 250 × "z" + "\n", c/many.txt 22 × "LimitsUnknown\n"; files those four; node fs; skip [".morph", "decks"]; the first question of example 2', when: 'roundZero with maxChars 30000; with 150; roundZero of "Make b twice a.\n"', then: 'ROUND0_HEADER, "\"Exited(\": 3 matches in 2 files", "a/run.go:1: func (s *S) Exited() bool {", "b/doc.md:1: Exited( here", "b/doc.md:2: Exited( " + 192 × "z" + "… (+58 chars)", "\"LimitsUnknown\": 23 matches in 2 files", "a/run.go:2: \treturn s.LimitsUnknown", "c/many.txt:1: LimitsUnknown" … "c/many.txt:19: LimitsUnknown", "… 3 more matches", "\"a/run.go\": 0 matches in 0 files", "\n"-joined (1085 chars); ROUND0_HEADER + "\n\"Exited(\": 3 matches in 2 files\n… round zero cut at 150 chars"; ""'}
             - {given: 'the tree of Run Tool example 7 (Python, Go, TypeScript), node fs, skip [".morph", "decks"]; question "Rename load_config in app/core.py and the Go twin loadConfig; keep `open(path)`.\n"', when: 'taskClues; roundZero with 30000', then: '["load_config", "app/core.py", "loadConfig", "open(path)"]; ROUND0_HEADER + "\n\"load_config\": 1 match in 1 file\napp/core.py:1: def load_config(path):\n\"app/core.py\": 0 matches in 0 files\n\"loadConfig\": 2 matches in 2 files\ncmd/main.go:3: func main() { loadConfig() }\nlib/config.ts:1: export function loadConfig(): void {}\n\"open(path)\": 1 match in 1 file\napp/core.py:2:     return open(path).read()" (412 chars)'}
+            - {given: 'examples.json["Session Text 5"].given', when: 'roundZero with 30000, three skips', then: 'examples.json["Session Text 5"].then'}
         - name: Scout Command
           description: "`morph scout`: one session on the working tree, its record written to .morph/scout/<id>/."
           behavior: >
