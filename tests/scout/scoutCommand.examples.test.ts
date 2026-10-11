@@ -8,6 +8,7 @@ import { SEED_HEADER } from "../../src/scout/seedFromOwnership.js";
 import { budgetSentence } from "../../src/scout/sessionText.js";
 import { DEFAULT_BUDGETS } from "../../src/scout/spendBudget.js";
 import {
+  DEFAULT_SCOUT_SETTINGS,
   FILE_SEED_HEADER,
   NODE_SCOUT_FS,
   SCOUT_DIR,
@@ -17,7 +18,7 @@ import {
   scoutId,
   sha256,
 } from "../../src/scout/scoutCommand.js";
-import type { ScoutRecord } from "../../src/scout/scoutCommand.js";
+import type { ScoutRecord, ScoutSettings } from "../../src/scout/scoutCommand.js";
 import { tmpRepo, tmpRoot } from "../helpers.js";
 import type { TmpRepo, TmpRoot } from "../helpers.js";
 
@@ -472,4 +473,202 @@ test("Scout Command example 5: the pure helpers", () => {
   } finally {
     f.rm();
   }
+});
+
+test("Scout Command example 6: settings give the budgets, caps and seed; the flag beats the settings' deadline", async () => {
+  const settings: ScoutSettings = {
+    grepSkip: [".morph/", "decks/", "docs/TASK_"],
+    budgets: {
+      calls: 5,
+      reads: 4,
+      chars: 9000,
+      rounds: 6,
+      deadlineSeconds: 900,
+    },
+    caps: {
+      readLines: 1,
+      readChars: 12000,
+      grepHits: 200,
+      grepLineChars: 300,
+      listEntries: 300,
+    },
+    seed: { files: 6, chars: 8000 },
+  };
+
+  const settingsCaps = {
+    readLines: 1,
+    readChars: 12000,
+    grepHits: 200,
+    grepLineChars: 300,
+    listEntries: 300,
+    grepSkip: [".morph/", "decks/", "docs/TASK_"],
+  };
+
+  {
+    const t = tmpRepo();
+    const s = tmpRoot();
+    try {
+      seedRepo(t);
+      s.write("task.txt", QUESTION);
+      const env = stubEnv(s);
+      s.write("ans/scout.t1.md", "READ src/b.ts");
+      s.write(
+        "ans/scout.t2.md",
+        'ANSWER {"targets": ["src/b.ts"], "context_slice": ["src/a.ts"], "reasoning": "b reads a"}',
+      );
+
+      const result = await scoutCommand(
+        t.root,
+        {
+          processor: "s",
+          issue: "task.txt",
+          seedFile: null,
+          deadlineSeconds: null,
+        },
+        depsOf(s, env),
+        settings,
+      );
+      expect(result.code).toBe(0);
+
+      const id = (result.document as { scoutId: string }).scoutId;
+      const record = JSON.parse(
+        t.read(".morph/scout/" + id + "/scout.json"),
+      ) as ScoutRecord;
+      expect(record.budgets).toStrictEqual({
+        calls: 5,
+        reads: 4,
+        chars: 9000,
+        rounds: 6,
+        deadlineMs: 900000,
+      });
+      expect(record.caps).toStrictEqual(settingsCaps);
+      expect(record.spent).toStrictEqual({
+        calls: 1,
+        reads: 1,
+        chars: 106,
+        rounds: 2,
+      });
+
+      const transcript = JSON.parse(
+        t.read(".morph/scout/" + id + "/transcript.json"),
+      ) as { role: string; content: string }[];
+      expect(transcript[0].content).toBe(
+        PROTOCOL +
+          "\n" +
+          budgetSentence({
+            calls: 5,
+            reads: 4,
+            chars: 9000,
+            rounds: 6,
+            deadlineMs: 900000,
+          }),
+      );
+      expect(transcript[3].content).toBe(
+        "READ src/b.ts lines 1-1 of 2\n1: import { a } from \"./a.js\";\n… 1 more lines; READ src/b.ts 2-2 for the next\n\nBudget left: 4 calls, 3 file reads, 8894 chars, 5 rounds."
+      );
+    } finally {
+      s.rm();
+      t.rm();
+    }
+  }
+
+  {
+    const t = tmpRepo();
+    const s = tmpRoot();
+    try {
+      seedRepo(t);
+      s.write("task.txt", QUESTION);
+      const env = stubEnv(s);
+      s.write("ans/scout.t1.md", "READ src/b.ts");
+      s.write(
+        "ans/scout.t2.md",
+        'ANSWER {"targets": ["src/b.ts"], "context_slice": ["src/a.ts"], "reasoning": "b reads a"}',
+      );
+
+      const result = await scoutCommand(
+        t.root,
+        {
+          processor: "s",
+          issue: "task.txt",
+          seedFile: null,
+          deadlineSeconds: 60,
+        },
+        depsOf(s, env),
+        settings,
+      );
+      expect(result.code).toBe(0);
+
+      const id = (result.document as { scoutId: string }).scoutId;
+      const record = JSON.parse(
+        t.read(".morph/scout/" + id + "/scout.json"),
+      ) as ScoutRecord;
+      expect(record.budgets).toStrictEqual({
+        calls: 5,
+        reads: 4,
+        chars: 9000,
+        rounds: 6,
+        deadlineMs: 60000,
+      });
+      expect(record.caps).toStrictEqual(settingsCaps);
+    } finally {
+      s.rm();
+      t.rm();
+    }
+  }
+
+  {
+    const t = tmpRepo();
+    const s = tmpRoot();
+    try {
+      seedRepo(t);
+      s.write("task.txt", QUESTION);
+      const env = stubEnv(s);
+      s.write("ans/scout.t1.md", "READ src/b.ts");
+      s.write(
+        "ans/scout.t2.md",
+        'ANSWER {"targets": ["src/b.ts"], "context_slice": ["src/a.ts"], "reasoning": "b reads a"}',
+      );
+
+      const result = await scoutCommand(
+        t.root,
+        {
+          processor: "s",
+          issue: "task.txt",
+          seedFile: null,
+          deadlineSeconds: null,
+        },
+        depsOf(s, env),
+      );
+      expect(result.code).toBe(0);
+
+      const id = (result.document as { scoutId: string }).scoutId;
+      const record = JSON.parse(
+        t.read(".morph/scout/" + id + "/scout.json"),
+      ) as ScoutRecord;
+      expect(record.budgets).toStrictEqual(DEFAULT_BUDGETS);
+      expect(record.caps).toStrictEqual(DEFAULT_TOOL_CAPS);
+    } finally {
+      s.rm();
+      t.rm();
+    }
+  }
+
+  expect(DEFAULT_SCOUT_SETTINGS).toStrictEqual({
+    grepSkip: [".morph", "decks"],
+    budgets: {
+      calls: 30,
+      reads: 12,
+      chars: 120000,
+      rounds: 40,
+      deadlineSeconds: 1800,
+    },
+    caps: {
+      readLines: 400,
+      readChars: 12000,
+      grepHits: 200,
+      grepLineChars: 300,
+      listEntries: 300,
+    },
+    seed: { files: 6, chars: 8000 },
+  });
 });
