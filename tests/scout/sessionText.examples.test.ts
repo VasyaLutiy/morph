@@ -13,7 +13,7 @@ import {
   taskClues,
 } from "../../src/scout/sessionText.js";
 import { DEFAULT_BUDGETS } from "../../src/scout/spendBudget.js";
-import { tmpRoot } from "../helpers.js";
+import { fixtureJson, tmpRoot } from "../helpers.js";
 
 test("Session Text example 1: budget sentences, budget left, not run and after close", () => {
   const spent = { calls: 2, reads: 1, chars: 50000, rounds: 3 };
@@ -152,6 +152,60 @@ test("Session Text example 4: round zero over Python, Go and TypeScript files", 
     ]);
     expect(roundZero(question, tree, NODE_FS, skip, 30000)).toBe(whole);
     expect(whole.length).toBe(412);
+  } finally {
+    p.rm();
+  }
+});
+
+test("Session Text example 5: round zero skips by grepSkip prefixes", () => {
+  const p = tmpRoot();
+  try {
+    p.write(
+      ".morph/runs/answer.txt",
+      "widgetFoo lives here (.morph/runs/answer.txt)\n",
+    );
+    p.write("decks/deck.json", "widgetFoo lives here (decks/deck.json)\n");
+    p.write("docs/PLAN.md", "widgetFoo lives here (docs/PLAN.md)\n");
+    p.write("docs/TASK_X.md", "widgetFoo lives here (docs/TASK_X.md)\n");
+    p.write("src/a.ts", "widgetFoo lives here (src/a.ts)\n");
+
+    const tree = {
+      root: p.root,
+      files: [
+        ".morph/runs/answer.txt",
+        "decks/deck.json",
+        "docs/PLAN.md",
+        "docs/TASK_X.md",
+        "src/a.ts",
+      ],
+    };
+    const NODE_FS: ScoutFs = {
+      realpath: (x: string): string => fs.realpathSync(x),
+      readFile: (x: string): string => fs.readFileSync(x, "utf8"),
+    };
+    const question = "Rename widgetFoo everywhere.\n";
+    const examples = fixtureJson("scout/examples.json") as Record<
+      string,
+      { texts: { prefixes: string; bare: string; none: string } }
+    >;
+    const texts = examples["Session Text 5"].texts;
+
+    expect(
+      roundZero(question, tree, NODE_FS, [".morph/", "decks/", "docs/TASK_"], 30000),
+    ).toBe(texts.prefixes);
+    expect(texts.prefixes.length).toBe(225);
+    expect(texts.prefixes).toContain(
+      "docs/PLAN.md:1: widgetFoo lives here (docs/PLAN.md)",
+    );
+    expect(texts.prefixes).not.toContain("docs/TASK_X.md");
+
+    expect(roundZero(question, tree, NODE_FS, [".morph", "decks"], 30000)).toBe(
+      texts.bare,
+    );
+    expect(texts.bare.length).toBe(281);
+
+    expect(roundZero(question, tree, NODE_FS, [], 30000)).toBe(texts.none);
+    expect(texts.none.length).toBe(411);
   } finally {
     p.rm();
   }
