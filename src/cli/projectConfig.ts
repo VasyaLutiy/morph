@@ -172,8 +172,17 @@ export function validateConfig(doc: unknown): ConfigResult {
   return { ok: true, config: buildConfig(doc) };
 }
 
+function isBlankOrComments(text: string): boolean {
+  for (const line of text.split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed === "" || trimmed.startsWith("#")) continue;
+    return false;
+  }
+  return true;
+}
+
 export function loadConfig(text: string | null, name: string = CONFIG_FILE): ConfigResult {
-  if (text === null || text.trim().length === 0) {
+  if (text === null || text.trim().length === 0 || isBlankOrComments(text)) {
     return { ok: true, config: buildConfig({}) };
   }
   const parsed = parseDocument(text, name);
@@ -187,8 +196,24 @@ export function readProjectConfig(
   root: string,
 ): { ok: true; config: ProjectConfig } | { ok: false; result: CommandResult } {
   const file = path.join(root, CONFIG_FILE);
-  const stat = fs.statSync(file, { throwIfNoEntry: false });
-  const text = stat?.isFile() ? fs.readFileSync(file, "utf8") : null;
+  let text: string | null;
+  try {
+    const stat = fs.statSync(file, { throwIfNoEntry: false });
+    text = stat?.isFile() ? fs.readFileSync(file, "utf8") : null;
+  } catch (e) {
+    let code: unknown;
+    if (typeof e === "object" && e !== null) {
+      code = (e as { code?: unknown }).code;
+    }
+    const reason = typeof code === "string" ? code : String(e);
+    return {
+      ok: false,
+      result: {
+        code: 2,
+        document: errorDocument(2, "DeckError", CONFIG_FILE + " cannot be read: " + reason),
+      },
+    };
+  }
   const loaded = loadConfig(text);
   if (loaded.ok) {
     return { ok: true, config: loaded.config };
