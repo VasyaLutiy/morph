@@ -42,7 +42,8 @@ or record the departure (§1.3).
    an experiment: its own branch, named so in the commit, no fix and no re-run counted on it.
 5. **Not in this scheme, never during preparation:** reference implementations, mutants, chain
    timing against 250 s, byte-identity re-cuts with two binaries, fullvet over stub trees,
-   MEASURE / TASK §11 / DECISIONS / State-at-handoff bookkeeping. `morph gate` is optional.
+   MEASURE / TASK §11 / DECISIONS / State-at-handoff bookkeeping — not even one row, even when the
+   project keeps the file (the operator's session writes it). `morph gate` is optional.
 6. **Paid calls** (scout, run, smoke) only through the wrapper the header names. Wrapper denied:
    stop at once and report; no workaround, and no preparation without the scout.
 7. **Keys are never printed**: no `env`, no `cat .env`, no echo of a `*_API_KEY`.
@@ -106,7 +107,9 @@ or record the departure (§1.3).
    `contour.yaml`): a phase that would take one over first compacts it as its own data commit —
    literals to fixtures by `ref`, behaviours reworded with every rule kept, no example's meaning
    changed — or puts the new Functions into a new Component. Examples carry full values, never
-   abbreviated.
+   abbreviated. **A new code directory** (a new Component or package): its layer goes into
+   `decks/tools/layers.json` in the same data commit — the guard reads it in every acceptance, and a
+   directory it does not list is red on every card of it (until the record is the source, #41).
 4. **Expected values are measured, never recalled** — from the current code, a fixture, or a
    spike's real output.
 5. **The phase data of V2** (schema and example: the reference §2–§4):
@@ -118,7 +121,9 @@ or record the departure (§1.3).
    - `decks/<p>/_stubs/`: a stub per target. **For an `--only` cut it is required**: without it
      `deck check` builds no generation.
 6. **A re-cut card's probe starts from its previous phase's probe**; only the changed and the new
-   examples change. On stubs it must go red exactly on those, and green on the unchanged rows.
+   examples change. On stubs it must go red exactly on those, and green on the unchanged rows —
+   except for an existing file re-cut with intent `generate`: its stub throws (§6.1), so every row is
+   red, the unchanged ones included; that is by design, and the report names it.
 7. **Judges: say what they must contain.** A judge's `lits` appear verbatim in the text the judge
    is given — check each against the record example and the spec's skeleton (a path built by
    concatenation is not a literal). In the map instruction of a judge, list its guard literals and
@@ -128,8 +133,13 @@ or record the departure (§1.3).
    gets an excerpt. A map `instruction` override is the card's opening; the Function follows.
 9. **Guards check code, not text** (AST / ESLint rules, never grep); never write a forbidden token
    as prose in an instruction.
-10. **Commit the data before cutting**, explicit paths (§11): `plan`, `deck check` and `run` read
-   the committed tree.
+10. **Validate every data file you edited** before committing: `python3 -m json.tool <file>` for
+   JSON, `plan` exit 0 for the record and the map. A large JSON is rewritten whole, not patched
+   piece by piece.
+11. **Commit the data before cutting**, explicit paths (§11): `plan`, `deck check` and `run` read
+   the committed tree. **The scout's output** (`.morph/scout/<id>/`) is committed with the data or
+   removed, unless the project's `.gitignore` covers it: an untracked file left in the tree turns
+   every card red at the last stage of every acceptance, and no retry can fix it.
 
 ## 5. The deck
 
@@ -150,12 +160,16 @@ or record the departure (§1.3).
 3. **Processor `ds`:** `python3 $MORPHV2/decks/tools/scale_tokens.py decks/<p>/deck.json 3`.
 4. **`<morph> deck check --root . --deck decks/<p>/deck.json`: errors 0.** With `_stubs/` beside
    the deck it compiles each card's stub tree; a break it names is a data defect, fixed before
-   the run. Read the largest slice off its weights.
+   the run. It compiles only: the guard and the probes run in §6. The key `unproven` appears only
+   when it lists something; absent means none. Read the largest slice off its weights.
 5. Commit the deck.
 
 ## 6. Stubs — the only dry check
 
-1. **Each card's acceptance runs once** in a scratch worktree, stubs in place of its targets:
+1. **Each card's acceptance runs once** in a scratch worktree, stubs in place of its targets. It is
+   the card's own `acceptance` text from `deck.json`, run whole (or `morph gate`), never a script that
+   imitates some of its stages: only the real acceptance reads the guard's data, the toolchain and
+   the tree as the run will:
    - a new code file: its typed exports, every body throwing `stub <name>`;
    - a patch target (intent `patch`): the current file plus only the declarations the probe needs
      to compile (a new optional key or type), no behaviour;
@@ -168,7 +182,8 @@ or record the departure (§1.3).
      target whose stub is the committed file or missing (a transaction deck without `_stubs/`: every committed target),
      read it before the gate; at run time a red in a kept file of a target's package is blamed on the owner and
      retried (P28);
-   - a judge's test file: one passing test.
+   - a judge's test file: one passing test, its name unique in the package (Go: two judge stubs
+     with `func TestStub` in one package do not build).
    Earlier generations' stubs stay in place for later cards.
 2. **The verdict, per probe:** each example red with a readable line (not a crash at import);
    unchanged rows green and named; a judge red at its guard; `node decks/tools/stubcheck.mjs <log> <stage> <targets,…>` (stage `probe` for a
@@ -242,7 +257,7 @@ fix the data and check again. A second failure: stop and report.
 ## 12. Report — numbers, one format, ≤ 40 lines
 
 1. The split, if any, as the FIRST line. The MorphV2 commit of the binary.
-2. **Times (UTC):** start, primer, scout, spec+record, deck cut, stubs, gate, run end, verify end,
+2. **Times (UTC)**, each from `date -u` at the moment, never typed: start, primer, scout, spec+record, deck cut, stubs, gate, run end, verify end,
    smoke start/end, re-run start/end, end. Prep = start → gate, in minutes, and your tool calls.
 3. **Scout:** $ and minutes; deck targets it named out of the total; roles you changed — two
    numbers, never one merged; a rejected answer's targets apart.

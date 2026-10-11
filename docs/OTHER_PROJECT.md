@@ -58,3 +58,21 @@ Constraints: <budget, what not to touch, merge: mine / fast-forward allowed>.
 <the phase text: goal, items, the live smoke it must pass>
 ```
 Untested so far: a paid V2 run and a V2 scout on a Python project. The first phase is that test.
+
+## 4. An orchestrator on another model, headless (beta MorphStudio P7c/P9a, #40, 11.10)
+
+GLM-5.3 ran the skill inside the Claude Code CLI over OpenRouter's Anthropic endpoint (`claude -p`). It worked, with
+these conditions:
+- **Prompt on stdin.** `--allowedTools` / `--disallowedTools` take any number of values, so a prompt given as an
+  argument is eaten by them ("Input must be provided").
+- **`BASH_DEFAULT_TIMEOUT_MS=3600000` in the wrapper.** With the default 120 s, `morph run` moves to the background,
+  and when the model ends its turn the headless session exits and kills the run (P7c-2 run 091904). The header says:
+  "never end the turn while a run is going".
+- **One simple command per call.** Compound commands (`;`, `&&`, `|`, `$VAR`) and `>` redirection need an approval
+  nobody gives headless, even into `--add-dir` folders. Outputs come from the tool result.
+- **Sandbox reach.** A sandbox limited to the project cannot read `$MORPHV2/docs/ORCHESTRATOR_REFERENCE.md` or the
+  skill's `references/lessons.md`. Add them with `--add-dir` (read only).
+- **Tool-call quality.** On P9a, 35 tool errors over 175 requests: parameter names leaked into Edit values, and one
+  such Edit corrupted `morph-map.json`. The skill's §4.10 (validate every edited data file) is a must for such a model.
+- **Price.** It is dominated by output (GLM ≈ $4.7/M). A provider without a prompt cache costs about 1.6× (P7c-1:
+  $2.55 against ≈ $1.6).

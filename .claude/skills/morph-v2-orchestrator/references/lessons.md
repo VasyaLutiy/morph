@@ -50,3 +50,12 @@ P24c, P24b. PM = the MorphStudio PM's live phases P7b, P7c, P8a (10.10).
 | §10.5 retries with `file:line` | PM P7b (#19) | the only way to see whether blame names the right card |
 | §11.1 explicit paths only | PM | `commit -a` swept another agent's uncommitted record edit into public `main` |
 | §12.6 minutes per round only | P24c (#20) | the run report has no per-card time yet |
+| §1.5 no MEASURE row, even one | beta MorphStudio P9a (#40), 11.10 | the orchestrator wrote a MEASURE row the operator's session owns |
+| §4.3 a new code directory needs its layer | beta MorphStudio P9a (#40), 11.10 | `users` missing from `layers.json`: every `users` card red at guard in run 1, $0.24 (the fix moves the rule into the record: #41) |
+| §4.6 generate re-cut: every row red | beta MorphStudio P8b/P9a (#40) | the throwing stub of §6.1 cannot keep unchanged rows green; the two rules read as a conflict |
+| §4.10 validate edited data | beta MorphStudio P9a (#40), GLM-5.3 | a garbled Edit corrupted `morph-map.json`; caught only by luck before the cut |
+| §4.11 scout output committed or removed | beta MorphStudio P7c-2, P9a (#40) | untracked `.morph/scout/<id>/scout.json`: every card red at the last stage, 2 runs lost |
+| §5.4 `deck check` compiles only; `unproven` absent = none | beta MorphStudio P9a (#40) | `deck check` 0 errors while the guard was red for 3 cards; the absent key was read as a missing check |
+| §6.1 the real acceptance, never an emulation | beta MorphStudio P9a (#40), reproduced 11.10 | "stubcheck 8/8" over `guardcheck.py`; the real acceptances on the same stubs stop at `== guard` for 3 cards — $0 to see, 1 run to learn |
+| §6.1 judge stub names unique per package | beta MorphStudio P9a (#40) | two `func TestStub` in package `users`: redeclared, one `deck check` round lost |
+| §12.2 times from `date -u` | beta MorphStudio P7c-3 (#40) | a hand-written times file one hour off UTC |
