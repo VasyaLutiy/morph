@@ -494,7 +494,7 @@ test("Rules Arg example 5: a missing edge is red whatever layers.json says", () 
       ]);
       expect(red.status).toBe(1);
       expect(red.stdout).toBe(
-        "guard: package daemon imports m/runner: the record has no 'uses' from daemon to runner (allowed: none)\n",
+        "guard: daemon/daemon.go:3: imports m/runner: the record has no 'uses' from daemon to runner (allowed: none)\n",
       );
     } finally {
       r.rm();
