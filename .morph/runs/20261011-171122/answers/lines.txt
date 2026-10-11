@@ -1,0 +1,16 @@
+morph run: canonical-guardrail.v1 accepted stage 0 finish stop chars 931
+morph run: canonical-guardrail.v2 untried stage 0 finish stop chars 907
+morph run: canonical-guardrail-judge.v1 accepted stage 0 finish stop chars 1821
+morph run: guardrail-rules.v1 accepted stage 0 finish stop chars 8382
+morph run: guardrail-rules.v2 untried stage 0 finish stop chars 7310
+morph run: build-acceptances.v1 accepted stage 0 finish stop chars 9076
+morph run: build-acceptances.v2 untried stage 0 finish stop chars 9076
+morph run: guardrail-rules-judge.v1 accepted stage 0 finish stop chars 29808
+morph run: compose.v1 accepted stage 0 finish stop chars 3054
+morph run: compose.v2 untried stage 0 finish stop chars 3044
+morph run: go-acceptance.v1 accepted stage 0 finish stop chars 6590
+morph run: go-acceptance.v2 untried stage 0 finish stop chars 6590
+morph run: plan-command.v1 accepted stage 0 finish stop chars 5843
+morph run: plan-command.v2 untried stage 0 finish stop chars 5843
+morph run: build-acceptances-judge.v1 accepted stage 0 finish stop chars 4536
+morph run: plan-command-judge.v1 accepted stage 0 finish stop chars 4429

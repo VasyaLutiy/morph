@@ -1,0 +1,111 @@
+```ts
+import { expect, test } from "vitest";
+import { buildAcceptances } from "../../src/builder/buildAcceptances.js";
+import { codeAcceptance, judgeAcceptance } from "../../src/builder/compose.js";
+import { DEFAULT_FROZEN } from "../../src/builder/readChecks.js";
+import { GO, TYPESCRIPT } from "../../src/language/profiles.js";
+import { fixture } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+import type { CardContext, Checks, JudgeFile } from "../../src/builder/types.js";
+
+function mkCard(customId: string, targets: string[], dependsOn: string[] = []): Card {
+  return { customId, targets, dependsOn, acceptance: null } as Card;
+}
+
+test("Build Acceptances example 12: a code member carries its rules and the go guard line gains the rules argument", () => {
+  const a = mkCard("a", ["src/x/a.ts"]);
+  const j = mkCard("j", ["tests/x/a.examples.test.ts"], ["a"]);
+  const checks: Checks = {
+    version: 1,
+    phase: "p30",
+    parts: "decks/p30/parts",
+    frozen: DEFAULT_FROZEN,
+    fullExclude: [],
+    ownGit: false,
+    cards: [
+      { id: "a", smoke: null, extra: null, files: null },
+      {
+        id: "j",
+        smoke: null,
+        extra: null,
+        files: [{ file: "tests/x/a.examples.test.ts", min: 1, max: 4, lits: [], drop: [], new: true }],
+      },
+    ],
+  };
+  const texts = { guard: "// guard\n", firstdiff: "// firstdiff\n", probes: { a: "// probe\n" } };
+  const files: JudgeFile[] = [
+    { file: "tests/x/a.examples.test.ts", min: 1, max: 4, lits: [], drop: [], new: true },
+  ];
+
+  const built = buildAcceptances({
+    cards: [a, j],
+    checks,
+    profile: TYPESCRIPT,
+    texts,
+    uses: { a: ["zod"] },
+    layers: { "src/x": ["src/y"], "src/z": [] },
+    rules: { "src/x": { pure: "Guardrail 'Pure' of Component x" }, "src/z": {} },
+  });
+  expect(built.ok).toBe(true);
+  if (!built.ok) throw new Error("expected ok");
+
+  const aCtx: CardContext = {
+    id: "a", phase: "p30", targets: ["src/x/a.ts"], siblings: [],
+    frozen: DEFAULT_FROZEN, fullExclude: [], ownGit: false,
+    profile: TYPESCRIPT, guard: "// guard\n", firstdiff: "// firstdiff\n",
+    allowed: ["zod"], vendor: false,
+    layers: { "src/x": ["src/y"] },
+    rules: { "src/x": { pure: "Guardrail 'Pure' of Component x" } },
+  };
+  const jCtx: CardContext = {
+    id: "j", phase: "p30", targets: ["tests/x/a.examples.test.ts"], siblings: [],
+    frozen: DEFAULT_FROZEN, fullExclude: [], ownGit: false,
+    profile: TYPESCRIPT, guard: "// guard\n", firstdiff: "// firstdiff\n",
+    allowed: [], vendor: false,
+  };
+
+  const aOut = built.cards.find((card) => card.customId === "a");
+  const jOut = built.cards.find((card) => card.customId === "j");
+  expect(aOut?.acceptance).toBe(codeAcceptance(aCtx, "// probe\n", null, null));
+  expect(aOut?.acceptance ?? "").toContain(
+    "node $P/guard.mjs src src/x/a.ts 'zod' '{\"src/x\":[\"src/y\"]}' '{\"src/x\":{\"pure\":\"Guardrail \\u0027Pure\\u0027 of Component x\"}}'\n",
+  );
+  expect(jOut?.acceptance).toBe(judgeAcceptance(jCtx, files));
+
+  const percentOf = mkCard("percent-of", ["calc/percent_of.go"]);
+  const clampJudge = mkCard("clamp-value-judge", ["calc/clamp_value_examples_test.go"]);
+  const goChecks: Checks = {
+    version: 1,
+    phase: "m1",
+    parts: "decks/m1/parts",
+    frozen: ["go.mod", "internal"],
+    fullExclude: [],
+    ownGit: false,
+    cards: [
+      { id: "percent-of", smoke: null, extra: null, files: null },
+      {
+        id: "clamp-value-judge",
+        smoke: null,
+        extra: null,
+        files: [{ file: "calc/clamp_value_examples_test.go", min: 4, max: 10, lits: ["TestClampValueExample1"], drop: [], new: true }],
+      },
+    ],
+  };
+  const goBuilt = buildAcceptances({
+    cards: [percentOf, clampJudge],
+    checks: goChecks,
+    profile: GO,
+    texts: { guard: "// guard\n", firstdiff: "// firstdiff\n", probes: { "percent-of": "package calc\n" } },
+    layers: { calc: ["report"] },
+    rules: { calc: { "no-shell": "Guardrail 'No Shell' of System m" } },
+  });
+  expect(goBuilt.ok).toBe(true);
+  if (!goBuilt.ok) throw new Error("expected ok");
+  const percentOfOut = goBuilt.cards.find((card) => card.customId === "percent-of");
+  const expectedGo = fixture("builder/go/code1.txt").replace(
+    "echo '== guard'; node $P/guard.mjs src calc/percent_of.go",
+    "echo '== guard'; node $P/guard.mjs src calc/percent_of.go '' '{\"calc\":[\"report\"]}' '{\"calc\":{\"no-shell\":\"Guardrail \\u0027No Shell\\u0027 of System m\"}}'",
+  );
+  expect(percentOfOut?.acceptance).toBe(expectedGo);
+});
+```

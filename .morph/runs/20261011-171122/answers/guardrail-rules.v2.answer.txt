@@ -1,0 +1,223 @@
+```typescript
+import { posix } from "node:path";
+import { resolveProfile } from "../language/profiles.js";
+import { cutTargets, slugName } from "../language/naming.js";
+import { codeTargets } from "../language/paths.js";
+import { guardrailKey, guardrailRule } from "../language/guardrails.js";
+import { GUARD_CONTRACT, planLayers } from "./layers.js";
+import type { ContourMap, ContourRecord } from "../contour/types.js";
+import type { LanguageProfile } from "../language/types.js";
+
+export type GuardrailRulesResult =
+  | { ok: true; rules: Record<string, Record<string, string>>; proseOnly: string[] }
+  | { ok: false; errors: string[] };
+
+export type PlanRulesResult =
+  | {
+      ok: true;
+      layers: Record<string, string[]> | null;
+      rules: Record<string, Record<string, string>> | null;
+      proseOnly: string[];
+    }
+  | { ok: false; error: string };
+
+interface NamePlace {
+  name: string;
+  place: string;
+}
+
+interface Unit {
+  dirs: string[];
+  names: NamePlace[];
+}
+
+function unitDirs(profile: LanguageProfile, targets: readonly string[]): string[] {
+  const dirs: string[] = [];
+  for (const t of codeTargets(profile, targets)) {
+    const d = posix.dirname(t);
+    if (!dirs.includes(d)) dirs.push(d);
+  }
+  return dirs;
+}
+
+export function guardrailRules(record: ContourRecord, map: ContourMap): GuardrailRulesResult {
+  const errors: string[] = [];
+  const seenErrors = new Set<string>();
+  const addError = (text: string): void => {
+    if (seenErrors.has(text)) return;
+    seenErrors.add(text);
+    errors.push(text);
+  };
+
+  const rules: Record<string, Record<string, string>> = {};
+  const proseOnly: string[] = [];
+  const proseSeen = new Set<string>();
+
+  const addName = (dirs: readonly string[], name: string, place: string, profile: LanguageProfile): void => {
+    const id = guardrailRule(profile, name);
+    if (id === null) {
+      const key = guardrailKey(name);
+      if (!proseSeen.has(key)) {
+        proseSeen.add(key);
+        proseOnly.push(name);
+      }
+      return;
+    }
+    for (const d of dirs) {
+      const entry = rules[d];
+      if (entry === undefined) continue;
+      if (Object.hasOwn(entry, id)) continue;
+      entry[id] = "Guardrail '" + name + "' of " + place;
+    }
+  };
+
+  for (const c of record.system.groups) {
+    const profileResult = resolveProfile(c.language, map.language);
+    if (!profileResult.ok) {
+      addError("Component '" + c.name + "': " + profileResult.error);
+      continue;
+    }
+    const profile = profileResult.profile;
+
+    const units: Unit[] = [];
+
+    for (const f of c.functions) {
+      const group = map.groups.find((g) => g.functions.includes(f.name));
+      const unitName = group !== undefined ? group.name : f.name;
+      const card = map.cards.find((cd) => cd.id === slugName(unitName));
+      let targets: readonly string[];
+      if (card !== undefined && card.targets !== null) {
+        targets = card.targets;
+      } else {
+        const cut = cutTargets(profile, c.name, unitName);
+        if (!cut.ok) {
+          addError("Component '" + c.name + "': " + cut.error);
+          continue;
+        }
+        targets = [cut.targets.code, cut.targets.test];
+      }
+      const names: NamePlace[] = [];
+      for (const g of f.guardrails) names.push({ name: g, place: "Function " + f.name });
+      for (const i of c.interfaces) {
+        if (i.exposes.length === 1 && i.exposes[0] === f.name) {
+          for (const g of i.guardrails ?? []) names.push({ name: g, place: "Interface " + i.name });
+        }
+      }
+      units.push({ dirs: unitDirs(profile, targets), names });
+    }
+
+    for (const i of c.interfaces) {
+      if (i.exposes.length === 1) continue;
+      const card = map.cards.find((cd) => cd.id === slugName(i.name));
+      let targets: readonly string[];
+      if (card !== undefined && card.targets !== null) {
+        targets = card.targets;
+      } else {
+        const cut = cutTargets(profile, c.name, i.name);
+        if (!cut.ok) {
+          addError("Component '" + c.name + "': " + cut.error);
+          continue;
+        }
+        targets = [cut.targets.code, cut.targets.test];
+      }
+      const names: NamePlace[] = [];
+      for (const g of i.guardrails ?? []) names.push({ name: g, place: "Interface " + i.name });
+      units.push({ dirs: unitDirs(profile, targets), names });
+    }
+
+    for (const u of units) {
+      for (const d of u.dirs) {
+        if (!Object.hasOwn(rules, d)) rules[d] = {};
+      }
+    }
+
+    for (const u of units) {
+      for (const n of u.names) addName(u.dirs, n.name, n.place, profile);
+      for (const g of c.guardrails) addName(u.dirs, g, "Component " + c.name, profile);
+      for (const g of record.system.guardrails) {
+        addName(u.dirs, g, "System " + record.system.name, profile);
+      }
+    }
+  }
+
+  if (errors.length > 0) return { ok: false, errors };
+
+  const sortedRules: Record<string, Record<string, string>> = {};
+  for (const key of Object.keys(rules).sort()) {
+    const entry = rules[key];
+    if (entry === undefined) continue;
+    const sortedEntry: Record<string, string> = {};
+    for (const id of Object.keys(entry).sort()) {
+      const text = entry[id];
+      if (text === undefined) continue;
+      sortedEntry[id] = text;
+    }
+    sortedRules[key] = sortedEntry;
+  }
+
+  return { ok: true, rules: sortedRules, proseOnly };
+}
+
+export function cardRules(
+  profile: LanguageProfile,
+  targets: readonly string[],
+  rules: Record<string, Record<string, string>>,
+): Record<string, Record<string, string>> {
+  const out: Record<string, Record<string, string>> = {};
+  for (const t of codeTargets(profile, targets)) {
+    const d = posix.dirname(t);
+    if (Object.hasOwn(out, d)) continue;
+    out[d] = Object.hasOwn(rules, d) ? rules[d] ?? {} : {};
+  }
+  return out;
+}
+
+export function rulesArg(rules: Record<string, Record<string, string>> | undefined): string {
+  if (rules === undefined) return "";
+  return " '" + JSON.stringify(rules).replaceAll("'", "\\u0027") + "'";
+}
+
+export function guardContract(guard: string): number {
+  const m = /morph-guard-contract: (\d+)/.exec(guard);
+  if (m === null) return 0;
+  return Number(m[1]);
+}
+
+export function planRules(
+  record: ContourRecord,
+  map: ContourMap,
+  layersFile: boolean,
+  guard: string,
+  language: string,
+): PlanRulesResult {
+  const n = guardContract(guard);
+  if (n < 2 && !layersFile) {
+    return { ok: true, layers: null, rules: null, proseOnly: [] };
+  }
+  const layersResult = planLayers(record, map, true, n >= 2 ? GUARD_CONTRACT : guard, language);
+  if (!layersResult.ok) return { ok: false, error: layersResult.error };
+  const rulesResult = guardrailRules(record, map);
+  if (!rulesResult.ok) return { ok: false, error: rulesResult.errors.join("\n") };
+  if (n >= 3) {
+    return {
+      ok: true,
+      layers: layersResult.layers,
+      rules: rulesResult.rules,
+      proseOnly: rulesResult.proseOnly,
+    };
+  }
+  const hasRules = Object.values(rulesResult.rules).some((entry) => Object.keys(entry).length > 0);
+  if (hasRules) {
+    return {
+      ok: false,
+      error:
+        "decks/tools/guard.mjs speaks contract " +
+        n +
+        ": copy templates/" +
+        language +
+        "/decks/tools/guard.mjs from MorphV2",
+    };
+  }
+  return { ok: true, layers: layersResult.layers, rules: null, proseOnly: [] };
+}
+```
