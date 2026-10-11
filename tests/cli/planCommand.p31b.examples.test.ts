@@ -1,0 +1,79 @@
+import fs from "node:fs";
+import { expect, test } from "vitest";
+import { planCommand } from "../../src/cli/planCommand.js";
+import { fixture, tmpRoot } from "../helpers.js";
+import type { PlanArgs, PlanDocument } from "../../src/cli/types.js";
+
+type Doc = PlanDocument & { warnings?: string[] };
+
+const MINI = [
+  "contour.yaml",
+  "morph-map.json",
+  "go.mod",
+  "internal/testhelp/testhelp.go",
+  "decks/m1/checks.json",
+  "decks/m1/parts/_clamp-value_probe_test.go",
+  "decks/m1/parts/_percent-of_probe_test.go",
+  "decks/m1/parts/_format-share_probe_test.go",
+];
+
+test("Plan Command example 20: imports extra and layers.json noted, hand guard silent", () => {
+  const r = tmpRoot();
+  try {
+    for (const f of MINI) {
+      r.write(f, fixture("go-mini/" + f));
+    }
+    r.write("contour.yaml", fixture("cli/goMiniGuarded.yaml"));
+    r.write("decks/tools/guard.mjs", "// morph-guard-contract: 3\n");
+    r.write("decks/tools/firstdiff.mjs", "// firstdiff\n");
+    r.write("decks/m1/checks.json", fixture("cli/goMini.imports.checks.json"));
+    r.write("decks/tools/layers.json", "{}\n");
+
+    const W = [
+      "calc/Clamp Value: step produces 'int' names no Data Object or Event of the record",
+      "calc/Percent Of: step produces 'int' names no Data Object or Event of the record",
+      "report/Format Share: step produces 'string' names no Data Object or Event of the record",
+    ];
+    const LAYERS =
+      "decks/tools/layers.json is not read: the record is the source; delete it";
+    const IMPORTS =
+      "clamp-value: checks.json extra 'imports' checks calc against a hand list; the record's rules and dependencies already govern imports per file: remove it";
+
+    const args: PlanArgs = {
+      name: "plan",
+      root: ".",
+      pretty: false,
+      spec: "contour.yaml",
+      components: ["calc", "report"],
+      map: "morph-map.json",
+      judge: true,
+      out: null,
+      checks: "decks/m1/checks.json",
+    };
+
+    const one = planCommand(r.root, args);
+    expect(one.code).toBe(0);
+    expect((one.document as Doc).warnings).toStrictEqual([...W, LAYERS, IMPORTS]);
+
+    const two = planCommand(r.root, {
+      ...args,
+      only: ["percent-of", "format-share"],
+    });
+    expect(two.code).toBe(0);
+    expect((two.document as Doc).warnings).toStrictEqual([...W, LAYERS]);
+
+    r.write("decks/tools/guard.mjs", "// guard\n");
+    fs.rmSync(r.path("decks/tools/layers.json"));
+    const three = planCommand(r.root, args);
+    expect(three.code).toBe(0);
+    expect((three.document as Doc).warnings).toStrictEqual(W);
+
+    r.write("decks/m1/checks.json", fixture("go-mini/decks/m1/checks.json"));
+    r.write("decks/tools/guard.mjs", "// morph-guard-contract: 3\n");
+    const four = planCommand(r.root, args);
+    expect(four.code).toBe(0);
+    expect((four.document as Doc).warnings).toStrictEqual(W);
+  } finally {
+    r.rm();
+  }
+});
