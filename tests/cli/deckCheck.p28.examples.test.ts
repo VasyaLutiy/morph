@@ -1,0 +1,108 @@
+import { expect, test } from "vitest";
+import { deckCheckCommand } from "../../src/cli/deckCheck.js";
+import { fixtureJson, tmpRoot } from "../helpers.js";
+import type { TmpRoot } from "../helpers.js";
+import type { DeckCheckDocument } from "../../src/cli/types.js";
+
+function seed(r: TmpRoot): void {
+  for (const [p, t] of Object.entries(fixtureJson("cli/unproven.json") as Record<string, string>)) {
+    r.write(p, t);
+  }
+}
+
+test("Deck Check example 7: deck check names what its build did not prove", () => {
+  const r = tmpRoot();
+  try {
+    seed(r);
+    const expected = fixtureJson("cli/deckCheck.unproven.json") as Record<string, DeckCheckDocument>;
+    const env = { PATH: process.env.PATH ?? "" };
+    for (const d of ["u", "q", "t"]) {
+      const got = deckCheckCommand(r.root, `decks/${d}/deck.json`, 500000, env);
+      expect(got.code).toBe(0);
+      const doc = got.document as DeckCheckDocument;
+      expect(doc).toStrictEqual(expected[d]);
+      expect(Object.keys(doc).pop()).toBe(d === "u" ? "weights" : "unproven");
+    }
+  } finally {
+    r.rm();
+  }
+}, 120000);
+
+test("Deck Check: a target whose stub is missing is unproven", () => {
+  const r = tmpRoot();
+  try {
+    seed(r);
+    const got = deckCheckCommand(r.root, "decks/q/deck.json", 500000, { PATH: process.env.PATH ?? "" });
+    const doc = got.document as DeckCheckDocument;
+    const reasons = (doc.unproven ?? []).filter((u) => u.path === "src/c.ts").map((u) => u.reason);
+    expect(reasons).toStrictEqual(["no stub: the build used the committed file"]);
+  } finally {
+    r.rm();
+  }
+}, 120000);
+
+test("Deck Check: a target whose stub differs is not listed", () => {
+  const r = tmpRoot();
+  try {
+    seed(r);
+    const got = deckCheckCommand(r.root, "decks/q/deck.json", 500000, { PATH: process.env.PATH ?? "" });
+    const doc = got.document as DeckCheckDocument;
+    const reasons = (doc.unproven ?? []).filter((u) => u.path === "src/b.ts").map((u) => u.reason);
+    expect(reasons).toStrictEqual([]);
+  } finally {
+    r.rm();
+  }
+}, 120000);
+
+test("Deck Check: a target absent from the tree is not listed", () => {
+  const r = tmpRoot();
+  try {
+    seed(r);
+    const got = deckCheckCommand(r.root, "decks/q/deck.json", 500000, { PATH: process.env.PATH ?? "" });
+    const doc = got.document as DeckCheckDocument;
+    const reasons = (doc.unproven ?? []).filter((u) => u.path === "calc/new.go").map((u) => u.reason);
+    expect(reasons).toStrictEqual([]);
+  } finally {
+    r.rm();
+  }
+}, 120000);
+
+test("Deck Check: a transaction deck with no _stubs/ is unproven", () => {
+  const r = tmpRoot();
+  try {
+    seed(r);
+    const got = deckCheckCommand(r.root, "decks/t/deck.json", 500000, { PATH: process.env.PATH ?? "" });
+    const doc = got.document as DeckCheckDocument;
+    const reasons = (doc.unproven ?? []).filter((u) => u.path === "calc/a.go").map((u) => u.reason);
+    expect(reasons).toStrictEqual(["no _stubs/ beside the deck: no build ran"]);
+  } finally {
+    r.rm();
+  }
+}, 120000);
+
+test("Deck Check: a plain deck with no _stubs/ stays silent", () => {
+  const r = tmpRoot();
+  try {
+    seed(r);
+    const got = deckCheckCommand(r.root, "decks/u/deck.json", 500000, { PATH: process.env.PATH ?? "" });
+    const doc = got.document as DeckCheckDocument;
+    expect(doc.unproven).toBeUndefined();
+  } finally {
+    r.rm();
+  }
+}, 120000);
+
+test("Deck Check: a stub equal to the committed file is unproven", () => {
+  const r = tmpRoot();
+  try {
+    seed(r);
+    const got = deckCheckCommand(r.root, "decks/q/deck.json", 500000, { PATH: process.env.PATH ?? "" });
+    const doc = got.document as DeckCheckDocument;
+    const reasons = (doc.unproven ?? []).filter((u) => u.path === "calc/a.go").map((u) => u.reason);
+    expect(reasons).toStrictEqual([
+      "the stub equals the committed file: the build proved nothing about its names",
+    ]);
+  } finally {
+    r.rm();
+  }
+}, 120000);
