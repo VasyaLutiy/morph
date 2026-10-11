@@ -6,6 +6,7 @@ import { selectCards } from "../planner/selectCards.js";
 import { buildAcceptances } from "../builder/buildAcceptances.js";
 import { resolveProfile } from "../language/profiles.js";
 import { readPlanChecks } from "./readPlanChecks.js";
+import { planLayers } from "../rules/layers.js";
 import { errorDocument } from "./document.js";
 import type { ContourMap } from "../contour/types.js";
 import type { PlanResult } from "../planner/types.js";
@@ -99,6 +100,10 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
     if (!read.ok) {
       return read.result;
     }
+    const layers = planLayers(record, map, hasFile("decks/tools/layers.json"), read.texts.guard, profiled.profile.id);
+    if (!layers.ok) {
+      return { code: 2, document: errorDocument(2, "DeckError", layers.error) };
+    }
     let checks = read.checks;
     if (args.only !== undefined) {
       const kept = new Set<string>(plan.cards.map((card) => card.customId));
@@ -111,6 +116,7 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
       texts: read.texts,
       uses: planned.uses,
       vendor: hasFile("vendor/modules.txt"),
+      ...(layers.layers !== null ? { layers: layers.layers } : {}),
     };
     const built = buildAcceptances(
       args.only !== undefined ? { ...input, transaction: true } : input,
