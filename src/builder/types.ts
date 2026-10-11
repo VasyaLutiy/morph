@@ -3,9 +3,12 @@ import type { LanguageProfile } from "../language/types.js";
 
 export interface JudgeFile { file: string; min: number; max: number; lits: string[]; drop: string[]; new: boolean }
 export interface CheckCard { id: string; smoke: number | null; extra: string | null; files: JudgeFile[] | null }
+export interface OverrideFile { file: string; min: number | null; max: number | null; lits: string[] | null; drop: string[] | null; new: boolean | null }
+export interface CheckOverride { id: string; smoke: number | null; extra: string | null; files: OverrideFile[] | null }
 export interface Checks {
   version: 1; phase: string; parts: string; frozen: string[]; fullExclude: string[]; ownGit: boolean;
   cards: CheckCard[];
+  overrides?: CheckOverride[];
 }
 export type ChecksResult = { ok: true; checks: Checks } | { ok: false; problems: string[] };
 export interface CardContext {

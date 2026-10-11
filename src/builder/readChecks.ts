@@ -1,4 +1,4 @@
-import type { CheckCard, Checks, ChecksResult, JudgeFile } from "./types.js";
+import type { CheckCard, CheckOverride, Checks, ChecksResult, JudgeFile, OverrideFile } from "./types.js";
 
 export const DEFAULT_FROZEN: string[] = [
   "contour.yaml",
@@ -10,7 +10,7 @@ export const DEFAULT_FROZEN: string[] = [
 
 const ID_RE = /^[A-Za-z0-9._-]+$/;
 
-const ROOT_KEYS: readonly string[] = ["version", "phase", "parts", "frozen", "fullExclude", "ownGit", "cards"];
+const ROOT_KEYS: readonly string[] = ["version", "phase", "parts", "frozen", "fullExclude", "ownGit", "cards", "overrides"];
 const CARD_KEYS: readonly string[] = ["id", "smoke", "extra", "files"];
 const FILE_KEYS: readonly string[] = ["file", "min", "max", "lits", "drop", "new"];
 
@@ -123,6 +123,127 @@ function checkFile(obj: Record<string, unknown>, path: string, problems: string[
   return null;
 }
 
+function checkOverrideFile(obj: Record<string, unknown>, path: string, problems: string[]): OverrideFile | null {
+  unknownKeys(obj, FILE_KEYS, path, problems);
+  const prefix = `${path}.`;
+  let file: string | null = null;
+  if (!has(obj, "file")) {
+    problems.push(`${prefix}file: required`);
+  } else {
+    file = nonEmptyString(prefix, "file", obj.file, problems);
+  }
+  let min: number | null = null;
+  if (has(obj, "min")) {
+    min = integer(prefix, "min", obj.min, problems, false);
+  }
+  let max: number | null = null;
+  if (has(obj, "max")) {
+    max = integer(prefix, "max", obj.max, problems, false);
+  }
+  let lits: string[] | null = null;
+  if (has(obj, "lits")) {
+    lits = stringList(prefix, "lits", obj.lits, problems);
+  }
+  let drop: string[] | null = null;
+  if (has(obj, "drop")) {
+    drop = stringList(prefix, "drop", obj.drop, problems);
+  }
+  let isNew: boolean | null = null;
+  if (has(obj, "new")) {
+    if (typeof obj.new !== "boolean") {
+      problems.push(`${prefix}new: must be true or false`);
+    } else {
+      isNew = obj.new;
+    }
+  }
+  if (min !== null && max !== null && min > max) {
+    problems.push(`${path}: min ${min} exceeds max ${max}`);
+  }
+  if (file !== null) {
+    return { file, min, max, lits, drop, new: isNew };
+  }
+  return null;
+}
+
+interface CardEntry {
+  id: string;
+  smoke: number | null;
+  extra: string | null;
+  files: JudgeFile[] | OverrideFile[] | null;
+}
+
+function checkCardEntry(
+  c: Record<string, unknown>,
+  cpath: string,
+  problems: string[],
+  seen: Set<string>,
+  override: boolean,
+): CardEntry {
+  unknownKeys(c, CARD_KEYS, cpath, problems);
+  const prefix = `${cpath}.`;
+
+  let id: string | null = null;
+  if (!has(c, "id")) {
+    problems.push(`${cpath}.id: required`);
+  } else if (typeof c.id !== "string" || !ID_RE.test(c.id)) {
+    problems.push(`${cpath}.id: must match ^[A-Za-z0-9._-]+$`);
+  } else {
+    id = c.id;
+    if (seen.has(id)) {
+      problems.push(`${cpath}.id: duplicate id '${id}'`);
+    } else {
+      seen.add(id);
+    }
+  }
+
+  let smoke: number | null = null;
+  if (has(c, "smoke")) {
+    const s = integer(prefix, "smoke", c.smoke, problems, true);
+    if (s !== null) {
+      smoke = s;
+    }
+  }
+
+  let extra: string | null = null;
+  if (has(c, "extra")) {
+    extra = nonEmptyString(prefix, "extra", c.extra, problems);
+  }
+
+  const filesPresent = has(c, "files");
+  let files: JudgeFile[] | OverrideFile[] | null = null;
+  if (filesPresent) {
+    const f: unknown = c.files;
+    if (!Array.isArray(f) || f.length === 0) {
+      problems.push(`${cpath}.files: must be a non-empty list`);
+    } else {
+      const jfs: (JudgeFile | OverrideFile)[] = [];
+      for (let j = 0; j < f.length; j++) {
+        const fj: unknown = f[j];
+        const fpath = `${cpath}.files[${j}]`;
+        if (!isPlainObject(fj)) {
+          problems.push(`${fpath}: must be an object`);
+          continue;
+        }
+        const jf: JudgeFile | OverrideFile | null = override
+          ? checkOverrideFile(fj, fpath, problems)
+          : checkFile(fj, fpath, problems);
+        if (jf !== null) {
+          jfs.push(jf);
+        }
+      }
+      if (jfs.length === f.length) {
+        files = jfs;
+      }
+    }
+  }
+
+  if (filesPresent && (has(c, "smoke") || has(c, "extra"))) {
+    problems.push(`${cpath}: a judge card (files) takes no smoke or extra`);
+  }
+
+  return { id: id ?? "", smoke, extra, files };
+}
+
 export function validateChecks(doc: unknown): ChecksResult {
   const problems: string[] = [];
   if (!isPlainObject(doc)) {
@@ -168,89 +289,70 @@ export function validateChecks(doc: unknown): ChecksResult {
     }
   }
 
-  const cardsRaw: unknown = root.cards;
-  if (!has(root, "cards")) {
-    problems.push("cards: required");
-  } else if (!Array.isArray(cardsRaw) || cardsRaw.length === 0) {
-    problems.push("cards: must be a non-empty list");
-  }
+  const cardsGiven = has(root, "cards");
+  const overridesGiven = has(root, "overrides");
 
   const outCards: CheckCard[] = [];
-  const seen: Set<string> = new Set();
-  if (Array.isArray(cardsRaw)) {
-    for (let i = 0; i < cardsRaw.length; i++) {
-      const c: unknown = cardsRaw[i];
-      const cpath = `cards[${i}]`;
-      if (!isPlainObject(c)) {
-        problems.push(`${cpath}: must be an object`);
-        continue;
-      }
-      unknownKeys(c, CARD_KEYS, cpath, problems);
-      const prefix = `${cpath}.`;
-
-      let id: string | null = null;
-      if (!has(c, "id")) {
-        problems.push(`${cpath}.id: required`);
-      } else if (typeof c.id !== "string" || !ID_RE.test(c.id)) {
-        problems.push(`${cpath}.id: must match ^[A-Za-z0-9._-]+$`);
-      } else {
-        id = c.id;
-        if (seen.has(id)) {
-          problems.push(`${cpath}.id: duplicate id '${id}'`);
-        } else {
-          seen.add(id);
+  if (cardsGiven) {
+    const cardsRaw: unknown = root.cards;
+    if (!Array.isArray(cardsRaw) || cardsRaw.length === 0) {
+      problems.push("cards: must be a non-empty list");
+    } else {
+      const seen: Set<string> = new Set();
+      for (let i = 0; i < cardsRaw.length; i++) {
+        const c: unknown = cardsRaw[i];
+        const cpath = `cards[${i}]`;
+        if (!isPlainObject(c)) {
+          problems.push(`${cpath}: must be an object`);
+          continue;
         }
+        const e = checkCardEntry(c, cpath, problems, seen, false);
+        outCards.push({ id: e.id, smoke: e.smoke, extra: e.extra, files: e.files as JudgeFile[] | null });
       }
-
-      let smoke: number | null = null;
-      if (has(c, "smoke")) {
-        const s = integer(prefix, "smoke", c.smoke, problems, true);
-        if (s !== null) {
-          smoke = s;
-        }
-      }
-
-      let extra: string | null = null;
-      if (has(c, "extra")) {
-        extra = nonEmptyString(prefix, "extra", c.extra, problems);
-      }
-
-      const filesPresent = has(c, "files");
-      let files: JudgeFile[] | null = null;
-      if (filesPresent) {
-        const f: unknown = c.files;
-        if (!Array.isArray(f) || f.length === 0) {
-          problems.push(`${cpath}.files: must be a non-empty list`);
-        } else {
-          const jfs: JudgeFile[] = [];
-          for (let j = 0; j < f.length; j++) {
-            const fj: unknown = f[j];
-            const fpath = `${cpath}.files[${j}]`;
-            if (!isPlainObject(fj)) {
-              problems.push(`${fpath}: must be an object`);
-              continue;
-            }
-            const jf = checkFile(fj, fpath, problems);
-            if (jf !== null) {
-              jfs.push(jf);
-            }
-          }
-          if (jfs.length === f.length) {
-            files = jfs;
-          }
-        }
-      }
-
-      if (filesPresent && (has(c, "smoke") || has(c, "extra"))) {
-        problems.push(`${cpath}: a judge card (files) takes no smoke or extra`);
-      }
-
-      outCards.push({ id: id ?? "", smoke, extra, files });
     }
+  }
+
+  const outOverrides: CheckOverride[] = [];
+  if (overridesGiven) {
+    const ovRaw: unknown = root.overrides;
+    if (!Array.isArray(ovRaw)) {
+      problems.push("overrides: must be a list");
+    } else {
+      const seenOv: Set<string> = new Set();
+      for (let i = 0; i < ovRaw.length; i++) {
+        const c: unknown = ovRaw[i];
+        const cpath = `overrides[${i}]`;
+        if (!isPlainObject(c)) {
+          problems.push(`${cpath}: must be an object`);
+          continue;
+        }
+        const e = checkCardEntry(c, cpath, problems, seenOv, true);
+        outOverrides.push({ id: e.id, smoke: e.smoke, extra: e.extra, files: e.files as OverrideFile[] | null });
+      }
+    }
+  }
+
+  if (cardsGiven && overridesGiven) {
+    problems.push(
+      "(root): cards and overrides exclude each other: cards lists every card, overrides only the cut's cards that differ",
+    );
   }
 
   if (problems.length > 0) {
     return { ok: false, problems };
+  }
+
+  if (cardsGiven) {
+    const checks: Checks = {
+      version: 1,
+      phase: phase ?? "",
+      parts: parts ?? `decks/${phase ?? ""}/parts`,
+      frozen: frozen ?? DEFAULT_FROZEN.slice(),
+      fullExclude: fullExclude ?? [],
+      ownGit,
+      cards: outCards,
+    };
+    return { ok: true, checks };
   }
 
   const checks: Checks = {
@@ -260,7 +362,8 @@ export function validateChecks(doc: unknown): ChecksResult {
     frozen: frozen ?? DEFAULT_FROZEN.slice(),
     fullExclude: fullExclude ?? [],
     ownGit,
-    cards: outCards,
+    cards: [],
+    overrides: outOverrides,
   };
   return { ok: true, checks };
 }
