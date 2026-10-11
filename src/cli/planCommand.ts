@@ -162,6 +162,7 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
       );
     }
   }
+  warnings.push(...planned.warnings);
 
   return {
     code: 0,
