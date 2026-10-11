@@ -1,0 +1,176 @@
+{
+  "version": 1,
+  "system": {
+    "name": "shop",
+    "description": "A shop.",
+    "requirements": [],
+    "guardrails": [],
+    "groups": [
+      {
+        "name": "orders",
+        "description": "Orders.",
+        "language": "typescript",
+        "requirements": [],
+        "guardrails": [],
+        "uses": [],
+        "functions": [
+          {
+            "name": "Place Order",
+            "description": "Places an order.",
+            "behavior": "",
+            "requirements": [],
+            "guardrails": [],
+            "preconditions": [],
+            "steps": [
+              {
+                "verb": "reads",
+                "target": "Price List"
+              },
+              {
+                "verb": "produces",
+                "target": "Order Placed"
+              }
+            ],
+            "examples": []
+          },
+          {
+            "name": "Cancel Order",
+            "description": "Cancels an order.",
+            "behavior": "Marks it cancelled.",
+            "requirements": [],
+            "guardrails": [],
+            "preconditions": [],
+            "steps": [],
+            "examples": [
+              {
+                "given": "g",
+                "when": "w",
+                "then": "t",
+                "ref": null
+              }
+            ]
+          }
+        ],
+        "dataObjects": [],
+        "interfaces": [
+          {
+            "name": "Orders API",
+            "description": "REST.",
+            "exposes": [
+              "Place Order",
+              "Cancel Order"
+            ],
+            "requirements": [
+              "Exact Sums"
+            ],
+            "guardrails": [
+              "No Network"
+            ],
+            "schema": "openapi.yaml#/orders"
+          }
+        ],
+        "events": [
+          {
+            "name": "Order Placed",
+            "description": "An order was placed.",
+            "requirements": [
+              "Exact Sums"
+            ],
+            "guardrails": [
+              "No Network"
+            ],
+            "schema": "{\n  \"id\": \"string\",\n  \"total\": {\n    \"cents\": \"integer\",\n    \"currency\": \"string\"\n  }\n}"
+          }
+        ],
+        "references": [
+          "Price List"
+        ],
+        "consumes": [
+          "Stock Low"
+        ],
+        "dependsOn": [
+          "catalog"
+        ]
+      },
+      {
+        "name": "catalog",
+        "description": "Prices of the shop.",
+        "language": null,
+        "requirements": [],
+        "guardrails": [],
+        "uses": [],
+        "functions": [
+          {
+            "name": "List Prices",
+            "description": "Lists the prices.",
+            "behavior": "Every price.",
+            "requirements": [],
+            "guardrails": [],
+            "preconditions": [],
+            "steps": [
+              {
+                "verb": "produces",
+                "target": "Price List"
+              }
+            ],
+            "examples": []
+          }
+        ],
+        "dataObjects": [
+          {
+            "name": "Price List",
+            "description": "Prices.",
+            "schema": "{\n  \"sku\": \"string\",\n  \"cents\": \"integer\"\n}",
+            "requirements": [
+              "Exact Sums"
+            ],
+            "guardrails": [
+              "No Network"
+            ]
+          }
+        ],
+        "interfaces": [],
+        "events": [
+          {
+            "name": "Stock Low",
+            "description": "Stock ran low.",
+            "requirements": [],
+            "guardrails": [],
+            "schema": null
+          }
+        ],
+        "references": [],
+        "consumes": [],
+        "dependsOn": []
+      }
+    ],
+    "dependencies": []
+  },
+  "actors": [
+    {
+      "name": "Buyer",
+      "description": "Buys.",
+      "uses": [
+        "Orders API"
+      ],
+      "requirements": [
+        "Exact Sums"
+      ],
+      "guardrails": [
+        "No Network"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "name": "Exact Sums",
+      "description": "Sums in cents."
+    }
+  ],
+  "guardrails": [
+    {
+      "name": "No Network",
+      "description": "No sockets."
+    }
+  ]
+}

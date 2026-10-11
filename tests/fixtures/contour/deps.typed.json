@@ -36,7 +36,11 @@
           }
         ],
         "dataObjects": [],
-        "interfaces": []
+        "interfaces": [],
+        "events": [],
+        "references": [],
+        "consumes": [],
+        "dependsOn": []
       },
       {
         "name": "diff",
@@ -67,7 +71,11 @@
           }
         ],
         "dataObjects": [],
-        "interfaces": []
+        "interfaces": [],
+        "events": [],
+        "references": [],
+        "consumes": [],
+        "dependsOn": []
       },
       {
         "name": "plain",
@@ -96,7 +104,11 @@
           }
         ],
         "dataObjects": [],
-        "interfaces": []
+        "interfaces": [],
+        "events": [],
+        "references": [],
+        "consumes": [],
+        "dependsOn": []
       }
     ],
     "dependencies": [

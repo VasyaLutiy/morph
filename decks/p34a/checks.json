@@ -1,0 +1,27 @@
+{
+  "phase": "p34a",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates"],
+  "fullExclude": ["tests/contour/record.examples.test.ts", "tests/contour/load.p34.examples.test.ts",
+    "tests/cli/planCommand.p34.examples.test.ts", "tests/rules/layers.p34.examples.test.ts"],
+  "cards": [
+    { "id": "validate-record" },
+    { "id": "load-spec" },
+    { "id": "plan-command" },
+    { "id": "layer-edges" },
+    { "id": "validate-record-judge", "files": [{ "file": "tests/contour/record.examples.test.ts", "min": 18, "max": 26, "new": false,
+      "drop": ["Validate Record example 6: version must be the number 1 and examples are required",
+        "Validate Record own: unknown keys come after required and before values, in the object's key order"],
+      "lits": ["Validate Record example 6: version must be the number 1 and examples are optional", "Validate Record example 9",
+        "Validate Record example 10", "contour/contourKeys.json", "contour/contourKeys.typed.json", "contour/contourKeys.warnings.json",
+        "(root): unknown key 'extra' (ignored)"] }] },
+    { "id": "load-spec-judge", "files": [{ "file": "tests/contour/load.p34.examples.test.ts", "min": 1, "max": 4, "new": true,
+      "lits": ["Load Spec example 5", "contour/contourKeys.json", "contour/contourKeys.typed.json", "contour/contourKeys.warnings.json", "../../contour.yaml"] }] },
+    { "id": "plan-command-judge", "files": [{ "file": "tests/cli/planCommand.p34.examples.test.ts", "min": 2, "max": 6, "new": true,
+      "lits": ["Plan Command example 16", "Plan Command example 17", "contour/parity/expected.json", "contour/contourKeys.json",
+        "contour/contourKeys.warnings.json", "no language on Component catalog and none in the map: typescript assumed"] }] },
+    { "id": "layer-edges-judge", "files": [{ "file": "tests/rules/layers.p34.examples.test.ts", "min": 1, "max": 3, "new": true,
+      "lits": ["Layer Edges example 5", "rules/dependsOn.yaml", "rules/dependsOnBad.yaml",
+        "Component 'app': dependsOn 'nope' names no Component of the record"] }] }
+  ]
+}

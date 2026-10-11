@@ -9,7 +9,7 @@
        "functions": [{"name": "G", "description": "G.", "behavior": "B.", "examples": [{"given": "g", "when": "w", "then": "t"}]}]}
     ],
     "dependencies": [
-      {"name": "yaml", "version": "^2.8.1", "language": "typescript", "url": "https://x"},
+      {"name": "yaml", "version": "^2.8.1", "language": "typescript", "url": "https://x", "doc": 3},
       {"name": "pyyaml", "version": "latest"},
       {"name": "yaml", "version": "1.x", "language": "typescript", "doc": ""},
       "left-pad",

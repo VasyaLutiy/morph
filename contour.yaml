@@ -1669,8 +1669,8 @@ System:
             keys in that order.
           steps: [{produces: Error Document}]
           examples:
-            - {given: 'examples.json["Emit Document 1"].given', when: "rendered", then: 'examples.json["Emit Document 1"].then'}
-            - {given: 'examples.json["Emit Document 2"].given', when: "rendered", then: 'examples.json["Emit Document 2"].then'}
+            - {given: 'examples.json["Emit Document 1"].given', when: rendered, then: 'examples.json["Emit Document 1"].then'}
+            - {given: 'examples.json["Emit Document 2"].given', when: rendered, then: 'examples.json["Emit Document 2"].then'}
             - {given: 'examples.json["Emit Document 3"].given', when: "rendered compact", then: 'examples.json["Emit Document 3"].then'}
         - name: Classify Error
           description: "Exit codes: 0 ok; 1 a card not written; 2 a refusal before spend; 3 a fault under way; 4 a usage error."
@@ -1680,9 +1680,9 @@ System:
             RuntimeError (3).
           steps: [{produces: Command Result}]
           examples:
-            - {given: 'examples.json["Classify Error 1"].given', when: "classifyThrown", then: 'examples.json["Classify Error 1"].then'}
-            - {given: 'examples.json["Classify Error 2"].given', when: "classifyThrown", then: 'examples.json["Classify Error 2"].then'}
-            - {given: 'examples.json["Classify Error 3"].given', when: "runExitCode", then: 'examples.json["Classify Error 3"].then'}
+            - {given: 'examples.json["Classify Error 1"].given', when: classifyThrown, then: 'examples.json["Classify Error 1"].then'}
+            - {given: 'examples.json["Classify Error 2"].given', when: classifyThrown, then: 'examples.json["Classify Error 2"].then'}
+            - {given: 'examples.json["Classify Error 3"].given', when: runExitCode, then: 'examples.json["Classify Error 3"].then'}
         - name: Read Deck File
           description: The deck file a command names, read by Load Deck.
           behavior: >
@@ -1693,7 +1693,7 @@ System:
           examples:
             - {given: 'examples.json["Read Deck File 1"].given', when: "readDeckFile(root, \"d.json\")", then: 'examples.json["Read Deck File 1"].then'}
             - {given: 'examples.json["Read Deck File 2"].given', when: "readDeckFile(root, \"nope.json\")", then: 'examples.json["Read Deck File 2"].then'}
-            - {given: 'examples.json["Read Deck File 3"].given', when: 'read', then: 'examples.json["Read Deck File 3"].then'}
+            - {given: 'examples.json["Read Deck File 3"].given', when: read, then: 'examples.json["Read Deck File 3"].then'}
         - name: Deck Check
           description: "`morph deck check`: generations, hazards, slice weights; with a stub tree, each card's tree compiled."
           behavior: >
@@ -1707,7 +1707,7 @@ System:
           examples:
             - {given: 'examples.json["Deck Check 1"].given', when: "deckCheckCommand(root, \"d.json\", 500000)", then: 'examples.json["Deck Check 1"].then'}
             - {given: 'examples.json["Deck Check 2"].given', when: 'deckCheckCommand(root, "d.json", 500000)', then: 'examples.json["Deck Check 2"].then'}
-            - {given: 'examples.json["Deck Check 3"].given', when: "checked", then: 'examples.json["Deck Check 3"].then'}
+            - {given: 'examples.json["Deck Check 3"].given', when: checked, then: 'examples.json["Deck Check 3"].then'}
             - {given: 'examples.json["Deck Check 4"].given', when: 'deckCheckCommand(root, <deck>, 500000, {PATH})', then: 'examples.json["Deck Check 4"].then'}
             - {given: 'examples.json["Deck Check 5"].given', when: 'deckCheckCommand(root, <deck>, 500000, {PATH})', then: 'examples.json["Deck Check 5"].then'}
             - {given: 'examples.json["Deck Check 6"].given', when: main, then: 'examples.json["Deck Check 6"].then'}
@@ -1729,43 +1729,44 @@ System:
             none> chars <text length, or none>\n". The checkout stays on the run branch.
           steps: [{uses: processor}, {calls: Read Deck File}, {uses: git}, {uses: runloop}, {produces: Run Document}]
           examples:
-            - {given: 'examples.json["Run Command 1"].given', when: 'run', then: 'examples.json["Run Command 1"].then'}
-            - {given: 'examples.json["Run Command 2"].given', when: 'run', then: 'examples.json["Run Command 2"].then'}
-            - {given: 'examples.json["Run Command 3"].given', when: "run", then: 'examples.json["Run Command 3"].then'}
+            - {given: 'examples.json["Run Command 1"].given', when: run, then: 'examples.json["Run Command 1"].then'}
+            - {given: 'examples.json["Run Command 2"].given', when: run, then: 'examples.json["Run Command 2"].then'}
+            - {given: 'examples.json["Run Command 3"].given', when: run, then: 'examples.json["Run Command 3"].then'}
             - {given: 'examples.json["Run Command 4"].given', when: run, then: 'examples.json["Run Command 4"].then'}
-            - {given: 'examples.json["Run Command 5"].given', when: "run", then: 'examples.json["Run Command 5"].then'}
+            - {given: 'examples.json["Run Command 5"].given', when: run, then: 'examples.json["Run Command 5"].then'}
             - {given: 'examples.json["Run Command 6"].given', when: run, then: 'examples.json["Run Command 6"].then'}
             - {given: 'examples.json["Run Command 7"].given', when: variantLine, then: 'examples.json["Run Command 7"].then'}
-            - {given: 'examples.json["Run Command 8"].given', when: 'run', then: 'examples.json["Run Command 8"].then'}
-            - {given: 'examples.json["Run Command 9"].given', when: 'run', then: 'examples.json["Run Command 9"].then'}
-            - {given: 'examples.json["Run Command 10"].given', when: 'run', then: 'examples.json["Run Command 10"].then'}
-            - {given: 'examples.json["Run Command 11"].given', when: "run", then: 'examples.json["Run Command 11"].then'}
-            - {given: 'examples.json["Run Command 12"].given', when: 'run', then: 'examples.json["Run Command 12"].then'}
+            - {given: 'examples.json["Run Command 8"].given', when: run, then: 'examples.json["Run Command 8"].then'}
+            - {given: 'examples.json["Run Command 9"].given', when: run, then: 'examples.json["Run Command 9"].then'}
+            - {given: 'examples.json["Run Command 10"].given', when: run, then: 'examples.json["Run Command 10"].then'}
+            - {given: 'examples.json["Run Command 11"].given', when: run, then: 'examples.json["Run Command 11"].then'}
+            - {given: 'examples.json["Run Command 12"].given', when: run, then: 'examples.json["Run Command 12"].then'}
         - name: Plan Command
           description: "`morph plan --spec`: record and map cut by Plan Spec, the deck to --out; one Plan Document."
           behavior: >
-            planCommand(root, args), in order. The spec (path.resolve(root, args.spec)) not a regular file → 4 UsageError "spec file not found: <spec as given>"; a
-            given map not a regular file → 4 UsageError "map file not found: <map as given>". loadContour(the spec's text, args.spec), then loadMap(the map's text,
-            args.map) when given (else the empty map: version 1, every list [], the rest null); an error → 2 DeckError, it. Plan Spec({record, map, spec: args.spec,
-            components: args.components, judge: args.judge, hasFile: a path is a regular file under root}); an error → 2 DeckError, it. With args.only, Select
-            Cards(plan, args.only), an error → 2 DeckError, it; its plan replaces Plan Spec's, the checks keep only its cards. With args.checks: profile = Resolve
-            Profile(the first selected Component's language, map.language), an error → 2 DeckError "the map: " + it; Read Plan Checks(root, args.checks, profile) (a
-            failure is the result); Plan Layers(the record, the map, "decks/tools/layers.json" is a regular file under root, texts.guard, profile.id) (P30, rules),
-            an error → 2 DeckError, it; Build Acceptances({cards, checks, profile, texts, uses: Plan Spec's uses, vendor: "vendor/modules.txt" is a regular file under
-            root, its layers when not null, and with args.only transaction: true}), errors → 2 DeckError "acceptances not built (<n> error|errors):\n" + them "\n"-joined; its cards replace
-            the plan's, except a card the map gives an acceptance (map card by customId ?? id, extra card by customId). args.out not null → the cards written to
-            path.resolve(root, args.out) as JSON.stringify(cards, null, 2) + "\n", parents created. → {code: 0, document: {spec, components, cards, generations,
-            externalDependsOn, out: args.out}}. Nothing else written; nothing on an error.
+            planCommand(root, args), in order: the spec (path.resolve(root, args.spec)), then a given map, not a regular file → 4 UsageError "spec file not found:
+            <spec as given>" | "map file not found: <map as given>". loadContour(the spec's text, args.spec), then loadMap(the map's text, args.map) when given (else
+            the empty map: version 1, every list [], the rest null); Plan Spec({record, map, spec: args.spec, components: args.components, judge: args.judge,
+            hasFile: a path is a regular file under root}); with args.only Select Cards(plan, args.only) (its plan replaces Plan Spec's, the checks keep only its
+            cards); each error → 2 DeckError, it. With args.checks: profile = Resolve Profile(the first selected Component's language, map.language), an error → 2
+            DeckError "the map: " + it; Read Plan Checks(root, args.checks, profile) (a failure is the result); Plan Layers(record, map, "decks/tools/layers.json" is
+            a regular file under root, texts.guard, profile.id) (P30), an error → 2 DeckError, it; Build Acceptances({cards, checks, profile, texts, uses: Plan
+            Spec's uses, vendor: "vendor/modules.txt" is a regular file under root, its layers when not null, with args.only transaction: true}), errors → 2
+            DeckError "acceptances not built (<n> error|errors):\n" + them "\n"-joined; its cards replace the plan's, except a card the map gives an acceptance (map
+            card by customId ?? id, extra card by customId). args.out not null → the cards written to path.resolve(root, args.out) as JSON.stringify(cards, null, 2)
+            + "\n", parents created. → {code: 0, document: {spec, components, cards, generations, externalDependsOn, out: args.out, last warnings only when
+            non-empty}}; warnings (P34) = loadContour's, then per name of the plan's components whose record Component's language and map.language are both null
+            "no language on Component <name> and none in the map: typescript assumed". Nothing else written; nothing on an error.
           steps: [{uses: contour}, {uses: planner}, {calls: Read Plan Checks}, {uses: rules}, {uses: builder}, {produces: Plan Document}]
           examples:
-            - {given: 'examples.json["Plan Command 1"].given', when: 'planCommand', then: 'examples.json["Plan Command 1"].then'}
-            - {given: 'examples.json["Plan Command 2"].given', when: 'planCommand', then: 'examples.json["Plan Command 2"].then'}
-            - {given: 'examples.json["Plan Command 3"].given', when: 'planCommand', then: 'examples.json["Plan Command 3"].then'}
-            - {given: 'examples.json["Plan Command 4"].given', when: 'planCommand', then: 'examples.json["Plan Command 4"].then'}
+            - {given: 'examples.json["Plan Command 1"].given', when: planCommand, then: 'examples.json["Plan Command 1"].then'}
+            - {given: 'examples.json["Plan Command 2"].given', when: planCommand, then: 'examples.json["Plan Command 2"].then'}
+            - {given: 'examples.json["Plan Command 3"].given', when: planCommand, then: 'examples.json["Plan Command 3"].then'}
+            - {given: 'examples.json["Plan Command 4"].given', when: planCommand, then: 'examples.json["Plan Command 4"].then'}
             - {given: 'examples.json["Plan Command 5"].given', when: main, then: 'examples.json["Plan Command 5"].then'}
-            - {given: 'examples.json["Plan Command 6"].given', when: 'planCommand', then: 'examples.json["Plan Command 6"].then'}
-            - {given: 'examples.json["Plan Command 7"].given', when: "planCommand", then: 'examples.json["Plan Command 7"].then'}
-            - {given: 'examples.json["Plan Command 8"].given', when: "planCommand", then: 'examples.json["Plan Command 8"].then'}
+            - {given: 'examples.json["Plan Command 6"].given', when: planCommand, then: 'examples.json["Plan Command 6"].then'}
+            - {given: 'examples.json["Plan Command 7"].given', when: planCommand, then: 'examples.json["Plan Command 7"].then'}
+            - {given: 'examples.json["Plan Command 8"].given', when: planCommand, then: 'examples.json["Plan Command 8"].then'}
             - {given: 'examples.json["Plan Command 9"].given', when: planCommand, then: 'examples.json["Plan Command 9"].then'}
             - {given: 'examples.json["Plan Command 10"].given', when: planCommand, then: 'examples.json["Plan Command 10"].then'}
             - {given: 'examples.json["Plan Command 11"].given', when: planCommand, then: 'examples.json["Plan Command 11"].then'}
@@ -1773,6 +1774,8 @@ System:
             - {given: 'examples.json["Plan Command 13"].given', when: planCommand, then: 'examples.json["Plan Command 13"].then'}
             - {given: 'examples.json["Plan Command 14"].given', when: planCommand, then: 'examples.json["Plan Command 14"].then'}
             - {given: 'examples.json["Plan Command 15"].given', when: planCommand, then: 'examples.json["Plan Command 15"].then'}
+            - {given: 'examples.json["Plan Command 16"].given', when: planCommand, then: 'examples.json["Plan Command 16"].then'}
+            - {given: 'examples.json["Plan Command 17"].given', when: planCommand, then: 'examples.json["Plan Command 17"].then'}
         - name: Read Plan Checks
           description: Files of `plan --checks`.
           behavior: >
@@ -1803,26 +1806,26 @@ System:
             {stdout, stderr: the process streams' write}), sets process.exitCode to the result, never calls process.exit.
           steps: [{calls: Parse Command}, {calls: Deck Check}, {calls: Plan Command}, {calls: Run Command}, {uses: batches}, {uses: primer}, {uses: scout-session}, {uses: review-session}, {uses: debt}, {uses: scaffold}, {uses: gate}, {uses: config}, {calls: Emit Document}, {calls: Classify Error}]
           examples:
-            - {given: 'examples.json["Main 1"].given', when: 'main', then: 'examples.json["Main 1"].then'}
-            - {given: 'examples.json["Main 2"].given', when: 'main', then: 'examples.json["Main 2"].then'}
-            - {given: 'examples.json["Main 3"].given', when: 'main', then: 'examples.json["Main 3"].then'}
-            - {given: 'examples.json["Main 4"].given', when: 'spawned', then: 'examples.json["Main 4"].then'}
-            - {given: 'examples.json["Main 5"].given', when: 'spawned', then: 'examples.json["Main 5"].then'}
+            - {given: 'examples.json["Main 1"].given', when: main, then: 'examples.json["Main 1"].then'}
+            - {given: 'examples.json["Main 2"].given', when: main, then: 'examples.json["Main 2"].then'}
+            - {given: 'examples.json["Main 3"].given', when: main, then: 'examples.json["Main 3"].then'}
+            - {given: 'examples.json["Main 4"].given', when: spawned, then: 'examples.json["Main 4"].then'}
+            - {given: 'examples.json["Main 5"].given', when: spawned, then: 'examples.json["Main 5"].then'}
             - {given: 'examples.json["Main 6"].given', when: 'spawned (spawnSync, timeout 30000 ms)', then: 'examples.json["Main 6"].then'}
-            - {given: 'examples.json["Main 7"].given', when: 'main', then: 'examples.json["Main 7"].then'}
+            - {given: 'examples.json["Main 7"].given', when: main, then: 'examples.json["Main 7"].then'}
             - {given: 'examples.json["Main 8"].given', when: 'main, twice', then: 'examples.json["Main 8"].then'}
-            - {given: 'examples.json["Main 9"].given', when: 'main', then: 'examples.json["Main 9"].then'}
-            - {given: 'examples.json["Main 10"].given', when: 'main', then: 'examples.json["Main 10"].then'}
-            - {given: 'examples.json["Main 11"].given', when: 'main', then: 'examples.json["Main 11"].then'}
-            - {given: 'examples.json["Main 12"].given', when: 'main', then: 'examples.json["Main 12"].then'}
-            - {given: 'examples.json["Main 13"].given', when: 'main', then: 'examples.json["Main 13"].then'}
-            - {given: 'examples.json["Main 14"].given', when: 'main', then: 'examples.json["Main 14"].then'}
-            - {given: 'examples.json["Main 15"].given', when: 'main', then: 'examples.json["Main 15"].then'}
-            - {given: 'examples.json["Main 16"].given', when: 'main', then: 'examples.json["Main 16"].then'}
-            - {given: 'examples.json["Main 17"].given', when: 'main', then: 'examples.json["Main 17"].then'}
-            - {given: 'examples.json["Main 18"].given', when: 'main', then: 'examples.json["Main 18"].then'}
-            - {given: 'examples.json["Main 19"].given', when: 'main', then: 'examples.json["Main 19"].then'}
-            - {given: 'examples.json["Main 20"].given', when: 'main', then: 'examples.json["Main 20"].then'}
+            - {given: 'examples.json["Main 9"].given', when: main, then: 'examples.json["Main 9"].then'}
+            - {given: 'examples.json["Main 10"].given', when: main, then: 'examples.json["Main 10"].then'}
+            - {given: 'examples.json["Main 11"].given', when: main, then: 'examples.json["Main 11"].then'}
+            - {given: 'examples.json["Main 12"].given', when: main, then: 'examples.json["Main 12"].then'}
+            - {given: 'examples.json["Main 13"].given', when: main, then: 'examples.json["Main 13"].then'}
+            - {given: 'examples.json["Main 14"].given', when: main, then: 'examples.json["Main 14"].then'}
+            - {given: 'examples.json["Main 15"].given', when: main, then: 'examples.json["Main 15"].then'}
+            - {given: 'examples.json["Main 16"].given', when: main, then: 'examples.json["Main 16"].then'}
+            - {given: 'examples.json["Main 17"].given', when: main, then: 'examples.json["Main 17"].then'}
+            - {given: 'examples.json["Main 18"].given', when: main, then: 'examples.json["Main 18"].then'}
+            - {given: 'examples.json["Main 19"].given', when: main, then: 'examples.json["Main 19"].then'}
+            - {given: 'examples.json["Main 20"].given', when: main, then: 'examples.json["Main 20"].then'}
       dataObjects:
         - name: Command
           description: One parsed invocation.
@@ -1838,7 +1841,7 @@ System:
           schema: "{ deck: string, cards: number, generations: string[][], errors: number, warnings: number, hazards: Hazard[], weights: SliceWeight[], builds?: Build Check[], unproven?: Unproven[] }"
         - name: Plan Document
           description: stdout of plan.
-          schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]>, out: string | null }"
+          schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]>, out: string | null, warnings?: string[] }"
         - name: Plan Checks
           description: What Read Plan Checks returns.
           schema: "{ ok: true, checks: Checks, texts: BuildTexts } | { ok: false, result: Command Result }"
@@ -2316,8 +2319,11 @@ System:
         with behaviour, steps, preconditions and counted examples, Data Objects with their
         schema text, Components selected by `--component`, the calls graph and the Data
         Objects each Function touches. Every problem of a document is named at once, one
-        "<path>: <message>" line each, in a pinned order. Unknown keys are rejected at every
-        level. No file is read here (the caller passes the text), no clock, no environment;
+        "<path>: <message>" line each, in a pinned order. The whole Contour key set is read
+        (P34, issue #44: a Contour record loads unchanged, as the old Morph promised); a key
+        outside Contour and V2's extensions is a warning "<path>: unknown key '<k>' (ignored)",
+        never a load error; a Function's behavior and examples are optional here (MorphV2's own
+        record keeps both on every Function: a project rule, Load Spec example 4). No file is read here (the caller passes the text), no clock, no environment;
         the package yaml is imported in Parse Document alone. Not wired into the cli: the
         planner is the first consumer. Since P19 (issue #10) a record declares the libraries its
         Components may import (System.dependencies, exact versions) and each Component names the
@@ -2331,43 +2337,59 @@ System:
           behavior: >
             validateRecord(doc: unknown). A doc that is not a plain object (null, an array, a
             scalar) → {ok: false, problems: ["(root): a record must be an object"]}. Otherwise
-            every object is checked against its key table (root: version, System, Actor,
-            Requirement, Guardrail; System: name, description, requirements, guardrails,
-            groups; Component: name, description, language, requirements, guardrails,
-            functions, dataObjects, interfaces; Function: name, description, behavior,
-            requirements, guardrails, preconditions, steps, examples; example: given, when,
-            then, ref; Data Object: name, description, schema; Interface: name, description,
-            exposes; Actor: name, description, uses; Requirement and Guardrail: name,
-            description; P19: System gains dependencies after groups, Component gains uses after
-            guardrails, a dependency: name, version, language, doc). Per object, in this order: each required key that is missing
-            ("<path>.<key>: required"), each key not in the table in the object's own order
-            ("<path>: unknown key '<k>' (known: <the table joined by ', '>)"), then the
-            present keys' values in the table's order, depth first. Required: the root's
-            System; every name and description; System.groups; a Function's behavior and
-            examples; an example's given, when, then; an Interface's exposes. version, when
-            present, must be 1 ("version: must be 1"); absent means 1. Texts must be non-empty
-            strings and are stored trimmed; lists must be lists; list items that are elements
-            must be objects; examples and exposes must not be empty; a step is an object with
-            exactly one key, a verb of calls, reads, modifies, produces, uses, whose value is a
-            non-empty string. A schema is a string, or a mapping of non-empty strings stored as
-            JSON.stringify(mapping, null, 2). A Component name repeated in the record, a
-            Function name repeated in its Component and a Data Object name repeated anywhere in
-            the record is a problem at the repeat's name. Absent lists become [], absent
-            language, ref and schema become null. Dependencies (P19): System.dependencies is a
-            list of objects, each requiring name, version and language (texts, trimmed; doc an
-            optional text, null when absent); a name repeated → "<path>.name: duplicate dependency
-            name '<n>'"; a version (trimmed) not matching /^v?[0-9]+(\.[0-9]+)*([-+][0-9A-Za-z.+-]+)?$/
-            → "<path>.version: must be an exact version (got '<v>')" (no range, tag or wildcard).
-            Component.uses is a list; per item in order: not a non-empty string → "<path>[i]: must be
-            a non-empty string"; its trimmed text not among the declared names → "<path>[i]: unknown
-            dependency '<n>' (declared: <names joined by ', ', or none>)"; a name already listed
-            before it → "<path>[i]: dependency '<n>' repeated". The declared names are read from the
-            document before the groups are walked: the trimmed name of every item of
-            System.dependencies that is an object with a non-empty string name, distinct, in order.
-            Absent dependencies and uses become []. Whether a dependency's language fits the
-            Component is the planner's check (the Component's language may come from the map). Any problem → {ok: false, problems} (all of
-            them, document order); none → {ok: true, record}. The paths read
-            System.groups[0].functions[3].examples[0].then; the root is "(root)".
+            every object is checked against its key table, the whole Contour key set plus V2's
+            extensions (P34, issue #44; contour.schema.json of the Contour author): root: version,
+            System, Actor, Requirement, Guardrail; System: name, description, requirements,
+            guardrails, groups, dependencies; Component: name, description, language,
+            requirements, guardrails, uses, functions, dataObjects, interfaces, events,
+            references, consumes, dependsOn; Function: name, description, behavior, requirements,
+            guardrails, preconditions, steps, examples; example: given, when, then, ref; Data
+            Object: name, description, schema, requirements, guardrails; Event: name,
+            description, requirements, guardrails, schema; Interface: name, description, exposes,
+            requirements, guardrails, schema; Actor: name, description, uses, requirements,
+            guardrails; Requirement and Guardrail: name, description; a dependency: name,
+            version, language, doc. Per object, in this order: each required key that is missing
+            ("<path>.<key>: required" — a problem), each key not in the table in the object's own
+            order ("<path>: unknown key '<k>' (ignored)" — a WARNING, never a problem; its value
+            is not read), then the present keys' values in the table's order, depth first.
+            Required: the root's System; every name and description (Event included);
+            System.groups; an example's given, when, then; an Interface's exposes. A Function's
+            behavior and examples are NOT required (absent: behavior "", examples []). version,
+            when present, must be 1 ("version: must be 1"); absent means 1. Texts must be
+            non-empty strings and are stored trimmed; lists must be lists; list items that are
+            elements must be objects; examples and exposes, when present, must not be empty; a
+            step is an object with exactly one key, a verb of calls, reads, modifies, produces,
+            uses, whose value is a non-empty string. requirements, guardrails, references,
+            consumes, dependsOn, exposes and an Actor's uses are lists of non-empty strings
+            (stored trimmed). Actor is one object (→ one Actor, path "Actor") or a list (paths
+            "Actor[i]"); anything else → "Actor: must be an object or a list". A schema (Data
+            Object, Event, Interface) is a non-empty string (trimmed), or a mapping: a mapping whose
+            every value is a string keeps today's text, each value trimmed and non-empty ("<path>.schema.<k>:
+            must be a non-empty string"), stored as JSON.stringify(mapping, null, 2) in the
+            document's key order; a mapping holding any other value (a mapping, a list, a number,
+            a boolean, null) is stored as JSON.stringify of it with the keys of every mapping at
+            every depth sorted ascending, indent 2 (the old reader's json.dumps sort_keys); anything
+            else → "<path>.schema: must be a non-empty string". A Component name repeated in the
+            record, a Function name repeated in its Component, a Data Object name repeated anywhere
+            in the record and an Event name repeated anywhere in the record is a problem at the
+            repeat's name ("duplicate Component|Function|Data Object|Event name '<n>'"). Absent
+            lists become [], absent language, ref and schema become null. Dependencies (P19):
+            System.dependencies is a list of objects, each requiring name, version and language
+            (texts, trimmed; doc an optional text, null when absent); a name repeated →
+            "<path>.name: duplicate dependency name '<n>'"; a version (trimmed) not matching
+            /^v?[0-9]+(\.[0-9]+)*([-+][0-9A-Za-z.+-]+)?$/ → "<path>.version: must be an exact
+            version (got '<v>')" (no range, tag or wildcard). Component.uses is a list; per item in
+            order: not a non-empty string → "<path>[i]: must be a non-empty string"; its trimmed
+            text not among the declared names → "<path>[i]: unknown dependency '<n>' (declared:
+            <names joined by ', ', or none>)"; a name already listed before it → "<path>[i]:
+            dependency '<n>' repeated". The declared names are read from the document before the
+            groups are walked: the trimmed name of every item of System.dependencies that is an
+            object with a non-empty string name, distinct, in order. Absent dependencies and uses
+            become []. Whether a dependency's language fits the Component is the planner's check
+            (the Component's language may come from the map). Any problem → {ok: false, problems}
+            (all of them, document order; the warnings are dropped); none → {ok: true, record},
+            plus a third key warnings (document order) only when there is at least one. The paths
+            read System.groups[0].functions[3].examples[0].then; the root is "(root)".
           steps:
             - reads: Contour Record
             - produces: Record Result
@@ -2375,11 +2397,11 @@ System:
             - given: 'the parsed mini record: 2 Components (tally, store), 4 Functions, 2 Data Objects, 1 Interface, 1 Actor, 1 Requirement, 1 Guardrail'
               ref: "tests/fixtures/contour/mini.json (the document), tests/fixtures/contour/mini.typed.json (the whole typed record)"
               when: "validated"
-              then: '{ok: true, record} with record equal to mini.typed.json: texts trimmed, absent lists [], absent ref/language/schema null, steps as {verb, target}, the mapping schema of Count Record as JSON text'
-            - given: 'the bad record: an unknown root key, version 2, a missing System description, a duplicate Function and Component, bad steps, an empty examples list, an example without then, a non-object group, a non-list Actor'
+              then: '{ok: true, record} with record equal to mini.typed.json: texts trimmed, absent lists [] (events, references, consumes, dependsOn and every requirements/guardrails included), absent ref/language/schema null, steps as {verb, target}, the mapping schema of Count Record as JSON text; no warnings key'
+            - given: 'the bad record: version 2, a missing System description, a duplicate Function and Component, bad steps, an empty examples list, an example without then, a numeric Data Object and Interface schema, a non-list Data Object guardrails, an Event without description, a non-object group, a string Actor (and two unknown keys, Extra and owner, which are warnings only)'
               ref: "tests/fixtures/contour/badRecord.json (the document), tests/fixtures/contour/badRecord.problems.json (the 19 problems in order)"
               when: "validated"
-              then: "{ok: false, problems} equal to the 19 lines of badRecord.problems.json, first \"(root): unknown key 'Extra' (known: version, System, Actor, Requirement, Guardrail)\", last \"Requirement[0].description: required\""
+              then: "{ok: false, problems} equal to the 19 lines of badRecord.problems.json, first \"version: must be 1\", among them \"System.groups[0].events[0].description: required\" and \"Actor: must be an object or a list\", last \"Requirement[0].description: required\"; no warnings key"
             - given: 'the documents [], null and "x"'
               when: "validated"
               then: '{ok: false, problems: ["(root): a record must be an object"]} for each'
@@ -2391,15 +2413,22 @@ System:
               then: '{ok: true, record: {version: 1, system: {name: "s", description: "d", requirements: [], guardrails: [], groups: [], dependencies: []}, actors: [], requirements: [], guardrails: []}} — no version means 1, texts trimmed, no Component is allowed, no dependency means []'
             - given: 'the document {version: "1", System: {name: "s", description: "d", groups: [{name: "c", description: "C.", functions: [{name: "f", description: "F.", behavior: "B."}]}]}}'
               when: "validated"
-              then: '{ok: false, problems: ["version: must be 1", "System.groups[0].functions[0].examples: required"]}'
+              then: '{ok: false, problems: ["version: must be 1"]} — a Function without examples is no problem'
             - given: 'the deps record: 3 Components (conf uses " zod " and yaml, diff uses github.com/google/go-cmp, plain uses []), 6 dependencies (names and texts padded with spaces, docs present and absent, versions 2.8.1, 3.23.8, v0.7.0, v0.0.0-20240521000000-abcdef123456, 6.0, 1.0.0-rc.1+build.5)'
               ref: "tests/fixtures/contour/deps.json (the document), tests/fixtures/contour/deps.typed.json (the whole typed record)"
               when: "validated"
               then: '{ok: true, record} with record equal to deps.typed.json: uses ["zod", "yaml"], ["github.com/google/go-cmp"], []; zod''s doc null; every version exact'
-            - given: 'the bad deps record (a uses naming an undeclared, a repeated, an empty and a non-string item; uses not a list; dependencies with an unknown key, a range, a tag, a missing language, a repeated name, an empty doc, a non-object, a missing name, two ranges); then {System: {name: "s", description: "d", groups: [one valid Component c with uses ["yaml"]]}}; then {System: {name: "s", description: "d", groups: [], dependencies: {}}}'
+            - given: 'the bad deps record (a uses naming an undeclared, a repeated, an empty and a non-string item; uses not a list; dependencies with an unknown key (a warning only) and a numeric doc, a range, a tag, a missing language, a repeated name, an empty doc, a non-object, a missing name, two ranges); then {System: {name: "s", description: "d", groups: [one valid Component c with uses ["yaml"]]}}; then {System: {name: "s", description: "d", groups: [], dependencies: {}}}'
               ref: "tests/fixtures/contour/badDeps.json (the document), tests/fixtures/contour/badDeps.problems.json (the 15 problems in order)"
               when: "validated"
               then: "{ok: false, problems} equal to the 15 lines of badDeps.problems.json, first \"System.groups[0].uses[1]: unknown dependency 'zod' (declared: yaml, pyyaml, ok)\", last \"System.dependencies[5].version: must be an exact version (got '>=1.0.0 <2')\"; then [\"System.groups[0].uses[0]: unknown dependency 'yaml' (declared: none)\"]; then [\"System.dependencies: must be a list\"]"
+            - given: 'the contour-keys record: every Contour key V2 did not read before — Component events (one with a nested mapping schema), references, consumes, dependsOn; Interface schema, requirements, guardrails; Data Object requirements, guardrails; one Actor object with requirements and guardrails; Functions without behavior or examples — and ten unknown keys, among them System.dataObjects'
+              ref: "tests/fixtures/contour/contourKeys.json (the document), tests/fixtures/contour/contourKeys.typed.json (the whole typed record), tests/fixtures/contour/contourKeys.warnings.json (the 10 warnings in order)"
+              when: "validated"
+              then: "{ok: true, record, warnings} with record equal to contourKeys.typed.json (Place Order behavior \"\" and examples [], the Event Order Placed's schema with sorted keys, the flat schema of Price List in its own order) and warnings equal to contourKeys.warnings.json, first \"(root): unknown key 'Extra' (ignored)\", second \"System: unknown key 'dataObjects' (ignored)\", last \"Requirement[0]: unknown key 'level' (ignored)\""
+            - given: 'the document {System: {name: "s", description: "d", groups: [{name: "c", description: "C.", dataObjects: [{name: "d", description: "D.", schema: {b: {z: 1, a: "x"}, a: ["q", {d: true, c: null}]}}]}]}}'
+              when: "validated"
+              then: '{ok: true, record} (no warnings key) whose Data Object d has schema JSON.stringify({a: ["q", {c: null, d: true}], b: {a: "x", z: 1}}, null, 2) — keys sorted at every depth, list order kept'
         - name: Validate Map
           description: Turns a parsed map document into a typed Contour Map, or every problem it has.
           behavior: >
@@ -2470,8 +2499,9 @@ System:
             Problems → {ok: false, error: "<name> is not a valid record (<n> problem[s]):\n"
             followed by the first 20 problems joined by "\n" and, when there are more, a last
             line "… and <n - 20> more"} ("map" for loadMap; "problem" when n is 1). Else {ok:
-            true, record} or {ok: true, map}. This repository's own contour.yaml and
-            morph-map.json load without a problem.
+            true, record} — plus warnings, Validate Record's own list, only when it gave one (P34)
+            — or {ok: true, map}. This repository's own contour.yaml and morph-map.json load
+            without a problem and without a warning.
           steps:
             - calls: Parse Document
             - calls: Validate Record
@@ -2491,6 +2521,10 @@ System:
             - given: "this repository's own contour.yaml and morph-map.json, read as text"
               when: "loadContour; loadMap"
               then: '{ok: true} for both: system.name "MorphV2", a Component named "contour", every Function with at least one example; map package "src" and a card with id "validate-record"'
+            - given: 'the text of contourKeys.json named "contourKeys.json"; then the text of this repository''s own contour.yaml named "contour.yaml"'
+              ref: "tests/fixtures/contour/contourKeys.json, tests/fixtures/contour/contourKeys.typed.json, tests/fixtures/contour/contourKeys.warnings.json"
+              when: "loadContour"
+              then: '{ok: true, record, warnings} with record equal to contourKeys.typed.json and warnings equal to contourKeys.warnings.json (10 lines); then {ok: true, record} with no warnings key ("warnings" in the result is false)'
         - name: Select Components
           description: The Components a plan cuts, by the names given with --component.
           behavior: >
@@ -2544,13 +2578,13 @@ System:
       dataObjects:
         - name: Contour Record
           description: The typed record (src/contour/types.ts); every list present, every optional text null when absent, texts trimmed.
-          schema: "{ version: 1, system: { name, description, requirements: string[], guardrails: string[], groups: Component[], dependencies: Dependency[] }, actors: { name, description, uses: string[] }[], requirements: { name, description }[], guardrails: { name, description }[] }; Dependency = { name, version, language, doc: string | null }; Component = { name, description, language: string | null, requirements, guardrails, uses: string[], functions: { name, description, behavior, requirements, guardrails, preconditions: string[], steps: { verb: 'calls'|'reads'|'modifies'|'produces'|'uses', target }[], examples: { given, when, then, ref: string | null }[] }[], dataObjects: { name, description, schema: string | null }[], interfaces: { name, description, exposes: string[] }[] }"
+          schema: "{ version: 1, system: { name, description, requirements: string[], guardrails: string[], groups: Component[], dependencies: Dependency[] }, actors: { name, description, uses: string[], requirements, guardrails }[], requirements: { name, description }[], guardrails: { name, description }[] }; Dependency = { name, version, language, doc: string | null }; Component = { name, description, language: string | null, requirements, guardrails, uses: string[], functions: { name, description, behavior (\"\" when absent), requirements, guardrails, preconditions: string[], steps: { verb: 'calls'|'reads'|'modifies'|'produces'|'uses', target }[], examples: { given, when, then, ref: string | null }[] }[], dataObjects: { name, description, schema: string | null, requirements, guardrails }[], interfaces: { name, description, exposes: string[], requirements?, guardrails?, schema?: string | null }[], events: { name, description, requirements, guardrails, schema: string | null }[], references, consumes, dependsOn: string[] }; the three Interface fields are optional in the type (an Interface built by hand in an older test still compiles) and always set by Validate Record"
         - name: Contour Map
           description: The typed map; snake_case keys of the document become camelCase fields, a key the map does not set is null.
           schema: "{ version: 1, package: string | null, language: string | null, docs: string[], groups: { name, functions: string[] }[], cards: ({ id } & CardFields)[], extraCards: ({ component: string | null } & CardFields)[] }; CardFields = { customId, intent: 'generate'|'patch', targets, contextSlice, dependsOn, instruction, acceptance, model, maxTokens, reasoningMaxTokens, variants }, each | null"
         - name: Record Result
           description: A typed record, or every problem.
-          schema: "{ ok: true, record: ContourRecord } | { ok: false, problems: string[] }"
+          schema: "{ ok: true, record: ContourRecord, warnings?: string[] } | { ok: false, problems: string[] }; warnings present only when non-empty (LoadRecordResult the same, with error in place of problems)"
         - name: Map Result
           description: A typed map, or every problem.
           schema: "{ ok: true, map: ContourMap } | { ok: false, problems: string[] }"
@@ -3542,7 +3576,8 @@ System:
         The acceptance rules the record states (P30, issue #41): src/rules/layers.ts, pure (node:path only; no file
         read, no clock, no environment), importing contour and language only. The layer rule — which directories a
         card's code may import — is read off the record: a Function step `uses: <Component>` lets the directories of
-        that Function's code targets import the used Component's directories, so the guard reads no hand copy
+        that Function's code targets import the used Component's directories (and Contour's Component.dependsOn lets all
+        of a Component's directories import the named Component's, P34), so the guard reads no hand copy
         (decks/tools/layers.json "layers"). cli's Plan Command calls Plan Layers; builder writes Card Layers through
         Layers Arg into the guard line of every code card; the template guards (data, contract 2) read that argument.
       language: typescript
@@ -3563,7 +3598,11 @@ System:
             componentSlug(its name); X is a dependency when a System dependency is named exactly X. Both → the error
             "Function '<F>': 'uses: <X>' names the Component '<that Component's name>' and the dependency '<X>'". A
             Component only → for each d of dirs(F), every directory of that Component but d itself joins edges[d]. A
-            dependency or neither → nothing (a module: Component.uses and the guard's module argument). Any error →
+            dependency or neither → nothing (a module: Component.uses and the guard's module argument). Then, after C's
+            Functions, per name X of C.dependsOn (Contour's own Component → Component edge, P34, issue #44), in order: X
+            names a Component (its name equals X or componentSlug equals componentSlug(X)) → for each directory d of C,
+            every directory of that Component but d itself joins edges[d]; no Component → the error "Component '<C>':
+            dependsOn '<X>' names no Component of the record". Any error →
             {ok: false, errors} (record order, each text once); else {ok: true, edges}: the keys and each list sorted
             ascending by code unit, no duplicates; a directory whose Functions use no Component maps to [].
           steps:
@@ -3589,6 +3628,10 @@ System:
               ref: "tests/fixtures/rules/both.yaml"
               when: layerEdges
               then: "{ok: false, errors: [\"Function 'Read Config': 'uses: yaml' names the Component 'yaml' and the dependency 'yaml'\"]}"
+            - given: 'the record tests/fixtures/rules/dependsOn.yaml (typescript Components app — dependsOn [store, Util] —, store — dependsOn [store] —, util — Pad Text has the step uses: store) and the empty map; then tests/fixtures/rules/dependsOnBad.yaml (the same, app dependsOn [nope, store, nope])'
+              ref: "tests/fixtures/rules/dependsOn.yaml, tests/fixtures/rules/dependsOnBad.yaml"
+              when: layerEdges
+              then: "{ok: true, edges: {\"src/app\": [\"src/store\", \"src/util\"], \"src/store\": [], \"src/util\": [\"src/store\"]}} — Util matched by slug, a Component depending on itself adds nothing, a uses step and a dependsOn give the same kind of edge; then {ok: false, errors: [\"Component 'app': dependsOn 'nope' names no Component of the record\"]} — one text once"
         - name: Card Layers
           description: The part of the edges one card's guard gets — its code directories.
           behavior: >

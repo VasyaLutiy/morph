@@ -18,6 +18,8 @@
   "Plan Command 12": "tests/fixtures/go-mini/, tests/fixtures/cli/goMini.sameGen.map.json",
   "Plan Command 13": "tests/fixtures/go-mini/, tests/fixtures/cli/goMini.deck.json",
   "Plan Command 14": "tests/fixtures/go-p7b/",
+  "Plan Command 16": "tests/fixtures/contour/parity/ (ccledger.contour.yaml, ccledger.map.json, contour-engine.contour.yaml, contour-engine.map.json, expected.json; the old decks ccledger.deck.json, contour-engine.deck.json)",
+  "Plan Command 17": "tests/fixtures/contour/contourKeys.json, tests/fixtures/contour/contourKeys.warnings.json",
   "Read Plan Checks 1": "tests/fixtures/cli/p1.checks.json (cards a, b, a-judge), tests/fixtures/cli/p1.planChecks.json",
   "Main 2": "tests/fixtures/decks/hazardsWriteWrite.json",
   "Main 4": "tests/fixtures/cli/literals.json",
