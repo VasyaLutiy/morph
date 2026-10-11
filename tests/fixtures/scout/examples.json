@@ -1,0 +1,6 @@
+{
+  "Run Scout 6": {
+    "given": "the tree of example 1, budgets {calls 1, reads 5, chars 100000, rounds 10, deadlineMs 600000}, t1 \"LIST src\", then (a) t2 {\"targets\": [\"src/b.ts\"], \"context_slice\": [\"src/a.ts\"], \"reasoning\": \"b\"} with no verb; (b) t2 ANSWER {\"targets\": [\"src/b.ts\"], \"reasoning\": \"the \"b\" file\"}, t3 ANSWER {\"targets\": [\"src/b.ts\"]}; (c) t2 ANSWER {\"targets\": [\"src/c.ts\"]}, t3 ANSWER {\"targets\": [\"src\"]}",
+    "then": "(a) ok \"the model answered after the budget closed: the call budget is spent (1 of 1 calls)\", answer {[\"src/b.ts\"], [\"src/a.ts\"], \"b\"}, spent {1, 0, 49, 2}; (b) ok, the same stopReason, answer {[\"src/b.ts\"], [], \"\"}, journal turns action, malformed (error \"ANSWER: the JSON does not parse\", chars 0), answer; spent {1, 0, 49, 3}; messages[5] \"Turn not understood: ANSWER: the JSON does not parse. No more tools will run: send ANSWER \" + ANSWER_SHAPE + \" now, every path a file of the tree, the JSON object last.\"; (c) invalid_answer \"no answer: the answer after the budget closed was rejected twice: targets: not in the tree (missing, ignored or a directory): src\", journal turns action, answer (error \"targets: not in the tree (missing, ignored or a directory): src/c.ts\"), answer, spent {1, 0, 49, 3}"
+  }
+}
