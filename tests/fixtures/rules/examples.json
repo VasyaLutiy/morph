@@ -66,5 +66,21 @@
  "Plan Rules 5": {
   "given": "the same for cases.json \"typescript\" (keys base, layers, dependencies, Pure, No Clock, No Env, No Process, Stdlib Only; beside decks/tools/layers.json with \"packages\": [\"zod\"] and a stale decks/tools/guardrails.json), the guard templates/typescript/decks/tools/guard.mjs on src/app/main.ts, planRules(R, M, false, \"// morph-guard-contract: 3\\n\", \"typescript\"), node_modules in each root a symlink to the repository's",
   "then": "as example 4, with cases.json \"typescript\" \"then\": the dependencies record stays red beside a layers.json listing zod (#42 ledger 3: a package comes from System.dependencies through Component.uses only)"
+ },
+ "Layer Edges 2": {
+  "given": "the trimmed MorphStudio record and map (tests/fixtures/rules/morphstudio/contour.yaml and morph-map.json: 19 Components, 33 Functions, f85a8e7's steps and targets; pump's targets are in daemon/)",
+  "then": "{ok: true, edges} with edges equal to morphstudio.edges.json: 18 directories, 30 allowed pairs, users [] and registry []; for every key but users, each directory of its list is in the layers.json \"layers\" entry of that key"
+ },
+ "Layer Edges 3": {
+  "given": "the record and the map of tests/fixtures/rules/union/ (contour.yaml, morph-map.json): alpha (Alpha Step, pkg/a.go, uses x and the dependency golang.org/x/text), beta (Beta Step, pkg/b.go + pkg/b_test.go, uses y and \"the shell\"), x (x/x.go), y (y/y.go), gamma (map group gamma-pair of Gamma One — uses alpha — and Gamma Two, card targets gamma/pair.go + gamma/pair_test.go; Gamma Three, no map card, uses gamma)",
+  "then": "{ok: true, edges: {\"gamma\": [\"pkg\"], \"pkg\": [\"x\", \"y\"], \"x\": [], \"y\": []}} — pkg is the union of alpha's and beta's uses; the dependency and the free word add nothing; Gamma Three's default target gamma/gamma_three.go shares gamma; a step using its own Component adds nothing"
+ },
+ "Layer Edges 4": {
+  "given": "the record tests/fixtures/rules/both.yaml (Component yaml; Component config whose Read Config has the step uses: yaml; the dependency yaml) and the empty map (EMPTY_MAP of src/cli/planCommand.ts)",
+  "then": "{ok: false, errors: [\"Function 'Read Config': 'uses: yaml' names the Component 'yaml' and the dependency 'yaml'\"]}"
+ },
+ "Layer Edges 5": {
+  "given": "the record tests/fixtures/rules/dependsOn.yaml (typescript Components app — dependsOn [store, Util] —, store — dependsOn [store] —, util — Pad Text has the step uses: store) and the empty map; then tests/fixtures/rules/dependsOnBad.yaml (the same, app dependsOn [nope, store, nope])",
+  "then": "{ok: true, edges: {\"src/app\": [\"src/store\", \"src/util\"], \"src/store\": [], \"src/util\": [\"src/store\"]}} — Util matched by slug, a Component depending on itself adds nothing, a uses step and a dependsOn give the same kind of edge; then {ok: false, errors: [\"Component 'app': dependsOn 'nope' names no Component of the record\"]} — one text once"
  }
 }
