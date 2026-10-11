@@ -125,15 +125,15 @@ test("Layers Arg example 2: the Go guard reads the record's layers", () => {
     );
 
     const L1 = { pkg: ["x", "y"] };
-    const a = run(r.root, "go", ["src", "pkg/a.go", "", JSON.stringify(L1)]);
+    const a = run(r.root, "go", ["src", "pkg/a.go", "", JSON.stringify(L1), "{}"]);
     expect(a.status).toBe(0);
     expect(a.stdout).toBe("");
-    const b = run(r.root, "go", ["src", "pkg/b.go", "", JSON.stringify(L1)]);
+    const b = run(r.root, "go", ["src", "pkg/b.go", "", JSON.stringify(L1), "{}"]);
     expect(b.status).toBe(0);
     expect(b.stdout).toBe("");
 
     const L2 = { registry: ["queue"] };
-    const red = run(r.root, "go", ["src", "registry/x.go", "", JSON.stringify(L2)]);
+    const red = run(r.root, "go", ["src", "registry/x.go", "", JSON.stringify(L2), "{}"]);
     expect(red.status).toBe(1);
     expect(red.stdout).toBe(
       "guard: package registry imports m/users: the record has no 'uses' from registry to users (allowed: queue)\n",
@@ -158,6 +158,7 @@ test("Layers Arg example 3: the TypeScript guard reads the record's layers", () 
       "src/report/line.ts",
       "",
       JSON.stringify(L1),
+      "{}",
     ]);
     expect(green.status).toBe(0);
     expect(green.stdout).toBe("");
@@ -168,6 +169,7 @@ test("Layers Arg example 3: the TypeScript guard reads the record's layers", () 
       "src/report/line.ts",
       "",
       JSON.stringify(L2),
+      "{}",
     ]);
     expect(red.status).toBe(1);
     expect(red.stdout).toBe(
