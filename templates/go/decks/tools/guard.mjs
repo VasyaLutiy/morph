@@ -1,12 +1,16 @@
 // Guard of a Go module: the layer rules and the Guardrail rules of the record, and the test-file rules. `morph plan
-// --checks` inlines this file into every acceptance. Imports and calls are read by the go tool (`go list`, and a
-// go/parser scan of the code files), never by grep: a word in a comment is not an import. Node's standard library only.
+// --checks` inlines this file into every acceptance. Imports and calls are read by the go tool (a go/parser scan of
+// each given code file), never by grep: a word in a comment is not an import. Node's standard library only. Every
+// rule is checked per FILE, never per package: a red names the importing file and line, so a package-mate's import
+// is never this card's red (P31b, issue #42).
 // morph-guard-contract: 3
 //   node guard.mjs src <file,file,...> <mods> <layers> <rules>  the packages of these Go files, all four arguments
 //                                                         written by `morph plan --checks` from the record:
 //     mods   = the module paths the card's Component declares (`uses`): a path or a path + "/...", ","-joined ('' none);
+//              a file may import the standard library (narrowed only by the rules below) and these, nothing else
+//              outside the module;
 //     layers = JSON {"<package dir>": ["<dir it may import>", ...]} from the `uses: <Component>` steps (contract 2): a
-//              package dir it lacks may import no other package of the module;
+//              file of a package dir it lacks may import no other package of the module;
 //     rules  = JSON {"<package dir>": {"<rule id>": "<the Guardrail and where the record attaches it>"}} from the
 //              record's canonical Guardrail names (contract 3).
 //              A missing layers or rules argument is red, never "everything allowed" (issue #46): re-cut with morph plan.
@@ -19,7 +23,6 @@
 //   no-env       no os.Getenv, os.LookupEnv, os.Environ, os.Setenv, os.Unsetenv, os.Clearenv, os.ExpandEnv
 //   stdlib-only  no import outside the standard library and the module, the declared modules included
 //   pure         all of the above but stdlib-only, and no import of os, time, syscall, unsafe
-// decks/tools/layers.json is not read.
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
@@ -43,37 +46,42 @@ function modulePath() {
 function isStd(imp) {
   return !imp.split("/")[0].includes(".");
 }
-function goImports(dir) {
-  const out = execFileSync("go", ["list", "-e", "-f", '{{join .Imports "\\n"}}', "./" + dir], {
-    encoding: "utf8", stdio: ["ignore", "pipe", "pipe"],
-  });
-  return out.split("\n").filter(Boolean);
-}
 function checkSrc(files, allowed, layers, rules) {
   const mod = modulePath();
-  const dirs = [];
+  const code = [];
   for (const f of files) {
-    const d = path.posix.dirname(f.split(path.sep).join("/"));
-    if (!dirs.includes(d)) dirs.push(d);
+    const rel = f.split(path.sep).join("/");
+    if (!rel.endsWith("_test.go")) code.push([f, rel]);
   }
-  for (const dir of dirs) {
-    for (const imp of goImports(dir)) {
+  if (code.length === 0) return;
+  const scanned = scanFiles(code.map(([f]) => f));
+  for (const [f, rel] of code) {
+    const r = scanned[f];
+    if (!r) { bad.push(`guard: ${rel}: not scanned`); continue; }
+    if (r.error) { bad.push(`guard: ${rel}: does not parse: ${r.error}`); continue; }
+    const dir = path.posix.dirname(rel);
+    const active = rules[dir] ?? {};
+    const first = (ids) => RULE_ORDER.find((id) => ids.includes(id) && id in active);
+    for (const h of r.imports) {
+      const imp = h.name;
+      const id = first(importRules(imp, mod));
+      if (id) { bad.push(`guard: ${rel}:${h.line}: imports ${imp}: ${active[id]}`); continue; }
       if (imp === mod || imp.startsWith(mod + "/")) {
         const target = imp === mod ? "." : imp.slice(mod.length + 1);
         if (target === dir) continue;
         const may = layers[dir] ?? [];
         if (!may.includes(target))
-          bad.push(`guard: package ${dir} imports ${imp}: the record has no 'uses' from ${dir} to ${target} (allowed: ${may.join(", ") || "none"})`);
+          bad.push(`guard: ${rel}:${h.line}: imports ${imp}: the record has no 'uses' from ${dir} to ${target} (allowed: ${may.join(", ") || "none"})`);
         continue;
       }
-      if (!isStd(imp)) {
-        if (allowed.some((m) => imp === m || imp.startsWith(m + "/"))) continue;
-        bad.push(`guard: package ${dir} imports ${imp} (the standard library ${allowed.length ? "and " + allowed.join(", ") + " " : ""}only)`);
-        continue;
-      }
+      if (!isStd(imp) && !allowed.some((m) => imp === m || imp.startsWith(m + "/")))
+        bad.push(`guard: ${rel}:${h.line}: imports ${imp}: not a dependency the record gives this Component (allowed: the standard library${allowed.length ? ", " + allowed.join(", ") : ""})`);
+    }
+    for (const h of r.uses) {
+      const id = first(useRules(h.name));
+      if (id) bad.push(`guard: ${rel}:${h.line}: uses ${h.name}: ${active[id]}`);
     }
   }
-  checkRules(files, rules);
 }
 // The go/parser scan of the code files: per file its imports and every selector <imported package>.<Name>, with lines.
 const SCAN = `package main
@@ -173,32 +181,6 @@ function useRules(sym) {
   if (CLOCK_USES.includes(sym)) out.push("no-clock", "pure");
   if (ENV_USES.includes(sym)) out.push("no-env", "pure");
   return out;
-}
-function checkRules(files, rules) {
-  const mod = modulePath();
-  const code = [];
-  for (const f of files) {
-    const rel = f.split(path.sep).join("/");
-    if (rel.endsWith("_test.go")) continue;
-    const active = rules[path.posix.dirname(rel)] ?? {};
-    if (Object.keys(active).length > 0) code.push([f, rel, active]);
-  }
-  if (code.length === 0) return;
-  const scanned = scanFiles(code.map(([f]) => f));
-  for (const [f, rel, active] of code) {
-    const r = scanned[f];
-    if (!r) { bad.push(`guard: ${rel}: not scanned`); continue; }
-    if (r.error) { bad.push(`guard: ${rel}: does not parse: ${r.error}`); continue; }
-    const first = (ids) => RULE_ORDER.find((id) => ids.includes(id) && id in active);
-    for (const h of r.imports) {
-      const id = first(importRules(h.name, mod));
-      if (id) bad.push(`guard: ${rel}:${h.line}: imports ${h.name}: ${active[id]}`);
-    }
-    for (const h of r.uses) {
-      const id = first(useRules(h.name));
-      if (id) bad.push(`guard: ${rel}:${h.line}: uses ${h.name}: ${active[id]}`);
-    }
-  }
 }
 function fileImports(text) {
   const out = [];

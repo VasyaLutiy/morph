@@ -1751,7 +1751,8 @@ System:
             card by customId ?? id, extra card by customId). args.out not null → the cards written to path.resolve(root, args.out) as JSON.stringify(cards, null, 2)
             + "\n", parents created. → {code: 0, document: {spec, components, cards, generations, externalDependsOn, out: args.out, Plan Rules' proseOnly when non-empty, last warnings only when
             non-empty}}; warnings (P34) = loadContour's, then per name of the plan's components whose record Component's language and map.language are both null
-            "no language on Component <name> and none in the map: typescript assumed", then Plan Spec's warnings (P34b). Nothing else written; nothing on an error.
+            "no language on Component <name> and none in the map: typescript assumed", then Plan Spec's warnings (P34b), then with args.checks rules' Plan Notes(per checks card kept, {id, extra, targets of
+            its plan card or []}, the layers.json fact, texts.guard) (P31b). Nothing else written; nothing on an error.
           steps: [{uses: contour}, {uses: planner}, {calls: Read Plan Checks}, {uses: rules}, {uses: builder}, {produces: Plan Document}]
           examples:
             - {given: 'examples.json["Plan Command 1"].given', when: planCommand, then: 'examples.json["Plan Command 1"].then'}
@@ -1773,6 +1774,7 @@ System:
             - {given: 'examples.json["Plan Command 17"].given', when: planCommand, then: 'examples.json["Plan Command 17"].then'}
             - {given: 'examples.json["Plan Command 18"].given', when: planCommand, then: 'examples.json["Plan Command 18"].then'}
             - {given: 'examples.json["Plan Command 19"].given', when: planCommand, then: 'examples.json["Plan Command 19"].then'}
+            - {given: 'examples.json["Plan Command 20"].given', when: planCommand, then: 'examples.json["Plan Command 20"].then'}
         - name: Read Plan Checks
           description: Files of `plan --checks`.
           behavior: >
@@ -3611,7 +3613,10 @@ System:
         Canonical Guardrail) give each code directory its guard rule ids (Guardrail Rules, src/rules/guardrails.ts), and
         the project guard's contract line, not the presence of layers.json, decides what is emitted. cli's Plan Command
         calls Plan Rules; builder writes Card Layers and Card Rules through Layers Arg and Rules Arg into the guard line of
-        every code card; the template guards (data, contract 3) read both arguments.
+        every code card; the template guards (data, contract 3) read both arguments. P31b (issue #42 Must hold 3, ledger
+        3–5): the guards check every rule per given code FILE, imports included (the standard library narrowed only by
+        the canonical rules, plus the record's dependencies of the card's Component), and read no file beside the record;
+        Plan Notes (src/rules/notes.ts) names in the plan document the hand copies a project still keeps beside it.
       language: typescript
       requirements: [Deterministic Core]
       functions:
@@ -3687,8 +3692,8 @@ System:
             contract 2 in P30, contract 3 since P31a, which never reads layers.json and is red without the argument — Rules
             Arg) read it as the fourth argument of `src`; Go keys a package by its directory, TypeScript a file by its
             first folder under src/ (the argument's directories mapped the same way); an import of another key not in
-            the importing key's list is red: Go "guard: package <dir> imports <import path>: the record has no 'uses'
-            from <dir> to <target dir> (allowed: <list joined by ', '> or none)", TypeScript "guard: <file>:<line> layer
+            the importing key's list is red, per importing file (P31b): Go "guard: <file>:<line>: imports <import path>: the
+            record has no 'uses' from <dir> to <target dir> (allowed: <list joined by ', '> or none)", TypeScript "guard: <file>:<line> layer
             <layer> imports layer <layer2>: the record has no 'uses' from <layer> to <layer2> (allowed: … or none)".
           steps:
             - produces: string
@@ -3696,14 +3701,8 @@ System:
             - given: 'layersArg([], undefined); layersArg(["zod"], undefined); layersArg([], {"users": []}); layersArg(["github.com/x/y"], {"pkg": ["x", "y"], ".": []})'
               when: layersArg
               then: '""; ""; " '''' ''{\"users\":[]}''"; " ''{\"pkg\":[\"x\",\"y\"],\".\":[]}''"'
-            - given: 'a tmp Go module "m" (go.mod "module m\n\ngo 1.22\n"; packages x, y, queue, users each one const; pkg/a.go imports m/x, pkg/b.go imports m/y; registry/x.go imports m/queue and m/users; decks/tools/layers.json {"layers": {"registry": ["queue", "users"]}, "pure": []}); node templates/go/decks/tools/guard.mjs src with the file and the three arguments allowArg([]) + layersArg([], L) + rulesArg({}) write: pkg/a.go and pkg/b.go with L {"pkg": ["x", "y"]}; registry/x.go with L {"registry": ["queue"]}'
-              ref: "templates/go/decks/tools/guard.mjs"
-              when: the guard runs in the module (GOFLAGS=-mod=mod GOPROXY=off GOTOOLCHAIN=local GOWORK=off)
-              then: 'exit 0 and no output for both pkg files (the union of alpha''s and beta''s uses, F5); exit 1 and the one line "guard: package registry imports m/users: the record has no ''uses'' from registry to users (allowed: queue)" — layers.json''s "layers" entry, which allows users, is not read (F3)'
-            - given: 'a tmp tree src/units/convert.ts (export const METRE = "m";) and src/report/line.ts (line 1 imports METRE from "../units/convert.js"); node templates/typescript/decks/tools/guard.mjs src src/report/line.ts with allowArg([]) + layersArg([], L) + rulesArg({}): L {"src/report": ["src/units"]}; L {"src/report": []}'
-              ref: "templates/typescript/decks/tools/guard.mjs"
-              when: the guard runs in the tree
-              then: 'exit 0 and no output; exit 1 and the one line "guard: src/report/line.ts:1 layer report imports layer units: the record has no ''uses'' from report to units (allowed: none)" (F6)'
+            - {given: 'examples.json["Layers Arg 2"].given', ref: "tests/fixtures/rules/examples.json, templates/go/decks/tools/guard.mjs", when: "the guard runs in the module (GOFLAGS=-mod=mod GOPROXY=off GOTOOLCHAIN=local GOWORK=off)", then: 'examples.json["Layers Arg 2"].then'}
+            - {given: 'examples.json["Layers Arg 3"].given', ref: "tests/fixtures/rules/examples.json, templates/typescript/decks/tools/guard.mjs", when: "the guard runs in the tree", then: 'examples.json["Layers Arg 3"].then'}
         - name: Plan Layers
           description: What `plan --checks` gives the builder — the edges when the project keeps decks/tools/layers.json and its guard speaks contract 2.
           behavior: >
@@ -3787,12 +3786,18 @@ System:
             decks/tools/guard.mjs, the line "// morph-guard-contract: 3"; data) take `src <files> <mods> <layers> <rules>`:
             a missing layers argument → exit 1 and "guard: no layer edges given — re-cut with morph plan", a missing rules
             argument → "guard: no Guardrail rules given — re-cut with morph plan" (fail closed, never "everything allowed":
-            issue #46); decks/tools/layers.json's layers, pure and entry are never read (TypeScript reads its packages
-            only). Per given code file (Go: never a _test.go) the rules of its directory, as each guard's header lists
+            issue #46); no file beside the record is read (P31b: decks/tools/layers.json not at all, TypeScript's packages
+            come from the `pkgs` argument only, the record's dependencies of the card's Component). Per given code file (Go: never a _test.go) the rules of its directory, as each guard's header lists
             them (no-shell, no-clock, no-network, no-env, no-process for TypeScript only, stdlib-only, pure), are checked
             on the syntax tree (Go: a go/parser scan run by `go run` in a temporary module; TypeScript: its compiler API);
             each finding is one line "guard: <file>:<line>: imports <path>|uses <name>: <the rule's text>", for the first
-            rule in that order that forbids it.
+            rule in that order that forbids it. P31b (#42 Must hold 3, #40 item 3): imports are checked per given code file
+            too, never per package — an import no rule forbids is allowed when it is of the standard library, of the
+            module (then the layer rule of Layers Arg) or of the `mods`/`pkgs` argument; any other is one line, Go "guard:
+            <file>:<line>: imports <path>: not a dependency the record gives this Component (allowed: the standard
+            library[, <mods joined by ', '>])", TypeScript as before ("guard: <file>:<line> package import \"<spec>\" (allowed:
+            node:*[, <pkgs>])"). Only the card's own files are read, so a package-mate's import is never its red: Blame
+            Log blames the card whose acceptance it is, the owner of the named file.
           steps:
             - produces: string
           examples:
@@ -3803,6 +3808,8 @@ System:
             - {given: 'examples.json["Rules Arg 3"].given', ref: "tests/fixtures/rules/examples.json, templates/typescript/decks/tools/guard.mjs", when: "the guard runs in the tree", then: 'examples.json["Rules Arg 3"].then'}
             - {given: 'examples.json["Rules Arg 4"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/parity/trees.json, tests/fixtures/rules/guard2/go.guard.txt, tests/fixtures/rules/guard2/typescript.guard.txt", when: "both guards run in the tree (the Go environment of example 2)", then: 'examples.json["Rules Arg 4"].then'}
             - {given: 'examples.json["Rules Arg 5"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/issue46/tree.json, tests/fixtures/rules/issue46/contour.yaml, tests/fixtures/rules/issue46/morph-map.json", when: "the guard runs in each state (the Go environment of example 2)", then: 'examples.json["Rules Arg 5"].then'}
+            - {given: 'examples.json["Rules Arg 6"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/p9a/", when: "the guard runs per file (the Go environment of example 2), then blameLog", then: 'examples.json["Rules Arg 6"].then'}
+            - {given: 'examples.json["Rules Arg 7"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/p9a/", when: "layerEdges, then the guard per file", then: 'examples.json["Rules Arg 7"].then'}
         - name: Guard Contract
           description: The contract number a project guard declares.
           behavior: >
@@ -3832,13 +3839,29 @@ System:
             - uses: rules
             - produces: Plan Rules Result
           examples:
-            - given: 'R, M = the ts-rename record and map (Layer Edges example 1); planRules(R, M, false, "// guard\n", "typescript"); planRules(R, M, true, "// guard\n", "typescript")'
-              when: planRules
-              then: '{ok: true, layers: null, rules: null, proseOnly: []}; {ok: false, error: "decks/tools/guard.mjs speaks contract 1: copy templates/typescript/decks/tools/guard.mjs from MorphV2"}'
-            - given: 'planRules(R, M, false, "// morph-guard-contract: 2\n", "typescript"); planRules(R, M, false, "// morph-guard-contract: 3\n", "typescript"); planRules(R, M, true, "// morph-guard-contract: 3\n", "typescript")'
-              when: planRules
-              then: '{ok: true, layers: {"src/report": ["src/units"], "src/units": []}, rules: null, proseOnly: []} (contract 2, no layers.json: the edges all the same, issue #46); {ok: true, layers: the same, rules: {"src/report": {}, "src/units": {}}, proseOnly: []}; the same again (layers.json changes nothing)'
+            - {given: 'examples.json["Plan Rules 1"].given', ref: "tests/fixtures/rules/examples.json", when: "planRules", then: 'examples.json["Plan Rules 1"].then'}
+            - {given: 'examples.json["Plan Rules 2"].given', ref: "tests/fixtures/rules/examples.json", when: "planRules", then: 'examples.json["Plan Rules 2"].then'}
             - {given: 'examples.json["Plan Rules 3"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/issue46/contour.yaml, tests/fixtures/rules/issue46/morph-map.json", when: "planRules", then: 'examples.json["Plan Rules 3"].then'}
+            - {given: 'examples.json["Plan Rules 4"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/single/cases.json", when: "planRules and planSpec, then the Go guard (the environment of Rules Arg 2)", then: 'examples.json["Plan Rules 4"].then'}
+            - {given: 'examples.json["Plan Rules 5"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/single/cases.json", when: "planRules and planSpec, then the TypeScript guard", then: 'examples.json["Plan Rules 5"].then'}
+        - name: Plan Notes
+          description: The notes `plan --checks` adds to the plan document when a file beside the record repeats what the record states (P31b, issue #42 Must hold 3 and ledger 3).
+          behavior: >
+            src/rules/notes.ts, pure (imports Guard Contract from ./guardrails.js and node:path's posix only):
+            `export interface NoteCard { id: string; extra: string | null; targets: readonly string[] }` and
+            planNotes(cards: readonly NoteCard[], layersFile: boolean, guard: string) → string[]. Guard Contract(guard)
+            below 3 → [] (a hand guard or an older copy may still read its files: nothing is said). Else, in order:
+            layersFile true → "decks/tools/layers.json is not read: the record is the source; delete it"; then per card, in
+            the given order, whose extra is not null and includes "== imports" (an `imports` stage of checks.json: a hand
+            whitelist) → "<id>: checks.json extra 'imports' checks <dir> against a hand list; the record's rules and
+            dependencies already govern imports per file: remove it", dir = the posix dirname of the card's first target,
+            "." when it has none. A note is not an error: the extra keeps running (it is phase data).
+          steps:
+            - calls: Guard Contract
+            - produces: string
+          examples:
+            - {given: 'examples.json["Plan Notes 1"].given', ref: "tests/fixtures/rules/examples.json", when: "planNotes", then: 'examples.json["Plan Notes 1"].then'}
+            - {given: 'examples.json["Plan Notes 2"].given', ref: "tests/fixtures/rules/examples.json", when: "planNotes", then: 'examples.json["Plan Notes 2"].then'}
       dataObjects:
         - name: Layer Edges Result
           description: Every code directory of the record with the directories it may import, or every error.
@@ -4840,6 +4863,7 @@ System:
             - {given: 'fillTemplate on "{{name}}:{{module}}:{{language}}" with {name: "{{module}}", module: "x/y", language: "go"}; then on "{name} {{Name}} {{name}" with {name: "n", module: "m", language: "l"}', when: fillTemplate, then: '"{{module}}:x/y:go" (one pass); then "{name} {{Name}} {{name}" unchanged'}
             - {given: 'a root holding b.txt and .a; a root that is a file f.txt; an absent root with language typescript on the fixture tree; an absent root with templates "nope" (cwd t)', when: initProject, then: 'code 2 RefusalError "target directory is not empty (first entry: .a)", the root still holds only .a and b.txt; "target is not a directory"; "template folder not found: typescript"; "template folder not found: common"; the absent roots still absent'}
             - {given: 'templates null; root t/gx (absent)', ref: "templates/", when: 'defaultTemplatesDir(); initProject(t/gx, {project: "gx", language: "go", module: "example.com/gx", templates: null}, "/"); listTemplateFiles on the fixture tree''s common and on t/none', then: 'path.resolve(<the repository root>, "templates"); code 0 with files = the distinct paths of listTemplateFiles(templates/common) and (templates/go) in code-unit order, among them "CLAUDE.md", "docs/AUTONOMY.md", "go.mod", "internal/testhelp/testhelp.go", "decks/tools/guard.mjs", "tools/tg.sh"; go.mod begins "module example.com/gx\n"; no written file holds "{{name}}", "{{module}}" or "{{language}}"; tools/tg.sh executable; [".gitignore", "README.md", "docs/notes.md", "tools/hello.sh"]; []'}
+            - {given: 'templates null; for each language "go", "typescript", "python" a fresh root t/<language> (absent); then the text of templates/<language>/decks/tools/guard.mjs for each language that has one (go, typescript)', ref: "templates/", when: 'initProject(t/<language>, {project: "p", language, module: null, templates: null}, "/")', then: 'code 0 each, no listed file and no written file is decks/tools/layers.json or ends in "layers.json" (P31b, #42 ledger 3: the record is the source); neither guard text contains "layers.json" (python has no guard)'}
       dataObjects:
         - name: Template Folder
           description: Morph's templates/<common|typescript|python|go>/, data; text files with the placeholders {{name}}, {{module}}, {{language}}.

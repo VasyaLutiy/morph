@@ -21,10 +21,50 @@
  },
  "Rules Arg 5": {
   "given": "issue #46: the tree of tests/fixtures/rules/issue46/tree.json (\"tree\": go.mod, runner/runner.go, daemon/daemon.go importing m/runner; the record tests/fixtures/rules/issue46/contour.yaml has no step uses: runner) in three states of decks/tools/layers.json: its \"with layers\" text (the layers key allows daemon → runner), its \"layers key removed\" text, the file absent; L and R = the layers and rules of Plan Rules example 3; node templates/go/decks/tools/guard.mjs src daemon/daemon.go \"\" L R, then src daemon/daemon.go alone",
-  "then": "in all three states: exit 1 and \"guard: package daemon imports m/runner: the record has no 'uses' from daemon to runner (allowed: none)\\n\"; then exit 1 and \"guard: no layer edges given — re-cut with morph plan\\n\" — a missing edge is red whatever layers.json says, and no argument is never allow-all"
+  "then": "in all three states: exit 1 and \"guard: daemon/daemon.go:3: imports m/runner: the record has no 'uses' from daemon to runner (allowed: none)\\n\" (the importing file and line, P31b); then exit 1 and \"guard: no layer edges given — re-cut with morph plan\\n\" — a missing edge is red whatever layers.json says, and no argument is never allow-all"
  },
  "Plan Rules 3": {
   "given": "R46, M46 = the record and map of tests/fixtures/rules/issue46/ (System guardrails [No Shell]); planRules(R46, M46, true, \"// morph-guard-contract: 3\\n\", \"go\"); planRules(R46, M46, false, \"// morph-guard-contract: 3\\n\", \"go\"); planRules(R46, M46, false, \"// morph-guard-contract: 2\\n\", \"go\"); planRules(R46, M46, true, \"// guard\\n\", \"go\")",
   "then": "{ok: true, layers: {\"daemon\": [], \"runner\": []}, rules: {\"daemon\": {\"no-shell\": \"Guardrail 'No Shell' of System issue46\"}, \"runner\": {\"no-shell\": \"Guardrail 'No Shell' of System issue46\"}}, proseOnly: []}; the same; {ok: false, error: \"decks/tools/guard.mjs speaks contract 2: copy templates/go/decks/tools/guard.mjs from MorphV2\"}; {ok: false, error: \"decks/tools/guard.mjs speaks contract 1: copy templates/go/decks/tools/guard.mjs from MorphV2\"}"
+ },
+ "Layers Arg 2": {
+  "given": "a tmp Go module \"m\" (go.mod \"module m\\n\\ngo 1.22\\n\"; packages x, y, queue, users each one const; pkg/a.go imports m/x, pkg/b.go imports m/y; registry/x.go imports m/queue and m/users; decks/tools/layers.json {\"layers\": {\"registry\": [\"queue\", \"users\"]}, \"pure\": []}); node templates/go/decks/tools/guard.mjs src with the file and the three arguments allowArg([]) + layersArg([], L) + rulesArg({}) write: pkg/a.go and pkg/b.go with L {\"pkg\": [\"x\", \"y\"]}; registry/x.go with L {\"registry\": [\"queue\"]}",
+  "then": "exit 0 and no output for both pkg files (the union of alpha's and beta's uses, F5); exit 1 and the one line \"guard: registry/x.go:5: imports m/users: the record has no 'uses' from registry to users (allowed: queue)\" (the importing file and line, P31b) — layers.json's \"layers\" entry, which allows users, is not read (F3)"
+ },
+ "Layers Arg 3": {
+  "given": "a tmp tree src/units/convert.ts (export const METRE = \"m\";) and src/report/line.ts (line 1 imports METRE from \"../units/convert.js\"); node templates/typescript/decks/tools/guard.mjs src src/report/line.ts with allowArg([]) + layersArg([], L) + rulesArg({}): L {\"src/report\": [\"src/units\"]}; L {\"src/report\": []}",
+  "then": "exit 0 and no output; exit 1 and the one line \"guard: src/report/line.ts:1 layer report imports layer units: the record has no 'uses' from report to units (allowed: none)\" (F6)"
+ },
+ "Plan Rules 1": {
+  "given": "R, M = the ts-rename record and map (Layer Edges example 1); planRules(R, M, false, \"// guard\\n\", \"typescript\"); planRules(R, M, true, \"// guard\\n\", \"typescript\")",
+  "then": "{ok: true, layers: null, rules: null, proseOnly: []}; {ok: false, error: \"decks/tools/guard.mjs speaks contract 1: copy templates/typescript/decks/tools/guard.mjs from MorphV2\"}"
+ },
+ "Plan Rules 2": {
+  "given": "planRules(R, M, false, \"// morph-guard-contract: 2\\n\", \"typescript\"); planRules(R, M, false, \"// morph-guard-contract: 3\\n\", \"typescript\"); planRules(R, M, true, \"// morph-guard-contract: 3\\n\", \"typescript\")",
+  "then": "{ok: true, layers: {\"src/report\": [\"src/units\"], \"src/units\": []}, rules: null, proseOnly: []} (contract 2, no layers.json: the edges all the same, issue #46); {ok: true, layers: the same, rules: {\"src/report\": {}, \"src/units\": {}}, proseOnly: []}; the same again (layers.json changes nothing)"
+ },
+ "Plan Notes 1": {
+  "given": "C = [{id: \"user-registry\", extra: \"echo '== imports'; go list ./users\\n\", targets: [\"users/registry.go\"]}, {id: \"user-registry-judge\", extra: null, targets: [\"users/registry_examples_test.go\"]}, {id: \"user-secrets\", extra: \"echo '== clock'; true\\n\", targets: [\"users/secrets.go\"]}, {id: \"root-main\", extra: \"echo '== imports'; true\\n\", targets: []}]; planNotes(C, true, \"// morph-guard-contract: 3\\n\"); planNotes(C, false, \"x\\n// morph-guard-contract: 4\\n\")",
+  "then": "[\"decks/tools/layers.json is not read: the record is the source; delete it\", \"user-registry: checks.json extra 'imports' checks users against a hand list; the record's rules and dependencies already govern imports per file: remove it\", \"root-main: checks.json extra 'imports' checks . against a hand list; the record's rules and dependencies already govern imports per file: remove it\"]; the same without its first entry"
+ },
+ "Plan Notes 2": {
+  "given": "C of example 1; planNotes(C, true, \"// morph-guard-contract: 2\\n\"); planNotes(C, true, \"// guard\\n\"); planNotes([], false, \"// morph-guard-contract: 3\\n\"); planNotes([{id: \"a\", extra: \"echo '== imports'\\n\", targets: [\"a/a.go\"]}], false, \"// morph-guard-contract: 3\\n\")",
+  "then": "[]; []; []; [\"a: checks.json extra 'imports' checks a against a hand list; the record's rules and dependencies already govern imports per file: remove it\"]"
+ },
+ "Rules Arg 6": {
+  "given": "MorphStudio P9a run 2 (#40 item 3; run 20261011-122303, its v1 answers): tests/fixtures/rules/p9a/tree.json \"tree\" (go.mod \"module morphstudio\\n\\ngo 1.22\\n\"; users/registry.go importing encoding/hex and io/fs, users/secrets.go importing io/fs, users/tokens.go; queue/queue.go) written to a tmp root with its \"layersJson\" (f85a8e7's, no users entry) at decks/tools/layers.json; L and R = JSON of the layers and of the rules of planRules(the record tests/fixtures/rules/p9a/contour.yaml, the map tests/fixtures/rules/p9a/morph-map.json, true, \"// morph-guard-contract: 3\\n\", \"go\"); node templates/go/decks/tools/guard.mjs src <f> \"\" L R for f = users/registry.go, users/secrets.go, users/tokens.go (the Go environment of Rules Arg 2); then the same three after \"forbidden\"'s users/registry.go is written over it (it adds the import github.com/google/uuid, line 5); then blameLog(that registry.go stdout, \"user-registry\", tree.json's \"owners\", TREE_PROFILES.map((t) => t.fileLine), () => true)",
+  "then": "exit 0 and no output for all three (encoding/hex and io/fs are the standard library and no rule of the record narrows it; run 2 had user-registry red 3/3 at the hand imports list, token-lookup red with it); then exit 1 and stdout \"guard: users/registry.go:5: imports github.com/google/uuid: not a dependency the record gives this Component (allowed: the standard library)\\n\" for users/registry.go, exit 0 and no output for users/secrets.go and users/tokens.go (a package-mate's import is not their red); then {cards: [\"user-registry\"], outside: []} — the owner of users/registry.go, not token-lookup"
+ },
+ "Rules Arg 7": {
+  "given": "MorphStudio P9a run 1 (the users layer, #41 F1): layerEdges(the record and the map of tests/fixtures/rules/p9a/); then the tree and layersJson of example 6 written to a tmp root and node templates/go/decks/tools/guard.mjs src users/registry.go,users/secrets.go,users/tokens.go \"\" <JSON of those edges> \"{}\" (the Go environment of Rules Arg 2)",
+  "then": "{ok: true, edges: {\"queue\": [], \"registry\": [\"queue\"], \"users\": []}} (users has its entry from the record; run 1 was red at the guard on every users card because the hand layers.json lacked it); exit 0 and no output"
+ },
+ "Plan Rules 4": {
+  "given": "tests/fixtures/rules/single/cases.json \"go\" (#42 ledger 4, one rule kind per record): for each key K of its \"records\" (base; layers: no step uses: lib; dependencies: no Component uses; Pure, No Shell, No Clock, No Network, No Env, Stdlib Only: that Guardrail on Component app) its \"tree\" written to a fresh tmp root, R = loadContour(records[K], \"contour.yaml\"), M = loadMap(its \"map\", \"morph-map.json\"), P = planRules(R, M, false, \"// morph-guard-contract: 3\\n\", \"go\"), S = planSpec({record: R, map: M, spec: \"contour.yaml\", components: [\"app\", \"lib\"], judge: false, hasFile: () => true}); node templates/go/decks/tools/guard.mjs src app/app.go <S.uses[\"app-main\"] joined by \",\"> <JSON of P.layers> <JSON of P.rules> (the Go environment of Rules Arg 2); then for every K once per key B of its \"beside\" (decks/tools/layers.json allowing everything, a stale decks/tools/guardrails.json), in a fresh root with beside[B] written at B",
+  "then": "for each K {status, stdout} equal to its \"then\"[K], which for every K but base differs from \"then\".base (changing only the record changes the verdict); with any beside file again \"then\"[K], base included (a file beside the record changes nothing)"
+ },
+ "Plan Rules 5": {
+  "given": "the same for cases.json \"typescript\" (keys base, layers, dependencies, Pure, No Clock, No Env, No Process, Stdlib Only; beside decks/tools/layers.json with \"packages\": [\"zod\"] and a stale decks/tools/guardrails.json), the guard templates/typescript/decks/tools/guard.mjs on src/app/main.ts, planRules(R, M, false, \"// morph-guard-contract: 3\\n\", \"typescript\"), node_modules in each root a symlink to the repository's",
+  "then": "as example 4, with cases.json \"typescript\" \"then\": the dependencies record stays red beside a layers.json listing zod (#42 ledger 3: a package comes from System.dependencies through Component.uses only)"
  }
 }

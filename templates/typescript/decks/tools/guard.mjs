@@ -4,7 +4,8 @@
 // morph-guard-contract: 3
 //   node guard.mjs src <file,file,...> <pkgs> <layers> <rules>  these files, all four arguments written by
 //                                                        `morph plan --checks` from the record:
-//     pkgs   = the packages the card's Component declares (`uses`), allowed in these files, ","-joined ('' none);
+//     pkgs   = the packages the card's Component declares (`uses`, of System.dependencies), ","-joined ('' none): the
+//              only npm packages these files may import (node:* is always allowed unless a rule forbids it);
 //     layers = JSON {"<dir>": ["<dir it may import>", ...]} from the `uses: <Component>` steps (contract 2); a dir's
 //              layer is its first folder under src/;
 //     rules  = JSON {"<dir>": {"<rule id>": "<the Guardrail and where the record attaches it>"}} from the record's
@@ -22,18 +23,12 @@
 //   no-process   no process, no console
 //   stdlib-only  no package import (node:* and relative paths only), the declared packages included
 //   pure         of node:* only node:path; no fetch, WebSocket, XMLHttpRequest, Date, console, process, Math.random
-// decks/tools/layers.json: only "packages", npm packages every file of src/ may import (node:* is always allowed
-// unless a rule forbids it); a package one Component uses is declared in contour.yaml instead and reaches the guard per
-// card.
+// No file beside the record is read: every allowed package, layer and rule comes in the arguments (P31b, issue #42).
 import ts from "typescript";
 import fs from "node:fs";
 import path from "node:path";
 
 const bad = [];
-const CONF = fs.existsSync("decks/tools/layers.json")
-  ? JSON.parse(fs.readFileSync("decks/tools/layers.json", "utf8"))
-  : {};
-const PACKAGES = CONF.packages ?? [];
 const RULE_ORDER = ["no-shell", "no-clock", "no-network", "no-env", "no-process", "stdlib-only", "pure"];
 const NET_MODULES = ["net", "http", "https", "http2", "dgram", "tls"];
 
@@ -126,7 +121,7 @@ function nameRules(n) {
 }
 
 function checkSrc(files, allowed, edges, rules) {
-  const packages = [...PACKAGES, ...allowed];
+  const packages = allowed;
   const layers = edgeLayers(edges);
   for (const file of files ?? tsFiles("src")) {
     const sf = parse(file);

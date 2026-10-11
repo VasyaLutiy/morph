@@ -1,0 +1,33 @@
+{
+  "phase": "p31b",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates"],
+  "fullExclude": ["tests/rules/notes.examples.test.ts", "tests/cli/planCommand.p31b.examples.test.ts",
+    "tests/rules/guardrails.p31b.examples.test.ts", "tests/scaffold/initProject.p31b.examples.test.ts",
+    "tests/rules/guardrails.examples.test.ts", "tests/rules/layers.examples.test.ts"],
+  "cards": [
+    { "id": "plan-notes" },
+    { "id": "plan-command" },
+    { "id": "plan-notes-judge", "files": [{ "file": "tests/rules/notes.examples.test.ts", "min": 2, "max": 6, "new": true,
+      "lits": ["Plan Notes example 1", "Plan Notes example 2", "decks/tools/layers.json is not read: the record is the source; delete it",
+        "checks.json extra 'imports' checks users against a hand list; the record's rules and dependencies already govern imports per file: remove it",
+        "root-main", "// morph-guard-contract: 4"] }] },
+    { "id": "plan-command-judge", "files": [{ "file": "tests/cli/planCommand.p31b.examples.test.ts", "min": 1, "max": 5, "new": true,
+      "lits": ["Plan Command example 20", "cli/goMini.imports.checks.json", "cli/goMiniGuarded.yaml", "morph-guard-contract: 3",
+        "decks/tools/layers.json is not read: the record is the source; delete it",
+        "clamp-value: checks.json extra 'imports' checks calc against a hand list", "percent-of", "format-share",
+        "calc/Clamp Value: step produces 'int' names no Data Object or Event of the record"] }] },
+    { "id": "layer-edges-judge", "files": [{ "file": "tests/rules/layers.examples.test.ts", "min": 11, "max": 11, "new": false,
+      "lits": ["Layers Arg example 2", "guard: registry/x.go:5: imports m/users: the record has no 'uses' from registry to users (allowed: queue)"] }] },
+    { "id": "guardrail-rules-judge", "files": [
+      { "file": "tests/rules/guardrails.examples.test.ts", "min": 14, "max": 14, "new": false,
+        "lits": ["Rules Arg example 5", "guard: daemon/daemon.go:3: imports m/runner: the record has no 'uses' from daemon to runner (allowed: none)"] },
+      { "file": "tests/rules/guardrails.p31b.examples.test.ts", "min": 4, "max": 8, "new": true,
+        "lits": ["Rules Arg example 6", "Rules Arg example 7", "Plan Rules example 4", "Plan Rules example 5",
+          "rules/p9a/tree.json", "rules/p9a/contour.yaml", "rules/p9a/morph-map.json", "rules/single/cases.json",
+          "imports github.com/google/uuid: not a dependency the record gives this Component (allowed: the standard library)",
+          "user-registry", "app-main", "morph-guard-contract: 3", "node_modules", "GOTOOLCHAIN"] }] },
+    { "id": "init-project-judge", "files": [{ "file": "tests/scaffold/initProject.p31b.examples.test.ts", "min": 1, "max": 3, "new": true,
+      "lits": ["Init Project example 6", "layers.json", "typescript", "python", "guard.mjs"] }] }
+  ]
+}
