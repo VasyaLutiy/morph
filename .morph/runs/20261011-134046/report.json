@@ -1,0 +1,112 @@
+{
+  "runId": "20261011-134046",
+  "completedAt": 1791726203945,
+  "branch": "morph/20261011-134046",
+  "processor": "ds",
+  "generations": 2,
+  "outcomes": [
+    {
+      "customId": "open-branch",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "open-branch.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "1702fce7069b11558c19702e3159c872268ef5ac",
+      "diffstat": {
+        "files": 1,
+        "insertions": 8,
+        "deletions": 4
+      }
+    },
+    {
+      "customId": "run-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/runCommand.examples.test.ts\n== names tests/cli/runCommand.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "778e18616bb5d496b241325d3ab722c8c91212fc",
+      "diffstat": {
+        "files": 1,
+        "insertions": 1,
+        "deletions": 1
+      }
+    },
+    {
+      "customId": "open-branch-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "open-branch-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/git/branch.examples.test.ts\n== names tests/git/branch.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "45141f436c217b2436e7766f35481120735dea04",
+      "diffstat": {
+        "files": 1,
+        "insertions": 47,
+        "deletions": 14
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 29709,
+    "outputTokens": 11505,
+    "cost": 0.0227187,
+    "requests": 4
+  },
+  "requests": [
+    {
+      "customId": "open-branch.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791726047-bG5mvJJqcRKVFXJkPg06",
+      "inputTokens": 5805,
+      "outputTokens": 773,
+      "cost": 0.0026691,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "open-branch.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791726047-W7ogaPr7sfVMFw42v6TV",
+      "inputTokens": 5805,
+      "outputTokens": 425,
+      "cost": 0.0022515,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791726047-BRqDo7NVL0wNUdYX4OXD",
+      "inputTokens": 9080,
+      "outputTokens": 3059,
+      "cost": 0.0063948,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "open-branch-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791726065-QxfVhNFrpHBtmpaolUjb",
+      "inputTokens": 9019,
+      "outputTokens": 7248,
+      "cost": 0.0114033,
+      "finishReason": "stop",
+      "error": null
+    }
+  ],
+  "rounds": [
+    {
+      "round": 0,
+      "reds": []
+    }
+  ]
+}
