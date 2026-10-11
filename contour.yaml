@@ -1698,7 +1698,8 @@ System:
             hazards = Find Hazards(deck), then the weighing's; generations = Layer Generations(deck); document {deck: deckPath as given, cards: the count,
             generations, errors and warnings: the hazards of each severity counted, hazards, weights: the weighing's}, keys in that order; builds = Check
             Builds(root, deckPath, deck, generations, env): not null → document.builds = it (a key after weights), errors also counts every missing
-            and every break of it, warnings every note. Code 2 when errors > 0, else 0.
+            and every break of it, warnings every note. unproven = Unproven Stubs(root, deckPath, deck) (P28b): not empty →
+            document.unproven = it, the last key, and warnings also counts each. Code 2 when errors > 0, else 0.
           steps: [{calls: Read Deck File}, {uses: cards}, {uses: planner-subset}, {produces: Deck Check Document}]
           examples:
             - {given: 'examples.json["Deck Check 1"].given', when: "deckCheckCommand(root, \"d.json\", 500000)", then: 'examples.json["Deck Check 1"].then'}
@@ -1707,6 +1708,7 @@ System:
             - {given: 'examples.json["Deck Check 4"].given', when: 'deckCheckCommand(root, <deck>, 500000, {PATH})', then: 'examples.json["Deck Check 4"].then'}
             - {given: 'examples.json["Deck Check 5"].given', when: 'deckCheckCommand(root, <deck>, 500000, {PATH})', then: 'examples.json["Deck Check 5"].then'}
             - {given: 'examples.json["Deck Check 6"].given', when: main, then: 'examples.json["Deck Check 6"].then'}
+            - {given: 'examples.json["Deck Check 7"].given', when: 'deckCheckCommand(root, <deck>, 500000, {PATH})', then: 'examples.json["Deck Check 7"].then'}
         - name: Run Command
           description: "`morph run`: processor, deck, hazards, run branch, Run Deck, archive; one Run Document."
           behavior: >
@@ -1828,7 +1830,7 @@ System:
           schema: "{ code: 0|1|2|3|4, document: unknown }"
         - name: Deck Check Document
           description: stdout of deck check.
-          schema: "{ deck: string, cards: number, generations: string[][], errors: number, warnings: number, hazards: Hazard[], weights: SliceWeight[], builds?: Build Check[] }"
+          schema: "{ deck: string, cards: number, generations: string[][], errors: number, warnings: number, hazards: Hazard[], weights: SliceWeight[], builds?: Build Check[], unproven?: Unproven[] }"
         - name: Plan Document
           description: stdout of plan.
           schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]>, out: string | null }"
@@ -3072,6 +3074,28 @@ System:
             - given: 'a tmp root: d.json = stub.cards.json; _stubs/ calc/a.go, report/c.go, src/t.ts, tests/t.test.ts; bin/go printing "vet: ./calc/zz.go:1:2: go ran with $GOFLAGS", node_modules/.bin/tsc printing "src/t.ts(1,1): error TS1: own" and "src/zz.ts(2,3): error TS2: tsc ran with $NO_COLOR $3", each exiting non-zero; env {PATH: <root>/bin + ":" + PATH}'
               when: checkBuilds
               then: 'checkBuilds.json["cards"]: a breaks ["calc/zz.go:1:2: go ran with -mod=mod"]; n note "the acceptance writes no $P/full.json: not built"; t breaks ["src/zz.ts(2,3): error TS2: tsc ran with 1 probe/t/tsconfig.card.json"] (its own src/t.ts line dropped); p note "python has no compile or typecheck step: not built"; b -mod=vendor, missing ["calc/n.go", "calc/b.go", "calc/b_test.go"]; u breaks both tsc lines (src/t.ts is not its own); j 5 missing'
+        - name: Unproven Stubs
+          description: The committed targets of a deck whose stub-tree build could not tell them from their stubs.
+          behavior: >
+            src/cli/unprovenStubs.ts (P28b, issue #22 M3), layer cli, node:fs and node:path and the cards layer only:
+            `export interface Unproven { card: string; path: string; reason: string }`, unprovenStubs(root, deckPath, deck)
+            → Unproven[]. stubDir = path.posix.join(path.posix.dirname(deckPath), "_stubs"), a directory under root
+            (path.resolve(root, stubDir)) or not. For every card of deck.cards in order and every target t of its targets in
+            order whose root/t is a regular file (the committed file the card re-cuts; a new file is never listed): with the
+            directory — stubDir/t under root not a regular file → {card: its customId, path: t, reason: "no stub: the build
+            used the committed file"}; its bytes equal to root/t's → reason "the stub equals the committed file: the build
+            proved nothing about its names"; else nothing. Without the directory — Transaction Deck marks deck.cards → reason
+            "no _stubs/ beside the deck: no build ran"; else nothing (a plain deck without stubs is as before). Nothing is
+            written. Why: a rewrite whose stub is the committed file hides every name a kept neighbour uses that the new
+            answer may drop (MorphStudio P8b, P7c); the list says the check did not see them.
+          steps:
+            - calls: Transaction Deck
+            - produces: Unproven
+          examples:
+            - given: 'a tmp root holding the files of tests/fixtures/cli/unproven.json: calc/a.go, src/b.ts, src/c.ts; decks/q/deck.json (a [calc/a.go] generate, b [src/b.ts, src/c.ts] patch, n [calc/new.go] generate, acceptances "exit 0") with decks/q/_stubs/ calc/a.go equal to the tree''s, src/b.ts different, calc/new.go; decks/t/deck.json the same cards with TRANSACTION_MARK + "\n" before each acceptance, no _stubs/; decks/u/deck.json the plain cards, no _stubs/. Read Deck File of "decks/q/deck.json", then "decks/t/deck.json", then "decks/u/deck.json"'
+              ref: "tests/fixtures/cli/unproven.json"
+              when: unprovenStubs(root, deckPath, deck)
+              then: '[{card: "a", path: "calc/a.go", reason: "the stub equals the committed file: the build proved nothing about its names"}, {card: "b", path: "src/c.ts", reason: "no stub: the build used the committed file"}] (src/b.ts''s stub differs; calc/new.go is not on disk); then [{card: "a", path: "calc/a.go"}, {card: "b", path: "src/b.ts"}, {card: "b", path: "src/c.ts"}], each reason "no _stubs/ beside the deck: no build ran"; then []'
       dataObjects:
         - name: Go Tree
           description: The Go files of a module (relative, sorted) and, per file, the module's own packages it imports as directories.
@@ -3085,6 +3109,9 @@ System:
         - name: Stub Tree
           description: One card's first-attempt tree for the deck check.
           schema: "{ card: string; generation: number; language: string | null; exports: string[]; config: { name: string; text: string } | null; stubs: Record<string, string>; own: string[]; missing: string[] }"
+        - name: Unproven
+          description: One committed target the deck check's build proved nothing about (P28b).
+          schema: "{ card: string; path: string; reason: string }"
         - name: Build Check
           description: One card's stub tree compiled by deck check.
           schema: "{ card: string; generation: number; language: string | null; stubbed: number; missing: string[]; breaks: string[]; note: string | null }"

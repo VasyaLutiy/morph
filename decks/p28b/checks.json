@@ -1,0 +1,16 @@
+{
+  "phase": "p28b",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates"],
+  "fullExclude": ["tests/cli/unprovenStubs.examples.test.ts", "tests/cli/deckCheck.p28.examples.test.ts"],
+  "cards": [
+    { "id": "unproven-stubs" },
+    { "id": "deck-check" },
+    { "id": "unproven-stubs-judge", "files": [{ "file": "tests/cli/unprovenStubs.examples.test.ts", "min": 1, "max": 7, "new": true,
+      "lits": ["Unproven Stubs example 1", "cli/unproven.json", "decks/q/deck.json", "decks/t/deck.json", "decks/u/deck.json",
+        "the stub equals the committed file: the build proved nothing about its names", "no stub: the build used the committed file",
+        "no _stubs/ beside the deck: no build ran", "src/c.ts"] }] },
+    { "id": "deck-check-judge", "files": [{ "file": "tests/cli/deckCheck.p28.examples.test.ts", "min": 1, "max": 7, "new": true,
+      "lits": ["Deck Check example 7", "cli/unproven.json", "cli/deckCheck.unproven.json", "unproven", "weights", "120000"] }] }
+  ]
+}

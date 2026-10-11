@@ -195,6 +195,10 @@
     "given": "the root of Check Builds 3 (d.json = planner/stub.cards.json, its _stubs/, bin/go and node_modules/.bin/tsc scripts); main(argv [\"deck\", \"check\", \"--deck\", \"d.json\", \"--root\", <root>], deps {env: {PATH: <root>/bin + \":\" + PATH}, now: () => 0, cwd: \"/\", transport: null}, io collecting)",
     "then": "2; one stdout document with errors 17 (9 missing + 8 breaks), warnings 12 (9 implicit-read hazards + 3 notes: n, p, v) and builds equal to checkBuilds.json[\"cards\"] (Main hands deps.env to Deck Check); stderr [\"morph deck check: exit 2\\n\"]"
   },
+  "Deck Check 7": {
+    "given": "a tmp root holding the files of tests/fixtures/cli/unproven.json (Unproven Stubs example 1); the deck \"decks/u/deck.json\", then \"decks/q/deck.json\", then \"decks/t/deck.json\"; env {PATH}",
+    "then": "code 0 each; documents equal to tests/fixtures/cli/deckCheck.unproven.json[\"u\"], [\"q\"], [\"t\"]: u exactly main's (warnings 3, no builds, no unproven key, weights the last key); q main's (warnings 6: three implicit-read hazards and three notes) with warnings 8 and unproven the last key, Unproven Stubs 1's first list; t main's (warnings 3, no builds key) with warnings 6 and unproven the last key, its second list"
+  },
   "Run Command 3": {
     "given": "processor \"nope\"; then \"bad\" with MORPH_PROCESSOR_bad_TYPE \"x\" in env",
     "then": "code 4 UsageError \"processor nope is not configured\"; then \"processor bad is not configured: MORPH_PROCESSOR_bad_TYPE must be one of openrouter, stub (got 'x')\"; no morph/* branch"
