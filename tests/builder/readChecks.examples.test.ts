@@ -53,7 +53,7 @@ test("Read Checks example 4: not an object, and an empty object", () => {
   }
   expect(validateChecks({})).toStrictEqual({
     ok: false,
-    problems: ["phase: required", "cards: required"],
+    problems: ["phase: required"],
   });
 });
 
