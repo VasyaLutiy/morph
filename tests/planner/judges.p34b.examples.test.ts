@@ -1,0 +1,53 @@
+import { expect, test } from "vitest";
+import { loadContour, loadMap } from "../../src/contour/load.js";
+import { TYPESCRIPT } from "../../src/language/profiles.js";
+import { cutComponent } from "../../src/planner/cut.js";
+import { cutJudges } from "../../src/planner/judges.js";
+import { fixture, fixtureJson } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+import type { Plan } from "../../src/planner/types.js";
+
+test("Cut Judges example 5: the Judge cards of the events record match the fixture, name their Callees and keep the examples of a group", () => {
+  const R = loadContour(fixture("planner/events.yaml"), "events.yaml");
+  if (!R.ok) throw new Error(R.error);
+  const M = loadMap(fixture("planner/events.map.json"), "events.map.json");
+  if (!M.ok) throw new Error(M.error);
+  const ORDERS = R.record.system.groups[0];
+  const CATALOG = R.record.system.groups[1];
+  const cuts = [ORDERS, CATALOG].flatMap((c) => {
+    const r = cutComponent({
+      record: R.record,
+      component: c,
+      map: M.map,
+      docs: [],
+      spec: "events.yaml",
+    });
+    if (!r.ok) throw new Error(r.error);
+    return r.cuts;
+  });
+  const cards = cutJudges({
+    record: R.record,
+    cuts,
+    map: M.map,
+    docs: [],
+    defaultProfile: TYPESCRIPT,
+    hasFile: (p) => p === "tests/helpers.ts",
+  });
+  expect(cards.map((c) => c.customId)).toStrictEqual([
+    "place-order-judge",
+    "cancel-order-judge",
+    "orders-api-judge",
+    "prices-judge",
+  ]);
+  const plan = fixtureJson("planner/events.plan.json") as Plan;
+  for (const card of cards) {
+    const expected = plan.cards.find((c) => c.customId === card.customId) as Card;
+    expect(card).toStrictEqual(expected);
+  }
+  const placeOrder = cards.find((c) => c.customId === "place-order-judge") as Card;
+  expect(placeOrder.instruction.endsWith("\n\nCallee Price Cart: Prices every item of a cart.")).toBe(true);
+  const prices = cards.find((c) => c.customId === "prices-judge") as Card;
+  expect(prices.instruction).toContain('e.g. "List Prices example 1".');
+  expect(prices.instruction).toContain("Examples of Function List Prices:");
+  expect(prices.instruction).not.toContain("Examples of Function Format Price");
+});
