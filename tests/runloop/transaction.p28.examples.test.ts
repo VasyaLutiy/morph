@@ -1,0 +1,273 @@
+import { expect, test } from "vitest";
+import { runTransaction } from "../../src/runloop/transaction.js";
+import { TRANSACTION_MARK } from "../../src/cards/transaction.js";
+import { fakeFetch, tmpRoot } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+import type { RunDeps, RunInput, VariantRecord } from "../../src/runloop/types.js";
+
+const M = TRANSACTION_MARK + "\n";
+const fence = (body: string): string => "```ts\n" + body + "```\n";
+
+function card(
+  customId: string,
+  target: string,
+  acceptance: string,
+  dependsOn: string[] = [],
+  contextSlice: string[] = [],
+): Card {
+  return {
+    customId,
+    intent: "generate",
+    targets: [target],
+    contextSlice,
+    instruction: "write " + target,
+    acceptance,
+    model: null,
+    maxTokens: null,
+    reasoning: null,
+    variants: 1,
+    dependsOn,
+  };
+}
+
+function makeDeps(
+  root: string,
+  commits: string[],
+  records: VariantRecord[],
+): RunDeps {
+  return {
+    config: {
+      id: "stub",
+      type: "stub",
+      model: "stub",
+      apiKey: null,
+      baseUrl: "https://openrouter.ai/api/v1",
+      route: "sync",
+      concurrency: 4,
+      providerOrder: null,
+      reasoning: null,
+      timeoutMs: 600000,
+      maxRetries: 0,
+      answersDir: root,
+    },
+    transport: { fetch: fakeFetch().fetch, sleep: async () => {} },
+    commit: (id, targets) => {
+      commits.push(id);
+      return {
+        commit: "sha-" + id,
+        diffstat: { files: targets.length, insertions: 1, deletions: 0 },
+      };
+    },
+    now: () => 0,
+    env: { PATH: process.env.PATH ?? "" },
+    onVariant: (record: VariantRecord): void => {
+      records.push(record);
+    },
+  };
+}
+
+function makeInput(root: string, cards: Card[], maxRetryBatches = 2): RunInput {
+  return {
+    root,
+    runId: "t1",
+    branch: "morph/t1",
+    deck: { cards, externalDependsOn: [] },
+    budget: { maxCards: 99, maxRetryBatches, deadline: 1e12 },
+  };
+}
+
+test("Run Transaction example 14: a Go red naming a kept file of a target's package blames its owner, and a kept file outside any target stays outside", async () => {
+  const L = "calc/b.go:3:31: undefined: fmtOut";
+
+  const r1 = tmpRoot("morph-tx-");
+  try {
+    r1.write("calc/b.go", "package calc\n\nfunc Report() string { return fmtOut() }\n");
+    r1.write("g.md", fence("package calc\n\nfunc Sum(a, b int) int { return a + b }\n"));
+    r1.write(
+      "g.r1.md",
+      fence(
+        'package calc\n\nfunc Sum(a, b int) int { return a + b }\n\nfunc fmtOut() string { return "" }\n',
+      ),
+    );
+    r1.write("gj.md", fence("package calc\n"));
+    const commits: string[] = [];
+    const records: VariantRecord[] = [];
+    const cards: Card[] = [
+      card(
+        "g",
+        "calc/a.go",
+        M + 'grep -q fmtOut calc/a.go || { echo "' + L + '"; exit 1; }',
+      ),
+      card(
+        "gj",
+        "calc/a_examples_test.go",
+        M + 'grep -q fmtOut calc/a.go || { echo "vet: ' + L + '"; exit 1; }',
+        ["g"],
+      ),
+    ];
+    const result = await runTransaction(
+      makeInput(r1.root, cards),
+      makeDeps(r1.root, commits, records),
+    );
+
+    const g = result.outcomes[0];
+    expect(g.status).toBe("written");
+    expect(g.reason).toBe(null);
+    expect(g.attempts).toBe(2);
+    expect(g.winningVariant).toBe("g.r1.v1");
+    expect(g.lastRound).toBeUndefined();
+    expect(g.acceptanceLog).toBe("");
+    expect(g.earlierFailures).toStrictEqual([L + "\n"]);
+
+    const gj = result.outcomes[1];
+    expect(gj.status).toBe("written");
+    expect(gj.reason).toBe(null);
+    expect(gj.attempts).toBe(1);
+    expect(gj.winningVariant).toBe("gj.v1");
+    expect(gj.lastRound).toBeUndefined();
+    expect(gj.acceptanceLog).toBe("");
+    expect(gj.earlierFailures).toStrictEqual(["vet: " + L + "\n"]);
+
+    expect(result.report.requests?.map((row) => row.customId)).toStrictEqual([
+      "g.v1",
+      "gj.v1",
+      "g.r1.v1",
+    ]);
+    expect(commits).toStrictEqual(["g.r1", "gj"]);
+    expect(result.report.rounds).toStrictEqual([
+      {
+        round: 0,
+        reds: [
+          { customId: "g", blamed: ["g"], log: L + "\n" },
+          { customId: "gj", blamed: ["g"], log: "vet: " + L + "\n" },
+        ],
+      },
+      { round: 1, reds: [] },
+    ]);
+    expect(result.report.stop).toBeUndefined();
+    expect(result.report.fault).toBeUndefined();
+    const retryG = records[records.length - 1];
+    expect(retryG).toBeDefined();
+    expect(JSON.stringify(retryG.request)).toContain(L);
+    expect(r1.read("calc/a.go")).toContain("fmtOut");
+  } finally {
+    r1.rm();
+  }
+
+  const r2 = tmpRoot("morph-tx-");
+  try {
+    r2.write("mcp/count.go", "package mcp\n");
+    r2.write("g.md", fence("package calc\n\nfunc Sum(a, b int) int { return a + b }\n"));
+    r2.write(
+      "g.r1.md",
+      fence(
+        'package calc\n\nfunc Sum(a, b int) int { return a + b }\n\nfunc fmtOut() string { return "" }\n',
+      ),
+    );
+    r2.write("gj.md", fence("package calc\n"));
+    const commits: string[] = [];
+    const cards: Card[] = [
+      card(
+        "g",
+        "calc/a.go",
+        M + 'grep -q fmtOut calc/a.go || { echo "mcp/count.go:6:52: undefined: x"; exit 1; }',
+      ),
+      card("gj", "calc/a_examples_test.go", M + "exit 0", ["g"]),
+    ];
+    const result = await runTransaction(
+      makeInput(r2.root, cards),
+      makeDeps(r2.root, commits, []),
+    );
+
+    const g = result.outcomes[0];
+    expect(g.status).toBe("failed");
+    expect(g.reason).toBe("outside the subset");
+    expect(g.attempts).toBe(1);
+    expect(g.winningVariant).toBe("g.v1");
+    expect(g.lastRound).toBe("red");
+    expect(g.acceptanceLog).toBe("mcp/count.go:6:52: undefined: x\n");
+    expect(g.earlierFailures).toStrictEqual([]);
+
+    const gj = result.outcomes[1];
+    expect(gj.status).toBe("failed");
+    expect(gj.reason).toBe("transaction rolled back");
+    expect(gj.attempts).toBe(1);
+    expect(gj.winningVariant).toBe("gj.v1");
+    expect(gj.lastRound).toBe("green");
+    expect(gj.acceptanceLog).toBe("");
+    expect(gj.earlierFailures).toStrictEqual([]);
+
+    expect(result.report.requests?.map((row) => row.customId)).toStrictEqual([
+      "g.v1",
+      "gj.v1",
+    ]);
+    expect(commits).toStrictEqual([]);
+    expect(result.report.rounds).toStrictEqual([
+      {
+        round: 0,
+        reds: [
+          { customId: "g", blamed: [], log: "mcp/count.go:6:52: undefined: x\n" },
+        ],
+      },
+    ]);
+    expect(result.report.stop).toBeUndefined();
+    expect(result.report.fault).toBe(
+      "outside the subset: mcp/count.go:6:52: undefined: x",
+    );
+    expect(Object.keys(result.report).pop()).toBe("fault");
+    expect(r2.exists("calc/a.go")).toBe(false);
+  } finally {
+    r2.rm();
+  }
+});
+
+test("Run Transaction example 15: a TypeScript red naming a target's module blames the target's owner", async () => {
+  const T = `out/k.ts(1,10): error TS2305: Module '"./a.js"' has no exported member 'fmtOut'.`;
+
+  const r = tmpRoot("morph-tx-");
+  try {
+    r.write("out/k.ts", 'import { fmtOut } from "./a.js";\nexport const k = fmtOut;\n');
+    r.write("k.log", T + "\n");
+    r.write("a.md", fence("export const sum = 1;\n"));
+    r.write("a.r1.md", fence("export const sum = 1;\nexport const fmtOut = 2;\n"));
+    const commits: string[] = [];
+    const records: VariantRecord[] = [];
+    const cards: Card[] = [
+      card("a", "out/a.ts", M + "grep -q fmtOut out/a.ts || { cat k.log; exit 1; }"),
+    ];
+    const result = await runTransaction(
+      makeInput(r.root, cards),
+      makeDeps(r.root, commits, records),
+    );
+
+    const a = result.outcomes[0];
+    expect(a.status).toBe("written");
+    expect(a.reason).toBe(null);
+    expect(a.attempts).toBe(2);
+    expect(a.winningVariant).toBe("a.r1.v1");
+    expect(a.lastRound).toBeUndefined();
+    expect(a.acceptanceLog).toBe("");
+    expect(a.earlierFailures).toStrictEqual([T + "\n"]);
+
+    expect(result.report.requests?.map((row) => row.customId)).toStrictEqual([
+      "a.v1",
+      "a.r1.v1",
+    ]);
+    expect(commits).toStrictEqual(["a.r1"]);
+    expect(result.report.rounds).toStrictEqual([
+      {
+        round: 0,
+        reds: [{ customId: "a", blamed: ["a"], log: T + "\n" }],
+      },
+      { round: 1, reds: [] },
+    ]);
+    expect(result.report.stop).toBeUndefined();
+    expect(result.report.fault).toBeUndefined();
+    const retryA = records[records.length - 1];
+    expect(retryA).toBeDefined();
+    expect(JSON.stringify(retryA.request)).toContain("error TS2305");
+    expect(r.read("out/a.ts")).toContain("fmtOut");
+  } finally {
+    r.rm();
+  }
+});
