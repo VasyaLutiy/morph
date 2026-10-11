@@ -1,8 +1,10 @@
 # The Contour in Morph
 
-> Status: draft for `docs/CONTOUR.md`, 11.10.2026. Every claim cites `file:line` or a commit.
-> V2 line numbers are at commit `120a849` (main, P31b merged). Old Morph lines are at the current
-> `mrph` checkout. Anything not checked against code or a run is marked **unverified**.
+> 11.10.2026. Every claim cites `file:line` or a commit. V2 line numbers are at commit `120a849`
+> (main, P31b merged; P31c added on top). Old Morph lines are at the `mrph` checkout of that day.
+> Anything not checked against code or a run is marked **unverified**. The planning and history files
+> cited here (`docs/PLAN.md`, `docs/DECISIONS.md`, `docs/AUTONOMY.md`, `docs/TASK_P*`) are on the
+> development branch `main`, not on `production`.
 > Prefixes: `mrph/` = `MorphProject/mrph`, `lab/` = `MorphProject/morph-lab`, no prefix = MorphV2.
 
 ## 1. What the Contour is
