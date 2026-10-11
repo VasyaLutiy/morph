@@ -565,3 +565,76 @@ test("Run Tool example 7: a tree in three languages, no rule of one language", (
     p.rm();
   }
 });
+
+test("Run Tool example 8: grepSkip entries are path prefixes, a GREP that names one lifts it", () => {
+  const p = tmpRoot("morph-tool-");
+  try {
+    p.write("t/docs/TASK_X.md", "hit task\n");
+    p.write("t/docs/PLAN.md", "hit plan\n");
+    p.write("t/decks/a.json", "hit deck\n");
+    p.write("t/src/a.ts", "hit src\n");
+    const tree: ScoutTree = {
+      root: p.path("t"),
+      files: ["docs/TASK_X.md", "docs/PLAN.md", "decks/a.json", "src/a.ts"],
+    };
+    const K: ToolCaps = {
+      ...DEFAULT_TOOL_CAPS,
+      grepSkip: [".morph/", "decks/", "docs/TASK_"],
+    };
+
+    expect(
+      runTool({ kind: "grep", pattern: "hit", path: "" }, tree, NODE_FS, K),
+    ).toStrictEqual({
+      text: [
+        "GREP /hit/ in the tree: 2 matches in 2 files",
+        "docs/PLAN.md:1: hit plan",
+        "src/a.ts:1: hit src",
+      ].join("\n"),
+      read: false,
+      error: null,
+    });
+
+    expect(
+      runTool({ kind: "grep", pattern: "hit", path: "docs" }, tree, NODE_FS, K),
+    ).toStrictEqual({
+      text: [
+        "GREP /hit/ in docs/: 2 matches in 2 files",
+        "docs/PLAN.md:1: hit plan",
+        "docs/TASK_X.md:1: hit task",
+      ].join("\n"),
+      read: false,
+      error: null,
+    });
+
+    expect(
+      runTool({ kind: "grep", pattern: "hit", path: "decks" }, tree, NODE_FS, K),
+    ).toStrictEqual({
+      text: [
+        "GREP /hit/ in decks/: 1 match in 1 file",
+        "decks/a.json:1: hit deck",
+      ].join("\n"),
+      read: false,
+      error: null,
+    });
+
+    expect(
+      runTool(
+        { kind: "grep", pattern: "hit", path: "" },
+        tree,
+        NODE_FS,
+        { ...DEFAULT_TOOL_CAPS, grepSkip: ["decks"] },
+      ),
+    ).toStrictEqual({
+      text: [
+        "GREP /hit/ in the tree: 3 matches in 3 files",
+        "docs/PLAN.md:1: hit plan",
+        "docs/TASK_X.md:1: hit task",
+        "src/a.ts:1: hit src",
+      ].join("\n"),
+      read: false,
+      error: null,
+    });
+  } finally {
+    p.rm();
+  }
+});
