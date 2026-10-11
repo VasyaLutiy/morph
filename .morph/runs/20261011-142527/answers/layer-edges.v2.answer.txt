@@ -1,0 +1,202 @@
+```ts
+import { posix } from "node:path";
+import { componentSlug } from "../contour/select.js";
+import { resolveProfile } from "../language/profiles.js";
+import { cutTargets, slugName } from "../language/naming.js";
+import { codeTargets } from "../language/paths.js";
+import type { ContourMap, ContourRecord } from "../contour/types.js";
+import type { LanguageProfile } from "../language/types.js";
+
+export const GUARD_CONTRACT = "morph-guard-contract: 2";
+
+export type LayerEdgesResult =
+  | { ok: true; edges: Record<string, string[]> }
+  | { ok: false; errors: string[] };
+
+export type PlanLayersResult =
+  | { ok: true; layers: Record<string, string[]> | null }
+  | { ok: false; error: string };
+
+function dirsOf(targets: readonly string[], profile: LanguageProfile): string[] {
+  const dirs: string[] = [];
+  for (const target of codeTargets(profile, targets)) {
+    const dir = posix.dirname(target);
+    if (!dirs.includes(dir)) dirs.push(dir);
+  }
+  return dirs;
+}
+
+export function layerEdges(record: ContourRecord, map: ContourMap): LayerEdgesResult {
+  const errors: string[] = [];
+  const seen = new Set<string>();
+  const push = (message: string): void => {
+    if (!seen.has(message)) {
+      seen.add(message);
+      errors.push(message);
+    }
+  };
+
+  const dependencies = new Set<string>();
+  for (const dependency of record.system.dependencies) {
+    dependencies.add(dependency.name);
+  }
+
+  const groups = record.system.groups;
+
+  const componentIndex = (target: string): number => {
+    for (let i = 0; i < groups.length; i++) {
+      const component = groups[i];
+      if (
+        component.name === target ||
+        componentSlug(component.name) === componentSlug(target)
+      ) {
+        return i;
+      }
+    }
+    return -1;
+  };
+
+  const componentDirs: string[][] = [];
+  const functionDirs: string[][][] = [];
+
+  for (const component of groups) {
+    const profile = resolveProfile(component.language, map.language);
+    const union: string[] = [];
+    const perFunction: string[][] = [];
+    componentDirs.push(union);
+    functionDirs.push(perFunction);
+    if (!profile.ok) {
+      push(`Component '${component.name}': ${profile.error}`);
+      for (let i = 0; i < component.functions.length; i++) {
+        perFunction.push([]);
+      }
+      continue;
+    }
+    for (const fn of component.functions) {
+      const dirs: string[] = [];
+      let unitName = fn.name;
+      for (const group of map.groups) {
+        if (group.functions.includes(fn.name)) {
+          unitName = group.name;
+          break;
+        }
+      }
+      let cardTargets: readonly string[] | null = null;
+      for (const card of map.cards) {
+        if (card.id === slugName(unitName)) {
+          cardTargets = card.targets;
+          break;
+        }
+      }
+      let targets: readonly string[];
+      if (cardTargets !== null) {
+        targets = cardTargets;
+      } else {
+        const cut = cutTargets(profile.profile, component.name, unitName);
+        if (!cut.ok) {
+          push(`Component '${component.name}': ${cut.error}`);
+          perFunction.push(dirs);
+          continue;
+        }
+        targets = [cut.targets.code, cut.targets.test];
+      }
+      for (const dir of dirsOf(targets, profile.profile)) {
+        dirs.push(dir);
+        if (!union.includes(dir)) union.push(dir);
+      }
+      perFunction.push(dirs);
+    }
+  }
+
+  const edgeSets = new Map<string, Set<string>>();
+  for (const union of componentDirs) {
+    for (const dir of union) {
+      if (!edgeSets.has(dir)) edgeSets.set(dir, new Set<string>());
+    }
+  }
+
+  for (let i = 0; i < groups.length; i++) {
+    const component = groups[i];
+    for (let j = 0; j < component.functions.length; j++) {
+      const fn = component.functions[j];
+      const dirs = functionDirs[i][j];
+      for (const step of fn.steps) {
+        if (step.verb !== "uses") continue;
+        const target = step.target;
+        const named = componentIndex(target);
+        const isDependency = dependencies.has(target);
+        if (named >= 0 && isDependency) {
+          push(
+            `Function '${fn.name}': 'uses: ${target}' names the Component '${groups[named].name}' and the dependency '${target}'`,
+          );
+          continue;
+        }
+        if (named < 0) continue;
+        for (const dir of dirs) {
+          const allowed = edgeSets.get(dir);
+          if (allowed === undefined) continue;
+          for (const other of componentDirs[named]) {
+            if (other !== dir) allowed.add(other);
+          }
+        }
+      }
+    }
+  }
+
+  if (errors.length > 0) return { ok: false, errors };
+
+  const keys = Array.from(edgeSets.keys()).sort();
+  const edges: Record<string, string[]> = {};
+  for (const key of keys) {
+    const allowed = edgeSets.get(key);
+    edges[key] = allowed === undefined ? [] : Array.from(allowed).sort();
+  }
+  return { ok: true, edges };
+}
+
+export function cardLayers(
+  profile: LanguageProfile,
+  targets: readonly string[],
+  edges: Record<string, string[]>,
+): Record<string, string[]> {
+  const result: Record<string, string[]> = {};
+  for (const target of codeTargets(profile, targets)) {
+    const dir = posix.dirname(target);
+    if (Object.hasOwn(result, dir)) continue;
+    result[dir] = Object.hasOwn(edges, dir) ? edges[dir] : [];
+  }
+  return result;
+}
+
+export function layersArg(
+  allowed: readonly string[],
+  layers: Record<string, string[]> | undefined,
+): string {
+  if (layers === undefined) return "";
+  const head = allowed.length === 0 ? " ''" : "";
+  return head + " '" + JSON.stringify(layers) + "'";
+}
+
+export function planLayers(
+  record: ContourRecord,
+  map: ContourMap,
+  layersFile: boolean,
+  guard: string,
+  language: string,
+): PlanLayersResult {
+  if (!layersFile) return { ok: true, layers: null };
+  const result = layerEdges(record, map);
+  if (!result.ok) return { ok: false, error: result.errors.join("\n") };
+  const hasEdges = Object.keys(result.edges).length > 0;
+  if (hasEdges && !guard.includes(GUARD_CONTRACT)) {
+    return {
+      ok: false,
+      error:
+        "decks/tools/guard.mjs speaks contract 1: copy templates/" +
+        language +
+        "/decks/tools/guard.mjs from MorphV2",
+    };
+  }
+  return { ok: true, layers: result.edges };
+}
+```

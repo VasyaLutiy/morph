@@ -1,0 +1,243 @@
+```
+import { expect, test } from "vitest";
+import { buildAcceptances } from "../../src/builder/buildAcceptances.js";
+import { codeAcceptance, judgeAcceptance } from "../../src/builder/compose.js";
+import { DEFAULT_FROZEN } from "../../src/builder/readChecks.js";
+import { GO, TYPESCRIPT } from "../../src/language/profiles.js";
+import { fixture } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+import type { CardContext, Checks, JudgeFile } from "../../src/builder/types.js";
+
+const GUARD = "// guard\n";
+const FIRSTDIFF = "// firstdiff\n";
+const PROBE = "// probe\n";
+
+function card(id: string, targets: string[], dependsOn: string[] = []): Card {
+  return { customId: id, targets, dependsOn, acceptance: null } as Card;
+}
+
+test("Build Acceptances example 11: each member's ctx carries its card layers, and without the key the deck is unchanged", () => {
+  const a = card("a", ["src/x/a.ts"]);
+  const j = card("j", ["tests/x/a.examples.test.ts"], ["a"]);
+  const files: JudgeFile[] = [
+    { file: "tests/x/a.examples.test.ts", min: 1, max: 4, lits: [], drop: [], new: true },
+  ];
+  const checks: Checks = {
+    version: 1,
+    phase: "p30",
+    parts: "decks/p30/parts",
+    frozen: DEFAULT_FROZEN,
+    fullExclude: [],
+    ownGit: false,
+    cards: [
+      { id: "a", smoke: null, extra: null, files: null },
+      { id: "j", smoke: null, extra: null, files },
+    ],
+  };
+  const texts = { guard: GUARD, firstdiff: FIRSTDIFF, probes: { a: PROBE } };
+  const uses = { a: ["zod"] };
+  const layers = { "src/x": ["src/y"], "src/z": [] };
+
+  const baseA: CardContext = {
+    id: "a",
+    phase: "p30",
+    targets: ["src/x/a.ts"],
+    siblings: [],
+    frozen: DEFAULT_FROZEN,
+    fullExclude: [],
+    ownGit: false,
+    profile: TYPESCRIPT,
+    guard: GUARD,
+    firstdiff: FIRSTDIFF,
+    allowed: ["zod"],
+    vendor: false,
+  };
+  const baseJ: CardContext = {
+    id: "j",
+    phase: "p30",
+    targets: ["tests/x/a.examples.test.ts"],
+    siblings: [],
+    frozen: DEFAULT_FROZEN,
+    fullExclude: [],
+    ownGit: false,
+    profile: TYPESCRIPT,
+    guard: GUARD,
+    firstdiff: FIRSTDIFF,
+    allowed: [],
+    vendor: false,
+  };
+
+  const built = buildAcceptances({ cards: [a, j], checks, profile: TYPESCRIPT, texts, uses, layers });
+  expect(built.ok).toBe(true);
+  if (!built.ok) throw new Error("expected ok");
+  const aOut = built.cards[0];
+  const jOut = built.cards[1];
+  expect(aOut.acceptance).toBe(
+    codeAcceptance({ ...baseA, layers: { "src/x": ["src/y"] } }, PROBE, null, null),
+  );
+  expect((aOut.acceptance ?? "").includes("node $P/guard.mjs src src/x/a.ts 'zod' '{\"src/x\":[\"src/y\"]}'\n")).toBe(true);
+  expect(jOut.acceptance).toBe(judgeAcceptance(baseJ, files));
+
+  const plain = buildAcceptances({ cards: [a, j], checks, profile: TYPESCRIPT, texts, uses });
+  expect(plain.ok).toBe(true);
+  if (!plain.ok) throw new Error("expected ok");
+  expect(plain.cards[0].acceptance).toBe(codeAcceptance(baseA, PROBE, null, null));
+  expect((plain.cards[0].acceptance ?? "").includes("node $P/guard.mjs src src/x/a.ts 'zod'\n")).toBe(true);
+  expect(plain.cards[0].acceptance).toBe(aOut.acceptance?.replace(" '' '{\"src/x\":[\"src/y\"]}'", ""));
+  expect(plain.cards[1].acceptance).toBe(jOut.acceptance);
+
+  const percent = card("percent-of", ["calc/percent_of.go"]);
+  const clampJudge = card("clamp-value-judge", ["calc/clamp_value_examples_test.go"]);
+  const goFiles: JudgeFile[] = [
+    {
+      file: "calc/clamp_value_examples_test.go",
+      min: 4,
+      max: 10,
+      lits: ["TestClampValueExample1"],
+      drop: [],
+      new: true,
+    },
+  ];
+  const goChecks: Checks = {
+    version: 1,
+    phase: "m1",
+    parts: "decks/p30/parts",
+    frozen: ["go.mod", "internal"],
+    fullExclude: [],
+    ownGit: false,
+    cards: [
+      { id: "percent-of", smoke: null, extra: null, files: null },
+      { id: "clamp-value-judge", smoke: null, extra: null, files: goFiles },
+    ],
+  };
+  const goBuilt = buildAcceptances({
+    cards: [percent, clampJudge],
+    checks: goChecks,
+    profile: GO,
+    texts: { guard: GUARD, firstdiff: FIRSTDIFF, probes: { "percent-of": "package calc\n" } },
+    layers: { calc: ["report"] },
+  });
+  expect(goBuilt.ok).toBe(true);
+  if (!goBuilt.ok) throw new Error("expected ok");
+  const expectedGo = fixture("builder/go/code1.txt").replace(
+    "echo '== guard'; node $P/guard.mjs src calc/percent_of.go",
+    "echo '== guard'; node $P/guard.mjs src calc/percent_of.go '' '{\"calc\":[\"report\"]}'",
+  );
+  expect(goBuilt.cards[0].acceptance).toBe(expectedGo);
+});
+
+test("Build Acceptances: a code member outside every edge gets an empty layers entry", () => {
+  const c = card("c", ["src/z/c.ts"]);
+  const checks: Checks = {
+    version: 1,
+    phase: "p30",
+    parts: "decks/p30/parts",
+    frozen: DEFAULT_FROZEN,
+    fullExclude: [],
+    ownGit: false,
+    cards: [{ id: "c", smoke: null, extra: null, files: null }],
+  };
+  const built = buildAcceptances({
+    cards: [c],
+    checks,
+    profile: TYPESCRIPT,
+    texts: { guard: GUARD, firstdiff: FIRSTDIFF, probes: { c: PROBE } },
+    layers: { "src/x": ["src/y"] },
+  });
+  expect(built.ok).toBe(true);
+  if (!built.ok) throw new Error("expected ok");
+  expect(built.cards[0].acceptance).toBe(
+    codeAcceptance(
+      {
+        id: "c",
+        phase: "p30",
+        targets: ["src/z/c.ts"],
+        siblings: [],
+        frozen: DEFAULT_FROZEN,
+        fullExclude: [],
+        ownGit: false,
+        profile: TYPESCRIPT,
+        guard: GUARD,
+        firstdiff: FIRSTDIFF,
+        allowed: [],
+        vendor: false,
+        layers: { "src/z": [] },
+      },
+      PROBE,
+      null,
+      null,
+    ),
+  );
+  expect((built.cards[0].acceptance ?? "").includes("node $P/guard.mjs src src/z/c.ts '' '{\"src/z\":[]}'\n")).toBe(true);
+});
+
+test("Build Acceptances: two code members in one directory carry the same layers entry", () => {
+  const a = card("a", ["src/x/a.ts"]);
+  const b = card("b", ["src/x/b.ts"]);
+  const checks: Checks = {
+    version: 1,
+    phase: "p30",
+    parts: "decks/p30/parts",
+    frozen: DEFAULT_FROZEN,
+    fullExclude: [],
+    ownGit: false,
+    cards: [
+      { id: "a", smoke: null, extra: null, files: null },
+      { id: "b", smoke: null, extra: null, files: null },
+    ],
+  };
+  const built = buildAcceptances({
+    cards: [a, b],
+    checks,
+    profile: TYPESCRIPT,
+    texts: { guard: GUARD, firstdiff: FIRSTDIFF, probes: { a: PROBE, b: PROBE } },
+    layers: { "src/x": ["src/y"] },
+  });
+  expect(built.ok).toBe(true);
+  if (!built.ok) throw new Error("expected ok");
+  expect(built.cards[0].acceptance).toBe(
+    codeAcceptance(
+      {
+        id: "a",
+        phase: "p30",
+        targets: ["src/x/a.ts"],
+        siblings: ["src/x/b.ts"],
+        frozen: DEFAULT_FROZEN,
+        fullExclude: [],
+        ownGit: false,
+        profile: TYPESCRIPT,
+        guard: GUARD,
+        firstdiff: FIRSTDIFF,
+        allowed: [],
+        vendor: false,
+        layers: { "src/x": ["src/y"] },
+      },
+      PROBE,
+      null,
+      null,
+    ),
+  );
+  expect(built.cards[1].acceptance).toBe(
+    codeAcceptance(
+      {
+        id: "b",
+        phase: "p30",
+        targets: ["src/x/b.ts"],
+        siblings: ["src/x/a.ts"],
+        frozen: DEFAULT_FROZEN,
+        fullExclude: [],
+        ownGit: false,
+        profile: TYPESCRIPT,
+        guard: GUARD,
+        firstdiff: FIRSTDIFF,
+        allowed: [],
+        vendor: false,
+        layers: { "src/x": ["src/y"] },
+      },
+      PROBE,
+      null,
+      null,
+    ),
+  );
+});
+```

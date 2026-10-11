@@ -1,0 +1,631 @@
+{
+  "runId": "20261011-142527",
+  "completedAt": 1791730207591,
+  "branch": "morph/20261011-142527",
+  "processor": "ds",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "layer-edges",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 2,
+      "winningVariant": "layer-edges.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/primer/primerCommand.p16.examples.test.ts > Primer Command example 9\nError: ENOENT: no such file or directory, open '/home/john/Documents/Work2026/MorphV2/tests/fixtures/go-mini/decks/tools/layers.json'\n ❯ fixture tests/helpers.ts:224:13\n    222| \n    223| export function fixture(name: string): string {\n    224|   return fs.readFileSync(fixturePath(name), \"utf8\");\n       |             ^\n    225| }\n    226| \n ❯ tests/primer/primerCommand.p16.examples.test.ts:51:48\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 164 passed (165)\n      Tests  1 failed | 996 passed (997)\n\n",
+      "earlierFailures": [
+        "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "build-acceptances",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 2,
+      "winningVariant": "build-acceptances.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/primer/primerCommand.p16.examples.test.ts > Primer Command example 9\nError: ENOENT: no such file or directory, open '/home/john/Documents/Work2026/MorphV2/tests/fixtures/go-mini/decks/tools/layers.json'\n ❯ fixture tests/helpers.ts:224:13\n    222| \n    223| export function fixture(name: string): string {\n    224|   return fs.readFileSync(fixturePath(name), \"utf8\");\n       |             ^\n    225| }\n    226| \n ❯ tests/primer/primerCommand.p16.examples.test.ts:51:48\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 164 passed (165)\n      Tests  1 failed | 996 passed (997)\n\n",
+      "earlierFailures": [
+        "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "layer-edges-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 2,
+      "winningVariant": "layer-edges-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/rules/layers.examples.test.ts\n== own\n== full\n FAIL  tests/primer/primerCommand.p16.examples.test.ts > Primer Command example 9\nError: ENOENT: no such file or directory, open '/home/john/Documents/Work2026/MorphV2/tests/fixtures/go-mini/decks/tools/layers.json'\n ❯ fixture tests/helpers.ts:224:13\n    222| \n    223| export function fixture(name: string): string {\n    224|   return fs.readFileSync(fixturePath(name), \"utf8\");\n       |             ^\n    225| }\n    226| \n ❯ tests/primer/primerCommand.p16.examples.test.ts:51:48\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 164 passed (165)\n      Tests  1 failed | 996 passed (997)\n\n",
+      "earlierFailures": [
+        "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "compose",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 2,
+      "winningVariant": "compose.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/primer/primerCommand.p16.examples.test.ts > Primer Command example 9\nError: ENOENT: no such file or directory, open '/home/john/Documents/Work2026/MorphV2/tests/fixtures/go-mini/decks/tools/layers.json'\n ❯ fixture tests/helpers.ts:224:13\n    222| \n    223| export function fixture(name: string): string {\n    224|   return fs.readFileSync(fixturePath(name), \"utf8\");\n       |             ^\n    225| }\n    226| \n ❯ tests/primer/primerCommand.p16.examples.test.ts:51:48\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 164 passed (165)\n      Tests  1 failed | 996 passed (997)\n\n",
+      "earlierFailures": [
+        "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "go-acceptance",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 2,
+      "winningVariant": "go-acceptance.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/primer/primerCommand.p16.examples.test.ts > Primer Command example 9\nError: ENOENT: no such file or directory, open '/home/john/Documents/Work2026/MorphV2/tests/fixtures/go-mini/decks/tools/layers.json'\n ❯ fixture tests/helpers.ts:224:13\n    222| \n    223| export function fixture(name: string): string {\n    224|   return fs.readFileSync(fixturePath(name), \"utf8\");\n       |             ^\n    225| }\n    226| \n ❯ tests/primer/primerCommand.p16.examples.test.ts:51:48\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 164 passed (165)\n      Tests  1 failed | 996 passed (997)\n\n",
+      "earlierFailures": [
+        "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "plan-command",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 2,
+      "winningVariant": "plan-command.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/primer/primerCommand.p16.examples.test.ts > Primer Command example 9\nError: ENOENT: no such file or directory, open '/home/john/Documents/Work2026/MorphV2/tests/fixtures/go-mini/decks/tools/layers.json'\n ❯ fixture tests/helpers.ts:224:13\n    222| \n    223| export function fixture(name: string): string {\n    224|   return fs.readFileSync(fixturePath(name), \"utf8\");\n       |             ^\n    225| }\n    226| \n ❯ tests/primer/primerCommand.p16.examples.test.ts:51:48\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 164 passed (165)\n      Tests  1 failed | 996 passed (997)\n\n",
+      "earlierFailures": [
+        "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "build-acceptances-judge",
+      "status": "failed",
+      "reason": "acceptance failed",
+      "attempts": 2,
+      "winningVariant": "build-acceptances-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/buildAcceptances.p30.examples.test.ts\n== own\n FAIL  tests/builder/buildAcceptances.p30.examples.test.ts > Build Acceptances example 11: each member's ctx carries its card layers, and without the key the deck is unchanged\nAssertionError: expected 'D=/tmp/morph/a-p30; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\\ncp src/x/a.ts $D/0-$S.ts 2>/dev/null\\n(\\n set -e\\n export NO_COLOR=1 CI=1\\nP=$PWD/probe/a; rm -rf $P; mkdir -p $P; trap \\'rm -rf …' to be 'D=/tmp/morph/a-p30; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\\ncp src/x/a.ts $D/0-$S.ts 2>/dev/null\\n(\\n set -e\\n export NO_COLOR=1 CI=1\\nP=$PWD/probe/a; rm -rf $P; mkdir -p $P; trap \\'rm -rf …' // Object.is equality\n\n- Expected\n+ Received\n\n@@ -32,11 +32,11 @@\n  cat > $P/a.probe.ts <<'MORPH_PROBE_EOF'\n  // probe\n  MORPH_PROBE_EOF\n  echo '== tsc'; node_modules/.bin/tsc --noEmit -p $P/tsconfig.card.json\n  echo '== eslint'; E=0; node_modules/.bin/eslint src/x/a.ts || E=1\n- echo '== guard'; node $P/guard.mjs src src/x/a.ts 'zod' '{\"src/x\":[\"src/y\"]}'\n+ echo '== guard'; node $P/guard.mjs src src/x/a.ts 'zod'\n  echo '== probe'; node_modules/.bin/vitest run --config $P/probe.config.mts --reporter=dot > $P/vt.log 2>&1 || { if grep -q '^ FAIL ' $P/vt.log; then awk '/^ FAIL /{p=1} p' $P/vt.log | grep -vE '^ +(Start at|Duration) ' | head -200; else tail -60 $P/vt.log; fi; node $P/firstdiff.mjs $P/vt.log; exit 1; }\n  [ \"$E\" = 0 ] || { echo \"== eslint failed (see above); every step between it and here passed\"; exit 1; }\n  echo '== full'; node_modules/.bin/vitest run --passWithNoTests --reporter=dot > $P/vt.log 2>&1 || { if grep -q '^ FAIL ' $P/vt.log; then awk '/^ FAIL /{p=1} p' $P/vt.log | grep -vE '^ +(Start at|Duration) ' | head -200; else tail -60 $P/vt.log; fi; node $P/firstdiff.mjs $P/vt.log; exit 1; }\n  echo '== frozen'; git diff --quiet HEAD -- contour.yaml morph-map.json docs decks tests/fixtures || { echo \"changed outside the targets: $(git diff --name-only HEAD -- contour.yaml morph-map.json docs decks tests/fixtures | tr \"\\n\" \" \")\"; exit 1; }\n  X=$(git ls-files --others --exclude-standard | grep -vxF -e src/x/a.ts || true); [ -z \"$X\" ] || { echo \"files left in the tree: $X\"; exit 1; }\n\n ❯ tests/builder/buildAcceptances.p30.examples.test.ts:85:37\n     83|   expect(plain.cards[0].acceptance).toBe(codeAcceptance(baseA, PROBE, …\n     84|   expect((plain.cards[0].acceptance ?? \"\").includes(\"node $P/guard.mjs…\n     85|   expect(plain.cards[0].acceptance).toBe(aOut.acceptance?.replace(\" ''…\n       |                                     ^\n     86|   expect(plain.cards[1].acceptance).toBe(jOut.acceptance);\n     87| \n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 2 passed (3)\n\nfirst difference at char 275 (line 7) of 1389/1367: expected \"...; node $P/guard.mjs src src/x/a.ts 'zod' '{\\\"src/x\\\":[\\\"src/y\\\"]}'\\necho '== probe'; \" received \"...; node $P/guard.mjs src src/x/a.ts 'zod'\\necho '== probe'; node_modules/.bin/vite\"\n",
+      "earlierFailures": [
+        "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "compose-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 2,
+      "winningVariant": "compose-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/compose.p30.examples.test.ts\n== own\n== full\n FAIL  tests/primer/primerCommand.p16.examples.test.ts > Primer Command example 9\nError: ENOENT: no such file or directory, open '/home/john/Documents/Work2026/MorphV2/tests/fixtures/go-mini/decks/tools/layers.json'\n ❯ fixture tests/helpers.ts:224:13\n    222| \n    223| export function fixture(name: string): string {\n    224|   return fs.readFileSync(fixturePath(name), \"utf8\");\n       |             ^\n    225| }\n    226| \n ❯ tests/primer/primerCommand.p16.examples.test.ts:51:48\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 164 passed (165)\n      Tests  1 failed | 996 passed (997)\n\n",
+      "earlierFailures": [
+        "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "go-acceptance-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 2,
+      "winningVariant": "go-acceptance-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/goAcceptance.p30.examples.test.ts\n== own\n== full\n FAIL  tests/primer/primerCommand.p16.examples.test.ts > Primer Command example 9\nError: ENOENT: no such file or directory, open '/home/john/Documents/Work2026/MorphV2/tests/fixtures/go-mini/decks/tools/layers.json'\n ❯ fixture tests/helpers.ts:224:13\n    222| \n    223| export function fixture(name: string): string {\n    224|   return fs.readFileSync(fixturePath(name), \"utf8\");\n       |             ^\n    225| }\n    226| \n ❯ tests/primer/primerCommand.p16.examples.test.ts:51:48\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 164 passed (165)\n      Tests  1 failed | 996 passed (997)\n\n",
+      "earlierFailures": [
+        "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "plan-command-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 2,
+      "winningVariant": "plan-command-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/planCommand.p30.examples.test.ts\n== own\n== full\n FAIL  tests/primer/primerCommand.p16.examples.test.ts > Primer Command example 9\nError: ENOENT: no such file or directory, open '/home/john/Documents/Work2026/MorphV2/tests/fixtures/go-mini/decks/tools/layers.json'\n ❯ fixture tests/helpers.ts:224:13\n    222| \n    223| export function fixture(name: string): string {\n    224|   return fs.readFileSync(fixturePath(name), \"utf8\");\n       |             ^\n    225| }\n    226| \n ❯ tests/primer/primerCommand.p16.examples.test.ts:51:48\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 164 passed (165)\n      Tests  1 failed | 996 passed (997)\n\n",
+      "earlierFailures": [
+        "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 574532,
+    "outputTokens": 260780,
+    "cost": 0.20864076,
+    "requests": 30
+  },
+  "requests": [
+    {
+      "customId": "layer-edges.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791728727-2j9hUer9pb0KNq91sKEB",
+      "inputTokens": 14167,
+      "outputTokens": 16534,
+      "cost": 0.01204545,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "layer-edges.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791728728-usocOQkCg8NZE5fxOG6c",
+      "inputTokens": 14167,
+      "outputTokens": 22508,
+      "cost": 0.01562985,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791728922-7NvvdAD1H4KhiNgSRd1O",
+      "inputTokens": 12883,
+      "outputTokens": 2580,
+      "cost": 0.00348045,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791728922-ozrtq60Ms5xx1uGGCrZC",
+      "inputTokens": 12883,
+      "outputTokens": 4018,
+      "cost": 0.00434325,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "layer-edges-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791728922-rdzXe2RmSLREUdNP5niF",
+      "inputTokens": 14384,
+      "outputTokens": 13548,
+      "cost": 0.0095952,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "compose.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729049-oXQfRNccfclDCsOYKJnW",
+      "inputTokens": 11571,
+      "outputTokens": 1098,
+      "cost": 0.00239445,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "compose.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729049-AqjwrvcwUiKAF3Vv58i2",
+      "inputTokens": 11571,
+      "outputTokens": 990,
+      "cost": 0.00080901,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "go-acceptance.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729049-fJhD3iErzpkJ1wSVhavI",
+      "inputTokens": 13986,
+      "outputTokens": 2612,
+      "cost": 0.0036651,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "go-acceptance.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729056-Wt0nbN1bZFTrYCXPmthV",
+      "inputTokens": 13986,
+      "outputTokens": 5073,
+      "cost": 0.00327546,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729058-0oAwh30CJAcCZO67sgi6",
+      "inputTokens": 12289,
+      "outputTokens": 1754,
+      "cost": 0.00289575,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729067-qodWg3sf95KEoOkc6EjI",
+      "inputTokens": 12289,
+      "outputTokens": 1511,
+      "cost": 0.00109107,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729087-ZJJw9WDVEwXi1iyF9AhM",
+      "inputTokens": 16387,
+      "outputTokens": 25485,
+      "cost": 0.01705785,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "compose-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729087-IeJnO2qFNvdcbBDFEXb4",
+      "inputTokens": 13910,
+      "outputTokens": 6759,
+      "cost": 0.0054507,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "go-acceptance-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729087-DycFrcRlQGUg2RdOsoiJ",
+      "inputTokens": 12607,
+      "outputTokens": 6009,
+      "cost": 0.00480525,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729133-gL3PQNcBvd72AWNI3niF",
+      "inputTokens": 24241,
+      "outputTokens": 38747,
+      "cost": 0.02619315,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "layer-edges.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729499-MlMMiko3x6S43beNh9RB",
+      "inputTokens": 26560,
+      "outputTokens": 16323,
+      "cost": 0.01191156,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "layer-edges.r1.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729499-6mVfRlhVLtmxTvmiSvzC",
+      "inputTokens": 26560,
+      "outputTokens": 14443,
+      "cost": 0.0091938,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729637-dEfuzYFx8ntFizTVlYR0",
+      "inputTokens": 22354,
+      "outputTokens": 10420,
+      "cost": 0.0096051,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances.r1.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729637-cYcgErAaCqeFw2pO6WIG",
+      "inputTokens": 22354,
+      "outputTokens": 7929,
+      "cost": 0.00520746,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "layer-edges-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729637-3iG5ed7C6uayffneFGCR",
+      "inputTokens": 32303,
+      "outputTokens": 17859,
+      "cost": 0.01473141,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "compose.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729781-ocxJfaKXQxBeXMPMFLOt",
+      "inputTokens": 20163,
+      "outputTokens": 2762,
+      "cost": 0.00468165,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "compose.r1.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729781-3UfR4D53BK3QRlaQXwds",
+      "inputTokens": 20163,
+      "outputTokens": 1261,
+      "cost": 0.00115449,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "go-acceptance.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729781-epUsEY8WpdSpcx6lsXEX",
+      "inputTokens": 22816,
+      "outputTokens": 2648,
+      "cost": 0.0050112,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "go-acceptance.r1.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729791-pMm7BExAk5x121A8fX4N",
+      "inputTokens": 22816,
+      "outputTokens": 2358,
+      "cost": 0.00179592,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729797-SY7RszDqSI2BqemsFhAd",
+      "inputTokens": 21726,
+      "outputTokens": 3428,
+      "cost": 0.0053157,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.r1.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729800-1mEN39SKWBSgnWiisJiq",
+      "inputTokens": 21726,
+      "outputTokens": 3312,
+      "cost": 0.00234306,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729827-DLrVptlQ0spO4HibDxrK",
+      "inputTokens": 26093,
+      "outputTokens": 13248,
+      "cost": 0.01068771,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "compose-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729828-7vS0YjprAz4fURim9OKu",
+      "inputTokens": 22503,
+      "outputTokens": 5231,
+      "cost": 0.00471693,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "go-acceptance-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729827-BM5wG6MdS60OjO9tYVqH",
+      "inputTokens": 21503,
+      "outputTokens": 2619,
+      "cost": 0.00313797,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791729850-mN5mbtmHHfcAaKUHPT8w",
+      "inputTokens": 33571,
+      "outputTokens": 7713,
+      "cost": 0.00641481,
+      "finishReason": "stop",
+      "error": null
+    }
+  ],
+  "rounds": [
+    {
+      "round": 0,
+      "reds": [
+        {
+          "customId": "layer-edges",
+          "blamed": [
+            "layer-edges",
+            "layer-edges-judge"
+          ],
+          "log": "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+        },
+        {
+          "customId": "build-acceptances",
+          "blamed": [
+            "build-acceptances",
+            "layer-edges-judge"
+          ],
+          "log": "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+        },
+        {
+          "customId": "layer-edges-judge",
+          "blamed": [
+            "layer-edges-judge"
+          ],
+          "log": "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+        },
+        {
+          "customId": "compose",
+          "blamed": [
+            "compose",
+            "layer-edges-judge"
+          ],
+          "log": "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+        },
+        {
+          "customId": "go-acceptance",
+          "blamed": [
+            "go-acceptance",
+            "layer-edges-judge"
+          ],
+          "log": "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+        },
+        {
+          "customId": "plan-command",
+          "blamed": [
+            "layer-edges-judge",
+            "plan-command"
+          ],
+          "log": "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+        },
+        {
+          "customId": "build-acceptances-judge",
+          "blamed": [
+            "build-acceptances-judge",
+            "layer-edges-judge"
+          ],
+          "log": "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+        },
+        {
+          "customId": "compose-judge",
+          "blamed": [
+            "compose-judge",
+            "layer-edges-judge"
+          ],
+          "log": "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+        },
+        {
+          "customId": "go-acceptance-judge",
+          "blamed": [
+            "go-acceptance-judge",
+            "layer-edges-judge"
+          ],
+          "log": "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+        },
+        {
+          "customId": "plan-command-judge",
+          "blamed": [
+            "layer-edges-judge",
+            "plan-command-judge"
+          ],
+          "log": "== tsc\ntests/rules/layers.examples.test.ts(22,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(27,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(33,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(39,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(48,7): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(53,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(57,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(63,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(66,3)\n[... 2617 chars clipped; diagnosis lines kept:]\n[...]\nxamples.test.ts(168,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(169,5): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(177,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(183,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(187,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(192,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(198,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(203,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(209,3): error TS2304: Cannot find name 'expect'.\ntests/rules/layers.examples.test.ts(218,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/rules/layers.examples.test.ts(232,3): error TS2304: Cannot find name 'expect'.\n"
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "reds": [
+        {
+          "customId": "layer-edges",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/primer/primerCommand.p16.examples.test.ts > Primer Command example 9\nError: ENOENT: no such file or directory, open '/home/john/Documents/Work2026/MorphV2/tests/fixtures/go-mini/decks/tools/layers.json'\n ❯ fixture tests/helpers.ts:224:13\n    222| \n    223| export function fixture(name: string): string {\n    224|   return fs.readFileSync(fixturePath(name), \"utf8\");\n       |             ^\n    225| }\n    226| \n ❯ tests/primer/primerCommand.p16.examples.test.ts:51:48\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 164 passed (165)\n      Tests  1 failed | 996 passed (997)\n\n"
+        },
+        {
+          "customId": "build-acceptances",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/primer/primerCommand.p16.examples.test.ts > Primer Command example 9\nError: ENOENT: no such file or directory, open '/home/john/Documents/Work2026/MorphV2/tests/fixtures/go-mini/decks/tools/layers.json'\n ❯ fixture tests/helpers.ts:224:13\n    222| \n    223| export function fixture(name: string): string {\n    224|   return fs.readFileSync(fixturePath(name), \"utf8\");\n       |             ^\n    225| }\n    226| \n ❯ tests/primer/primerCommand.p16.examples.test.ts:51:48\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 164 passed (165)\n      Tests  1 failed | 996 passed (997)\n\n"
+        },
+        {
+          "customId": "layer-edges-judge",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard tests/rules/layers.examples.test.ts\n== own\n== full\n FAIL  tests/primer/primerCommand.p16.examples.test.ts > Primer Command example 9\nError: ENOENT: no such file or directory, open '/home/john/Documents/Work2026/MorphV2/tests/fixtures/go-mini/decks/tools/layers.json'\n ❯ fixture tests/helpers.ts:224:13\n    222| \n    223| export function fixture(name: string): string {\n    224|   return fs.readFileSync(fixturePath(name), \"utf8\");\n       |             ^\n    225| }\n    226| \n ❯ tests/primer/primerCommand.p16.examples.test.ts:51:48\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 164 passed (165)\n      Tests  1 failed | 996 passed (997)\n\n"
+        },
+        {
+          "customId": "compose",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/primer/primerCommand.p16.examples.test.ts > Primer Command example 9\nError: ENOENT: no such file or directory, open '/home/john/Documents/Work2026/MorphV2/tests/fixtures/go-mini/decks/tools/layers.json'\n ❯ fixture tests/helpers.ts:224:13\n    222| \n    223| export function fixture(name: string): string {\n    224|   return fs.readFileSync(fixturePath(name), \"utf8\");\n       |             ^\n    225| }\n    226| \n ❯ tests/primer/primerCommand.p16.examples.test.ts:51:48\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 164 passed (165)\n      Tests  1 failed | 996 passed (997)\n\n"
+        },
+        {
+          "customId": "go-acceptance",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/primer/primerCommand.p16.examples.test.ts > Primer Command example 9\nError: ENOENT: no such file or directory, open '/home/john/Documents/Work2026/MorphV2/tests/fixtures/go-mini/decks/tools/layers.json'\n ❯ fixture tests/helpers.ts:224:13\n    222| \n    223| export function fixture(name: string): string {\n    224|   return fs.readFileSync(fixturePath(name), \"utf8\");\n       |             ^\n    225| }\n    226| \n ❯ tests/primer/primerCommand.p16.examples.test.ts:51:48\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 164 passed (165)\n      Tests  1 failed | 996 passed (997)\n\n"
+        },
+        {
+          "customId": "plan-command",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/primer/primerCommand.p16.examples.test.ts > Primer Command example 9\nError: ENOENT: no such file or directory, open '/home/john/Documents/Work2026/MorphV2/tests/fixtures/go-mini/decks/tools/layers.json'\n ❯ fixture tests/helpers.ts:224:13\n    222| \n    223| export function fixture(name: string): string {\n    224|   return fs.readFileSync(fixturePath(name), \"utf8\");\n       |             ^\n    225| }\n    226| \n ❯ tests/primer/primerCommand.p16.examples.test.ts:51:48\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 164 passed (165)\n      Tests  1 failed | 996 passed (997)\n\n"
+        },
+        {
+          "customId": "build-acceptances-judge",
+          "blamed": [
+            "build-acceptances-judge"
+          ],
+          "log": "== tsc\n== eslint\n== guard tests/builder/buildAcceptances.p30.examples.test.ts\n== own\n FAIL  tests/builder/buildAcceptances.p30.examples.test.ts > Build Acceptances example 11: each member's ctx carries its card layers, and without the key the deck is unchanged\nAssertionError: expected 'D=/tmp/morph/a-p30; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\\ncp src/x/a.ts $D/0-$S.ts 2>/dev/null\\n(\\n set -e\\n export NO_COLOR=1 CI=1\\nP=$PWD/probe/a; rm -rf $P; mkdir -p $P; trap \\'rm -rf …' to be 'D=/tmp/morph/a-p30; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\\ncp src/x/a.ts $D/0-$S.ts 2>/dev/null\\n(\\n set -e\\n export NO_COLOR=1 CI=1\\nP=$PWD/probe/a; rm -rf $P; mkdir -p $P; trap \\'rm -rf …' // Object.is equality\n\n- Expected\n+ Received\n\n@@ -32,11 +32,11 @@\n  cat > $P/a.probe.ts <<'MORPH_PROBE_EOF'\n  // probe\n  MORPH_PROBE_EOF\n  echo '== tsc'; node_modules/.bin/tsc --noEmit -p $P/tsconfig.card.json\n  echo '== eslint'; E=0; node_modules/.bin/eslint src/x/a.ts || E=1\n- echo '== guard'; node $P/guard.mjs src src/x/a.ts 'zod' '{\"src/x\":[\"src/y\"]}'\n+ echo '== guard'; node $P/guard.mjs src src/x/a.ts 'zod'\n  echo '== probe'; node_modules/.bin/vitest run --config $P/probe.config.mts --reporter=dot > $P/vt.log 2>&1 || { if grep -q '^ FAIL ' $P/vt.log; then awk '/^ FAIL /{p=1} p' $P/vt.log | grep -vE '^ +(Start at|Duration) ' | head -200; else tail -60 $P/vt.log; fi; node $P/firstdiff.mjs $P/vt.log; exit 1; }\n  [ \"$E\" = 0 ] || { echo \"== eslint failed (see above); every step between it and here passed\"; exit 1; }\n  echo '== full'; node_modules/.bin/vitest run --passWithNoTests --reporter=dot > $P/vt.log 2>&1 || { if grep -q '^ FAIL ' $P/vt.log; then awk '/^ FAIL /{p=1} p' $P/vt.log | grep -vE '^ +(Start at|Duration) ' | head -200; else tail -60 $P/vt.log; fi; node $P/firstdiff.mjs $P/vt.log; exit 1; }\n  echo '== frozen'; git diff --quiet HEAD -- contour.yaml morph-map.json docs decks tests/fixtures || { echo \"changed outside the targets: $(git diff --name-only HEAD -- contour.yaml morph-map.json docs decks tests/fixtures | tr \"\\n\" \" \")\"; exit 1; }\n  X=$(git ls-files --others --exclude-standard | grep -vxF -e src/x/a.ts || true); [ -z \"$X\" ] || { echo \"files left in the tree: $X\"; exit 1; }\n\n ❯ tests/builder/buildAcceptances.p30.examples.test.ts:85:37\n     83|   expect(plain.cards[0].acceptance).toBe(codeAcceptance(baseA, PROBE, …\n     84|   expect((plain.cards[0].acceptance ?? \"\").includes(\"node $P/guard.mjs…\n     85|   expect(plain.cards[0].acceptance).toBe(aOut.acceptance?.replace(\" ''…\n       |                                     ^\n     86|   expect(plain.cards[1].acceptance).toBe(jOut.acceptance);\n     87| \n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 2 passed (3)\n\nfirst difference at char 275 (line 7) of 1389/1367: expected \"...; node $P/guard.mjs src src/x/a.ts 'zod' '{\\\"src/x\\\":[\\\"src/y\\\"]}'\\necho '== probe'; \" received \"...; node $P/guard.mjs src src/x/a.ts 'zod'\\necho '== probe'; node_modules/.bin/vite\"\n"
+        },
+        {
+          "customId": "compose-judge",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard tests/builder/compose.p30.examples.test.ts\n== own\n== full\n FAIL  tests/primer/primerCommand.p16.examples.test.ts > Primer Command example 9\nError: ENOENT: no such file or directory, open '/home/john/Documents/Work2026/MorphV2/tests/fixtures/go-mini/decks/tools/layers.json'\n ❯ fixture tests/helpers.ts:224:13\n    222| \n    223| export function fixture(name: string): string {\n    224|   return fs.readFileSync(fixturePath(name), \"utf8\");\n       |             ^\n    225| }\n    226| \n ❯ tests/primer/primerCommand.p16.examples.test.ts:51:48\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 164 passed (165)\n      Tests  1 failed | 996 passed (997)\n\n"
+        },
+        {
+          "customId": "go-acceptance-judge",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard tests/builder/goAcceptance.p30.examples.test.ts\n== own\n== full\n FAIL  tests/primer/primerCommand.p16.examples.test.ts > Primer Command example 9\nError: ENOENT: no such file or directory, open '/home/john/Documents/Work2026/MorphV2/tests/fixtures/go-mini/decks/tools/layers.json'\n ❯ fixture tests/helpers.ts:224:13\n    222| \n    223| export function fixture(name: string): string {\n    224|   return fs.readFileSync(fixturePath(name), \"utf8\");\n       |             ^\n    225| }\n    226| \n ❯ tests/primer/primerCommand.p16.examples.test.ts:51:48\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 164 passed (165)\n      Tests  1 failed | 996 passed (997)\n\n"
+        },
+        {
+          "customId": "plan-command-judge",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard tests/cli/planCommand.p30.examples.test.ts\n== own\n== full\n FAIL  tests/primer/primerCommand.p16.examples.test.ts > Primer Command example 9\nError: ENOENT: no such file or directory, open '/home/john/Documents/Work2026/MorphV2/tests/fixtures/go-mini/decks/tools/layers.json'\n ❯ fixture tests/helpers.ts:224:13\n    222| \n    223| export function fixture(name: string): string {\n    224|   return fs.readFileSync(fixturePath(name), \"utf8\");\n       |             ^\n    225| }\n    226| \n ❯ tests/primer/primerCommand.p16.examples.test.ts:51:48\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 164 passed (165)\n      Tests  1 failed | 996 passed (997)\n\n"
+        }
+      ]
+    }
+  ],
+  "stop": "unattributed red: layer-edges, build-acceptances, layer-edges-judge, compose, go-acceptance, plan-command, compose-judge, go-acceptance-judge, plan-command-judge"
+}
