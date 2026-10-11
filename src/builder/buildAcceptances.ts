@@ -4,6 +4,7 @@ import { codeAcceptance, judgeAcceptance } from "./compose.js";
 import { goCodeAcceptance, goJudgeAcceptance } from "./goAcceptance.js";
 import { untrackedStep } from "./steps.js";
 import { TRANSACTION_MARK } from "../cards/transaction.js";
+import { cardLayers } from "../rules/layers.js";
 import type { Deck } from "../cards/types.js";
 import type { BuildInput, BuildResult, CardContext, Checks } from "./types.js";
 import type { Card } from "../cards/types.js";
@@ -172,6 +173,9 @@ export function buildAcceptances(input: BuildInput): BuildResult {
       firstdiff: input.texts.firstdiff,
       allowed,
       vendor: input.vendor === true,
+      ...(input.layers !== undefined
+        ? { layers: cardLayers(input.profile, card.targets, input.layers) }
+        : {}),
     };
     if (check.files !== null) {
       acceptanceOf.set(
