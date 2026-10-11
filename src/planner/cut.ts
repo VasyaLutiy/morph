@@ -206,7 +206,7 @@ export function cutComponent(input: CutInput): CutResult {
       const modules = entry.ownerBaseIds.map(
         (id) => (finalTargets.get(id) as string[])[0],
       );
-      blocks.push(interfaceSection(entry.iface, modules));
+      blocks.push(interfaceSection(entry.iface, modules, record));
     }
     const inherited = inheritedSection(record, component);
     if (inherited !== "") blocks.push(inherited);
@@ -230,12 +230,30 @@ export function cutComponent(input: CutInput): CutResult {
       variants: override?.variants ?? base.variants,
       dependsOn,
     };
+    const guardrails: string[] = [];
+    for (const fn of base.functions) {
+      for (const name of fn.guardrails) {
+        if (!guardrails.includes(name)) guardrails.push(name);
+      }
+    }
+    for (const entry of base.interfaceSections) {
+      for (const name of entry.iface.guardrails ?? []) {
+        if (!guardrails.includes(name)) guardrails.push(name);
+      }
+    }
+    for (const name of record.system.guardrails) {
+      if (!guardrails.includes(name)) guardrails.push(name);
+    }
+    for (const name of component.guardrails) {
+      if (!guardrails.includes(name)) guardrails.push(name);
+    }
     cuts.push({
       card,
       component,
       profile,
       functions: base.functions,
       slicedByMap: (override?.contextSlice ?? null) !== null,
+      guardrails,
     });
   }
   return { ok: true, cuts };

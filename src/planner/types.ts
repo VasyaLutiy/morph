@@ -8,7 +8,7 @@ export type UnitsResult = { ok: true; units: Unit[] } | { ok: false; error: stri
 export interface CutInput { record: ContourRecord; component: Component; map: ContourMap; docs: string[]; spec: string }
 export interface CutCard {
   card: Card; component: Component | null; profile: LanguageProfile | null;
-  functions: ContourFunction[]; slicedByMap: boolean;
+  functions: ContourFunction[]; slicedByMap: boolean; guardrails?: string[];
 }
 export type CutResult = { ok: true; cuts: CutCard[] } | { ok: false; error: string };
 export interface JudgeInput {
@@ -26,4 +26,4 @@ export interface Plan {
   spec: string; components: string[]; cards: Card[]; generations: string[][];
   externalDependsOn: Record<string, string[]>;
 }
-export type PlanResult = { ok: true; plan: Plan; uses: Record<string, string[]> } | { ok: false; error: string };
+export type PlanResult = { ok: true; plan: Plan; uses: Record<string, string[]>; warnings: string[] } | { ok: false; error: string };
