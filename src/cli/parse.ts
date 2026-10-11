@@ -721,7 +721,7 @@ export function parseCommand(argv: string[]): ParseResult {
       processor: values.get("--processor") ?? "",
       issue: values.get("--issue") ?? "",
       seedFile: values.has("--seed-file") ? values.get("--seed-file") ?? "" : null,
-      deadlineSeconds: deadline !== undefined ? Number(deadline) : 1800,
+      deadlineSeconds: deadline !== undefined ? Number(deadline) : null,
     };
     return { ok: true, command };
   }
