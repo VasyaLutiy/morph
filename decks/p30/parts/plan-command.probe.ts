@@ -13,8 +13,9 @@ const args: PlanArgs = {
   name: "plan", root: ".", pretty: false, spec: "contour.yaml", components: ["calc", "report"], map: "morph-map.json",
   judge: true, out: "decks/m1/deck.json", checks: "decks/m1/checks.json",
 };
-const HEREDOC = "<<'MORPH_GUARD_EOF'\n// guard\nMORPH_GUARD_EOF\n";
-const HEREDOC2 = "<<'MORPH_GUARD_EOF'\n// morph-guard-contract: 2\nMORPH_GUARD_EOF\n";
+const TAG = "MORPH_GUARD" + "_EOF"; // the tag itself may not appear in a probe (it is inlined in a heredoc)
+const HEREDOC = "<<'" + TAG + "'\n// guard\n" + TAG + "\n";
+const HEREDOC2 = "<<'" + TAG + "'\n// morph-guard-contract: 2\n" + TAG + "\n";
 const LINES: Record<string, [string, string]> = {
   "clamp-value": ["node $P/guard.mjs src calc/clamp_value.go\n", "node $P/guard.mjs src calc/clamp_value.go '' '{\"calc\":[]}'\n"],
   "percent-of": ["node $P/guard.mjs src calc/percent_of.go\n", "node $P/guard.mjs src calc/percent_of.go '' '{\"calc\":[]}'\n"],
