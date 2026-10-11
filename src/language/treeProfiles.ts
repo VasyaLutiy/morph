@@ -62,3 +62,35 @@ export const TEST_LINES: readonly TestProfile[] = [
     packageLine: "^FAIL\\t(\\S+)",
   },
 ];
+
+export interface NeighbourProfile {
+  id: string;
+  file: string;
+  directory: boolean;
+  testFile: string | null;
+  module: string | null;
+}
+
+export const NEIGHBOUR_RULES: readonly NeighbourProfile[] = [
+  {
+    id: "typescript",
+    file: "\\.[cm]?tsx?$",
+    directory: false,
+    testFile: null,
+    module: "'\"?(\\.\\.?/[^'\"]+)\"?'",
+  },
+  {
+    id: "python",
+    file: "\\.pyi?$",
+    directory: false,
+    testFile: null,
+    module: null,
+  },
+  {
+    id: "go",
+    file: "\\.go$",
+    directory: true,
+    testFile: "_test\\.go$",
+    module: null,
+  },
+];
