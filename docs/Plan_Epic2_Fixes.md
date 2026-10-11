@@ -111,6 +111,8 @@ A phase is done when:
 - Replay: MorphStudio P9a run 2. `encoding/hex` and `io/fs` pass, and token-lookup is not blamed for
   `users/registry.go`.
 
+### P31c: Function-level Guardrail scope per card file (#42 ledger 9) — done 11.10: run 20261011-183413, 2/2, $0.042 + scout $0.015
+
 ### P33 (later, data phase, operator's decision): MorphV2 eats its own rule
 Complete MorphV2's record: `uses` steps to match `LAYERS`, Guardrails per Component to match `NO_CLOCK`/`NO_ENV`/….
 Then switch `decks/tools/guard.mjs` to the template's contract, so that the 13 "· guard ·" DECISIONS lines become

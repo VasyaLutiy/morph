@@ -185,7 +185,8 @@ or record the departure (§1.3).
    the tree as the run will:
    - a new code file: its typed exports, every body throwing `stub <name>`;
    - a patch target (intent `patch`): the current file plus only the declarations the probe needs
-     to compile (a new optional key or type), no behaviour;
+     to compile (a new optional key or type), no behaviour — when it needs none, the stub IS the
+     current file, and `deck check`'s `unproven` lists it: expected for a patch, name it;
    - **an existing file re-cut with intent `generate`** (rewritten from the record, the card never
      sees the old text): ONLY the names the record gives that file, typed, every body throwing —
      never the current file. Its kept neighbours (same package/module, not in the deck) then build
@@ -220,9 +221,12 @@ fix the data and check again. A second failure: stop and report.
 2. **Start it as ONE background call**, the command in its foreground:
    `<morph> run --root . --deck decks/<p>/deck.json --processor <P> --deadline <s> > /tmp/<p>/run-1.json 2> /tmp/<p>/run-1.err; echo EXIT=$?`
    with `run_in_background: true`; no `nohup`, no `&`. The harness wakes you when it ends.
-3. **No polling.** No `sleep` loops, no `pgrep` loops, no periodic `tail`: each wake rereads your
-   whole context (P7b: 18 polls ≈ 4.9M tokens for nothing). Look once at `morph run:` lines in the
-   `.err` only if asked.
+3. **No polling — of ANY background command** (scout, run, gate, a long test). No `sleep`, no
+   `pgrep` loops, no periodic `cat`/`tail` of an output: each wake rereads your whole context (P7b:
+   18 polls ≈ 4.9M tokens for nothing). Look once at `morph run:` lines in the `.err` only if asked.
+   **End your turn only while a background command of yours is still running** — the harness wakes
+   you when it exits. With none running, keep working in the same turn: a turn that ends on "now I
+   will do X" with no tool call is a stop, not a plan (P31c, 11.10).
 4. **Keep out of the tree while it runs**: no edit, no commit, no primer, no scout.
 
 ## 9. Verify and the live reproduction

@@ -67,3 +67,5 @@ P24c, P24b. PM = the MorphStudio PM's live phases P7b, P7c, P8a (10.10).
 | §4.7 a patching judge gets its test's variable types; whitespace in examples collapses | P34b, P31a, 11.10 | `'warnings' does not exist in type 'PlanDocument'`: 1 retry; `"  No   Shell "` rendered as `" No Shell "` |
 | §10.1 tree-defect fix on the run branch; grep concatenated fixture paths | P30, P34a, 11.10 | a fixture read as `"go-mini/" + path` deleted: every card red at `== full` |
 | §4.3 structure and rules in the record, not layers.json | P30–P31b, 11.10 | the layer, pure and imports rules moved from hand data into the record; layers.json is gone from the templates |
+| §8.3 no polling of any background command; end the turn only while one runs | P31c, 11.10 (operator caught it) | `sleep 60; cat …output; tail scout.err` on the scout; then a turn ended on "Now the record: rules Component." with nothing running — the session stopped until the operator resumed it |
+| §6.1 a patch stub equal to the committed file is expected in `unproven` | P31c, 11.10 | the probe needed no new declaration; `unproven` always lists such a stub |
