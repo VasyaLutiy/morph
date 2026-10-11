@@ -116,12 +116,14 @@ export function roundZero(
 
   const out: string[] = [ROUND0_HEADER];
   const files = [...tree.files].sort();
+  const prefixes = skip.map((entry) =>
+    entry.includes("/") ? entry : entry + "/",
+  );
 
   for (const clue of clues) {
     const hits: Hit[] = [];
     for (const file of files) {
-      const first = file.split("/")[0] ?? "";
-      if (skip.includes(first)) continue;
+      if (prefixes.some((prefix) => file.startsWith(prefix))) continue;
       const caged = cagePath(tree, file, "file", fs);
       if (!caged.ok) continue;
       let text: string;
