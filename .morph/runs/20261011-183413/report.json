@@ -1,0 +1,111 @@
+{
+  "runId": "20261011-183413",
+  "completedAt": 1791744118022,
+  "branch": "morph/20261011-183413",
+  "processor": "ds",
+  "generations": 2,
+  "outcomes": [
+    {
+      "customId": "guardrail-rules",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "guardrail-rules.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "4d88268dd303a2ce7f1b2da94767823359018e3c",
+      "diffstat": {
+        "files": 1,
+        "insertions": 71,
+        "deletions": 12
+      }
+    },
+    {
+      "customId": "guardrail-rules-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "guardrail-rules-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/rules/guardrails.examples.test.ts\n== guard tests/rules/guardrails.p31c.examples.test.ts\n== names tests/rules/guardrails.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard tests/rules/guardrails.examples.test.ts\n== guard tests/rules/guardrails.p31c.examples.test.ts\nguard: tests/rules/guardrails.p31c.examples.test.ts does not mention the example literal \"Rules Arg example 8\"\n"
+      ],
+      "commit": "3076de3a8df2f0f8879f94b30dedb69ff1cf562e",
+      "diffstat": {
+        "files": 2,
+        "insertions": 159,
+        "deletions": 3
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 86935,
+    "outputTokens": 49463,
+    "cost": 0.04188861,
+    "requests": 4
+  },
+  "requests": [
+    {
+      "customId": "guardrail-rules.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791743654-4sriRhYf93yJmj9N4xlL",
+      "inputTokens": 13434,
+      "outputTokens": 9087,
+      "cost": 0.0074673,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "guardrail-rules.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791743654-K9XEBNoHI2oW3fxy4FyD",
+      "inputTokens": 13434,
+      "outputTokens": 12596,
+      "cost": 0.0095727,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "guardrail-rules-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791743772-BseObuw04pqFrmCl4BQZ",
+      "inputTokens": 24465,
+      "outputTokens": 19347,
+      "cost": 0.01444851,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "guardrail-rules-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791743979-bgARaEa3sCuZ3i4Dbt8h",
+      "inputTokens": 35602,
+      "outputTokens": 8433,
+      "cost": 0.0104001,
+      "finishReason": "stop",
+      "error": null
+    }
+  ],
+  "rounds": [
+    {
+      "round": 0,
+      "reds": [
+        {
+          "customId": "guardrail-rules-judge",
+          "blamed": [
+            "guardrail-rules-judge"
+          ],
+          "log": "== tsc\n== eslint\n== guard tests/rules/guardrails.examples.test.ts\n== guard tests/rules/guardrails.p31c.examples.test.ts\nguard: tests/rules/guardrails.p31c.examples.test.ts does not mention the example literal \"Rules Arg example 8\"\n"
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "reds": []
+    }
+  ]
+}
