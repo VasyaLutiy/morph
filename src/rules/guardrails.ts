@@ -27,6 +27,7 @@ interface NamedPlace {
 
 interface Unit {
   dirs: string[];
+  files: string[];
   names: NamedPlace[];
 }
 
@@ -96,7 +97,14 @@ export function guardrailRules(record: ContourRecord, map: ContourMap): Guardrai
           names.push({ name: guardrail, place: "Interface " + iface.name });
         }
       }
-      units.push({ dirs: codeDirs(profile, targets), names });
+      const files: string[] = [];
+      const seenFiles = new Set<string>();
+      for (const target of codeTargets(profile, targets)) {
+        if (seenFiles.has(target)) continue;
+        seenFiles.add(target);
+        files.push(target);
+      }
+      units.push({ dirs: codeDirs(profile, targets), files, names });
     }
 
     for (const iface of component.interfaces) {
@@ -117,7 +125,14 @@ export function guardrailRules(record: ContourRecord, map: ContourMap): Guardrai
       for (const guardrail of iface.guardrails ?? []) {
         names.push({ name: guardrail, place: "Interface " + iface.name });
       }
-      units.push({ dirs: codeDirs(profile, targets), names });
+      const files: string[] = [];
+      const seenFiles = new Set<string>();
+      for (const target of codeTargets(profile, targets)) {
+        if (seenFiles.has(target)) continue;
+        seenFiles.add(target);
+        files.push(target);
+      }
+      units.push({ dirs: codeDirs(profile, targets), files, names });
     }
 
     for (const unit of units) {
@@ -142,9 +157,15 @@ export function guardrailRules(record: ContourRecord, map: ContourMap): Guardrai
           continue;
         }
         const text = "Guardrail '" + named.name + "' of " + named.place;
-        for (const dir of unit.dirs) {
-          const entry: Record<string, string> | undefined = rules[dir];
-          if (entry === undefined) continue;
+        const filePlace = named.place.startsWith("Function ") || named.place.startsWith("Interface ");
+        const keys = filePlace ? unit.files : unit.dirs;
+        for (const key of keys) {
+          let entry: Record<string, string> | undefined = rules[key];
+          if (entry === undefined) {
+            if (!filePlace) continue;
+            entry = {};
+            rules[key] = entry;
+          }
           if (Object.hasOwn(entry, id)) continue;
           entry[id] = text;
         }
@@ -175,16 +196,54 @@ export function cardRules(
   targets: readonly string[],
   rules: Record<string, Record<string, string>>,
 ): Record<string, Record<string, string>> {
-  const out: Record<string, Record<string, string>> = {};
-  for (const target of codeTargets(profile, targets)) {
+  const code = codeTargets(profile, targets);
+  const order: string[] = [];
+  const byDir = new Map<string, string[]>();
+  for (const target of code) {
     const dir = posix.dirname(target);
-    if (Object.hasOwn(out, dir)) continue;
-    if (Object.hasOwn(rules, dir)) {
-      const entry: Record<string, string> | undefined = rules[dir];
-      out[dir] = entry === undefined ? {} : entry;
-    } else {
-      out[dir] = {};
+    let list = byDir.get(dir);
+    if (list === undefined) {
+      list = [];
+      byDir.set(dir, list);
+      order.push(dir);
     }
+    list.push(target);
+  }
+  const out: Record<string, Record<string, string>> = {};
+  for (const dir of order) {
+    const files = byDir.get(dir);
+    const entry: Record<string, string> = {};
+    if (files !== undefined) {
+      for (const target of files) {
+        if (!Object.hasOwn(rules, target)) continue;
+        const fileEntry: Record<string, string> | undefined = rules[target];
+        if (fileEntry === undefined) continue;
+        for (const id of Object.keys(fileEntry)) {
+          if (Object.hasOwn(entry, id)) continue;
+          const text: string | undefined = fileEntry[id];
+          if (text === undefined) continue;
+          entry[id] = text;
+        }
+      }
+    }
+    if (Object.hasOwn(rules, dir)) {
+      const dirEntry: Record<string, string> | undefined = rules[dir];
+      if (dirEntry !== undefined) {
+        for (const id of Object.keys(dirEntry)) {
+          if (Object.hasOwn(entry, id)) continue;
+          const text: string | undefined = dirEntry[id];
+          if (text === undefined) continue;
+          entry[id] = text;
+        }
+      }
+    }
+    const sorted: Record<string, string> = {};
+    for (const id of Object.keys(entry).sort()) {
+      const text: string | undefined = entry[id];
+      if (text === undefined) continue;
+      sorted[id] = text;
+    }
+    out[dir] = sorted;
   }
   return out;
 }
