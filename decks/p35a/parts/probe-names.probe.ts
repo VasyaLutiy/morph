@@ -80,4 +80,7 @@ test("Probe Names example 4: pascalName and the go titles", () => {
       own: [{ name: "Percent Of", count: 5 }], strict: false,
     }),
   ).toStrictEqual(["card 'percent-of': probe " + GP + " names NoSuch example 2, which the record does not give"]);
+  expect(
+    probeTitles(GO, "func TestProbePMToolsExample1(t *testing.T) {}\nfunc TestProbeDaemonCoreExample12DoneWaitReady(t *testing.T) {}\n", ["PM Tools", "Daemon Core"]),
+  ).toStrictEqual([{ function: "PM Tools", n: 1 }]);
 });

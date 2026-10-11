@@ -5153,7 +5153,7 @@ System:
             pascalName(name) = language's nameWords(name), each word with its first letter upper-cased, joined ("Percent
             Of" → "PercentOf", "MCP mount" → "McpMount"). probeTitles(profile, text, names) → Probe Title[] in line order,
             text split on "\n". The go profile: a line starting "func TestProbe" + X + "Example" + n + "(" (X one or more of
-            [A-Za-z0-9_], the longest that fits; n digits) → {function: the first of names whose pascalName is X, else X; n:
+            [A-Za-z0-9_], the longest that fits; n digits) → {function: the first of names whose pascalName is X, letter case ignored ("PMTools" is "PM Tools"), else X; n:
             Number(n)}. Any other profile: a line whose first non-blank characters (spaces, tabs) are "test(" or "it(", then
             optional spaces, then a quote (", ' or a backquote), the title running to the next same quote on the line; a
             title "<F> example <n>" or "<F> example <n>:<rest>" (F at least one character, n digits) → {function: F, n};

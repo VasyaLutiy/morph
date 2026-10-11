@@ -20,6 +20,9 @@ const LAYERS = {
   // P30: rules reads the layer rule off the record (contour's types and componentSlug, language's profiles, naming and
   // paths) (docs/TASK_P30_rules.md §4)
   rules: ["contour", "language"],
+  // P35a: criterion checks probes and builds judge defaults from the cut (builder's types and probeFile, planner's
+  // Card Criterion, contour's Example, language's naming and paths) (docs/TASK_P35a_criterion.md §2.2)
+  criterion: ["cards", "builder", "contour", "language", "planner"],
   primer: ["cards", "git", "store", "language"],
   // P13a: the seed reads language's profiles (and, from P13b, git's ownership) (docs/TASK_P13a_scout.md §4)
   // P13b: the round loop builds the processor's Request and Message (compiler's types) (docs/TASK_P13b_scout.md §4)

@@ -115,7 +115,7 @@ export function checkProbeNames(input: ProbeNamesInput): string[];
 - typescript line rule: `/^[ \t]*(?:test|it)\(\s*(["'`])(.*?)\1/` on each line; the title matches
   `/^(.+) example (\d+)(?::.*)?$/` → `{function: m[1], n: Number(m[2])}`.
 - go line rule: `/^func TestProbe([A-Za-z0-9_]+)Example(\d+)\(/`; the function is the first of `names` whose
-  `pascalName` equals the capture, else the capture itself.
+  `pascalName` equals the capture with letter case ignored (`TestProbePMToolsExample1` names "PM Tools", MorphStudio's form), else the capture itself.
 - the line texts (`<numbers>` = distinct numbers ascending joined by `", "`):
   - `card '<id>': probe <path> lacks <F> example <numbers> (the record gives <count>)`
   - `card '<id>': probe <path> names <F> example <numbers>, not an example of its Functions (<own names joined by ", ", or none>)`
