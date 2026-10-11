@@ -1,4 +1,0 @@
-{
-  "layers": {"calc": [], "report": ["calc"], "internal/testhelp": []},
-  "pure": ["calc", "report"]
-}

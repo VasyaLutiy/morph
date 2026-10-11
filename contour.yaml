@@ -3412,13 +3412,8 @@ System:
             - given: 'the go profile; cards a (["src/x/a.ts"]) and b (["calc/b.go"]); checks cards a, b; probes {a: "// probe\n"}; then probeFile(go, "percent-of") and probeFile(typescript, "a")'
               when: "buildAcceptances; probeFile"
               then: "{ok: false, errors: [\"card 'a' has no go target\", \"code card 'b' has no probe\"]}; \"_percent-of_probe_test.go\"; \"a.probe.ts\""
-            - given: 'cards a (["src/x/a.ts"]), b (["src/x/b.ts"]), acceptances null; checks phase "p7" with cards a, b; probes a, b "// probe\n"; guard "// guard\n", firstdiff "// firstdiff\n"; uses {"a": ["zod", "yaml"], "a-judge": ["ajv"], "c": ["x"]}, vendor true; then the same input without uses and vendor'
-              when: "buildAcceptances"
-              then: 'ok; a''s acceptance = codeAcceptance(ctx {id "a", phase "p7", targets ["src/x/a.ts"], siblings ["src/x/b.ts"], frozen DEFAULT_FROZEN, fullExclude [], ownGit false, typescript, the texts, allowed ["zod", "yaml"]}, "// probe\n", null, null), holding "node $P/guard.mjs src src/x/a.ts ''zod,yaml''\n"; b''s = codeAcceptance with siblings ["src/x/a.ts"], holding "node $P/guard.mjs src src/x/b.ts\n"; then a''s holds "node $P/guard.mjs src src/x/a.ts\n" and b''s is the same as before'
-            - given: 'the go input of example 5 plus uses {"percent-of": ["github.com/dustin/go-humanize", "golang.org/x/text"]} and vendor true'
-              ref: "tests/fixtures/builder/go/code1.txt"
-              when: "buildAcceptances"
-              then: 'ok; percent-of''s acceptance = code1.txt with "export GOFLAGS=-mod=mod " become "export GOFLAGS=-mod=vendor " and its guard line "node $P/guard.mjs src calc/percent_of.go" ending in " ''github.com/dustin/go-humanize,golang.org/x/text''"; the judge''s = goJudgeAcceptance(its ctx with siblings ["calc/percent_of.go"] and vendor true, files), holding "export GOFLAGS=-mod=vendor " and no "-mod=mod"'
+            - {given: 'examples.json["Build Acceptances 7"].given', ref: "tests/fixtures/builder/examples.json", when: buildAcceptances, then: 'examples.json["Build Acceptances 7"].then'}
+            - {given: 'examples.json["Build Acceptances 8"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/go/code1.txt", when: buildAcceptances, then: 'examples.json["Build Acceptances 8"].then'}
             - {given: 'examples.json["Build Acceptances 9"].given', ref: "tests/fixtures/builder/examples.json", when: buildAcceptances, then: 'examples.json["Build Acceptances 9"].then'}
             - {given: 'examples.json["Build Acceptances 10"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/go/code1.txt", when: buildAcceptances, then: 'examples.json["Build Acceptances 10"].then'}
       dataObjects:
