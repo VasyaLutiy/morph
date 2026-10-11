@@ -1593,11 +1593,10 @@ System:
     # ---------------------------------------------------------------- P7
     - name: cli
       description: >
-        The `morph` binary: src/cli/*.ts and the entry src/cli.ts (bin dist/cli.js): argv parsed, routed by Main, one JSON document on stdout, log
-        lines on stderr, an exit code per outcome; only the entry touches the process.
-        tests/fixtures/cli/examples.json["<Function> <n>"] holds the given and then of an example naming it.
-        tests/fixtures/cli/refs.json["<Function> <n>"] names the fixture files an example uses. tests/fixtures/cli/flags.json
-        lists the flags: "bare" (no value), "valued" (one value), "takes" (command → the flags it accepts).
+        The `morph` binary: src/cli/*.ts and the entry src/cli.ts (bin dist/cli.js): Main routes argv; one JSON document on stdout, log lines on
+        stderr, an exit code per outcome; only the entry touches the process. tests/fixtures/cli/examples.json["<Function> <n>"]: an example's
+        given and then; refs.json["<Function> <n>"]: the fixture files it uses; flags.json: the flags, "bare" (no value), "valued" (one value),
+        "takes" (command → the flags it accepts).
       language: typescript
       requirements: [One Document Out]
       functions:
@@ -1605,31 +1604,30 @@ System:
           description: argv into one Command or a usage error.
           behavior: >
             parseCommand(argv) scans argv left to right. A token starting with "--" is a flag: flags.json "bare" take no value, "valued" take the next token
-            whatever it is; another flag (--x=y too) → "unknown flag: <t>"; a value flag last → "flag <t> needs a value"; a flag
-            twice → "flag <t> given twice", but --component repeats, values in argv order (the first error by argv wins). Other tokens are words naming the command:
-            none → "no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept, init)"; run; plan ("plan --from-scout" with
-            --from-scout); submit; collect; primer; scout; review + two words <base> <head>; card; accept; init; gate; deck check; a first word report → NotYetError
-            "command report is not available yet"; deck add|status|reset|clear → NotYetError "command deck <w> is not available yet"; else "unknown command: <words,
+            whatever it is; another flag (--x=y too) → "unknown flag: <t>"; a value flag last → "flag <t> needs a value"; a flag twice → "flag <t> given twice",
+            but --component repeats, values in argv order (the first error by argv wins). Other tokens are words naming the command: none → "no command
+            (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept, init)"; run; plan ("plan --from-scout" with --from-scout);
+            submit; collect; primer; scout; review + two words <base> <head>; card; accept; init; gate; deck check; a first word report → NotYetError "command
+            report is not available yet"; deck add|status|reset|clear → NotYetError "command deck <w> is not available yet"; else "unknown command: <words,
             space-joined>". An extra word → "unexpected argument: <first extra>". Then in order: a flag the command does not take → "flag <f> does not apply to
-            <command>", in argv order (flags.json "takes": the flags of "every command" plus the command's own). Below I = ^[A-Za-z0-9._-]+$, and "<f> ~ P" = a value not matching P → "<f> must match P (got '<v>')", P written out. card
-            and accept: no --deck → "missing --deck", no --id → "missing --id", --id ~ I (accept: an --id holding "," must be distinct ids joined by ",", each
-            matching I, else "--id must be distinct card ids joined by \",\" (got '<v>')"); card done. accept: --from-run ~ I; --model with --from-run → "--model
-            does not apply with --from-run"; --pick without it → "--pick needs --from-run"; without --from-run no --model → "missing --model", --model ~
-            ^[A-Za-z0-9._/:-]+$; a --pick not distinct names joined by ",", each matching I → "--pick must be distinct answer names joined by \",\" (got '<v>')"; else
-            done (model null with --from-run; fromRun, then pick (names in order), each key only when given). init: no --name → "missing --name", --name ~ I, no
-            --language → "missing --language", not typescript, python or go → "--language must be one of typescript, python, go (got '<v>')", --module ~
-            ^[A-Za-z0-9._/-]+$, else done (module, templates null when not given). review: fewer than two refs → "review needs two refs: <base> <head>", --scout ~ I,
-            --mutants then --mutant-timeout not a positive integer, else done (mutants null, mutantTimeoutSeconds 120, test null when not given). plan --from-scout:
-            --from-scout ~ I, else done (out null when not given). plan: no --spec → "missing --spec"; a given --only split on "," must be distinct ids each matching
-            I, else "--only must be distinct card ids joined by \",\" (got '<v>')"; else done (components [] and map, out null when not given; checks, then only (ids
-            in order), each key only when given). collect: no --batch → "missing --batch", --batch ~ I, else done. primer done (write: --write given). scout: no
-            --processor → "missing --processor", no --issue → "missing --issue", --deadline not a positive integer → "--deadline must be a positive integer (got
-            '<v>')", else done (seedFile null, deadlineSeconds null when not given: Main's config gives it). The rest: no --deck → "missing --deck"; gate: no --stubs → "missing --stubs",
-            no --refs → "missing --refs", --mutants as review's, else done (mutants only when given); run or submit: no --processor → "missing --processor"; submit
-            done; run: --run-id ~ I; numbers in the order --slice-cap-bytes (deck check), --deadline, --max-cards, --max-retry-batches (run): digits only, ≥ 1 ("<f>
-            must be a positive integer (got '<v>')"), --max-retry-batches ≥ 0 ("must be a non-negative integer"). A failure is {ok: false, error: {error: {code: 4,
-            kind: "UsageError"|"NotYetError", message}}}. Defaults: root ".", pretty false, sliceCapBytes 500000, runId null, deadlineSeconds 2400, maxCards null (the
-            card count), maxRetryBatches 2.
+            <command>", in argv order (flags.json "takes": the flags of "every command" plus the command's own). Below I = ^[A-Za-z0-9._-]+$; "<f> ~ P" = a
+            value not matching P → "<f> must match P (got '<v>')", P written out; "need <f>" = no <f> → "missing <f>"; "<f> ≡ I,<what>" = a value split on ","
+            that is not distinct <what> each matching I → "<f> must be distinct <what> joined by \",\" (got '<v>')". card and accept: need --deck, need --id,
+            --id ~ I (accept: an --id holding "," ≡ I,card ids); card done. accept: --from-run ~ I; --model with --from-run → "--model does not apply with
+            --from-run"; --pick without it → "--pick needs --from-run"; without --from-run need --model, --model ~ ^[A-Za-z0-9._/:-]+$; --pick ≡ I,answer names;
+            else done (model null with --from-run; fromRun, then pick (names in order), each key only when given). init: need --name, --name ~ I, need
+            --language, not typescript, python or go → "--language must be one of typescript, python, go (got '<v>')", --module ~ ^[A-Za-z0-9._/-]+$, else done
+            (module, templates null when not given). review: fewer than two refs → "review needs two refs: <base> <head>", --scout ~ I, --mutants then
+            --mutant-timeout not a positive integer, else done (mutants null, mutantTimeoutSeconds 120, test null when not given). plan --from-scout:
+            --from-scout ~ I, else done (out null when not given). plan: need --spec; a given --only ≡ I,card ids; else done (components [] and map, out null
+            when not given; checks, then only (ids in order), each key only when given). collect: need --batch, --batch ~ I, else done. primer done (write:
+            --write given). scout: need --processor, need --issue, --deadline not a positive integer → "--deadline must be a positive integer (got '<v>')", else
+            done (seedFile null, deadlineSeconds null when not given: Main's config gives it). The rest: need --deck; gate: need --stubs, need --refs, --mutants
+            as review's, else done (mutants only when given); run or submit: need --processor; submit done; run: --run-id ~ I; numbers in the order
+            --slice-cap-bytes (deck check), --deadline, --max-cards, --max-retry-batches (run): digits only, ≥ 1 ("<f> must be a positive integer (got '<v>')"),
+            --max-retry-batches ≥ 0 ("must be a non-negative integer"). A failure is {ok: false, error: {error: {code: 4, kind: "UsageError"|"NotYetError",
+            message}}}. Defaults: root ".", pretty false, sliceCapBytes 500000, runId null, deadlineSeconds 2400, maxCards null (the card count),
+            maxRetryBatches 2.
           steps: [{produces: Command}]
           examples:
             - {given: 'parseArgv.json["1"]', when: parsed, then: 'parse.json["1"]'}
