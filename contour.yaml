@@ -1386,14 +1386,17 @@ System:
               when: "runGit, then gitOk"
               then: 'runGit gives code 1, stdout "", stderr beginning "error: pathspec ''nope'' did not match"; gitOk throws an Error whose message begins "git checkout failed (exit 1): error: pathspec ''nope'' did not match"'
         - name: Open Run Branch
-          description: morph/<runId> from HEAD; refuses a dirty tree outside .morph/ and an existing branch.
+          description: morph/<runId> from HEAD; refuses a dirty tree (every git status entry, .morph/ included) and an existing branch.
           behavior: >
             openRunBranch(root, runId, env): runId must match ^[A-Za-z0-9._-]+$, else
             {ok: false, error: "invalid runId: <runId>"} and no git call. Then `git status
             --porcelain --untracked-files=all`: every entry's path (the text after the
-            two status letters and a space; for a rename the path after " -> ") that does
-            not start with ".morph/" is dirty; any dirty path → {ok: false, error: "dirty tree
-            outside .morph/: <dirty paths sorted, joined by ", ">"}. Then base = `git rev-parse
+            two status letters and a space; for a rename the path after " -> ") is dirty,
+            paths under .morph/ included (ignored files are never listed, so a .gitignore
+            covering .morph/ keeps them out): one definition of a dirty tree with every
+            acceptance's untracked step (P32, #43). Any dirty path → {ok: false, error: "dirty
+            tree: <dirty paths sorted, joined by ", "> (commit, remove or ignore them: every
+            acceptance fails on a file left in the tree)"}. Then base = `git rev-parse
             HEAD` (trimmed); a branch refs/heads/morph/<runId> that already exists → {ok: false,
             error: "branch morph/<runId> already exists"}; else `git checkout -q -b
             morph/<runId>` and {ok: true, branch: "morph/<runId>", base}. A refusal leaves the
@@ -1405,12 +1408,12 @@ System:
             - given: 'a fresh repo on main whose HEAD is <h>; runId "r1"'
               when: "opened"
               then: '{ok: true, branch: "morph/r1", base: <h>} (40 hex chars); `git rev-parse --abbrev-ref HEAD` now reads "morph/r1"'
-            - given: 'a fresh repo with the untracked files .morph/deck.json and .morph/runs/x/report.json; runId "r2"'
+            - given: 'a fresh repo with the untracked files .morph/deck.json and .morph/runs/x/report.json and no .gitignore; runId "r2"; then .gitignore ".morph/*\n" committed, the same two files still untracked, runId "r2" again'
               when: "opened"
-              then: '{ok: true, branch: "morph/r2", base: <h>} — files under .morph/ do not make the tree dirty'
+              then: '{ok: false, error: "dirty tree: .morph/deck.json, .morph/runs/x/report.json (commit, remove or ignore them: every acceptance fails on a file left in the tree)"}, the checkout still main and no branch morph/r2; then {ok: true, branch: "morph/r2", base: <HEAD after the .gitignore commit>}'
             - given: 'a repo with README.md committed and then modified, and an untracked src/a.ts; runId "r3"'
               when: "opened"
-              then: '{ok: false, error: "dirty tree outside .morph/: README.md, src/a.ts"}; the checkout is still main and no branch morph/r3 exists'
+              then: '{ok: false, error: "dirty tree: README.md, src/a.ts (commit, remove or ignore them: every acceptance fails on a file left in the tree)"}; the checkout is still main and no branch morph/r3 exists'
             - given: 'a fresh repo where the branch morph/r4 already exists (git branch morph/r4); runId "r4"; then runId "a b"'
               when: "opened"
               then: '{ok: false, error: "branch morph/r4 already exists"}, the checkout still main; then {ok: false, error: "invalid runId: a b"}'

@@ -1,0 +1,20 @@
+{
+  "phase": "p32",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates"],
+  "cards": [
+    { "id": "open-branch" },
+    { "id": "open-branch-judge", "files": [{ "file": "tests/git/branch.examples.test.ts", "min": 12, "max": 14, "new": false,
+      "drop": ["Open Run Branch example 2: untracked files under .morph/ do not make the tree dirty",
+        "Open Run Branch own: a staged rename into .morph/ is not dirty",
+        "Open Run Branch own: a modified tracked file under .morph/ is not dirty"],
+      "lits": ["Open Run Branch example 2: untracked files under .morph/ are dirty unless .gitignore covers them",
+        "Open Run Branch own: a staged rename into .morph/ is dirty",
+        "Open Run Branch own: a modified tracked file under .morph/ is dirty",
+        "dirty tree: .morph/deck.json, .morph/runs/x/report.json", "dirty tree: README.md, src/a.ts",
+        "dirty tree: .morph/.keep, .morph/x.ts", "dirty tree: .morph/deck.json (", ".morph/*",
+        " (commit, remove or ignore them: every acceptance fails on a file left in the tree)"] }] },
+    { "id": "run-command-judge", "files": [{ "file": "tests/cli/runCommand.examples.test.ts", "min": 10, "max": 10, "new": false,
+      "lits": ["dirty tree: notes.txt (commit, remove or ignore them: every acceptance fails on a file left in the tree)"] }] }
+  ]
+}

@@ -89,7 +89,7 @@
   },
   "Run Command 4": {
     "given": "the same setup with an untracked notes.txt in the repo",
-    "then": "code 2 RefusalError \"dirty tree outside .morph/: notes.txt\"; the checkout still main; no archive"
+    "then": "code 2 RefusalError \"dirty tree: notes.txt (commit, remove or ignore them: every acceptance fails on a file left in the tree)\"; the checkout still main; no archive"
   },
   "Read Deck File 1": {
     "given": "a tmp root with d.json = the deck of the tiny fixture",
