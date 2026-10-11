@@ -1,0 +1,10 @@
+morph run: validate-record.v1 accepted stage 0 finish stop chars 23290
+morph run: validate-record.v2 untried stage 0 finish stop chars 23375
+morph run: layer-edges.v1 accepted stage 0 finish stop chars 6667
+morph run: load-spec.v1 accepted stage 0 finish stop chars 2440
+morph run: validate-record-judge.v1 accepted stage 0 finish stop chars 9269
+morph run: layer-edges-judge.v1 accepted stage 0 finish stop chars 1005
+morph run: load-spec-judge.v1 accepted stage 0 finish stop chars 732
+morph run: plan-command.v1 accepted stage 0 finish stop chars 5658
+morph run: plan-command.v2 untried stage 0 finish stop chars 5641
+morph run: plan-command-judge.v1 accepted stage 0 finish stop chars 4023

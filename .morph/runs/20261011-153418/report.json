@@ -1,0 +1,271 @@
+{
+  "runId": "20261011-153418",
+  "completedAt": 1791733336062,
+  "branch": "morph/20261011-153418",
+  "processor": "ds",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "validate-record",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "validate-record.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec example 5: this repository's own record gives the P9 deck\nAssertionError: expected [ [ 'validate-record' ], [ 'load-spec', 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec-judge', 'select-components-judge', 'validate-map-judge' ] ] to strictly equal [ [ 'validate-record' ], [ 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec', 'select-components-judge', 'validate-map-judge' ], [ 'load-spec-judge' ] ]\n\n- Expected\n+ Received\n\n  [\n    [\n      \"validate-record\",\n    ],\n    [\n+     \"load-spec\",\n      \"select-components\",\n      \"validate-map\",\n      \"validate-record-judge\",\n    ],\n    [\n-     \"load-spec\",\n+     \"load-spec-judge\",\n      \"select-components-judge\",\n      \"validate-map-judge\",\n-   ],\n-   [\n-     \"load-spec-judge\",\n    ],\n  ]\n\n ❯ tests/planner/plan.examples.test.ts:222:30\n    220|   expect(r.ok).toBe(true);\n    221|   if (!r.ok) return;\n    222|   expect(r.plan.generations).toStrictEqual([\n       |                              ^\n    223|     [\"validate-record\"],\n    224|     [\"select-components\", \"validate-map\", \"validate-record-judge\"],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 168 passed (169)\n      Tests  1 failed | 997 passed (998)\n\nfirst difference at char 43 (line 6) of 233/224: expected \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"select-components\\\",\\n    \\\"validate-map\\\",\\n\" received \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"load-spec\\\",\\n    \\\"select-components\\\",\\n   \"\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "layer-edges",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "layer-edges.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec example 5: this repository's own record gives the P9 deck\nAssertionError: expected [ [ 'validate-record' ], [ 'load-spec', 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec-judge', 'select-components-judge', 'validate-map-judge' ] ] to strictly equal [ [ 'validate-record' ], [ 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec', 'select-components-judge', 'validate-map-judge' ], [ 'load-spec-judge' ] ]\n\n- Expected\n+ Received\n\n  [\n    [\n      \"validate-record\",\n    ],\n    [\n+     \"load-spec\",\n      \"select-components\",\n      \"validate-map\",\n      \"validate-record-judge\",\n    ],\n    [\n-     \"load-spec\",\n+     \"load-spec-judge\",\n      \"select-components-judge\",\n      \"validate-map-judge\",\n-   ],\n-   [\n-     \"load-spec-judge\",\n    ],\n  ]\n\n ❯ tests/planner/plan.examples.test.ts:222:30\n    220|   expect(r.ok).toBe(true);\n    221|   if (!r.ok) return;\n    222|   expect(r.plan.generations).toStrictEqual([\n       |                              ^\n    223|     [\"validate-record\"],\n    224|     [\"select-components\", \"validate-map\", \"validate-record-judge\"],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 168 passed (169)\n      Tests  1 failed | 997 passed (998)\n\nfirst difference at char 43 (line 6) of 233/224: expected \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"select-components\\\",\\n    \\\"validate-map\\\",\\n\" received \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"load-spec\\\",\\n    \\\"select-components\\\",\\n   \"\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "load-spec",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "load-spec.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec example 5: this repository's own record gives the P9 deck\nAssertionError: expected [ [ 'validate-record' ], [ 'load-spec', 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec-judge', 'select-components-judge', 'validate-map-judge' ] ] to strictly equal [ [ 'validate-record' ], [ 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec', 'select-components-judge', 'validate-map-judge' ], [ 'load-spec-judge' ] ]\n\n- Expected\n+ Received\n\n  [\n    [\n      \"validate-record\",\n    ],\n    [\n+     \"load-spec\",\n      \"select-components\",\n      \"validate-map\",\n      \"validate-record-judge\",\n    ],\n    [\n-     \"load-spec\",\n+     \"load-spec-judge\",\n      \"select-components-judge\",\n      \"validate-map-judge\",\n-   ],\n-   [\n-     \"load-spec-judge\",\n    ],\n  ]\n\n ❯ tests/planner/plan.examples.test.ts:222:30\n    220|   expect(r.ok).toBe(true);\n    221|   if (!r.ok) return;\n    222|   expect(r.plan.generations).toStrictEqual([\n       |                              ^\n    223|     [\"validate-record\"],\n    224|     [\"select-components\", \"validate-map\", \"validate-record-judge\"],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 168 passed (169)\n      Tests  1 failed | 997 passed (998)\n\nfirst difference at char 43 (line 6) of 233/224: expected \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"select-components\\\",\\n    \\\"validate-map\\\",\\n\" received \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"load-spec\\\",\\n    \\\"select-components\\\",\\n   \"\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "validate-record-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "validate-record-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/contour/record.examples.test.ts\n== names tests/contour/record.examples.test.ts\n== own\n== full\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec example 5: this repository's own record gives the P9 deck\nAssertionError: expected [ [ 'validate-record' ], [ 'load-spec', 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec-judge', 'select-components-judge', 'validate-map-judge' ] ] to strictly equal [ [ 'validate-record' ], [ 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec', 'select-components-judge', 'validate-map-judge' ], [ 'load-spec-judge' ] ]\n\n- Expected\n+ Received\n\n  [\n    [\n      \"validate-record\",\n    ],\n    [\n+     \"load-spec\",\n      \"select-components\",\n      \"validate-map\",\n      \"validate-record-judge\",\n    ],\n    [\n-     \"load-spec\",\n+     \"load-spec-judge\",\n      \"select-components-judge\",\n      \"validate-map-judge\",\n-   ],\n-   [\n-     \"load-spec-judge\",\n    ],\n  ]\n\n ❯ tests/planner/plan.examples.test.ts:222:30\n    220|   expect(r.ok).toBe(true);\n    221|   if (!r.ok) return;\n    222|   expect(r.plan.generations).toStrictEqual([\n       |                              ^\n    223|     [\"validate-record\"],\n    224|     [\"select-components\", \"validate-map\", \"validate-record-judge\"],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 168 passed (169)\n      Tests  1 failed | 997 passed (998)\n\nfirst difference at char 43 (line 6) of 233/224: expected \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"select-components\\\",\\n    \\\"validate-map\\\",\\n\" received \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"load-spec\\\",\\n    \\\"select-components\\\",\\n   \"\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "layer-edges-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "layer-edges-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/rules/layers.p34.examples.test.ts\n== own\n== full\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec example 5: this repository's own record gives the P9 deck\nAssertionError: expected [ [ 'validate-record' ], [ 'load-spec', 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec-judge', 'select-components-judge', 'validate-map-judge' ] ] to strictly equal [ [ 'validate-record' ], [ 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec', 'select-components-judge', 'validate-map-judge' ], [ 'load-spec-judge' ] ]\n\n- Expected\n+ Received\n\n  [\n    [\n      \"validate-record\",\n    ],\n    [\n+     \"load-spec\",\n      \"select-components\",\n      \"validate-map\",\n      \"validate-record-judge\",\n    ],\n    [\n-     \"load-spec\",\n+     \"load-spec-judge\",\n      \"select-components-judge\",\n      \"validate-map-judge\",\n-   ],\n-   [\n-     \"load-spec-judge\",\n    ],\n  ]\n\n ❯ tests/planner/plan.examples.test.ts:222:30\n    220|   expect(r.ok).toBe(true);\n    221|   if (!r.ok) return;\n    222|   expect(r.plan.generations).toStrictEqual([\n       |                              ^\n    223|     [\"validate-record\"],\n    224|     [\"select-components\", \"validate-map\", \"validate-record-judge\"],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 168 passed (169)\n      Tests  1 failed | 997 passed (998)\n\nfirst difference at char 43 (line 6) of 233/224: expected \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"select-components\\\",\\n    \\\"validate-map\\\",\\n\" received \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"load-spec\\\",\\n    \\\"select-components\\\",\\n   \"\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "load-spec-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "load-spec-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/contour/load.p34.examples.test.ts\n== own\n== full\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec example 5: this repository's own record gives the P9 deck\nAssertionError: expected [ [ 'validate-record' ], [ 'load-spec', 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec-judge', 'select-components-judge', 'validate-map-judge' ] ] to strictly equal [ [ 'validate-record' ], [ 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec', 'select-components-judge', 'validate-map-judge' ], [ 'load-spec-judge' ] ]\n\n- Expected\n+ Received\n\n  [\n    [\n      \"validate-record\",\n    ],\n    [\n+     \"load-spec\",\n      \"select-components\",\n      \"validate-map\",\n      \"validate-record-judge\",\n    ],\n    [\n-     \"load-spec\",\n+     \"load-spec-judge\",\n      \"select-components-judge\",\n      \"validate-map-judge\",\n-   ],\n-   [\n-     \"load-spec-judge\",\n    ],\n  ]\n\n ❯ tests/planner/plan.examples.test.ts:222:30\n    220|   expect(r.ok).toBe(true);\n    221|   if (!r.ok) return;\n    222|   expect(r.plan.generations).toStrictEqual([\n       |                              ^\n    223|     [\"validate-record\"],\n    224|     [\"select-components\", \"validate-map\", \"validate-record-judge\"],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 168 passed (169)\n      Tests  1 failed | 997 passed (998)\n\nfirst difference at char 43 (line 6) of 233/224: expected \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"select-components\\\",\\n    \\\"validate-map\\\",\\n\" received \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"load-spec\\\",\\n    \\\"select-components\\\",\\n   \"\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "plan-command",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "plan-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec example 5: this repository's own record gives the P9 deck\nAssertionError: expected [ [ 'validate-record' ], [ 'load-spec', 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec-judge', 'select-components-judge', 'validate-map-judge' ] ] to strictly equal [ [ 'validate-record' ], [ 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec', 'select-components-judge', 'validate-map-judge' ], [ 'load-spec-judge' ] ]\n\n- Expected\n+ Received\n\n  [\n    [\n      \"validate-record\",\n    ],\n    [\n+     \"load-spec\",\n      \"select-components\",\n      \"validate-map\",\n      \"validate-record-judge\",\n    ],\n    [\n-     \"load-spec\",\n+     \"load-spec-judge\",\n      \"select-components-judge\",\n      \"validate-map-judge\",\n-   ],\n-   [\n-     \"load-spec-judge\",\n    ],\n  ]\n\n ❯ tests/planner/plan.examples.test.ts:222:30\n    220|   expect(r.ok).toBe(true);\n    221|   if (!r.ok) return;\n    222|   expect(r.plan.generations).toStrictEqual([\n       |                              ^\n    223|     [\"validate-record\"],\n    224|     [\"select-components\", \"validate-map\", \"validate-record-judge\"],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 168 passed (169)\n      Tests  1 failed | 997 passed (998)\n\nfirst difference at char 43 (line 6) of 233/224: expected \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"select-components\\\",\\n    \\\"validate-map\\\",\\n\" received \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"load-spec\\\",\\n    \\\"select-components\\\",\\n   \"\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "plan-command-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "plan-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/planCommand.p34.examples.test.ts\n== own\n== full\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec example 5: this repository's own record gives the P9 deck\nAssertionError: expected [ [ 'validate-record' ], [ 'load-spec', 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec-judge', 'select-components-judge', 'validate-map-judge' ] ] to strictly equal [ [ 'validate-record' ], [ 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec', 'select-components-judge', 'validate-map-judge' ], [ 'load-spec-judge' ] ]\n\n- Expected\n+ Received\n\n  [\n    [\n      \"validate-record\",\n    ],\n    [\n+     \"load-spec\",\n      \"select-components\",\n      \"validate-map\",\n      \"validate-record-judge\",\n    ],\n    [\n-     \"load-spec\",\n+     \"load-spec-judge\",\n      \"select-components-judge\",\n      \"validate-map-judge\",\n-   ],\n-   [\n-     \"load-spec-judge\",\n    ],\n  ]\n\n ❯ tests/planner/plan.examples.test.ts:222:30\n    220|   expect(r.ok).toBe(true);\n    221|   if (!r.ok) return;\n    222|   expect(r.plan.generations).toStrictEqual([\n       |                              ^\n    223|     [\"validate-record\"],\n    224|     [\"select-components\", \"validate-map\", \"validate-record-judge\"],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 168 passed (169)\n      Tests  1 failed | 997 passed (998)\n\nfirst difference at char 43 (line 6) of 233/224: expected \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"select-components\\\",\\n    \\\"validate-map\\\",\\n\" received \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"load-spec\\\",\\n    \\\"select-components\\\",\\n   \"\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 155074,
+    "outputTokens": 56606,
+    "cost": 0.055081979999999996,
+    "requests": 10
+  },
+  "requests": [
+    {
+      "customId": "validate-record.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791732859-EVB3i4eRWHZ6hchDOd2M",
+      "inputTokens": 16384,
+      "outputTokens": 17956,
+      "cost": 0.0132312,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "validate-record.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791732859-py1WgjCNL1X2bx5XxUlZ",
+      "inputTokens": 16384,
+      "outputTokens": 15896,
+      "cost": 0.0119952,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "layer-edges.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791732992-mn8Rq3bw6oq3YHPYOdSn",
+      "inputTokens": 13471,
+      "outputTokens": 5831,
+      "cost": 0.00551925,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "load-spec.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791732992-WOLXDMK0KWyFQxCp15a8",
+      "inputTokens": 16006,
+      "outputTokens": 695,
+      "cost": 0.0028179,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "validate-record-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791732992-pSsfG6Dslno4I4FNQbR4",
+      "inputTokens": 18993,
+      "outputTokens": 3832,
+      "cost": 0.00514815,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "layer-edges-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791733039-fEYS5aFe4vRHOv0WWFbQ",
+      "inputTokens": 13748,
+      "outputTokens": 2794,
+      "cost": 0.0037386,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "load-spec-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791733039-6yvszOwnP9dnQQwNAiIx",
+      "inputTokens": 12785,
+      "outputTokens": 264,
+      "cost": 0.00207615,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791733039-C5CThzPS3DUFA5hZ84TX",
+      "inputTokens": 11135,
+      "outputTokens": 1870,
+      "cost": 0.00279225,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791733042-DHQuKye5ccYrpcnvbEfN",
+      "inputTokens": 11135,
+      "outputTokens": 1969,
+      "cost": 0.00140013,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791733067-NoqUvLf5H8eEsF6Gn9ru",
+      "inputTokens": 25033,
+      "outputTokens": 5499,
+      "cost": 0.00636315,
+      "finishReason": "stop",
+      "error": null
+    }
+  ],
+  "rounds": [
+    {
+      "round": 0,
+      "reds": [
+        {
+          "customId": "validate-record",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec example 5: this repository's own record gives the P9 deck\nAssertionError: expected [ [ 'validate-record' ], [ 'load-spec', 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec-judge', 'select-components-judge', 'validate-map-judge' ] ] to strictly equal [ [ 'validate-record' ], [ 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec', 'select-components-judge', 'validate-map-judge' ], [ 'load-spec-judge' ] ]\n\n- Expected\n+ Received\n\n  [\n    [\n      \"validate-record\",\n    ],\n    [\n+     \"load-spec\",\n      \"select-components\",\n      \"validate-map\",\n      \"validate-record-judge\",\n    ],\n    [\n-     \"load-spec\",\n+     \"load-spec-judge\",\n      \"select-components-judge\",\n      \"validate-map-judge\",\n-   ],\n-   [\n-     \"load-spec-judge\",\n    ],\n  ]\n\n ❯ tests/planner/plan.examples.test.ts:222:30\n    220|   expect(r.ok).toBe(true);\n    221|   if (!r.ok) return;\n    222|   expect(r.plan.generations).toStrictEqual([\n       |                              ^\n    223|     [\"validate-record\"],\n    224|     [\"select-components\", \"validate-map\", \"validate-record-judge\"],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 168 passed (169)\n      Tests  1 failed | 997 passed (998)\n\nfirst difference at char 43 (line 6) of 233/224: expected \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"select-components\\\",\\n    \\\"validate-map\\\",\\n\" received \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"load-spec\\\",\\n    \\\"select-components\\\",\\n   \"\n"
+        },
+        {
+          "customId": "layer-edges",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec example 5: this repository's own record gives the P9 deck\nAssertionError: expected [ [ 'validate-record' ], [ 'load-spec', 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec-judge', 'select-components-judge', 'validate-map-judge' ] ] to strictly equal [ [ 'validate-record' ], [ 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec', 'select-components-judge', 'validate-map-judge' ], [ 'load-spec-judge' ] ]\n\n- Expected\n+ Received\n\n  [\n    [\n      \"validate-record\",\n    ],\n    [\n+     \"load-spec\",\n      \"select-components\",\n      \"validate-map\",\n      \"validate-record-judge\",\n    ],\n    [\n-     \"load-spec\",\n+     \"load-spec-judge\",\n      \"select-components-judge\",\n      \"validate-map-judge\",\n-   ],\n-   [\n-     \"load-spec-judge\",\n    ],\n  ]\n\n ❯ tests/planner/plan.examples.test.ts:222:30\n    220|   expect(r.ok).toBe(true);\n    221|   if (!r.ok) return;\n    222|   expect(r.plan.generations).toStrictEqual([\n       |                              ^\n    223|     [\"validate-record\"],\n    224|     [\"select-components\", \"validate-map\", \"validate-record-judge\"],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 168 passed (169)\n      Tests  1 failed | 997 passed (998)\n\nfirst difference at char 43 (line 6) of 233/224: expected \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"select-components\\\",\\n    \\\"validate-map\\\",\\n\" received \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"load-spec\\\",\\n    \\\"select-components\\\",\\n   \"\n"
+        },
+        {
+          "customId": "load-spec",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec example 5: this repository's own record gives the P9 deck\nAssertionError: expected [ [ 'validate-record' ], [ 'load-spec', 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec-judge', 'select-components-judge', 'validate-map-judge' ] ] to strictly equal [ [ 'validate-record' ], [ 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec', 'select-components-judge', 'validate-map-judge' ], [ 'load-spec-judge' ] ]\n\n- Expected\n+ Received\n\n  [\n    [\n      \"validate-record\",\n    ],\n    [\n+     \"load-spec\",\n      \"select-components\",\n      \"validate-map\",\n      \"validate-record-judge\",\n    ],\n    [\n-     \"load-spec\",\n+     \"load-spec-judge\",\n      \"select-components-judge\",\n      \"validate-map-judge\",\n-   ],\n-   [\n-     \"load-spec-judge\",\n    ],\n  ]\n\n ❯ tests/planner/plan.examples.test.ts:222:30\n    220|   expect(r.ok).toBe(true);\n    221|   if (!r.ok) return;\n    222|   expect(r.plan.generations).toStrictEqual([\n       |                              ^\n    223|     [\"validate-record\"],\n    224|     [\"select-components\", \"validate-map\", \"validate-record-judge\"],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 168 passed (169)\n      Tests  1 failed | 997 passed (998)\n\nfirst difference at char 43 (line 6) of 233/224: expected \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"select-components\\\",\\n    \\\"validate-map\\\",\\n\" received \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"load-spec\\\",\\n    \\\"select-components\\\",\\n   \"\n"
+        },
+        {
+          "customId": "validate-record-judge",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard tests/contour/record.examples.test.ts\n== names tests/contour/record.examples.test.ts\n== own\n== full\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec example 5: this repository's own record gives the P9 deck\nAssertionError: expected [ [ 'validate-record' ], [ 'load-spec', 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec-judge', 'select-components-judge', 'validate-map-judge' ] ] to strictly equal [ [ 'validate-record' ], [ 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec', 'select-components-judge', 'validate-map-judge' ], [ 'load-spec-judge' ] ]\n\n- Expected\n+ Received\n\n  [\n    [\n      \"validate-record\",\n    ],\n    [\n+     \"load-spec\",\n      \"select-components\",\n      \"validate-map\",\n      \"validate-record-judge\",\n    ],\n    [\n-     \"load-spec\",\n+     \"load-spec-judge\",\n      \"select-components-judge\",\n      \"validate-map-judge\",\n-   ],\n-   [\n-     \"load-spec-judge\",\n    ],\n  ]\n\n ❯ tests/planner/plan.examples.test.ts:222:30\n    220|   expect(r.ok).toBe(true);\n    221|   if (!r.ok) return;\n    222|   expect(r.plan.generations).toStrictEqual([\n       |                              ^\n    223|     [\"validate-record\"],\n    224|     [\"select-components\", \"validate-map\", \"validate-record-judge\"],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 168 passed (169)\n      Tests  1 failed | 997 passed (998)\n\nfirst difference at char 43 (line 6) of 233/224: expected \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"select-components\\\",\\n    \\\"validate-map\\\",\\n\" received \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"load-spec\\\",\\n    \\\"select-components\\\",\\n   \"\n"
+        },
+        {
+          "customId": "layer-edges-judge",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard tests/rules/layers.p34.examples.test.ts\n== own\n== full\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec example 5: this repository's own record gives the P9 deck\nAssertionError: expected [ [ 'validate-record' ], [ 'load-spec', 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec-judge', 'select-components-judge', 'validate-map-judge' ] ] to strictly equal [ [ 'validate-record' ], [ 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec', 'select-components-judge', 'validate-map-judge' ], [ 'load-spec-judge' ] ]\n\n- Expected\n+ Received\n\n  [\n    [\n      \"validate-record\",\n    ],\n    [\n+     \"load-spec\",\n      \"select-components\",\n      \"validate-map\",\n      \"validate-record-judge\",\n    ],\n    [\n-     \"load-spec\",\n+     \"load-spec-judge\",\n      \"select-components-judge\",\n      \"validate-map-judge\",\n-   ],\n-   [\n-     \"load-spec-judge\",\n    ],\n  ]\n\n ❯ tests/planner/plan.examples.test.ts:222:30\n    220|   expect(r.ok).toBe(true);\n    221|   if (!r.ok) return;\n    222|   expect(r.plan.generations).toStrictEqual([\n       |                              ^\n    223|     [\"validate-record\"],\n    224|     [\"select-components\", \"validate-map\", \"validate-record-judge\"],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 168 passed (169)\n      Tests  1 failed | 997 passed (998)\n\nfirst difference at char 43 (line 6) of 233/224: expected \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"select-components\\\",\\n    \\\"validate-map\\\",\\n\" received \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"load-spec\\\",\\n    \\\"select-components\\\",\\n   \"\n"
+        },
+        {
+          "customId": "load-spec-judge",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard tests/contour/load.p34.examples.test.ts\n== own\n== full\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec example 5: this repository's own record gives the P9 deck\nAssertionError: expected [ [ 'validate-record' ], [ 'load-spec', 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec-judge', 'select-components-judge', 'validate-map-judge' ] ] to strictly equal [ [ 'validate-record' ], [ 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec', 'select-components-judge', 'validate-map-judge' ], [ 'load-spec-judge' ] ]\n\n- Expected\n+ Received\n\n  [\n    [\n      \"validate-record\",\n    ],\n    [\n+     \"load-spec\",\n      \"select-components\",\n      \"validate-map\",\n      \"validate-record-judge\",\n    ],\n    [\n-     \"load-spec\",\n+     \"load-spec-judge\",\n      \"select-components-judge\",\n      \"validate-map-judge\",\n-   ],\n-   [\n-     \"load-spec-judge\",\n    ],\n  ]\n\n ❯ tests/planner/plan.examples.test.ts:222:30\n    220|   expect(r.ok).toBe(true);\n    221|   if (!r.ok) return;\n    222|   expect(r.plan.generations).toStrictEqual([\n       |                              ^\n    223|     [\"validate-record\"],\n    224|     [\"select-components\", \"validate-map\", \"validate-record-judge\"],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 168 passed (169)\n      Tests  1 failed | 997 passed (998)\n\nfirst difference at char 43 (line 6) of 233/224: expected \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"select-components\\\",\\n    \\\"validate-map\\\",\\n\" received \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"load-spec\\\",\\n    \\\"select-components\\\",\\n   \"\n"
+        },
+        {
+          "customId": "plan-command",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec example 5: this repository's own record gives the P9 deck\nAssertionError: expected [ [ 'validate-record' ], [ 'load-spec', 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec-judge', 'select-components-judge', 'validate-map-judge' ] ] to strictly equal [ [ 'validate-record' ], [ 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec', 'select-components-judge', 'validate-map-judge' ], [ 'load-spec-judge' ] ]\n\n- Expected\n+ Received\n\n  [\n    [\n      \"validate-record\",\n    ],\n    [\n+     \"load-spec\",\n      \"select-components\",\n      \"validate-map\",\n      \"validate-record-judge\",\n    ],\n    [\n-     \"load-spec\",\n+     \"load-spec-judge\",\n      \"select-components-judge\",\n      \"validate-map-judge\",\n-   ],\n-   [\n-     \"load-spec-judge\",\n    ],\n  ]\n\n ❯ tests/planner/plan.examples.test.ts:222:30\n    220|   expect(r.ok).toBe(true);\n    221|   if (!r.ok) return;\n    222|   expect(r.plan.generations).toStrictEqual([\n       |                              ^\n    223|     [\"validate-record\"],\n    224|     [\"select-components\", \"validate-map\", \"validate-record-judge\"],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 168 passed (169)\n      Tests  1 failed | 997 passed (998)\n\nfirst difference at char 43 (line 6) of 233/224: expected \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"select-components\\\",\\n    \\\"validate-map\\\",\\n\" received \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"load-spec\\\",\\n    \\\"select-components\\\",\\n   \"\n"
+        },
+        {
+          "customId": "plan-command-judge",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard tests/cli/planCommand.p34.examples.test.ts\n== own\n== full\n FAIL  tests/planner/plan.examples.test.ts > Plan Spec example 5: this repository's own record gives the P9 deck\nAssertionError: expected [ [ 'validate-record' ], [ 'load-spec', 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec-judge', 'select-components-judge', 'validate-map-judge' ] ] to strictly equal [ [ 'validate-record' ], [ 'select-components', 'validate-map', 'validate-record-judge' ], [ 'load-spec', 'select-components-judge', 'validate-map-judge' ], [ 'load-spec-judge' ] ]\n\n- Expected\n+ Received\n\n  [\n    [\n      \"validate-record\",\n    ],\n    [\n+     \"load-spec\",\n      \"select-components\",\n      \"validate-map\",\n      \"validate-record-judge\",\n    ],\n    [\n-     \"load-spec\",\n+     \"load-spec-judge\",\n      \"select-components-judge\",\n      \"validate-map-judge\",\n-   ],\n-   [\n-     \"load-spec-judge\",\n    ],\n  ]\n\n ❯ tests/planner/plan.examples.test.ts:222:30\n    220|   expect(r.ok).toBe(true);\n    221|   if (!r.ok) return;\n    222|   expect(r.plan.generations).toStrictEqual([\n       |                              ^\n    223|     [\"validate-record\"],\n    224|     [\"select-components\", \"validate-map\", \"validate-record-judge\"],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 168 passed (169)\n      Tests  1 failed | 997 passed (998)\n\nfirst difference at char 43 (line 6) of 233/224: expected \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"select-components\\\",\\n    \\\"validate-map\\\",\\n\" received \"... [\\n    \\\"validate-record\\\",\\n  ],\\n  [\\n    \\\"load-spec\\\",\\n    \\\"select-components\\\",\\n   \"\n"
+        }
+      ]
+    }
+  ],
+  "stop": "unattributed red: validate-record, layer-edges, load-spec, validate-record-judge, layer-edges-judge, load-spec-judge, plan-command, plan-command-judge"
+}

@@ -1,0 +1,27 @@
+```ts
+import { test, expect } from "vitest";
+import { layerEdges } from "../../src/rules/layers.js";
+import { loadContour } from "../../src/contour/load.js";
+import { EMPTY_MAP } from "../../src/cli/planCommand.js";
+import { fixture } from "../helpers.js";
+
+test("Layer Edges example 5: Component.dependsOn adds layer edges; a name that matches no Component is one error", () => {
+  const good = loadContour(fixture("rules/dependsOn.yaml"), "dependsOn.yaml");
+  if (!good.ok) throw new Error("fixture");
+  expect(layerEdges(good.record, EMPTY_MAP)).toStrictEqual({
+    ok: true,
+    edges: {
+      "src/app": ["src/store", "src/util"],
+      "src/store": [],
+      "src/util": ["src/store"],
+    },
+  });
+
+  const bad = loadContour(fixture("rules/dependsOnBad.yaml"), "dependsOnBad.yaml");
+  if (!bad.ok) throw new Error("fixture");
+  expect(layerEdges(bad.record, EMPTY_MAP)).toStrictEqual({
+    ok: false,
+    errors: ["Component 'app': dependsOn 'nope' names no Component of the record"],
+  });
+});
+```
