@@ -3089,7 +3089,7 @@ System:
             written. Why: a rewrite whose stub is the committed file hides every name a kept neighbour uses that the new
             answer may drop (MorphStudio P8b, P7c); the list says the check did not see them.
           steps:
-            - calls: Transaction Deck
+            - uses: cards
             - produces: Unproven
           examples:
             - given: 'a tmp root holding the files of tests/fixtures/cli/unproven.json: calc/a.go, src/b.ts, src/c.ts; decks/q/deck.json (a [calc/a.go] generate, b [src/b.ts, src/c.ts] patch, n [calc/new.go] generate, acceptances "exit 0") with decks/q/_stubs/ calc/a.go equal to the tree''s, src/b.ts different, calc/new.go; decks/t/deck.json the same cards with TRANSACTION_MARK + "\n" before each acceptance, no _stubs/; decks/u/deck.json the plain cards, no _stubs/. Read Deck File of "decks/q/deck.json", then "decks/t/deck.json", then "decks/u/deck.json"'
