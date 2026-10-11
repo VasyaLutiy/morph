@@ -74,11 +74,17 @@ test("Guardrail Rules example 3: every place a guardrail is written", () => {
       },
       "src/orders": {
         "no-clock": "Guardrail 'no  CLOCK' of Component orders",
-        "no-env": "Guardrail 'No Env' of Interface orders API",
         "no-network": "Guardrail 'No Network' of System guarded",
+      },
+      "src/orders/cancelOrder.ts": {
         "no-process": "Guardrail 'No Process' of Interface cancel hook",
-        "no-shell": "Guardrail 'No Shell' of Function Place Order",
         pure: "Guardrail 'Pure' of Function Cancel Order",
+      },
+      "src/orders/ordersApi.ts": {
+        "no-env": "Guardrail 'No Env' of Interface orders API",
+      },
+      "src/orders/placeOrder.ts": {
+        "no-shell": "Guardrail 'No Shell' of Function Place Order",
       },
     },
     proseOnly: [
@@ -116,7 +122,13 @@ test("Card Rules example 1: the rules of the code directories of the card", () =
       ["src/orders/placeOrder.ts", "tests/orders/placeOrder.test.ts"],
       RT.rules,
     ),
-  ).toStrictEqual({ "src/orders": RT.rules["src/orders"] });
+  ).toStrictEqual({
+    "src/orders": {
+      "no-clock": "Guardrail 'no  CLOCK' of Component orders",
+      "no-network": "Guardrail 'No Network' of System guarded",
+      "no-shell": "Guardrail 'No Shell' of Function Place Order",
+    },
+  });
   expect(cardRules(GO, ["new/a.go", "new/b.go", "main.go"], {})).toStrictEqual({
     new: {},
     ".": {},
