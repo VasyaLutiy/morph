@@ -90,6 +90,7 @@ export function cutJudges(input: JudgeInput): Card[] {
       input.defaultProfile;
     const code = codeTargets(profile, base.targets);
     if (code.length === 0) continue;
+    if (cut.functions.length > 0 && !cut.functions.some((f) => f.examples.length > 0)) continue;
     const builtId = `${base.customId}-judge`;
     const override = findOverride(input.map, builtId);
     const defaultTarget = judgeTarget(profile, code[0]);
@@ -105,15 +106,17 @@ export function cutJudges(input: JudgeInput): Card[] {
       judgeInstruction(profile, { test, module: code[0], docs: [...input.docs] }),
     ];
     if (cut.functions.length > 0) {
+      const withExamples = cut.functions.filter((f) => f.examples.length > 0);
       blocks.push(
-        EXAMPLES_LINE_FIRST + cut.functions[0].name + EXAMPLES_LINE_LAST,
+        EXAMPLES_LINE_FIRST + withExamples[0].name + EXAMPLES_LINE_LAST,
       );
-      for (const fn of cut.functions) {
+      for (const fn of withExamples) {
         blocks.push(`Examples of Function ${fn.name}:\n${renderExamples(fn.examples)}`);
       }
       for (const block of dataBlocks(input.record, cut.functions)) blocks.push(block);
       for (const callee of callees(cut.component, cut.functions)) {
-        blocks.push(`Callee ${callee.name}: ${callee.description}\nBehaviour: ${callee.behavior}`);
+        const head = `Callee ${callee.name}: ${callee.description}`;
+        blocks.push(callee.behavior !== "" ? `${head}\nBehaviour: ${callee.behavior}` : head);
       }
       const preconditions = preconditionLines(input, cut, callees(cut.component, cut.functions));
       if (preconditions.length > 0) {
