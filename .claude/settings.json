@@ -8,12 +8,3 @@
     ]
   }
 }
-
-{
-  "permissions": {
-    "allow": [
-      "Bash(/tmp/oldscheme/*/morph.sh:*)",
-      "Bash(nohup /tmp/oldscheme/*/morph.sh:*)"
-    ]
-  }
-}
