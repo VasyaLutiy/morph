@@ -1,0 +1,10 @@
+morph run: transaction-deck.v1 accepted stage 0 finish stop chars 7551
+morph run: transaction-deck.v2 untried stage 0 finish stop chars 7479
+morph run: tree-profiles.v1 accepted stage 0 finish stop chars 2062
+morph run: tree-profiles.v2 untried stage 0 finish stop chars 2064
+morph run: run-transaction.v1 accepted stage 0 finish stop chars 19335
+morph run: run-transaction.v2 untried stage 0 finish stop chars 19335
+morph run: transaction-deck-judge.v1 accepted stage 0 finish stop chars 5071
+morph run: tree-profiles-judge.v1 accepted stage 0 finish stop chars 3131
+morph run: run-transaction-judge.v1 accepted stage 0 finish stop chars 8554
+morph run: transaction-deck-judge.r1.v1 accepted stage 0 finish stop chars 5203

@@ -1,0 +1,150 @@
+```typescript
+import { blameLog } from "../../src/cards/transaction.js";
+import {
+  NEIGHBOUR_RULES,
+  TEST_LINES,
+  TREE_PROFILES,
+} from "../../src/language/treeProfiles.js";
+
+const FILE_LINES = TREE_PROFILES.map((profile) => profile.fileLine);
+const ALWAYS = (): boolean => true;
+
+test("Blame Log example 9: a red naming a kept file of a target's Go package is the owner's, retried", () => {
+  const owners: Record<string, string> = {
+    "calc/a.go": "g",
+    "calc/a_examples_test.go": "gj",
+    "pump/flow.go": "p2",
+  };
+  const g1 =
+    "# example.com/m/calc\ncalc/b.go:4:7: undefined: okView\ncalc/b.go:5:9: undefined: fmtOut\n# example.com/m/calc\nvet: calc/b.go:4:7: undefined: okView\n";
+  const g2 = "calc/b_test.go:7:2: undefined: helperT\n";
+  const g3 = "cmd/tool/main.go:6:2: undefined: calc.Sum\n";
+  expect(
+    blameLog(g1, "g", owners, FILE_LINES, ALWAYS, TEST_LINES, NEIGHBOUR_RULES),
+  ).toStrictEqual({ cards: ["g"], outside: [] });
+  expect(
+    blameLog(g2, "g", owners, FILE_LINES, ALWAYS, TEST_LINES, NEIGHBOUR_RULES),
+  ).toStrictEqual({ cards: ["g", "gj"], outside: [] });
+  expect(
+    blameLog(g3, "g", owners, FILE_LINES, ALWAYS, TEST_LINES, NEIGHBOUR_RULES),
+  ).toStrictEqual({
+    cards: [],
+    outside: ["cmd/tool/main.go:6:2: undefined: calc.Sum"],
+  });
+  expect(
+    blameLog(g1, "g", owners, FILE_LINES, ALWAYS, TEST_LINES),
+  ).toStrictEqual({
+    cards: [],
+    outside: [
+      "calc/b.go:4:7: undefined: okView",
+      "calc/b.go:5:9: undefined: fmtOut",
+    ],
+  });
+});
+
+test("Blame Log example 10: a red naming a target's module is the owner's; no module named stays outside", () => {
+  const owners: Record<string, string> = {
+    "src/a.ts": "a",
+    "tests/a.examples.test.ts": "aj",
+  };
+  const t1 = `src/b.ts(1,10): error TS2305: Module '"./a.js"' has no exported member 'fmtOut'.\nsrc/cli/c.ts(1,10): error TS2305: Module '"../a.js"' has no exported member 'fmtOut'.\n`;
+  const t2 = "src/a2.ts(3,4): error TS2304: Cannot find name 'q7'.\n";
+  const t3 = `src/b.ts(1,10): error TS2305: Module '"./z.js"' has no exported member 'q'.\n`;
+  expect(
+    blameLog(t1, "a", owners, FILE_LINES, ALWAYS, TEST_LINES, NEIGHBOUR_RULES),
+  ).toStrictEqual({ cards: ["a"], outside: [] });
+  expect(
+    blameLog(t2, "a", owners, FILE_LINES, ALWAYS, TEST_LINES, NEIGHBOUR_RULES),
+  ).toStrictEqual({
+    cards: [],
+    outside: ["src/a2.ts(3,4): error TS2304: Cannot find name 'q7'."],
+  });
+  expect(
+    blameLog(t3, "a", owners, FILE_LINES, ALWAYS, TEST_LINES, NEIGHBOUR_RULES),
+  ).toStrictEqual({
+    cards: [],
+    outside: [
+      `src/b.ts(1,10): error TS2305: Module '"./z.js"' has no exported member 'q'.`,
+    ],
+  });
+  expect(
+    blameLog(t1, "a", owners, FILE_LINES, ALWAYS, TEST_LINES),
+  ).toStrictEqual({
+    cards: [],
+    outside: [
+      `src/b.ts(1,10): error TS2305: Module '"./a.js"' has no exported member 'fmtOut'.`,
+      `src/cli/c.ts(1,10): error TS2305: Module '"../a.js"' has no exported member 'fmtOut'.`,
+    ],
+  });
+});
+
+test("Blame Log: an own key of owners is blamed to its owner whatever the rules", () => {
+  const owners: Record<string, string> = { "calc/a.go": "g" };
+  expect(
+    blameLog(
+      "calc/a.go:1:2: undefined: helper\n",
+      "g",
+      owners,
+      FILE_LINES,
+      ALWAYS,
+      TEST_LINES,
+      NEIGHBOUR_RULES,
+    ),
+  ).toStrictEqual({ cards: ["g"], outside: [] });
+});
+
+test("Blame Log: a kept file that is not on disk is the card's", () => {
+  const owners: Record<string, string> = { "calc/a.go": "g" };
+  const gone = (): boolean => false;
+  expect(
+    blameLog(
+      "calc/b.go:1:2: undefined: helper\n",
+      "g",
+      owners,
+      FILE_LINES,
+      gone,
+      TEST_LINES,
+      NEIGHBOUR_RULES,
+    ),
+  ).toStrictEqual({ cards: ["g"], outside: [] });
+});
+
+test("Blame Log: a kept Go file in a directory with no target is outside", () => {
+  const owners: Record<string, string> = { "calc/a.go": "g" };
+  expect(
+    blameLog(
+      "rate/rate.go:1:2: undefined: Mid\n",
+      "g",
+      owners,
+      FILE_LINES,
+      ALWAYS,
+      TEST_LINES,
+      NEIGHBOUR_RULES,
+    ),
+  ).toStrictEqual({
+    cards: [],
+    outside: ["rate/rate.go:1:2: undefined: Mid"],
+  });
+});
+
+test("Blame Log: a module naming no own key leaves the kept file outside", () => {
+  const owners: Record<string, string> = { "src/a.ts": "a" };
+  const line = `src/b.ts(1,1): error TS2305: Module '"./nope.js"' has no exported member 'x'.\n`;
+  expect(
+    blameLog(line, "b", owners, FILE_LINES, ALWAYS, TEST_LINES, NEIGHBOUR_RULES),
+  ).toStrictEqual({
+    cards: [],
+    outside: [
+      `src/b.ts(1,1): error TS2305: Module '"./nope.js"' has no exported member 'x'.`,
+    ],
+  });
+});
+
+test("Blame Log: a .jsx module resolves to an own .tsx key", () => {
+  const owners: Record<string, string> = { "src/widget.tsx": "w" };
+  const line = `src/b.ts(1,1): error TS2305: Module '"./widget.jsx"' has no exported member 'W'.\n`;
+  expect(
+    blameLog(line, "b", owners, FILE_LINES, ALWAYS, TEST_LINES, NEIGHBOUR_RULES),
+  ).toStrictEqual({ cards: ["w"], outside: [] });
+});
+```
