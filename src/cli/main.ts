@@ -1,6 +1,7 @@
 import path from "node:path";
 import { parseCommand } from "./parse.js";
 import { renderDocument, classifyThrown, readDeckFile } from "./document.js";
+import { readProjectConfig } from "./projectConfig.js";
 import { checkBuilds } from "./checkBuilds.js";
 import { deckCheckCommand } from "./deckCheck.js";
 import { runCommand } from "./runCommand.js";
@@ -29,6 +30,7 @@ export async function main(argv: string[], deps: CliDeps, io: CliIo): Promise<Ex
   }
   const command = parsed.command;
   const root = path.resolve(deps.cwd, command.root);
+  const config = readProjectConfig(root);
 
   const detached: DetachedDeps = {
     env: deps.env,
@@ -39,54 +41,58 @@ export async function main(argv: string[], deps: CliDeps, io: CliIo): Promise<Ex
   };
 
   let result: CommandResult;
-  try {
-    if (command.name === "deck check") {
-      result = deckCheckCommand(root, command.deck, command.sliceCapBytes, deps.env);
-    } else if (command.name === "plan") {
-      result = planCommand(root, command);
-    } else if (command.name === "submit") {
-      result = await submitDeck(root, command.deck, command.processor, detached);
-    } else if (command.name === "collect") {
-      result = await collectBatch(root, command.batch, detached);
-    } else if (command.name === "primer") {
-      result = primerCommand(root, command.write, { env: deps.env, now: deps.now });
-    } else if (command.name === "scout") {
-      result = await scoutCommand(root, command, deps);
-    } else if (command.name === "plan --from-scout") {
-      result = planFromScout(root, command);
-    } else if (command.name === "review") {
-      result = await reviewCommand(root, command, deps);
-    } else if (command.name === "card") {
-      result = cardBrief(root, command);
-    } else if (command.name === "accept") {
-      result =
-        command.fromRun !== undefined || command.id.includes(",")
-          ? await acceptGroup(
-              root,
-              {
-                deck: command.deck,
-                ids: command.id.split(","),
-                model: command.model,
-                fromRun: command.fromRun ?? null,
-                pick: command.pick ?? [],
-                commit: command.commit,
-              },
-              deps,
-            )
-          : await acceptCard(
-              root,
-              { deck: command.deck, id: command.id, model: command.model ?? "", commit: command.commit },
-              deps,
-            );
-    } else if (command.name === "init") {
-      result = initProject(root, command, deps.cwd);
-    } else if (command.name === "gate") {
-      result = await gateCommand(root, command, { env: deps.env, now: deps.now, readDeck: readDeckFile, builds: checkBuilds });
-    } else {
-      result = await runCommand(root, command, deps, io.stderr);
+  if (!config.ok) {
+    result = config.result;
+  } else {
+    try {
+      if (command.name === "deck check") {
+        result = deckCheckCommand(root, command.deck, command.sliceCapBytes, deps.env);
+      } else if (command.name === "plan") {
+        result = planCommand(root, command);
+      } else if (command.name === "submit") {
+        result = await submitDeck(root, command.deck, command.processor, detached);
+      } else if (command.name === "collect") {
+        result = await collectBatch(root, command.batch, detached);
+      } else if (command.name === "primer") {
+        result = primerCommand(root, command.write, { env: deps.env, now: deps.now });
+      } else if (command.name === "scout") {
+        result = await scoutCommand(root, command, deps, config.config.scout);
+      } else if (command.name === "plan --from-scout") {
+        result = planFromScout(root, command);
+      } else if (command.name === "review") {
+        result = await reviewCommand(root, command, deps);
+      } else if (command.name === "card") {
+        result = cardBrief(root, command);
+      } else if (command.name === "accept") {
+        result =
+          command.fromRun !== undefined || command.id.includes(",")
+            ? await acceptGroup(
+                root,
+                {
+                  deck: command.deck,
+                  ids: command.id.split(","),
+                  model: command.model,
+                  fromRun: command.fromRun ?? null,
+                  pick: command.pick ?? [],
+                  commit: command.commit,
+                },
+                deps,
+              )
+            : await acceptCard(
+                root,
+                { deck: command.deck, id: command.id, model: command.model ?? "", commit: command.commit },
+                deps,
+              );
+      } else if (command.name === "init") {
+        result = initProject(root, command, deps.cwd);
+      } else if (command.name === "gate") {
+        result = await gateCommand(root, command, { env: deps.env, now: deps.now, readDeck: readDeckFile, builds: checkBuilds });
+      } else {
+        result = await runCommand(root, command, deps, io.stderr);
+      }
+    } catch (e) {
+      result = classifyThrown(e);
     }
-  } catch (e) {
-    result = classifyThrown(e);
   }
 
   io.stdout(renderDocument(result.document, command.pretty));
