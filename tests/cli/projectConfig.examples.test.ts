@@ -157,3 +157,62 @@ test("Load Config example 4: readProjectConfig reads the file or falls back to D
     r.rm();
   }
 });
+
+test("Load Config example 5: a text of comments only is blank", () => {
+  expect(loadConfig("# all commented out\n# scout:\n#   grepSkip: []\n")).toStrictEqual({
+    ok: true,
+    config: DEFAULT_CONFIG,
+  });
+  expect(loadConfig("\n  # x\n\n")).toStrictEqual({
+    ok: true,
+    config: DEFAULT_CONFIG,
+  });
+  expect(loadConfig("# c\nversion: 2\n")).toStrictEqual({
+    ok: false,
+    problems: ["version: must be 1"],
+  });
+});
+
+test("Load Config example 6: a config that cannot be read is a DeckError result", () => {
+  const r = tmpRoot("morph-config-");
+  try {
+    fs.symlinkSync("morph.config.yaml", r.path("morph.config.yaml"));
+    expect(readProjectConfig(r.root)).toStrictEqual({
+      ok: false,
+      result: {
+        code: 2,
+        document: {
+          error: {
+            code: 2,
+            kind: "DeckError",
+            message: "morph.config.yaml cannot be read: ELOOP",
+          },
+        },
+      },
+    });
+
+    fs.rmSync(r.path("morph.config.yaml"), { force: true });
+    r.write("morph.config.yaml", "version: 1\n");
+    fs.chmodSync(r.path("morph.config.yaml"), 0o000);
+    if (process.getuid?.() !== 0) {
+      expect(readProjectConfig(r.root)).toStrictEqual({
+        ok: false,
+        result: {
+          code: 2,
+          document: {
+            error: {
+              code: 2,
+              kind: "DeckError",
+              message: "morph.config.yaml cannot be read: EACCES",
+            },
+          },
+        },
+      });
+    }
+  } finally {
+    if (r.exists("morph.config.yaml")) {
+      fs.chmodSync(r.path("morph.config.yaml"), 0o644);
+    }
+    r.rm();
+  }
+});
