@@ -33,9 +33,13 @@ test("Plan Command example 1: the ledger record with a map plans into decks/p.js
   const r = planRoot();
   try {
     const result = planCommand(r.root, planArgs(r.root, {}));
-    const expected: PlanDocument = {
+    const expected: PlanDocument & { warnings?: string[] } = {
       ...(fixtureJson("planner/ledger.plan.json") as Plan),
       out: "decks/p.json",
+      warnings: [
+        "ledger/Sum Entries: step produces 'number' names no Data Object or Event of the record",
+        "ledger/Format Report: step produces 'string' names no Data Object or Event of the record",
+      ],
     };
     expect(result).toStrictEqual({ code: 0, document: expected });
     const text = JSON.stringify(expected.cards, null, 2) + "\n";

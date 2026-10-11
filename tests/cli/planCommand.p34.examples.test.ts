@@ -106,6 +106,8 @@ test("Plan Command example 17: the plan document warns the record's 10 unknown k
     expect(doc.warnings).toStrictEqual([
       ...(fixtureJson("contour/contourKeys.warnings.json") as string[]),
       "no language on Component catalog and none in the map: typescript assumed",
+      "orders/Place Order: no examples, no judge",
+      "catalog/List Prices: no examples, no judge",
     ]);
     expect(Object.keys(doc).at(-1)).toBe("warnings");
     expect(doc.generations).toStrictEqual([
@@ -114,5 +116,73 @@ test("Plan Command example 17: the plan document warns the record's 10 unknown k
     ]);
   } finally {
     r.rm();
+  }
+});
+
+test("Plan Command example 18: the Events and the Interface contract render in the card instructions", () => {
+  const lines = fixtureJson("contour/parity/lines.json") as Record<string, Record<string, string[]>>;
+  const r = tmpRoot();
+  try {
+    r.write("contour.yaml", fixture("contour/parity/ccledger.contour.yaml"));
+    r.write("morph-map.json", fixture("contour/parity/ccledger.map.json"));
+    const args: PlanArgs = {
+      name: "plan",
+      root: ".",
+      pretty: false,
+      spec: "contour.yaml",
+      components: [],
+      map: "morph-map.json",
+      judge: true,
+      out: null,
+    };
+    const res = planCommand(r.root, args);
+    expect(res.code).toBe(0);
+    const doc = res.document as PlanDocument;
+    for (const [id, texts] of Object.entries(lines["ccledger"])) {
+      const card = doc.cards.find((c) => c.customId === id);
+      for (const text of texts) {
+        expect(card?.instruction).toContain(text);
+      }
+    }
+  } finally {
+    r.rm();
+  }
+
+  const rEngine = tmpRoot();
+  try {
+    rEngine.write("contour.yaml", fixture("contour/parity/contour-engine.contour.yaml"));
+    rEngine.write("morph-map.json", fixture("contour/parity/contour-engine.map.json"));
+    const args: PlanArgs = {
+      name: "plan",
+      root: ".",
+      pretty: false,
+      spec: "contour.yaml",
+      components: ["contour-engine"],
+      map: "morph-map.json",
+      judge: true,
+      out: null,
+    };
+    const res = planCommand(rEngine.root, args);
+    expect(res.code).toBe(0);
+    const doc = res.document as PlanDocument;
+    expect(doc.cards.map((c) => c.customId)).toStrictEqual([
+      "diagram",
+      "schema",
+      "store",
+      "diagram-judge",
+      "engine",
+      "schema-judge",
+      "store-judge",
+      "mcp",
+      "rest",
+    ]);
+    for (const [id, texts] of Object.entries(lines["contour-engine"])) {
+      const card = doc.cards.find((c) => c.customId === id);
+      for (const text of texts) {
+        expect(card?.instruction).toContain(text);
+      }
+    }
+  } finally {
+    rEngine.rm();
   }
 });

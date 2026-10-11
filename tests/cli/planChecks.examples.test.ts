@@ -51,7 +51,18 @@ test("Plan Command example 6: checks build the acceptances, the map override win
       }
       return c;
     });
-    expect(result).toStrictEqual({ code: 0, document: { ...plan, cards, out: "decks/p.json" } });
+    expect(result).toStrictEqual({
+      code: 0,
+      document: {
+        ...plan,
+        cards,
+        out: "decks/p.json",
+        warnings: [
+          "ledger/Sum Entries: step produces 'number' names no Data Object or Event of the record",
+          "ledger/Format Report: step produces 'string' names no Data Object or Event of the record",
+        ],
+      },
+    });
     const ledgerTypes = cards.find((c) => c.customId === "ledger-types");
     if (ledgerTypes === undefined) throw new Error("ledger-types missing from the plan");
     expect(ledgerTypes.acceptance).toBe("exit 0\n");
