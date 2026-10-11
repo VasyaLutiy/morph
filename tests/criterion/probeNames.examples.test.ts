@@ -1,0 +1,162 @@
+import { test, expect } from "vitest";
+import { checkProbeNames, pascalName, probeTitles } from "../../src/criterion/probeNames.js";
+import { GO, TYPESCRIPT } from "../../src/language/profiles.js";
+import { fixture } from "../helpers.js";
+
+test("Probe Names example 1: typescript titles of T1 and a probe without problems", () => {
+  const t1 = fixture("criterion/titles1.ts.txt");
+  const titles = probeTitles(TYPESCRIPT, t1, ["Clamp Value", "Percent Of"]);
+  expect(titles).toStrictEqual([
+    { function: "Clamp Value", n: 1 },
+    { function: "Clamp Value", n: 2 },
+    { function: "Clamp Value", n: 2 },
+    { function: "Clamp Value", n: 3 },
+  ]);
+  expect(
+    checkProbeNames({
+      id: "clamp-value",
+      path: "decks/m1/parts/clamp-value.probe.ts",
+      profile: TYPESCRIPT,
+      text: t1,
+      own: [{ name: "Clamp Value", count: 3 }],
+      record: [
+        { name: "Clamp Value", count: 3 },
+        { name: "Percent Of", count: 5 },
+      ],
+      strict: true,
+    }),
+  ).toStrictEqual([]);
+});
+
+test("Probe Names example 2: strict lines of T2", () => {
+  const t2 = fixture("criterion/titles2.ts.txt");
+  expect(
+    checkProbeNames({
+      id: "clamp-value",
+      path: "decks/m1/parts/clamp-value.probe.ts",
+      profile: TYPESCRIPT,
+      text: t2,
+      own: [{ name: "Clamp Value", count: 4 }],
+      record: [
+        { name: "Clamp Value", count: 4 },
+        { name: "Percent Of", count: 5 },
+      ],
+      strict: true,
+    }),
+  ).toStrictEqual([
+    "card 'clamp-value': probe decks/m1/parts/clamp-value.probe.ts lacks Clamp Value example 3, 4 (the record gives 4)",
+    "card 'clamp-value': probe decks/m1/parts/clamp-value.probe.ts names Clamp Value example 5, not an example of its Functions (Clamp Value)",
+    "card 'clamp-value': probe decks/m1/parts/clamp-value.probe.ts names Percent Of example 1, not an example of its Functions (Clamp Value)",
+    "card 'clamp-value': probe decks/m1/parts/clamp-value.probe.ts names Add Tax example 1, not an example of its Functions (Clamp Value)",
+  ]);
+});
+
+test("Probe Names example 3: the strict flag and empty own names", () => {
+  const t2 = fixture("criterion/titles2.ts.txt");
+  expect(
+    checkProbeNames({
+      id: "clamp-value",
+      path: "decks/m1/parts/clamp-value.probe.ts",
+      profile: TYPESCRIPT,
+      text: t2,
+      own: [{ name: "Clamp Value", count: 4 }],
+      record: [
+        { name: "Clamp Value", count: 4 },
+        { name: "Percent Of", count: 5 },
+      ],
+      strict: false,
+    }),
+  ).toStrictEqual([
+    "card 'clamp-value': probe decks/m1/parts/clamp-value.probe.ts names Clamp Value example 5, which the record does not give",
+    "card 'clamp-value': probe decks/m1/parts/clamp-value.probe.ts names Add Tax example 1, which the record does not give",
+  ]);
+  expect(
+    checkProbeNames({
+      id: "clamp-value",
+      path: "decks/m1/parts/clamp-value.probe.ts",
+      profile: TYPESCRIPT,
+      text: t2,
+      own: [],
+      record: [
+        { name: "Clamp Value", count: 4 },
+        { name: "Percent Of", count: 5 },
+      ],
+      strict: true,
+    }),
+  ).toStrictEqual([
+    "card 'clamp-value': probe decks/m1/parts/clamp-value.probe.ts names Clamp Value example 1, 2, 5, not an example of its Functions (none)",
+    "card 'clamp-value': probe decks/m1/parts/clamp-value.probe.ts names Percent Of example 1, not an example of its Functions (none)",
+    "card 'clamp-value': probe decks/m1/parts/clamp-value.probe.ts names Add Tax example 1, not an example of its Functions (none)",
+  ]);
+});
+
+test("Probe Names example 4: pascalName and the go probe titles", () => {
+  expect(pascalName("Percent Of")).toBe("PercentOf");
+  expect(pascalName("MCP mount")).toBe("McpMount");
+  expect(pascalName("go-p7b phase loop")).toBe("GoP7bPhaseLoop");
+
+  const g = fixture("go-mini/decks/m1/parts/_percent-of_probe_test.go");
+  expect(probeTitles(GO, g, ["Clamp Value", "Percent Of", "Format Share"])).toStrictEqual([
+    { function: "Percent Of", n: 1 },
+    { function: "Percent Of", n: 2 },
+    { function: "Percent Of", n: 3 },
+    { function: "Percent Of", n: 4 },
+    { function: "Percent Of", n: 5 },
+  ]);
+  expect(
+    checkProbeNames({
+      id: "percent-of",
+      path: "decks/m1/parts/_percent-of_probe_test.go",
+      profile: GO,
+      text: g,
+      own: [{ name: "Percent Of", count: 5 }],
+      record: [
+        { name: "Clamp Value", count: 4 },
+        { name: "Percent Of", count: 5 },
+        { name: "Format Share", count: 3 },
+      ],
+      strict: true,
+    }),
+  ).toStrictEqual([]);
+  expect(
+    checkProbeNames({
+      id: "percent-of",
+      path: "decks/m1/parts/_percent-of_probe_test.go",
+      profile: GO,
+      text: g,
+      own: [{ name: "Percent Of", count: 6 }],
+      record: [
+        { name: "Clamp Value", count: 4 },
+        { name: "Percent Of", count: 5 },
+        { name: "Format Share", count: 3 },
+      ],
+      strict: true,
+    }),
+  ).toStrictEqual([
+    "card 'percent-of': probe decks/m1/parts/_percent-of_probe_test.go lacks Percent Of example 6 (the record gives 6)",
+  ]);
+  expect(
+    checkProbeNames({
+      id: "percent-of",
+      path: "decks/m1/parts/_percent-of_probe_test.go",
+      profile: GO,
+      text: g + "func TestProbeNoSuchExample2(t *testing.T) {}\n",
+      own: [{ name: "Percent Of", count: 5 }],
+      record: [
+        { name: "Clamp Value", count: 4 },
+        { name: "Percent Of", count: 5 },
+        { name: "Format Share", count: 3 },
+      ],
+      strict: false,
+    }),
+  ).toStrictEqual([
+    "card 'percent-of': probe decks/m1/parts/_percent-of_probe_test.go names NoSuch example 2, which the record does not give",
+  ]);
+  expect(
+    probeTitles(
+      GO,
+      "func TestProbePMToolsExample1(t *testing.T) {}\nfunc TestProbeDaemonCoreExample12DoneWaitReady(t *testing.T) {}\n",
+      ["PM Tools", "Daemon Core"],
+    ),
+  ).toStrictEqual([{ function: "PM Tools", n: 1 }]);
+});
