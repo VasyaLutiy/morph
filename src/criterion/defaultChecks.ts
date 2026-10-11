@@ -1,0 +1,284 @@
+import { probeFile } from "../builder/buildAcceptances.js";
+import { hasExtension, testTarget } from "../language/paths.js";
+import { checkProbeNames } from "./probeNames.js";
+import type { Card } from "../cards/types.js";
+import type { CheckCard, Checks, JudgeFile } from "../builder/types.js";
+import type { Example } from "../contour/types.js";
+import type { LanguageProfile } from "../language/types.js";
+import type { CardCriterion } from "../planner/types.js";
+import type { ExampleCount } from "./probeNames.js";
+
+export interface DefaultChecksInput {
+  checks: Checks;
+  cards: Card[];
+  all: string[];
+  criteria: Record<string, CardCriterion>;
+  profile: LanguageProfile;
+  mapAcceptance: string[];
+  hasFile: (path: string) => boolean;
+  record: ExampleCount[];
+  probes: Record<string, string>;
+  readProbe: (id: string) => string | null;
+}
+
+export type DefaultChecksResult =
+  | { ok: true; checks: Checks; probes: Record<string, string>; overrides: string[] }
+  | { ok: false; message: string };
+
+function quotedTexts(then: string): string[] {
+  const out: string[] = [];
+  let i = 0;
+  while (i < then.length) {
+    if (then[i] !== '"') {
+      i += 1;
+      continue;
+    }
+    i += 1;
+    let raw = "";
+    let closed = false;
+    while (i < then.length) {
+      const ch = then[i];
+      if (ch === "\\" && i + 1 < then.length) {
+        raw += ch + then[i + 1];
+        i += 2;
+        continue;
+      }
+      if (ch === '"') {
+        closed = true;
+        i += 1;
+        break;
+      }
+      raw += ch;
+      i += 1;
+    }
+    if (!closed) {
+      break;
+    }
+    const text = raw.replace(/\s+/g, " ").trim();
+    if (text !== "") {
+      out.push(text);
+    }
+  }
+  return out;
+}
+
+export function thenLiterals(examples: readonly Example[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const example of examples) {
+    for (const text of quotedTexts(example.then)) {
+      if (!seen.has(text)) {
+        seen.add(text);
+        result.push(text);
+      }
+    }
+  }
+  return result;
+}
+
+function ownOf(criterion: CardCriterion | undefined): ExampleCount[] {
+  if (criterion === undefined) {
+    return [];
+  }
+  return criterion.functions.map((f) => ({ name: f.name, count: f.examples.length }));
+}
+
+function nameProblems(
+  cards: readonly CheckCard[],
+  criteria: Record<string, CardCriterion>,
+  checks: Checks,
+  profile: LanguageProfile,
+  record: ExampleCount[],
+  probes: Record<string, string>,
+  strict: boolean,
+): string[] {
+  const problems: string[] = [];
+  for (const card of cards) {
+    if (card.files !== null) {
+      continue;
+    }
+    const text = probes[card.id];
+    if (text === undefined) {
+      continue;
+    }
+    const lines = checkProbeNames({
+      id: card.id,
+      path: checks.parts + "/" + probeFile(profile, card.id),
+      profile,
+      text,
+      own: ownOf(criteria[card.id]),
+      record,
+      strict,
+    });
+    for (const line of lines) {
+      problems.push(line);
+    }
+  }
+  return problems;
+}
+
+function problemMessage(problems: string[]): string {
+  const n = problems.length;
+  const word = n === 1 ? "problem" : "problems";
+  return `probe names differ from the record (${n} ${word}):\n${problems.join("\n")}`;
+}
+
+export function defaultChecks(input: DefaultChecksInput): DefaultChecksResult {
+  const { checks, criteria, profile, record } = input;
+
+  if (checks.overrides === undefined) {
+    const problems = nameProblems(checks.cards, criteria, checks, profile, record, input.probes, false);
+    if (problems.length > 0) {
+      return { ok: false, message: problemMessage(problems) };
+    }
+    return { ok: true, checks, probes: input.probes, overrides: [] };
+  }
+
+  const errors: string[] = [];
+  const cardIds = new Set(input.cards.map((c) => c.customId));
+  const allIds = new Set(input.all);
+
+  for (const over of checks.overrides) {
+    if (!cardIds.has(over.id) && !allIds.has(over.id)) {
+      errors.push(`checks override '${over.id}' is not a card of the cut`);
+    }
+  }
+
+  const mapAcc = new Set(input.mapAcceptance);
+  const built: CheckCard[] = [];
+  const overrideLines: string[] = [];
+
+  for (const card of input.cards) {
+    if (mapAcc.has(card.customId)) {
+      continue;
+    }
+    if (!card.targets.some((t) => hasExtension(profile, t))) {
+      continue;
+    }
+    const over = checks.overrides.find((o) => o.id === card.customId);
+    const criterion = criteria[card.customId];
+    const isJudge = criterion !== undefined && criterion.judge === true;
+    const functions = criterion === undefined ? [] : criterion.functions;
+    let count = 0;
+    for (const f of functions) {
+      count += f.examples.length;
+    }
+
+    if (!isJudge) {
+      if (over !== undefined && over.files !== null) {
+        errors.push(`checks override '${card.customId}': files given for a code card`);
+        continue;
+      }
+      const target = testTarget(profile, card.targets);
+      built.push({
+        id: card.customId,
+        smoke: over?.smoke ?? (target !== null ? 5 : null),
+        extra: over?.extra ?? null,
+        files: null,
+      });
+      continue;
+    }
+
+    if (over !== undefined && (over.smoke !== null || over.extra !== null)) {
+      errors.push(`checks override '${card.customId}': smoke or extra given for a judge`);
+      continue;
+    }
+    const overrideFiles = over?.files ?? [];
+    let bad = false;
+    for (const f of overrideFiles) {
+      if (!card.targets.includes(f.file)) {
+        errors.push(`checks override '${card.customId}': ${f.file} is not a target of the judge`);
+        bad = true;
+      }
+    }
+    if (bad) {
+      continue;
+    }
+
+    const several = card.targets.length !== 1;
+    const examples: Example[] = functions.flatMap((f) => f.examples);
+    const files: JudgeFile[] = [];
+    for (const target of card.targets) {
+      const f = overrideFiles.find((x) => x.file === target);
+      let min: number;
+      let max: number;
+      let lits: string[];
+      if (several) {
+        if (f === undefined || f.min === null || f.max === null) {
+          errors.push(
+            `judge '${card.customId}' writes ${card.targets.length} test files: give min and max of ${target} in checks.json overrides`,
+          );
+          continue;
+        }
+        min = f.min;
+        max = f.max;
+        lits = f.lits ?? [];
+      } else {
+        min = f?.min ?? count;
+        max = f?.max ?? min + 6;
+        lits = f?.lits ?? thenLiterals(examples);
+      }
+      const drop = f?.drop ?? [];
+      const isNew = f?.new ?? !input.hasFile(target);
+      if (min > max) {
+        errors.push(`judge '${card.customId}' ${target}: min ${min} exceeds max ${max}`);
+        continue;
+      }
+      files.push({ file: target, min, max, lits, drop, new: isNew });
+      if (f !== undefined) {
+        const prefix = several ? `${card.customId} ${target}` : card.customId;
+        if (f.min !== null) {
+          overrideLines.push(`${prefix}: min from checks.json`);
+        }
+        if (f.max !== null) {
+          overrideLines.push(`${prefix}: max from checks.json`);
+        }
+        if (f.lits !== null) {
+          overrideLines.push(`${prefix}: lits from checks.json`);
+        }
+      }
+    }
+    built.push({ id: card.customId, smoke: null, extra: null, files });
+  }
+
+  if (errors.length > 0) {
+    const n = errors.length;
+    const word = n === 1 ? "error" : "errors";
+    return { ok: false, message: `checks defaults not built (${n} ${word}):\n${errors.join("\n")}` };
+  }
+
+  const fullExclude = [...checks.fullExclude];
+  for (const card of built) {
+    if (card.files === null) {
+      continue;
+    }
+    for (const file of card.files) {
+      if (!fullExclude.includes(file.file)) {
+        fullExclude.push(file.file);
+      }
+    }
+  }
+
+  const newProbes: Record<string, string> = { ...input.probes };
+  for (const card of built) {
+    if (card.files !== null) {
+      continue;
+    }
+    if (newProbes[card.id] !== undefined) {
+      continue;
+    }
+    const text = input.readProbe(card.id);
+    if (text !== null) {
+      newProbes[card.id] = text;
+    }
+  }
+
+  const builtChecks: Checks = { ...checks, cards: built, fullExclude };
+
+  const problems = nameProblems(built, criteria, builtChecks, profile, record, newProbes, true);
+  if (problems.length > 0) {
+    return { ok: false, message: problemMessage(problems) };
+  }
+
+  return { ok: true, checks: builtChecks, probes: newProbes, overrides: overrideLines };
+}
