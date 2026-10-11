@@ -7,6 +7,7 @@ import { buildAcceptances } from "../builder/buildAcceptances.js";
 import { resolveProfile } from "../language/profiles.js";
 import { readPlanChecks } from "./readPlanChecks.js";
 import { planRules } from "../rules/guardrails.js";
+import { planNotes } from "../rules/notes.js";
 import { errorDocument } from "./document.js";
 import type { ContourMap } from "../contour/types.js";
 import type { PlanResult } from "../planner/types.js";
@@ -90,6 +91,7 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
   }
 
   let proseOnly: string[] = [];
+  let notes: string[] = [];
   let cards: Card[] = plan.cards;
   if (args.checks !== undefined) {
     const first = record.system.groups.find((g) => g.name === plan.components[0]);
@@ -111,6 +113,15 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
       const kept = new Set<string>(plan.cards.map((card) => card.customId));
       checks = { ...checks, cards: checks.cards.filter((c) => kept.has(c.id)) };
     }
+    notes = planNotes(
+      checks.cards.map((c) => ({
+        id: c.id,
+        extra: c.extra,
+        targets: plan.cards.find((k) => k.customId === c.id)?.targets ?? [],
+      })),
+      hasFile("decks/tools/layers.json"),
+      read.texts.guard,
+    );
     const input = {
       cards: plan.cards,
       checks,
@@ -166,6 +177,7 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
     }
   }
   warnings.push(...planned.warnings);
+  warnings.push(...notes);
 
   return {
     code: 0,
