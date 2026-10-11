@@ -1535,7 +1535,8 @@
         "src/contour/record.ts"
       ],
       "depends_on": [
-        "validate-record"
+        "validate-record",
+        "validate-map"
       ],
       "variants": 1,
       "max_tokens": 12000,
