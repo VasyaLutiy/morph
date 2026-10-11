@@ -1,4 +1,5 @@
 {
+  "Parse Command 1": "tests/fixtures/cli/parseArgv.json (example number → its argv lists), parse.json (→ the result; a list for several)",
   "Read Deck File 1": "tests/fixtures/decks/tiny.json (one card a → src/a.ts)",
   "Read Deck File 3": "tests/fixtures/decks/cycle.json, tests/fixtures/decks/duplicate.json",
   "Deck Check 1": "tests/fixtures/decks/hazardsWriteWrite.json, tests/fixtures/cli/deckCheck.writeWrite.json",
@@ -26,5 +27,6 @@
   "Main 14": "tests/fixtures/debt/deck.json",
   "Main 15": "tests/fixtures/debt/accept.deck.json",
   "Main 16": "tests/fixtures/scaffold/tpl/",
-  "Main 18": "tests/fixtures/debt/group.deck.json, tests/fixtures/debt/group.run.json"
+  "Main 18": "tests/fixtures/debt/group.deck.json, tests/fixtures/debt/group.run.json",
+  "Plan Command 19": "tests/fixtures/cli/goMiniGuarded.yaml, tests/fixtures/cli/goMiniGuarded.deck.json"
 }

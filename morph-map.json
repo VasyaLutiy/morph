@@ -1091,7 +1091,8 @@
       ],
       "context_slice": [
         "docs/TASK_P25_config.md",
-        "docs/CONVENTIONS.md"
+        "docs/CONVENTIONS.md",
+        "tests/fixtures/cli/flags.json"
       ],
       "depends_on": [],
       "variants": 2,

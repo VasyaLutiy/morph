@@ -1596,27 +1596,22 @@ System:
         The `morph` binary: src/cli/*.ts and the entry src/cli.ts (bin dist/cli.js): argv parsed, routed by Main, one JSON document on stdout, log
         lines on stderr, an exit code per outcome; only the entry touches the process.
         tests/fixtures/cli/examples.json["<Function> <n>"] holds the given and then of an example naming it.
-        tests/fixtures/cli/refs.json["<Function> <n>"] names the fixture files an example uses.
+        tests/fixtures/cli/refs.json["<Function> <n>"] names the fixture files an example uses. tests/fixtures/cli/flags.json
+        lists the flags: "bare" (no value), "valued" (one value), "takes" (command → the flags it accepts).
       language: typescript
       requirements: [One Document Out]
       functions:
         - name: Parse Command
           description: argv into one Command or a usage error.
           behavior: >
-            parseCommand(argv) scans argv left to right. A token starting with "--" is a flag: --pretty, --judge, --write, --md, --commit take no value; --root,
-            --deck, --processor, --run-id, --deadline, --max-cards, --max-retry-batches, --slice-cap-bytes, --spec, --component, --map, --out, --checks, --batch, --issue,
-            --seed-file, --from-scout, --scout, --mutants, --mutant-timeout, --test, --id, --model, --from-run, --pick, --name, --language, --module, --templates, --only,
-            --stubs, --refs take the next token whatever it is; another flag (--x=y too) → "unknown flag: <t>"; a value flag last → "flag <t> needs a value"; a flag
+            parseCommand(argv) scans argv left to right. A token starting with "--" is a flag: flags.json "bare" take no value, "valued" take the next token
+            whatever it is; another flag (--x=y too) → "unknown flag: <t>"; a value flag last → "flag <t> needs a value"; a flag
             twice → "flag <t> given twice", but --component repeats, values in argv order (the first error by argv wins). Other tokens are words naming the command:
             none → "no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept, init)"; run; plan ("plan --from-scout" with
             --from-scout); submit; collect; primer; scout; review + two words <base> <head>; card; accept; init; gate; deck check; a first word report → NotYetError
             "command report is not available yet"; deck add|status|reset|clear → NotYetError "command deck <w> is not available yet"; else "unknown command: <words,
             space-joined>". An extra word → "unexpected argument: <first extra>". Then in order: a flag the command does not take → "flag <f> does not apply to
-            <command>", in argv order (all take --root, --pretty; deck check --deck, --slice-cap-bytes; run --deck, --processor, --run-id, --deadline, --max-cards,
-            --max-retry-batches; plan --spec, --component, --map, --judge, --out, --checks, --only; review --spec, --map, --scout, --mutants, --mutant-timeout, --test,
-            --write; submit --deck, --processor; collect --batch; primer --write; scout --processor, --issue, --seed-file, --deadline; plan --from-scout --from-scout,
-            --out; card --deck, --id, --md; accept --deck, --id, --model, --commit, --from-run, --pick; init --name, --language, --module, --templates; gate --deck,
-            --stubs, --refs, --mutants). Below I = ^[A-Za-z0-9._-]+$, and "<f> ~ P" = a value not matching P → "<f> must match P (got '<v>')", P written out. card
+            <command>", in argv order (flags.json "takes": the flags of "every command" plus the command's own). Below I = ^[A-Za-z0-9._-]+$, and "<f> ~ P" = a value not matching P → "<f> must match P (got '<v>')", P written out. card
             and accept: no --deck → "missing --deck", no --id → "missing --id", --id ~ I (accept: an --id holding "," must be distinct ids joined by ",", each
             matching I, else "--id must be distinct card ids joined by \",\" (got '<v>')"); card done. accept: --from-run ~ I; --model with --from-run → "--model
             does not apply with --from-run"; --pick without it → "--pick needs --from-run"; without --from-run no --model → "missing --model", --model ~
@@ -1637,7 +1632,7 @@ System:
             card count), maxRetryBatches 2.
           steps: [{produces: Command}]
           examples:
-            - {given: 'parseArgv.json["1"]', ref: "tests/fixtures/cli/parseArgv.json (example number → its argv lists), parse.json (→ the result; a list for several)", when: parsed, then: 'parse.json["1"]'}
+            - {given: 'parseArgv.json["1"]', when: parsed, then: 'parse.json["1"]'}
             - {given: 'parseArgv.json["2"]', when: parsed, then: 'parse.json["2"]'}
             - {given: 'parseArgv.json["3"]', when: parsed, then: 'parse.json["3"]'}
             - {given: 'parseArgv.json["4"]', when: parsed, then: 'parse.json["4"]'}
@@ -1777,7 +1772,7 @@ System:
             - {given: 'examples.json["Plan Command 16"].given', when: planCommand, then: 'examples.json["Plan Command 16"].then'}
             - {given: 'examples.json["Plan Command 17"].given', when: planCommand, then: 'examples.json["Plan Command 17"].then'}
             - {given: 'examples.json["Plan Command 18"].given', when: planCommand, then: 'examples.json["Plan Command 18"].then'}
-            - {given: 'examples.json["Plan Command 19"].given', ref: "tests/fixtures/cli/goMiniGuarded.yaml, tests/fixtures/cli/goMiniGuarded.deck.json", when: planCommand, then: 'examples.json["Plan Command 19"].then'}
+            - {given: 'examples.json["Plan Command 19"].given', when: planCommand, then: 'examples.json["Plan Command 19"].then'}
         - name: Read Plan Checks
           description: Files of `plan --checks`.
           behavior: >
