@@ -1,0 +1,5 @@
+test("Clamp Value example 1: inside", () => {});
+test("Clamp Value example 2: below", () => {});
+test("Clamp Value example 5: none such", () => {});
+test("Percent Of example 1: a neighbour's example", () => {});
+test(`Add Tax example 1: a fixture's Function`, () => {});

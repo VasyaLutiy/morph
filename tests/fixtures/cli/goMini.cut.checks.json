@@ -1,0 +1,10 @@
+{
+  "phase": "m1",
+  "frozen": [
+    "contour.yaml",
+    "morph-map.json",
+    "decks",
+    "go.mod",
+    "internal"
+  ]
+}

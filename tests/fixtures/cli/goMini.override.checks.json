@@ -1,0 +1,23 @@
+{
+  "phase": "m1",
+  "frozen": [
+    "contour.yaml",
+    "morph-map.json",
+    "decks",
+    "go.mod",
+    "internal"
+  ],
+  "overrides": [
+    {
+      "id": "percent-of-judge",
+      "files": [
+        {
+          "file": "calc/percent_of_examples_test.go",
+          "lits": [
+            "TestPercentOfExample1"
+          ]
+        }
+      ]
+    }
+  ]
+}

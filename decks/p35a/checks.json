@@ -1,0 +1,37 @@
+{
+  "phase": "p35a",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates"],
+  "fullExclude": ["tests/criterion/probeNames.examples.test.ts", "tests/criterion/defaultChecks.examples.test.ts",
+    "tests/builder/readChecks.examples.test.ts", "tests/builder/readChecks.p35.examples.test.ts",
+    "tests/planner/plan.p35.examples.test.ts", "tests/cli/planCommand.p35.examples.test.ts"],
+  "cards": [
+    { "id": "probe-names" },
+    { "id": "read-checks" },
+    { "id": "plan-spec" },
+    { "id": "default-checks" },
+    { "id": "plan-command" },
+    { "id": "probe-names-judge", "files": [
+      { "file": "tests/criterion/probeNames.examples.test.ts", "min": 4, "max": 10, "new": true,
+        "lits": ["Probe Names example 1", "Probe Names example 4", "criterion/titles1.ts.txt", "criterion/titles2.ts.txt",
+          "McpMount", "GoP7bPhaseLoop", "which the record does not give", "not an example of its Functions (none)"] }] },
+    { "id": "read-checks-judge", "files": [
+      { "file": "tests/builder/readChecks.examples.test.ts", "min": 7, "max": 7, "new": false, "lits": ["phase: required"] },
+      { "file": "tests/builder/readChecks.p35.examples.test.ts", "min": 2, "max": 8, "new": true,
+        "lits": ["Read Checks example 5", "Read Checks example 6", "overrides: must be a list",
+          "(root): cards and overrides exclude each other", "overrides[2].id: duplicate id 'a'"] }] },
+    { "id": "plan-spec-judge", "files": [
+      { "file": "tests/planner/plan.p35.examples.test.ts", "min": 1, "max": 4, "new": true,
+        "lits": ["Plan Spec example 9", "go-mini/contour.yaml", "planner/ledger.plan.json", "store-schema-judge", "ledger-cli", "checks-judge"] }] },
+    { "id": "default-checks-judge", "files": [
+      { "file": "tests/criterion/defaultChecks.examples.test.ts", "min": 5, "max": 11, "new": true,
+        "lits": ["Default Checks example 1", "Default Checks example 5", "criterion/goMini.criteria.json", "criterion/ts.input.json",
+          "checks defaults not built (5 errors):", "cpu: 33% (1 of 3)", "percent-of-judge: max from checks.json",
+          "ab-judge tests/b.examples.test.ts: lits from checks.json", "probe names differ from the record (2 problems):"] }] },
+    { "id": "plan-command-judge", "files": [
+      { "file": "tests/cli/planCommand.p35.examples.test.ts", "min": 3, "max": 9, "new": true,
+        "lits": ["Plan Command example 21", "Plan Command example 22", "Plan Command example 23", "cli/goMini.defaults.checks.json",
+          "cli/clampValue.drift.probe.txt", "probe names differ from the record (2 problems):", "percent-of-judge: lits from checks.json",
+          "# morph: subset transaction", "checks override 'nope' is not a card of the cut"] }] }
+  ]
+}

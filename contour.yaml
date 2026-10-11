@@ -1737,21 +1737,22 @@ System:
         - name: Plan Command
           description: "`morph plan --spec`: record and map cut by Plan Spec, the deck to --out; one Plan Document."
           behavior: >
-            planCommand(root, args), in order: the spec (path.resolve(root, args.spec)), then a given map, not a regular file → 4 UsageError "spec file not found:
-            <spec as given>" | "map file not found: <map as given>". loadContour(the spec's text, args.spec), then loadMap(the map's text, args.map) when given (else
-            the empty map: version 1, every list [], the rest null); Plan Spec({record, map, spec: args.spec, components: args.components, judge: args.judge,
-            hasFile: a path is a regular file under root}); with args.only Select Cards(plan, args.only) (its plan replaces Plan Spec's, the checks keep only its
-            cards); each error → 2 DeckError, it. With args.checks: profile = Resolve Profile(the first selected Component's language, map.language), an error → 2
-            DeckError "the map: " + it; Read Plan Checks(root, args.checks, profile) (a failure is the result); Plan Rules(record, map, "decks/tools/layers.json" is
-            a regular file under root, texts.guard, profile.id) (P31a), an error → 2 DeckError, it; Build Acceptances({cards, checks, profile, texts, uses: Plan
-            Spec's uses, vendor: "vendor/modules.txt" is a regular file under root, its layers, then its rules, each when not null, with args.only transaction: true}), errors → 2
-            DeckError "acceptances not built (<n> error|errors):\n" + them "\n"-joined; its cards replace the plan's, except a card the map gives an acceptance (map
-            card by customId ?? id, extra card by customId). args.out not null → the cards written to path.resolve(root, args.out) as JSON.stringify(cards, null, 2)
-            + "\n", parents created. → {code: 0, document: {spec, components, cards, generations, externalDependsOn, out: args.out, Plan Rules' proseOnly when non-empty, last warnings only when
-            non-empty}}; warnings (P34) = loadContour's, then per name of the plan's components whose record Component's language and map.language are both null
-            "no language on Component <name> and none in the map: typescript assumed", then Plan Spec's warnings (P34b), then with args.checks rules' Plan Notes(per checks card kept, {id, extra, targets of
-            its plan card or []}, the layers.json fact, texts.guard) (P31b). Nothing else written; nothing on an error.
-          steps: [{uses: contour}, {uses: planner}, {calls: Read Plan Checks}, {uses: rules}, {uses: builder}, {produces: Plan Document}]
+            planCommand(root, args), in order: the spec (path.resolve(root, args.spec)), then a given map, not a regular file → 4 UsageError "spec file not
+            found: <spec as given>" | "map file not found: <map as given>". loadContour(spec text, args.spec), loadMap(map text, args.map) when given (else the
+            empty map: version 1, lists [], the rest null); Plan Spec({record, map, spec: args.spec, components, judge, hasFile: a regular file under root});
+            with args.only Select Cards(plan, args.only) (its plan replaces Plan Spec's, the checks keep only its cards); each error → 2 DeckError, it. With
+            args.checks: profile = Resolve Profile(the first selected Component's language, map.language), an error → 2 DeckError "the map: " + it; Read Plan
+            Checks(root, args.checks, profile) (a failure is the result); Plan Rules(record, map, hasFile("decks/tools/layers.json"), texts.guard, profile.id)
+            (P31a), an error → 2 DeckError, it; P35a (#45) after the --only filter: criterion's Default Checks (record: every Function; readProbe(id): <parts>/<probeFile(profile, id)>'s text, or null), not ok → 2 DeckError, its message, ok → its checks and probes replace them; Build Acceptances({cards, checks, profile, texts, uses: Plan Spec's, vendor:
+            hasFile("vendor/modules.txt"), its layers, then its rules, each when not null, with args.only transaction: true}), errors → 2 DeckError "acceptances
+            not built (<n> error|errors):\n" + them "\n"-joined; its cards replace the plan's, except a card the map gives an acceptance (overridden: map card
+            by customId ?? id, extra card by customId). args.out not null → the cards to path.resolve(root, args.out) as JSON.stringify(cards, null, 2) + "\n",
+            parents created. → {code: 0, document: {spec, components, cards, generations, externalDependsOn, out: args.out, Plan Rules' proseOnly, Default
+            Checks' overrides, last warnings, each of the three only when non-empty}}; warnings (P34) = loadContour's, then per plan component whose record
+            Component's language and map.language are both null "no language on Component <name> and none in the map: typescript assumed", then Plan Spec's
+            (P34b), then with args.checks rules' Plan Notes(per checks card, {id, extra, targets of its plan card or []}, the layers.json fact, texts.guard)
+            (P31b). Nothing else written; nothing on an error.
+          steps: [{uses: contour}, {uses: planner}, {calls: Read Plan Checks}, {uses: rules}, {uses: builder}, {uses: criterion}, {produces: Plan Document}]
           examples:
             - {given: 'examples.json["Plan Command 1"].given', when: planCommand, then: 'examples.json["Plan Command 1"].then'}
             - {given: 'examples.json["Plan Command 2"].given', when: planCommand, then: 'examples.json["Plan Command 2"].then'}
@@ -1773,6 +1774,9 @@ System:
             - {given: 'examples.json["Plan Command 18"].given', when: planCommand, then: 'examples.json["Plan Command 18"].then'}
             - {given: 'examples.json["Plan Command 19"].given', when: planCommand, then: 'examples.json["Plan Command 19"].then'}
             - {given: 'examples.json["Plan Command 20"].given', when: planCommand, then: 'examples.json["Plan Command 20"].then'}
+            - {given: 'examples.json["Plan Command 21"].given', when: planCommand, then: 'examples.json["Plan Command 21"].then'}
+            - {given: 'examples.json["Plan Command 22"].given', when: planCommand, then: 'examples.json["Plan Command 22"].then'}
+            - {given: 'examples.json["Plan Command 23"].given', when: planCommand, then: 'examples.json["Plan Command 23"].then'}
         - name: Read Plan Checks
           description: Files of `plan --checks`.
           behavior: >
@@ -1838,7 +1842,7 @@ System:
           schema: "{ deck: string, cards: number, generations: string[][], errors: number, warnings: number, hazards: Hazard[], weights: SliceWeight[], builds?: Build Check[], unproven?: Unproven[] }"
         - name: Plan Document
           description: stdout of plan.
-          schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]>, out: string | null, warnings?: string[] }"
+          schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]>, out: string | null, proseOnly?: string[], overrides?: string[], warnings?: string[] }"
         - name: Plan Checks
           description: What Read Plan Checks returns.
           schema: "{ ok: true, checks: Checks, texts: BuildTexts } | { ok: false, result: Command Result }"
@@ -2903,13 +2907,18 @@ System:
             (uses {} with no dependency; Plan keeps its five keys, so the plan document and the
             deck of a dependency-free record are byte for byte what they were). On the
             same record and map the old `mrph plan --spec --judge` gives the same ids, dependsOn
-            and generations (golden cross-check; texts and targets differ by design).
+            and generations (golden cross-check; texts and targets differ by design). P35a (#45): the ok result's last
+            key criteria = a Card Criterion per card of the plan (keys in plan card order): a card Cut Component made
+            {judge: false, functions: its Cut Card's Functions as {name, examples}} ([] for an Interface card), an extra
+            card {judge: false, functions: []}, a judge card {judge: true, functions: those of its code card, the first
+            id of its dependsOn ([] when that id has none)}.
           steps:
             - calls: Cut Component
             - calls: Cut Judges
             - calls: Order Deck
             - uses: contour
             - produces: Plan
+            - produces: Card Criterion
           examples:
             - given: 'the ledger record and map, spec "ledger.yaml", components ["ledger", "store"], judge true, hasFile true only for "tests/helpers.ts"'
               ref: "tests/fixtures/planner/ledger.golden.json (the old mrph's ids, dependsOn, generations, external), tests/fixtures/planner/ledger.plan.json (the whole plan)"
@@ -2932,6 +2941,7 @@ System:
               when: "planSpec"
               then: "{ok: false, error: \"dependency 'github.com/google/go-cmp' of Component 'diff': doc file not found: docs/deps/go-cmp.md\"}; then {ok: false, error: \"dependency 'yaml' of Component 'conf': doc file not found: docs/deps/yaml.md\"} (zod has no doc); then ok with uses {}"
             - {given: 'examples.json["Plan Spec 8"].given', when: "planSpec", then: 'examples.json["Plan Spec 8"].then'}
+            - {given: 'examples.json["Plan Spec 9"].given', when: "planSpec", then: 'examples.json["Plan Spec 9"].then'}
 
       dataObjects:
         - name: Budget
@@ -2946,6 +2956,9 @@ System:
         - name: Plan
           description: The result of planSpec and the body of the plan document.
           schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]> }"
+        - name: Card Criterion
+          description: Which Functions' examples are a card's criterion (P35a); a judge's are its code card's.
+          schema: "{ judge: boolean, functions: { name: string, examples: Example[] }[] }"
 
     - name: planner-subset
       description: >
@@ -3374,10 +3387,10 @@ System:
           behavior: >
             validateChecks(doc: unknown). Not a plain object → {ok: false, problems: ["(root): checks
             must be an object"]}. Every object is checked against its key table — root: version, phase,
-            parts, frozen, fullExclude, ownGit, cards; card: id, smoke, extra, files; file: file, min,
+            parts, frozen, fullExclude, ownGit, cards, overrides; card: id, smoke, extra, files; file: file, min,
             max, lits, drop, new — first its unknown keys in the object's order ("<path>: unknown key
             '<k>' (known: <table joined by ', '>)"), then its keys in table order. Required: phase,
-            cards, a card's id, a file's file, min, max ("<path>.<key>: required"). version must be 1
+            a card's id, a file's file, min, max ("<path>.<key>: required"). version must be 1
             ("version: must be 1"); phase and id must match ^[A-Za-z0-9._-]+$; a repeated id →
             "cards[<i>].id: duplicate id '<id>'"; parts, extra, file non-empty strings; frozen,
             fullExclude, lits, drop lists ("must be a list") of non-empty strings ("<path>[<j>]: must be a
@@ -3389,7 +3402,13 @@ System:
             version 1, parts "decks/<phase>/parts", frozen DEFAULT_FROZEN = ["contour.yaml",
             "morph-map.json", "docs", "decks", "tests/fixtures"], fullExclude [], ownGit false, smoke,
             extra and files null, lits and drop [], new false. Any problem → {ok: false, problems}
-            (document order); none → {ok: true, checks}.
+            (document order); none → {ok: true, checks}. P35a (#45): overrides a list ("overrides: must be a list") of
+            objects ("overrides[<i>]: must be an object"), each checked as a card at overrides[<i>] (same table and rules,
+            duplicate ids among the overrides), except that an override's file requires only file: min, max, lits, drop,
+            new are null when absent (Override File), min > max when both given. Then cards and overrides both given →
+            "(root): cards and overrides exclude each other: cards lists every card, overrides only the cut's cards that
+            differ". No cards → the cut form: cards [] and the last key overrides ([] when absent); cards given → no key
+            overrides, as before.
           steps:
             - reads: Checks
             - produces: Checks Result
@@ -3404,10 +3423,12 @@ System:
             - given: 'the bad checks document: an unknown root key, version 2, a bad phase, frozen as a string, an empty exclude, a non-boolean ownGit, five bad cards'
               ref: "tests/fixtures/builder/badChecks.json (the document), tests/fixtures/builder/badChecks.problems.json (the 21 problems in order)"
               when: "validated"
-              then: "{ok: false, problems} equal to the 21 lines of badChecks.problems.json, first \"(root): unknown key 'extra' (known: version, phase, parts, frozen, fullExclude, ownGit, cards)\", last \"cards[4].files[1]: must be an object\""
+              then: "{ok: false, problems} equal to the 21 lines of badChecks.problems.json, first \"(root): unknown key 'extra' (known: version, phase, parts, frozen, fullExclude, ownGit, cards, overrides)\", last \"cards[4].files[1]: must be an object\""
             - given: 'the documents [], null and "x"; then {}'
               when: "validated"
-              then: '{ok: false, problems: ["(root): checks must be an object"]} for each; then {ok: false, problems: ["phase: required", "cards: required"]}'
+              then: '{ok: false, problems: ["(root): checks must be an object"]} for each; then {ok: false, problems: ["phase: required"]} (P35a: no cards is the cut form)'
+            - {given: 'examples.json["Read Checks 5"].given', ref: "tests/fixtures/builder/examples.json", when: validated, then: 'examples.json["Read Checks 5"].then'}
+            - {given: 'examples.json["Read Checks 6"].given', ref: "tests/fixtures/builder/examples.json", when: validated, then: 'examples.json["Read Checks 6"].then'}
         - name: Build Acceptances
           description: Sets the acceptance of every card the checks name, from its generation's siblings and the texts read.
           behavior: >
@@ -3475,7 +3496,13 @@ System:
       dataObjects:
         - name: Checks
           description: A phase's acceptance knobs, read from its checks document (decks/<phase>/checks.json).
-          schema: "{ version: 1, phase: string, parts: string, frozen: string[], fullExclude: string[], ownGit: boolean, cards: { id: string, smoke: number | null, extra: string | null, files: JudgeFile[] | null }[] }"
+          schema: "{ version: 1, phase: string, parts: string, frozen: string[], fullExclude: string[], ownGit: boolean, cards: { id: string, smoke: number | null, extra: string | null, files: JudgeFile[] | null }[], overrides?: Check Override[] }"
+        - name: Check Override
+          description: A cut-form card's knobs and bounds (P35a); null = the default.
+          schema: "{ id: string, smoke: number | null, extra: string | null, files: Override File[] | null }"
+        - name: Override File
+          description: A judge file's bounds in an override; null = the default.
+          schema: "{ file: string, min: number | null, max: number | null, lits: string[] | null, drop: string[] | null, new: boolean | null }"
         - name: Judge File
           description: One test file a judge writes or patches, with the guard's bounds and literals and the HEAD names it may drop.
           schema: "{ file: string, min: number, max: number, lits: string[], drop: string[], new: boolean }"
@@ -5107,6 +5134,107 @@ System:
           description: One corpus entry cut again.
           schema: "{ name: string, code: number, bytes: number, sha256: string, ok: boolean }"
 
+    # ---------------------------------------------------------------- P35a
+    - name: criterion
+      description: >
+        The record's examples as the criterion of a phase's hand data (P35a, issue #45): src/criterion/*.ts, pure (no
+        file read, no clock, no randomness, no environment, no Node module). Probe Names reads the example titles of a
+        code card's probe and compares them with the examples of the card's Functions; Default Checks builds the cards
+        of a checks document in the cut form (no cards list, only the phase knobs and per-card overrides) from the cut
+        itself, each judge's bounds and literals from its Functions' examples. cli's Plan Command calls both; planner's
+        Plan Spec tells which Functions each card holds (Card Criterion). tests/fixtures/criterion/examples.json["<Function>
+        <n>"] holds the given and then of an example naming it.
+      language: typescript
+      requirements: [Deterministic Core]
+      functions:
+        - name: Probe Names
+          description: The example titles of a probe, and every one the record does not give or the probe lacks.
+          behavior: >
+            pascalName(name) = language's nameWords(name), each word with its first letter upper-cased, joined ("Percent
+            Of" → "PercentOf", "MCP mount" → "McpMount"). probeTitles(profile, text, names) → Probe Title[] in line order,
+            text split on "\n". The go profile: a line starting "func TestProbe" + X + "Example" + n + "(" (X one or more of
+            [A-Za-z0-9_], the longest that fits; n digits) → {function: the first of names whose pascalName is X, else X; n:
+            Number(n)}. Any other profile: a line whose first non-blank characters (spaces, tabs) are "test(" or "it(", then
+            optional spaces, then a quote (", ' or a backquote), the title running to the next same quote on the line; a
+            title "<F> example <n>" or "<F> example <n>:<rest>" (F at least one character, n digits) → {function: F, n};
+            every other title is the probe's own test, skipped. checkProbeNames({id, path, profile, text, own, record,
+            strict}) → string[]; own and record are Example Counts ({name, count}); titles = probeTitles(profile, text,
+            record names then own names). A title met twice (an example split over several tests) counts once. strict:
+            per own entry in order, the numbers 1..count no title gives, ascending → "card '<id>': probe <path> lacks <F>
+            example <the numbers joined by ', '> (the record gives <count>)"; then the titles that are not (an own name, 1 ≤
+            n ≤ its count), grouped by function in order of first appearance, numbers distinct ascending → "card '<id>':
+            probe <path> names <F> example <numbers>, not an example of its Functions (<own names joined by ', ', or
+            none>)". Not strict: no lacks lines; the titles whose function is no record name or whose n is outside
+            1..count, grouped the same → "card '<id>': probe <path> names <F> example <numbers>, which the record does not
+            give". The lacks lines come before the names lines.
+          steps:
+            - uses: language
+            - reads: Example Count
+            - produces: Probe Title
+          examples:
+            - {given: 'examples.json["Probe Names 1"].given', when: "probeTitles; checkProbeNames", then: 'examples.json["Probe Names 1"].then'}
+            - {given: 'examples.json["Probe Names 2"].given', when: checkProbeNames, then: 'examples.json["Probe Names 2"].then'}
+            - {given: 'examples.json["Probe Names 3"].given', when: checkProbeNames, then: 'examples.json["Probe Names 3"].then'}
+            - {given: 'examples.json["Probe Names 4"].given', ref: "tests/fixtures/go-mini/decks/m1/parts/_percent-of_probe_test.go", when: "pascalName; probeTitles; checkProbeNames", then: 'examples.json["Probe Names 4"].then'}
+        - name: Default Checks
+          description: The cards of a cut-form checks document, built from the cut and its Functions' examples.
+          behavior: >
+            defaultChecks(input) → Default Checks Result; input (Plan Command's, P35a): checks (builder's Checks, after the
+            --only filter), cards (the plan's cards, deck order), all (the ids of Plan Spec's plan before --only), criteria
+            (Plan Spec's Card Criterion per customId), profile, mapAcceptance (the customIds the map gives an acceptance:
+            map card by customId ?? id, extra card by customId), hasFile (a regular file under root), record (every
+            Function of the record as an Example Count, record order), probes (Read Plan Checks' texts.probes) and
+            readProbe(id) (the probe's text or null). The old form (checks without the key overrides): checks, probes
+            and overrides [] as given. The cut form: the errors, in order: per override in order, an id neither in cards
+            nor in all → "checks override '<id>' is not a card of the cut" (an id of all only is dropped); then per card in
+            order, skipping a card in mapAcceptance and a card none of whose targets language's hasExtension(profile, ·)
+            accepts: o = the override of its id or none; judge = criteria[customId]?.judge === true; count = the examples of
+            its criterion's functions counted. A code card: o with files → "checks override '<id>': files given for a code
+            card"; else {id, smoke: o.smoke ?? (language's testTarget(profile, targets) not null ? 5 : null), extra:
+            o.extra ?? null, files: null}. A judge: o with smoke or extra → "checks override '<id>': smoke or extra given for
+            a judge"; an o file whose file is no target → "checks override '<id>': <file> is not a target of the judge";
+            else files = per target in order, f = o's file of that path or none: one target → min = f.min ?? count, max =
+            f.max ?? min + 6, lits = f.lits ?? thenLiterals(the examples of its functions, in order); several targets → a
+            target whose f gives no min or no max → "judge '<id>' writes <n> test files: give min and max of <file> in
+            checks.json overrides", lits = f.lits ?? []; drop = f.drop ?? [], new = f.new ?? !hasFile(target); min > max →
+            "judge '<id>' <file>: min <min> exceeds max <max>"; the card {id, smoke: null, extra: null, files}. Errors →
+            {ok: false, message: "checks defaults not built (<n> error|errors):\n" + them "\n"-joined}. Else checks = checks
+            with cards = the built cards and fullExclude = checks.fullExclude followed by every built judge's file not yet
+            in it (card order, target order); overrides = per built judge, per file, per field of min, max, lits that f
+            gives, "<id>: <field> from checks.json" (one target) or "<id> <file>: <field> from checks.json" (several);
+            probes = the given ones plus, per built code card without one, readProbe(id) when not null. Both forms then:
+            per checks card with files null holding a probe, Probe Names' checkProbeNames({id, path: checks.parts + "/" +
+            builder's probeFile(profile, id), profile, text, own: its criterion's functions as Example Counts ([] without a
+            criterion), record, strict: the cut form}); lines → {ok: false, message: "probe names differ from the record
+            (<n> problem|problems):\n" + them "\n"-joined}. → {ok: true, checks, probes, overrides}. thenLiterals(examples)
+            → string[]: in each example's then, in order, the text between a double quote and the next double quote not
+            preceded by a backslash (a backslash keeps itself and the next character), each run of whitespace collapsed to
+            one space, trimmed; an unclosed quote ends the scan of that then; empty texts dropped; distinct, the first kept.
+          steps:
+            - calls: Probe Names
+            - uses: builder
+            - uses: language
+            - uses: cards
+            - uses: planner
+            - reads: Checks
+            - reads: Card Criterion
+            - produces: Default Checks Result
+          examples:
+            - {given: 'examples.json["Default Checks 1"].given', ref: "tests/fixtures/cli/goMini.deck.json, tests/fixtures/criterion/goMini.criteria.json", when: defaultChecks, then: 'examples.json["Default Checks 1"].then'}
+            - {given: 'examples.json["Default Checks 2"].given', ref: "tests/fixtures/cli/goMini.deck.json, tests/fixtures/criterion/goMini.criteria.json", when: defaultChecks, then: 'examples.json["Default Checks 2"].then'}
+            - {given: 'examples.json["Default Checks 3"].given', ref: "tests/fixtures/cli/goMini.deck.json, tests/fixtures/criterion/goMini.criteria.json", when: defaultChecks, then: 'examples.json["Default Checks 3"].then'}
+            - {given: 'examples.json["Default Checks 4"].given', ref: "tests/fixtures/cli/goMini.deck.json, tests/fixtures/criterion/goMini.criteria.json, tests/fixtures/criterion/ts.input.json", when: defaultChecks, then: 'examples.json["Default Checks 4"].then'}
+            - {given: 'examples.json["Default Checks 5"].given', when: thenLiterals, then: 'examples.json["Default Checks 5"].then'}
+      dataObjects:
+        - name: Example Count
+          description: A Function's name and the number of its examples.
+          schema: "{ name: string, count: number }"
+        - name: Probe Title
+          description: One example title of a probe.
+          schema: "{ function: string, n: number }"
+        - name: Default Checks Result
+          description: The checks with their cards built, the probes read and the override lines of the plan document; or the error message.
+          schema: "{ ok: true, checks: Checks, probes: Record<string, string>, overrides: string[] } | { ok: false, message: string }"
   dependencies:
     - {name: yaml, version: "2.9.1", language: typescript, doc: docs/deps/yaml.md}
 Actor:

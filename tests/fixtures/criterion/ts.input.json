@@ -1,0 +1,127 @@
+{
+  "cards": [
+    {
+      "customId": "ab",
+      "intent": "generate",
+      "targets": [
+        "src/a.ts"
+      ],
+      "contextSlice": [],
+      "instruction": "Write ab.",
+      "acceptance": "exit 0\n",
+      "model": null,
+      "maxTokens": 8000,
+      "reasoning": {
+        "maxTokens": 2500
+      },
+      "variants": 1,
+      "dependsOn": []
+    },
+    {
+      "customId": "ab-judge",
+      "intent": "generate",
+      "targets": [
+        "tests/a.examples.test.ts",
+        "tests/b.examples.test.ts"
+      ],
+      "contextSlice": [],
+      "instruction": "Write ab-judge.",
+      "acceptance": "exit 0\n",
+      "model": null,
+      "maxTokens": 8000,
+      "reasoning": {
+        "maxTokens": 2500
+      },
+      "variants": 1,
+      "dependsOn": [
+        "ab"
+      ]
+    },
+    {
+      "customId": "cd",
+      "intent": "generate",
+      "targets": [
+        "src/c.ts",
+        "tests/c.test.ts"
+      ],
+      "contextSlice": [],
+      "instruction": "Write cd.",
+      "acceptance": "exit 0\n",
+      "model": null,
+      "maxTokens": 8000,
+      "reasoning": {
+        "maxTokens": 2500
+      },
+      "variants": 1,
+      "dependsOn": []
+    },
+    {
+      "customId": "notes",
+      "intent": "generate",
+      "targets": [
+        "docs/NOTES.md"
+      ],
+      "contextSlice": [],
+      "instruction": "Write notes.",
+      "acceptance": "exit 0\n",
+      "model": null,
+      "maxTokens": 8000,
+      "reasoning": {
+        "maxTokens": 2500
+      },
+      "variants": 1,
+      "dependsOn": []
+    },
+    {
+      "customId": "ef",
+      "intent": "generate",
+      "targets": [
+        "src/e.ts"
+      ],
+      "contextSlice": [],
+      "instruction": "Write ef.",
+      "acceptance": "exit 0\n",
+      "model": null,
+      "maxTokens": 8000,
+      "reasoning": {
+        "maxTokens": 2500
+      },
+      "variants": 1,
+      "dependsOn": []
+    }
+  ],
+  "criteria": {
+    "ab": {
+      "judge": false,
+      "functions": [
+        {
+          "name": "A B",
+          "examples": [
+            {
+              "given": "x",
+              "when": "w",
+              "then": "\"lit one\" and \"lit two\"",
+              "ref": null
+            }
+          ]
+        }
+      ]
+    },
+    "ab-judge": {
+      "judge": true,
+      "functions": [
+        {
+          "name": "A B",
+          "examples": [
+            {
+              "given": "x",
+              "when": "w",
+              "then": "\"lit one\" and \"lit two\"",
+              "ref": null
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,8 @@
+package calc
+
+import "testing"
+
+func TestProbeClampValueExample1(t *testing.T) {}
+func TestProbeClampValueExample2(t *testing.T) {}
+func TestProbeClampValueExample3(t *testing.T) {}
+func TestProbeClampValueExample5(t *testing.T) {}

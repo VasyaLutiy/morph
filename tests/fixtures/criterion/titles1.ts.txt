@@ -1,0 +1,11 @@
+import { expect, test } from "vitest";
+
+test("Clamp Value example 1: inside", () => {
+  expect(1).toBe(1);
+});
+test("Clamp Value example 2: below", () => {});
+test("Clamp Value example 2: below, a second row", () => {});
+  it('Clamp Value example 3: above', () => {});
+test("Clamp Value rows: the edges", () => {});
+test("Clamp Value example 4 without a colon", () => {});
+const s = 'test("Percent Of example 9: inside a string")';

@@ -1,0 +1,206 @@
+{
+  "clamp-value": {
+    "judge": false,
+    "functions": [
+      {
+        "name": "Clamp Value",
+        "examples": [
+          {
+            "given": "v 5, lo 0, hi 3",
+            "when": "clamped",
+            "then": "3",
+            "ref": null
+          },
+          {
+            "given": "v -2, lo -1, hi 4",
+            "when": "clamped",
+            "then": "-1",
+            "ref": null
+          },
+          {
+            "given": "v 7, lo 9, hi 2",
+            "when": "clamped",
+            "then": "7 — the bounds are swapped to 2..9",
+            "ref": null
+          },
+          {
+            "given": "v 12, lo 9, hi 2",
+            "when": "clamped",
+            "then": "9",
+            "ref": null
+          }
+        ]
+      }
+    ]
+  },
+  "clamp-value-judge": {
+    "judge": true,
+    "functions": [
+      {
+        "name": "Clamp Value",
+        "examples": [
+          {
+            "given": "v 5, lo 0, hi 3",
+            "when": "clamped",
+            "then": "3",
+            "ref": null
+          },
+          {
+            "given": "v -2, lo -1, hi 4",
+            "when": "clamped",
+            "then": "-1",
+            "ref": null
+          },
+          {
+            "given": "v 7, lo 9, hi 2",
+            "when": "clamped",
+            "then": "7 — the bounds are swapped to 2..9",
+            "ref": null
+          },
+          {
+            "given": "v 12, lo 9, hi 2",
+            "when": "clamped",
+            "then": "9",
+            "ref": null
+          }
+        ]
+      }
+    ]
+  },
+  "percent-of": {
+    "judge": false,
+    "functions": [
+      {
+        "name": "Percent Of",
+        "examples": [
+          {
+            "given": "part 1, whole 3",
+            "when": "taken as a percent",
+            "then": "33",
+            "ref": null
+          },
+          {
+            "given": "part 2, whole 3",
+            "when": "taken as a percent",
+            "then": "67",
+            "ref": null
+          },
+          {
+            "given": "part 1, whole 8",
+            "when": "taken as a percent",
+            "then": "13 — 12.5 rounds half up",
+            "ref": null
+          },
+          {
+            "given": "part 5, whole 4",
+            "when": "taken as a percent",
+            "then": "100 — 125 is clamped",
+            "ref": null
+          },
+          {
+            "given": "part 3, whole 0; then part -3, whole 7",
+            "when": "taken as a percent",
+            "then": "0; then 0 — no whole, and a negative share clamped",
+            "ref": null
+          }
+        ]
+      }
+    ]
+  },
+  "format-share": {
+    "judge": false,
+    "functions": [
+      {
+        "name": "Format Share",
+        "examples": [
+          {
+            "given": "label \"cpu\", part 1, whole 3",
+            "when": "formatted",
+            "then": "\"cpu: 33% (1 of 3)\"",
+            "ref": null
+          },
+          {
+            "given": "label \"\", part 5, whole 4",
+            "when": "formatted",
+            "then": "\"total: 100% (5 of 4)\"",
+            "ref": null
+          },
+          {
+            "given": "label \"disk\", part 0, whole 0",
+            "when": "formatted",
+            "then": "\"disk: 0% (0 of 0)\"",
+            "ref": null
+          }
+        ]
+      }
+    ]
+  },
+  "percent-of-judge": {
+    "judge": true,
+    "functions": [
+      {
+        "name": "Percent Of",
+        "examples": [
+          {
+            "given": "part 1, whole 3",
+            "when": "taken as a percent",
+            "then": "33",
+            "ref": null
+          },
+          {
+            "given": "part 2, whole 3",
+            "when": "taken as a percent",
+            "then": "67",
+            "ref": null
+          },
+          {
+            "given": "part 1, whole 8",
+            "when": "taken as a percent",
+            "then": "13 — 12.5 rounds half up",
+            "ref": null
+          },
+          {
+            "given": "part 5, whole 4",
+            "when": "taken as a percent",
+            "then": "100 — 125 is clamped",
+            "ref": null
+          },
+          {
+            "given": "part 3, whole 0; then part -3, whole 7",
+            "when": "taken as a percent",
+            "then": "0; then 0 — no whole, and a negative share clamped",
+            "ref": null
+          }
+        ]
+      }
+    ]
+  },
+  "format-share-judge": {
+    "judge": true,
+    "functions": [
+      {
+        "name": "Format Share",
+        "examples": [
+          {
+            "given": "label \"cpu\", part 1, whole 3",
+            "when": "formatted",
+            "then": "\"cpu: 33% (1 of 3)\"",
+            "ref": null
+          },
+          {
+            "given": "label \"\", part 5, whole 4",
+            "when": "formatted",
+            "then": "\"total: 100% (5 of 4)\"",
+            "ref": null
+          },
+          {
+            "given": "label \"disk\", part 0, whole 0",
+            "when": "formatted",
+            "then": "\"disk: 0% (0 of 0)\"",
+            "ref": null
+          }
+        ]
+      }
+    ]
+  }
+}
