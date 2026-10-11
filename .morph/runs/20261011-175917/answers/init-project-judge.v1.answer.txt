@@ -1,0 +1,38 @@
+```
+import fs from "node:fs";
+import path from "node:path";
+import { expect, test } from "vitest";
+import { defaultTemplatesDir, initProject } from "../../src/scaffold/initProject.js";
+import { tmpRoot } from "../helpers.js";
+
+test("Init Project example 6: init writes no layers.json and the guards do not mention it", () => {
+  const t = tmpRoot();
+  try {
+    const languages = ["go", "typescript", "python"] as const;
+    for (const language of languages) {
+      const result = initProject(
+        t.path(language),
+        { project: "p", language, module: null, templates: null },
+        "/",
+      );
+      expect(result.code).toBe(0);
+      const doc = result.document as { files: string[] };
+      for (const file of doc.files) {
+        expect(file.endsWith("layers.json")).toBe(false);
+      }
+      expect(fs.existsSync(path.join(t.path(language), "decks", "tools", "layers.json"))).toBe(false);
+    }
+
+    const guardLanguages = ["go", "typescript"] as const;
+    for (const language of guardLanguages) {
+      const text = fs.readFileSync(
+        path.join(defaultTemplatesDir(), language, "decks", "tools", "guard.mjs"),
+        "utf8",
+      );
+      expect(text.includes("layers.json")).toBe(false);
+    }
+  } finally {
+    t.rm();
+  }
+});
+```

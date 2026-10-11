@@ -1,0 +1,10 @@
+morph run: guardrail-rules-judge.v1 accepted stage 0 finish stop chars 28732
+morph run: init-project-judge.v1 accepted stage 0 finish stop chars 1263
+morph run: layer-edges-judge.v1 accepted stage 0 finish stop chars 9093
+morph run: plan-notes.v1 accepted stage 0 finish stop chars 950
+morph run: plan-notes.v2 untried stage 0 finish stop chars 949
+morph run: plan-command.v1 accepted stage 0 finish stop chars 6204
+morph run: plan-command.v2 untried stage 0 finish stop chars 6204
+morph run: plan-notes-judge.v1 accepted stage 0 finish stop chars 2116
+morph run: plan-command-judge.v1 accepted stage 0 finish stop chars 2883
+morph run: guardrail-rules-judge.r1.v1 accepted stage 0 finish stop chars 29112

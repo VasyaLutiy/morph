@@ -1,0 +1,35 @@
+```
+import { posix } from "node:path";
+import { guardContract } from "./guardrails.js";
+
+export interface NoteCard {
+  id: string;
+  extra: string | null;
+  targets: readonly string[];
+}
+
+export function planNotes(cards: readonly NoteCard[], layersFile: boolean, guard: string): string[] {
+  if (guardContract(guard) < 3) return [];
+
+  const notes: string[] = [];
+
+  if (layersFile) {
+    notes.push("decks/tools/layers.json is not read: the record is the source; delete it");
+  }
+
+  for (const card of cards) {
+    if (card.extra === null) continue;
+    if (!card.extra.includes("== imports")) continue;
+    const target = card.targets[0];
+    const dir = target === undefined ? "." : posix.dirname(target);
+    notes.push(
+      card.id +
+        ": checks.json extra 'imports' checks " +
+        dir +
+        " against a hand list; the record's rules and dependencies already govern imports per file: remove it",
+    );
+  }
+
+  return notes;
+}
+```
