@@ -1,0 +1,95 @@
+import { expect, test } from "vitest";
+import { loadContour, loadMap } from "../../src/contour/load.js";
+import { TYPESCRIPT } from "../../src/language/profiles.js";
+import { componentDependencies, cutComponent } from "../../src/planner/cut.js";
+import { fixture } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+import type { Component, ContourRecord } from "../../src/contour/types.js";
+import type { CutCard } from "../../src/planner/types.js";
+
+function componentNamed(record: ContourRecord, name: string): Component {
+  const found = record.system.groups.find((g) => g.name === name);
+  if (found === undefined) throw new Error("no Component " + name);
+  return found;
+}
+
+function cardNamed(cuts: readonly CutCard[], customId: string): Card {
+  const found = cuts.find((c) => c.card.customId === customId);
+  if (found === undefined) throw new Error("no card " + customId);
+  return found.card;
+}
+
+test("Cut Component example 6: a Component's dependencies come in record order and the ending finale names them", () => {
+  const recordLoaded = loadContour(fixture("planner/deps.yaml"), "deps.yaml");
+  if (!recordLoaded.ok) throw new Error(recordLoaded.error);
+  const mapLoaded = loadMap(fixture("planner/deps.map.json"), "deps.map.json");
+  if (!mapLoaded.ok) throw new Error(mapLoaded.error);
+  const record = recordLoaded.record;
+  const map = mapLoaded.map;
+  const docs = ["docs/TASK.md"];
+
+  const confResult = cutComponent({
+    record,
+    component: componentNamed(record, "conf"),
+    map,
+    docs,
+    spec: "deps.yaml",
+  });
+  if (!confResult.ok) throw new Error(confResult.error);
+  expect(confResult.cuts.map((c) => c.card.customId)).toStrictEqual(["read-config", "check-config"]);
+  const confFinale =
+    "\n\n" +
+    TYPESCRIPT.finale +
+    " Imports: the standard library plus yaml@2.8.1, zod@3.23.8; their API is in docs/deps/yaml.md; no other import.";
+  for (const cut of confResult.cuts) {
+    expect(cut.card.instruction.endsWith(confFinale)).toBe(true);
+  }
+
+  const diffResult = cutComponent({
+    record,
+    component: componentNamed(record, "diff"),
+    map,
+    docs,
+    spec: "deps.yaml",
+  });
+  if (!diffResult.ok) throw new Error(diffResult.error);
+  const diffValues = cardNamed(diffResult.cuts, "diff-values");
+  expect(
+    diffValues.instruction.endsWith(
+      "Imports: the standard library plus github.com/google/go-cmp@v0.7.0; their API is in docs/deps/go-cmp.md; no other import.",
+    ),
+  ).toBe(true);
+  expect(
+    diffValues.instruction.includes(
+      "Go 1.22, the standard library and the modules named at the end (go.mod requires them;",
+    ),
+  ).toBe(true);
+
+  const plain = componentNamed(record, "plain");
+  const plainResult = cutComponent({ record, component: plain, map, docs, spec: "deps.yaml" });
+  if (!plainResult.ok) throw new Error(plainResult.error);
+  const padLeft = cardNamed(plainResult.cuts, "pad-left");
+  expect(padLeft.instruction.endsWith("\n\n" + TYPESCRIPT.finale)).toBe(true);
+  expect(componentDependencies(record, plain)).toStrictEqual([]);
+});
+
+test("Cut Component example 7: a Component that uses a dependency of another language is a fault", () => {
+  const recordLoaded = loadContour(fixture("planner/deps.yaml"), "deps.yaml");
+  if (!recordLoaded.ok) throw new Error(recordLoaded.error);
+  const mapLoaded = loadMap(fixture("planner/deps.map.json"), "deps.map.json");
+  if (!mapLoaded.ok) throw new Error(mapLoaded.error);
+  const wrong = componentNamed(recordLoaded.record, "wrong");
+
+  const result = cutComponent({
+    record: recordLoaded.record,
+    component: wrong,
+    map: mapLoaded.map,
+    docs: ["docs/TASK.md"],
+    spec: "deps.yaml",
+  });
+
+  expect(result).toStrictEqual({
+    ok: false,
+    error: "Component 'wrong' uses 'github.com/google/go-cmp', a go dependency (the Component is typescript)",
+  });
+});

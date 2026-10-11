@@ -1,0 +1,247 @@
+import {
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  realpathSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { cagePath } from "./cagePath.js";
+import type { ScoutFs, ScoutTree } from "./cagePath.js";
+import { hasExtension, profileForPath } from "../language/paths.js";
+import type { Card } from "../cards/types.js";
+
+export interface FromScoutOptions {
+  fromScout: string;
+  out: string | null;
+}
+
+export interface FromScoutResult {
+  code: 0 | 1 | 2 | 3 | 4;
+  document: unknown;
+}
+
+export const SCOUT_SESSIONS = ".morph/scout";
+
+export const PATCH_CONTRACT =
+  "Change the target files of this card to do the task above. Return each target file COMPLETE, not a diff. Keep the public names the files already declare: other code imports them. Write or change no other file.";
+
+export interface PatchInput {
+  scoutId: string;
+  question: string;
+  targets: string[];
+  contextSlice: string[];
+  targetBytes: number;
+}
+
+export function patchAcceptance(targets: string[]): string | null {
+  for (const target of targets) {
+    const profile = profileForPath(target);
+    if (profile === null) {
+      continue;
+    }
+    let line = profile.parseLine;
+    if (profile.parseTakesFiles) {
+      line += " " + targets.filter((t) => hasExtension(profile, t)).join(" ");
+    }
+    return line + " && " + profile.fullRunLine;
+  }
+  return null;
+}
+
+export function patchCard(input: PatchInput): Card {
+  const scaled = Math.ceil(input.targetBytes / 3) * 2;
+  const maxTokens = Math.max(16000, scaled);
+  return {
+    customId: "scout-" + input.scoutId,
+    intent: "patch",
+    targets: input.targets,
+    contextSlice: input.contextSlice,
+    instruction: input.question.trim() + "\n\n" + PATCH_CONTRACT,
+    acceptance: patchAcceptance(input.targets),
+    model: null,
+    maxTokens,
+    reasoning: null,
+    variants: 1,
+    dependsOn: [],
+  };
+}
+
+const NODE_FS: ScoutFs = {
+  realpath: (path: string): string => realpathSync(path),
+  readFile: (path: string): string => readFileSync(path, "utf8"),
+};
+
+function failure(code: 2 | 4, kind: string, message: string): FromScoutResult {
+  return { code, document: { error: { code, kind, message } } };
+}
+
+function shown(value: unknown): string {
+  if (value === undefined) {
+    return "null";
+  }
+  const json = JSON.stringify(value);
+  return json === undefined ? "null" : json;
+}
+
+function strings(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const out: string[] = [];
+  for (const item of value) {
+    if (typeof item !== "string") {
+      return [];
+    }
+    out.push(item);
+  }
+  return out;
+}
+
+function sizeOf(path: string): number | null {
+  try {
+    const st = statSync(path);
+    return st.isFile() ? st.size : null;
+  } catch {
+    return null;
+  }
+}
+
+function sessionNames(root: string): string[] {
+  const dir = join(root, SCOUT_SESSIONS);
+  let entries: string[] = [];
+  try {
+    entries = readdirSync(dir);
+  } catch {
+    entries = [];
+  }
+  const names: string[] = [];
+  for (const name of entries) {
+    try {
+      if (statSync(join(dir, name, "scout.json")).isFile()) {
+        names.push(name);
+      }
+    } catch {
+      // no regular scout.json here: not a session
+    }
+  }
+  names.sort((a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0));
+  return names;
+}
+
+export function planFromScout(root: string, args: FromScoutOptions): FromScoutResult {
+  const names = sessionNames(root);
+  let id: string;
+  if (args.fromScout === "latest") {
+    if (names.length === 0) {
+      return failure(4, "UsageError", "no scout session under " + SCOUT_SESSIONS);
+    }
+    id = names[names.length - 1];
+  } else {
+    if (!names.includes(args.fromScout)) {
+      return failure(4, "UsageError", "scout session not found: " + args.fromScout);
+    }
+    id = args.fromScout;
+  }
+
+  const at = SCOUT_SESSIONS + "/" + id + "/scout.json";
+  let text: string;
+  try {
+    text = readFileSync(join(root, SCOUT_SESSIONS, id, "scout.json"), "utf8");
+  } catch {
+    return failure(2, "DeckError", at + " does not parse");
+  }
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    return failure(2, "DeckError", at + " does not parse");
+  }
+
+  const record: Record<string, unknown> =
+    raw !== null && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+
+  if (record.schema !== 1) {
+    return failure(2, "DeckError", at + ": schema " + shown(record.schema) + ", expected 1");
+  }
+
+  const status = typeof record.status === "string" ? record.status : String(record.status);
+  const why = typeof record.stopReason === "string" ? record.stopReason : String(record.stopReason);
+  const answerRaw: unknown = record.answer;
+  const answer: Record<string, unknown> | null =
+    answerRaw !== null && typeof answerRaw === "object" && !Array.isArray(answerRaw)
+      ? (answerRaw as Record<string, unknown>)
+      : null;
+
+  if (status !== "ok" || answer === null) {
+    return failure(2, "RefusalError", "scout session " + id + " has no answer (" + status + "): " + why);
+  }
+
+  const targets = strings(answer.targets);
+  const contextSlice = strings(answer.context_slice);
+  const question = typeof record.question === "string" ? record.question : "";
+
+  if (targets.length === 0 || question.trim() === "") {
+    return failure(2, "DeckError", at + ": the answer has no targets or the session no question");
+  }
+
+  const tree: ScoutTree = { root, files: [...targets, ...contextSlice] };
+  const keptTargets: string[] = [];
+  const dropped: string[] = [];
+  let targetBytes = 0;
+
+  for (const target of targets) {
+    const caged = cagePath(tree, target, "file", NODE_FS);
+    if (!caged.ok) {
+      return failure(2, "RefusalError", "target refused: " + caged.error);
+    }
+    const size = sizeOf(join(root, caged.path));
+    if (size === null) {
+      return failure(2, "RefusalError", "target refused: not a file: " + target);
+    }
+    targetBytes += size;
+    keptTargets.push(caged.path);
+  }
+
+  const keptSlice: string[] = [];
+  for (const path of contextSlice) {
+    const caged = cagePath(tree, path, "file", NODE_FS);
+    if (!caged.ok) {
+      dropped.push(path);
+      continue;
+    }
+    if (sizeOf(join(root, caged.path)) === null) {
+      dropped.push(path);
+      continue;
+    }
+    keptSlice.push(caged.path);
+  }
+
+  const card = patchCard({
+    scoutId: id,
+    question,
+    targets: keptTargets,
+    contextSlice: keptSlice,
+    targetBytes,
+  });
+
+  if (args.out !== null) {
+    const dest = resolve(root, args.out);
+    mkdirSync(dirname(dest), { recursive: true });
+    writeFileSync(dest, JSON.stringify([card], null, 2) + "\n");
+  }
+
+  return {
+    code: 0,
+    document: {
+      scoutId: id,
+      scout: at,
+      ref: typeof record.ref === "string" ? record.ref : null,
+      cards: [card],
+      dropped,
+      out: args.out,
+    },
+  };
+}

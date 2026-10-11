@@ -1,0 +1,238 @@
+import { buildAcceptances } from "../../src/builder/buildAcceptances.js";
+import { codeAcceptance, judgeAcceptance } from "../../src/builder/compose.js";
+import { untrackedStep } from "../../src/builder/steps.js";
+import { DEFAULT_FROZEN } from "../../src/builder/readChecks.js";
+import { GO, TYPESCRIPT } from "../../src/language/profiles.js";
+import { TRANSACTION_MARK } from "../../src/cards/transaction.js";
+import { fixture } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+import type { BuildInput, CardContext, Checks, JudgeFile } from "../../src/builder/types.js";
+import { expect, test } from "vitest";
+
+const card = (id: string, targets: string[], dependsOn: string[] = []): Card => ({
+  customId: id,
+  intent: "generate",
+  targets,
+  contextSlice: [],
+  instruction: "w",
+  acceptance: null,
+  model: null,
+  maxTokens: null,
+  reasoning: null,
+  variants: 1,
+  dependsOn,
+});
+
+const judgeFiles: JudgeFile[] = [
+  { file: "tests/x/a.examples.test.ts", min: 1, max: 4, lits: [], drop: [], new: true },
+];
+
+const checks: Checks = {
+  version: 1,
+  phase: "p8",
+  parts: "decks/p8/parts",
+  frozen: DEFAULT_FROZEN,
+  fullExclude: ["tests/x/old.test.ts"],
+  ownGit: false,
+  cards: [
+    { id: "a", smoke: null, extra: null, files: null },
+    { id: "b", smoke: null, extra: null, files: null },
+    { id: "j", smoke: null, extra: null, files: judgeFiles },
+  ],
+};
+
+const cardCtx = (id: string, targets: string[]): CardContext => ({
+  id,
+  phase: "p8",
+  targets,
+  siblings: [],
+  frozen: DEFAULT_FROZEN,
+  fullExclude: ["tests/x/old.test.ts"],
+  ownGit: false,
+  profile: TYPESCRIPT,
+  guard: "// guard\n",
+  firstdiff: "// firstdiff\n",
+  allowed: [],
+  vendor: false,
+});
+
+const ALL = ["src/x/a.ts", "src/x/b.ts", "tests/x/a.examples.test.ts"];
+
+const tsCards = (): Card[] => [
+  card("a", ["src/x/a.ts"]),
+  card("b", ["src/x/b.ts"]),
+  card("j", ["tests/x/a.examples.test.ts"], ["a"]),
+];
+
+const tsTexts = {
+  guard: "// guard\n",
+  firstdiff: "// firstdiff\n",
+  probes: { a: "// probe\n", b: "// probe\n" },
+};
+
+const goCards = (): Card[] => [
+  card("percent-of", ["calc/percent_of.go"]),
+  card("clamp-value-judge", ["calc/clamp_value_examples_test.go"]),
+];
+
+const goChecks: Checks = {
+  version: 1,
+  phase: "m1",
+  parts: "decks/m1/parts",
+  frozen: ["go.mod", "internal"],
+  fullExclude: [],
+  ownGit: false,
+  cards: [
+    { id: "percent-of", smoke: null, extra: null, files: null },
+    {
+      id: "clamp-value-judge",
+      smoke: null,
+      extra: null,
+      files: [
+        {
+          file: "calc/clamp_value_examples_test.go",
+          min: 4,
+          max: 10,
+          lits: ["TestClampValueExample1"],
+          drop: [],
+          new: true,
+        },
+      ],
+    },
+  ],
+};
+
+const goTexts = {
+  guard: "// guard\n",
+  firstdiff: "// firstdiff\n",
+  probes: { "percent-of": "package calc\n" },
+};
+
+test("Build Acceptances example 10: a transaction cut marks every acceptance and replaces its untracked step with the whole subset", () => {
+  const input: BuildInput = {
+    cards: tsCards(),
+    checks,
+    profile: TYPESCRIPT,
+    texts: tsTexts,
+    transaction: true,
+    hide: { a: ["src/x/b.ts"] },
+  };
+  const result = buildAcceptances(input);
+  expect(result.ok).toBe(true);
+  if (!result.ok) return;
+
+  const expectedA =
+    TRANSACTION_MARK +
+    "\n" +
+    codeAcceptance(cardCtx("a", ["src/x/a.ts"]), "// probe\n", null, null).replace(
+      untrackedStep(["src/x/a.ts"]),
+      () => untrackedStep(ALL),
+    );
+  const expectedB =
+    TRANSACTION_MARK +
+    "\n" +
+    codeAcceptance(cardCtx("b", ["src/x/b.ts"]), "// probe\n", null, null).replace(
+      untrackedStep(["src/x/b.ts"]),
+      () => untrackedStep(ALL),
+    );
+  const expectedJ =
+    TRANSACTION_MARK +
+    "\n" +
+    judgeAcceptance(cardCtx("j", ["tests/x/a.examples.test.ts"]), judgeFiles).replace(
+      untrackedStep(["tests/x/a.examples.test.ts"]),
+      () => untrackedStep(ALL),
+    );
+  expect(result.cards[0].acceptance).toBe(expectedA);
+  expect(result.cards[1].acceptance).toBe(expectedB);
+  expect(result.cards[2].acceptance).toBe(expectedJ);
+
+  const withFalse = buildAcceptances({
+    cards: tsCards(),
+    checks,
+    profile: TYPESCRIPT,
+    texts: tsTexts,
+    transaction: false,
+  });
+  const withNeither = buildAcceptances({
+    cards: tsCards(),
+    checks,
+    profile: TYPESCRIPT,
+    texts: tsTexts,
+  });
+  expect(withFalse).toStrictEqual(withNeither);
+  expect(withFalse.ok).toBe(true);
+  if (!withFalse.ok) return;
+  const plainA: string = withFalse.cards[0].acceptance ?? "";
+  expect(plainA).toContain("src/x/b.ts");
+
+  const goResult = buildAcceptances({
+    cards: goCards(),
+    checks: goChecks,
+    profile: GO,
+    texts: goTexts,
+    transaction: true,
+  });
+  expect(goResult.ok).toBe(true);
+  if (!goResult.ok) return;
+  const code1 = fixture("builder/go/code1.txt");
+  const expectedGo =
+    TRANSACTION_MARK +
+    "\n" +
+    code1
+      .replace('{"Replace":{"calc/clamp_value_examples_test.go":""}}', '{"Replace":{}}')
+      .replace(
+        "-e calc/percent_of.go ||",
+        "-e calc/percent_of.go -e calc/clamp_value_examples_test.go ||",
+      );
+  expect(goResult.cards[0].acceptance).toBe(expectedGo);
+});
+
+test("Build Acceptances 10: transaction true ignores the hide map", () => {
+  const withHide = buildAcceptances({
+    cards: tsCards(),
+    checks,
+    profile: TYPESCRIPT,
+    texts: tsTexts,
+    transaction: true,
+    hide: { a: ["src/x/b.ts"] },
+  });
+  const withoutHide = buildAcceptances({
+    cards: tsCards(),
+    checks,
+    profile: TYPESCRIPT,
+    texts: tsTexts,
+    transaction: true,
+  });
+  expect(withHide).toStrictEqual(withoutHide);
+});
+
+test("Build Acceptances 10: transaction true marks every card and accepts the whole subset as untracked", () => {
+  const result = buildAcceptances({
+    cards: tsCards(),
+    checks,
+    profile: TYPESCRIPT,
+    texts: tsTexts,
+    transaction: true,
+  });
+  expect(result.ok).toBe(true);
+  if (!result.ok) return;
+  const step = untrackedStep(ALL);
+  for (const c of result.cards) {
+    const acceptance: string = c.acceptance ?? "";
+    expect(acceptance.startsWith(TRANSACTION_MARK + "\n")).toBe(true);
+    expect(acceptance).toContain(step);
+  }
+});
+
+test("Build Acceptances 10: transaction true keeps the deck order", () => {
+  const result = buildAcceptances({
+    cards: tsCards(),
+    checks,
+    profile: TYPESCRIPT,
+    texts: tsTexts,
+    transaction: true,
+  });
+  expect(result.ok).toBe(true);
+  if (!result.ok) return;
+  expect(result.cards.map((c) => c.customId)).toStrictEqual(["a", "b", "j"]);
+});

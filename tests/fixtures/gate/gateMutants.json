@@ -1,0 +1,366 @@
+{
+ "only a": [
+  {
+   "card": "a",
+   "path": "src/a.ts",
+   "line": 1,
+   "column": 55,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "a",
+   "path": "src/a.ts",
+   "line": 1,
+   "column": 61,
+   "rule": "&& → ||"
+  },
+  {
+   "card": "a",
+   "path": "src/a.ts",
+   "line": 1,
+   "column": 66,
+   "rule": "> → >="
+  }
+ ],
+ "two": [
+  {
+   "card": "a",
+   "path": "src/a.ts",
+   "line": 1,
+   "column": 55,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 21,
+   "column": 46,
+   "rule": "=== → !=="
+  }
+ ],
+ "cap": [
+  {
+   "card": "a",
+   "path": "src/a.ts",
+   "line": 1,
+   "column": 55,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "a",
+   "path": "src/a.ts",
+   "line": 1,
+   "column": 61,
+   "rule": "&& → ||"
+  },
+  {
+   "card": "a",
+   "path": "src/a.ts",
+   "line": 1,
+   "column": 66,
+   "rule": "> → >="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 1,
+   "column": 45,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 2,
+   "column": 45,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 3,
+   "column": 45,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 6,
+   "column": 45,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 7,
+   "column": 45,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 9,
+   "column": 45,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 10,
+   "column": 45,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 11,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 13,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 15,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 17,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 18,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 19,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 21,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 22,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 25,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 26,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 27,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 29,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 30,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 31,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 34,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 35,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 37,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 38,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "b",
+   "path": "src/b.ts",
+   "line": 39,
+   "column": 46,
+   "rule": "=== → !=="
+  },
+  {
+   "card": "d",
+   "path": "lib/q.go",
+   "line": 2,
+   "column": 39,
+   "rule": "&& → ||"
+  }
+ ],
+ "run": {
+  "planned": 3,
+  "tried": 3,
+  "killed": 1,
+  "timedOut": 0,
+  "seconds": 5,
+  "survivors": [
+   {
+    "card": "f",
+    "path": "src/f.ts",
+    "line": 1,
+    "column": 61,
+    "rule": "&& → ||"
+   },
+   {
+    "card": "f",
+    "path": "src/f.ts",
+    "line": 1,
+    "column": 66,
+    "rule": "> → >="
+   }
+  ],
+  "untried": [],
+  "baselines": []
+ },
+ "stop": {
+  "planned": 3,
+  "tried": 1,
+  "killed": 1,
+  "timedOut": 0,
+  "seconds": 4,
+  "survivors": [],
+  "untried": [
+   {
+    "card": "f",
+    "path": "src/f.ts",
+    "line": 1,
+    "column": 61,
+    "rule": "&& → ||"
+   },
+   {
+    "card": "f",
+    "path": "src/f.ts",
+    "line": 1,
+    "column": 66,
+    "rule": "> → >="
+   }
+  ],
+  "baselines": []
+ },
+ "baseline": {
+  "planned": 3,
+  "tried": 0,
+  "killed": 0,
+  "timedOut": 0,
+  "seconds": 2,
+  "survivors": [],
+  "untried": [
+   {
+    "card": "f",
+    "path": "src/f.ts",
+    "line": 1,
+    "column": 55,
+    "rule": "=== → !=="
+   },
+   {
+    "card": "f",
+    "path": "src/f.ts",
+    "line": 1,
+    "column": 61,
+    "rule": "&& → ||"
+   },
+   {
+    "card": "f",
+    "path": "src/f.ts",
+    "line": 1,
+    "column": 66,
+    "rule": "> → >="
+   }
+  ],
+  "baselines": [
+   {
+    "card": "f",
+    "exit": 1,
+    "timedOut": false
+   }
+  ]
+ },
+ "timeout": {
+  "planned": 3,
+  "tried": 3,
+  "killed": 1,
+  "timedOut": 1,
+  "seconds": 5,
+  "survivors": [
+   {
+    "card": "f",
+    "path": "src/f.ts",
+    "line": 1,
+    "column": 61,
+    "rule": "&& → ||"
+   },
+   {
+    "card": "f",
+    "path": "src/f.ts",
+    "line": 1,
+    "column": 66,
+    "rule": "> → >="
+   }
+  ],
+  "untried": [],
+  "baselines": []
+ }
+}

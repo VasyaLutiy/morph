@@ -1,0 +1,13 @@
+{
+  "customId": "a",
+  "intent": "generate",
+  "targets": [
+    "src/a.ts"
+  ],
+  "contextSlice": [
+    "docs/B.md",
+    "docs/A.md"
+  ],
+  "instruction": "Write src/a.ts.",
+  "variants": 2
+}

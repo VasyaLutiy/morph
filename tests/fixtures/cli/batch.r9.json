@@ -1,0 +1,11 @@
+{
+  "batchId": "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W",
+  "processor": "b",
+  "model": "acme/m:batch",
+  "customIds": [
+    "clamp-value.v1",
+    "sign-of.v1"
+  ],
+  "status": "completed",
+  "cost": 0.0005804
+}

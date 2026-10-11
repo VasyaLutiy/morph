@@ -1,0 +1,89 @@
+import path from "node:path";
+import type { Plan } from "./types.js";
+
+export interface GoTree {
+  files: string[];
+  imports: Record<string, string[]>;
+}
+
+const dirOf = (file: string): string => path.posix.dirname(file);
+
+// Keeps a package whose non-test files are all hidden when a visible file still
+// lies in it or imports it: those non-test files leave the hide list, to a fixed point.
+function keepUsedPackages(hide: string[], tree: GoTree): string[] {
+  const hidden = new Set<string>(hide);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    const dirs = new Set<string>();
+    for (const file of hidden) dirs.add(dirOf(file));
+    for (const dir of dirs) {
+      const plain: string[] = [];
+      for (const file of tree.files) {
+        if (dirOf(file) !== dir) continue;
+        if (file.endsWith("_test.go")) continue;
+        plain.push(file);
+      }
+      if (plain.length === 0) continue;
+      let whole = true;
+      for (const file of plain) {
+        if (!hidden.has(file)) {
+          whole = false;
+          break;
+        }
+      }
+      if (!whole) continue;
+      let used = false;
+      for (const file of tree.files) {
+        if (hidden.has(file)) continue;
+        if (dirOf(file) === dir) {
+          used = true;
+          break;
+        }
+        const imports = tree.imports[file];
+        if (imports !== undefined && imports.includes(dir)) {
+          used = true;
+          break;
+        }
+      }
+      if (!used) continue;
+      for (const file of plain) {
+        hidden.delete(file);
+        changed = true;
+      }
+    }
+  }
+  return hide.filter((file) => hidden.has(file));
+}
+
+export function hideLater(plan: Plan, tree: GoTree): Record<string, string[]> {
+  const hideByCard: Record<string, string[]> = {};
+  if (plan.generations.length < 2) return hideByCard;
+
+  const generationOf = new Map<string, number>();
+  plan.generations.forEach((generation, index) => {
+    for (const id of generation) {
+      if (!generationOf.has(id)) generationOf.set(id, index);
+    }
+  });
+  const last = plan.generations.length;
+
+  for (const card of plan.cards) {
+    const g = generationOf.get(card.customId) ?? last;
+    const hide: string[] = [];
+    const seen = new Set<string>();
+    for (const other of plan.cards) {
+      if (other.customId === card.customId) continue;
+      const og = generationOf.get(other.customId) ?? last;
+      if (og < g) continue;
+      for (const target of other.targets) {
+        if (!target.endsWith(".go")) continue;
+        if (seen.has(target)) continue;
+        seen.add(target);
+        hide.push(target);
+      }
+    }
+    hideByCard[card.customId] = keepUsedPackages(hide, tree);
+  }
+  return hideByCard;
+}

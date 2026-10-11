@@ -1,0 +1,14 @@
+{
+  "phase": "b1",
+  "frozen": ["contour.yaml", "morph-map.json", "decks", "go.mod", "internal", "mcp"],
+  "cards": [
+    { "id": "control-contract" },
+    { "id": "phase-loop" },
+    { "id": "runtime-guard" },
+    { "id": "daemon-core" },
+    { "id": "control-contract-judge", "files": [{ "file": "control/control_examples_test.go", "min": 2, "max": 8, "lits": ["TestControlContractExample2", "P10b · "] }] },
+    { "id": "phase-loop-judge", "files": [{ "file": "supervisor/loop_examples_test.go", "min": 3, "max": 9, "lits": ["TestPhaseLoopExample3", "restart: boom"] }] },
+    { "id": "runtime-guard-judge", "files": [{ "file": "supervisor/guard_examples_test.go", "min": 4, "max": 10, "lits": ["TestRuntimeGuardExample4"] }] },
+    { "id": "daemon-core-judge", "files": [{ "file": "daemon/daemon_examples_test.go", "min": 2, "max": 8, "lits": ["TestDaemonCoreExample2", "restart: oom"] }] }
+  ]
+}

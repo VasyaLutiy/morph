@@ -1,0 +1,1 @@
+X=$(git ls-files --others --exclude-standard | grep -vxF -e src/a.ts -e src/b.ts || true); [ -z "$X" ] || { echo "files left in the tree: $X"; exit 1; }

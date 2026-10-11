@@ -1,0 +1,20 @@
+{
+  "System": {
+    "name": "bad deps",
+    "description": "Every dependency fault once.",
+    "groups": [
+      {"name": "a", "description": "A.", "uses": ["yaml", "zod", "yaml", "", 7],
+       "functions": [{"name": "F", "description": "F.", "behavior": "B.", "examples": [{"given": "g", "when": "w", "then": "t"}]}]},
+      {"name": "b", "description": "B.", "uses": "yaml",
+       "functions": [{"name": "G", "description": "G.", "behavior": "B.", "examples": [{"given": "g", "when": "w", "then": "t"}]}]}
+    ],
+    "dependencies": [
+      {"name": "yaml", "version": "^2.8.1", "language": "typescript", "url": "https://x"},
+      {"name": "pyyaml", "version": "latest"},
+      {"name": "yaml", "version": "1.x", "language": "typescript", "doc": ""},
+      "left-pad",
+      {"version": "1.0.0", "language": "go"},
+      {"name": "ok", "version": ">=1.0.0 <2", "language": "go"}
+    ]
+  }
+}

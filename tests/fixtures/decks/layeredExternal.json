@@ -1,0 +1,4 @@
+[
+  {"customId": "a", "intent": "generate", "targets": ["src/a.ts"], "instruction": "x", "dependsOn": ["ext"]},
+  {"customId": "b", "intent": "generate", "targets": ["src/b.ts"], "instruction": "x"}
+]

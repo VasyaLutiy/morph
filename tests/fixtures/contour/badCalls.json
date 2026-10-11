@@ -1,0 +1,18 @@
+{
+  "System": {
+    "name": "s",
+    "description": "S.",
+    "groups": [
+      {
+        "name": "loop",
+        "description": "L.",
+        "functions": [
+          { "name": "A", "description": "A.", "behavior": "a", "steps": [{ "calls": "B" }, { "calls": "C" }],
+            "examples": [{ "given": "g", "when": "w", "then": "t" }] },
+          { "name": "C", "description": "C.", "behavior": "c", "steps": [{ "calls": "C" }],
+            "examples": [{ "given": "g", "when": "w", "then": "t" }] }
+        ]
+      }
+    ]
+  }
+}

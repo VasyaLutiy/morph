@@ -1,0 +1,215 @@
+import { readFileSync, statSync } from "node:fs";
+import { resolve } from "node:path";
+
+import { layerGenerations } from "../cards/layer.js";
+import { loadDeck } from "../cards/model.js";
+import type { Card } from "../cards/types.js";
+import { compileCard } from "../compiler/compile.js";
+import type { InputDigest, Request } from "../compiler/types.js";
+import { assembleBatch } from "../processor/batchRequest.js";
+import { readBatch } from "../processor/batchResponse.js";
+import { PREFIX, readRegistry } from "../processor/registry.js";
+import { realTransport } from "../processor/send.js";
+import type { ProcessorConfig, Transport } from "../processor/types.js";
+
+export interface SubmittedBatch {
+  batchId: string;
+  processor: string;
+  model: string;
+  customIds: string[];
+  status: string;
+  cost: number | null;
+  deck: string;
+  submittedAt: number;
+  cards: Card[];
+  inputs: Record<string, InputDigest>;
+  collectedAt?: number;
+  files?: string[];
+}
+
+export interface DetachedDeps {
+  env: Record<string, string>;
+  now: () => number;
+  transport: Transport | null;
+  saveState(state: SubmittedBatch): string | null;
+  saveAnswers(batchId: string, answers: { customId: string; text: string }[]): string[];
+}
+
+export interface DetachedResult {
+  code: 0 | 1 | 2 | 3 | 4;
+  document: unknown;
+}
+
+export interface SubmitDocument {
+  batchId: string;
+  processor: string;
+  model: string;
+  customIds: string[];
+  status: string;
+  deferred: string[];
+  refused: { customId: string; reason: string }[];
+  state: string;
+}
+
+export function refusal(code: 0 | 1 | 2 | 3 | 4, kind: string, message: string): DetachedResult {
+  return { code, document: { error: { code, kind, message } } };
+}
+
+export function batchConfig(env: Record<string, string>, id: string): ProcessorConfig | DetachedResult {
+  const registry = readRegistry(env);
+  const config = registry.configs.find((candidate) => candidate.id === id);
+  if (config === undefined) {
+    const prefix = PREFIX + id + "_";
+    const messages = registry.faults
+      .filter((fault) => fault.key.startsWith(prefix))
+      .map((fault) => fault.message);
+    const suffix = messages.length > 0 ? ": " + messages.join("; ") : "";
+    return refusal(4, "UsageError", "processor " + id + " is not configured" + suffix);
+  }
+  if (config.type !== "openrouter" || config.route !== "batch") {
+    return refusal(2, "RefusalError", "processor " + id + " is not an openrouter processor on route batch");
+  }
+  return config;
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+export async function submitDeck(
+  root: string,
+  deckPath: string,
+  processor: string,
+  deps: DetachedDeps
+): Promise<DetachedResult> {
+  const config = batchConfig(deps.env, processor);
+  if ("code" in config) return config;
+
+  const full = resolve(root, deckPath);
+  let text = "";
+  try {
+    if (!statSync(full).isFile()) {
+      return refusal(4, "UsageError", "deck file not found: " + deckPath);
+    }
+    text = readFileSync(full, "utf8");
+  } catch {
+    return refusal(4, "UsageError", "deck file not found: " + deckPath);
+  }
+
+  const loaded = loadDeck(text);
+  if (!loaded.ok) {
+    const detail = loaded.faults.map((fault) => fault.key + ": " + fault.message).join("; ");
+    return refusal(2, "DeckError", "invalid deck: " + detail);
+  }
+  const deck = loaded.deck;
+  if (deck.cards.length === 0) {
+    return refusal(2, "RefusalError", "deck has no cards");
+  }
+
+  const generations = layerGenerations(deck);
+  const first = new Set(generations[0] ?? []);
+  const firstCards = deck.cards.filter((card) => first.has(card.customId));
+
+  const kept: Card[] = [];
+  const refused: { customId: string; reason: string }[] = [];
+  const requests: Request[] = [];
+  const inputs: Record<string, InputDigest> = {};
+
+  for (const card of firstCards) {
+    if (card.acceptance === null || card.acceptance.trim() === "") {
+      refused.push({ customId: card.customId, reason: "no acceptance" });
+      continue;
+    }
+    if (card.model !== null && card.model !== config.model) {
+      refused.push({
+        customId: card.customId,
+        reason:
+          "batch runs one model: " +
+          card.customId +
+          " pins " +
+          card.model +
+          ", the batch is " +
+          config.model,
+      });
+      continue;
+    }
+    const compiled = compileCard(card, root);
+    if (!compiled.ok) {
+      const fault = compiled.faults[0];
+      refused.push({
+        customId: card.customId,
+        reason: "compile: " + (fault === undefined ? "unknown" : fault.message),
+      });
+      continue;
+    }
+    for (const request of compiled.requests) requests.push(request);
+    inputs[card.customId] = compiled.inputs;
+    kept.push(card);
+  }
+
+  if (requests.length === 0) {
+    const detail = refused.map((entry) => entry.customId + " " + entry.reason).join("; ");
+    return refusal(2, "RefusalError", "nothing to submit: " + detail);
+  }
+
+  const call = assembleBatch(requests, config);
+  const transport = deps.transport ?? realTransport(config.timeoutMs);
+  let status = 0;
+  let body = "";
+  try {
+    const reply = await transport.fetch(call.url, {
+      method: "POST",
+      headers: call.headers,
+      body: call.body,
+    });
+    status = reply.status;
+    body = await reply.text();
+  } catch (error) {
+    return refusal(3, "RuntimeError", "batch submit: transport: " + errorMessage(error));
+  }
+
+  const read = readBatch(status, body);
+  if (read.state === "error") {
+    return refusal(3, "RuntimeError", "batch submit: " + (read.error ?? "unknown error"));
+  }
+  const batchId = read.batchId;
+  if (batchId === null) {
+    return refusal(3, "RuntimeError", "batch submit: no batch id");
+  }
+
+  const customIds = requests.map((request) => request.customId);
+  const state: SubmittedBatch = {
+    batchId,
+    processor: config.id,
+    model: config.model,
+    customIds,
+    status: read.status ?? "unknown",
+    cost: null,
+    deck: deckPath,
+    submittedAt: deps.now(),
+    cards: kept,
+    inputs,
+  };
+
+  let saved: string | null = null;
+  try {
+    saved = deps.saveState(state);
+  } catch (error) {
+    return refusal(3, "RuntimeError", "batch " + batchId + ": state not saved: " + errorMessage(error));
+  }
+  if (saved === null) {
+    return refusal(3, "RuntimeError", "batch " + batchId + ": state not saved");
+  }
+
+  const document: SubmitDocument = {
+    batchId,
+    processor: config.id,
+    model: config.model,
+    customIds,
+    status: state.status,
+    deferred: generations.slice(1).flat(),
+    refused,
+    state: saved,
+  };
+  return { code: 0, document };
+}

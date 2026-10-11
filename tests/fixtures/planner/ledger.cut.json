@@ -1,0 +1,93 @@
+[
+  {
+    "customId": "parse",
+    "intent": "patch",
+    "targets": [
+      "src/ledger/parse.ts"
+    ],
+    "contextSlice": [
+      "docs/TASK.md"
+    ],
+    "instruction": "Read docs/TASK.md FIRST (in your context). Every name you need is in them or below; do not invent names, keys or files.\n\n## Function Parse Entry\n\nOne line of text into an Entry.\n\nBehaviour: Splits \"<name> <cents>\" at the last space; the cents are digits.\n\nSteps:\n- produces: Entry\n\nExamples (the tests must prove each one):\n1. given the line \"rent 1200\"; when parsed; then {name: \"rent\", cents: 1200}\n2. given the line \"x\"; when parsed; then the error \"no amount in line 1\"\n\nData Entry: One ledger entry.\nSchema:\n{ name: string, cents: number }\n\n## Component requirements / guardrails\n\nRequirements:\n- Exact Sums: Sums are integers of cents, never floats.\n\nGuardrails:\n- No Network: Nothing opens a socket.\n- Pure Core: No clock and no file system in the core.\n\nWrite the files: `src/ledger/parse.ts`.\n\nTypeScript with `strict` on, ESM with NodeNext resolution: every relative import carries the `.js` extension and types are imported with `import type`. No `any`: use `unknown` and narrow. Tests are vitest: `toBe` on scalars and short strings, `toStrictEqual` on a whole result; stubs come from `tests/helpers.ts`, never your own.",
+    "acceptance": "D=/tmp/morph/parse; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp src/ledger/parse.ts $D/0-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint src/ledger/parse.ts\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+    "model": null,
+    "maxTokens": 9000,
+    "reasoning": {
+      "maxTokens": 2500
+    },
+    "variants": 1,
+    "dependsOn": []
+  },
+  {
+    "customId": "checks",
+    "intent": "patch",
+    "targets": [
+      "src/ledger/checks.ts",
+      "tests/ledger/checks.test.ts"
+    ],
+    "contextSlice": [
+      "docs/TASK.md",
+      "src/ledger/parse.ts"
+    ],
+    "instruction": "Read docs/TASK.md FIRST (in your context). Every name you need is in them or below; do not invent names, keys or files.\n\n## Function Sum Entries\n\nThe total of a list of entries.\n\nBehaviour: Adds the cents of every entry; the empty list sums to 0.\n\nPreconditions:\n- every line is parsed first, else Parse Entry faults before the sum\n\nSteps:\n- calls: Parse Entry\n- reads: Entry\n- produces: number\n\nExamples (the tests must prove each one):\n1. given entries rent 1200 and food 300; when summed; then 1500 (ref: Exact Sums)\n\nData Entry: One ledger entry.\nSchema:\n{ name: string, cents: number }\n\n## Function Check Ledger\n\nChecks that a ledger's stated total matches its entries.\n\nBehaviour: Parses every line, sums the entries and compares the sum with the stated total.\n\nSteps:\n- calls: Parse Entry\n- calls: Sum Entries\n- uses: store\n\nExamples (the tests must prove each one):\n1. given lines \"a 1\", \"b 2\" and the total 3; when checked; then ok\n2. given lines \"a 1\" and the total 2; when checked; then the error \"total 2 does not match the sum 1\"\n\nRequirements:\n- Exact Sums: Sums are integers of cents, never floats.\n- Unknown Rule (definition not found in the record)\n\n## Interface check API\n\nThe checker as a library.\n\nExposes:\n- Check Ledger (`src/ledger/checks.ts`)\n\n## Component requirements / guardrails\n\nRequirements:\n- Exact Sums: Sums are integers of cents, never floats.\n\nGuardrails:\n- No Network: Nothing opens a socket.\n- Pure Core: No clock and no file system in the core.\n\nWrite the files: `src/ledger/checks.ts`, `tests/ledger/checks.test.ts`.\n\nTypeScript with `strict` on, ESM with NodeNext resolution: every relative import carries the `.js` extension and types are imported with `import type`. No `any`: use `unknown` and narrow. Tests are vitest: `toBe` on scalars and short strings, `toStrictEqual` on a whole result; stubs come from `tests/helpers.ts`, never your own.",
+    "acceptance": "D=/tmp/morph/checks; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp src/ledger/checks.ts $D/0-$S.ts 2>/dev/null\ncp tests/ledger/checks.test.ts $D/1-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint src/ledger/checks.ts tests/ledger/checks.test.ts\n node_modules/.bin/vitest run tests/ledger/checks.test.ts --reporter=dot\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+    "model": null,
+    "maxTokens": 29500,
+    "reasoning": {
+      "maxTokens": 2500
+    },
+    "variants": 2,
+    "dependsOn": [
+      "parse"
+    ]
+  },
+  {
+    "customId": "format-report",
+    "intent": "patch",
+    "targets": [
+      "src/ledger/formatReport.ts",
+      "tests/ledger/formatReport.test.ts"
+    ],
+    "contextSlice": [
+      "docs/TASK.md",
+      "src/ledger/checks.ts"
+    ],
+    "instruction": "Write the report formatter.\n\n## Function Format Report\n\nThe report text of a ledger.\n\nBehaviour: One line per entry, then the total.\n\nSteps:\n- calls: Sum Entries\n- produces: string\n\nExamples (the tests must prove each one):\n1. given the entry rent 1200; when formatted; then \"rent 1200\\ntotal 1200\\n\"\n\nGuardrails:\n- No Network: Nothing opens a socket.\n\n## Component requirements / guardrails\n\nRequirements:\n- Exact Sums: Sums are integers of cents, never floats.\n\nGuardrails:\n- No Network: Nothing opens a socket.\n- Pure Core: No clock and no file system in the core.\n\nWrite the files: `src/ledger/formatReport.ts`, `tests/ledger/formatReport.test.ts`.\n\nTypeScript with `strict` on, ESM with NodeNext resolution: every relative import carries the `.js` extension and types are imported with `import type`. No `any`: use `unknown` and narrow. Tests are vitest: `toBe` on scalars and short strings, `toStrictEqual` on a whole result; stubs come from `tests/helpers.ts`, never your own.",
+    "acceptance": "D=/tmp/morph/format-report; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp src/ledger/formatReport.ts $D/0-$S.ts 2>/dev/null\ncp tests/ledger/formatReport.test.ts $D/1-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint src/ledger/formatReport.ts tests/ledger/formatReport.test.ts\n node_modules/.bin/vitest run tests/ledger/formatReport.test.ts --reporter=dot\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+    "model": null,
+    "maxTokens": 16500,
+    "reasoning": {
+      "maxTokens": 2500
+    },
+    "variants": 1,
+    "dependsOn": [
+      "checks",
+      "outside"
+    ]
+  },
+  {
+    "customId": "ledger-cli",
+    "intent": "patch",
+    "targets": [
+      "src/ledger/ledgerCli.ts",
+      "tests/ledger/ledgerCli.test.ts"
+    ],
+    "contextSlice": [
+      "docs/TASK.md",
+      "src/ledger/formatReport.ts",
+      "src/ledger/checks.ts"
+    ],
+    "instruction": "Read docs/TASK.md FIRST (in your context). Every name you need is in them or below; do not invent names, keys or files.\n\n## Interface ledger CLI\n\nThe command line.\n\nExposes:\n- Format Report (`src/ledger/formatReport.ts`)\n- Check Ledger (`src/ledger/checks.ts`)\n\n## Component requirements / guardrails\n\nRequirements:\n- Exact Sums: Sums are integers of cents, never floats.\n\nGuardrails:\n- No Network: Nothing opens a socket.\n- Pure Core: No clock and no file system in the core.\n\nWrite the files: `src/ledger/ledgerCli.ts`, `tests/ledger/ledgerCli.test.ts`.\n\nTypeScript with `strict` on, ESM with NodeNext resolution: every relative import carries the `.js` extension and types are imported with `import type`. No `any`: use `unknown` and narrow. Tests are vitest: `toBe` on scalars and short strings, `toStrictEqual` on a whole result; stubs come from `tests/helpers.ts`, never your own.",
+    "acceptance": "D=/tmp/morph/ledger-cli; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp src/ledger/ledgerCli.ts $D/0-$S.ts 2>/dev/null\ncp tests/ledger/ledgerCli.test.ts $D/1-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint src/ledger/ledgerCli.ts tests/ledger/ledgerCli.test.ts\n node_modules/.bin/vitest run tests/ledger/ledgerCli.test.ts --reporter=dot\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+    "model": null,
+    "maxTokens": 12000,
+    "reasoning": {
+      "maxTokens": 2500
+    },
+    "variants": 1,
+    "dependsOn": [
+      "format-report",
+      "checks"
+    ]
+  }
+]

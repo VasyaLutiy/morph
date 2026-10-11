@@ -1,0 +1,52 @@
+version: 1
+System:
+  name: till
+  description: A shop till and its ledger tools; the reviewer's examples read it (docs/TASK_P14_reviewer.md §2.1).
+  groups:
+    - name: shop
+      description: Prices of the till.
+      language: typescript
+      functions:
+        - name: Add Tax
+          description: The price with the tax.
+          behavior: addTax(price) is price times 1.2.
+          examples:
+            - {given: "100", when: addTax, then: "120"}
+            - {given: "0", when: addTax, then: "0"}
+            - {given: "-5", when: addTax, then: "-6"}
+        - name: Round Price
+          description: Two decimals.
+          behavior: roundPrice(x) rounds half up to cents.
+          examples:
+            - {given: "1.005", when: roundPrice, then: "1.01"}
+            - {given: "2", when: roundPrice, then: "2"}
+        - name: Format Price
+          description: The price as text.
+          behavior: formatPrice(x) is "$" and two decimals.
+          examples:
+            - {given: "3", when: formatPrice, then: '"$3.00"'}
+        - name: Parse Price
+          description: Text to a price.
+          behavior: parsePrice(text) reads "$" and digits.
+          examples:
+            - {given: '"$3.00"', when: parsePrice, then: "3"}
+            - {given: '"3"', when: parsePrice, then: "null"}
+    - name: Ledger Tools
+      description: Sums of the ledger.
+      language: python
+      functions:
+        - name: Sum Rows
+          description: The sum of the rows.
+          behavior: sum_rows(rows) adds the amounts.
+          examples:
+            - {given: "[1, 2]", when: sum_rows, then: "3"}
+            - {given: "[]", when: sum_rows, then: "0"}
+    - name: legacy
+      description: Code in a language the profiles do not know.
+      language: cobol
+      functions:
+        - name: Old Total
+          description: The old total.
+          behavior: old.
+          examples:
+            - {given: "1", when: total, then: "1"}

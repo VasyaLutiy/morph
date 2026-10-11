@@ -1,0 +1,24 @@
+{
+  "phase": "m1",
+  "frozen": ["contour.yaml", "morph-map.json", "decks", "go.mod", "internal"],
+  "cards": [
+    { "id": "clamp-value" },
+    { "id": "percent-of" },
+    { "id": "format-share" },
+    {
+      "id": "clamp-value-judge",
+      "files": [{ "file": "calc/clamp_value_examples_test.go", "min": 4, "max": 10, "new": true,
+        "lits": ["TestClampValueExample1", "TestClampValueExample2", "TestClampValueExample3", "TestClampValueExample4"] }]
+    },
+    {
+      "id": "percent-of-judge",
+      "files": [{ "file": "calc/percent_of_examples_test.go", "min": 5, "max": 11, "new": true,
+        "lits": ["TestPercentOfExample1", "TestPercentOfExample2", "TestPercentOfExample3", "TestPercentOfExample4", "TestPercentOfExample5"] }]
+    },
+    {
+      "id": "format-share-judge",
+      "files": [{ "file": "report/format_share_examples_test.go", "min": 3, "max": 9, "new": true,
+        "lits": ["TestFormatShareExample1", "TestFormatShareExample2", "TestFormatShareExample3", "total: 100% (5 of 4)", "disk: 0% (0 of 0)"] }]
+    }
+  ]
+}

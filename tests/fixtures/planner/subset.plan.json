@@ -1,0 +1,120 @@
+{
+  "spec": "s.yaml",
+  "components": [
+    "k"
+  ],
+  "cards": [
+    {
+      "customId": "a",
+      "intent": "generate",
+      "targets": [
+        "src/k/a.ts"
+      ],
+      "contextSlice": [
+        "docs/K.md"
+      ],
+      "instruction": "write src/k/a.ts",
+      "acceptance": null,
+      "model": null,
+      "maxTokens": 6000,
+      "reasoning": null,
+      "variants": 1,
+      "dependsOn": []
+    },
+    {
+      "customId": "e",
+      "intent": "generate",
+      "targets": [
+        "src/k/e.ts"
+      ],
+      "contextSlice": [
+        "docs/K.md"
+      ],
+      "instruction": "write src/k/e.ts",
+      "acceptance": null,
+      "model": null,
+      "maxTokens": 6000,
+      "reasoning": null,
+      "variants": 1,
+      "dependsOn": [
+        "outside"
+      ]
+    },
+    {
+      "customId": "b",
+      "intent": "generate",
+      "targets": [
+        "src/k/b.ts"
+      ],
+      "contextSlice": [
+        "docs/K.md"
+      ],
+      "instruction": "write src/k/b.ts",
+      "acceptance": null,
+      "model": null,
+      "maxTokens": 6000,
+      "reasoning": null,
+      "variants": 1,
+      "dependsOn": [
+        "a"
+      ]
+    },
+    {
+      "customId": "c",
+      "intent": "generate",
+      "targets": [
+        "src/k/c.ts"
+      ],
+      "contextSlice": [
+        "docs/K.md"
+      ],
+      "instruction": "write src/k/c.ts",
+      "acceptance": null,
+      "model": null,
+      "maxTokens": 6000,
+      "reasoning": null,
+      "variants": 1,
+      "dependsOn": [
+        "a"
+      ]
+    },
+    {
+      "customId": "d",
+      "intent": "generate",
+      "targets": [
+        "src/k/d.ts"
+      ],
+      "contextSlice": [
+        "docs/K.md"
+      ],
+      "instruction": "write src/k/d.ts",
+      "acceptance": null,
+      "model": null,
+      "maxTokens": 6000,
+      "reasoning": null,
+      "variants": 1,
+      "dependsOn": [
+        "b",
+        "c"
+      ]
+    }
+  ],
+  "generations": [
+    [
+      "a",
+      "e"
+    ],
+    [
+      "b",
+      "c"
+    ],
+    [
+      "d"
+    ]
+  ],
+  "externalDependsOn": {
+    "e": [
+      "outside"
+    ]
+  }
+}

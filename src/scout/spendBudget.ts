@@ -1,0 +1,129 @@
+/**
+ * Spend Budget — one turn charged against the five budgets of a scout session.
+ *
+ * Pure: no clock, no environment, no network, no file system. Elapsed time is a
+ * parameter handed in by the caller (P13b's round loop). `spent` is never
+ * mutated: the new counts come back in the returned `Charged`.
+ */
+
+/** The five budgets of one scout session. */
+export interface ScoutBudgets {
+  calls: number;
+  reads: number;
+  chars: number;
+  rounds: number;
+  deadlineMs: number;
+}
+
+/** The session's default budgets: the old scout's preregistered numbers. */
+export const DEFAULT_BUDGETS: ScoutBudgets = {
+  calls: 30,
+  reads: 12,
+  chars: 120000,
+  rounds: 40,
+  deadlineMs: 1800000,
+};
+
+/** What a session has spent so far. */
+export interface ScoutSpent {
+  calls: number;
+  reads: number;
+  chars: number;
+  rounds: number;
+}
+
+/** The name of a budget, the first one that closes naming the session's stop. */
+export type BudgetName = "deadline" | "rounds" | "calls" | "reads" | "chars";
+
+/** What one turn costs: a call, a read, and the text it delivers. */
+export interface Charge {
+  call: boolean;
+  read: boolean;
+  text: string;
+}
+
+/** What Spend Budget returns: the new counts, the delivered text, the closed budget. */
+export interface Charged {
+  spent: ScoutSpent;
+  text: string;
+  closed: BudgetName | null;
+  why: string | null;
+}
+
+/** Appended to a text clipped by the character budget; its 43 chars are charged too. */
+export const CLIP_MARKER = "\n[… clipped: the character budget is spent]";
+
+/**
+ * The budgets whose closure grants the model one final answer-only turn.
+ * `deadline` and `rounds` end the session instead.
+ */
+export const FINAL_TURN: readonly BudgetName[] = ["calls", "reads", "chars"];
+
+/**
+ * Charge one turn against the budgets.
+ *
+ * `spent` is not changed. The delivered text is clipped at the remaining
+ * characters — the marker counted — and the new `chars` is the length of what
+ * is delivered, so an overdrawn budget shows more than its cap. The first
+ * budget that holds in the order deadline, rounds, calls, reads, chars names
+ * the stop, with the new counts.
+ */
+export function spendTurn(
+  budgets: ScoutBudgets,
+  spent: ScoutSpent,
+  charge: Charge,
+  elapsedMs: number,
+): Charged {
+  const remaining = budgets.chars - spent.chars;
+  const text =
+    charge.text.length <= remaining
+      ? charge.text
+      : charge.text.slice(0, Math.max(remaining, 0)) + CLIP_MARKER;
+
+  const next: ScoutSpent = {
+    calls: spent.calls + (charge.call ? 1 : 0),
+    reads: spent.reads + (charge.read ? 1 : 0),
+    chars: spent.chars + text.length,
+    rounds: spent.rounds + 1,
+  };
+
+  let closed: BudgetName | null = null;
+  let why: string | null = null;
+
+  if (elapsedMs >= budgets.deadlineMs) {
+    closed = "deadline";
+    why = `the deadline (${budgets.deadlineMs / 1000} s) passed`;
+  } else if (next.rounds >= budgets.rounds) {
+    closed = "rounds";
+    why = `the round budget is spent (${next.rounds} of ${budgets.rounds} rounds)`;
+  } else if (next.calls >= budgets.calls) {
+    closed = "calls";
+    why = `the call budget is spent (${next.calls} of ${budgets.calls} calls)`;
+  } else if (next.reads >= budgets.reads) {
+    closed = "reads";
+    why = `the read budget is spent (${next.reads} of ${budgets.reads} reads)`;
+  } else if (next.chars >= budgets.chars) {
+    closed = "chars";
+    why = `the character budget is spent (${next.chars} of ${budgets.chars} chars)`;
+  }
+
+  return { spent: next, text, closed, why };
+}
+
+/** The four sentences a session's stop_reason can be. */
+export function stopReason(
+  answered: boolean,
+  closed: BudgetName | null,
+  why: string | null,
+): string {
+  if (answered && closed === null) {
+    return "the model answered on its own";
+  }
+  if (answered) {
+    return `the model answered after the budget closed: ${why}`;
+  }
+  if (closed !== null) {
+    return `no answer: ${why}`;
+  }
+  return "no answer: the session ended with every budget open";
+}

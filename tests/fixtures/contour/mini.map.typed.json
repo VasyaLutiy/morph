@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "package": "src",
+  "language": "typescript",
+  "docs": [
+    "docs/TASK.md"
+  ],
+  "groups": [
+    {
+      "name": "report",
+      "functions": [
+        "Report Count"
+      ]
+    },
+    {
+      "name": "store",
+      "functions": [
+        "Save Count",
+        "Load Counts"
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "id": "count-words",
+      "customId": null,
+      "intent": null,
+      "targets": [
+        "src/tally/countWords.ts"
+      ],
+      "contextSlice": null,
+      "dependsOn": null,
+      "instruction": null,
+      "acceptance": null,
+      "model": null,
+      "maxTokens": 12000,
+      "reasoningMaxTokens": null,
+      "variants": 2
+    },
+    {
+      "id": "report-judge",
+      "customId": null,
+      "intent": "generate",
+      "targets": null,
+      "contextSlice": [
+        "docs/TASK.md",
+        "tests/helpers.ts"
+      ],
+      "dependsOn": [
+        "report"
+      ],
+      "instruction": "Write the judge.",
+      "acceptance": "  exit 0\n",
+      "model": null,
+      "maxTokens": null,
+      "reasoningMaxTokens": null,
+      "variants": null
+    }
+  ],
+  "extraCards": [
+    {
+      "component": "store",
+      "customId": "store-schema",
+      "intent": "generate",
+      "targets": [
+        "src/store/schema.ts"
+      ],
+      "contextSlice": null,
+      "dependsOn": null,
+      "instruction": "Write the schema.",
+      "acceptance": null,
+      "model": null,
+      "maxTokens": null,
+      "reasoningMaxTokens": null,
+      "variants": null
+    }
+  ]
+}

@@ -1,0 +1,218 @@
+import fs from "node:fs";
+import { expect, test } from "vitest";
+import {
+  DEFAULT_CONFIG,
+  loadConfig,
+  readProjectConfig,
+  validateConfig,
+} from "../../src/cli/projectConfig.js";
+import { DEFAULT_BUDGETS } from "../../src/scout/spendBudget.js";
+import { DEFAULT_TOOL_CAPS } from "../../src/scout/runTool.js";
+import { SEED_CHARS, SEED_FILES } from "../../src/scout/seedFromOwnership.js";
+import { tmpRoot } from "../helpers.js";
+
+test("Load Config example 1: no file, blank text, version only and an empty object give DEFAULT_CONFIG", () => {
+  const caps = {
+    readLines: DEFAULT_TOOL_CAPS.readLines,
+    readChars: DEFAULT_TOOL_CAPS.readChars,
+    grepHits: DEFAULT_TOOL_CAPS.grepHits,
+    grepLineChars: DEFAULT_TOOL_CAPS.grepLineChars,
+    listEntries: DEFAULT_TOOL_CAPS.listEntries,
+  };
+  const budgets = {
+    calls: DEFAULT_BUDGETS.calls,
+    reads: DEFAULT_BUDGETS.reads,
+    chars: DEFAULT_BUDGETS.chars,
+    rounds: DEFAULT_BUDGETS.rounds,
+    deadlineSeconds: DEFAULT_BUDGETS.deadlineMs / 1000,
+  };
+  const literal = {
+    version: 1,
+    scout: {
+      grepSkip: [".morph", "decks"],
+      budgets: { calls: 30, reads: 12, chars: 120000, rounds: 40, deadlineSeconds: 1800 },
+      caps: { readLines: 400, readChars: 12000, grepHits: 200, grepLineChars: 300, listEntries: 300 },
+      seed: { files: 6, chars: 8000 },
+    },
+  };
+  const built = {
+    version: 1,
+    scout: {
+      grepSkip: DEFAULT_TOOL_CAPS.grepSkip,
+      budgets,
+      caps,
+      seed: { files: SEED_FILES, chars: SEED_CHARS },
+    },
+  };
+  expect(DEFAULT_CONFIG).toStrictEqual(literal);
+  expect(DEFAULT_CONFIG).toStrictEqual(built);
+  const results = [
+    loadConfig(null),
+    loadConfig(" \n"),
+    loadConfig("version: 1\n"),
+    validateConfig({}),
+  ];
+  for (const result of results) {
+    expect(result).toStrictEqual({ ok: true, config: DEFAULT_CONFIG });
+  }
+});
+
+test("Load Config example 2: a key given keeps every other key and the default key order", () => {
+  const text =
+    "scout:\n seed: {files: 3}\n budgets: {deadlineSeconds: 600, calls: 10}\n grepSkip: [.morph/, decks/, docs/TASK_]\n";
+  const expected = {
+    version: 1,
+    scout: {
+      grepSkip: [".morph/", "decks/", "docs/TASK_"],
+      budgets: { calls: 10, reads: 12, chars: 120000, rounds: 40, deadlineSeconds: 600 },
+      caps: DEFAULT_CONFIG.scout.caps,
+      seed: { files: 3, chars: 8000 },
+    },
+  };
+  const result = loadConfig(text);
+  expect(result).toStrictEqual({ ok: true, config: expected });
+  if (!result.ok) throw new Error("expected loadConfig to succeed");
+  expect(JSON.stringify(result.config)).toBe(JSON.stringify(expected));
+});
+
+test("Load Config example 3: problems list unknown keys first then the table order", () => {
+  const text =
+    "version: 2\nscuot: 1\nscout:\n caps: []\n budgets: {calls: \"30\", reads: 0, call: 1}\n grepSkip: [\"\", 3]\n";
+  expect(loadConfig(text)).toStrictEqual({
+    ok: false,
+    problems: [
+      "(root): unknown key 'scuot' (known: version, scout)",
+      "version: must be 1",
+      "scout.grepSkip[0]: must be a non-empty string",
+      "scout.grepSkip[1]: must be a non-empty string",
+      "scout.budgets: unknown key 'call' (known: calls, reads, chars, rounds, deadlineSeconds)",
+      "scout.budgets.calls: must be a positive integer",
+      "scout.budgets.reads: must be a positive integer",
+      "scout.caps: must be an object",
+    ],
+  });
+  expect(validateConfig([])).toStrictEqual({
+    ok: false,
+    problems: ["(root): config must be an object"],
+  });
+  expect(validateConfig({ scout: null })).toStrictEqual({
+    ok: false,
+    problems: ["scout: must be an object"],
+  });
+  expect(
+    validateConfig({ scout: { grepSkip: "decks", seed: { chars: 1.5 } } }),
+  ).toStrictEqual({
+    ok: false,
+    problems: [
+      "scout.grepSkip: must be a list",
+      "scout.seed.chars: must be a positive integer",
+    ],
+  });
+  const parseFailure = loadConfig("a: [\n");
+  expect(parseFailure.ok).toBe(false);
+  if (parseFailure.ok) throw new Error("expected a parse failure");
+  expect(parseFailure.problems.length).toBe(1);
+  const firstProblem = parseFailure.problems[0] ?? "";
+  expect(firstProblem.startsWith("cannot parse morph.config.yaml: ")).toBe(true);
+  expect(loadConfig("- 1\n")).toStrictEqual({
+    ok: false,
+    problems: ["morph.config.yaml is not a mapping at the top level"],
+  });
+});
+
+test("Load Config example 4: readProjectConfig reads the file or falls back to DEFAULT_CONFIG", () => {
+  const r = tmpRoot("morph-config-");
+  try {
+    expect(readProjectConfig(r.root)).toStrictEqual({ ok: true, config: DEFAULT_CONFIG });
+
+    r.write("morph.config.yaml", "scout:\n grepSkip: [docs/TASK_]\n");
+    expect(readProjectConfig(r.root)).toStrictEqual({
+      ok: true,
+      config: {
+        version: 1,
+        scout: { ...DEFAULT_CONFIG.scout, grepSkip: ["docs/TASK_"] },
+      },
+    });
+
+    r.write("morph.config.yaml", "scout: {budgets: {calls: x}, cap: 1}\n");
+    expect(readProjectConfig(r.root)).toStrictEqual({
+      ok: false,
+      result: {
+        code: 2,
+        document: {
+          error: {
+            code: 2,
+            kind: "DeckError",
+            message:
+              "morph.config.yaml is not a valid config (2 problems): scout: unknown key 'cap' (known: grepSkip, budgets, caps, seed); scout.budgets.calls: must be a positive integer",
+          },
+        },
+      },
+    });
+
+    const r2 = r.path("sub");
+    fs.mkdirSync(r.path("sub/morph.config.yaml"), { recursive: true });
+    expect(readProjectConfig(r2)).toStrictEqual({ ok: true, config: DEFAULT_CONFIG });
+  } finally {
+    r.rm();
+  }
+});
+
+test("Load Config example 5: a text of comments only is blank", () => {
+  expect(loadConfig("# all commented out\n# scout:\n#   grepSkip: []\n")).toStrictEqual({
+    ok: true,
+    config: DEFAULT_CONFIG,
+  });
+  expect(loadConfig("\n  # x\n\n")).toStrictEqual({
+    ok: true,
+    config: DEFAULT_CONFIG,
+  });
+  expect(loadConfig("# c\nversion: 2\n")).toStrictEqual({
+    ok: false,
+    problems: ["version: must be 1"],
+  });
+});
+
+test("Load Config example 6: a config that cannot be read is a DeckError result", () => {
+  const r = tmpRoot("morph-config-");
+  try {
+    fs.symlinkSync("morph.config.yaml", r.path("morph.config.yaml"));
+    expect(readProjectConfig(r.root)).toStrictEqual({
+      ok: false,
+      result: {
+        code: 2,
+        document: {
+          error: {
+            code: 2,
+            kind: "DeckError",
+            message: "morph.config.yaml cannot be read: ELOOP",
+          },
+        },
+      },
+    });
+
+    fs.rmSync(r.path("morph.config.yaml"), { force: true });
+    r.write("morph.config.yaml", "version: 1\n");
+    fs.chmodSync(r.path("morph.config.yaml"), 0o000);
+    if (process.getuid?.() !== 0) {
+      expect(readProjectConfig(r.root)).toStrictEqual({
+        ok: false,
+        result: {
+          code: 2,
+          document: {
+            error: {
+              code: 2,
+              kind: "DeckError",
+              message: "morph.config.yaml cannot be read: EACCES",
+            },
+          },
+        },
+      });
+    }
+  } finally {
+    if (r.exists("morph.config.yaml")) {
+      fs.chmodSync(r.path("morph.config.yaml"), 0o644);
+    }
+    r.rm();
+  }
+});

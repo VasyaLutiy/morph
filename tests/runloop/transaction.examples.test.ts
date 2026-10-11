@@ -1,0 +1,503 @@
+import { expect, test } from "vitest";
+import { TRANSACTION_MARK } from "../../src/cards/transaction.js";
+import { runDeck } from "../../src/runloop/deck.js";
+import { runTransaction } from "../../src/runloop/transaction.js";
+import { fakeFetch, tmpRoot } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+import type {
+  CardOutcome,
+  RunDeps,
+  RunInput,
+  RunResult,
+  VariantRecord,
+} from "../../src/runloop/types.js";
+
+const M = TRANSACTION_MARK + "\n";
+
+const fence = (body: string): string => "```ts\n" + body + "```\n";
+
+function card(
+  customId: string,
+  target: string,
+  acceptance: string,
+  dependsOn: string[] = [],
+): Card {
+  return {
+    customId,
+    intent: "generate",
+    targets: [target],
+    contextSlice: [],
+    instruction: "write " + target,
+    acceptance,
+    model: null,
+    maxTokens: null,
+    reasoning: null,
+    variants: 1,
+    dependsOn,
+  };
+}
+
+function makeInput(root: string, cards: Card[], maxRetryBatches = 8): RunInput {
+  return {
+    root,
+    runId: "t1",
+    branch: "morph/t1",
+    deck: { cards, externalDependsOn: [] },
+    budget: { maxCards: 99, maxRetryBatches, deadline: 1e12 },
+  };
+}
+
+function makeDeps(
+  root: string,
+  commits: string[],
+  records: VariantRecord[],
+): RunDeps {
+  return {
+    config: {
+      id: "stub",
+      type: "stub",
+      model: "stub",
+      apiKey: null,
+      baseUrl: "https://openrouter.ai/api/v1",
+      route: "sync",
+      concurrency: 4,
+      providerOrder: null,
+      reasoning: null,
+      timeoutMs: 600000,
+      maxRetries: 0,
+      answersDir: root,
+    },
+    transport: { fetch: fakeFetch().fetch, sleep: async () => {} },
+    commit: (id, targets) => {
+      commits.push(id);
+      return {
+        commit: "sha-" + id,
+        diffstat: { files: targets.length, insertions: 1, deletions: 0 },
+      };
+    },
+    now: () => 0,
+    env: { PATH: process.env.PATH ?? "" },
+    onVariant: (rec) => {
+      records.push(rec);
+    },
+  };
+}
+
+function outcome(res: RunResult, id: string): CardOutcome {
+  const found = res.outcomes.find((entry) => entry.customId === id);
+  if (found === undefined) {
+    throw new Error("no outcome " + id);
+  }
+  return found;
+}
+
+test("Run Transaction example 1: a card's own acceptance runs on the tree with every card written", async () => {
+  const r = tmpRoot("morph-tx-");
+  const other = tmpRoot("morph-tx-");
+  try {
+    const bodyA = fence('export const a = "A1";\n');
+    const bodyB = fence('export const b = "B2";\n');
+    r.write("a.md", bodyA);
+    r.write("b.md", bodyB);
+    other.write("a.md", bodyA);
+    other.write("b.md", bodyB);
+    const cards = [
+      card("a", "out/a.ts", M + "grep -q B2 out/b.ts && grep -q A1 out/a.ts"),
+      card("b", "out/b.ts", M + "grep -q B2 out/b.ts", ["a"]),
+    ];
+    const commits: string[] = [];
+    const records: VariantRecord[] = [];
+    const res = await runTransaction(
+      makeInput(r.root, cards),
+      makeDeps(r.root, commits, records),
+    );
+
+    const a = outcome(res, "a");
+    expect(a.status).toBe("written");
+    expect(a.attempts).toBe(1);
+    expect(a.winningVariant).toBe("a.v1");
+    expect(a.earlierFailures).toStrictEqual([]);
+    expect(a.commit).not.toBe(null);
+    expect(a.diffstat).not.toBe(null);
+
+    const b = outcome(res, "b");
+    expect(b.status).toBe("written");
+    expect(b.attempts).toBe(1);
+    expect(b.winningVariant).toBe("b.v1");
+    expect(b.earlierFailures).toStrictEqual([]);
+    expect(b.commit).not.toBe(null);
+
+    expect(commits).toStrictEqual(["a", "b"]);
+    expect(res.report.generations).toBe(2);
+    expect(res.report.usageTotals.requests).toBe(2);
+    const reqIds = (res.report.requests ?? []).map((row) => row.customId);
+    expect(reqIds).toStrictEqual(["a.v1", "b.v1"]);
+    expect(res.report.fault).toBeUndefined();
+
+    const commits2: string[] = [];
+    const records2: VariantRecord[] = [];
+    const dRes = await runDeck(
+      makeInput(other.root, cards),
+      makeDeps(other.root, commits2, records2),
+    );
+    const a2 = outcome(dRes, "a");
+    expect(a2.status).toBe("written");
+    expect(a2.winningVariant).toBe("a.v1");
+    const b2 = outcome(dRes, "b");
+    expect(b2.status).toBe("written");
+    expect(b2.winningVariant).toBe("b.v1");
+    expect(commits2).toStrictEqual(["a", "b"]);
+  } finally {
+    r.rm();
+    other.rm();
+  }
+});
+
+test("Run Transaction example 2: a red round retries the blamed owner, not the running card", async () => {
+  const r = tmpRoot("morph-tx-");
+  try {
+    r.write("a.md", fence("export const a = 1;\n"));
+    r.write("b.md", fence('export const b = "B_OLD";\n'));
+    r.write("b.r1.md", fence('export const b = "B_NEW";\n'));
+    const cards = [
+      card(
+        "a",
+        "out/a.ts",
+        M +
+          'grep -q B_NEW out/b.ts || { echo "out/b.ts(1,14): error TS2305: b is old"; exit 1; }',
+      ),
+      card("b", "out/b.ts", M + "grep -q export out/b.ts", ["a"]),
+    ];
+    const commits: string[] = [];
+    const records: VariantRecord[] = [];
+    const res = await runTransaction(
+      makeInput(r.root, cards),
+      makeDeps(r.root, commits, records),
+    );
+
+    const a = outcome(res, "a");
+    expect(a.status).toBe("written");
+    expect(a.attempts).toBe(1);
+    expect(a.earlierFailures).toStrictEqual([
+      "out/b.ts(1,14): error TS2305: b is old\n",
+    ]);
+
+    const b = outcome(res, "b");
+    expect(b.status).toBe("written");
+    expect(b.attempts).toBe(2);
+    expect(b.winningVariant).toBe("b.r1.v1");
+    expect(b.earlierFailures).toStrictEqual([]);
+
+    const reqIds = (res.report.requests ?? []).map((row) => row.customId);
+    expect(reqIds).toStrictEqual(["a.v1", "b.v1", "b.r1.v1"]);
+    expect(commits).toStrictEqual(["a", "b.r1"]);
+
+    const record = records.find((rec) => rec.request.customId === "b.r1.v1");
+    if (record === undefined) {
+      throw new Error("no variant record for b.r1.v1");
+    }
+    const asJson = JSON.stringify(record.request);
+    expect(asJson.includes("error TS2305: b is old")).toBe(true);
+    expect(asJson.includes("<previous_attempt_diff>")).toBe(true);
+
+    expect(r.read("out/b.ts")).toContain("B_NEW");
+  } finally {
+    r.rm();
+  }
+});
+
+test("Run Transaction example 3: an existing file no card owns is outside the subset", async () => {
+  const r = tmpRoot("morph-tx-");
+  try {
+    r.write("out/legacy.ts", "export const legacy = 0;\n");
+    r.write("a.md", fence("export const a = 1;\n"));
+    r.write("b.md", fence('export const b = "B2";\n'));
+    const cards = [
+      card(
+        "a",
+        "out/a.ts",
+        M +
+          "echo \"out/legacy.ts(3,4): error TS2304: Cannot find name 'q7'.\"; exit 1",
+      ),
+      card("b", "out/b.ts", M + "exit 0", ["a"]),
+    ];
+    const commits: string[] = [];
+    const records: VariantRecord[] = [];
+    const res = await runTransaction(
+      makeInput(r.root, cards),
+      makeDeps(r.root, commits, records),
+    );
+
+    const a = outcome(res, "a");
+    expect(a.status).toBe("failed");
+    expect(a.reason).toBe("outside the subset");
+    expect(a.attempts).toBe(1);
+    expect(a.commit).toBe(null);
+
+    const b = outcome(res, "b");
+    expect(b.status).toBe("failed");
+    expect(b.reason).toBe("transaction rolled back");
+    expect(b.commit).toBe(null);
+
+    expect(res.report.fault).toBe(
+      "outside the subset: out/legacy.ts(3,4): error TS2304: Cannot find name 'q7'.",
+    );
+    expect(Object.keys(res.report).pop()).toBe("fault");
+
+    expect(r.exists("out/a.ts")).toBe(false);
+    expect(r.exists("out/b.ts")).toBe(false);
+    expect(r.read("out/legacy.ts")).toBe("export const legacy = 0;\n");
+    expect(commits).toStrictEqual([]);
+    expect(res.report.usageTotals.requests).toBe(2);
+  } finally {
+    r.rm();
+  }
+});
+
+test("Run Transaction example 4: a red card is retried after its sibling writes the file it needs", async () => {
+  const r = tmpRoot("morph-tx-");
+  try {
+    r.write("s.md", fence('export const s = "S1";\n'));
+    r.write("j.md", fence('test("j", () => {});\n'));
+    r.write("j.r1.md", fence('test("j", () => {});\n'));
+    r.write("p.md", fence('export const p = "P5";\n'));
+    const cards = [
+      card("s", "out/s.ts", M + "grep -q S1 out/s.ts"),
+      card(
+        "j",
+        "tests/s.test.ts",
+        M +
+          '[ -f j.once ] || { touch j.once; echo "forced red"; exit 1; }; grep -q P5 out/p.ts',
+        ["s"],
+      ),
+      card("p", "out/p.ts", M + "grep -q P5 out/p.ts", ["s"]),
+    ];
+    const commits: string[] = [];
+    const records: VariantRecord[] = [];
+    const res = await runTransaction(
+      makeInput(r.root, cards),
+      makeDeps(r.root, commits, records),
+    );
+
+    expect(res.report.generations).toBe(2);
+
+    const s = outcome(res, "s");
+    expect(s.status).toBe("written");
+    expect(s.attempts).toBe(1);
+
+    const p = outcome(res, "p");
+    expect(p.status).toBe("written");
+    expect(p.attempts).toBe(1);
+
+    const j = outcome(res, "j");
+    expect(j.status).toBe("written");
+    expect(j.attempts).toBe(2);
+    expect(j.winningVariant).toBe("j.r1.v1");
+    expect(j.earlierFailures).toStrictEqual(["forced red\n"]);
+
+    const reqIds = (res.report.requests ?? []).map((row) => row.customId);
+    expect(reqIds).toStrictEqual(["s.v1", "j.v1", "p.v1", "j.r1.v1"]);
+    expect(commits).toStrictEqual(["s", "j.r1", "p"]);
+    expect(r.exists("j.once")).toBe(true);
+  } finally {
+    r.rm();
+  }
+});
+
+test("Run Transaction example 5: a card whose own acceptance stays red fails after two retries", async () => {
+  const r = tmpRoot("morph-tx-");
+  try {
+    r.write("out/a.ts", 'export const a = "OLD";\n');
+    r.write("a.md", fence('export const a = "NEW";\n'));
+    r.write("a.r1.md", fence('export const a = "NEW";\n'));
+    r.write("a.r2.md", fence('export const a = "NEW";\n'));
+    r.write("b.md", fence('export const b = "B2";\n'));
+    const cards = [
+      card("a", "out/a.ts", M + "echo red-a7; exit 1"),
+      card("b", "out/b.ts", M + "exit 0"),
+    ];
+    const commits: string[] = [];
+    const records: VariantRecord[] = [];
+    const res = await runTransaction(
+      makeInput(r.root, cards),
+      makeDeps(r.root, commits, records),
+    );
+
+    const a = outcome(res, "a");
+    expect(a.status).toBe("failed");
+    expect(a.reason).toBe("acceptance failed");
+    expect(a.attempts).toBe(3);
+    expect(a.acceptanceLog).toBe("red-a7\n");
+    expect(a.earlierFailures).toStrictEqual(["red-a7\n", "red-a7\n"]);
+    expect(a.commit).toBe(null);
+
+    const b = outcome(res, "b");
+    expect(b.status).toBe("failed");
+    expect(b.reason).toBe("transaction rolled back");
+    expect(b.attempts).toBe(1);
+    expect(b.acceptanceLog).toBe("");
+    expect(b.earlierFailures).toStrictEqual([]);
+    expect(b.commit).toBe(null);
+
+    const reqIds = (res.report.requests ?? []).map((row) => row.customId);
+    expect(reqIds).toStrictEqual(["a.v1", "b.v1", "a.r1.v1", "a.r2.v1"]);
+    expect(commits).toStrictEqual([]);
+    expect(r.read("out/a.ts")).toBe('export const a = "OLD";\n');
+    expect(r.exists("out/b.ts")).toBe(false);
+    expect(res.report.fault).toBeUndefined();
+  } finally {
+    r.rm();
+  }
+});
+
+test("Run Transaction example 6: maxRetryBatches 0 rolls back after one red round", async () => {
+  const r = tmpRoot("morph-tx-");
+  try {
+    r.write("out/a.ts", 'export const a = "OLD";\n');
+    r.write("a.md", fence('export const a = "NEW";\n'));
+    r.write("a.r1.md", fence('export const a = "NEW";\n'));
+    r.write("a.r2.md", fence('export const a = "NEW";\n'));
+    r.write("b.md", fence('export const b = "B2";\n'));
+    const cards = [
+      card("a", "out/a.ts", M + "echo red-a7; exit 1"),
+      card("b", "out/b.ts", M + "exit 0"),
+    ];
+    const commits: string[] = [];
+    const records: VariantRecord[] = [];
+    const res = await runTransaction(
+      makeInput(r.root, cards, 0),
+      makeDeps(r.root, commits, records),
+    );
+
+    const a = outcome(res, "a");
+    expect(a.status).toBe("failed");
+    expect(a.reason).toBe("acceptance failed");
+    expect(a.attempts).toBe(1);
+    expect(a.earlierFailures).toStrictEqual([]);
+
+    const b = outcome(res, "b");
+    expect(b.status).toBe("failed");
+    expect(b.reason).toBe("transaction rolled back");
+    expect(b.attempts).toBe(1);
+
+    expect(res.report.usageTotals.requests).toBe(2);
+    expect(r.read("out/a.ts")).toBe('export const a = "OLD";\n');
+  } finally {
+    r.rm();
+  }
+});
+
+test("Run Transaction example 7: a missing answer kills the write, no acceptance runs", async () => {
+  const r = tmpRoot("morph-tx-");
+  try {
+    r.write("a.md", fence('export const a = "A1";\n'));
+    const cards = [
+      card("a", "out/a.ts", M + "touch ran-a; exit 0"),
+      card("b", "out/b.ts", M + "exit 0", ["a"]),
+    ];
+    const commits: string[] = [];
+    const records: VariantRecord[] = [];
+    const res = await runTransaction(
+      makeInput(r.root, cards, 2),
+      makeDeps(r.root, commits, records),
+    );
+
+    const a = outcome(res, "a");
+    expect(a.status).toBe("failed");
+    expect(a.reason).toBe("transaction rolled back");
+    expect(a.attempts).toBe(1);
+    expect(a.commit).toBe(null);
+
+    const b = outcome(res, "b");
+    expect(b.status).toBe("failed");
+    expect(b.reason).toBe("acceptance failed");
+    expect(b.attempts).toBe(3);
+    expect(b.acceptanceLog).toBe(
+      "answer corrupt: stub has no answer: " + r.path("b.r2.v1.md"),
+    );
+
+    const reqIds = (res.report.requests ?? []).map((row) => row.customId);
+    expect(reqIds).toStrictEqual(["a.v1", "b.v1", "b.r1.v1", "b.r2.v1"]);
+    expect(r.exists("out/a.ts")).toBe(false);
+    expect(r.exists("ran-a")).toBe(false);
+    expect(commits).toStrictEqual([]);
+  } finally {
+    r.rm();
+  }
+});
+
+test("Run Transaction extra: a commit hook that throws leaves committed cards written and the rest skipped fault", async () => {
+  const r = tmpRoot("morph-tx-");
+  try {
+    r.write("a.md", fence('export const a = "A1";\n'));
+    r.write("b.md", fence('export const b = "B2";\n'));
+    const cards = [
+      card("a", "out/a.ts", M + "exit 0"),
+      card("b", "out/b.ts", M + "exit 0"),
+    ];
+    const commits: string[] = [];
+    const records: VariantRecord[] = [];
+    const deps: RunDeps = {
+      ...makeDeps(r.root, commits, records),
+      commit: (id) => {
+        commits.push(id);
+        if (id === "b") {
+          throw new Error("hook broke");
+        }
+        return {
+          commit: "sha-" + id,
+          diffstat: { files: 1, insertions: 1, deletions: 0 },
+        };
+      },
+    };
+    const res = await runTransaction(makeInput(r.root, cards), deps);
+    expect(res.report.fault).toBe("hook broke");
+    const a = outcome(res, "a");
+    expect(a.status).toBe("written");
+    expect(a.commit).toBe("sha-a");
+    const b = outcome(res, "b");
+    expect(b.status).toBe("skipped");
+    expect(b.reason).toBe("fault");
+    expect(b.attempts).toBe(0);
+    expect(b.commit).toBe(null);
+    expect(commits).toStrictEqual(["a", "b"]);
+    expect(r.exists("out/a.ts")).toBe(true);
+    expect(r.exists("out/b.ts")).toBe(true);
+  } finally {
+    r.rm();
+  }
+});
+
+test("Run Transaction extra: an interrupt before any commit skips every card with a fault", async () => {
+  const r = tmpRoot("morph-tx-");
+  try {
+    r.write("a.md", fence('export const a = "A1";\n'));
+    r.write("b.md", fence('export const b = "B2";\n'));
+    const cards = [
+      card("a", "out/a.ts", M + "echo red-a7; exit 1"),
+      card("b", "out/b.ts", M + "exit 0"),
+    ];
+    const commits: string[] = [];
+    const records: VariantRecord[] = [];
+    const deps: RunDeps = {
+      ...makeDeps(r.root, commits, records),
+      interrupted: () => "sigterm",
+    };
+    const res = await runTransaction(makeInput(r.root, cards), deps);
+    expect(res.report.fault).toBe("interrupted by sigterm");
+    expect(res.outcomes.map((entry) => entry.status)).toStrictEqual([
+      "skipped",
+      "skipped",
+    ]);
+    expect(res.outcomes.map((entry) => entry.reason)).toStrictEqual([
+      "fault",
+      "fault",
+    ]);
+    expect(res.outcomes.map((entry) => entry.attempts)).toStrictEqual([0, 0]);
+    expect(commits).toStrictEqual([]);
+    expect(r.exists("out/a.ts")).toBe(false);
+    expect(r.exists("out/b.ts")).toBe(false);
+  } finally {
+    r.rm();
+  }
+});

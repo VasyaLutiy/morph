@@ -1,0 +1,8 @@
+[
+  {"customId": "use-judge", "intent": "generate", "targets": ["tests/use.test.ts"], "instruction": "Test use.", "dependsOn": ["use"], "acceptance": "grep -q 'use()' tests/use.test.ts || { echo \"FAIL: tests/use.test.ts\"; exit 1; }"},
+  {"customId": "use", "intent": "patch", "targets": ["src/use.ts"], "instruction": "Use the new lib.", "dependsOn": ["lib"], "acceptance": "grep -q 'lib(2)' src/use.ts && grep -q 'lib = (n' src/lib.ts || { echo \"FAIL: src/use.ts needs the new lib\"; exit 1; }"},
+  {"customId": "two", "intent": "generate", "targets": ["src/x.ts", "src/y.ts"], "instruction": "Write x and y.", "acceptance": "test -f src/x.ts && test -f src/y.ts"},
+  {"customId": "lib", "intent": "patch", "targets": ["src/lib.ts"], "instruction": "Make lib a function.", "acceptance": "grep -q 'lib = (n' src/lib.ts || { echo \"FAIL: src/lib.ts\"; exit 1; }"},
+  {"customId": "none", "intent": "generate", "targets": ["src/n.ts"], "instruction": "No acceptance."},
+  {"customId": "dup", "intent": "patch", "targets": ["src/lib.ts"], "instruction": "Also lib.", "acceptance": "true"}
+]

@@ -1,0 +1,321 @@
+{
+  "runId": "20261007-204822",
+  "completedAt": 1791407058201,
+  "branch": "morph/20261007-204822",
+  "processor": "ds",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "archive-run",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "archive-run.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "36e443ca73eef148eb1271bab1e0ca4813333372",
+      "diffstat": {
+        "files": 1,
+        "insertions": 27,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "submit-deck",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "submit-deck.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "299c0188a65c4ceb86db3e36084d330fede537a6",
+      "diffstat": {
+        "files": 1,
+        "insertions": 215,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "archive-run-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "archive-run-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/git/archive.p11b2.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/git/archive.p11b2.examples.test.ts(5,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/git/archive.p11b2.examples.test.ts(14,5): error TS2304: Cannot find name 'expect'.\ntests/git/archive.p11b2.examples.test.ts(18,5): error TS2304: Cannot find name 'expect'.\ntests/git/archive.p11b2.examples.test.ts(19,5): error TS2304: Cannot find name 'expect'.\ntests/git/archive.p11b2.examples.test.ts(21,5): error TS2304: Cannot find name 'expect'.\ntests/git/archive.p11b2.examples.test.ts(22,5): error TS2304: Cannot find name 'expect'.\ntests/git/archive.p11b2.examples.test.ts(28,5): error TS2304: Cannot find name 'expect'.\ntests/git/archive.p11b2.examples.test.ts(30,5): error TS2304: Cannot find name 'expect'.\ntests/git/archive.p11b2.examples.test.ts(31,5): error TS2304: Cannot find name 'expect'.\ntests/git/archive.p11b2.examples.test.ts(32,5): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": "2e569abc58ac3db796b89c53ef492fe19fea5d04",
+      "diffstat": {
+        "files": 1,
+        "insertions": 36,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "collect-batch",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "collect-batch.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "abad463de5c21511e0fe793dd42c5046fdde5aad",
+      "diffstat": {
+        "files": 1,
+        "insertions": 176,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "submit-deck-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "submit-deck-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/batches/submit.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "bd9c771035d8774bd17dbe97dd73ae0336e93eb1",
+      "diffstat": {
+        "files": 1,
+        "insertions": 303,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "collect-batch-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "collect-batch-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/batches/collect.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "9e2bacd1ae5a76b071ad4760ce05542e93594cc2",
+      "diffstat": {
+        "files": 1,
+        "insertions": 264,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "parse-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "4072f5606983e69d5ba7838cdf3bd5ce71442e30",
+      "diffstat": {
+        "files": 3,
+        "insertions": 102,
+        "deletions": 14
+      }
+    },
+    {
+      "customId": "main-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "main-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/main.p11b2.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "b18ac91732aae6d69f6808ef1bc5a13f752c2c1b",
+      "diffstat": {
+        "files": 1,
+        "insertions": 127,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "parse-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "parse-command-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/parse.examples.test.ts\n== names tests/cli/parse.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard tests/cli/parse.examples.test.ts\n== names tests/cli/parse.examples.test.ts\n== own\n== full\n FAIL  tests/acceptance/run.p11c.examples.test.ts > Run Acceptance example 5: the child env drops processor and secret keys\nAssertionError: expected 'CI=1\\nNO_COLOR=1\\nPATH=/usr/bin:/bin\\nTOKENS_LEFT=7\\nPWD=/tmp/morph-eDk287\\nKEYBOARD=us\\n' not to contain 'k2'\n\n- Expected\n+ Received\n\n- k2\n+ CI=1\n+ NO_COLOR=1\n+ PATH=/usr/bin:/bin\n+ TOKENS_LEFT=7\n+ PWD=/tmp/morph-eDk287\n+ KEYBOARD=us\n+\n\n ❯ tests/acceptance/run.p11c.examples.test.ts:27:30\n     25|     expect(lines).toContain(\"CI=1\");\n     26|     for (const leaked of [\"MORPH_PROCESSOR_\", \"k1\", \"m/x\", \"k2\", \"t3\"]…\n     27|       expect(result.log).not.toContain(leaked);\n       |                              ^\n     28|     }\n     29|     expect(env.MORPH_PROCESSOR_x_API_KEY).toBe(\"k1\");\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 82 passed (83)\n      Tests  1 failed | 619 passed (620)\n\nfirst difference at char 0 (line 1) of 2/83: expected \"k2\" received \"CI=1\\nNO_COLOR=1\\nPATH=/usr/bin:/bin\\nTOKEN\"\n"
+      ],
+      "commit": "53628f68a5da45ca0f2b15fbc00407202f1a8d3b",
+      "diffstat": {
+        "files": 1,
+        "insertions": 87,
+        "deletions": 1
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 301172,
+    "outputTokens": 144864,
+    "cost": 0.11825291999999998,
+    "requests": 15
+  },
+  "requests": [
+    {
+      "customId": "archive-run.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791406103-jyPWIRXJThoFPCfh6RjS",
+      "inputTokens": 17342,
+      "outputTokens": 1385,
+      "cost": 0.0034323,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "archive-run.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791406103-Hrq690Ig5tpK0w7IimRD",
+      "inputTokens": 17342,
+      "outputTokens": 1947,
+      "cost": 0.0037695,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "submit-deck.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791406103-hgmi0tHfthJljkU4u9CZ",
+      "inputTokens": 17999,
+      "outputTokens": 19758,
+      "cost": 0.01455465,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "submit-deck.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791406106-nR735g1e5jK83HSiOFai",
+      "inputTokens": 17999,
+      "outputTokens": 10075,
+      "cost": 0.00639477,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "archive-run-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791406273-NeBZbUd3bNzqeBq0pcRG",
+      "inputTokens": 17900,
+      "outputTokens": 1744,
+      "cost": 0.00359316,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "collect-batch.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791406273-m9gWflj9WavZ5WMFCs66",
+      "inputTokens": 19870,
+      "outputTokens": 9937,
+      "cost": 0.00728382,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "collect-batch.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791406273-3bUAqRbcWaOlH2u2eaBP",
+      "inputTokens": 19870,
+      "outputTokens": 5938,
+      "cost": 0.00391674,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "submit-deck-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791406284-xbI9PtSuzLlkWGkpHMEj",
+      "inputTokens": 18107,
+      "outputTokens": 15338,
+      "cost": 0.00998349,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "archive-run-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791406469-GAztTBWzAL3bYgqrltm3",
+      "inputTokens": 24412,
+      "outputTokens": 1262,
+      "cost": 0.00270828,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "collect-batch-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791406526-2yhbaTHFeJ63NFG4xADT",
+      "inputTokens": 21658,
+      "outputTokens": 17535,
+      "cost": 0.01205898,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791406526-Aqnp0HJnpz5MdD0xvmX2",
+      "inputTokens": 21898,
+      "outputTokens": 14079,
+      "cost": 0.0117321,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791406526-vh6eHqnInEpZQQnu6VQK",
+      "inputTokens": 21898,
+      "outputTokens": 7106,
+      "cost": 0.0075483,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "main-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791406712-s52a2JYQGeuuVC6z7qCi",
+      "inputTokens": 19342,
+      "outputTokens": 13731,
+      "cost": 0.00942918,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791406712-kaxZMqqSgkoMIixBSh9W",
+      "inputTokens": 19184,
+      "outputTokens": 4722,
+      "cost": 0.0057108,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791406900-sRcU7yR1tCNhx3rcRc3M",
+      "inputTokens": 26351,
+      "outputTokens": 20307,
+      "cost": 0.01613685,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}

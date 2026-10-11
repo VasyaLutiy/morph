@@ -1,0 +1,1463 @@
+{
+  "1": {
+    "ok": true,
+    "command": {
+      "name": "deck check",
+      "root": ".",
+      "pretty": false,
+      "deck": "d.json",
+      "sliceCapBytes": 500000
+    }
+  },
+  "2": {
+    "ok": true,
+    "command": {
+      "name": "run",
+      "root": "/r",
+      "pretty": true,
+      "deck": "d.json",
+      "processor": "s",
+      "runId": "r1",
+      "deadlineSeconds": 60,
+      "maxCards": 3,
+      "maxRetryBatches": 0
+    }
+  },
+  "3": {
+    "ok": false,
+    "error": {
+      "error": {
+        "code": 4,
+        "kind": "UsageError",
+        "message": "unknown command: frobnicate"
+      }
+    }
+  },
+  "4": [
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "NotYetError",
+          "message": "command report is not available yet"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "NotYetError",
+          "message": "command deck status is not available yet"
+        }
+      }
+    }
+  ],
+  "5": {
+    "ok": false,
+    "error": {
+      "error": {
+        "code": 4,
+        "kind": "UsageError",
+        "message": "missing --processor"
+      }
+    }
+  },
+  "6": {
+    "ok": false,
+    "error": {
+      "error": {
+        "code": 4,
+        "kind": "UsageError",
+        "message": "flag --processor does not apply to deck check"
+      }
+    }
+  },
+  "7": {
+    "ok": false,
+    "error": {
+      "error": {
+        "code": 4,
+        "kind": "UsageError",
+        "message": "--deadline must be a positive integer (got '0')"
+      }
+    }
+  },
+  "8": [
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --root needs a value"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept, init)"
+        }
+      }
+    }
+  ],
+  "9": {
+    "ok": true,
+    "command": {
+      "name": "plan",
+      "root": ".",
+      "pretty": true,
+      "spec": "c.yaml",
+      "components": [
+        "a",
+        "b"
+      ],
+      "map": "m.json",
+      "judge": true,
+      "out": "d.json"
+    }
+  },
+  "10": {
+    "ok": true,
+    "command": {
+      "name": "plan",
+      "root": "/r",
+      "pretty": false,
+      "spec": "c.yaml",
+      "components": [],
+      "map": null,
+      "judge": false,
+      "out": null
+    }
+  },
+  "11": [
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --spec"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --judge given twice"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --judge does not apply to run"
+        }
+      }
+    }
+  ],
+  "12": {
+    "ok": true,
+    "command": {
+      "name": "plan",
+      "root": ".",
+      "pretty": false,
+      "spec": "c.yaml",
+      "components": [],
+      "map": null,
+      "judge": false,
+      "out": null,
+      "checks": "decks/p1/checks.json"
+    }
+  },
+  "13": [
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --checks does not apply to run"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --checks needs a value"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --checks given twice"
+        }
+      }
+    }
+  ],
+  "14": [
+    {
+      "ok": true,
+      "command": {
+        "name": "submit",
+        "root": ".",
+        "pretty": false,
+        "deck": "d.json",
+        "processor": "b"
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "collect",
+        "root": "/r",
+        "pretty": true,
+        "batch": "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W"
+      }
+    }
+  ],
+  "15": [
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --processor"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --deck"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --batch"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--batch must match ^[A-Za-z0-9._-]+$ (got 'a/b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --deck does not apply to collect"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --run-id does not apply to submit"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "unexpected argument: extra"
+        }
+      }
+    }
+  ],
+  "16": [
+    {
+      "ok": true,
+      "command": {
+        "name": "primer",
+        "root": ".",
+        "pretty": false,
+        "write": false
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "primer",
+        "root": "/r",
+        "pretty": true,
+        "write": true
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --deck does not apply to primer"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "unexpected argument: x"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --write does not apply to deck check"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --write given twice"
+        }
+      }
+    }
+  ],
+  "17": [
+    {
+      "ok": true,
+      "command": {
+        "name": "scout",
+        "root": ".",
+        "pretty": false,
+        "processor": "ds",
+        "issue": "task.txt",
+        "seedFile": null,
+        "deadlineSeconds": null
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "scout",
+        "root": "/r",
+        "pretty": true,
+        "processor": "s",
+        "issue": "/tmp/q.md",
+        "seedFile": "seed.json",
+        "deadlineSeconds": 90
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --processor"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --issue"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--deadline must be a positive integer (got '0')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --deck does not apply to scout"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --issue does not apply to run"
+        }
+      }
+    }
+  ],
+  "18": [
+    {
+      "ok": true,
+      "command": {
+        "name": "plan --from-scout",
+        "root": ".",
+        "pretty": false,
+        "fromScout": "latest",
+        "out": null
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "plan --from-scout",
+        "root": "/r",
+        "pretty": true,
+        "fromScout": "20261008-225320-74e423b1",
+        "out": "decks/s.json"
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --spec does not apply to plan --from-scout"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--from-scout must match ^[A-Za-z0-9._-]+$ (got 'a/b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --from-scout needs a value"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --judge does not apply to plan --from-scout"
+        }
+      }
+    }
+  ],
+  "19": [
+    {
+      "ok": true,
+      "command": {
+        "name": "review",
+        "root": ".",
+        "pretty": false,
+        "base": "v1",
+        "head": "HEAD",
+        "spec": null,
+        "map": null,
+        "scout": null,
+        "mutants": null,
+        "mutantTimeoutSeconds": 120,
+        "test": null,
+        "write": false
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "review",
+        "root": "/r",
+        "pretty": true,
+        "base": "4f2a9c1",
+        "head": "morph/20261009-101500",
+        "spec": "c.yaml",
+        "map": "m.json",
+        "scout": "latest",
+        "mutants": 8,
+        "mutantTimeoutSeconds": 30,
+        "test": "npm test",
+        "write": true
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "review needs two refs: <base> <head>"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "review needs two refs: <base> <head>"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "unexpected argument: c"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--mutants must be a positive integer (got '0')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--mutant-timeout must be a positive integer (got 'x')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--scout must match ^[A-Za-z0-9._-]+$ (got 'a/b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --deck does not apply to review"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --mutants does not apply to run"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --test does not apply to plan"
+        }
+      }
+    }
+  ],
+  "20": [
+    {
+      "ok": true,
+      "command": {
+        "name": "card",
+        "root": ".",
+        "pretty": false,
+        "deck": "d.json",
+        "id": "fix-a",
+        "md": false
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "card",
+        "root": "/r",
+        "pretty": true,
+        "deck": "decks/p9/deck.json",
+        "id": "x_2",
+        "md": true
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "accept",
+        "root": ".",
+        "pretty": false,
+        "deck": "d.json",
+        "id": "fix-a",
+        "model": "claude-fable-5-1",
+        "commit": false
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "accept",
+        "root": "/q",
+        "pretty": false,
+        "deck": "d",
+        "id": "b.v",
+        "model": "acme/m:free",
+        "commit": true
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --deck"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --id"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --model"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--id must match ^[A-Za-z0-9._-]+$ (got 'a b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--model must match ^[A-Za-z0-9._/:-]+$ (got 'm x')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --commit does not apply to card"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --md does not apply to accept"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --id does not apply to run"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "unexpected argument: x"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --model does not apply to review"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --deck"
+        }
+      }
+    }
+  ],
+  "21": [
+    {
+      "ok": true,
+      "command": {
+        "name": "init",
+        "root": ".",
+        "pretty": false,
+        "project": "acme",
+        "language": "go",
+        "module": null,
+        "templates": null
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "init",
+        "root": "/w/p",
+        "pretty": true,
+        "project": "beta_svc",
+        "language": "python",
+        "module": "example.com/x-y/beta",
+        "templates": "../tpl"
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "init",
+        "root": ".",
+        "pretty": false,
+        "project": "a",
+        "language": "typescript",
+        "module": "github.com/acme/x_1.v2",
+        "templates": null
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --name"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--name must match ^[A-Za-z0-9._-]+$ (got 'a b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--name must match ^[A-Za-z0-9._-]+$ (got 'a b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --language"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--language must be one of typescript, python, go (got 'rust')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--language must be one of typescript, python, go (got 'TypeScript')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--module must match ^[A-Za-z0-9._/-]+$ (got 'a b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --deck does not apply to init"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --name does not apply to run"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --templates does not apply to card"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "unexpected argument: x"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --name given twice"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --language needs a value"
+        }
+      }
+    }
+  ],
+  "22": [
+    {
+      "ok": true,
+      "command": {
+        "name": "plan",
+        "root": ".",
+        "pretty": false,
+        "spec": "c.yaml",
+        "components": [],
+        "map": null,
+        "judge": false,
+        "out": null,
+        "only": [
+          "a",
+          "b.v_2"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "plan",
+        "root": "/r",
+        "pretty": true,
+        "spec": "s",
+        "components": [
+          "q"
+        ],
+        "map": null,
+        "judge": true,
+        "out": null,
+        "checks": "k.json",
+        "only": [
+          "x-9"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "plan",
+        "root": ".",
+        "pretty": false,
+        "spec": "s",
+        "components": [],
+        "map": null,
+        "judge": false,
+        "out": null,
+        "only": [
+          "b",
+          "a",
+          "c"
+        ]
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--only must be distinct card ids joined by \",\" (got 'a,,b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--only must be distinct card ids joined by \",\" (got 'p,q,p')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--only must be distinct card ids joined by \",\" (got 'a b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--only must be distinct card ids joined by \",\" (got '')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--only must be distinct card ids joined by \",\" (got 'a/b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --spec"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --only needs a value"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --only given twice"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --only does not apply to run"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --only does not apply to plan --from-scout"
+        }
+      }
+    }
+  ],
+  "23": [
+    {
+      "ok": true,
+      "command": {
+        "name": "gate",
+        "root": ".",
+        "pretty": false,
+        "deck": "decks/p9/deck.json",
+        "stubs": "decks/p9/_stubs",
+        "refs": "/abs/rf"
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "gate",
+        "root": "/q",
+        "pretty": true,
+        "deck": "d",
+        "stubs": "s",
+        "refs": "r"
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --deck"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --stubs"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --refs"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --processor does not apply to gate"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --stubs does not apply to deck check"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "unexpected argument: x"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --stubs needs a value"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --refs given twice"
+        }
+      }
+    }
+  ],
+  "24": [
+    {
+      "ok": true,
+      "command": {
+        "name": "gate",
+        "root": ".",
+        "pretty": false,
+        "deck": "d.json",
+        "stubs": "s",
+        "refs": "r",
+        "mutants": 30
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "gate",
+        "root": "/w",
+        "pretty": true,
+        "deck": "d.json",
+        "stubs": "s",
+        "refs": "r",
+        "mutants": 5
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--mutants must be a positive integer (got '0')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--mutants must be a positive integer (got 'x7')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --stubs"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --mutants needs a value"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --mutants given twice"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --mutant-timeout does not apply to gate"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--mutants must be a positive integer (got '0')"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "gate",
+        "root": ".",
+        "pretty": false,
+        "deck": "d.json",
+        "stubs": "s",
+        "refs": "r"
+      }
+    }
+  ],
+  "25": [
+    {
+      "ok": true,
+      "command": {
+        "name": "accept",
+        "root": ".",
+        "pretty": false,
+        "deck": "d.json",
+        "id": "a,b,c",
+        "model": "m",
+        "commit": true
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "accept",
+        "root": ".",
+        "pretty": false,
+        "deck": "d.json",
+        "id": "a,b",
+        "model": null,
+        "commit": false,
+        "fromRun": "20261009-211927",
+        "pick": [
+          "b.r2.v1",
+          "a.r1.v1"
+        ]
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--id must be distinct card ids joined by \",\" (got 'a,a')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--id must be distinct card ids joined by \",\" (got 'a,')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--model does not apply with --from-run"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--pick needs --from-run"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--from-run must match ^[A-Za-z0-9._-]+$ (got 'r 1')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--pick must be distinct answer names joined by \",\" (got 'a.v1,a.v1')"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "accept",
+        "root": ".",
+        "pretty": false,
+        "deck": "d.json",
+        "id": "a",
+        "model": null,
+        "commit": true,
+        "fromRun": "r1"
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--id must match ^[A-Za-z0-9._-]+$ (got 'a,b')"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --from-run does not apply to card"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "accept",
+        "root": ".",
+        "pretty": false,
+        "deck": "d.json",
+        "id": "a",
+        "model": "m",
+        "commit": false
+      }
+    }
+  ]
+}

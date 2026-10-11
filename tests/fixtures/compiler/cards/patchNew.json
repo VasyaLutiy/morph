@@ -1,0 +1,9 @@
+{
+  "customId": "n",
+  "intent": "patch",
+  "targets": [
+    "src/x.ts",
+    "src/z.ts"
+  ],
+  "instruction": "Patch src/x.ts and add src/z.ts."
+}

@@ -1,0 +1,23 @@
+{
+  "id": "python",
+  "extensions": [
+    ".py",
+    ".pyi"
+  ],
+  "testDirs": [
+    "tests"
+  ],
+  "testFilePattern": "^(test_.*\\.py|.*_test\\.py)$",
+  "nameCase": "snake",
+  "codeTarget": "{component}/{name}.py",
+  "testTarget": "tests/test_{name}.py",
+  "judgeTarget": "tests/test_{name}_examples.py",
+  "parseLine": "python3 -m py_compile",
+  "parseTakesFiles": true,
+  "lintLine": "ruff check {files}",
+  "ownTestLine": "python3 -m pytest {test} -q --tb=short",
+  "fullRunLine": "python3 -m pytest -q --tb=short",
+  "finale": "Python 3.10 or later, standard library only, type hints on every public function. Tests are pytest: plain `assert` on scalars and short values; fixtures and stubs come from `tests/conftest.py`, never your own.",
+  "judgeInstruction": "Write ONLY the test file `{test}`: one test per example of `{module}` taken from {docs}, in example order, each test function named `test_<function>_example_<n>`. Do not write or modify `{module}`: the author of the criterion is not the author of the code. pytest, fixtures from `tests/conftest.py`; Python 3.10 or later, standard library only.",
+  "helpersModule": "tests/conftest.py"
+}

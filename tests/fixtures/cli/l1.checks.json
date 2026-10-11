@@ -1,0 +1,8 @@
+{
+  "phase": "l1",
+  "cards": [
+    { "id": "ledger-types" },
+    { "id": "parse" },
+    { "id": "parse-judge", "files": [{ "file": "tests/ledger/parse.examples.test.ts", "min": 1, "max": 9 }] }
+  ]
+}

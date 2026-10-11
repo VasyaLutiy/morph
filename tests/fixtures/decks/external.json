@@ -1,0 +1,3 @@
+[
+  {"customId": "a", "intent": "generate", "targets": ["src/a.ts"], "instruction": "x", "dependsOn": ["zzz"]}
+]

@@ -1,0 +1,11 @@
+{
+  "customId": "m",
+  "intent": "generate",
+  "targets": [
+    "src/a.ts"
+  ],
+  "contextSlice": [
+    "docs/missing.md"
+  ],
+  "instruction": "Write src/a.ts."
+}

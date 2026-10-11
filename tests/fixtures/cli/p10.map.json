@@ -1,0 +1,122 @@
+{
+  "groups": {
+    "parse-command": [
+      "Parse Command"
+    ],
+    "render": [
+      "Render Examples",
+      "Render Function",
+      "Render Context",
+      "Card Budget"
+    ],
+    "cut-component": [
+      "Cut Units",
+      "Cut Component"
+    ],
+    "plan-spec": [
+      "Order Deck",
+      "Plan Spec"
+    ]
+  },
+  "cards": {
+    "parse-command": {
+      "targets": [
+        "src/cli/parse.ts"
+      ],
+      "depends_on": [
+        "plan-command"
+      ]
+    },
+    "parse-command-judge": {
+      "targets": [
+        "tests/cli/parse.examples.test.ts"
+      ],
+      "depends_on": [
+        "parse-command"
+      ]
+    },
+    "render": {
+      "targets": [
+        "src/planner/types.ts",
+        "src/planner/render.ts"
+      ]
+    },
+    "cut-component": {
+      "targets": [
+        "src/planner/cut.ts"
+      ],
+      "depends_on": [
+        "render"
+      ]
+    },
+    "cut-judges": {
+      "targets": [
+        "src/planner/judges.ts"
+      ],
+      "depends_on": [
+        "render"
+      ]
+    },
+    "plan-spec": {
+      "targets": [
+        "src/planner/plan.ts"
+      ],
+      "depends_on": [
+        "cut-component",
+        "cut-judges"
+      ]
+    },
+    "plan-command": {
+      "targets": [
+        "src/cli/types.ts",
+        "src/cli/planCommand.ts",
+        "src/cli/main.ts"
+      ],
+      "depends_on": [
+        "plan-spec"
+      ]
+    },
+    "render-judge": {
+      "targets": [
+        "tests/planner/render.examples.test.ts"
+      ],
+      "depends_on": [
+        "render"
+      ]
+    },
+    "cut-component-judge": {
+      "targets": [
+        "tests/planner/cut.examples.test.ts"
+      ],
+      "depends_on": [
+        "cut-component"
+      ]
+    },
+    "cut-judges-judge": {
+      "targets": [
+        "tests/planner/judges.examples.test.ts"
+      ],
+      "depends_on": [
+        "cut-judges"
+      ]
+    },
+    "plan-spec-judge": {
+      "targets": [
+        "tests/planner/plan.examples.test.ts"
+      ],
+      "depends_on": [
+        "plan-spec"
+      ]
+    },
+    "plan-command-judge": {
+      "targets": [
+        "tests/cli/planCommand.examples.test.ts",
+        "tests/cli/main.examples.test.ts"
+      ],
+      "depends_on": [
+        "plan-command",
+        "parse-command"
+      ]
+    }
+  }
+}

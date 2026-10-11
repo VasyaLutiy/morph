@@ -1,0 +1,38 @@
+D=/tmp/morph/a-p2; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log
+cp report/a.go $D/0-$S.go 2>/dev/null
+cp report/a_test.go $D/1-$S.go 2>/dev/null
+(
+ set -e
+ export NO_COLOR=1 CI=1
+export GOFLAGS=-mod=mod GOPROXY=off GOSUMDB=off GOTOOLCHAIN=local GOWORK=off GOCACHE="${GOCACHE:-/tmp/morph/go-build}" GOPATH="${GOPATH:-/tmp/morph/go}"
+P=$PWD/probe/a; rm -rf $P; mkdir -p $P; trap 'rm -rf $P report/a_probe_test.go' EXIT
+cat > $P/guard.mjs <<'MORPH_GUARD_EOF'
+// guard
+MORPH_GUARD_EOF
+cat > $P/firstdiff.mjs <<'MORPH_FIRSTDIFF_EOF'
+// firstdiff
+MORPH_FIRSTDIFF_EOF
+cat > $P/overlay.json <<'MORPH_CONF_EOF'
+{"Replace":{}}
+MORPH_CONF_EOF
+cat > $P/full.json <<'MORPH_CONF_EOF'
+{"Replace":{"calc/old_test.go":""}}
+MORPH_CONF_EOF
+G0=$( (git symbolic-ref -q HEAD || true; git rev-parse HEAD; git for-each-ref --format='%(refname) %(objectname)') 2>&1)
+echo '== build'; go build -overlay $P/overlay.json ./report
+echo '== vet'; E=0; go vet -overlay $P/overlay.json ./report || E=1
+echo '== gofmt'; F=$(gofmt -l report/a.go report/a_test.go 2>&1) || true; [ -z "$F" ] || { echo "gofmt -l lists: $F"; gofmt -d report/a.go report/a_test.go 2>&1 | head -60; E=1; }
+echo '== guard'; node $P/guard.mjs src report/a.go; node $P/guard.mjs tests report/a_test.go 1 5
+echo '== probe'; cat > report/a_probe_test.go <<'MORPH_PROBE_EOF'
+package report
+MORPH_PROBE_EOF
+go test -count=1 -overlay $P/overlay.json -run '^TestProbe' ./report > $P/gt.log 2>&1 || { if grep -q '^--- FAIL' $P/gt.log; then awk '/^--- FAIL/{p=1} p' $P/gt.log | grep -vE '^(ok[[:space:]]|PASS$|FAIL$)' | head -200; else tail -60 $P/gt.log; fi; node $P/firstdiff.mjs $P/gt.log; exit 1; }
+rm -f report/a_probe_test.go
+echo '== own'; go test -count=1 -overlay $P/overlay.json ./report > $P/gt.log 2>&1 || { if grep -q '^--- FAIL' $P/gt.log; then awk '/^--- FAIL/{p=1} p' $P/gt.log | grep -vE '^(ok[[:space:]]|PASS$|FAIL$)' | head -200; else tail -60 $P/gt.log; fi; node $P/firstdiff.mjs $P/gt.log; exit 1; }
+[ "$E" = 0 ] || { echo "== vet or gofmt failed (see above); every step between it and here passed"; exit 1; }
+echo '== bin'; true
+echo '== full'; go test -count=1 -overlay $P/full.json ./... > $P/gt.log 2>&1 || { if grep -q '^--- FAIL' $P/gt.log; then awk '/^--- FAIL/{p=1} p' $P/gt.log | grep -vE '^(ok[[:space:]]|PASS$|FAIL$)' | head -200; else tail -60 $P/gt.log; fi; node $P/firstdiff.mjs $P/gt.log; exit 1; }
+echo '== own git'; G1=$( (git symbolic-ref -q HEAD || true; git rev-parse HEAD; git for-each-ref --format='%(refname) %(objectname)') 2>&1); [ "$G0" = "$G1" ] || { echo "tests changed this repository's HEAD or refs:"; echo "before: $G0" | head -5; echo "after: $G1" | head -5; exit 1; }
+echo '== frozen'; git diff --quiet HEAD -- contour.yaml morph-map.json docs decks tests/fixtures || { echo "changed outside the targets: $(git diff --name-only HEAD -- contour.yaml morph-map.json docs decks tests/fixtures | tr "\n" " ")"; exit 1; }
+X=$(git ls-files --others --exclude-standard | grep -vxF -e report/a.go -e report/a_test.go || true); [ -z "$X" ] || { echo "files left in the tree: $X"; exit 1; }
+) > $L 2>&1; rc=$?; cat $L; exit $rc

@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "package": "",
+  "docs": "docs/TASK.md",
+  "groups": { "a": ["F", "G"], "b": ["G"], "c": [] },
+  "cards": {
+    "x": { "custom_id": "bad id", "intent": "todo", "targets": [], "max_tokens": 0, "variants": 1.5, "slice": [] },
+    "y": "z"
+  },
+  "extra_cards": [{ "targets": ["a.ts"], "component": "store" }],
+  "Extra": 1
+}

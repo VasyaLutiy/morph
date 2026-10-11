@@ -1,0 +1,187 @@
+import { test, expect } from "vitest";
+import { main } from "../../src/cli/main.js";
+import { PATCH_CONTRACT } from "../../src/scout/planFromScout.js";
+import { tmpRepo, tmpRoot } from "../helpers.js";
+
+test("Main example 10: scout then plan --from-scout on a committed repo", async () => {
+  const t = tmpRepo();
+  const s = tmpRoot();
+  const stdout: string[] = [];
+  const stderr: string[] = [];
+  const io = {
+    stdout(text: string): void {
+      stdout.push(text);
+    },
+    stderr(text: string): void {
+      stderr.push(text);
+    },
+  };
+  try {
+    t.write("src/a.ts", "export const a = 1;\n");
+    t.git(["add", "."]);
+    t.git(["commit", "-q", "-m", "files"]);
+    const head = t.git(["rev-parse", "HEAD"]);
+    s.write("task.txt", "Double a.\n");
+    s.write("ans/scout.t1.md", 'ANSWER {"targets": ["src/a.ts"]}');
+    const deps = {
+      env: {
+        PATH: process.env.PATH ?? "",
+        MORPH_PROCESSOR_s_TYPE: "stub",
+        MORPH_PROCESSOR_s_ANSWERS_DIR: s.path("ans"),
+      },
+      now: (): number => 1791500000000,
+      cwd: s.root,
+      transport: null,
+    };
+
+    const code1 = await main(
+      ["scout", "--processor", "s", "--issue", "task.txt", "--root", t.root],
+      deps,
+      io,
+    );
+    expect(code1).toBe(0);
+    expect(stdout).toHaveLength(1);
+    const scoutDoc = JSON.parse(stdout[0]!) as {
+      scoutId: string;
+      scout: string;
+      status: string;
+      answer: unknown;
+      stopReason: string;
+      spent: unknown;
+      elapsedMs: number;
+      usage: unknown;
+    };
+    expect(scoutDoc.scoutId.startsWith("20261008-225320-")).toBe(true);
+    const scoutId = scoutDoc.scoutId;
+    expect(scoutDoc).toStrictEqual({
+      scoutId,
+      scout: ".morph/scout/" + scoutId + "/scout.json",
+      status: "ok",
+      answer: { targets: ["src/a.ts"], context_slice: [], reasoning: "" },
+      stopReason: "the model answered on its own",
+      spent: { calls: 0, reads: 0, chars: 0, rounds: 1 },
+      elapsedMs: 0,
+      usage: { requests: 1, inputTokens: 0, outputTokens: 0, cost: 0 },
+    });
+    expect(stderr).toStrictEqual(["morph scout: exit 0\n"]);
+
+    const code2 = await main(
+      ["plan", "--from-scout", "latest", "--root", t.root, "--out", "decks/s.json"],
+      deps,
+      io,
+    );
+    expect(code2).toBe(0);
+    expect(stdout).toHaveLength(2);
+    const expectedCard = {
+      customId: "scout-" + scoutId,
+      intent: "patch",
+      targets: ["src/a.ts"],
+      contextSlice: [],
+      instruction: "Double a.\n\n" + PATCH_CONTRACT,
+      acceptance:
+        "node_modules/.bin/tsc --noEmit && node_modules/.bin/vitest run --reporter=dot",
+      model: null,
+      maxTokens: 16000,
+      reasoning: null,
+      variants: 1,
+      dependsOn: [],
+    };
+    const planDoc = JSON.parse(stdout[1]!) as unknown;
+    expect(planDoc).toStrictEqual({
+      scoutId,
+      scout: ".morph/scout/" + scoutId + "/scout.json",
+      ref: head,
+      cards: [expectedCard],
+      dropped: [],
+      out: "decks/s.json",
+    });
+    expect(t.read("decks/s.json")).toBe(JSON.stringify([expectedCard], null, 2) + "\n");
+    expect(stderr).toStrictEqual([
+      "morph scout: exit 0\n",
+      "morph plan --from-scout: exit 0\n",
+    ]);
+  } finally {
+    t.rm();
+    s.rm();
+  }
+});
+
+test("Main example 11: usage errors, empty tree, git fault", async () => {
+  const t = tmpRepo();
+  const s = tmpRoot();
+  const e = tmpRoot();
+  const stdout: string[] = [];
+  const stderr: string[] = [];
+  const io = {
+    stdout(text: string): void {
+      stdout.push(text);
+    },
+    stderr(text: string): void {
+      stderr.push(text);
+    },
+  };
+  try {
+    s.write("task.txt", "Double a.\n");
+    s.write("ans/scout.t1.md", 'ANSWER {"targets": ["src/a.ts"]}');
+    const deps = {
+      env: {
+        PATH: process.env.PATH ?? "",
+        MORPH_PROCESSOR_s_TYPE: "stub",
+        MORPH_PROCESSOR_s_ANSWERS_DIR: s.path("ans"),
+      },
+      now: (): number => 1791500000000,
+      cwd: s.root,
+      transport: null,
+    };
+
+    const code1 = await main(
+      ["scout", "--processor", "nope", "--issue", "task.txt", "--root", t.root],
+      deps,
+      io,
+    );
+    expect(code1).toBe(4);
+    expect(stdout).toHaveLength(1);
+    expect(JSON.parse(stdout[0]!)).toStrictEqual({
+      error: { code: 4, kind: "UsageError", message: "processor nope is not configured" },
+    });
+    expect(stderr).toStrictEqual(["morph scout: exit 4\n"]);
+
+    const code2 = await main(
+      ["plan", "--from-scout", "latest", "--root", e.root],
+      deps,
+      io,
+    );
+    expect(code2).toBe(4);
+    expect(stdout).toHaveLength(2);
+    expect(JSON.parse(stdout[1]!)).toStrictEqual({
+      error: { code: 4, kind: "UsageError", message: "no scout session under .morph/scout" },
+    });
+    expect(stderr).toStrictEqual([
+      "morph scout: exit 4\n",
+      "morph plan --from-scout: exit 4\n",
+    ]);
+
+    const code3 = await main(
+      ["scout", "--processor", "s", "--issue", "task.txt", "--root", e.root],
+      deps,
+      io,
+    );
+    expect(code3).toBe(3);
+    expect(stdout).toHaveLength(3);
+    const third = JSON.parse(stdout[2]!) as {
+      error: { code: number; kind: string; message: string };
+    };
+    expect(third.error.code).toBe(3);
+    expect(third.error.kind).toBe("RuntimeError");
+    expect(third.error.message.startsWith("git ls-files failed (exit 128): ")).toBe(true);
+    expect(stderr).toStrictEqual([
+      "morph scout: exit 4\n",
+      "morph plan --from-scout: exit 4\n",
+      "morph scout: exit 3\n",
+    ]);
+  } finally {
+    t.rm();
+    s.rm();
+    e.rm();
+  }
+});

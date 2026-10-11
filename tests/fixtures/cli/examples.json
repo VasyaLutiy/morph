@@ -1,0 +1,258 @@
+{
+  "Run Command 1": {
+    "given": "a tmpRepo; env with a git identity, MORPH_PROCESSOR_s_TYPE stub, MORPH_PROCESSOR_s_ANSWERS_DIR a side tmp root with a.md, b.md (fenced ts blocks); a deck file there: a → out/a.ts (\"test -f out/a.ts\"), b → out/b.ts dependsOn [a]; runId \"r1\"",
+    "then": "code 0; runId \"r1\", branch \"morph/r1\", base = HEAD before; a, b \"written\", generations 2, processor \"s\", usageTotals.requests 2; archive {ok: true, dir: \".morph/runs/r1\", commit: HEAD}; subjects since base, newest first: \"morph run r1: deck and report\", \"morph b: out/b.ts\", \"morph a: out/a.ts\"; HEAD on morph/r1; status clean"
+  },
+  "Run Command 9": {
+    "given": "example 1 with the env of literals.json[\"Run Command 9\"]; deps.transport answering 202 batchSubmittedLive.json, then 200 batchCompletedLive.json; cards clamp-value → out/clamp.ts, sign-of → out/sign.ts, \"test -f <target>\"; runId \"r9\"",
+    "then": "code 0, both written; every report.requests row batchId \"batch-1791388269-cp5qOr5IQ0xoz1ntuc8W\"; usageTotals.cost 0.0005804; .morph/batches/<that id>.json exactly batch.r9.json; git status --porcelain exactly \"?? .morph/batches/\""
+  },
+  "Run Command 10": {
+    "given": "example 1, runId \"r10\"; a .git/hooks/commit-msg (755) that prints \"card commits refused\" to stderr, exit 1, on a message starting \"morph a:\"",
+    "then": "code 3, the Run Document; report.fault \"git commit failed (exit 1): card commits refused\"; a, b \"skipped\", reason \"fault\"; archive {ok: true, dir: \".morph/runs/r10\", commit: HEAD} (report.json with the fault, Morph-Skipped: 2), the only commit since base; HEAD on morph/r10"
+  },
+  "Main 4": {
+    "given": "the binary built by tsc -p tsconfig.build.json into a tmp out dir ({\"type\":\"module\"}, node_modules linked); a tmpRepo, a side root with a.md, b.md and the deck a, then b dependsOn a; `node <out>/cli.js run --root <repo> --deck <deck> --processor s --run-id e2e`, the stub env",
+    "then": "exit 0; stdout one line of JSON: runId \"e2e\", branch \"morph/e2e\", outcomes written, written, archive ok; the last three subjects \"morph run e2e: deck and report\", \"morph b: out/b.ts\", \"morph a: out/a.ts\"; stderr literals.json[\"Main 4\"] (a.md, b.md 30 chars each)"
+  },
+  "Main 6": {
+    "given": "a tmpRepo; side root: a.md, deck a → out/a.ts (`sleep 30 & echo $! > <side>/sleep.pid; kill -INT $PPID; wait`), then b (\"true\"); `node --import tsx src/cli.ts run --root <repo> --deck <deck> --processor s --run-id sig`, cwd the repository, the stub env",
+    "then": "status 3; one Run Document: fault \"interrupted by SIGINT\", a \"failed\" (log ending \"acceptance interrupted by SIGINT\\n\"), b \"skipped\" \"fault\", archive ok; the sleep gone; HEAD on morph/sig; status clean"
+  },
+  "Main 9": {
+    "given": "a tmpRepo t, tests/a.test.ts \"test(\\\"a\\\", () => {});\\nit(\\\"b\\\", () => {});\\n\"; deps {env {PATH}, now 1791400000000, cwd \"/\"}; argv [primer, --write, --root, t]; then [primer, --root, a non-repo tmp root]",
+    "then": "0; one document: tests {language \"typescript\", files 1, tests 2}, written \".morph/primer.md\" = its markdown; stderr [\"morph primer: exit 0\\n\"]; then 3 RuntimeError beginning \"git ls-files failed (exit 128): \", stderr [\"morph primer: exit 3\\n\"]"
+  },
+  "Plan Command 1": {
+    "given": "a tmp root holding ledger.yaml and ledger.map.json (the planner fixtures' texts) and a tests/helpers.ts; args spec \"ledger.yaml\", components [\"ledger\", \"store\"], map \"ledger.map.json\", judge true, out \"decks/p.json\"",
+    "then": "code 0; document equal to ledger.plan.json plus out \"decks/p.json\"; the file decks/p.json is exactly JSON.stringify(document.cards, null, 2) + \"\\n\"; Read Deck File of it is ok with 17 cards and externalDependsOn [\"outside\"]"
+  },
+  "Main 8": {
+    "given": "the setup of Submit Deck 1, argv [\"submit\", \"--deck\", \"d.json\", \"--processor\", \"b\", \"--root\", t]; then the transport and now of Collect Batch 1 in new deps, argv [\"collect\", \"--batch\", <its id>, \"--root\", t]",
+    "then": "0 and 0; the two documents of those examples on stdout; stderr \"morph submit: exit 0\\n\", \"morph collect: exit 0\\n\"; the state file and answer files as Collect Batch 1"
+  },
+  "Main 10": {
+    "given": "a tmpRepo t, src/a.ts committed; a side root s: task.txt \"Double a.\\n\", ans/scout.t1.md ANSWER {\"targets\": [\"src/a.ts\"]}; deps {env {PATH, MORPH_PROCESSOR_s_TYPE stub, MORPH_PROCESSOR_s_ANSWERS_DIR s/ans}, now 1791500000000, cwd s}; argv [scout, --processor, s, --issue, task.txt, --root, t], then [plan, --from-scout, latest, --root, t, --out, decks/s.json]",
+    "then": "0, 0; the documents of Scout Command (status ok) and Plan From Scout (one patch card scout-<scoutId> on src/a.ts), decks/s.json its cards; stderr \"morph scout: exit 0\\n\", \"morph plan --from-scout: exit 0\\n\""
+  },
+  "Main 11": {
+    "given": "those deps; argv [scout, --processor, nope, --issue, task.txt, --root, t]; [plan, --from-scout, latest, --root, an empty tmp root e]; [scout, --processor, s, --issue, task.txt, --root, e]",
+    "then": "4 \"processor nope is not configured\" (stderr \"morph scout: exit 4\\n\"); 4 \"no scout session under .morph/scout\" (\"morph plan --from-scout: exit 4\\n\"); 3 RuntimeError beginning \"git ls-files failed (exit 128): \""
+  },
+  "Main 12": {
+    "given": "a tmpRepo t: contour.yaml and morph-map.json = tests/fixtures/reviewer/record.yaml and map.json committed at tag b0; src/shop/addTax.ts in a commit with the trailers Morph-Card: add-tax, Morph-Model: m/x at tag h1; deps {env {PATH}, now () => 0, cwd t, transport null}, in process; argv [review, b0, h1, --spec, contour.yaml, --map, morph-map.json]; then [review, b0, h1, --root, t, --pretty] with cwd \"/\"",
+    "then": "1; one stdout chunk, the Review Document: range \"b0..h1\", verdict findings, counts.missing 3 and counts.findings 3 (Add Tax's three examples named by no test); stderr [\"morph review: exit 1\\n\"]; then 0, one chunk beginning \"{\\n  \\\"range\\\": \\\"b0..h1\\\",\\n  \\\"verdict\\\": \\\"clean\\\",\"; stderr [\"morph review: exit 0\\n\"]"
+  },
+  "Main 13": {
+    "given": "the same deps; argv [review, HEAD, --root, t]; [review, nope, HEAD, --root, t]; [review, HEAD, HEAD, --root, e] (e an empty tmpRoot outside git)",
+    "then": "4 {error {4, UsageError, \"review needs two refs: <base> <head>\"}}, stderr [\"morph: review needs two refs: <base> <head>\\n\"]; 4 \"not a commit: nope\", stderr [\"morph review: exit 4\\n\"]; 3 RuntimeError beginning \"git rev-parse failed (exit 128): \", stderr [\"morph review: exit 3\\n\"]"
+  },
+  "Run Command 8": {
+    "given": "example 2 with maxRetryBatches 1, answers a.md and a.r1.md (each a 30-char fenced ts block); a log pushing its texts",
+    "then": "code 1; the log literals.json[\"Run Command 8\"]; the archive commit adds exactly deck.json, report.json, answers/a.v1.answer.txt, a.r1.v1.answer.txt and answers/lines.txt (the two log lines) under .morph/runs/r1; the a.r1.v1 request (gunzipSync of requests/a.r1.v1.request.json.gz) has a last message holding \"<acceptance_output>\"; status clean"
+  },
+  "Plan Command 6": {
+    "given": "example 1 plus checks decks/l1/checks.json, decks/tools/guard.mjs \"// guard\\n\", firstdiff.mjs \"// firstdiff\\n\", decks/l1/parts/parse.probe.ts, ledger-types.probe.ts \"// probe\\n\"",
+    "then": "code 0; example 1 but parse's acceptance codeAcceptance(ctx {phase \"l1\", siblings [\"src/ledger/types.ts\"]}, \"// probe\\n\", null, null), parse-judge's judgeAcceptance(ctx, files); ledger-types keeps the map's \"exit 0\\n\""
+  },
+  "Run Command 12": {
+    "given": "example 1, deck [x → out/x.ts \"true\", q → out/q.ts no acceptance, d → out/d.ts \" \\n\"]",
+    "then": "code 2 RefusalError \"deck has 2 card(s) with no acceptance: q,d\"; no morph/* branch"
+  },
+  "Main 3": {
+    "given": "a run with a valid stub env and deck, --run-id r1, --root and cwd both a tmp root that is not a git repository",
+    "then": "3; one document {error: {code: 3, kind: \"RuntimeError\", message beginning \"git status failed (exit 128): \"}}; stderr [\"morph run: exit 3\\n\"]"
+  },
+  "Deck Check 2": {
+    "given": "d.json = the tiny fixture and src/a.ts = \"export const a = 1;\\n\" (20 bytes)",
+    "then": "code 0; errors 0, warnings 1, hazards [{kind: \"implicit-read\", severity: \"warning\", cards: [\"a\"], path: null, repair: null}], weights [{card: \"a\", bytes: 20, missing: []}]"
+  },
+  "Run Command 2": {
+    "given": "the same setup, one card a with acceptance \"exit 1\", maxRetryBatches 0",
+    "then": "code 1; outcome a \"failed\", reason \"acceptance failed\"; archive ok with the trailer Morph-Failed: 1; out/a.ts absent"
+  },
+  "Plan Command 9": {
+    "given": "a tmp root holding the go-mini files (tests/fixtures/go-mini/: contour.yaml with Components calc and report, both language go; morph-map.json without a language; go.mod; internal/testhelp/testhelp.go; decks/m1/checks.json; decks/m1/parts/_clamp-value_probe_test.go, _percent-of_probe_test.go, _format-share_probe_test.go), decks/tools/guard.mjs \"// guard\\n\" and decks/tools/firstdiff.mjs \"// firstdiff\\n\"; args {spec \"contour.yaml\", map \"morph-map.json\", components [\"calc\", \"report\"], judge true, checks \"decks/m1/checks.json\", out \"decks/m1/deck.json\"}; then the same root with the two \"      language: go\\n\" lines removed from contour.yaml and \"language\": \"go\" added to the map, out \"decks/m1/deck2.json\"",
+    "then": "code 0; components [\"calc\", \"report\"]; generations [[\"clamp-value\"], [\"clamp-value-judge\", \"percent-of\"], [\"format-share\", \"percent-of-judge\"], [\"format-share-judge\"]]; the cards equal goMini.deck.json (6 cards: Go targets, the go profile's finale and judge instruction, the Go acceptances with the probe of each code card read from its _<id>_probe_test.go); decks/m1/deck.json equals the fixture's text; then code 0 and decks/m1/deck2.json equal to it too — the Component's language and the map's give one deck"
+  },
+  "Run Command 7": {
+    "given": "records {request.customId \"a.v1\", verdict \"rejected\", stages 4, lastStage \"probe\", finishReason \"stop\", text 30 chars}, {request.customId \"b.r1.v2\", verdict \"corrupt\", stages 0, lastStage null, finishReason null, text null}",
+    "then": "\"morph run: a.v1 rejected stage 4 probe finish stop chars 30\\n\"; \"morph run: b.r1.v2 corrupt stage 0 finish none chars none\\n\""
+  },
+  "Run Command 6": {
+    "given": "one card a; runId null; deps.now always 1791310149000",
+    "then": "mintRunId(1791310149000) is \"20261006-180909\"; code 0; runId, report.runId \"20261006-180909\", branch \"morph/20261006-180909\"; .morph/runs/20261006-180909/report.json exists"
+  },
+  "Plan Command 5": {
+    "given": "main([\"plan\", \"--root\", <the root>, \"--spec\", \"ledger.yaml\", \"--component\", \"store\", \"--map\", \"ledger.map.json\"]) in process, deps {env: {}, now: () => 0, cwd: \"/\", transport: null}",
+    "then": "0; one stdout chunk, a document with components [\"store\"], 4 cards, out null; stderr [\"morph plan: exit 0\\n\"]; nothing written under the root"
+  },
+  "Run Command 4": {
+    "given": "the same setup with an untracked notes.txt in the repo",
+    "then": "code 2 RefusalError \"dirty tree outside .morph/: notes.txt\"; the checkout still main; no archive"
+  },
+  "Read Deck File 1": {
+    "given": "a tmp root with d.json = the deck of the tiny fixture",
+    "then": "{ok: true, deck: {cards: [card a with every default filled], externalDependsOn: []}}"
+  },
+  "Read Deck File 2": {
+    "given": "a tmp root without nope.json",
+    "then": "{ok: false, result: {code: 4, document: {error: {code: 4, kind: \"UsageError\", message: \"deck file not found: nope.json\"}}}}"
+  },
+  "Read Deck File 3": {
+    "given": "c.json = the cycle fixture; dup.json = the duplicate fixture",
+    "then": "code 2, kind \"DeckError\", message \"invalid deck: dependsOn: dependsOn cycle a -> b -> a\"; then \"invalid deck: cards[2].customId: duplicate customId b\""
+  },
+  "Plan Command 2": {
+    "given": "the same root; spec \"nope.yaml\"; then spec \"ledger.yaml\" with map \"m.json\"",
+    "then": "{code: 4, document: {error: {code: 4, kind: \"UsageError\", message: \"spec file not found: nope.yaml\"}}}; then the same with \"map file not found: m.json\""
+  },
+  "Plan Command 3": {
+    "given": "bad.yaml = \"System: {}\\n\" as the spec; then spec ledger.yaml with m.json = \"{\\\"docs\\\": \\\"x\\\"}\" as the map",
+    "then": "code 2 DeckError, then code 2 DeckError: the messages literals.json[\"Plan Command 3\"]"
+  },
+  "Plan Command 4": {
+    "given": "the same root, components [\"nope\"], out \"decks/q.json\"",
+    "then": "code 2 DeckError \"no Component 'nope' in the record (have: ledger, store)\"; decks/q.json not written"
+  },
+  "Read Plan Checks 1": {
+    "given": "decks/p1/checks.json, decks/tools/guard.mjs \"// guard\\n\", firstdiff.mjs \"// firstdiff\\n\", decks/p1/parts/a.probe.ts \"// probe a\\n\", a-judge.probe.ts \"// no\\n\"",
+    "then": "equal to p1.planChecks.json"
+  },
+  "Read Plan Checks 2": {
+    "given": "that root; then no guard.mjs; then no firstdiff.mjs",
+    "then": "4 UsageError \"checks file not found: nope.json\"; \"guard file not found: decks/tools/guard.mjs\"; \"locator file not found: decks/tools/firstdiff.mjs\""
+  },
+  "Read Plan Checks 3": {
+    "given": "c.json = \"{\"; then {\"cards\": []}",
+    "then": "2 DeckError beginning \"cannot parse c.json: \"; then \"c.json is not a valid checks document (2 problems):\\nphase: required\\ncards: must be a non-empty list\""
+  },
+  "Main 1": {
+    "given": "argv [\"frobnicate\"], in process",
+    "then": "4; stdout exactly [\"{\\\"error\\\":{\\\"code\\\":4,\\\"kind\\\":\\\"UsageError\\\",\\\"message\\\":\\\"unknown command: frobnicate\\\"}}\\n\"]; stderr [\"morph: unknown command: frobnicate\\n\"]"
+  },
+  "Main 2": {
+    "given": "a tmp root with d.json = the write-write fixture; argv [\"deck\", \"check\", \"--deck\", \"d.json\", \"--root\", <root>, \"--pretty\"]",
+    "then": "2; one stdout chunk beginning \"{\\n  \\\"deck\\\": \\\"d.json\\\",\\n  \\\"cards\\\": 2,\"; stderr [\"morph deck check: exit 2\\n\"]"
+  },
+  "Main 5": {
+    "given": "the built binary, argv [\"frobnicate\"]",
+    "then": "exit 4; stdout exactly example 1's one stdout chunk"
+  },
+  "Main 7": {
+    "given": "in process, deps {env: {}, now: () => 0, cwd: \"/\", transport: null}; argv [\"collect\", \"--batch\", \"batch-none\", \"--root\", <a tmp root>]",
+    "then": "4; one stdout document {error: {code: 4, kind: \"UsageError\", message: \"batch state not found: .morph/batches/batch-none.json\"}}; stderr [\"morph collect: exit 4\\n\"]"
+  },
+  "Main 14": {
+    "given": "a tmpRoot t (no git, no .morph) holding d.json = debt/deck.json, src/x.ts \"export const x = 1;\\n\", docs/a.md \"# A\\n\", docs/b.md \"B\"; deps {env {PATH}, now () => 0, cwd \"/\", transport null}; argv [card, --deck, d.json, --id, fmt.x, --md, --root, t, --pretty]; then [card, --deck, d.json, --id, zz, --root, t]; then [card, --root, t, --deck, d.json]",
+    "then": "0, one stdout chunk beginning \"{\\n  \\\"deck\\\": \\\"d.json\\\",\\n  \\\"card\\\": \\\"fmt.x\\\",\\n\" whose JSON has lastRun null and markdown beginning \"# Debt brief: fmt.x\\n\\nWrite only: `src/x.ts`, `src/y.ts`. Change no other file.\\n\", stderr [\"morph card: exit 0\\n\"]; then 4, stdout exactly \"{\\\"error\\\":{\\\"code\\\":4,\\\"kind\\\":\\\"UsageError\\\",\\\"message\\\":\\\"no card 'zz' in d.json (have: base, fmt.x, solo)\\\"}}\\n\", stderr [\"morph card: exit 4\\n\"]; then 4 UsageError \"missing --id\", stderr [\"morph: missing --id\\n\"]"
+  },
+  "Main 15": {
+    "given": "a tmpRepo t, one commit \"base\" of d.json = debt/accept.deck.json and src/a.ts \"broken\\n\", then src/a.ts written \"fixed\\n\"; deps {env {PATH}, now () => 0, cwd t, transport null}; argv [accept, --deck, d.json, --id, fix-a, --model, claude-fable-5-1, --commit]; then the same argv again; then [accept, --deck, d.json, --id, fix-a, --model, m x]",
+    "then": "0, one stdout document {deck \"d.json\", card \"fix-a\", model \"claude-fable-5-1\", exit 0, timedOut false, green true, log \"\", outside [], commit HEAD's sha, diffstat {1, 1, 1}, reason null}, the HEAD message \"morph fix-a: src/a.ts\\n\\nMorph-Card: fix-a\\nMorph-Model: claude-fable-5-1\\nMorph-Acceptance-Exit: 0\\nMorph-Debt: true\", stderr [\"morph accept: exit 0\\n\"]; then 1, commit null, reason \"nothing to commit: the targets equal HEAD\", stderr [\"morph accept: exit 1\\n\"]; then 4 UsageError \"--model must match ^[A-Za-z0-9._/:-]+$ (got 'm x')\", stderr [\"morph: --model must match ^[A-Za-z0-9._/:-]+$ (got 'm x')\\n\"]"
+  },
+  "Emit Document 1": {
+    "given": "doc {a: 1, b: [true, null]}, pretty false",
+    "then": "\"{\\\"a\\\":1,\\\"b\\\":[true,null]}\\n\""
+  },
+  "Emit Document 2": {
+    "given": "the same doc, pretty true",
+    "then": "\"{\\n  \\\"a\\\": 1,\\n  \\\"b\\\": [\\n    true,\\n    null\\n  ]\\n}\\n\""
+  },
+  "Emit Document 3": {
+    "given": "errorDocument(4, \"UsageError\", \"unknown command: x\")",
+    "then": "\"{\\\"error\\\":{\\\"code\\\":4,\\\"kind\\\":\\\"UsageError\\\",\\\"message\\\":\\\"unknown command: x\\\"}}\\n\""
+  },
+  "Classify Error 1": {
+    "given": "new Error(\"git add failed (exit 1): fatal: x\")",
+    "then": "{code: 3, document: {error: {code: 3, kind: \"RuntimeError\", message: \"git add failed (exit 1): fatal: x\"}}}"
+  },
+  "Classify Error 2": {
+    "given": "the string \"boom\"",
+    "then": "as example 1, message \"boom\""
+  },
+  "Classify Error 3": {
+    "given": "reports with outcomes [written, written] and [written, skipped], archive ok; then [written] with archive {ok: false}",
+    "then": "0, 1, 3"
+  },
+  "Deck Check 1": {
+    "given": "a tmp root holding only d.json = the write-write fixture (a and b both write src/x.ts)",
+    "then": "code 2; document equal to tests/fixtures/cli/deckCheck.writeWrite.json"
+  },
+  "Deck Check 3": {
+    "given": "the same tree, sliceCapBytes 10",
+    "then": "code 0; warnings 2; hazards [the implicit-read, then {kind: \"oversized-slice\", severity: \"warning\", cards: [\"a\"], path: null, repair: null, bytes: 20, cap: 10}]"
+  },
+  "Deck Check 4": {
+    "given": "a tmp root holding a copy of tests/fixtures/go-p7b (decks/b1/deck.p20.json, deck.p21.json and decks/b1/_stubs/ among its files); env {PATH: the test process's PATH}; the deck \"decks/b1/deck.p20.json\", then \"decks/b1/deck.p21.json\"",
+    "then": "code 2; errors 9 (no hazard error; the 9 breaks of Check Builds 1), warnings 0, generations [[\"control-contract\"], [\"control-contract-judge\", \"phase-loop\"], [\"phase-loop-judge\", \"runtime-guard\"], [\"daemon-core\", \"runtime-guard-judge\"], [\"daemon-core-judge\"]], builds equal to tests/fixtures/cli/checkBuilds.json[\"p20\"] (phase-loop's breaks [\"supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)\"]), the last key of the document; then code 0, errors 0, builds equal to checkBuilds.json[\"p21\"]"
+  },
+  "Deck Check 5": {
+    "given": "a tmp root holding the files of tests/fixtures/ts-rename.json and node_modules linked to this repository's; env {PATH}; the deck \"decks/r1/deck.json\"; then a tmp root of Deck Check 2 (d.json = the tiny fixture, src/a.ts) plus _stubs/src/a.ts = \"x\", deckCheckCommand(root, \"d.json\", 500000)",
+    "then": "code 2, errors 5, warnings 0, builds equal to checkBuilds.json[\"ts-rename\"]; then code 0 and the document of Deck Check 2 with one more key, builds: [{card: \"a\", generation: 0, language: \"typescript\", stubbed: 0, missing: [], breaks: [], note: \"the acceptance writes no $P/tsconfig.card.json: not built\"}], warnings 2 (the implicit-read and the note); without _stubs/ the document has no builds key"
+  },
+  "Deck Check 6": {
+    "given": "the root of Check Builds 3 (d.json = planner/stub.cards.json, its _stubs/, bin/go and node_modules/.bin/tsc scripts); main(argv [\"deck\", \"check\", \"--deck\", \"d.json\", \"--root\", <root>], deps {env: {PATH: <root>/bin + \":\" + PATH}, now: () => 0, cwd: \"/\", transport: null}, io collecting)",
+    "then": "2; one stdout document with errors 17 (9 missing + 8 breaks), warnings 12 (9 implicit-read hazards + 3 notes: n, p, v) and builds equal to checkBuilds.json[\"cards\"] (Main hands deps.env to Deck Check); stderr [\"morph deck check: exit 2\\n\"]"
+  },
+  "Run Command 3": {
+    "given": "processor \"nope\"; then \"bad\" with MORPH_PROCESSOR_bad_TYPE \"x\" in env",
+    "then": "code 4 UsageError \"processor nope is not configured\"; then \"processor bad is not configured: MORPH_PROCESSOR_bad_TYPE must be one of openrouter, stub (got 'x')\"; no morph/* branch"
+  },
+  "Run Command 5": {
+    "given": "a deck of a and b both targeting out/x.ts",
+    "then": "code 2 RefusalError \"deck has 1 hazard error(s): write-write a,b out/x.ts\"; no morph/* branch"
+  },
+  "Run Command 11": {
+    "given": "a deck file \"[]\"",
+    "then": "code 2 RefusalError \"deck has no cards\"; no morph/* branch; no .morph"
+  },
+  "Plan Command 7": {
+    "given": "example 6, checks decks/l2/checks.json = {\"phase\": \"l2\", \"cards\": [{\"id\": \"zz\"}]}",
+    "then": "2 DeckError \"acceptances not built (1 error):\\nchecks card 'zz' is not in the deck\""
+  },
+  "Plan Command 8": {
+    "given": "the repository; contour.yaml, planner, cli, judge, map tests/fixtures/cli/p10.map.json, checks decks/p10/checks.json",
+    "then": "code 0; v2deck.json's 12 acceptances byte for byte, guard.p10.txt (trimEnd) replaced by decks/tools/guard.mjs"
+  },
+  "Main 16": {
+    "given": "a tmpRoot t; deps {env {PATH}, now () => 0, cwd t.root, transport null}; argv A = init --root p --name acme --language go --module example.com/acme --templates <the fixture tree tests/fixtures/scaffold/tpl, absolute>; then A again; then init --name acme --language rust; then t/t2 holding common/a.txt \"{{name}}\\n\" and python/b.txt \"{{language}}\\n\", argv init --root q --name b --language python --templates t2",
+    "then": "exit 0, stderr [\"morph init: exit 0\\n\"], one stdout document {name \"acme\", language \"go\", module \"example.com/acme\", files [\".gitignore\", \"README.md\", \"docs/notes.md\", \"go.mod\", \"internal/keep.txt\", \"tools/hello.sh\"]}, t/p/go.mod \"module example.com/acme\\n\\ngo 1.22\\n\"; then exit 2, stdout {error {code 2, kind \"RefusalError\", message \"target directory is not empty (first entry: .gitignore)\"}}, stderr [\"morph init: exit 2\\n\"]; then exit 4, stderr [\"morph: --language must be one of typescript, python, go (got 'rust')\\n\"]; then exit 0, {name \"b\", language \"python\", module \"b\", files [\"a.txt\", \"b.txt\"]}, t/q/a.txt \"b\\n\", t/q/b.txt \"python\\n\" (root and templates resolved against cwd)"
+  },
+  "Plan Command 10": {
+    "given": "a tmp root holding contour.yaml = tests/fixtures/planner/deps.yaml (dependencies yaml 2.8.1, go-cmp, zod 3.23.8 in that order; Component conf uses [zod, yaml]), morph-map.json = tests/fixtures/planner/deps.map.json, docs/deps/yaml.md \"# yaml\\n\", decks/tools/guard.mjs \"// guard\\n\", decks/tools/firstdiff.mjs \"// firstdiff\\n\", decks/d1/checks.json {\"phase\": \"d1\", \"cards\": [{\"id\": \"read-config\", \"smoke\": 3}, {\"id\": \"pad-left\", \"smoke\": 2}]}, decks/d1/parts/read-config.probe.ts and pad-left.probe.ts \"// probe\\n\"; args {spec \"contour.yaml\", map \"morph-map.json\", components [\"conf\", \"plain\"], judge false, checks \"decks/d1/checks.json\", out \"decks/d1/deck.json\"}; then vendor/modules.txt \"# github.com/google/go-cmp v0.7.0\\n\" written and the same args with out \"decks/d1/deck2.json\"",
+    "then": "code 0; cards pad-left [src/plain/padLeft.ts, tests/plain/padLeft.test.ts], read-config [src/conf/readConfig.ts, tests/conf/readConfig.test.ts], check-config [src/conf/checkConfig.ts, tests/conf/checkConfig.test.ts] in that order; read-config's acceptance = codeAcceptance(ctx {id \"read-config\", phase \"d1\", targets its two, siblings pad-left's two, frozen DEFAULT_FROZEN, fullExclude [], ownGit false, typescript, guard \"// guard\\n\", firstdiff \"// firstdiff\\n\", allowed [\"yaml\", \"zod\"]}, \"// probe\\n\", 3, null), holding \"node $P/guard.mjs src src/conf/readConfig.ts 'yaml,zod'; node $P/guard.mjs tests tests/conf/readConfig.test.ts 1 3\\n\" (record order, not uses order); pad-left's = codeAcceptance of its ctx (siblings read-config's two, no allowed), \"// probe\\n\", 2, null), holding \"node $P/guard.mjs src src/plain/padLeft.ts; node\"; check-config (not in the checks) keeps the plan's acceptance; then code 0 and decks/d1/deck2.json equal to decks/d1/deck.json byte for byte (a typescript acceptance does not read vendor)"
+  },
+  "Plan Command 11": {
+    "given": "the root of example 10 plus docs/deps/go-cmp.md \"# go-cmp\\n\", decks/d2/checks.json {\"phase\": \"d2\", \"cards\": [{\"id\": \"diff-values\", \"smoke\": 4}]}, decks/d2/parts/_diff-values_probe_test.go \"package diff\\n\", and no vendor/modules.txt; args {spec \"contour.yaml\", map \"morph-map.json\", components [\"diff\"], judge false, checks \"decks/d2/checks.json\", out \"decks/d2/deck.json\"}; then vendor/modules.txt \"# github.com/google/go-cmp v0.7.0\\n## explicit; go 1.11\\ngithub.com/google/go-cmp/cmp\\n\" written and out \"decks/d2/deck2.json\"",
+    "then": "code 0; one card diff-values (targets [\"diff/diff_values.go\", \"diff/diff_values_test.go\"]) whose acceptance = goCodeAcceptance(ctx {id \"diff-values\", phase \"d2\", targets those two, siblings [], frozen DEFAULT_FROZEN, fullExclude [], ownGit false, go, the texts, allowed [\"github.com/google/go-cmp\"], vendor false}, \"package diff\\n\", 4, null): it holds GO_ENV (\"export GOFLAGS=-mod=mod \", once) and \"node $P/guard.mjs src diff/diff_values.go 'github.com/google/go-cmp'; node $P/guard.mjs tests diff/diff_values_test.go 1 4\\n\"; then code 0 and the card in decks/d2/deck2.json equal to the first but its acceptance, which is the first with \"export GOFLAGS=-mod=mod \" become \"export GOFLAGS=-mod=vendor \", nothing else changed"
+  },
+  "Plan Command 12": {
+    "given": "a tmp root holding the go-mini files of Plan Command 9 (tests/fixtures/go-mini/: contour.yaml, go.mod, internal/testhelp/testhelp.go, decks/m1/checks.json naming all six cards, the three decks/m1/parts/_<id>_probe_test.go), decks/tools/guard.mjs \"// guard\\n\" and decks/tools/firstdiff.mjs \"// firstdiff\\n\", morph-map.json = tests/fixtures/cli/goMini.sameGen.map.json (go-mini's map with percent-of \"depends_on\": [], so clamp-value and percent-of share generation 0, as session.go and mount.go did in MorphStudio run 20261008-201843); args {spec \"contour.yaml\", map \"morph-map.json\", components [\"calc\", \"report\"], judge true, checks \"decks/m1/checks.json\", out \"decks/m1/deck.json\"}; then the same args with only [\"percent-of\"] and out \"decks/m1/only.json\"",
+    "then": "code 0; generations [[\"clamp-value\", \"percent-of\"], [\"clamp-value-judge\", \"format-share\", \"percent-of-judge\"], [\"format-share-judge\"]]; percent-of's acceptance holds the overlay line {\"Replace\":{\"calc/clamp_value.go\":\"\"}} exactly once — a hand-filtered deck of that card keeps it and blanks the accepted file percent_of.go calls; then code 0; generations [[\"percent-of\"]], externalDependsOn {}; cards: one, equal to the first deck's percent-of card except its acceptance, which is TRANSACTION_MARK + \"\\n\" + the first one with {\"Replace\":{\"calc/clamp_value.go\":\"\"}} → {\"Replace\":{}} and nothing else (P21c: an --only cut is a transaction; its one member's untracked step names its own target, as before); decks/m1/only.json holds exactly that one card (JSON, indent 2, newline)"
+  },
+  "Plan Command 13": {
+    "given": "a tmp root holding the go-mini files of Plan Command 9 (tests/fixtures/go-mini/: contour.yaml, go.mod, internal/testhelp/testhelp.go, decks/m1/checks.json naming all six cards, the three decks/m1/parts/_<id>_probe_test.go), decks/tools/guard.mjs \"// guard\\n\" and decks/tools/firstdiff.mjs \"// firstdiff\\n\", morph-map.json = go-mini's own; args of Plan Command 9 with only [\"percent-of-judge\", \"format-share\"] and out \"decks/m1/two.json\"; then only [\"nope\", \"percent-of\", \"x.2\"] and out \"decks/m1/bad.json\"; then only [\"clamp-value\"], no checks, out null",
+    "then": "code 0; generations [[\"format-share\", \"percent-of-judge\"]]; externalDependsOn {\"format-share\": [\"percent-of\"], \"percent-of-judge\": [\"percent-of\"]}; cards: goMini.deck.json's format-share and percent-of-judge in that order, every field equal but the acceptance, which is TRANSACTION_MARK + \"\\n\" + that card's goMini.deck.json acceptance with its sibling overlay line → {\"Replace\":{}} (format-share's {\"Replace\":{\"calc/percent_of_examples_test.go\":\"\"}}, percent-of-judge's {\"Replace\":{\"report/format_share.go\":\"\"}}: P21c, the two kept siblings no longer hide each other) and its untracked step → \"X=$(git ls-files --others --exclude-standard | grep -vxF -e report/format_share.go -e calc/percent_of_examples_test.go || true); [ -z \"$X\" ] || { echo \"files left in the tree: $X\"; exit 1; }\\n\" (both members' targets, the checks' order); then code 2, {error: {code: 2, kind: \"DeckError\", message: \"--only names cards the plan does not have: nope, x.2\"}}, decks/m1/bad.json not written; then code 0, cards [the plan's clamp-value card without checks] (equal to that card of the same args with no --only, no mark: no checks, no transaction), generations [[\"clamp-value\"]]"
+  },
+  "Plan Command 14": {
+    "given": "a tmp root holding the go-p7b files (tests/fixtures/go-p7b/: contour.yaml, morph-map.json, go.mod, internal/testhelp/testhelp.go, decks/b1/checks.json naming all eight cards, the four decks/b1/parts/_<id>_probe_test.go, the eight Go files of control/, supervisor/ and daemon/ — the code before the re-cut: Resumes, Exited(code, now); guard.go:20 reads l.Resumes — and mcp/session.go, no card's target, importing supervisor), decks/tools/guard.mjs \"// guard\\n\" and decks/tools/firstdiff.mjs \"// firstdiff\\n\"; args {spec \"contour.yaml\", map \"morph-map.json\", components [\"control\", \"supervisor\", \"daemon\"], judge true, checks \"decks/b1/checks.json\", out null} with only [\"control-contract\", \"phase-loop\", \"runtime-guard\", \"daemon-core\", \"control-contract-judge\", \"phase-loop-judge\", \"runtime-guard-judge\", \"daemon-core-judge\"]; then the same args without only; then mcp/session.go removed and the --only args again",
+    "then": "code 0; generations [[\"control-contract\"], [\"control-contract-judge\", \"phase-loop\"], [\"phase-loop-judge\", \"runtime-guard\"], [\"daemon-core\", \"runtime-guard-judge\"], [\"daemon-core-judge\"]]; every acceptance starts with TRANSACTION_MARK + \"\\n\"; phase-loop's holds {\"Replace\":{}} twice (overlay.json and full.json: nothing hidden, P21c) and not the text `\"supervisor/guard.go\":\"\"`; its untracked step U8 = \"X=$(git ls-files --others --exclude-standard | grep -vxF -e control/control.go -e supervisor/loop.go -e supervisor/guard.go -e daemon/daemon.go -e control/control_examples_test.go -e supervisor/loop_examples_test.go -e supervisor/guard_examples_test.go -e daemon/daemon_examples_test.go || true); [ -z \"$X\" ] || { echo \"files left in the tree: $X\"; exit 1; }\\n\" (the eight targets, the checks' order); then code 0, the same generations and cards but the acceptances: phase-loop's holds {\"Replace\":{\"control/control_examples_test.go\":\"\"}} and {\"Replace\":{}} once each, and every --only acceptance = TRANSACTION_MARK + \"\\n\" + the card's acceptance without --only with its first {\"Replace\":{…}} line, when not {\"Replace\":{}}, made {\"Replace\":{}} and its untracked step made U8 (daemon-core-judge's, last generation, only the step); then mcp/session.go removed and the --only cut is the same, card for card (the tree is not read)"
+  },
+  "Main 17": {
+    "given": "a tmp root r (empty); deps {env {PATH}, now () => 0, cwd \"/\", transport null}; argv [gate, --deck, nope.json, --stubs, s, --refs, r, --root, r]; then [gate, --deck, d.json, --root, r]",
+    "then": "4, one stdout document {\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"deck file not found: nope.json\"}} + \"\\n\" (Gate Command through Read Deck File), stderr [\"morph gate: exit 4\\n\"]; then 4, {\"error\":{\"code\":4,\"kind\":\"UsageError\",\"message\":\"missing --stubs\"}} + \"\\n\", stderr [\"morph: missing --stubs\\n\"]"
+  },
+  "Main 18": {
+    "given": "a tmpRepo t as in Accept Group example 1 (one commit \"base\" of d.json = debt/group.deck.json, src/lib.ts, src/use.ts, README.md; the archive debt/group.run.json written untracked under .morph/runs/r1/); deps {env {PATH}, now () => 0, cwd t, transport null}; argv [accept, --deck, d.json, --id, use,lib, --from-run, r1, --commit]; then [accept, --deck, d.json, --id, lib, --from-run, r1, --pick, lib.v2]",
+    "then": "0, one stdout document {deck \"d.json\", run \"r1\", cards: lib then use, each green with its variant lib.v1, use.v1, outside [], green true, committed 2, restored false, reason null}, the HEAD message \"morph use: src/use.ts\\n\\nMorph-Card: use\\nMorph-Model: deepseek/deepseek-v4.1-flash\\nMorph-Variant: use.v1\\nMorph-Run: r1\\nMorph-Acceptance-Exit: 0\", stderr [\"morph accept: exit 0\\n\"]; then 2, stdout {error {code 2, kind \"RefusalError\", message \"no request lib.v2 in .morph/runs/r1/report.json\"}}, stderr [\"morph accept: exit 2\\n\"] (a single --id with --from-run is a group)"
+  },
+  "Main 19": {
+    "given": "a tmpRepo t (README.md committed) holding the untracked file morph.config.yaml \"version: 1\\nscout:\\n  grepSkp: []\\n  budgets: {calls: \\\"30\\\"}\\n\"; a side root s (cwd) with task.txt \"Make b twice a.\\n\" and the stub processor s answering scout.t1 ANSWER {\"targets\": [\"README.md\"]}; deps {env {PATH, MORPH_PROCESSOR_s_TYPE stub, MORPH_PROCESSOR_s_ANSWERS_DIR s/ans}, now () => 1791500000000, cwd s, transport null}; argv [scout, --processor, s, --issue, task.txt, --root, t]; then [primer, --root, t]",
+    "then": "2 both times, each one stdout document {error {code 2, kind \"DeckError\", message \"morph.config.yaml is not a valid config (2 problems): scout: unknown key 'grepSkp' (known: grepSkip, budgets, caps, seed); scout.budgets.calls: must be a positive integer\"}}, stderr [\"morph scout: exit 2\\n\"] then [\"morph primer: exit 2\\n\"]; no .morph directory under t (the config is read before any command runs)"
+  },
+  "Main 20": {
+    "given": "the harness of Main 19 with src/a.ts \"export const a = 1;\\n\" committed and the stub answering ANSWER {\"targets\": [\"src/a.ts\"]}; (a) morph.config.yaml \"scout:\\n  grepSkip: [.morph/, decks/, docs/TASK_]\\n  budgets: {calls: 7, deadlineSeconds: 900}\\n\" and argv [scout, --processor, s, --issue, task.txt, --root, t, --deadline, 60]; (b) the same config and argv without --deadline 60, in a second tmpRepo; (c) no morph.config.yaml and argv without --deadline, in a third",
+    "then": "0 each; the session's scout.json (the document's scout path under t): (a) budgets {calls 7, reads 12, chars 120000, rounds 40, deadlineMs 60000} (the flag beats the config) and caps.grepSkip [\".morph/\", \"decks/\", \"docs/TASK_\"]; (b) budgets.deadlineMs 900000 (the config), budgets.calls 7, the same grepSkip; (c) budgets = DEFAULT_BUDGETS (deadlineMs 1800000) and caps = DEFAULT_TOOL_CAPS (grepSkip [\".morph\", \"decks\"]); stderr [\"morph scout: exit 0\\n\"] each"
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "layers": {"control": [], "supervisor": ["control"], "daemon": ["supervisor"], "mcp": ["supervisor"], "internal/testhelp": []},
+  "pure": ["control", "supervisor", "daemon"]
+}

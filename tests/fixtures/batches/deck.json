@@ -1,0 +1,5 @@
+[
+  {"customId": "clamp-value", "intent": "generate", "targets": ["out/clamp.ts"], "contextSlice": ["docs/clamp.md"], "instruction": "Write clampValue.", "acceptance": "test -f out/clamp.ts"},
+  {"customId": "sign-of", "intent": "generate", "targets": ["out/sign.ts"], "instruction": "Write signOf.", "acceptance": "test -f out/sign.ts"},
+  {"customId": "later", "intent": "generate", "targets": ["out/later.ts"], "instruction": "Use both.", "acceptance": "true", "dependsOn": ["clamp-value", "sign-of"]}
+]

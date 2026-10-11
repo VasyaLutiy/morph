@@ -1,0 +1,188 @@
+{
+  "4": [
+    {
+      "card": "a",
+      "generation": 0,
+      "language": "go",
+      "exports": [
+        "export NO_COLOR=1 CI=1",
+        "export GOFLAGS=-mod=mod GOPROXY=off"
+      ],
+      "config": {
+        "name": "full.json",
+        "text": "{\"Replace\":{\"calc/b.go\":\"\",\"report/c.go\":\"\"}}"
+      },
+      "stubs": {
+        "calc/a.go": "decks/q9/_stubs/calc/a.go",
+        "calc/n.go": "decks/q9/_stubs/calc/n.go",
+        "calc/b.go": "decks/q9/_stubs/calc/b.go",
+        "calc/b_test.go": "decks/q9/_stubs/calc/b_test.go",
+        "report/c.go": "decks/q9/_stubs/report/c.go",
+        "calc/a_examples_test.go": "decks/q9/_stubs/calc/a_examples_test.go"
+      },
+      "own": [
+        "calc/a.go"
+      ],
+      "missing": [
+        "calc/v.go"
+      ]
+    },
+    {
+      "card": "n",
+      "generation": 0,
+      "language": "go",
+      "exports": [],
+      "config": null,
+      "stubs": {},
+      "own": [
+        "calc/n.go"
+      ],
+      "missing": []
+    },
+    {
+      "card": "t",
+      "generation": 0,
+      "language": "typescript",
+      "exports": [
+        "export NO_COLOR=1 CI=1"
+      ],
+      "config": {
+        "name": "tsconfig.card.json",
+        "text": "{\n  \"extends\": \"../../tsconfig.json\",\n  \"include\": [\n    \"../../src\",\n    \"../../tests\",\n    \"./*.probe.ts\"\n  ],\n  \"exclude\": []\n}"
+      },
+      "stubs": {
+        "src/t.ts": "decks/q9/_stubs/src/t.ts",
+        "tests/t.test.ts": "decks/q9/_stubs/tests/t.test.ts"
+      },
+      "own": [
+        "src/t.ts",
+        "tests/t.test.ts"
+      ],
+      "missing": []
+    },
+    {
+      "card": "p",
+      "generation": 0,
+      "language": "python",
+      "exports": [
+        "export NO_COLOR=1 CI=1"
+      ],
+      "config": null,
+      "stubs": {},
+      "own": [
+        "pkg/p.py"
+      ],
+      "missing": []
+    },
+    {
+      "card": "b",
+      "generation": 1,
+      "language": "go",
+      "exports": [
+        "export NO_COLOR=1 CI=1",
+        "export GOFLAGS=-mod=vendor GOPROXY=off GOCACHE=\"${GOCACHE:-/tmp/q9/go-build}\""
+      ],
+      "config": {
+        "name": "full.json",
+        "text": "{\"Replace\":{\"report/c.go\":\"\"}}"
+      },
+      "stubs": {
+        "calc/a.go": "decks/q9/_stubs/calc/a.go",
+        "calc/n.go": "decks/q9/_stubs/calc/n.go",
+        "calc/b.go": "decks/q9/_stubs/calc/b.go",
+        "calc/b_test.go": "decks/q9/_stubs/calc/b_test.go"
+      },
+      "own": [
+        "calc/b.go",
+        "calc/b_test.go"
+      ],
+      "missing": []
+    },
+    {
+      "card": "c",
+      "generation": 1,
+      "language": "go",
+      "exports": [
+        "export NO_COLOR=1 CI=1",
+        "export GOFLAGS=-mod=mod GOPROXY=off"
+      ],
+      "config": {
+        "name": "full.json",
+        "text": "{\"Replace\":{\"calc/b.go\":\"\",\"calc/b_test.go\":\"\"}}"
+      },
+      "stubs": {
+        "calc/a.go": "decks/q9/_stubs/calc/a.go",
+        "calc/n.go": "decks/q9/_stubs/calc/n.go",
+        "report/c.go": "decks/q9/_stubs/report/c.go"
+      },
+      "own": [
+        "report/c.go",
+        "report/NOTES.md"
+      ],
+      "missing": []
+    },
+    {
+      "card": "v",
+      "generation": 1,
+      "language": "go",
+      "exports": [
+        "export GOFLAGS=-mod=mod GOPROXY=off"
+      ],
+      "config": null,
+      "stubs": {},
+      "own": [
+        "calc/v.go"
+      ],
+      "missing": []
+    },
+    {
+      "card": "u",
+      "generation": 1,
+      "language": "typescript",
+      "exports": [
+        "export NO_COLOR=1 CI=1"
+      ],
+      "config": {
+        "name": "tsconfig.card.json",
+        "text": "{\n  \"extends\": \"../../tsconfig.json\",\n  \"include\": [\n    \"../../src\",\n    \"../../tests\",\n    \"./*.probe.ts\"\n  ],\n  \"exclude\": [\n    \"../../tests/t.test.ts\"\n  ]\n}"
+      },
+      "stubs": {
+        "src/t.ts": "decks/q9/_stubs/src/t.ts",
+        "tests/t.test.ts": "decks/q9/_stubs/tests/t.test.ts"
+      },
+      "own": [
+        "tests/u.test.ts"
+      ],
+      "missing": [
+        "tests/u.test.ts"
+      ]
+    },
+    {
+      "card": "j",
+      "generation": 2,
+      "language": "go",
+      "exports": [
+        "export NO_COLOR=1 CI=1",
+        "export GOFLAGS=-mod=vendor GOPROXY=off GOCACHE=\"${GOCACHE:-/tmp/q9/go-build}\""
+      ],
+      "config": {
+        "name": "full.json",
+        "text": "{\"Replace\":{\"report/c.go\":\"\"}}"
+      },
+      "stubs": {
+        "calc/a.go": "decks/q9/_stubs/calc/a.go",
+        "calc/n.go": "decks/q9/_stubs/calc/n.go",
+        "calc/b.go": "decks/q9/_stubs/calc/b.go",
+        "calc/b_test.go": "decks/q9/_stubs/calc/b_test.go",
+        "report/c.go": "decks/q9/_stubs/report/c.go",
+        "calc/a_examples_test.go": "decks/q9/_stubs/calc/a_examples_test.go"
+      },
+      "own": [
+        "calc/a_examples_test.go"
+      ],
+      "missing": [
+        "calc/v.go"
+      ]
+    }
+  ]
+}

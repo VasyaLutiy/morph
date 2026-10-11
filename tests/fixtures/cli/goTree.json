@@ -1,0 +1,17 @@
+{
+  "go.mod": "// a comment line first\nmodule example.com/m\n\ngo 1.22\n",
+  "main.go": "package main\n\nimport \"example.com/m/x\"\n\nfunc main() { x.X() }\n",
+  "x/x.go": "package x\n\nimport (\n\t\"fmt\"\n\ty \"example.com/m/y\"\n\t. \"example.com/m/z\" // dot import\n\t_ \"example.com/m\"\n\t// \"example.com/m/commented\"\n\t\"example.com/mother/q\"\n\ty2 \"example.com/m/y\"\n)\n\nfunc X() { fmt.Println(y.Y, Z) }\n",
+  "y/y.go": "package y\n\nimport yy \"example.com/m/y/deep\"\n\nvar Y = yy.D\n",
+  "y/deep/d.go": "package deep\n\n// D is a constant; the word import in a comment is no import: import \"example.com/m/x\"\nconst D = 1\n",
+  "z/z_test.go": "package z\n\nimport (\n\t\"testing\"\n\n\t\"example.com/m/x\"\n)\n\nfunc TestZ(t *testing.T) { x.X() }\n",
+  "z/z.go": "package z\n\nconst Z = 2\n",
+  "vendor/example.com/v/v.go": "package v\n",
+  "x/testdata/t.go": "package t\n",
+  ".cache/c.go": "package c\n",
+  "_old/o.go": "package o\n",
+  "x/_draft.go": "package x\n",
+  "x/.swap.go": "package x\n",
+  "z/notes.txt": "import \"example.com/m/x\"\n",
+  "decks/p1/parts/_x_probe_test.go": "package x\n"
+}

@@ -1,0 +1,144 @@
+{
+  "phase": "p10",
+  "fullExclude": [
+    "tests/cli/parse.examples.test.ts",
+    "tests/cli/main.examples.test.ts"
+  ],
+  "cards": [
+    {
+      "id": "parse-command"
+    },
+    {
+      "id": "parse-command-judge",
+      "files": [
+        {
+          "file": "tests/cli/parse.examples.test.ts",
+          "min": 19,
+          "max": 23,
+          "lits": [
+            "missing --spec",
+            "no command (commands: deck check, plan, run)",
+            "command scout is not available yet",
+            "flag --judge does not apply to run",
+            "Parse Command example 11"
+          ],
+          "drop": [
+            "Parse Command example 4: plan and deck status answer NotYetError"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "render"
+    },
+    {
+      "id": "cut-component"
+    },
+    {
+      "id": "cut-judges"
+    },
+    {
+      "id": "plan-spec"
+    },
+    {
+      "id": "plan-command"
+    },
+    {
+      "id": "render-judge",
+      "files": [
+        {
+          "file": "tests/planner/render.examples.test.ts",
+          "min": 11,
+          "max": 19,
+          "lits": [
+            "sumEntries.section.txt",
+            "checkLedger.section.txt",
+            "Exact Sums",
+            "(definition not found in the record)",
+            "29500"
+          ],
+          "new": true
+        }
+      ]
+    },
+    {
+      "id": "cut-component-judge",
+      "files": [
+        {
+          "file": "tests/planner/cut.examples.test.ts",
+          "min": 7,
+          "max": 15,
+          "lits": [
+            "ledger.cut.json",
+            "store.cut.json",
+            "badCalls.json",
+            "duplicate customId 'parse-entry'",
+            "Interface 'x' exposes unknown Function 'Nope'"
+          ],
+          "new": true
+        }
+      ]
+    },
+    {
+      "id": "cut-judges-judge",
+      "files": [
+        {
+          "file": "tests/planner/judges.examples.test.ts",
+          "min": 4,
+          "max": 12,
+          "lits": [
+            "ledger.judges.json",
+            "extras.judges.json",
+            "Preconditions a test's setup depends on:",
+            "Write the CLI tests."
+          ],
+          "new": true
+        }
+      ]
+    },
+    {
+      "id": "plan-spec-judge",
+      "files": [
+        {
+          "file": "tests/planner/plan.examples.test.ts",
+          "min": 8,
+          "max": 16,
+          "lits": [
+            "ledger.golden.json",
+            "ledger.plan.json",
+            "layered.json",
+            "dependency cycle among a, b",
+            "../../contour.yaml",
+            "validate-record"
+          ],
+          "new": true
+        }
+      ]
+    },
+    {
+      "id": "plan-command-judge",
+      "files": [
+        {
+          "file": "tests/cli/planCommand.examples.test.ts",
+          "min": 5,
+          "max": 13,
+          "lits": [
+            "ledger.plan.json",
+            "spec file not found: nope.yaml",
+            "morph plan: exit 0\\n",
+            "decks/p.json"
+          ],
+          "new": true
+        },
+        {
+          "file": "tests/cli/main.examples.test.ts",
+          "min": 5,
+          "max": 5,
+          "lits": [
+            "symlinkSync"
+          ]
+        }
+      ]
+    }
+  ]
+}

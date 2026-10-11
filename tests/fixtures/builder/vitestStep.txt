@@ -1,0 +1,1 @@
+node_modules/.bin/vitest run tests/a.test.ts --reporter=dot > $P/vt.log 2>&1 || { if grep -q '^ FAIL ' $P/vt.log; then awk '/^ FAIL /{p=1} p' $P/vt.log | grep -vE '^ +(Start at|Duration) ' | head -200; else tail -60 $P/vt.log; fi; node $P/firstdiff.mjs $P/vt.log; exit 1; }

@@ -1,0 +1,5 @@
+{
+  "error": {
+    "message": "HTTP 400: invalid batch inference job: Model 'z-ai/glm-5.3:batch' does not have a :batch endpoint."
+  }
+}

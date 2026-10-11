@@ -1,0 +1,12 @@
+node_modules/
+dist/
+probe/
+coverage/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.morph/*
+!.morph/runs/
+.morph/runs/*/requests/
+.env
+*.log

@@ -1,0 +1,101 @@
+{
+  "base": "4f2a9c1",
+  "head": "morph/20261009-101500",
+  "changed": [
+    {
+      "path": "src/shop/addTax.ts",
+      "status": "modified",
+      "added": 7,
+      "deleted": 2,
+      "writers": [
+        "add-tax"
+      ],
+      "scope": "target"
+    },
+    {
+      "path": "docs/a|b.md",
+      "status": "added",
+      "added": null,
+      "deleted": null,
+      "writers": [],
+      "scope": "outside"
+    }
+  ],
+  "obligations": [
+    {
+      "component": "shop",
+      "function": "Add Tax",
+      "touchedBy": [
+        "card add-tax",
+        "file src/shop/addTax.ts"
+      ],
+      "examples": 3,
+      "missing": [
+        2
+      ]
+    }
+  ],
+  "guardrails": [
+    {
+      "name": "Tests Kept",
+      "files": 1,
+      "findings": 0
+    },
+    {
+      "name": "No New Skips",
+      "files": 1,
+      "findings": 1
+    }
+  ],
+  "mutants": [
+    {
+      "path": "src/shop/addTax.ts",
+      "line": 4,
+      "rule": "=== → !==",
+      "killed": true
+    },
+    {
+      "path": "src/shop/addTax.ts",
+      "line": 9,
+      "rule": "+ → -",
+      "killed": false
+    }
+  ],
+  "findings": [
+    {
+      "kind": "mutation",
+      "source": "mutation src/shop/addTax.ts:9",
+      "path": "src/shop/addTax.ts",
+      "expected": "a test fails on + → - at line 9",
+      "got": "every test passed"
+    },
+    {
+      "kind": "scope",
+      "source": "scout s1",
+      "path": "docs/a|b.md",
+      "expected": "a target of the scout session (src/shop/addTax.ts)",
+      "got": "changed, though the scout did not name it"
+    },
+    {
+      "kind": "obligation",
+      "source": "record: shop · Add Tax · example 2",
+      "path": "tests/shop/addTax.examples.test.ts",
+      "expected": "a test named \"Add Tax example 2\"",
+      "got": "no test title at head starts with it"
+    },
+    {
+      "kind": "guardrail",
+      "source": "guardrail No New Skips",
+      "path": "tests/shop/addTax.test.ts",
+      "expected": "at most 0 skipped or focused tests, as at base",
+      "got": "1 at head"
+    },
+    {
+      "kind": "envelope",
+      "source": "primer: ownership",
+      "path": "docs/a|b.md",
+      "expected": "written by a Morph card of the range",
+      "got": "changed outside every card's targets; no Morph card ever wrote it"
+    }
+  ]
+}

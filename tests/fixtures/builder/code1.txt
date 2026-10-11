@@ -1,0 +1,46 @@
+D=/tmp/morph/a-p1; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log
+cp src/x/a.ts $D/0-$S.ts 2>/dev/null
+(
+ set -e
+ export NO_COLOR=1 CI=1
+P=$PWD/probe/a; rm -rf $P; mkdir -p $P; trap 'rm -rf $P' EXIT
+cat > $P/guard.mjs <<'MORPH_GUARD_EOF'
+// guard
+MORPH_GUARD_EOF
+cat > $P/probe.config.mts <<'MORPH_CONF_EOF'
+import { defineConfig } from "vitest/config";
+import { fileURLToPath } from "node:url";
+export default defineConfig({
+  root: fileURLToPath(new URL("../..", import.meta.url)),
+  test: { environment: "node", include: ["probe/a/**/*.probe.ts"],
+    setupFiles: ["tests/setup.ts"], chaiConfig: { truncateThreshold: 200 } },
+});
+MORPH_CONF_EOF
+cat > $P/tsconfig.card.json <<'MORPH_TSCONF_EOF'
+{
+  "extends": "../../tsconfig.json",
+  "include": [
+    "../../src",
+    "../../tests",
+    "./*.probe.ts"
+  ],
+  "exclude": [
+    "../../src/x/b.ts"
+  ]
+}
+MORPH_TSCONF_EOF
+cat > $P/firstdiff.mjs <<'MORPH_FIRSTDIFF_EOF'
+// firstdiff
+MORPH_FIRSTDIFF_EOF
+cat > $P/a.probe.ts <<'MORPH_PROBE_EOF'
+// probe
+MORPH_PROBE_EOF
+echo '== tsc'; node_modules/.bin/tsc --noEmit -p $P/tsconfig.card.json
+echo '== eslint'; E=0; node_modules/.bin/eslint src/x/a.ts || E=1
+echo '== guard'; node $P/guard.mjs src src/x/a.ts
+echo '== probe'; node_modules/.bin/vitest run --config $P/probe.config.mts --reporter=dot > $P/vt.log 2>&1 || { if grep -q '^ FAIL ' $P/vt.log; then awk '/^ FAIL /{p=1} p' $P/vt.log | grep -vE '^ +(Start at|Duration) ' | head -200; else tail -60 $P/vt.log; fi; node $P/firstdiff.mjs $P/vt.log; exit 1; }
+[ "$E" = 0 ] || { echo "== eslint failed (see above); every step between it and here passed"; exit 1; }
+echo '== full'; node_modules/.bin/vitest run --passWithNoTests --reporter=dot > $P/vt.log 2>&1 || { if grep -q '^ FAIL ' $P/vt.log; then awk '/^ FAIL /{p=1} p' $P/vt.log | grep -vE '^ +(Start at|Duration) ' | head -200; else tail -60 $P/vt.log; fi; node $P/firstdiff.mjs $P/vt.log; exit 1; }
+echo '== frozen'; git diff --quiet HEAD -- contour.yaml morph-map.json docs decks tests/fixtures || { echo "changed outside the targets: $(git diff --name-only HEAD -- contour.yaml morph-map.json docs decks tests/fixtures | tr "\n" " ")"; exit 1; }
+X=$(git ls-files --others --exclude-standard | grep -vxF -e src/x/a.ts || true); [ -z "$X" ] || { echo "files left in the tree: $X"; exit 1; }
+) > $L 2>&1; rc=$?; cat $L; exit $rc

@@ -1,0 +1,17 @@
+[
+  "(root): unknown key 'Extra' (known: version, package, language, docs, groups, cards, extra_cards)",
+  "version: must be 1",
+  "package: must be a non-empty string",
+  "docs: must be a list",
+  "groups.b[0]: Function 'G' is already in group 'a'",
+  "groups.c: must be a non-empty list of Function names",
+  "cards.x: unknown key 'slice' (known: custom_id, intent, targets, context_slice, depends_on, instruction, acceptance, model, max_tokens, reasoning_max_tokens, variants)",
+  "cards.x.custom_id: must match ^[A-Za-z0-9._-]+$",
+  "cards.x.intent: must be generate or patch",
+  "cards.x.targets: must hold at least one path",
+  "cards.x.max_tokens: must be a positive integer",
+  "cards.x.variants: must be a positive integer",
+  "cards.y: must be an object",
+  "extra_cards[0].custom_id: required",
+  "extra_cards[0].instruction: required"
+]

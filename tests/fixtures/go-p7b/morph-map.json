@@ -1,0 +1,13 @@
+{
+  "docs": ["go.mod"],
+  "cards": {
+    "control-contract": { "intent": "patch", "targets": ["control/control.go"], "max_tokens": 6000 },
+    "phase-loop": { "intent": "patch", "targets": ["supervisor/loop.go"], "context_slice": ["go.mod", "control/control.go"], "depends_on": ["control-contract"], "max_tokens": 6000 },
+    "runtime-guard": { "intent": "patch", "targets": ["supervisor/guard.go"], "context_slice": ["go.mod", "supervisor/loop.go"], "depends_on": ["phase-loop"], "max_tokens": 6000 },
+    "daemon-core": { "intent": "patch", "targets": ["daemon/daemon.go"], "context_slice": ["go.mod", "supervisor/loop.go"], "depends_on": ["phase-loop", "runtime-guard"], "max_tokens": 6000 },
+    "control-contract-judge": { "intent": "patch", "targets": ["control/control_examples_test.go"], "max_tokens": 8000 },
+    "phase-loop-judge": { "intent": "patch", "targets": ["supervisor/loop_examples_test.go"], "max_tokens": 8000 },
+    "runtime-guard-judge": { "intent": "patch", "targets": ["supervisor/guard_examples_test.go"], "max_tokens": 8000 },
+    "daemon-core-judge": { "intent": "patch", "targets": ["daemon/daemon_examples_test.go"], "max_tokens": 8000 }
+  }
+}

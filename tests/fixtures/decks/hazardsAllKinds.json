@@ -1,0 +1,7 @@
+[
+  {"customId": "a", "intent": "generate", "targets": ["src/x.ts"], "contextSlice": ["docs/a.md"], "instruction": "x"},
+  {"customId": "b", "intent": "generate", "targets": ["src/x.ts"], "contextSlice": ["docs/b.md"], "instruction": "x"},
+  {"customId": "c", "intent": "generate", "targets": ["src/y.ts"], "contextSlice": ["src/x.ts"], "instruction": "x"},
+  {"customId": "d", "intent": "generate", "targets": ["src/z.ts"], "contextSlice": ["src/w.ts"], "instruction": "x"},
+  {"customId": "e", "intent": "generate", "targets": ["src/w.ts"], "contextSlice": [], "instruction": "x", "dependsOn": ["c"]}
+]

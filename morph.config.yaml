@@ -1,0 +1,4 @@
+# MorphV2's own project config (issue #18; docs/ORCHESTRATOR_REFERENCE.md §8). An absent key keeps its built-in value.
+version: 1
+scout:
+  grepSkip: [".morph/", "decks/", "docs/TASK_"]   # path prefixes; a GREP that names one (-- docs) lifts it

@@ -1,0 +1,129 @@
+import { chmodSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import type { Stats } from "node:fs";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
+
+export type InitLanguage = "typescript" | "python" | "go";
+
+export interface InitOptions {
+  project: string;
+  language: InitLanguage;
+  module: string | null;
+  templates: string | null;
+}
+
+export interface InitValues {
+  name: string;
+  module: string;
+  language: string;
+}
+
+export interface InitDocument {
+  name: string;
+  language: InitLanguage;
+  module: string;
+  files: string[];
+}
+
+export interface InitResult {
+  code: 0 | 2;
+  document: unknown;
+}
+
+export const COMMON_DIR = "common";
+
+export function defaultTemplatesDir(): string {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  return path.resolve(here, "..", "..", "templates");
+}
+
+export function fillTemplate(text: string, values: InitValues): string {
+  return text.replace(/\{\{(name|module|language)\}\}/g, (match, key: string): string => {
+    if (key === "name") return values.name;
+    if (key === "module") return values.module;
+    if (key === "language") return values.language;
+    return match;
+  });
+}
+
+export function listTemplateFiles(dir: string): string[] {
+  if (!isDirectory(dir)) return [];
+  const files: string[] = [];
+  collectInto(dir, "", files);
+  files.sort();
+  return files;
+}
+
+export function initProject(root: string, args: InitOptions, cwd: string): InitResult {
+  const templates = args.templates === null ? defaultTemplatesDir() : path.resolve(cwd, args.templates);
+
+  const rootStat = statOrNull(root);
+  if (rootStat !== null) {
+    if (!rootStat.isDirectory()) return refusal("target is not a directory");
+    const entries = readdirSync(root).sort();
+    if (entries.length > 0) {
+      return refusal(`target directory is not empty (first entry: ${entries[0]})`);
+    }
+  }
+
+  const folders = [COMMON_DIR, args.language];
+  for (const folder of folders) {
+    if (!isDirectory(path.join(templates, folder))) {
+      return refusal(`template folder not found: ${folder}`);
+    }
+  }
+
+  const sources = new Map<string, string>();
+  for (const folder of folders) {
+    const base = path.join(templates, folder);
+    for (const rel of listTemplateFiles(base)) sources.set(rel, path.join(base, rel));
+  }
+  const files = Array.from(sources.keys()).sort();
+
+  const values: InitValues = {
+    name: args.project,
+    module: args.module ?? args.project,
+    language: args.language,
+  };
+
+  mkdirSync(root, { recursive: true });
+  for (const rel of files) {
+    const source = sources.get(rel);
+    if (source === undefined) continue;
+    const dest = path.join(root, rel);
+    mkdirSync(path.dirname(dest), { recursive: true });
+    writeFileSync(dest, fillTemplate(readFileSync(source, "utf8"), values));
+    chmodSync(dest, statSync(source).mode & 0o777);
+  }
+
+  return {
+    code: 0,
+    document: { name: args.project, language: args.language, module: values.module, files },
+  };
+}
+
+function refusal(message: string): InitResult {
+  return { code: 2, document: { error: { code: 2, kind: "RefusalError", message } } };
+}
+
+function isDirectory(target: string): boolean {
+  const stat = statOrNull(target);
+  return stat !== null && stat.isDirectory();
+}
+
+function statOrNull(target: string): Stats | null {
+  try {
+    return statSync(target);
+  } catch {
+    return null;
+  }
+}
+
+function collectInto(dir: string, prefix: string, files: string[]): void {
+  const entries = readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const rel = prefix === "" ? entry.name : `${prefix}/${entry.name}`;
+    if (entry.isDirectory()) collectInto(path.join(dir, entry.name), rel, files);
+    else if (entry.isFile()) files.push(rel);
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "gen-0000000002-TESTtestTESTtestTEST",
+  "provider": "Novita",
+  "model": "z-ai/glm-5.3",
+  "object": "chat.completion",
+  "created": 1791289398,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "length",
+      "native_finish_reason": "length",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": null,
+        "refusal": null,
+        "reasoning": "Let me think about the hunk headers first."
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 15550,
+    "completion_tokens": 12000,
+    "total_tokens": 27550,
+    "cost": 0.0172,
+    "is_byok": false,
+    "prompt_tokens_details": { "cached_tokens": 0 },
+    "completion_tokens_details": { "reasoning_tokens": 12000 }
+  }
+}

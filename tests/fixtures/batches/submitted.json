@@ -1,0 +1,56 @@
+{
+  "batchId": "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W",
+  "processor": "b",
+  "model": "acme/m:batch",
+  "customIds": [
+    "clamp-value.v1",
+    "sign-of.v1"
+  ],
+  "status": "validating",
+  "cost": null,
+  "deck": "d.json",
+  "submittedAt": 1791400000000,
+  "cards": [
+    {
+      "customId": "clamp-value",
+      "intent": "generate",
+      "targets": [
+        "out/clamp.ts"
+      ],
+      "contextSlice": [
+        "docs/clamp.md"
+      ],
+      "instruction": "Write clampValue.",
+      "acceptance": "test -f out/clamp.ts",
+      "model": null,
+      "maxTokens": null,
+      "reasoning": null,
+      "variants": 1,
+      "dependsOn": []
+    },
+    {
+      "customId": "sign-of",
+      "intent": "generate",
+      "targets": [
+        "out/sign.ts"
+      ],
+      "contextSlice": [],
+      "instruction": "Write signOf.",
+      "acceptance": "test -f out/sign.ts",
+      "model": null,
+      "maxTokens": null,
+      "reasoning": null,
+      "variants": 1,
+      "dependsOn": []
+    }
+  ],
+  "inputs": {
+    "clamp-value": {
+      "docs/clamp.md": "0acba86238043b8c",
+      "out/clamp.ts": "absent"
+    },
+    "sign-of": {
+      "out/sign.ts": "absent"
+    }
+  }
+}

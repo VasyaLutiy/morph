@@ -1,0 +1,59 @@
+{
+  "report": {
+    "runId": "r1",
+    "completedAt": 0,
+    "branch": "morph/r1",
+    "processor": "ds",
+    "generations": 3,
+    "outcomes": [],
+    "usageTotals": {
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "cost": 0,
+      "requests": 8
+    },
+    "requests": [
+      {
+        "customId": "lib.v1",
+        "model": "deepseek/deepseek-v4.1-flash"
+      },
+      {
+        "customId": "lib.r1.v1",
+        "model": "deepseek/deepseek-v4.1-flash"
+      },
+      {
+        "customId": "lib.r2.v1",
+        "model": "deepseek/deepseek-v4.1-flash"
+      },
+      {
+        "customId": "use.v1",
+        "model": "deepseek/deepseek-v4.1-flash"
+      },
+      {
+        "customId": "use.v2",
+        "model": "deepseek/deepseek-v4.1-flash"
+      },
+      {
+        "customId": "use-judge.v1",
+        "model": "z-ai/glm-5.3"
+      },
+      {
+        "customId": "two.v1",
+        "model": "deepseek/deepseek-v4.1-flash"
+      },
+      {
+        "customId": "two.v2",
+        "model": "deepseek/deepseek-v4.1-flash"
+      }
+    ]
+  },
+  "answers": {
+    "lib.v1": "```ts\nexport const lib = (n: number): number => n;\n```\n",
+    "lib.r1.v1": "Here it is.\n\n```ts\nexport const lib = (n: number): number => n * 1;\n```\n",
+    "use.v1": "```ts\nimport { lib } from \"./lib.js\";\nexport const use = (): number => lib(2);\n```\n",
+    "use.v2": "```ts\nexport const use = (): number => 2;\n```\n",
+    "use-judge.v1": "```ts\nimport { use } from \"../src/use.js\";\nexport const t = use();\n```\n",
+    "two.v1": "FILE: src/x.ts\n```ts\nexport const x = 1;\n```\n\nFILE: src/y.ts\n```ts\nexport const y = 2;\nexport const z = 3;\n```\n",
+    "two.v2": "FILE: src/x.ts\n```ts\nexport const x = 1;\n"
+  }
+}

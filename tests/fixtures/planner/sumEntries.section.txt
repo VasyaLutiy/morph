@@ -1,0 +1,20 @@
+## Function Sum Entries
+
+The total of a list of entries.
+
+Behaviour: Adds the cents of every entry; the empty list sums to 0.
+
+Preconditions:
+- every line is parsed first, else Parse Entry faults before the sum
+
+Steps:
+- calls: Parse Entry
+- reads: Entry
+- produces: number
+
+Examples (the tests must prove each one):
+1. given entries rent 1200 and food 300; when summed; then 1500 (ref: Exact Sums)
+
+Data Entry: One ledger entry.
+Schema:
+{ name: string, cents: number }

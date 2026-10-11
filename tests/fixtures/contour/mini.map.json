@@ -1,0 +1,17 @@
+{
+  "package": "src",
+  "language": "typescript",
+  "docs": ["docs/TASK.md"],
+  "groups": { "report": ["Report Count"], "store": ["Save Count", "Load Counts"] },
+  "cards": {
+    "count-words": { "targets": ["src/tally/countWords.ts"], "max_tokens": 12000, "variants": 2 },
+    "report-judge": {
+      "intent": "generate", "context_slice": ["docs/TASK.md", "tests/helpers.ts"], "depends_on": ["report"],
+      "instruction": "Write the judge.", "acceptance": "  exit 0\n"
+    }
+  },
+  "extra_cards": [
+    { "component": "store", "custom_id": "store-schema", "intent": "generate", "targets": ["src/store/schema.ts"],
+      "instruction": "Write the schema." }
+  ]
+}

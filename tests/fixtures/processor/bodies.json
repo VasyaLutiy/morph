@@ -1,0 +1,6 @@
+{
+  "AR1": "{\"model\":\"z-ai/glm-5.3\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],\"max_tokens\":12000,\"reasoning\":{\"max_tokens\":2500},\"provider\":{\"order\":[\"Novita\",\"Together\"],\"allow_fallbacks\":false},\"usage\":{\"include\":true}}",
+  "AR2": "{\"model\":\"x/y\",\"messages\":[{\"role\":\"system\",\"content\":\"s\"},{\"role\":\"user\",\"content\":\"u\"}],\"reasoning\":{\"effort\":\"low\"},\"usage\":{\"include\":true}}",
+  "AB1": "{\"endpoint\":\"/v1/chat/completions\",\"model\":\"z-ai/glm-5.3:batch\",\"requests\":[{\"custom_id\":\"a.v1\",\"body\":{\"max_tokens\":12000,\"reasoning\":{\"max_tokens\":2500},\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}},{\"custom_id\":\"a.v2\",\"body\":{\"reasoning\":{\"effort\":\"low\"},\"messages\":[{\"role\":\"system\",\"content\":\"s\"},{\"role\":\"user\",\"content\":\"u\"}]}}]}",
+  "AB2": "{\"endpoint\":\"/v1/chat/completions\",\"model\":\"z-ai/glm-5.3:batch\",\"requests\":[{\"custom_id\":\"b.v1\",\"body\":{\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}]}"
+}

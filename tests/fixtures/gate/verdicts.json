@@ -1,0 +1,86 @@
+{
+ "go probe": {
+  "stage": "probe",
+  "expected": "probe",
+  "outside": [],
+  "failures": [
+   "--- FAIL: TestProbeControlContractExample1 (0.00s)"
+  ]
+ },
+ "go judge": {
+  "stage": "guard",
+  "expected": "guard",
+  "outside": [],
+  "failures": []
+ },
+ "go vet outside": {
+  "stage": "probe",
+  "expected": "probe",
+  "outside": [
+   "vet: supervisor/guard_examples_test.go:11:16: not enough arguments in call to l.Exited"
+  ],
+  "failures": []
+ },
+ "ts tsc": {
+  "stage": "tsc",
+  "expected": "probe",
+  "outside": [
+   "src/report/line.ts(1,17): error TS2724: '\"../units/convert.js\"' has no exported member named 'toMeters'. Did you mean 'toMetres'?",
+   "tests/units/convert.examples.test.ts(2,10): error TS2724: '\"../../src/units/convert.js\"' has no exported member named 'toMeters'. Did you mean 'toMetres'?"
+  ],
+  "failures": []
+ },
+ "ts probe": {
+  "stage": "probe",
+  "expected": "probe",
+  "outside": [],
+  "failures": [
+   "FAIL  probe/to-metres/to-metres.probe.ts > To Metres example 1",
+   "FAIL  probe/to-metres/to-metres.probe.ts > To Metres example 2"
+  ]
+ },
+ "mixed": {
+  "stage": "verdict",
+  "expected": "probe",
+  "outside": [
+   "./a/a.go:6:25: undefined: b.Old",
+   "vet: ./a/a.go:6:25: undefined: b.Old",
+   "src/u.ts(2,3): error TS2304: Cannot find name 'q'.",
+   "tests/x.test.ts(4,5): error TS2345: Argument of type 'string' is not assignable."
+  ],
+  "failures": [
+   "FAIL  probe/k/k.probe.ts > K example 1",
+   "--- FAIL: TestProbeK (0.00s)"
+  ]
+ },
+ "mixed, every stage": {
+  "stage": "verdict",
+  "expected": "probe",
+  "outside": [
+   "./a/a.go:6:25: undefined: b.Old",
+   "vet: ./a/a.go:6:25: undefined: b.Old",
+   "src/u.ts(2,3): error TS2304: Cannot find name 'q'.",
+   "tests/x.test.ts(4,5): error TS2345: Argument of type 'string' is not assignable.",
+   "src/zz.ts(9,9): error TS1: after the compile stages"
+  ],
+  "failures": [
+   "FAIL  probe/k/k.probe.ts > K example 1",
+   "--- FAIL: TestProbeK (0.00s)"
+  ]
+ },
+ "mixed, no pattern": {
+  "stage": "verdict",
+  "expected": "probe",
+  "outside": [],
+  "failures": [
+   "FAIL  probe/k/k.probe.ts > K example 1",
+   "--- FAIL: TestProbeK (0.00s)"
+  ]
+ },
+ "none": {
+  "stage": null,
+  "expected": "probe",
+  "outside": [],
+  "failures": []
+ }
+}

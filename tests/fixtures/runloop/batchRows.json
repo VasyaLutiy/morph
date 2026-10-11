@@ -1,0 +1,37 @@
+[
+  {
+    "customId": "clamp-value.v1",
+    "model": "z-ai/glm-5.3:batch",
+    "provider": "DeepInfra",
+    "generationId": "gen-batch-1791388269-d8fd2d40d4a58d1324e8",
+    "inputTokens": 431,
+    "outputTokens": 57,
+    "cost": 0.0003029253,
+    "finishReason": "stop",
+    "error": null,
+    "batchId": "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W"
+  },
+  {
+    "customId": "sign-of.v1",
+    "model": "z-ai/glm-5.3:batch",
+    "provider": "DeepInfra",
+    "generationId": "gen-batch-1791388269-f422e6d682c8c1ca3ddb",
+    "inputTokens": 401,
+    "outputTokens": 46,
+    "cost": 0.0002774747,
+    "finishReason": "stop",
+    "error": null,
+    "batchId": "batch-1791388269-cp5qOr5IQ0xoz1ntuc8W"
+  },
+  {
+    "customId": "pin.v1",
+    "model": "other/m",
+    "provider": null,
+    "generationId": null,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cost": null,
+    "finishReason": null,
+    "error": "batch runs one model: pin.v1 pins other/m, the batch is z-ai/glm-5.3:batch"
+  }
+]

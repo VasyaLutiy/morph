@@ -1,0 +1,103 @@
+{
+  "runId": "20261007-111944",
+  "completedAt": 1791372125984,
+  "branch": "morph/20261007-111944",
+  "processor": "glm53",
+  "generations": 1,
+  "outcomes": [
+    {
+      "customId": "cut-judges-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "cut-judges-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/planner/judges.examples.test.ts\n== own\n== full\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n\n/home/john/Documents/Work2026/MorphV2/tests/planner/judges.examples.test.ts\n  40:23  error  '_path' is defined but never used  @typescript-eslint/no-unused-vars\n\n✖ 1 problem (1 error, 0 warnings)\n\n== guard tests/planner/judges.examples.test.ts\n== own\n== eslint failed (see above); every step between it and here passed\n"
+      ],
+      "commit": "ea07677f04da9fc5b113a055a2a389db8dd9b151",
+      "diffstat": {
+        "files": 1,
+        "insertions": 121,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-spec-judge",
+      "status": "failed",
+      "reason": "acceptance failed",
+      "attempts": 3,
+      "winningVariant": null,
+      "acceptanceLog": "== tsc\n== eslint\n\n/home/john/Documents/Work2026/MorphV2/tests/planner/plan.examples.test.ts\n  24:7  error  'EMPTY_MAP' is assigned a value but never used  @typescript-eslint/no-unused-vars\n\n✖ 1 problem (1 error, 0 warnings)\n\n== guard tests/planner/plan.examples.test.ts\n== own\n== eslint failed (see above); every step between it and here passed\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n\n/home/john/Documents/Work2026/MorphV2/tests/planner/plan.examples.test.ts\n  21:7  error  'LEDGER' is assigned a value but never used  @typescript-eslint/no-unused-vars\n  22:7  error  'STORE' is assigned a value but never used   @typescript-eslint/no-unused-vars\n\n✖ 2 problems (2 errors, 0 warnings)\n\n== guard tests/planner/plan.examples.test.ts\nguard: tests/planner/plan.examples.test.ts does not mention the example literal \"layered.json\"\n",
+        "== tsc\n== eslint\n== guard tests/planner/plan.examples.test.ts\n== own\n FAIL  tests/planner/plan.examples.test.ts > own: planSpec keeps the map slice of an extra card as is\nAssertionError: expected null not to be null // Object.is equality\n ❯ tests/planner/plan.examples.test.ts:230:35\n    228| test(\"own: planSpec keeps the map slice of an extra card as is\", () =>…\n    229|   const notes = MAP.extraCards.find((e) => e.customId === \"notes\");\n    230|   expect(notes?.contextSlice).not.toBe(null);\n       |                                   ^\n    231|   const r = planSpec(planInput({ components: [\"store\"], judge: false }…\n    232|   if (!r.ok) throw new Error(r.error);\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 14 passed (15)\n\n"
+      ],
+      "commit": null,
+      "diffstat": null
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 121442,
+    "outputTokens": 14515,
+    "cost": 0.050531903999999996,
+    "requests": 5
+  },
+  "requests": [
+    {
+      "customId": "cut-judges-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371985-OJaQcxtL06UkTaaZsSJK",
+      "inputTokens": 19249,
+      "outputTokens": 1868,
+      "cost": 0.006566724,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec-judge.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791371984-lCsDOjn4pMG1dm8ha1II",
+      "inputTokens": 20706,
+      "outputTokens": 2761,
+      "cost": 0.012144048,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-judges-judge.r1.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791372021-68YwYG6ZElEpL4Ppjxl1",
+      "inputTokens": 26030,
+      "outputTokens": 1651,
+      "cost": 0.006589296,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec-judge.r1.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791372021-Qp7gpmbhDv0FsKoEB20j",
+      "inputTokens": 27651,
+      "outputTokens": 3071,
+      "cost": 0.015470148,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec-judge.r2.v1",
+      "model": "z-ai/glm-5.3",
+      "provider": "Novita",
+      "generationId": "gen-1791372061-fDDBy9su5w9JYIZz2ilC",
+      "inputTokens": 27806,
+      "outputTokens": 5164,
+      "cost": 0.009761688,
+      "finishReason": "stop",
+      "error": null
+    }
+  ]
+}

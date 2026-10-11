@@ -1,0 +1,24 @@
+[
+  {
+    "customId": "a.v1",
+    "model": "stub",
+    "provider": "stub",
+    "generationId": "stub-a.v1",
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cost": 0,
+    "finishReason": "stop",
+    "error": null
+  },
+  {
+    "customId": "b.v1",
+    "model": "stub",
+    "provider": "stub",
+    "generationId": "stub-b.v1",
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cost": 0,
+    "finishReason": "stop",
+    "error": null
+  }
+]

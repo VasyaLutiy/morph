@@ -1,0 +1,119 @@
+version: 1
+System:
+  name: ledger
+  description: >
+    Keeps a ledger of entries and reports their sum.
+  requirements: [Exact Sums]
+  guardrails: [No Network]
+  groups:
+    - name: ledger
+      description: Parsing, summing, checking and reporting entries.
+      language: typescript
+      requirements: [Exact Sums]
+      guardrails: [Pure Core]
+      functions:
+        - name: Parse Entry
+          description: One line of text into an Entry.
+          behavior: >
+            Splits "<name> <cents>" at the last space;
+            the cents are digits.
+          steps:
+            - produces: Entry
+          examples:
+            - given: 'the line "rent 1200"'
+              when: parsed
+              then: '{name: "rent", cents: 1200}'
+            - given: 'the line "x"'
+              when: parsed
+              then: 'the error "no amount in line 1"'
+        - name: Sum Entries
+          description: The total of a list of entries.
+          behavior: Adds the cents of every entry; the empty list sums to 0.
+          preconditions:
+            - every line is parsed first, else Parse Entry faults before the sum
+          steps:
+            - calls: Parse Entry
+            - reads: Entry
+            - produces: number
+          examples:
+            - given: entries rent 1200 and food 300
+              when: summed
+              then: "1500"
+              ref: Exact Sums
+        - name: Check Ledger
+          description: Checks that a ledger's stated total matches its entries.
+          behavior: Parses every line, sums the entries and compares the sum with the stated total.
+          requirements: [Exact Sums, Unknown Rule]
+          steps:
+            - calls: Parse Entry
+            - calls: Sum Entries
+            - uses: store
+          examples:
+            - given: 'lines "a 1", "b 2" and the total 3'
+              when: checked
+              then: ok
+            - given: 'lines "a 1" and the total 2'
+              when: checked
+              then: 'the error "total 2 does not match the sum 1"'
+        - name: Format Report
+          description: The report text of a ledger.
+          behavior: One line per entry, then the total.
+          guardrails: [No Network]
+          steps:
+            - calls: Sum Entries
+            - produces: string
+          examples:
+            - given: the entry rent 1200
+              when: formatted
+              then: '"rent 1200\ntotal 1200\n"'
+      dataObjects:
+        - name: Entry
+          description: One ledger entry.
+          schema: "{ name: string, cents: number }"
+      interfaces:
+        - name: ledger CLI
+          description: The command line.
+          exposes: [Format Report, Check Ledger]
+        - name: check API
+          description: The checker as a library.
+          exposes: [Check Ledger]
+    - name: store
+      description: Keeps ledgers on disk.
+      language: python
+      functions:
+        - name: Save Ledger
+          description: Writes a ledger file.
+          behavior: Writes one line per entry.
+          preconditions:
+            - the directory exists, else the write faults
+          steps:
+            - modifies: Ledger File
+            - uses: ledger
+          examples:
+            - given: the entry rent 1200
+              when: saved
+              then: 'the file holds "rent 1200\n"'
+        - name: Load Ledger
+          description: Reads a ledger file.
+          behavior: One entry per line; a missing file is no entries.
+          steps:
+            - reads: Ledger File
+            - produces: Entry
+          examples:
+            - given: a missing file
+              when: loaded
+              then: "[]"
+      dataObjects:
+        - name: Ledger File
+          description: A text file of entries.
+          schema:
+            path: string
+            text: string
+Requirement:
+  - name: Exact Sums
+    description: Sums are integers of cents, never floats.
+Guardrail:
+  - name: No Network
+    description: Nothing opens a socket.
+  - name: Pure Core
+    description: No clock and no file system in the core.

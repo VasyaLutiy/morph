@@ -1,0 +1,67 @@
+import { describe, expect, test } from "vitest";
+import type { Request } from "../../src/compiler/types.js";
+import { assembleBatch, batchUrl } from "../../src/processor/batchRequest.js";
+import type { ProcessorConfig } from "../../src/processor/types.js";
+import { fixtureJson } from "../helpers.js";
+
+describe("Assemble Batch", () => {
+  test("Assemble Batch example 1", () => {
+    const config = fixtureJson("processor/batchConfig.json") as ProcessorConfig;
+    const requests: Request[] = [
+      {
+        customId: "a.v1",
+        model: null,
+        maxTokens: 12000,
+        reasoning: null,
+        messages: [{ role: "user", content: "hi" }],
+      },
+      {
+        customId: "a.v2",
+        model: null,
+        maxTokens: null,
+        reasoning: { effort: "low" },
+        messages: [
+          { role: "system", content: "s" },
+          { role: "user", content: "u" },
+        ],
+      },
+    ];
+    const call = assembleBatch(requests, config);
+    expect(call.url).toBe("https://openrouter.ai/api/beta/batches");
+    expect(call.headers).toStrictEqual({
+      Authorization: "Bearer sk-or-test",
+      "Content-Type": "application/json",
+    });
+    expect(call.body).toBe(
+      '{"endpoint":"/v1/chat/completions","model":"z-ai/glm-5.3:batch","requests":[{"custom_id":"a.v1","body":{"max_tokens":12000,"reasoning":{"max_tokens":2500},"messages":[{"role":"user","content":"hi"}]}},{"custom_id":"a.v2","body":{"reasoning":{"effort":"low"},"messages":[{"role":"system","content":"s"},{"role":"user","content":"u"}]}}]}'
+    );
+  });
+
+  test("Assemble Batch example 2", () => {
+    const base = fixtureJson("processor/batchConfig.json") as ProcessorConfig;
+    const config: ProcessorConfig = {
+      ...base,
+      apiKey: null,
+      reasoning: null,
+      baseUrl: "http://127.0.0.1:9/v1/",
+    };
+    const requests: Request[] = [
+      {
+        customId: "b.v1",
+        model: "x/y",
+        maxTokens: null,
+        reasoning: null,
+        messages: [{ role: "user", content: "hi" }],
+      },
+    ];
+    const call = assembleBatch(requests, config);
+    expect(call.url).toBe("http://127.0.0.1:9/beta/batches");
+    expect(call.headers).toStrictEqual({
+      "Content-Type": "application/json",
+    });
+    expect(call.body).toBe(
+      '{"endpoint":"/v1/chat/completions","model":"z-ai/glm-5.3:batch","requests":[{"custom_id":"b.v1","body":{"messages":[{"role":"user","content":"hi"}]}}]}'
+    );
+    expect(batchUrl("http://h/x/")).toBe("http://h/x/batches");
+  });
+});

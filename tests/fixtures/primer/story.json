@@ -1,0 +1,328 @@
+{
+  "Read Story 1": {
+    "chronology": [
+      {
+        "phase": "P0",
+        "date": "2026-10-06",
+        "builder": "mrph",
+        "models": [
+          "z-ai/glm-5.3"
+        ],
+        "written": 1,
+        "planned": 1,
+        "runs": 1,
+        "notes": "",
+        "cost": "0.0343",
+        "switches": []
+      },
+      {
+        "phase": "P5",
+        "date": "2026-10-06",
+        "builder": "mrph",
+        "models": [
+          "z-ai/glm-5.3"
+        ],
+        "written": 7,
+        "planned": 8,
+        "runs": 3,
+        "notes": "3 runs: 7+0+0 written; re-cut 1 card, failed again; debt run at max_tokens 25500 failed — debt open…",
+        "cost": "0.2787",
+        "switches": []
+      },
+      {
+        "phase": "P5 debt (fable)",
+        "date": "",
+        "builder": "claude -p",
+        "models": [],
+        "written": 1,
+        "planned": 1,
+        "runs": 0,
+        "notes": "process-generation-judge, processor swap: Fable 5.1 xhigh; 14 tests, 1 acceptance run, 0 defects, 2…",
+        "cost": "4.1723",
+        "switches": []
+      },
+      {
+        "phase": "P7 smoke",
+        "date": "2026-10-06",
+        "builder": "V2 binary",
+        "models": [],
+        "written": 3,
+        "planned": 3,
+        "runs": 1,
+        "notes": "exit 0, 2 generations, 3 requests, 355 in / 106 out tokens",
+        "cost": "0.0003",
+        "switches": []
+      },
+      {
+        "phase": "P9c",
+        "date": "2026-10-07",
+        "builder": "mrph",
+        "models": [
+          "z-ai/glm-5.3"
+        ],
+        "written": 7,
+        "planned": 7,
+        "runs": 1,
+        "notes": "1 run, no fix; burned: 2 unclosed fences, 1 missing files, 2 losing variants",
+        "cost": "0.0873",
+        "switches": []
+      },
+      {
+        "phase": "P9 switch test",
+        "date": "",
+        "builder": "V2 replay ×3 + mrph control",
+        "models": [],
+        "written": 0,
+        "planned": 8,
+        "runs": 0,
+        "notes": "V2 before P9b, after P9b, after P9c",
+        "cost": "0.0750",
+        "switches": []
+      },
+      {
+        "phase": "P10a",
+        "date": "2026-10-07",
+        "builder": "V2 binary",
+        "models": [
+          "z-ai/glm-5.3"
+        ],
+        "written": 12,
+        "planned": 12,
+        "runs": 4,
+        "notes": "4 runs: 0 + 10 + 1 + 1 written; 3 data fixes, the third an operator exception after an emergency st…",
+        "cost": "0.3718",
+        "switches": [
+          "builder mrph → V2 binary"
+        ]
+      },
+      {
+        "phase": "P10b1",
+        "date": "2026-10-07",
+        "builder": "V2 cut + V2 run",
+        "models": [
+          "z-ai/glm-5.3"
+        ],
+        "written": 10,
+        "planned": 10,
+        "runs": 1,
+        "notes": "1 run, no fix; 4 retries won: probe-dir-judge r1, build-acceptances r1; 4 losing variants",
+        "cost": "0.0998",
+        "switches": [
+          "builder V2 binary → V2 cut + V2 run"
+        ]
+      },
+      {
+        "phase": "P10b2",
+        "date": "2026-10-07",
+        "builder": "V2 cut + V2 run",
+        "models": [
+          "z-ai/glm-5.3"
+        ],
+        "written": 6,
+        "planned": 6,
+        "runs": 1,
+        "notes": "1 run, no fix; retries won: read-plan-checks-judge r1, plan-command-judge r2",
+        "cost": "0.0780",
+        "switches": []
+      },
+      {
+        "phase": "P10c1",
+        "date": "2026-10-07",
+        "builder": "V2 cut + V2 run",
+        "models": [
+          "z-ai/glm-5.3"
+        ],
+        "written": 8,
+        "planned": 8,
+        "runs": 1,
+        "notes": "1 run, no fix, no retry; 4 losing v2 variants of code cards",
+        "cost": "0.1289",
+        "switches": []
+      },
+      {
+        "phase": "P11",
+        "date": "2026-10-07",
+        "builder": "V2 cut + V2 run",
+        "models": [
+          "z-ai/glm-5.3"
+        ],
+        "written": 8,
+        "planned": 8,
+        "runs": 1,
+        "notes": "1 run; retry won send-batch-judge r1; v2 won assemble-batch, send-batch",
+        "cost": "0.0737",
+        "switches": []
+      },
+      {
+        "phase": "P11 smoke",
+        "date": "2026-10-07",
+        "builder": "V2 cut + V2 run on the batch route",
+        "models": [],
+        "written": 2,
+        "planned": 2,
+        "runs": 1,
+        "notes": "exit 0, 1 generation = 1 batch `batch-1791388269-cp5qOr5IQ0xoz1ntuc8W`, 2 requests, 832 in / 103 ou…",
+        "cost": "0.0006",
+        "switches": []
+      },
+      {
+        "phase": "P11b1",
+        "date": "2026-10-07",
+        "builder": "V2/ds",
+        "models": [
+          "deepseek/deepseek-v4.1-flash"
+        ],
+        "written": 14,
+        "planned": 14,
+        "runs": 1,
+        "notes": "1 run, no fix; 13 first attempt, retry won run-deck-judge r1; 7 untried v2",
+        "cost": "0.1379",
+        "switches": [
+          "builder V2 cut + V2 run → V2/ds",
+          "model z-ai/glm-5.3 → deepseek/deepseek-v4.1-flash"
+        ]
+      },
+      {
+        "phase": "P11c1",
+        "date": "2026-10-07",
+        "builder": "V2/ds",
+        "models": [
+          "deepseek/deepseek-v4.1-flash"
+        ],
+        "written": 12,
+        "planned": 12,
+        "runs": 1,
+        "notes": "1 run, no fix; 11 first attempt, run-command-judge won at r2; 6 untried v2",
+        "cost": "0.0941",
+        "switches": []
+      },
+      {
+        "phase": "P11b2",
+        "date": "2026-10-07",
+        "builder": "V2/ds",
+        "models": [
+          "deepseek/deepseek-v4.1-flash"
+        ],
+        "written": 9,
+        "planned": 9,
+        "runs": 1,
+        "notes": "1 run, no fix; 7 first attempt, retries won archive-run-judge r1, parse-command-judge r1; 4 untried…",
+        "cost": "0.1183",
+        "switches": []
+      },
+      {
+        "phase": "P11b2 smoke",
+        "date": "2026-10-07",
+        "builder": "V2 detached batch route",
+        "models": [],
+        "written": 2,
+        "planned": 2,
+        "runs": 1,
+        "notes": "submit exit 0, process exited, state with cards+inputs; collect in a second process: 12 × exit 1 pe…",
+        "cost": "0.0006",
+        "switches": []
+      }
+    ],
+    "next": {
+      "phase": "P12a",
+      "row": "P12a · primer + cli · issue #1: архивы V2 и mrph с итогами, хронология фаз из MEASURE (столбец «прогоны»), «что дальше» из PLAN и AUTONOMY, хвост DECISIONS и issues из файла, тесты по профилю языка; `morph primer [--write]`",
+      "handoff": [
+        "State at handoff (07.10, after the P11b2 smoke)",
+        "Resumed by the operator 07.10 (smoke checked green; no code reviews until further notice). Next, in order: **P12** primer (issue #1,",
+        "label `P12-primer`) → **smoke stop** (V2 primer on this repo); P13a, P13b, P14 → **final smoke stop**. At each smoke stop:",
+        "🧪, then stop; the operator resumes.",
+        "Lessons for the next preparations: default code targets add a test file (give a smoke cap or code-only targets); new"
+      ]
+    },
+    "decisions": [
+      "P11b2 · cut · parse-command writes src/cli/types.ts, parse.ts AND main.ts; Main's code card is filtered out, main-judge depends on parse-command (map) · widening Command breaks main.ts's last `else runCommand(command)` under tsc until the routing lands: the two must be one card.",
+      "P11b2 · acceptance · `decks/p11b2/checks.json`: ownGit true, fullExclude `tests/cli/parse.examples.test.ts`, code-only targets (new files `intent: generate`), no smoke cap; probes `decks/p11b2/parts/{submit-deck,collect-batch,archive-run,parse-command}.probe.ts` (24 tests) with a second processor i…",
+      "P11b2 · smoke · slug of ds on the batch route unmeasured: the smoke's first call is a one-card submit with maxTokens 8 on `deepseek/deepseek-v4.1-flash:batch`; a 400 \"does not have a :batch endpoint\" falls back to `z-ai/glm-5.3:batch` (P11 smoke) · no paid call before the gate.",
+      "P11b2 smoke · batch route · `deepseek/deepseek-v4.1-flash:batch` is accepted and completes (~73 min for one tiny request, finish `length` at maxTokens 8) — slow but working; the batch route stays on `z-ai/glm-5.3:batch` (processor glm53b, 733 s for 2 requests) · operator 07.10 after checking the sm…",
+      "from P12 · verify step · no code reviews until further notice: step 4 keeps the mechanical checks (`git status` clean, tsc, eslint, vitest, build) and drops the read of the written code against §2.2; no review passes, no review issues · operator 07.10: the goal is to close all phases through P14."
+    ],
+    "issues": {
+      "state": "read",
+      "items": [
+        {
+          "number": 6,
+          "title": "P15 golang: Go language profile written by Morph itself + live validation on a small Go project",
+          "labels": [
+            "P15-golang"
+          ]
+        },
+        {
+          "number": 1,
+          "title": "primer: на TypeScript 0 тестов — счёт только по def test_* (Python)",
+          "labels": [
+            "P12-primer"
+          ]
+        }
+      ]
+    },
+    "missing": []
+  },
+  "Read Story 2": {
+    "chronology": [
+      {
+        "phase": "P1",
+        "date": "2026-11-01",
+        "builder": "night",
+        "models": [
+          "m/a",
+          "m/b"
+        ],
+        "written": 2,
+        "planned": 3,
+        "runs": 2,
+        "notes": "two runs",
+        "cost": "0.5",
+        "switches": []
+      },
+      {
+        "phase": "P1 smoke",
+        "date": "",
+        "builder": "night",
+        "models": [],
+        "written": null,
+        "planned": null,
+        "runs": 0,
+        "notes": "",
+        "cost": "",
+        "switches": []
+      },
+      {
+        "phase": "P2",
+        "date": "2026-11-02",
+        "builder": "day",
+        "models": [
+          "m/c"
+        ],
+        "written": 4,
+        "planned": 4,
+        "runs": 1,
+        "notes": "",
+        "cost": "1.25",
+        "switches": [
+          "builder night → day",
+          "model m/a, m/b → m/c"
+        ]
+      }
+    ],
+    "next": {
+      "phase": null,
+      "row": null,
+      "handoff": []
+    },
+    "decisions": [],
+    "issues": {
+      "state": "absent",
+      "items": []
+    },
+    "missing": [
+      "plan",
+      "autonomy",
+      "decisions"
+    ]
+  }
+}
