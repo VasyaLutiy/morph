@@ -1,0 +1,35 @@
+{
+  "phase": "p31a",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates"],
+  "fullExclude": ["tests/language/guardrails.examples.test.ts", "tests/rules/guardrails.examples.test.ts", "tests/rules/layers.examples.test.ts",
+    "tests/builder/buildAcceptances.p31a.examples.test.ts", "tests/cli/planCommand.p31a.examples.test.ts"],
+  "cards": [
+    { "id": "canonical-guardrail" },
+    { "id": "guardrail-rules" },
+    { "id": "build-acceptances" },
+    { "id": "compose" },
+    { "id": "go-acceptance" },
+    { "id": "plan-command" },
+    { "id": "canonical-guardrail-judge", "files": [{ "file": "tests/language/guardrails.examples.test.ts", "min": 3, "max": 8, "new": true,
+      "lits": ["Canonical Guardrail example 1", "Canonical Guardrail example 2", "Canonical Guardrail example 3",
+        "no-process", "stdlib-only", "Interfaces Share One Core", "Standard Library Only", "constructor"] }] },
+    { "id": "guardrail-rules-judge", "files": [
+      { "file": "tests/rules/guardrails.examples.test.ts", "min": 14, "max": 26, "new": true,
+        "lits": ["Guardrail Rules example 1", "Guardrail Rules example 2", "Guardrail Rules example 3", "Guardrail Rules example 4",
+          "Card Rules example 1", "Rules Arg example 1", "Rules Arg example 2", "Rules Arg example 3", "Rules Arg example 4",
+          "Rules Arg example 5", "Guard Contract example 1", "Plan Rules example 1", "Plan Rules example 2", "Plan Rules example 3",
+          "rules/parity/trees.json", "rules/guard2/", "rules/guarded.yaml", "rules/badLanguage.yaml", "rules/issue46/tree.json",
+          "Guardrail 'no  CLOCK' of Component orders", "Interfaces Share One Core", "Frozen Tree During Run",
+          "no layer edges given — re-cut with morph plan", "no Guardrail rules given — re-cut with morph plan",
+          "the record has no 'uses' from daemon to runner (allowed: none)",
+          "speaks contract 2: copy templates/go/decks/tools/guard.mjs from MorphV2", "uses os.Getenv", "imports node:child_process"] },
+      { "file": "tests/rules/layers.examples.test.ts", "min": 11, "max": 11, "new": false,
+        "lits": ["Layers Arg example 2", "Layers Arg example 3"] }] },
+    { "id": "build-acceptances-judge", "files": [{ "file": "tests/builder/buildAcceptances.p31a.examples.test.ts", "min": 1, "max": 5, "new": true,
+      "lits": ["Build Acceptances example 12", "builder/go/code1.txt", "Guardrail 'Pure' of Component x", "Guardrail 'No Shell' of System m", "zod"] }] },
+    { "id": "plan-command-judge", "files": [{ "file": "tests/cli/planCommand.p31a.examples.test.ts", "min": 1, "max": 5, "new": true,
+      "lits": ["Plan Command example 19", "cli/goMiniGuarded.yaml", "cli/goMiniGuarded.deck.json", "morph-guard-contract: 3",
+        "Frozen Tree During Run", "speaks contract 2: copy templates/go/decks/tools/guard.mjs from MorphV2", "decks/tools/layers.json"] }] }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+ "go": {
+  "go.mod": "module m\n\ngo 1.22\n",
+  "decks/tools/layers.json": "{\"pure\": [\"calc\", \"clock\", \"shell\"]}\n",
+  "calc/add.go": "package calc\n\nimport \"strings\"\n\nfunc Add(a, b int) int { return a + b + len(strings.TrimSpace(\"\")) }\n",
+  "clock/now.go": "package clock\n\nimport \"time\"\n\nfunc Stamp() string { return time.Now().Format(time.RFC3339) }\n",
+  "shell/run.go": "package shell\n\nimport \"os/exec\"\n\nfunc Run() error { return exec.Command(\"true\").Run() }\n",
+  "app/app.go": "package app\n\nimport (\n\t\"os\"\n\t\"os/exec\"\n\t\"time\"\n)\n\nfunc Main() string {\n\t_ = exec.Command(\"true\").Run()\n\treturn os.Getenv(\"HOME\") + time.Now().String()\n}\n"
+ },
+ "typescript": {
+  "decks/tools/layers.json": "{\"pure\": [\"core\", \"clock\", \"net\"], \"entry\": \"src/main/cli.ts\", \"packages\": []}\n",
+  "src/core/add.ts": "export function add(a: number, b: number): number {\n  return a + b;\n}\n",
+  "src/clock/now.ts": "export function stamp(): number {\n  return Date.now();\n}\n",
+  "src/net/page.ts": "export function getPage(url: string): Promise<Response> {\n  return fetch(url);\n}\n",
+  "src/app/run.ts": "export function runApp(): void {\n  console.log(\"run\");\n}\n",
+  "src/util/pad.ts": "export function pad(s: string): string {\n  return s.padStart(4);\n}\n",
+  "src/main/cli.ts": "import { runApp } from \"../app/run.js\";\n\nrunApp();\nconsole.log(\"done\");\nprocess.exitCode = 0;\n"
+ }
+}

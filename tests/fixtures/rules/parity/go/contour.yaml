@@ -1,0 +1,37 @@
+version: 1
+System:
+  name: parity-go
+  description: Four Go packages of module m; three are pure in the old decks/tools/layers.json, so their Components carry the Guardrail Pure (#42 ledger item 2).
+  guardrails: []
+  groups:
+    - name: calc
+      description: Pure arithmetic.
+      language: go
+      guardrails: [Pure]
+      functions:
+        - name: Add Numbers
+          description: Adds two numbers.
+          behavior: Add(a, b int) int returns a + b.
+    - name: clock
+      description: Pure, but its code reads the clock.
+      language: go
+      guardrails: [Pure]
+      functions:
+        - name: Stamp Now
+          description: The current time.
+          behavior: Stamp() string formats time.Now().
+    - name: shell
+      description: Pure, but its code runs a command.
+      language: go
+      guardrails: [Pure]
+      functions:
+        - name: Run Tool
+          description: Runs a tool.
+          behavior: Run() error runs exec.Command("true").
+    - name: app
+      description: Not pure; reads the clock, the environment and runs a command.
+      language: go
+      functions:
+        - name: Run App
+          description: The app.
+          behavior: Main() reads os.Getenv, time.Now and runs exec.Command.

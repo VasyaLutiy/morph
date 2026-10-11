@@ -12,7 +12,8 @@ writes); fallback `<processor>`.
 Known limits carried: <none yet>.
 
 Lessons for the next preparations: default code targets add a test file (give a smoke cap or code-only targets); a new
-file needs `"intent": "generate"` in the map; a new code folder needs its layer in `decks/tools/layers.json`; size a
+file needs `"intent": "generate"` in the map; a new code folder takes its layer from the record's `uses: <Component>` steps and its rules from the canonical
+Guardrails of its Component (never a file beside the record); size a
 judge from its expected answer (≥ 28 000 for a ~20 KB answer, before any processor factor); vary every constant the code
 must not hard-code across the examples; every mutant run under a 120 s timeout; kill leftover watchers and workers of the
 scratch tree.

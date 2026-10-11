@@ -1,0 +1,11 @@
+{
+ "tree": {
+  "go.mod": "module m\n\ngo 1.22\n",
+  "runner/runner.go": "package runner\n\nconst Name = \"runner\"\n",
+  "daemon/daemon.go": "package daemon\n\nimport \"m/runner\"\n\nfunc Start() string { return runner.Name }\n"
+ },
+ "layersJson": {
+  "with layers": "{\"layers\": {\"daemon\": [\"runner\"], \"runner\": []}, \"pure\": []}\n",
+  "layers key removed": "{\"pure\": []}\n"
+ }
+}

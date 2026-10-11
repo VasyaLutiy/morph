@@ -1,0 +1,20 @@
+version: 1
+System:
+  name: bad
+  description: A Component whose language no profile knows, and one that is fine.
+  guardrails: [Pure]
+  groups:
+    - name: legacy
+      description: Old code.
+      language: cobol
+      functions:
+        - name: Old Report
+          description: Prints a report.
+          behavior: Prints it.
+    - name: fresh
+      description: New code.
+      language: go
+      functions:
+        - name: New Report
+          description: Prints a report.
+          behavior: Prints it.

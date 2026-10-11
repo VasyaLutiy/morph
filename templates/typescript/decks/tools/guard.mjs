@@ -1,23 +1,30 @@
-// Guard of a TypeScript project: the layer rules of the record and the test-file rules, checked on the TypeScript
-// syntax tree (never by grep: a word in a comment is not an import). `morph plan --checks` inlines this file into every
-// acceptance.
-// morph-guard-contract: 2
-//   node guard.mjs src [file,file,...] [pkg,pkg,...] [layers]  every .ts under src/, or only these; the packages the
-//                                                        card's Component declares (`uses`), allowed in these files
-//                                                        only; layers = JSON {"<dir>": ["<dir it may import>", ...]},
-//                                                        written by `morph plan` from the record's `uses: <Component>`
-//                                                        steps (contract 2); a dir's layer is its first folder under
-//                                                        src/; given, the "layers" key of layers.json is not read
+// Guard of a TypeScript project: the layer rules and the Guardrail rules of the record, and the test-file rules,
+// checked on the TypeScript syntax tree (never by grep: a word in a comment is not an import). `morph plan --checks`
+// inlines this file into every acceptance.
+// morph-guard-contract: 3
+//   node guard.mjs src <file,file,...> <pkgs> <layers> <rules>  these files, all four arguments written by
+//                                                        `morph plan --checks` from the record:
+//     pkgs   = the packages the card's Component declares (`uses`), allowed in these files, ","-joined ('' none);
+//     layers = JSON {"<dir>": ["<dir it may import>", ...]} from the `uses: <Component>` steps (contract 2); a dir's
+//              layer is its first folder under src/;
+//     rules  = JSON {"<dir>": {"<rule id>": "<the Guardrail and where the record attaches it>"}} from the record's
+//              canonical Guardrail names (contract 3), keyed by the file's directory.
+//              A missing layers or rules argument is red, never "everything allowed" (issue #46): re-cut with morph plan.
 //   node guard.mjs helpers <file> <name,name,...>        the stub module: node:* only, these exports
 //   node guard.mjs tests <file> <min> <max> [lits.json]  one test file; lits = strings it must hold; it may import
 //                                                        vitest, node:*, relative paths and package.json's dependencies
-// decks/tools/layers.json:
-//   "pure":     folders with no clock, randomness, environment, network, console or process; of node:* only node:path
-//   "entry":    the one file that touches process (argv, env, exit code) and console, e.g. "src/cli.ts"; null → none
-//   "packages": npm packages every file of src/ may import (node:* is always allowed outside the pure folders); a
-//               package one Component uses is declared in contour.yaml instead and reaches the guard per card
-//   "layers":   read only with no layers argument (contract 1): {"<dir under src/>": ["<dir it may import>", ...] or
-//               "*"}; null → every folder may import every other
+// Rule ids (a red names the file and line):
+//   no-shell     no import of node:child_process
+//   no-clock     no Date, no Math.random
+//   no-network   no fetch, WebSocket, XMLHttpRequest; no import of node:net, node:http, node:https, node:http2,
+//                node:dgram, node:tls
+//   no-env       no process.env
+//   no-process   no process, no console
+//   stdlib-only  no package import (node:* and relative paths only), the declared packages included
+//   pure         of node:* only node:path; no fetch, WebSocket, XMLHttpRequest, Date, console, process, Math.random
+// decks/tools/layers.json: only "packages", npm packages every file of src/ may import (node:* is always allowed
+// unless a rule forbids it); a package one Component uses is declared in contour.yaml instead and reaches the guard per
+// card.
 import ts from "typescript";
 import fs from "node:fs";
 import path from "node:path";
@@ -26,10 +33,9 @@ const bad = [];
 const CONF = fs.existsSync("decks/tools/layers.json")
   ? JSON.parse(fs.readFileSync("decks/tools/layers.json", "utf8"))
   : {};
-const LAYERS = CONF.layers ?? null;
-const PURE = new Set(CONF.pure ?? []);
-const ENTRY = CONF.entry ?? null;
 const PACKAGES = CONF.packages ?? [];
+const RULE_ORDER = ["no-shell", "no-clock", "no-network", "no-env", "no-process", "stdlib-only", "pure"];
+const NET_MODULES = ["net", "http", "https", "http2", "dgram", "tls"];
 
 function parse(file) {
   return ts.createSourceFile(file, fs.readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
@@ -99,23 +105,43 @@ function edgeLayers(edges) {
   return out;
 }
 
-function checkSrc(files, allowed, edges) {
+function bare(spec) {
+  return spec.startsWith("node:") ? spec.slice(5) : spec;
+}
+function importRules(spec) {
+  const out = [];
+  const rel = spec.startsWith("./") || spec.startsWith("../");
+  const name = bare(spec);
+  if (name === "child_process") out.push("no-shell");
+  if (NET_MODULES.includes(name)) out.push("no-network");
+  if (!rel && !spec.startsWith("node:")) out.push("stdlib-only");
+  if (spec.startsWith("node:") && spec !== "node:path") out.push("pure");
+  return out;
+}
+function nameRules(n) {
+  if (n === "Date") return ["no-clock", "pure"];
+  if (["fetch", "WebSocket", "XMLHttpRequest"].includes(n)) return ["no-network", "pure"];
+  if (n === "process" || n === "console") return ["no-process", "pure"];
+  return [];
+}
+
+function checkSrc(files, allowed, edges, rules) {
   const packages = [...PACKAGES, ...allowed];
-  const layers = edges === null ? LAYERS : edgeLayers(edges);
+  const layers = edgeLayers(edges);
   for (const file of files ?? tsFiles("src")) {
     const sf = parse(file);
     const rel = file.split(path.sep).join("/");
     const layer = layerOf(rel);
-    if (edges === null && LAYERS !== null && layer !== null && !(layer in LAYERS)) {
-      bad.push(`guard: ${rel} is in an unknown layer "${layer}" (have: ${Object.keys(LAYERS).join(", ") || "none"})`);
-      continue;
-    }
-    const pure = layer !== null && PURE.has(layer);
+    const active = rules[path.posix.dirname(rel)] ?? {};
+    const first = (ids) => RULE_ORDER.find((id) => ids.includes(id) && id in active);
+    const rule = (node, what, ids) => {
+      const id = first(ids);
+      if (id) bad.push(`guard: ${rel}:${line(sf, node)}: ${what}: ${active[id]}`);
+      return id !== undefined;
+    };
     for (const [node, spec] of moduleSpecifiers(sf)) {
-      if (spec.startsWith("node:")) {
-        if (pure && spec !== "node:path") report(sf, node, `${spec} in the pure layer ${layer} (only node:path)`);
-        continue;
-      }
+      if (rule(node, `imports ${spec}`, importRules(spec))) continue;
+      if (spec.startsWith("node:")) continue;
       if (!spec.startsWith("./") && !spec.startsWith("../")) {
         if (!packages.some((p) => spec === p || spec.startsWith(p + "/")))
           report(sf, node, `package import "${spec}" (allowed: node:*${packages.length ? ", " + packages.join(", ") : ""})`);
@@ -123,24 +149,22 @@ function checkSrc(files, allowed, edges) {
       }
       const target = path.posix.normalize(path.posix.join(path.posix.dirname(rel), spec));
       const tl = layerOf(target);
-      if (layers === null || layer === null || tl === null || tl === layer) continue;
+      if (layer === null || tl === null || tl === layer) continue;
       const may = layers[layer] ?? [];
-      if (may !== "*" && !may.includes(tl))
-        report(sf, node, edges === null
-          ? `layer ${layer} imports layer ${tl} (allowed: ${may.join(", ") || "none"})`
-          : `layer ${layer} imports layer ${tl}: the record has no 'uses' from ${layer} to ${tl} (allowed: ${may.join(", ") || "none"})`);
+      if (!may.includes(tl))
+        report(sf, node, `layer ${layer} imports layer ${tl}: the record has no 'uses' from ${layer} to ${tl} (allowed: ${may.join(", ") || "none"})`);
     }
     walk(sf, (node) => {
       if (node.kind === ts.SyntaxKind.AnyKeyword) report(sf, node, "explicit any");
       if (ts.isIdentifier(node) && isValueRef(node)) {
         const n = node.text;
-        if (pure && ["fetch", "WebSocket", "XMLHttpRequest", "Date", "console", "process"].includes(n))
-          report(sf, node, `${n} in the pure layer ${layer}`);
-        if ((n === "process" || n === "console") && ENTRY !== null && rel !== ENTRY && !pure)
-          report(sf, node, `${n} in ${rel} (only ${ENTRY} touches it; the rest gets it as a parameter)`);
-        if (n === "Math" && node.parent && ts.isPropertyAccessExpression(node.parent) &&
-            node.parent.name.text === "random" && pure) report(sf, node, `Math.random in the pure layer ${layer}`);
+        rule(node, `uses ${n}`, nameRules(n));
+        if (n === "Math" && node.parent && ts.isPropertyAccessExpression(node.parent) && node.parent.name.text === "random")
+          rule(node, "uses Math.random", ["no-clock", "pure"]);
       }
+      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&
+          node.expression.text === "process" && node.name.text === "env")
+        rule(node, "uses process.env", ["no-env"]);
       if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&
           node.expression.text === "process" && node.name.text === "exit")
         report(sf, node, "process.exit (set process.exitCode: exit cuts a piped stdout)");
@@ -202,7 +226,9 @@ function checkTest(file, min, max, lits) {
 }
 
 const [mode, a, b, c, d] = process.argv.slice(2);
-if (mode === "src") checkSrc(a ? a.split(",").filter(Boolean) : null, (b ?? "").split(",").filter(Boolean), c ? JSON.parse(c) : null);
+if (mode === "src" && c === undefined) bad.push("guard: no layer edges given — re-cut with morph plan");
+else if (mode === "src" && d === undefined) bad.push("guard: no Guardrail rules given — re-cut with morph plan");
+else if (mode === "src") checkSrc(a ? a.split(",").filter(Boolean) : null, (b ?? "").split(",").filter(Boolean), JSON.parse(c), JSON.parse(d));
 else if (mode === "helpers") checkHelpers(a, (b ?? "").split(",").filter(Boolean));
 else if (mode === "tests") checkTest(a, Number(b), Number(c), d ? JSON.parse(fs.readFileSync(d, "utf8")) : []);
 else bad.push(`guard: unknown mode ${mode}`);

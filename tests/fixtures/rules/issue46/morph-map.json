@@ -1,0 +1,7 @@
+{
+  "language": "go",
+  "cards": {
+    "daemon-core": { "targets": ["daemon/daemon.go"] },
+    "run-step": { "targets": ["runner/runner.go"] }
+  }
+}

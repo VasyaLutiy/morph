@@ -1,4 +1,20 @@
 {
+ "Build Acceptances 2": {
+  "given": "cards a (targets [\"src/x/a.ts\"]), b ([\"src/x/b.ts\"]), c ([\"src/x/c.ts\"]), d ([\"src/x/d.ts\"], dependsOn [\"a\"]), every acceptance null; checks phase \"p1\" with cards b, a, d; probes for a, b, d \"// probe\\n\"; guard \"// guard\\n\", firstdiff \"// firstdiff\\n\"",
+  "then": "ok; a's acceptance = codeAcceptance with siblings [\"src/x/b.ts\"], b's with [\"src/x/a.ts\"], d's with [] (generation 1 alone); c's acceptance stays null"
+ },
+ "Build Acceptances 3": {
+  "given": "cards a ([\"src/x/a.ts\", \"tests/x/a.test.ts\"]), j ([\"tests/x/j.examples.test.ts\"]); checks cards a, j (files [tests/x/k.examples.test.ts]), z; probes {}; guard \"x MORPH_PROBE_EOF\"",
+  "then": "{ok: false, errors: [\"the guard holds the heredoc tag MORPH_PROBE_EOF\", \"code card 'a' has no probe\", \"code card 'a' targets the test tests/x/a.test.ts but has no smoke cap\", \"judge 'j': files [\\\"tests/x/k.examples.test.ts\\\"] are not its targets [\\\"tests/x/j.examples.test.ts\\\"]\", \"checks card 'z' is not in the deck\"]}"
+ },
+ "Build Acceptances 5": {
+  "given": "the go profile; cards percent-of ([\"calc/percent_of.go\"]) and clamp-value-judge ([\"calc/clamp_value_examples_test.go\"]), one generation, acceptances null; checks phase \"m1\", frozen [\"go.mod\", \"internal\"], cards percent-of and clamp-value-judge (files [{calc/clamp_value_examples_test.go, min 4, max 10, lits [\"TestClampValueExample1\"], new true}]); probes {percent-of: \"package calc\\n\"}; guard \"// guard\\n\", firstdiff \"// firstdiff\\n\"",
+  "then": "ok; percent-of's acceptance = code1.txt (goCodeAcceptance, siblings [\"calc/clamp_value_examples_test.go\"]); the judge's = goJudgeAcceptance with siblings [\"calc/percent_of.go\"]"
+ },
+ "Build Acceptances 6": {
+  "given": "the go profile; cards a ([\"src/x/a.ts\"]) and b ([\"calc/b.go\"]); checks cards a, b; probes {a: \"// probe\\n\"}; then probeFile(go, \"percent-of\") and probeFile(typescript, \"a\")",
+  "then": "{ok: false, errors: [\"card 'a' has no go target\", \"code card 'b' has no probe\"]}; \"_percent-of_probe_test.go\"; \"a.probe.ts\""
+ },
  "Build Acceptances 7": {
   "given": "cards a ([\"src/x/a.ts\"]), b ([\"src/x/b.ts\"]), acceptances null; checks phase \"p7\" with cards a, b; probes a, b \"// probe\\n\"; guard \"// guard\\n\", firstdiff \"// firstdiff\\n\"; uses {\"a\": [\"zod\", \"yaml\"], \"a-judge\": [\"ajv\"], \"c\": [\"x\"]}, vendor true; then the same input without uses and vendor",
   "then": "ok; a's acceptance = codeAcceptance(ctx {id \"a\", phase \"p7\", targets [\"src/x/a.ts\"], siblings [\"src/x/b.ts\"], frozen DEFAULT_FROZEN, fullExclude [], ownGit false, typescript, the texts, allowed [\"zod\", \"yaml\"]}, \"// probe\\n\", null, null), holding \"node $P/guard.mjs src src/x/a.ts 'zod,yaml'\\n\"; b's = codeAcceptance with siblings [\"src/x/a.ts\"], holding \"node $P/guard.mjs src src/x/b.ts\\n\"; then a's holds \"node $P/guard.mjs src src/x/a.ts\\n\" and b's is the same as before"
@@ -22,5 +38,13 @@
  "Build Acceptances 11": {
   "given": "the typescript profile; cards a ([\"src/x/a.ts\"]), j ([\"tests/x/a.examples.test.ts\"], dependsOn [\"a\"]), acceptances null; checks phase \"p30\", cards a, j (files [{file \"tests/x/a.examples.test.ts\", min 1, max 4, lits [], drop [], new true}]); probes {a: \"// probe\\n\"}; guard \"// guard\\n\", firstdiff \"// firstdiff\\n\"; uses {\"a\": [\"zod\"]}; layers {\"src/x\": [\"src/y\"], \"src/z\": []}; then the same input without layers; then the go input of Build Acceptances 5 plus layers {\"calc\": [\"report\"]}",
   "then": "ok; a's acceptance = codeAcceptance(ctx {id \"a\", phase \"p30\", targets [\"src/x/a.ts\"], siblings [], frozen DEFAULT_FROZEN, fullExclude [], ownGit false, typescript, the texts, allowed [\"zod\"], vendor false, layers {\"src/x\": [\"src/y\"]}}, \"// probe\\n\", null, null), holding \"node $P/guard.mjs src src/x/a.ts 'zod' '{\\\"src/x\\\":[\\\"src/y\\\"]}'\\n\"; j's = judgeAcceptance(its ctx with siblings [], its files), the same text as without layers; then ok and a's acceptance holds \"node $P/guard.mjs src src/x/a.ts 'zod'\\n\" (no layers argument); then ok and percent-of's acceptance = code1.txt with its line \"echo '== guard'; node $P/guard.mjs src calc/percent_of.go\" ending in \" '' '{\\\"calc\\\":[\\\"report\\\"]}'\", nothing else changed"
+ },
+ "Code Acceptance 5": {
+  "given": "codeAcceptance of the ctx of example 1 with layers {\"src/x\": [\"src/y\"]} and rules {\"src/x\": {\"no-clock\": \"Guardrail 'No Clock' of Component x\"}}; of the ctx of example 1 with allowed [\"zod\"], layers {\"src/x\": []} and rules {}; of the ctx of example 2 with layers {\"src/x\": []} and rules {\"src/x\": {}} (probe \"// probe\\n\", smoke 5 and extra \"echo '== bin'; true\\n\" as there); of the ctx of example 1 with layers {\"src/x\": [\"src/y\"]} and no rules",
+  "then": "code1.txt with its line \"echo '== guard'; node $P/guard.mjs src src/x/a.ts\" ending in \" '' '{\\\"src/x\\\":[\\\"src/y\\\"]}' '{\\\"src/x\\\":{\\\"no-clock\\\":\\\"Guardrail \\\\u0027No Clock\\\\u0027 of Component x\\\"}}'\" (Rules Arg right after Layers Arg, each ' of the rules written \\\\u0027), nothing else changed; code1.txt with that line ending in \" 'zod' '{\\\"src/x\\\":[]}' '{}'\", nothing else changed; code2.txt with \"guard.mjs src src/x/a.ts; node\" become \"guard.mjs src src/x/a.ts '' '{\\\"src/x\\\":[]}' '{\\\"src/x\\\":{}}'; node\", nothing else changed; exactly Code Acceptance 4's first text (no rules argument)"
+ },
+ "Build Acceptances 12": {
+  "given": "the typescript input of Build Acceptances 11 (cards a, j; uses {\"a\": [\"zod\"]}; layers {\"src/x\": [\"src/y\"], \"src/z\": []}) plus rules {\"src/x\": {\"pure\": \"Guardrail 'Pure' of Component x\"}, \"src/z\": {}}; then the go input of Build Acceptances 5 plus layers {\"calc\": [\"report\"]} and rules {\"calc\": {\"no-shell\": \"Guardrail 'No Shell' of System m\"}}",
+  "then": "ok; a's acceptance = codeAcceptance(ctx {id \"a\", phase \"p30\", targets [\"src/x/a.ts\"], siblings [], frozen DEFAULT_FROZEN, fullExclude [], ownGit false, typescript, the texts, allowed [\"zod\"], vendor false, layers {\"src/x\": [\"src/y\"]}, rules {\"src/x\": {\"pure\": \"Guardrail 'Pure' of Component x\"}}}, \"// probe\\n\", null, null), holding \"node $P/guard.mjs src src/x/a.ts 'zod' '{\\\"src/x\\\":[\\\"src/y\\\"]}' '{\\\"src/x\\\":{\\\"pure\\\":\\\"Guardrail \\\\u0027Pure\\\\u0027 of Component x\\\"}}'\\n\"; j's = judgeAcceptance(its ctx with siblings [], its files), the same text as without rules; then ok and percent-of's acceptance = code1.txt with its line \"echo '== guard'; node $P/guard.mjs src calc/percent_of.go\" ending in \" '' '{\\\"calc\\\":[\\\"report\\\"]}' '{\\\"calc\\\":{\\\"no-shell\\\":\\\"Guardrail \\\\u0027No Shell\\\\u0027 of System m\\\"}}'\", nothing else changed"
  }
 }

@@ -164,6 +164,13 @@
       "Card Layers",
       "Layers Arg",
       "Plan Layers"
+    ],
+    "guardrail-rules": [
+      "Guardrail Rules",
+      "Card Rules",
+      "Rules Arg",
+      "Guard Contract",
+      "Plan Rules"
     ]
   },
   "cards": {
@@ -1691,18 +1698,19 @@
         "src/cli/planCommand.ts"
       ],
       "context_slice": [
-        "docs/TASK_P34b_contour.md",
+        "docs/TASK_P31a_guardrails.md",
         "docs/CONVENTIONS.md",
         "src/cli/types.ts",
-        "src/contour/types.ts",
-        "src/planner/types.ts"
+        "src/builder/types.ts",
+        "src/rules/guardrails.ts"
       ],
       "depends_on": [
-        "cut-component"
+        "guardrail-rules",
+        "build-acceptances"
       ],
       "variants": 2,
       "max_tokens": 12000,
-      "instruction": "Read docs/TASK_P34b_contour.md sections 2.2 (src/cli/planCommand.ts) and 4. Patch src/cli/planCommand.ts (its current text follows) and return it WHOLE; change nothing else in it. One change: after the language lines are pushed to `warnings`, push `...planned.warnings` (Plan Spec's warnings; `planned` is the planSpec result, ok at that point). The document stays as it is: warnings its last key and only when non-empty. Every other step, message and order stays as it is. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P31a_guardrails.md sections 2.2 (src/cli/planCommand.ts) and 4. Patch src/cli/planCommand.ts (its current text follows) and return it WHOLE; change nothing else in it. The import of planLayers from \"../rules/layers.js\" becomes `import { planRules } from \"../rules/guardrails.js\";`. In the args.checks branch the planLayers call becomes planRules(record, map, hasFile(\"decks/tools/layers.json\"), read.texts.guard, profiled.profile.id) (same error branch: code 2, DeckError, its error); the build input spreads `...(r.layers !== null ? { layers: r.layers } : {})` and then `...(r.rules !== null ? { rules: r.rules } : {})` after vendor (r = the Plan Rules result); keep its proseOnly in a variable declared before the branch (`let proseOnly: string[] = [];`), and the returned document gains `...(proseOnly.length > 0 ? { proseOnly } : {})` right after `out: args.out`, before the warnings. Every other step, message and order stays as it is. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "render-judge": {
       "intent": "generate",
@@ -1786,25 +1794,24 @@
       "instruction": "You write tests/planner/plan.p34b.examples.test.ts only, a NEW file with the tests of Plan Spec example 8 (examples 1-7 are already tested; you do not repeat them). Read docs/TASK_P34b_contour.md sections 2.1 (the events fixtures, the planner harness and the Plan Spec 8 harness, verbatim) and 2.2 (src/planner/plan.ts and the examples table), and tests/fixtures/planner/examples.json \"Plan Spec 8\". Import planSpec from \"../../src/planner/plan.js\", fixture and fixtureJson from \"../helpers.js\", loadContour and loadMap from \"../../src/contour/load.js\". Three cases, each `if (!r.ok) throw new Error(r.error)` first: events (plan toStrictEqual fixtureJson(\"planner/events.plan.json\"), warnings toStrictEqual fixtureJson(\"planner/events.warnings.json\")); the ledger (planner/ledger.yaml, planner/ledger.map.json, spec \"ledger.yaml\", components [\"ledger\", \"store\"], judge true, hasFile true only for \"tests/helpers.ts\": plan toStrictEqual fixtureJson(\"planner/ledger.plan.json\"), warnings toStrictEqual [\"ledger/Sum Entries: step produces 'number' names no Data Object or Event of the record\", \"ledger/Format Report: step produces 'string' names no Data Object or Event of the record\"]); this repository's record (fixture(\"../../contour.yaml\") named \"contour.yaml\", fixture(\"../../morph-map.json\") named \"morph-map.json\", spec \"contour.yaml\", components [\"contour\"], judge true, hasFile always true: warnings toStrictEqual []). Tests named \"Plan Spec example 8: <what>\". Strings with toBe, a whole document, result or state with toStrictEqual, a substring with toContain; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned; import test and expect from \"vitest\"."
     },
     "plan-command-judge": {
-      "intent": "patch",
+      "intent": "generate",
       "targets": [
-        "tests/cli/planCommand.examples.test.ts",
-        "tests/cli/planChecks.examples.test.ts",
-        "tests/cli/planCommand.p34.examples.test.ts"
+        "tests/cli/planCommand.p31a.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P34b_contour.md",
+        "docs/TASK_P31a_guardrails.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/cli/types.ts",
         "src/cli/planCommand.ts",
-        "tests/fixtures/contour/parity/lines.json"
+        "tests/cli/planCommand.p30.examples.test.ts",
+        "tests/fixtures/cli/examples.json"
       ],
       "depends_on": [
         "plan-command"
       ],
-      "max_tokens": 24000,
-      "instruction": "You patch three test files and return each WHOLE (their current texts follow). Read docs/TASK_P34b_contour.md sections 2.1 (the Plan Command 18 harness) and 2.2 (src/cli/planCommand.ts and the examples table). Changes only. tests/cli/planCommand.examples.test.ts: in \"Plan Command example 1\" the expected document also ends with `warnings: [\"ledger/Sum Entries: step produces 'number' names no Data Object or Event of the record\", \"ledger/Format Report: step produces 'string' names no Data Object or Event of the record\"]` (after out); the decks/p.json text check stays on expected.cards. tests/cli/planChecks.examples.test.ts: in \"Plan Command example 6\" the expected document `{ ...plan, cards, out: \"decks/p.json\" }` also ends with the same warnings. tests/cli/planCommand.p34.examples.test.ts: in \"Plan Command example 17\" the expected warnings are [...the 10 lines of contourKeys.warnings.json, \"no language on Component catalog and none in the map: typescript assumed\", \"orders/Place Order: no examples, no judge\", \"catalog/List Prices: no examples, no judge\"]; after it add \"Plan Command example 18: <what>\": ccledger (components []) and contour-engine (components [\"contour-engine\"]) each in its own tmp root with judge true, code 0, for every customId and text of fixtureJson(\"contour/parity/lines.json\")[<record>] the card of that customId has an instruction that contains the text, and the contour-engine document's card ids toStrictEqual [\"diagram\", \"schema\", \"store\", \"diagram-judge\", \"engine\", \"schema-judge\", \"store-judge\", \"mcp\", \"rest\"]. Keep every other test, its name and every other line of the three files exactly as it is; every tmp root removed in finally (r.rm()). Strings with toBe, a whole document, result or state with toStrictEqual, a substring with toContain; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned; import test and expect from \"vitest\"."
+      "max_tokens": 16000,
+      "instruction": "You write tests/cli/planCommand.p31a.examples.test.ts only, a NEW file with the test of Plan Command example 19 (the other examples are already tested). Read docs/TASK_P31a_guardrails.md sections 2.1 (the Plan Command 19 harness) and 2.2, and tests/fixtures/cli/examples.json \"Plan Command 19\" (in your slice). Copy the MINI list and the root setup of tests/cli/planCommand.p30.examples.test.ts (in your slice), then write contour.yaml from fixture(\"cli/goMiniGuarded.yaml\") and decks/tools/guard.mjs \"// morph-guard-contract: 3\\n\". Import planCommand from \"../../src/cli/planCommand.js\", fixture and tmpRoot from \"../helpers.js\", types Card from \"../../src/cards/types.js\" and PlanArgs from \"../../src/cli/types.js\" with `import type`. One test named \"Plan Command example 19: <what>\" running the four states in order: the expected cards are the golden's with String.replace on the acceptance (\"\\n// guard\\n\" → \"\\n// morph-guard-contract: 3\\n\") and on each code card's guard line, exactly the then's suffixes (in a TypeScript string the JSON's \\u0027 is written \"\\\\u0027\"); JSON.parse(r.read(\"decks/m1/deck.json\")) toStrictEqual them; Object.keys(document) toStrictEqual the listed keys and its proseOnly [\"Frozen Tree During Run\"]; again.json read text toBe deck.json read text; the contract-2 state's whole document toStrictEqual {error: {code: 2, kind: \"DeckError\", message: <the then's message>}} and r.exists(\"decks/m1/two.json\") toBe false; the hand state's cards toStrictEqual the golden and \"proseOnly\" in the document toBe false. Strings with toBe, a whole document, result or state with toStrictEqual, a substring with toContain; a literal holding a single quote goes in a double-quoted string. Every tmp root is removed in finally (r.rm()). No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned; import test and expect from \"vitest\"."
     },
     "read-checks": {
       "intent": "generate",
@@ -1863,17 +1870,17 @@
         "src/builder/compose.ts"
       ],
       "context_slice": [
-        "docs/TASK_P30_rules.md",
+        "docs/TASK_P31a_guardrails.md",
         "docs/CONVENTIONS.md",
         "src/builder/types.ts",
-        "src/rules/layers.ts"
+        "src/rules/guardrails.ts"
       ],
       "depends_on": [
         "build-acceptances"
       ],
       "variants": 2,
       "max_tokens": 12000,
-      "instruction": "Read docs/TASK_P30_rules.md sections 2.2 (src/builder/compose.ts) and 4. Patch src/builder/compose.ts (its current text follows) and return it WHOLE; change nothing else in it. `import { layersArg } from \"../rules/layers.js\";`; codeAcceptance's guard line appends layersArg(ctx.allowed ?? [], ctx.layers) right after allowArg(ctx.allowed ?? []), before the tests part (ctx.layers is CardContext's new optional field, src/builder/types.ts in your slice). judgeAcceptance, allowArg and litsJson stay exactly as they are. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P31a_guardrails.md sections 2.2 (src/builder/compose.ts) and 4. Patch src/builder/compose.ts (its current text follows) and return it WHOLE; change nothing else in it. `import { rulesArg } from \"../rules/guardrails.js\";`; codeAcceptance's guard line appends rulesArg(ctx.rules) right after layersArg(ctx.allowed ?? [], ctx.layers), before the tests part (ctx.rules is CardContext's new optional field, src/builder/types.ts in your slice). judgeAcceptance, allowArg and litsJson stay exactly as they are. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "build-acceptances": {
       "intent": "patch",
@@ -1882,16 +1889,16 @@
         "src/builder/buildAcceptances.ts"
       ],
       "context_slice": [
-        "docs/TASK_P30_rules.md",
+        "docs/TASK_P31a_guardrails.md",
         "docs/CONVENTIONS.md",
-        "src/rules/layers.ts"
+        "src/rules/guardrails.ts"
       ],
       "depends_on": [
-        "layer-edges"
+        "guardrail-rules"
       ],
       "variants": 2,
       "max_tokens": 14000,
-      "instruction": "Read docs/TASK_P30_rules.md sections 2.2 (src/builder/types.ts and src/builder/buildAcceptances.ts) and 4. Patch both files (their current texts follow) and return each WHOLE; change nothing else in them. types.ts: CardContext gains `layers?: Record<string, string[]>` right after `vendor?: boolean`; BuildInput gains `layers?: Record<string, string[]>` as its LAST field, after `transaction?: boolean`. buildAcceptances.ts: `import { cardLayers } from \"../rules/layers.js\";`; when input.layers !== undefined every member's ctx object ends with `layers: cardLayers(input.profile, card.targets, input.layers)`; when it is undefined the ctx is built exactly as now, with no layers key. Every other check, message, order and field stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P31a_guardrails.md sections 2.2 (src/builder/types.ts and src/builder/buildAcceptances.ts) and 4. Patch both files (their current texts follow) and return each WHOLE; change nothing else in them. types.ts: CardContext gains `rules?: Record<string, Record<string, string>>` right after `layers?: Record<string, string[]>`; BuildInput gains the same `rules?` as its LAST field, after `layers?`. buildAcceptances.ts: `import { cardRules } from \"../rules/guardrails.js\";`; when input.rules !== undefined every member's ctx object ends with `rules: cardRules(input.profile, card.targets, input.rules)`, after the layers entry; when it is undefined the ctx is built exactly as now, with no rules key. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "steps-judge": {
       "intent": "generate",
@@ -1972,17 +1979,18 @@
     "build-acceptances-judge": {
       "intent": "generate",
       "targets": [
-        "tests/builder/buildAcceptances.p30.examples.test.ts"
+        "tests/builder/buildAcceptances.p31a.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P30_rules.md",
+        "docs/TASK_P31a_guardrails.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/builder/types.ts",
         "src/builder/buildAcceptances.ts",
         "src/builder/compose.ts",
-        "src/rules/layers.ts",
-        "tests/fixtures/builder/examples.json"
+        "src/rules/guardrails.ts",
+        "tests/fixtures/builder/examples.json",
+        "tests/builder/buildAcceptances.p30.examples.test.ts"
       ],
       "depends_on": [
         "build-acceptances",
@@ -1990,7 +1998,7 @@
         "go-acceptance"
       ],
       "max_tokens": 16000,
-      "instruction": "You write tests/builder/buildAcceptances.p30.examples.test.ts only, a NEW file with the test of Build Acceptances example 11 (examples 1-10 are already tested). Read docs/TASK_P30_rules.md sections 2.2 (Build Acceptances and the examples table) and 2.3, and tests/fixtures/builder/examples.json \"Build Acceptances 11\"; its go input is the one of Build Acceptances example 5 below. Import buildAcceptances from \"../../src/builder/buildAcceptances.js\", codeAcceptance and judgeAcceptance from \"../../src/builder/compose.js\", DEFAULT_FROZEN from \"../../src/builder/readChecks.js\", GO and TYPESCRIPT from \"../../src/language/profiles.js\", fixture from \"../helpers.js\", types with `import type`. The expected percent-of script is fixture(\"builder/go/code1.txt\") with its guard line changed by String.replace, the changed line written out as a literal. One test named \"Build Acceptances example 11: <what>\"; then at most 4 of your own on section 2.2. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/builder/buildAcceptances.p31a.examples.test.ts only, a NEW file with the test of Build Acceptances example 12 (examples 1-11 are already tested). Read docs/TASK_P31a_guardrails.md section 2.2 (Build Acceptances and the examples table) and tests/fixtures/builder/examples.json \"Build Acceptances 12\" (in your slice). Copy the inputs of tests/builder/buildAcceptances.p30.examples.test.ts (in your slice: its typescript input and its go input of Build Acceptances 5) and add the rules of the example. Import buildAcceptances from \"../../src/builder/buildAcceptances.js\", codeAcceptance and judgeAcceptance from \"../../src/builder/compose.js\", DEFAULT_FROZEN from \"../../src/builder/readChecks.js\", GO and TYPESCRIPT from \"../../src/language/profiles.js\", fixture from \"../helpers.js\", types with `import type`. One test named \"Build Acceptances example 12: <what>\": a's acceptance toBe codeAcceptance of the ctx the then lists (rules its last key) and toContain the then's guard text (in a TypeScript string the JSON's \\u0027 is written \"\\\\u0027\"); j's toBe its acceptance without rules; percent-of's toBe fixture(\"builder/go/code1.txt\") with String.replace on its guard line adding exactly the then's suffix. The tests write nothing and spawn nothing. Strings with toBe, a whole document, result or state with toStrictEqual, a substring with toContain; a literal holding a single quote goes in a double-quoted string. Every tmp root is removed in finally (r.rm()). No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned; import test and expect from \"vitest\"."
     },
     "read-plan-checks": {
       "intent": "generate",
@@ -2951,17 +2959,17 @@
         "src/builder/goAcceptance.ts"
       ],
       "context_slice": [
-        "docs/TASK_P30_rules.md",
+        "docs/TASK_P31a_guardrails.md",
         "docs/CONVENTIONS.md",
         "src/builder/types.ts",
-        "src/rules/layers.ts"
+        "src/rules/guardrails.ts"
       ],
       "depends_on": [
         "build-acceptances"
       ],
       "variants": 2,
       "max_tokens": 16000,
-      "instruction": "Read docs/TASK_P30_rules.md sections 2.2 (src/builder/goAcceptance.ts) and 4. Patch src/builder/goAcceptance.ts (its current text follows) and return it WHOLE; change nothing else in it. `import { layersArg } from \"../rules/layers.js\";`; goCodeAcceptance's guard line appends layersArg(ctx.allowed ?? [], ctx.layers) right after allowArg(ctx.allowed ?? []), before the tests part (ctx.layers is CardContext's new optional field, src/builder/types.ts in your slice). goJudgeAcceptance and everything else stay exactly as they are. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P31a_guardrails.md sections 2.2 (src/builder/goAcceptance.ts) and 4. Patch src/builder/goAcceptance.ts (its current text follows) and return it WHOLE; change nothing else in it. `import { rulesArg } from \"../rules/guardrails.js\";`; goCodeAcceptance's guard line appends rulesArg(ctx.rules) right after layersArg(ctx.allowed ?? [], ctx.layers), before the tests part (ctx.rules is CardContext's new optional field, src/builder/types.ts in your slice). goJudgeAcceptance and everything else stay exactly as they are. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "go-acceptance-judge": {
       "intent": "generate",
@@ -3799,6 +3807,82 @@
       ],
       "max_tokens": 12000,
       "instruction": "You write tests/rules/layers.p34.examples.test.ts only, a NEW file with the test of Layer Edges example 5 (examples 1-4 and the other Functions are already tested). Read docs/TASK_P34a_contour.md sections 2.1 (the Layer Edges 5 harness) and 2.2. Import layerEdges from \"../../src/rules/layers.js\", loadContour from \"../../src/contour/load.js\", EMPTY_MAP from \"../../src/cli/planCommand.js\", fixture from \"../helpers.js\". One test named \"Layer Edges example 5: <what>\": dependsOn.yaml's edges toStrictEqual {ok: true, edges: {\"src/app\": [\"src/store\", \"src/util\"], \"src/store\": [], \"src/util\": [\"src/store\"]}}; dependsOnBad.yaml's toStrictEqual {ok: false, errors: [\"Component 'app': dependsOn 'nope' names no Component of the record\"]}. The tests write nothing and spawn nothing. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned; import test and expect from \"vitest\"."
+    },
+    "canonical-guardrail": {
+      "intent": "generate",
+      "targets": [
+        "src/language/guardrails.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P31a_guardrails.md",
+        "docs/CONVENTIONS.md",
+        "src/language/types.ts"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 6000,
+      "instruction": "Read docs/TASK_P31a_guardrails.md sections 2.2 (src/language/guardrails.ts) and 4. Write src/language/guardrails.ts, a NEW file: `import type { LanguageProfile, ProfileId } from \"./types.js\";` and nothing else imported. Export GUARDRAIL_RULES: Record<ProfileId, Record<string, string>> with the keys typescript, python, go in that order and the entries the Function below gives, in that order; guardrailKey(name) and guardrailRule(profile, name) (an own-property lookup: Object.hasOwn, so \"constructor\" gives null). Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "canonical-guardrail-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/language/guardrails.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P31a_guardrails.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/language/types.ts",
+        "src/language/guardrails.ts"
+      ],
+      "depends_on": [
+        "canonical-guardrail"
+      ],
+      "max_tokens": 8000,
+      "instruction": "You write tests/language/guardrails.examples.test.ts only, a NEW file with one test per example of Canonical Guardrail (3 tests, named \"Canonical Guardrail example <N>: <what>\"). Import GUARDRAIL_RULES, guardrailKey, guardrailRule from \"../../src/language/guardrails.js\" and GO, PYTHON, TYPESCRIPT from \"../../src/language/profiles.js\". Example 1: guardrailKey of \"  No   Shell \", \"STDLIB\\tOnly\" (a tab) and \"No-Shell\" toBe \"no shell\", \"stdlib only\", \"no-shell\". Example 2: the nine guardrailRule calls, each toBe its value (a string or null). Example 3: GUARDRAIL_RULES toStrictEqual the whole object of the example, and Object.keys(GUARDRAIL_RULES) toStrictEqual [\"typescript\", \"python\", \"go\"]. The tests write nothing and spawn nothing. Strings with toBe, a whole document, result or state with toStrictEqual, a substring with toContain; a literal holding a single quote goes in a double-quoted string. Every tmp root is removed in finally (r.rm()). No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned; import test and expect from \"vitest\"."
+    },
+    "guardrail-rules": {
+      "intent": "generate",
+      "targets": [
+        "src/rules/guardrails.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P31a_guardrails.md",
+        "docs/CONVENTIONS.md",
+        "src/contour/types.ts",
+        "src/language/types.ts",
+        "src/language/guardrails.ts",
+        "src/rules/layers.ts"
+      ],
+      "depends_on": [
+        "canonical-guardrail"
+      ],
+      "variants": 2,
+      "max_tokens": 14000,
+      "instruction": "Read docs/TASK_P31a_guardrails.md sections 2.2 (src/rules/guardrails.ts) and 4. Write src/rules/guardrails.ts, a NEW file with the five Functions below and the two result types of section 2.2. Imports exactly: `import { posix } from \"node:path\";`, resolveProfile from \"../language/profiles.js\", cutTargets and slugName from \"../language/naming.js\", codeTargets from \"../language/paths.js\", guardrailKey and guardrailRule from \"../language/guardrails.js\", GUARD_CONTRACT and planLayers from \"./layers.js\", and the types ContourMap, ContourRecord (\"../contour/types.js\") and LanguageProfile (\"../language/types.js\") with `import type`; src/rules/layers.ts (in your slice) shows how those helpers are called (the unit and targets of a Function exactly as layerEdges finds them). Pure: no file read, no clock, no environment, no process. rulesArg writes each ' of the JSON as the six characters \\u0027 (`.replaceAll(\"'\", \"\\\\u0027\")`). Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "guardrail-rules-judge": {
+      "intent": "patch",
+      "targets": [
+        "tests/rules/guardrails.examples.test.ts",
+        "tests/rules/layers.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P31a_guardrails.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/rules/guardrails.ts",
+        "tests/fixtures/rules/examples.json",
+        "src/rules/layers.ts",
+        "src/contour/load.ts",
+        "tests/fixtures/rules/issue46/tree.json",
+        "tests/fixtures/rules/parity/trees.json"
+      ],
+      "depends_on": [
+        "guardrail-rules"
+      ],
+      "max_tokens": 30000,
+      "instruction": "You write two test files and return each WHOLE. (1) tests/rules/guardrails.examples.test.ts, a NEW file: one test per example of Guardrail Rules (1-4), Card Rules (1), Rules Arg (1-5), Guard Contract (1) and Plan Rules (1-3), 14 tests in that order, each named \"<Function> example <N>: <what>\". Read docs/TASK_P31a_guardrails.md sections 2.1 (fixtures and the harnesses: records, guards, Rules Arg 4's old guard with the node_modules symlink) and 2.2, and tests/fixtures/rules/examples.json (in your slice: the given and then of Guardrail Rules 2-3, Rules Arg 2-5 and Plan Rules 3, which the record names by key). Import guardrailRules, cardRules, rulesArg, guardContract, planRules from \"../../src/rules/guardrails.js\", layerEdges from \"../../src/rules/layers.js\", loadContour and loadMap from \"../../src/contour/load.js\", EMPTY_MAP from \"../../src/cli/planCommand.js\", GO and TYPESCRIPT from \"../../src/language/profiles.js\", fixture, fixtureJson, fixturePath and tmpRoot from \"../helpers.js\", spawnSync from \"node:child_process\", fs from \"node:fs\", path from \"node:path\". Every expected value is the example's then, copied exactly: a rule text is \"Guardrail '<name>' of <place> <name>\" with the name as written (\"no  CLOCK\" keeps its two spaces); guard outputs are compared whole with toBe on stdout and the exit with toBe on status; the guard trees of Rules Arg 2 and 3 are written exactly as their given says (line numbers matter: the red lines name them). Rules Arg 4 compares, per file, the old guard's status with the new guard's and both with the listed exits. Rules Arg 5 writes tree.json's \"tree\", then each state (its \"layersJson\" text at decks/tools/layers.json, or no file), each in its own tmp root. (2) tests/rules/layers.examples.test.ts (its current text follows): in \"Layers Arg example 2\" and \"Layers Arg example 3\" every guard call gains a last argument \"{}\" (the rules argument of Rules Arg: the contract-3 guard is red without it); change nothing else in that file, every test and its name kept. Strings with toBe, a whole document, result or state with toStrictEqual, a substring with toContain; a literal holding a single quote goes in a double-quoted string. Every tmp root is removed in finally (r.rm()). No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned; import test and expect from \"vitest\"."
     }
   }
 }

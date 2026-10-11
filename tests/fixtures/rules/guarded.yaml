@@ -1,0 +1,36 @@
+version: 1
+System:
+  name: guarded
+  description: Guardrails at every place the record attaches them (#42 Must hold 1, ledger item 8), with the empty map.
+  guardrails: [No Network, Frozen Tree During Run]
+  groups:
+    - name: orders
+      description: TypeScript orders; the Component's guardrail is written with odd case and spacing.
+      language: typescript
+      guardrails: ["no  CLOCK"]
+      functions:
+        - name: Place Order
+          description: Places an order.
+          behavior: placeOrder(cart) returns the order.
+          guardrails: [No Shell, Interfaces Share One Core]
+        - name: Cancel Order
+          description: Cancels an order.
+          behavior: cancelOrder(id) returns true.
+          guardrails: [Pure]
+      interfaces:
+        - name: orders API
+          description: The two calls over one surface.
+          exposes: [Place Order, Cancel Order]
+          guardrails: [No Env, Missing Rule]
+        - name: cancel hook
+          description: The cancel call alone.
+          exposes: [Cancel Order]
+          guardrails: [No Process]
+    - name: catalog
+      description: Go catalog; No Process has no Go rule.
+      language: go
+      guardrails: [No Process, Stdlib Only]
+      functions:
+        - name: List Prices
+          description: Lists the prices.
+          behavior: ListPrices() []int returns the prices.

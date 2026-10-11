@@ -1,0 +1,9 @@
+{
+  "language": "go",
+  "cards": {
+    "add-numbers": { "targets": ["calc/add.go"] },
+    "stamp-now": { "targets": ["clock/now.go"] },
+    "run-tool": { "targets": ["shell/run.go"] },
+    "run-app": { "targets": ["app/app.go"] }
+  }
+}
