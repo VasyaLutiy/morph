@@ -12,11 +12,13 @@ export interface CardContext {
   id: string; phase: string; targets: string[]; siblings: string[]; frozen: string[];
   fullExclude: string[]; ownGit: boolean; profile: LanguageProfile; guard: string; firstdiff: string;
   allowed?: string[]; vendor?: boolean; layers?: Record<string, string[]>;
+  rules?: Record<string, Record<string, string>>;
 }
 export interface BuildTexts { guard: string; firstdiff: string; probes: Record<string, string> }
 export interface BuildInput {
   cards: Card[]; checks: Checks; profile: LanguageProfile; texts: BuildTexts;
   uses?: Record<string, string[]>; vendor?: boolean; hide?: Record<string, string[]>;
   transaction?: boolean; layers?: Record<string, string[]>;
+  rules?: Record<string, Record<string, string>>;
 }
 export type BuildResult = { ok: true; cards: Card[] } | { ok: false; errors: string[] };

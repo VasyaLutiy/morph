@@ -5,6 +5,7 @@ import { goCodeAcceptance, goJudgeAcceptance } from "./goAcceptance.js";
 import { untrackedStep } from "./steps.js";
 import { TRANSACTION_MARK } from "../cards/transaction.js";
 import { cardLayers } from "../rules/layers.js";
+import { cardRules } from "../rules/guardrails.js";
 import type { Deck } from "../cards/types.js";
 import type { BuildInput, BuildResult, CardContext, Checks } from "./types.js";
 import type { Card } from "../cards/types.js";
@@ -175,6 +176,9 @@ export function buildAcceptances(input: BuildInput): BuildResult {
       vendor: input.vendor === true,
       ...(input.layers !== undefined
         ? { layers: cardLayers(input.profile, card.targets, input.layers) }
+        : {}),
+      ...(input.rules !== undefined
+        ? { rules: cardRules(input.profile, card.targets, input.rules) }
         : {}),
     };
     if (check.files !== null) {
