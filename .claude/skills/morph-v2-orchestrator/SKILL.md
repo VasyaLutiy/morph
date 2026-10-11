@@ -138,7 +138,7 @@ or record the departure (§1.3).
    card, never widen the slice.
 2. **Cut:**
    ```
-   <morph> plan --root . --spec contour.yaml --map morph-map.json --component <C>… --judge \
+   <morph> plan --root . --spec contour.yaml --map morph-map.json --component <C> [--component <C2> …] --judge \
      --checks decks/<p>/checks.json [--only <ids>] --out decks/<p>/deck.json
    ```
    - `--checks` builds acceptances for TypeScript and Go only; a Python project keeps the map's
@@ -171,8 +171,8 @@ or record the departure (§1.3).
    - a judge's test file: one passing test.
    Earlier generations' stubs stay in place for later cards.
 2. **The verdict, per probe:** each example red with a readable line (not a crash at import);
-   unchanged rows green and named; a judge red at its guard; `decks/tools/stubcheck.mjs` exit 0 on
-   each log where the tree has it. A probe that imports what an earlier card writes cannot be
+   unchanged rows green and named; a judge red at its guard; `node decks/tools/stubcheck.mjs <log> <stage> <targets,…>` (stage `probe` for a
+   code card, `guard` for a judge; reference §4) exit 0 on each log where the tree has it. A probe that imports what an earlier card writes cannot be
    checked this way: name it.
 3. **`node_modules` in a scratch worktree** is a real directory of per-entry symlinks, so the
    project's `.gitignore` covers it. Never edit `.git/info/exclude`: it is shared with the repo.

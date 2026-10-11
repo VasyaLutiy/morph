@@ -83,7 +83,9 @@ Name each test after its example ("Plan Command example 13: …"), so a red line
 example. Rules that cost runs:
 - the expected value is read off the code or the fixture it comes from, never written from
   memory (P20 replay 10.10: a wrong `acceptance: null` in one example cost 6 attempts);
-- on the stubs every example goes red with a readable line, not a crash at import.
+- on the stubs every example goes red with a readable line, not a crash at import;
+- one test per example row: a test that mixes a new call with an unchanged one stops at the red
+  first call, so its unchanged row never shows green on the stubs (P28a example 14).
 
 ## 4. _stubs
 
@@ -100,6 +102,11 @@ nothing about that file's names; `deck check` lists it under `unproven` ("the st
 build proved nothing about its names"), as it lists a target with no stub ("no stub: the build used the committed
 file") and, for a transaction deck with no `_stubs/` at all, every committed target ("no _stubs/ beside the deck: no
 build ran"). Each entry is a warning; the exit is unchanged (P28b, #22).
+
+Checking a stub log: `node decks/tools/stubcheck.mjs <log> <stage> <target,target,…>`, where
+`<stage>` is where the stub must stop — `probe` for a code card, `guard` for a judge — and the
+targets are the card's. Exit 0: red at that stage and no build/vet/tsc line names a file outside
+the targets; exit 1 one line per failure; exit 2 usage.
 
 ## 5. The transaction
 
@@ -125,7 +132,7 @@ All commands print one JSON document on stdout. The exit codes are shared: 0 ok,
 
 | command | does | exit |
 |---|---|---|
-| `morph plan --root . --spec contour.yaml --map morph-map.json --component <C>… --judge [--checks <f>] [--only <ids>] --out <deck>` | cuts the deck; with `--checks` builds acceptances | 0; 2 (record/map/checks invalid, acceptances not built); 4 (checks/guard/locator file not found) |
+| `morph plan --root . --spec contour.yaml --map morph-map.json --component <C> [--component <C2> …] --judge [--checks <f>] [--only <ids>] --out <deck>` | cuts the deck; with `--checks` builds acceptances. One value per `--component`: `--component a b` exits 4 | 0; 2 (record/map/checks invalid, acceptances not built; e.g. a `calls` step naming a Function of another Component: "Function '<f>' calls unknown Function '<t>' of Component '<c>'" — a `calls` step names a Function of its own Component only); 4 (checks/guard/locator file not found) |
 | `morph deck check --root . --deck <deck> [--slice-cap-bytes N]` | errors: write-write (two owners of a path), read-write (a slice reads a same-generation target: add dependsOn); warnings: oversized-slice (over the cap, default 500 000 B), unordered-read, implicit-read (empty slice); **with `_stubs/` beside the deck**: compiles each card's stub tree (tsc / go build+vet): a missing stub or a break naming a file outside the card is an error; `unproven` (last key): a committed target whose stub equals it or is missing, or every committed target of a transaction deck with no `_stubs/` — warnings (§4) | 0 when errors 0, else 2 |
 | `morph gate --root . --deck <deck> --stubs <dir> --refs <dir> [--mutants N]` | in a scratch clone of HEAD: every acceptance on stubs (red at its stage, no outside file), on references (green), chains ≤ 250 s, builds; `--mutants`: ≤ N mutants killed by the owner's acceptance, 20 min stop | 0; 1 only mutants survive/untried; 2 any other finding |
 | `morph run --root . --deck <deck> --processor <P> --deadline <s>` | branch `morph/<runId>`, a commit per accepted card, archive `.morph/runs/<runId>/` | 0 all written; 1 a card not written; 2/4 refused; 3 fault or archive failed |
