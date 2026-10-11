@@ -3189,22 +3189,12 @@ System:
     # ---------------------------------------------------------------- P10b
     - name: builder
       description: >
-        The acceptance builder: src/builder/*.ts, pure functions that write every card's acceptance
-        shell script (issue #3, A1–A10 and B1–B2). Input:
-        the deck's cards, a phase's checks document (the knobs: phase, frozen paths, full-suite
-        excludes, own-git, per card a smoke cap, an extra step or a judge's test files with their
-        bounds, literals and kept names), the language profile (its parse, lint and test lines) and
-        the texts the caller has read (the guard, the first-difference locator, one probe per code
-        card). Output: the same cards with each named card's acceptance set: snapshot of the targets
-        outside the tree, a set -e subshell with NO_COLOR=1 CI=1 and the log printed whole, a probe
-        directory with a per-card tsconfig that leaves out the same generation's other targets, then
-        the stages in a fixed order, each announced by an "== <stage>" line: tsc, eslint (verdict held
-        until after the probe and the own test), guard, probe or the judge's files, own test, full
-        suite, own git, frozen, untracked; every failed vitest step prints its whole failure section
-        and the first difference. The scripts equal build.py's P10a form byte for byte. The
-        typescript profile builds here, the go profile by builder-go (P15); no other profile has a
-        builder. No file read, no clock, no environment; node:path is the only Node module. `morph
-        plan --checks` (cli) reads the files and calls it.
+        The acceptance builder (issue #3): src/builder/*.ts, pure, writes each card's acceptance script from the cards,
+        a checks document, the language profile and the texts cli read (guard, locator, probes): a targets snapshot, a
+        set -e subshell (NO_COLOR=1 CI=1, log printed whole), a probe directory with a per-card tsconfig, then the "==
+        <stage>" stages: tsc, eslint (verdict after the probe and own test), guard, probe or judge files, own test, full
+        suite, own git, frozen, untracked; a failed vitest step prints its failure and first difference. Byte for byte
+        build.py's P10a form. typescript here, go in builder-go (P15). No file read, clock or environment; node:path only.
       language: typescript
       requirements: [Deterministic Core]
       functions:
