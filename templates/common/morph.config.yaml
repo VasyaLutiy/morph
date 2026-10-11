@@ -1,0 +1,8 @@
+# The project's Morph config (MorphV2 docs/ORCHESTRATOR_REFERENCE.md §8): read by every morph command from the root.
+# Every key is optional; an absent key keeps its built-in value (the commented lines show them).
+version: 1
+scout:
+  grepSkip: [".morph/", "decks/"]   # path prefixes; a GREP that names one (-- decks) lifts it
+  # budgets: { calls: 30, reads: 12, chars: 120000, rounds: 40, deadlineSeconds: 1800 }
+  # caps: { readLines: 400, readChars: 12000, grepHits: 200, grepLineChars: 300, listEntries: 300 }
+  # seed: { files: 6, chars: 8000 }

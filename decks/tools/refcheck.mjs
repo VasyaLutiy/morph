@@ -59,6 +59,19 @@ const partsLine = text.split("\n").find((l) => l.startsWith("decks/<phase>/parts
 same("probe file (typescript)", partsLine.split(/\s+/)[0].replace("decks/<phase>/parts/", ""), probeFile(TYPESCRIPT, "<id>"));
 same("probe file (go)", (partsLine.match(/Go: (\S+?)\)/) ?? [])[1], probeFile(GO, "<id>"));
 
+// §8: the built-in config block, the scout key table, and the two config files of the tree (issue #18)
+const { loadConfig, validateConfig, DEFAULT_CONFIG } = await load("cli/projectConfig.js");
+const cfg = loadConfig(marked("config"));
+if (!cfg.ok) bad.push(`config block: ${cfg.problems.join("; ")}`);
+else same("config block", cfg.config, DEFAULT_CONFIG);
+const cprobe = validateConfig({ scout: { zz: 1 } });
+const ckeys = cprobe.ok ? null : (cprobe.problems.find((q) => q.startsWith("scout: unknown key 'zz'")) ?? "");
+same("scout keys", ticks(marked("config-keys")), ckeys === null ? null : ckeys.slice(ckeys.indexOf("(known: ") + 8, -1).split(", "));
+for (const f of ["morph.config.yaml", "templates/common/morph.config.yaml"]) {
+  const r = loadConfig(fs.readFileSync(f, "utf8"), f);
+  if (!r.ok) bad.push(`${f}: ${r.problems.join("; ")}`);
+}
+
 for (const b of bad) console.log("refcheck: " + b);
 console.log(bad.length === 0 ? "refcheck: ok" : `refcheck: ${bad.length} mismatch(es)`);
 process.exit(bad.length === 0 ? 0 : 1);

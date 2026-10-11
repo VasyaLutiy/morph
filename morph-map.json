@@ -1,7 +1,7 @@
 {
   "package": "src",
   "docs": [
-    "docs/TASK_P27_scout.md"
+    "docs/TASK_P25_config.md"
   ],
   "groups": {
     "card-model": [
@@ -1076,22 +1076,16 @@
       "intent": "patch",
       "targets": [
         "src/cli/types.ts",
-        "src/cli/parse.ts",
-        "src/cli/main.ts"
+        "src/cli/parse.ts"
       ],
       "context_slice": [
-        "docs/TASK_P24b_group.md",
-        "docs/CONVENTIONS.md",
-        "src/cli/document.ts",
-        "src/debt/acceptCard.ts",
-        "src/debt/acceptGroup.ts"
+        "docs/TASK_P25_config.md",
+        "docs/CONVENTIONS.md"
       ],
-      "depends_on": [
-        "accept-group"
-      ],
+      "depends_on": [],
       "variants": 2,
       "max_tokens": 30000,
-      "instruction": "Read docs/TASK_P24b_group.md sections 2.1 (Parse Command 25's argv, per word) and 2.2 (src/cli/types.ts, parse.ts and main.ts: AcceptArgs, the accept checks table, the accept route) and 4. Patch the three files (their current texts follow) and return each WHOLE; change nothing else in them. types.ts: AcceptArgs exactly as section 2.2 shows. parse.ts: \"--from-run\" and \"--pick\" join ACCEPT_FLAGS (both take a value); accept's checks of the table, in its order, right after \"missing --id\"; card keeps its own --id rule and its command; the accept command keys in the order name, root, pretty, deck, id, model, commit, then fromRun and pick only when given (no key at all otherwise, never undefined). main.ts: the accept route of section 2.2 and its import; every other route stays as it is. Every other check, message, default and key stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P25_config.md section 2.2 (src/cli/types.ts, src/cli/parse.ts). Patch the two files (their current texts follow) and return each WHOLE; change nothing else in them. types.ts: ScoutArgs.deadlineSeconds becomes `number | null`. parse.ts: the scout command's deadlineSeconds is null when --deadline is not given (it was 1800); a given --deadline is checked and parsed exactly as now. The run command keeps its 2400 default; every other check, message, default and key stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "deck-check": {
       "intent": "patch",
@@ -1137,20 +1131,16 @@
     "main": {
       "intent": "patch",
       "targets": [
-        "src/cli.ts"
-      ],
-      "context_slice": [
-        "docs/TASK_P11c2_runner.md",
-        "docs/CONVENTIONS.md",
-        "src/cli/types.ts",
         "src/cli/main.ts"
       ],
-      "depends_on": [
-        "run-command"
+      "context_slice": [
+        "docs/TASK_P25_config.md",
+        "docs/CONVENTIONS.md"
       ],
+      "depends_on": [],
       "variants": 2,
       "max_tokens": 8000,
-      "instruction": "Read docs/TASK_P11c2_runner.md sections 2.2 (Main / the entry: issue #5 finding 6) and 4. Patch src/cli.ts, the binary's entry (its current text follows); change nothing else in it. Before main is called: `let signalled: string | null = null;` and ONE listener `(signal: NodeJS.Signals): void => { if (signalled === null) signalled = signal; }` added with process.on(\"SIGINT\", …) and process.on(\"SIGTERM\", …); the deps object passed to main gains, as its last key, `interrupted: () => signalled`. Keep `process.exitCode = code`; never call process.exit. Write no test file: a probe tests you and a judge writes the example test."
+      "instruction": "Read docs/TASK_P25_config.md section 2.2 (src/cli/main.ts) and the Main behaviour below. Patch src/cli/main.ts (its current text follows) and return it WHOLE. Add `import { readProjectConfig } from \"./projectConfig.js\";` (a neighbour card writes that file: readProjectConfig(root: string) returns {ok: true; config: ProjectConfig} | {ok: false; result: CommandResult}). Right after `const root = …`, `const config = readProjectConfig(root);`. Then: when !config.ok, result = config.result and no command runs; else the existing dispatch, unchanged except the scout route `await scoutCommand(root, command, deps, config.config.scout)`. The stdout and stderr lines after the dispatch stay as they are and run in both cases. Every other route stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "document-judge": {
       "intent": "generate",
@@ -1177,23 +1167,19 @@
       "acceptance": "D=/tmp/morph/document-judge-p7; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp tests/cli/document.examples.test.ts $D/0-$S.ts 2>/dev/null\n(\n set -e\n export NO_COLOR=1 CI=1\nP=$PWD/probe/document-judge; rm -rf $P; mkdir -p $P; trap 'rm -rf $P' EXIT\ncat > $P/guard.mjs <<'MORPH_GUARD_EOF'\n// MorphV2 guard: the layer rules of docs/CONVENTIONS.md and the test-file rules, checked on\n// the TypeScript syntax tree. Inlined into every acceptance by decks/tools/build.py.\n//   node guard.mjs src [file,file,...]                   every .ts under src/, or only these\n//   node guard.mjs helpers <file> <name,name,...>        the stub module: node:* only, exports\n//   node guard.mjs tests <file> <min> <max> [lits.json]  one test file; lits = strings it must hold\nimport ts from \"typescript\";\nimport fs from \"node:fs\";\nimport path from \"node:path\";\n\nconst bad = [];\n\n// which internal layers a layer may import; \"*\" = any; unknown dirs are reported\nconst LAYERS = {\n  cards: [], wait: [],\n  response: [\"cards\"], store: [\"cards\"], compiler: [\"cards\"], language: [\"cards\"],\n  contour: [\"cards\"], git: [\"cards\"], acceptance: [\"cards\", \"wait\", \"compiler\"],\n  processor: [\"cards\", \"wait\", \"compiler\"], planner: [\"cards\", \"contour\", \"language\"],\n  primer: [\"cards\", \"git\", \"store\", \"language\"],\n  scout: [\"cards\", \"processor\", \"wait\", \"primer\"],\n  reviewer: [\"cards\", \"contour\", \"primer\", \"scout\", \"git\"],\n  runloop: [\"cards\", \"wait\", \"store\", \"compiler\", \"response\", \"acceptance\", \"language\",\n    \"git\", \"processor\"],\n  cli: \"*\",\n};\nconst ROOT_FILES = new Set([\"src/index.ts\"]);\nconst SHELL = new Set([\"acceptance\", \"git\"]);          // node:child_process\nconst NET = new Set([\"processor\"]);                    // fetch, WebSocket, XMLHttpRequest\nconst CONSOLE = new Set([\"cli\"]);                      // console, process.exit\nconst PROCESS = new Set([\"cli\", \"processor\", \"acceptance\"]);\nconst NO_CLOCK = new Set([\"cards\", \"compiler\", \"response\", \"language\", \"contour\", \"planner\"]);\nconst YAML = new Set([\"contour\"]);\n// P3: the acceptance gets the child's environment as a parameter (docs/TASK_P3_acceptance.md §4)\nconst NO_ENV = new Set([\"acceptance\", \"processor\", \"git\"]);\n// P4: the one file of a NO_ENV layer that may read process.env (Read Registry, docs/TASK_P4_processor.md §4)\nconst ENV_READERS = new Set([\"src/processor/registry.ts\"]);\n// P6: the one file of src/git that spawns (Run Git, docs/TASK_P6_git.md §4); git takes the env whole\nconst GIT_SPAWNER = \"src/git/run.ts\";\n// P7: the binary's entry is src/cli.ts (package.json bin dist/cli.js), layer cli; it alone touches\n// process (env, argv, cwd, stdout, exitCode) and the wall clock: src/cli/* gets them as parameters\n// (docs/TASK_P7_cli.md §4)\nconst CLI_ENTRY = \"src/cli.ts\";\n\nfunction parse(file) {\n  return ts.createSourceFile(file, fs.readFileSync(file, \"utf8\"), ts.ScriptTarget.Latest, true,\n    ts.ScriptKind.TS);\n}\nfunction line(sf, node) {\n  return sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1;\n}\nfunction report(sf, node, rule) {\n  bad.push(`guard: ${sf.fileName}:${line(sf, node)} ${rule}`);\n}\nfunction walk(node, fn) {\n  fn(node);\n  ts.forEachChild(node, (child) => walk(child, fn));\n}\n// an identifier that refers to a value binding (not a property name, a type, a declared name)\nfunction isValueRef(node) {\n  const p = node.parent;\n  if (!p) return false;\n  if (ts.isPropertyAccessExpression(p) && p.name === node) return false;\n  if ((ts.isPropertyAssignment(p) || ts.isPropertyDeclaration(p) || ts.isPropertySignature(p) ||\n       ts.isMethodDeclaration(p) || ts.isMethodSignature(p) || ts.isGetAccessor(p) ||\n       ts.isSetAccessor(p) || ts.isEnumMember(p)) && p.name === node) return false;\n  if (ts.isTypeReferenceNode(p) || ts.isQualifiedName(p) || ts.isTypeQueryNode(p)) return false;\n  if ((ts.isParameter(p) || ts.isVariableDeclaration(p) || ts.isFunctionDeclaration(p) ||\n       ts.isBindingElement(p)) && p.name === node) return false;\n  if (ts.isImportSpecifier(p) || ts.isExportSpecifier(p) || ts.isImportClause(p)) return false;\n  if (ts.isLabeledStatement(p) || ts.isBreakOrContinueStatement(p)) return false;\n  return true;\n}\nfunction tsFiles(dir) {\n  const out = [];\n  if (!fs.existsSync(dir)) return out;\n  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {\n    const f = path.join(dir, e.name);\n    if (e.isDirectory()) out.push(...tsFiles(f));\n    else if (f.endsWith(\".ts\")) out.push(f);\n  }\n  return out.sort();\n}\nfunction moduleSpecifiers(sf) {\n  const out = [];\n  walk(sf, (node) => {\n    if ((ts.isImportDeclaration(node) || (ts.isExportDeclaration(node) && node.moduleSpecifier)) &&\n        ts.isStringLiteralLike(node.moduleSpecifier)) out.push([node, node.moduleSpecifier.text]);\n    if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword)\n      report(sf, node, \"dynamic import\");\n  });\n  return out;\n}\nfunction layerOf(rel) {\n  if (rel === CLI_ENTRY) return \"cli\";\n  const parts = rel.split(\"/\");\n  return parts.length >= 3 && parts[0] === \"src\" ? parts[1] : null;\n}\n\nfunction checkSrc(files) {\n  for (const file of files ?? tsFiles(\"src\")) {\n    const sf = parse(file);\n    const rel = file.split(path.sep).join(\"/\");\n    const layer = layerOf(rel);\n    if (layer === null && !ROOT_FILES.has(rel)) { bad.push(`guard: ${rel} is not under a layer directory`); continue; }\n    if (layer !== null && !(layer in LAYERS)) { bad.push(`guard: ${rel} is in an unknown layer \"${layer}\"`); continue; }\n    const allowed = layer === null ? [] : LAYERS[layer];\n    for (const [node, spec] of moduleSpecifiers(sf)) {\n      if (spec.startsWith(\"node:\")) {\n        if (spec === \"node:child_process\" && !SHELL.has(layer))\n          report(sf, node, `node:child_process outside src/acceptance and src/git`);\n        if (spec === \"node:child_process\" && layer === \"git\" && rel !== GIT_SPAWNER)\n          report(sf, node, `node:child_process in ${rel} (only ${GIT_SPAWNER} spawns git)`);\n        continue;\n      }\n      if (spec === \"yaml\") { if (!YAML.has(layer)) report(sf, node, `\"yaml\" outside src/contour`); continue; }\n      if (!spec.startsWith(\"./\") && !spec.startsWith(\"../\")) { report(sf, node, `package import \"${spec}\" (node:* only)`); continue; }\n      const target = path.posix.normalize(path.posix.join(path.posix.dirname(rel), spec));\n      const tl = layerOf(target);\n      if (tl === null) { if (!ROOT_FILES.has(target)) report(sf, node, `import of \"${spec}\" outside src/<layer>/`); continue; }\n      if (tl !== layer && allowed !== \"*\" && !allowed.includes(tl))\n        report(sf, node, `layer ${layer ?? \"src\"} imports layer ${tl} (allowed: ${allowed.join(\", \") || \"none\"})`);\n    }\n    walk(sf, (node) => {\n      if (node.kind === ts.SyntaxKind.AnyKeyword) report(sf, node, \"explicit any\");\n      if (ts.isIdentifier(node) && isValueRef(node)) {\n        const n = node.text;\n        if ([\"fetch\", \"WebSocket\", \"XMLHttpRequest\"].includes(n) && !NET.has(layer))\n          report(sf, node, `global ${n} outside src/processor`);\n        if (n === \"console\" && !CONSOLE.has(layer)) report(sf, node, \"console outside src/cli\");\n        if (n === \"process\" && !PROCESS.has(layer)) report(sf, node, \"process outside src/cli, src/processor, src/acceptance\");\n        if ((n === \"process\" || n === \"console\") && layer === \"cli\" && rel !== CLI_ENTRY)\n          report(sf, node, `${n} in ${rel} (only ${CLI_ENTRY} touches it; env, cwd, clock and io are parameters)`);\n        if (n === \"Date\" && NO_CLOCK.has(layer)) report(sf, node, `Date in the deterministic layer ${layer}`);\n        if (n === \"Math\" && node.parent && ts.isPropertyAccessExpression(node.parent) &&\n            node.parent.name.text === \"random\") report(sf, node, \"Math.random\");\n      }\n      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&\n          node.expression.text === \"process\" && node.name.text === \"exit\" && !CONSOLE.has(layer))\n        report(sf, node, \"process.exit outside src/cli\");\n      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&\n          node.expression.text === \"process\" && node.name.text === \"exit\" && rel === CLI_ENTRY)\n        report(sf, node, `process.exit in ${CLI_ENTRY} (set process.exitCode: exit cuts a piped stdout)`);\n      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&\n          node.expression.text === \"Date\" && node.name.text === \"now\" && layer === \"cli\" && rel !== CLI_ENTRY)\n        report(sf, node, `Date.now in ${rel} (the clock is the parameter now)`);\n      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&\n          node.expression.text === \"process\" && node.name.text === \"env\" && NO_ENV.has(layer) &&\n          !ENV_READERS.has(rel))\n        report(sf, node, `process.env in src/${layer} (the environment is a parameter)`);\n    });\n  }\n}\n\nfunction checkHelpers(file, names) {\n  if (!fs.existsSync(file)) { bad.push(`guard: ${file} missing`); return; }\n  const sf = parse(file);\n  for (const [node, spec] of moduleSpecifiers(sf))\n    if (!spec.startsWith(\"node:\")) report(sf, node, `helpers import \"${spec}\" (node:* only)`);\n  const exported = new Set();\n  walk(sf, (node) => {\n    if (node.kind === ts.SyntaxKind.AnyKeyword) report(sf, node, \"explicit any\");\n    const mods = ts.canHaveModifiers(node) ? ts.getModifiers(node) ?? [] : [];\n    if (!mods.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) return;\n    if ((ts.isFunctionDeclaration(node) || ts.isInterfaceDeclaration(node) ||\n         ts.isTypeAliasDeclaration(node) || ts.isClassDeclaration(node)) && node.name)\n      exported.add(node.name.text);\n    if (ts.isVariableStatement(node))\n      for (const d of node.declarationList.declarations) if (ts.isIdentifier(d.name)) exported.add(d.name.text);\n  });\n  for (const n of names) if (!exported.has(n)) bad.push(`guard: ${file} does not export ${n}`);\n}\n\nfunction checkTest(file, min, max, lits) {\n  if (!fs.existsSync(file)) { bad.push(`guard: ${file} missing`); return; }\n  const sf = parse(file);\n  const text = sf.getFullText();\n  let count = 0;\n  for (const [node, spec] of moduleSpecifiers(sf))\n    if (spec !== \"vitest\" && !spec.startsWith(\"node:\") && !spec.startsWith(\"./\") && !spec.startsWith(\"../\"))\n      report(sf, node, `import of a package \"${spec}\" (vitest, node:* and relative paths only)`);\n  walk(sf, (node) => {\n    if (node.kind === ts.SyntaxKind.AnyKeyword) report(sf, node, \"explicit any\");\n    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) &&\n        (node.expression.text === \"test\" || node.expression.text === \"it\")) count += 1;\n    if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression)) {\n      const o = node.expression.text, p = node.name.text;\n      if ([\"test\", \"it\", \"describe\"].includes(o) && [\"skip\", \"only\", \"todo\", \"fails\"].includes(p))\n        report(sf, node, `${o}.${p}`);\n      if (o === \"vi\" && [\"stubGlobal\", \"useFakeTimers\", \"mock\", \"doMock\"].includes(p))\n        report(sf, node, `vi.${p} (stubs come from tests/helpers.ts)`);\n    }\n    if (ts.isIdentifier(node) && isValueRef(node) &&\n        [\"setTimeout\", \"setInterval\", \"setImmediate\"].includes(node.text))\n      report(sf, node, `${node.text} (real timers are not used under tests/; use fakeClock)`);\n    const declared = (ts.isFunctionDeclaration(node) || ts.isVariableDeclaration(node) ||\n      ts.isClassDeclaration(node)) && node.name && ts.isIdentifier(node.name) ? node.name.text : null;\n    if (declared && (declared === \"fetch\" || /^[Ff]ake/.test(declared)))\n      report(sf, node, `own stub \"${declared}\" (stubs come from tests/helpers.ts)`);\n  });\n  if (count < min || count > max)\n    bad.push(`guard: ${file} has ${count} test/it calls, expected ${min}..${max}`);\n  for (const lit of lits) if (!text.includes(lit)) bad.push(`guard: ${file} does not mention the example literal ${JSON.stringify(lit)}`);\n}\n\nconst [mode, a, b, c, d] = process.argv.slice(2);\nif (mode === \"src\") checkSrc(a ? a.split(\",\").filter(Boolean) : null);\nelse if (mode === \"helpers\") checkHelpers(a, (b ?? \"\").split(\",\").filter(Boolean));\nelse if (mode === \"tests\") checkTest(a, Number(b), Number(c), d ? JSON.parse(fs.readFileSync(d, \"utf8\")) : []);\nelse bad.push(`guard: unknown mode ${mode}`);\nfor (const x of bad) console.log(x);\nprocess.exit(bad.length ? 1 : 0);\nMORPH_GUARD_EOF\ncat > $P/probe.config.mts <<'MORPH_CONF_EOF'\nimport { defineConfig } from \"vitest/config\";\nimport { fileURLToPath } from \"node:url\";\nexport default defineConfig({\n  root: fileURLToPath(new URL(\"../..\", import.meta.url)),\n  test: { environment: \"node\", include: [\"probe/document-judge/**/*.probe.ts\"],\n    setupFiles: [\"tests/setup.ts\"], chaiConfig: { truncateThreshold: 200 } },\n});\nMORPH_CONF_EOF\ncat > $P/tsconfig.card.json <<'MORPH_TSCONF_EOF'\n{\n  \"extends\": \"../../tsconfig.json\",\n  \"include\": [\n    \"../../src\",\n    \"../../tests\",\n    \"./*.probe.ts\"\n  ],\n  \"exclude\": [\n    \"../../src/cli/parse.ts\",\n    \"../../src/cli/deckCheck.ts\",\n    \"../../src/cli/runCommand.ts\"\n  ]\n}\nMORPH_TSCONF_EOF\nG0=$( (git symbolic-ref -q HEAD || true; git rev-parse HEAD; git for-each-ref --format='%(refname) %(objectname)') 2>&1)\necho '== tsc'; node_modules/.bin/tsc --noEmit -p $P/tsconfig.card.json\necho '== eslint'; node_modules/.bin/eslint tests/cli/document.examples.test.ts\ncat > $P/lits.json <<'MORPH_LITS_EOF'\n[\"{\\\"a\\\":1,\\\"b\\\":[true,null]}\", \"RuntimeError\", \"deck file not found: nope.json\", \"invalid deck: dependsOn: dependsOn cycle a -> b -> a\"]\nMORPH_LITS_EOF\necho '== guard'; node $P/guard.mjs tests tests/cli/document.examples.test.ts 9 17 $P/lits.json\necho '== own'; node_modules/.bin/vitest run tests/cli/document.examples.test.ts --reporter=dot > $P/vt.log 2>&1 || { grep -E '^ FAIL |Error|AssertionError|^ +Tests |^ +Test Files |expected|received' $P/vt.log | head -80; exit 1; }\necho '== full'; node_modules/.bin/vitest run --passWithNoTests --reporter=dot > $P/vt.log 2>&1 || { grep -E '^ FAIL |Error|AssertionError|^ +Tests |^ +Test Files |expected|received' $P/vt.log | head -80; exit 1; }\necho '== own git'; G1=$( (git symbolic-ref -q HEAD || true; git rev-parse HEAD; git for-each-ref --format='%(refname) %(objectname)') 2>&1); [ \"$G0\" = \"$G1\" ] || { echo \"tests changed this repository's HEAD or refs:\"; echo \"before: $G0\" | head -5; echo \"after: $G1\" | head -5; exit 1; }\necho '== frozen'; git diff --quiet HEAD -- contour.yaml morph-map.json docs decks tests/fixtures || { echo \"changed outside the targets: $(git diff --name-only HEAD -- contour.yaml morph-map.json docs decks tests/fixtures | tr \"\\n\" \" \")\"; exit 1; }\nX=$(git ls-files --others --exclude-standard | grep -vxF -e tests/cli/document.examples.test.ts || true); [ -z \"$X\" ] || { echo \"files left in the tree: $X\"; exit 1; }\n) > $L 2>&1; rc=$?; cat $L; exit $rc"
     },
     "parse-command-judge": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
-        "tests/cli/accept.p24b.examples.test.ts"
+        "tests/cli/parse.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P24b_group.md",
-        "docs/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cli/types.ts",
-        "src/cli/main.ts",
-        "tests/fixtures/cli/examples.json"
+        "docs/TASK_P25_config.md",
+        "docs/CONVENTIONS.md"
       ],
       "depends_on": [
         "parse-command"
       ],
       "max_tokens": 20000,
-      "instruction": "You write tests/cli/accept.p24b.examples.test.ts only, a NEW file with the tests of Parse Command example 25 and Main example 18 (the earlier examples are already tested). Read docs/TASK_P24b_group.md sections 2.1 (Parse Command 25's argv, per word; the Main 18 harness) and 2.2 and 2.3. Import parseCommand from \"../../src/cli/parse.js\", main from \"../../src/cli/main.js\", tmpRepo, fixture and fixtureJson from \"../helpers.js\", types with `import type` from \"../../src/cli/types.js\". Test \"Parse Command example 25: <what>\" maps parseArgv.json[\"25\"] through parseCommand and compares the list whole with parse.json[\"25\"]; test \"Main example 18: <what>\" on its own tmpRepo removed in finally, checking every value examples.json[\"Main 18\"].then names; then at most 4 of your own on section 2.2 rows, each argv a JSON array of single words. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "Read docs/TASK_P25_config.md section 2.3. Patch tests/cli/parse.examples.test.ts (its current text follows) and return it WHOLE with ONE change: in the test \"Parse Command example 17: the word scout and its flags\", the object bareCommand gets `deadlineSeconds: null` in place of `deadlineSeconds: 1800`. Every other line stays byte for byte: every test, its name, the imports and helpers. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "deck-check-judge": {
       "intent": "generate",
@@ -1239,28 +1225,21 @@
     "main-judge": {
       "intent": "generate",
       "targets": [
-        "tests/cli/main.p18.examples.test.ts"
+        "tests/cli/main.p25.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P18_template.md",
+        "docs/TASK_P25_config.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
-        "src/cli/types.ts",
         "src/cli/main.ts",
-        "tests/fixtures/scaffold/tpl/common/.gitignore",
-        "tests/fixtures/scaffold/tpl/common/README.md",
-        "tests/fixtures/scaffold/tpl/common/docs/notes.md",
-        "tests/fixtures/scaffold/tpl/common/tools/hello.sh",
-        "tests/fixtures/scaffold/tpl/go/README.md",
-        "tests/fixtures/scaffold/tpl/go/go.mod",
-        "tests/fixtures/scaffold/tpl/go/internal/keep.txt",
-        "tests/fixtures/scaffold/tpl/python/pyproject.toml"
+        "tests/cli/main.p13b.examples.test.ts",
+        "tests/fixtures/cli/examples.json"
       ],
       "depends_on": [
-        "parse-command"
+        "main"
       ],
       "max_tokens": 16000,
-      "instruction": "You write tests/cli/main.p18.examples.test.ts only, a NEW file with the test of Main example 16; examples 1-15 are already tested and you do not repeat them. Read docs/TASK_P18_template.md sections 2.1 (the fixture tree) and 2.2 (Main and its table). Call main(argv, deps, io) in process from \"../../src/cli/main.js\" with deps {env: {PATH: process.env.PATH ?? \"\"}, now: () => 0, cwd: t.root, transport: null} and an io that pushes stdout and stderr chunks; parse each stdout chunk with JSON.parse; tmpRoot and fixturePath from \"../helpers.js\"; the fixture tree is fixturePath(\"scaffold/tpl\"). Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/cli/main.p25.examples.test.ts only, a NEW file with the tests of Main examples 19 and 20 (examples.json[\"Main 19\"] and [\"Main 20\"], their given and then); the earlier examples are already tested. Read docs/TASK_P25_config.md sections 2.1 (the Main 19-20 harness) and 2.3. Build the harness as tests/cli/main.p13b.examples.test.ts does (it follows): main from \"../../src/cli/main.js\", tmpRepo and tmpRoot from \"../helpers.js\", io pushing stdout and stderr chunks, env {PATH, MORPH_PROCESSOR_s_TYPE: \"stub\", MORPH_PROCESSOR_s_ANSWERS_DIR: s.path(\"ans\")}, now () => 1791500000000, cwd s.root, transport null. Test \"Main example 19: an invalid config stops every command before it runs\" and test \"Main example 20: the config gives the scout's budgets and grepSkip, the flag beats it\"; parse each stdout chunk with JSON.parse; read scout.json with JSON.parse(t.read(the document's scout path)); check t.exists(\".morph\") false in 19. Import DEFAULT_BUDGETS from \"../../src/scout/spendBudget.js\" and DEFAULT_TOOL_CAPS from \"../../src/scout/runTool.js\" for (c). Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "card-brief": {
       "intent": "generate",
@@ -2494,14 +2473,14 @@
         "src/scout/runTool.ts"
       ],
       "context_slice": [
-        "docs/TASK_P27_scout.md",
+        "docs/TASK_P25_config.md",
         "docs/CONVENTIONS.md",
         "src/scout/cagePath.ts"
       ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 12000,
-      "instruction": "Read docs/TASK_P27_scout.md sections 2.2 (src/scout/runTool.ts) and 4, and the Run Tool behaviour below; src/scout/cagePath.ts follows (do not change it). Patch src/scout/runTool.ts (its current text follows) and return it WHOLE. (1) ToolCaps gains `readChars?: number` right after readLines; DEFAULT_TOOL_CAPS gains `readChars: 12000` right after readLines. (2) READ: after last = min(to, from + readLines - 1), when caps.readChars is not undefined keep the shown lines `<i>: <line>` from `from` on while the sum of their lengths, each plus 1, stays <= readChars, at least one line; a first line longer than readChars is shown as its first readChars characters + \"… (+<rest> chars)\"; last becomes the last kept line, and the header and the \"… more lines; READ <path> <last+1>-<to> for the next\" trailer use it. (3) LIST: a shown file entry becomes `<name> (<n> line|lines)` with n its lines (splitLines of fs.readFile of the entry's listed path, after cagePath file), `<name> (binary)` when it holds \"\\0\", the name alone when cagePath refuses or readFile throws; only the shown entries are read; directory entries unchanged. GREP and everything else unchanged. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P25_config.md section 2.2 (src/scout/runTool.ts and its table) and the Run Tool behaviour below; src/scout/cagePath.ts follows (do not change it). Patch src/scout/runTool.ts (its current text follows) and return it WHOLE. Only the GREP skip changes: replace namedFirst and the `skip` choice, and the per-file `skip.includes(file.split(\"/\")[0])` test, by: entries = caps.grepSkip, each entry without \"/\" taken as entry + \"/\"; when the caged path c is not \"\", drop each entry e with (c + \"/\").startsWith(e) or e.startsWith(c + \"/\"); a listed file is passed over when it starts with any entry left. Everything else (READ, LIST, the texts, DEFAULT_TOOL_CAPS, ToolCaps, the exports) stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "spend-budget": {
       "intent": "generate",
@@ -2571,14 +2550,16 @@
         "tests/scout/runTool.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P27_scout.md",
+        "docs/TASK_P25_config.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/scout/runTool.ts"
       ],
-      "depends_on": [],
+      "depends_on": [
+        "run-tool"
+      ],
       "max_tokens": 20000,
-      "instruction": "Read docs/TASK_P27_scout.md section 2.5 (language neutrality) and the Run Tool examples below. Patch tests/scout/runTool.examples.test.ts (its current text follows) and return it WHOLE with ONE test appended: \"Run Tool example 7: a tree in three languages, no rule of one language\". It builds under its own tmpRoot the tree t/app/core.py, t/app/__init__.py, t/cmd/main.go, t/lib/config.ts with the record's contents, tree {root: p.path(\"t\"), files: [\"app/core.py\", \"app/__init__.py\", \"cmd/main.go\", \"lib/config.ts\"]}, runs the five actions with DEFAULT_TOOL_CAPS and compares each whole ToolResult with toStrictEqual: the texts as the record writes them, read false for LIST and GREP, true for READ, error null. Every existing test stays byte for byte, its name included; keep the file's imports and helpers, add an import only for what the new test uses. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "Read docs/TASK_P25_config.md sections 2.1 (Run Tool example 8's tree) and 2.2, and the Run Tool examples below. Patch tests/scout/runTool.examples.test.ts (its current text follows) and return it WHOLE with ONE test appended: \"Run Tool example 8: grepSkip entries are path prefixes, a GREP that names one lifts it\". It builds under its own tmpRoot p the four files under t/ with the record's contents, tree {root: p.path(\"t\"), files: [\"docs/TASK_X.md\", \"docs/PLAN.md\", \"decks/a.json\", \"src/a.ts\"]}, runs the four GREPs of the record ({kind: \"grep\", pattern: \"hit\", path}) with {...DEFAULT_TOOL_CAPS, grepSkip: [\".morph/\", \"decks/\", \"docs/TASK_\"]} and, last, {...DEFAULT_TOOL_CAPS, grepSkip: [\"decks\"]}, and compares each whole ToolResult {text, read: false, error: null} with toStrictEqual, the texts as the record writes them. Every existing test stays byte for byte, its name included; keep the file's imports and helpers, add an import only for what the new test uses. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "spend-budget-judge": {
       "intent": "generate",
@@ -2662,17 +2643,16 @@
         "src/scout/scoutCommand.ts"
       ],
       "context_slice": [
-        "docs/TASK_P27_scout.md",
+        "docs/TASK_P25_config.md",
         "docs/CONVENTIONS.md",
-        "src/scout/runScout.ts",
-        "src/git/run.ts"
+        "src/scout/runTool.ts",
+        "src/scout/spendBudget.ts",
+        "src/scout/seedFromOwnership.ts"
       ],
-      "depends_on": [
-        "run-scout"
-      ],
+      "depends_on": [],
       "variants": 2,
       "max_tokens": 16000,
-      "instruction": "Read docs/TASK_P27_scout.md section 2.2 (src/scout/scoutCommand.ts) and the Scout Command behaviour below; src/scout/runScout.ts (its ScoutSession now has historyText?) and src/git/run.ts follow (do not change them). Patch src/scout/scoutCommand.ts (its current text follows) and return it WHOLE: right after ref, `const log = runGit(root, [\"log\", \"-n\", \"10\", \"--format=%h %s\"], deps.env)`; historyText = \"Recent commits (newest first):\\n\" + log.stdout.trim() when log.code is 0 and that trimmed stdout is not \"\", else \"\"; pass historyText in the session given to runScout, after maxTokens. Nothing else changes: the refusals, the record, the ids, the files written. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P25_config.md section 2.2 (src/scout/scoutCommand.ts and its table) and the Scout Command behaviour below; src/scout/runTool.ts, spendBudget.ts and seedFromOwnership.ts follow (do not change them). Patch src/scout/scoutCommand.ts (its current text follows) and return it WHOLE. (1) ScoutOptions.deadlineSeconds becomes `number | null`. (2) Export `interface ScoutSettings` with the shape of section 2.2 and `const DEFAULT_SCOUT_SETTINGS: ScoutSettings` built from the imported constants: grepSkip [...DEFAULT_TOOL_CAPS.grepSkip]; budgets {calls, reads, chars, rounds of DEFAULT_BUDGETS, deadlineSeconds: DEFAULT_BUDGETS.deadlineMs / 1000}; caps {readLines: DEFAULT_TOOL_CAPS.readLines, readChars: DEFAULT_TOOL_CAPS.readChars ?? 12000, grepHits, grepLineChars, listEntries}; seed {files: SEED_FILES, chars: SEED_CHARS}. (3) scoutCommand gains a fourth parameter `settings: ScoutSettings = DEFAULT_SCOUT_SETTINGS`: the seed uses settings.seed.files and settings.seed.chars; budgets = {calls, reads, chars, rounds of settings.budgets, deadlineMs: (args.deadlineSeconds ?? settings.budgets.deadlineSeconds) * 1000}; caps = {...settings.caps, grepSkip: settings.grepSkip}, in the session and the record. Nothing else changes: the refusals, the record's keys and order, the ids, the files written. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "scout-command-judge": {
       "intent": "patch",
@@ -2680,17 +2660,18 @@
         "tests/scout/scoutCommand.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P27_scout.md",
+        "docs/TASK_P25_config.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/scout/scoutCommand.ts",
-        "src/scout/sessionText.ts"
+        "src/scout/sessionText.ts",
+        "tests/fixtures/scout/examples.json"
       ],
       "depends_on": [
         "scout-command"
       ],
       "max_tokens": 20000,
-      "instruction": "Read docs/TASK_P27_scout.md sections 2.1 and 2.3 and the Scout Command example 1 below. Patch tests/scout/scoutCommand.examples.test.ts (its current text follows) and return it WHOLE: in the test of example 1, transcript[0] is {role \"system\", content PROTOCOL + \"\\n\" + budgetSentence(DEFAULT_BUDGETS)}; LIST_ROOT becomes \"LIST .: 2 entries\\nREADME.md (1 line)\\nsrc/ (2 files)\"; transcript[1] gains \"\\n\\nRecent commits (newest first):\\n\" + t.git([\"log\", \"-n\", \"10\", \"--format=%h %s\"]).trim() between LIST_ROOT and \"\\n\\nTask:\\n\"; transcript[3] is READ_B + \"\\n\\nBudget left: 29 calls, 11 file reads, 119914 chars, 39 rounds.\". Import budgetSentence from \"../../src/scout/sessionText.js\" and DEFAULT_BUDGETS from \"../../src/scout/spendBudget.js\". Every other test stays byte for byte, its name included; keep the file's imports and helpers, add an import only for what the new tests use. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "Read docs/TASK_P25_config.md sections 2.1 (Scout Command example 6) and 2.2, and examples.json[\"Scout Command 6\"] (tests/fixtures/scout/examples.json, its given and then). Patch tests/scout/scoutCommand.examples.test.ts (its current text follows) and return it WHOLE with ONE test appended: \"Scout Command example 6: settings give the budgets, caps and seed; the flag beats the settings' deadline\". Three calls, each on its own tmpRepo seeded by the file's seedRepo and its own side root with the answers of example 1 (stubEnv, depsOf): (a) deadlineSeconds null with the settings S of the fixture, (b) 60 with S, (c) null with no fourth argument. Read each scout.json under .morph/scout/<the document's scoutId>/ and check budgets and caps with toStrictEqual; for (a) also spent, transcript[0].content PROTOCOL + \"\\n\" + budgetSentence({calls: 5, reads: 4, chars: 9000, rounds: 6, deadlineMs: 900000}) and transcript[3].content with toBe; (c) budgets DEFAULT_BUDGETS and caps DEFAULT_TOOL_CAPS; and DEFAULT_SCOUT_SETTINGS with toStrictEqual against its literal. Import DEFAULT_SCOUT_SETTINGS and the type ScoutSettings from \"../../src/scout/scoutCommand.js\" (add them to the existing import). Every existing test stays byte for byte, its name included; keep the file's imports and helpers, add an import only for what the new test uses. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "plan-from-scout": {
       "intent": "generate",
@@ -3743,6 +3724,40 @@
       "depends_on": [],
       "max_tokens": 16000,
       "instruction": "Read docs/TASK_P27_scout.md section 2.5 (language neutrality) and the Session Text examples below. Patch tests/scout/sessionText.examples.test.ts (its current text follows) and return it WHOLE with ONE test appended: \"Session Text example 4: round zero over Python, Go and TypeScript files\". It builds under its own tmpRoot the tree of Run Tool example 7 (app/core.py, app/__init__.py, cmd/main.go, lib/config.ts with the record's contents, root p.root, files in that order), checks taskClues of the question with toStrictEqual and roundZero(question, tree, NODE_FS, [\".morph\", \"decks\"], 30000) with toBe against ROUND0_HEADER + the record's lines joined with \"\\n\", and its length 412. Every existing test stays byte for byte, its name included; keep the file's imports and helpers, add an import only for what the new test uses. Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+    },
+    "load-config": {
+      "intent": "generate",
+      "targets": [
+        "src/cli/projectConfig.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P25_config.md",
+        "docs/CONVENTIONS.md",
+        "src/contour/load.ts",
+        "src/cli/document.ts",
+        "src/cli/types.ts"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 12000,
+      "instruction": "Read docs/TASK_P25_config.md sections 2.1 and 2.2 (src/cli/projectConfig.ts and its table) and 4, and the Load Config behaviour below; src/contour/load.ts, src/cli/document.ts and src/cli/types.ts follow (import from them, do not change them). Write src/cli/projectConfig.ts, a NEW file of the layer cli. Export CONFIG_FILE, the types ProjectConfig and ConfigResult, DEFAULT_CONFIG, validateConfig, loadConfig and readProjectConfig, exactly as section 2.2 names them. Import DEFAULT_SCOUT_SETTINGS and `import type { ScoutSettings }` from \"../scout/scoutCommand.js\" (a neighbour card adds both there; do not define them yourself), parseDocument from \"../contour/load.js\", errorDocument from \"./document.js\", `import type { CommandResult }` from \"./types.js\", fs from \"node:fs\", path from \"node:path\". validateConfig walks the five key tables in the behaviour's order: an object's unknown keys first in its own key order, then its known keys in table order; the merged config is built fresh in DEFAULT_CONFIG's key order (never mutate DEFAULT_CONFIG); a positive integer is typeof number, Number.isInteger and >= 1. readProjectConfig reads path.join(root, CONFIG_FILE) only when fs.statSync(…, {throwIfNoEntry: false})?.isFile() is true. Write no test file: a probe tests you and a judge writes the example tests."
+    },
+    "load-config-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/cli/projectConfig.examples.test.ts"
+      ],
+      "context_slice": [
+        "docs/TASK_P25_config.md",
+        "docs/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/cli/projectConfig.ts"
+      ],
+      "depends_on": [
+        "load-config"
+      ],
+      "max_tokens": 16000,
+      "instruction": "You write tests/cli/projectConfig.examples.test.ts only, a NEW file with one test per Load Config example, in order, named \"Load Config example <N>: <what>\" (N 1 to 4). Read docs/TASK_P25_config.md sections 2.1, 2.2 and 2.3. Import from \"../../src/cli/projectConfig.js\" what you use, DEFAULT_BUDGETS from \"../../src/scout/spendBudget.js\", DEFAULT_TOOL_CAPS from \"../../src/scout/runTool.js\", SEED_FILES and SEED_CHARS from \"../../src/scout/seedFromOwnership.js\", tmpRoot from \"../helpers.js\". Example 1 checks DEFAULT_CONFIG with toStrictEqual against the full literal AND against the object built from DEFAULT_BUDGETS (deadlineSeconds: DEFAULT_BUDGETS.deadlineMs / 1000), DEFAULT_TOOL_CAPS and SEED_FILES/SEED_CHARS. Example 2 also compares JSON.stringify of the config with JSON.stringify of the literal (key order). Example 3 compares each problems list whole with toStrictEqual, the parse error by startsWith. Example 4 writes morph.config.yaml under one tmpRoot r with r.write, rewriting it between the calls; r2 is r.path(\"sub\") holding a directory sub/morph.config.yaml made with fs.mkdirSync (import fs from \"node:fs\"). Strings with toBe, a whole document, result or state with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root and tmp repo is removed in finally. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     }
   }
 }

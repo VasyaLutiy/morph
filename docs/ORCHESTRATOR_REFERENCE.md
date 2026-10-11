@@ -141,3 +141,30 @@ morph run --root . --deck decks/<p>/deck.json --processor ds --deadline <from th
 ```
 A red run: salvage from the archive first (`morph accept --from-run`, skill §10.1); then one fix by class, a re-cut with `--checks … --only <red ids>` into
 `decks/<p>/deck-fix.json`, one re-run.
+
+## 8. morph.config.yaml (issue #18, generation 1)
+
+`<root>/morph.config.yaml` is read by every command right after `--root` is resolved, before anything runs (no
+parent-directory search, no cwd, no environment). Absent, empty or `{}` = the built-in values below. Every key is
+optional; a given key replaces only its default (`grepSkip` as a whole list). Precedence: a flag (`morph scout
+--deadline`), then the config, then the built-in. An invalid file stops every command with exit 2, DeckError
+"morph.config.yaml is not a valid config (<n> problems): <path>: …; …" — unknown keys are refused (version 1 knows only
+`version` and `scout`; the other sections of the issue come in later generations).
+
+<!-- refcheck: config-keys -->
+Scout keys: `grepSkip`, `budgets`, `caps`, `seed`.
+
+`grepSkip` entries are path prefixes; a bare name (`decks`) is a top directory (`decks/`). A GREP whose `-- <dir>` is at
+or under an entry, or above it (`-- docs` for `docs/TASK_`), lifts that entry. Round zero keeps the first-segment rule
+(`docs/TASK_` does not skip its hits). scout.json `caps.grepSkip` shows what applied.
+
+<!-- refcheck: config -->
+```yaml
+version: 1
+scout:
+  grepSkip: [".morph", "decks"]
+  budgets: { calls: 30, reads: 12, chars: 120000, rounds: 40, deadlineSeconds: 1800 }
+  caps: { readLines: 400, readChars: 12000, grepHits: 200, grepLineChars: 300, listEntries: 300 }
+  seed: { files: 6, chars: 8000 }
+```
+(The built-in values; MorphV2's own `morph.config.yaml` sets `grepSkip: [".morph/", "decks/", "docs/TASK_"]`.)

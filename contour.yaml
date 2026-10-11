@@ -1600,7 +1600,7 @@ System:
             I, else "--only must be distinct card ids joined by \",\" (got '<v>')"; else done (components [] and map, out null when not given; checks, then only (ids
             in order), each key only when given). collect: no --batch → "missing --batch", --batch ~ I, else done. primer done (write: --write given). scout: no
             --processor → "missing --processor", no --issue → "missing --issue", --deadline not a positive integer → "--deadline must be a positive integer (got
-            '<v>')", else done (seedFile null, deadlineSeconds 1800 when not given). The rest: no --deck → "missing --deck"; gate: no --stubs → "missing --stubs",
+            '<v>')", else done (seedFile null, deadlineSeconds null when not given: Main's config gives it). The rest: no --deck → "missing --deck"; gate: no --stubs → "missing --stubs",
             no --refs → "missing --refs", --mutants as review's, else done (mutants only when given); run or submit: no --processor → "missing --processor"; submit
             done; run: --run-id ~ I; numbers in the order --slice-cap-bytes (deck check), --deadline, --max-cards, --max-retry-batches (run): digits only, ≥ 1 ("<f>
             must be a positive integer (got '<v>')"), --max-retry-batches ≥ 0 ("must be a non-negative integer"). A failure is {ok: false, error: {error: {code: 4,
@@ -1757,9 +1757,10 @@ System:
           description: Routing, one document, log lines, exit code; src/cli.ts wires the process.
           behavior: >
             main(argv, deps, io) → Promise<ExitCode>. Parse Command; a failure → io.stdout(renderDocument(its error document, pretty = argv holds "--pretty")),
-            io.stderr("morph: <message>\n"), 4. Else root = path.resolve(deps.cwd, command.root); by command, in try/catch (a thrown value → classifyThrown): Deck
+            io.stderr("morph: <message>\n"), 4. Else root = path.resolve(deps.cwd, command.root); config = Read Project Config(root) (Component config) for every
+            command before it runs: a failure is the result, no command runs. Else by command, in try/catch (a thrown value → classifyThrown): Deck
             Check (env: deps.env), Plan Command, await Submit Deck(root, deck, processor, D), await Collect Batch(root, batch, D), Primer Command(root, write, {env,
-            now of deps}), await Scout Command(root, command, deps), Plan From Scout(root, command), await Review Command(root, command, deps), Card Brief(root,
+            now of deps}), await Scout Command(root, command, deps, config.scout), Plan From Scout(root, command), await Review Command(root, command, deps), Card Brief(root,
             command), accept: await Accept Group(root, {deck, ids: id split on ",", model, fromRun or null, pick or [], commit}, deps) when --id holds "," or fromRun
             is given, else await Accept Card(root, command, deps), Init Project(root, command, deps.cwd), await Gate Command(root, command, {env, now, readDeck: Read
             Deck File, builds: Check Builds}), else await Run Command (io.stderr its log); D = {env, now, transport of deps, saveState: git's saveBatchRecord(root, ·),
@@ -1767,7 +1768,7 @@ System:
             name>: exit <code>\n"), return result.code. The entry src/cli.ts (`#!/usr/bin/env node`) calls main(process.argv.slice(2), {env: process.env without
             undefined values, now: Date.now, cwd: process.cwd(), transport: null, interrupted: () => the first SIGINT or SIGTERM its own listeners caught, or null},
             {stdout, stderr: the process streams' write}), sets process.exitCode to the result, never calls process.exit.
-          steps: [{calls: Parse Command}, {calls: Deck Check}, {calls: Plan Command}, {calls: Run Command}, {uses: batches}, {uses: primer}, {uses: scout-session}, {uses: review-session}, {uses: debt}, {uses: scaffold}, {uses: gate}, {calls: Emit Document}, {calls: Classify Error}]
+          steps: [{calls: Parse Command}, {calls: Deck Check}, {calls: Plan Command}, {calls: Run Command}, {uses: batches}, {uses: primer}, {uses: scout-session}, {uses: review-session}, {uses: debt}, {uses: scaffold}, {uses: gate}, {uses: config}, {calls: Emit Document}, {calls: Classify Error}]
           examples:
             - {given: 'examples.json["Main 1"].given', when: 'main', then: 'examples.json["Main 1"].then'}
             - {given: 'examples.json["Main 2"].given', when: 'main', then: 'examples.json["Main 2"].then'}
@@ -1787,10 +1788,12 @@ System:
             - {given: 'examples.json["Main 16"].given', when: 'main', then: 'examples.json["Main 16"].then'}
             - {given: 'examples.json["Main 17"].given', when: 'main', then: 'examples.json["Main 17"].then'}
             - {given: 'examples.json["Main 18"].given', when: 'main', then: 'examples.json["Main 18"].then'}
+            - {given: 'examples.json["Main 19"].given', when: 'main', then: 'examples.json["Main 19"].then'}
+            - {given: 'examples.json["Main 20"].given', when: 'main', then: 'examples.json["Main 20"].then'}
       dataObjects:
         - name: Command
           description: One parsed invocation.
-          schema: "every variant also has root: string, pretty: boolean; {name: 'deck check', deck, sliceCapBytes}|{name: 'run', deck, processor, runId: string|null, deadlineSeconds, maxCards: number|null, maxRetryBatches}|{name: 'plan', spec, components: string[], map: string|null, judge: boolean, out: string|null, checks?: string, only?: string[]}|{name: 'submit', deck, processor}|{name: 'collect', batch}|{name: 'primer', write: boolean}|{name: 'scout', processor, issue, seedFile: string|null, deadlineSeconds}|{name: 'plan --from-scout', fromScout, out: string|null}|{name: 'review', base, head, spec: string|null, map: string|null, scout: string|null, mutants: number|null, mutantTimeoutSeconds, test: string|null, write: boolean}|{name: 'card', deck, id, md: boolean}|{name: 'accept', deck, id, model: string|null, commit: boolean, fromRun?: string, pick?: string[]}|{name: 'init', project, language: 'typescript' | 'python' | 'go', module: string|null, templates: string|null}|{name: 'gate', deck, stubs, refs, mutants?: number}"
+          schema: "every variant also has root: string, pretty: boolean; {name: 'deck check', deck, sliceCapBytes}|{name: 'run', deck, processor, runId: string|null, deadlineSeconds, maxCards: number|null, maxRetryBatches}|{name: 'plan', spec, components: string[], map: string|null, judge: boolean, out: string|null, checks?: string, only?: string[]}|{name: 'submit', deck, processor}|{name: 'collect', batch}|{name: 'primer', write: boolean}|{name: 'scout', processor, issue, seedFile: string|null, deadlineSeconds: number|null}|{name: 'plan --from-scout', fromScout, out: string|null}|{name: 'review', base, head, spec: string|null, map: string|null, scout: string|null, mutants: number|null, mutantTimeoutSeconds, test: string|null, write: boolean}|{name: 'card', deck, id, md: boolean}|{name: 'accept', deck, id, model: string|null, commit: boolean, fromRun?: string, pick?: string[]}|{name: 'init', project, language: 'typescript' | 'python' | 'go', module: string|null, templates: string|null}|{name: 'gate', deck, stubs, refs, mutants?: number}"
         - name: Error Document
           description: The document of every non-result exit.
           schema: "{ error: { code: 0|1|2|3|4, kind: 'UsageError'|'NotYetError'|'DeckError'|'RefusalError'|'RuntimeError', message: string } }"
@@ -1813,6 +1816,49 @@ System:
         - name: morph CLI
           description: The only entry point.
           exposes: [Parse Command]
+
+    # ---------------------------------------------------------------- P25
+    - name: config
+      description: >
+        The project config (issue #18, generation 1): <root>/morph.config.yaml, read once by Main after root is resolved,
+        for every command; src/cli/projectConfig.ts, layer cli. Version 1 holds the section scout (grepSkip, budgets,
+        caps, seed); an absent file, an empty one and {} give the built-in values byte for byte. Precedence: a CLI flag,
+        then the config, then the built-in default. No parent-directory search, no cwd, no environment.
+      language: typescript
+      requirements: [One Document Out]
+      functions:
+        - name: Load Config
+          description: morph.config.yaml into a whole Project Config, or every problem it has.
+          behavior: >
+            src/cli/projectConfig.ts. CONFIG_FILE = "morph.config.yaml". DEFAULT_CONFIG = {version: 1, scout:
+            DEFAULT_SCOUT_SETTINGS (Scout Command's)}. validateConfig(doc: unknown) → {ok: true, config} | {ok: false,
+            problems: string[]}. Not a plain object → problems ["(root): config must be an object"]. Every object is
+            checked against its key table — (root): version, scout; scout: grepSkip, budgets, caps, seed; scout.budgets:
+            calls, reads, chars, rounds, deadlineSeconds; scout.caps: readLines, readChars, grepHits, grepLineChars,
+            listEntries; scout.seed: files, chars — first its unknown keys in the object's order ("<path>: unknown key
+            '<k>' (known: <the table ", "-joined>)", <path> "(root)" at the top, else the dotted path), then its keys in
+            table order. version must be 1 ("version: must be 1"); scout, scout.budgets, scout.caps, scout.seed objects
+            ("<path>: must be an object"); scout.grepSkip a list ("scout.grepSkip: must be a list") of non-empty strings
+            ("scout.grepSkip[<j>]: must be a non-empty string"); every other leaf a number that is a positive integer
+            ("<path>: must be a positive integer"). Every key is optional: config = DEFAULT_CONFIG with each given value
+            in place of its default (grepSkip as a whole list, a budget, cap or seed key alone), keys always in
+            DEFAULT_CONFIG's order. Any problem → {ok: false, problems} in document order. loadConfig(text: string |
+            null, name = CONFIG_FILE): null, or a text that is blank after trim → {ok: true, config: DEFAULT_CONFIG};
+            else contour's Parse Document(text, name) error → {ok: false, problems: [its error]}; else
+            validateConfig(doc). readProjectConfig(root) → {ok: true, config} | {ok: false, result}: path.join(root,
+            CONFIG_FILE) a regular file → loadConfig(its UTF-8 text), else loadConfig(null); problems → result {code 2,
+            document errorDocument(2, "DeckError", "morph.config.yaml is not a valid config (<n> problem|problems): " +
+            the problems "; "-joined)} (Emit Document's shape: {error: {code, kind, message}}). Nothing is written.
+          steps: [{uses: scout-session}, {uses: contour}, {produces: Project Config}]
+          examples:
+            - {given: 'loadConfig(null); loadConfig("  \n"); loadConfig("version: 1\n"); validateConfig({})', when: called, then: 'each {ok: true, config: DEFAULT_CONFIG}; DEFAULT_CONFIG = {version: 1, scout: {grepSkip: [".morph", "decks"], budgets: {calls: 30, reads: 12, chars: 120000, rounds: 40, deadlineSeconds: 1800}, caps: {readLines: 400, readChars: 12000, grepHits: 200, grepLineChars: 300, listEntries: 300}, seed: {files: 6, chars: 8000}}}: budgets = DEFAULT_BUDGETS with deadlineSeconds = deadlineMs / 1000, caps = DEFAULT_TOOL_CAPS without grepSkip, grepSkip = DEFAULT_TOOL_CAPS.grepSkip, seed = {SEED_FILES, SEED_CHARS}'}
+            - {given: 'the text "scout:\n  seed: {files: 3}\n  budgets: {deadlineSeconds: 600, calls: 10}\n  grepSkip: [.morph/, decks/, docs/TASK_]\n"', when: loadConfig, then: '{ok: true, config: {version: 1, scout: {grepSkip: [".morph/", "decks/", "docs/TASK_"], budgets: {calls: 10, reads: 12, chars: 120000, rounds: 40, deadlineSeconds: 600}, caps: DEFAULT_CONFIG.scout.caps, seed: {files: 3, chars: 8000}}}}, JSON.stringify of it equal to that of the literal (keys in DEFAULT_CONFIG''s order)'}
+            - {given: 'the text "version: 2\nscuot: 1\nscout:\n  caps: []\n  budgets: {calls: \"30\", reads: 0, call: 1}\n  grepSkip: [\"\", 3]\n"; validateConfig([]); validateConfig({scout: null}); validateConfig({scout: {grepSkip: "decks", seed: {chars: 1.5}}}); loadConfig("a: [\n"); loadConfig("- 1\n")', when: 'loadConfig, validateConfig', then: '{ok: false, problems: ["(root): unknown key ''scuot'' (known: version, scout)", "version: must be 1", "scout.grepSkip[0]: must be a non-empty string", "scout.grepSkip[1]: must be a non-empty string", "scout.budgets: unknown key ''call'' (known: calls, reads, chars, rounds, deadlineSeconds)", "scout.budgets.calls: must be a positive integer", "scout.budgets.reads: must be a positive integer", "scout.caps: must be an object"]}; ["(root): config must be an object"]; ["scout: must be an object"]; ["scout.grepSkip: must be a list", "scout.seed.chars: must be a positive integer"]; one problem starting "cannot parse morph.config.yaml: "; ["morph.config.yaml is not a mapping at the top level"]'}
+            - {given: 'a tmpRoot r: no morph.config.yaml; then morph.config.yaml "scout:\n  grepSkip: [docs/TASK_]\n"; then "scout: {budgets: {calls: x}, cap: 1}\n"; then a directory r2 holding a directory named morph.config.yaml, and r2''s parent holding an invalid morph.config.yaml', when: readProjectConfig, then: '{ok: true, config: DEFAULT_CONFIG}; {ok: true, config} with scout.grepSkip ["docs/TASK_"], the rest DEFAULT_CONFIG; {ok: false, result: {code: 2, document: {error: {code: 2, kind: "DeckError", message: "morph.config.yaml is not a valid config (2 problems): scout: unknown key ''cap'' (known: grepSkip, budgets, caps, seed); scout.budgets.calls: must be a positive integer"}}}}; {ok: true, config: DEFAULT_CONFIG} (not a regular file; the parent is never read)'}
+      dataObjects:
+        - name: Project Config
+          description: What Load Config gives; every key present.
+          schema: "{ version: 1, scout: { grepSkip: string[], budgets: { calls, reads, chars, rounds, deadlineSeconds: number }, caps: { readLines, readChars, grepHits, grepLineChars, listEntries: number }, seed: { files, chars: number } } }"
 
     # ---------------------------------------------------------------- P11b2
     - name: batches
@@ -3697,7 +3743,7 @@ System:
           description: One READ, GREP or LIST executed over the listing through the cage and the injected file system, its text capped in lines and characters; LIST shows each file's line count.
           behavior: >
             runTool(action, tree, fs, caps {readLines, readChars?, grepHits, grepLineChars, listEntries, grepSkip:
-            string[]}) → {text, read: action is a READ, error: string | null}. DEFAULT_TOOL_CAPS = {readLines 400,
+            string[] (path prefixes)}) → {text, read: action is a READ, error: string | null}. DEFAULT_TOOL_CAPS = {readLines 400,
             readChars 12000, grepHits 200, grepLineChars 300, listEntries 300, grepSkip [".morph", "decks"]}. A failure:
             error = its message, text = "<READ|GREP|LIST> failed: <error>"; else error null and text = its lines
             "\n"-joined, no final newline. A file's lines: its text split on "\n", one trailing "\r" removed from each,
@@ -3710,9 +3756,9 @@ System:
             last kept (a first shown line longer than readChars is its first readChars chars + "… (+<the rest's length>
             chars)"): "READ <path> lines <from>-<last> of <n>", then the shown lines, then when last < to "… <to − last>
             more lines; READ <path> <last + 1>-<to> for the next". GREP: new RegExp(pattern) (no flags) throws →
-            "invalid pattern /<pattern>/"; Cage Path (dir) refused → its error; skip = grepSkip, or none when the caged
-            path's first segment is in grepSkip; each listed file under the caged path whose first segment is not
-            skipped: Cage Path (file) refused or readFile throws → counted refused; a "\0" → passed over silently; each
+            "invalid pattern /<pattern>/"; Cage Path (dir) refused → its error; skip = the grepSkip entries, one with no "/"
+            read as <entry> + "/" (a top directory), less each entry e the caged path c names (c ≠ "" and c + "/" starts with
+            e, or e starts with c + "/"); each listed file under the caged path that starts with no skip entry: Cage Path (file) refused or readFile throws → counted refused; a "\0" → passed over silently; each
             line i that the pattern tests true is a match, shown while fewer than grepHits are shown as "<file>:<i>:
             <line>", a line longer than grepLineChars as its first grepLineChars chars + "… (+<the rest's length>
             chars)". Lines: "GREP /<pattern>/ in <'the tree' or the caged path + '/'>: <m> match|matches in <f>
@@ -3733,6 +3779,7 @@ System:
             - {given: 'the same tree', when: 'LIST "" (C); LIST "" (D); "src/"; "src/a.ts"; "../x"', then: '"LIST .: 7 entries\n.morph/ (1 file)\nREADME.md (1 line)\n… 5 more entries"; "LIST .: 7 entries\n.morph/ (1 file)\nREADME.md (1 line)\ndecks/ (1 file)\ndirlink\nout.txt\nsrc/ (4 files)\ntests/ (1 file)" (dirlink unreadable, out.txt refused: names alone); "LIST src/: 4 entries\na.ts (5 lines)\nb.ts (3 lines)\nbin.dat (binary)\ne.ts (0 lines)"; "LIST failed: no such directory in the tree: src/a.ts"; "LIST failed: path leaves the root: ../x"; read false'}
             - {given: 'a real tmp dir with w.txt = 200 lines of 250 × "w" each + "\n", long.txt = 13000 × "x" + "\n"; files ["long.txt", "w.txt"]; D', when: 'READ w.txt; w.txt 47-200; long.txt; and w.txt with D without readChars', then: '"READ w.txt lines 1-47 of 200", 47 lines "<i>: " + 250 × "w", "… 153 more lines; READ w.txt 48-200 for the next" (12 053 chars); "READ w.txt lines 47-93 of 200" … "… 107 more lines; READ w.txt 94-200 for the next" (12 063 chars); "READ long.txt lines 1-1 of 1\n1: " + 11 997 × "x" + "… (+1003 chars)" (12 044 chars); "READ w.txt lines 1-200 of 200" and every line, read true, error null'}
             - {given: 'a tree in three languages (a real tmp dir): app/core.py "def load_config(path):\n    return open(path).read()\n", app/__init__.py "", cmd/main.go "package main\n\nfunc main() { loadConfig() }\n", lib/config.ts "export function loadConfig(): void {}\n"; D', when: 'LIST ""; LIST app; LIST cmd; GREP "load_config|loadConfig" in ""; READ cmd/main.go', then: '"LIST .: 3 entries\napp/ (2 files)\ncmd/ (1 file)\nlib/ (1 file)"; "LIST app/: 2 entries\n__init__.py (0 lines)\ncore.py (2 lines)"; "LIST cmd/: 1 entry\nmain.go (3 lines)"; "GREP /load_config|loadConfig/ in the tree: 3 matches in 3 files\napp/core.py:1: def load_config(path):\ncmd/main.go:3: func main() { loadConfig() }\nlib/config.ts:1: export function loadConfig(): void {}"; "READ cmd/main.go lines 1-3 of 3\n1: package main\n2: \n3: func main() { loadConfig() }" (no rule depends on a file''s language)'}
+            - {given: 'a real tmp dir: docs/TASK_X.md "hit task\n", docs/PLAN.md "hit plan\n", decks/a.json "hit deck\n", src/a.ts "hit src\n"; files those four; K = DEFAULT_TOOL_CAPS with grepSkip [".morph/", "decks/", "docs/TASK_"]', when: 'GREP "hit" in "" (K); in "docs" (K); in "decks" (K); in "" with grepSkip ["decks"]', then: '"GREP /hit/ in the tree: 2 matches in 2 files\ndocs/PLAN.md:1: hit plan\nsrc/a.ts:1: hit src"; "GREP /hit/ in docs/: 2 matches in 2 files\ndocs/PLAN.md:1: hit plan\ndocs/TASK_X.md:1: hit task"; "GREP /hit/ in decks/: 1 match in 1 file\ndecks/a.json:1: hit deck"; "GREP /hit/ in the tree: 3 matches in 3 files\ndocs/PLAN.md:1: hit plan\ndocs/TASK_X.md:1: hit task\nsrc/a.ts:1: hit src"; read false, error null on every one'}
         - name: Spend Budget
           description: One turn charged against the five budgets; the first closed budget and its sentence; the stop_reason.
           behavior: >
@@ -3793,7 +3840,7 @@ System:
           description: What Cage Path returns.
           schema: "{ ok: true, path: string } | { ok: false, error: string }"
         - name: Tool Caps
-          description: Caps on one tool answer, not budgets.
+          description: Caps on one tool answer, not budgets; grepSkip entries are path prefixes.
           schema: "{ readLines, readChars?, grepHits, grepLineChars, listEntries: number, grepSkip: string[] }"
         - name: Tool Result
           description: What Run Tool returns.
@@ -3902,7 +3949,10 @@ System:
         - name: Scout Command
           description: "`morph scout`: one session on the working tree, its record written to .morph/scout/<id>/."
           behavior: >
-            scoutCommand(root, args {processor, issue, seedFile, deadlineSeconds}, deps {env, now, cwd, transport}) → Promise of {code, document}. In order, each
+            scoutCommand(root, args {processor, issue, seedFile, deadlineSeconds: number | null}, deps {env, now, cwd, transport}, settings =
+            DEFAULT_SCOUT_SETTINGS) → Promise of {code, document}. DEFAULT_SCOUT_SETTINGS (exported; Load Config's scout) = {grepSkip, budgets {calls, reads, chars,
+            rounds, deadlineSeconds: deadlineMs / 1000}, caps {readLines, readChars, grepHits, grepLineChars, listEntries}, seed {files: SEED_FILES, chars:
+            SEED_CHARS}} of DEFAULT_TOOL_CAPS and DEFAULT_BUDGETS. In order, each
             refusal {code 4, document {error {code 4, kind "UsageError", message}}} before any spend or write: 1. processor Read Registry(deps.env), no config with
             that id → "processor <id> is not configured" + (": " + the messages of the faults keyed "MORPH_PROCESSOR_<id>_…", "; "-joined, when any). 2.
             path.resolve(deps.cwd, issue) not a regular file → "issue file not found: <issue>"; its UTF-8 text is the question; blank → "issue file is empty:
@@ -3911,10 +3961,11 @@ System:
             readSeedFile(text, listing) refusing → "seed file <seedFile>: <error>" (the JSON does not parse; files must be a non-empty list of paths — also for a
             non-object; notes must be a list of strings; not in the tree: <file>); seedText = renderFileSeed(files, notes) = FILE_SEED_HEADER ("Seed: files the
             operator named (--seed-file):") + "\n", "- <file>\n" each, "Note: <note>\n" each; seed {source "file", path seedFile, files, chars}. Else
-            seedFromOwnership(readOwnership(readMorphLog(root, env)), listing, SEED_FILES) rendered with SEED_CHARS; seed {source "primer", path null, files, chars:
+            seedFromOwnership(readOwnership(readMorphLog(root, env)), listing, settings.seed.files) rendered with settings.seed.chars; seed {source "primer", path null, files, chars:
             the text's length}. 5. ref = git rev-parse --verify -q HEAD trimmed on exit 0, else null; historyText = "Recent commits (newest first):\n" + the stdout
             of git log -n 10 --format=%h %s (runGit) trimmed when exit 0 and not "", else "". 6. start = now(); Run Scout({question, tree {root, files: listing},
-            NODE_SCOUT_FS (realpathSync; readFileSync utf8), seedText, DEFAULT_BUDGETS with deadlineMs = deadlineSeconds × 1000, DEFAULT_TOOL_CAPS, maxTokens null,
+            NODE_SCOUT_FS (realpathSync; readFileSync utf8), seedText, budgets {calls, reads, chars, rounds of settings.budgets, deadlineMs: (args.deadlineSeconds ??
+            settings.budgets.deadlineSeconds) × 1000}, caps {...settings.caps, grepSkip: settings.grepSkip}, maxTokens null,
             historyText}, {config, deps.transport or realTransport(config.timeoutMs), now}). 7. id = scoutId(start, sha256(question)) = the UTC "YYYYMMDD-HHMMSS"
             of start + "-" + the hex sha256's first 8 chars; SCOUT_DIR ".morph/scout"/<id>/ created under root, scout.json = JSON.stringify(record, null, 2) + "\n",
             record {schema 1, scoutId, createdAt (ISO of start), root, ref, question, questionSha256, protocolSha256 (of PROTOCOL), processor (the config id),
@@ -3927,6 +3978,7 @@ System:
             - {given: 'processor nope; processor bad with MORPH_PROCESSOR_bad_TYPE x; issue none.txt; issue blank.txt "  \n"; a root outside git', when: scoutCommand, then: '4 "processor nope is not configured"; "processor bad is not configured: MORPH_PROCESSOR_bad_TYPE must be one of openrouter, stub (got ''x'')"; "issue file not found: none.txt"; "issue file is empty: blank.txt"; no .morph; then a rejection "git ls-files failed (exit 128): …"'}
             - {given: 'an empty answers dir, deadlineSeconds 5', when: scoutCommand, then: 'code 1, status no_answer, answer null, "no answer: the model call failed in round 1: stub has no answer: <s>/ans/scout.t1.md", usage.requests 1; scout.json written with that status, deadlineMs 5000, 1 journal entry'}
             - {given: 'scoutId(1791500000000, the question''s sha), scoutId(0, "0123456789abcdef"), sha256(""), renderFileSeed(["x/a.py", "b.ts"], ["one", "two"]), readSeedFile of three texts, NODE_SCOUT_FS', when: called, then: '"20261008-225320-74e423b1", "19700101-000000-01234567", "e3b0c442…b855" (64 hex), the header + "- x/a.py\n- b.ts\nNote: one\nNote: two\n"; ok and two refusals; the file read and realpath, a missing path throws'}
+            - {given: 'examples.json["Scout Command 6"].given', when: 'scoutCommand with deadlineSeconds null and S; with 60 and S; with null and no settings', then: 'examples.json["Scout Command 6"].then'}
         - name: Plan From Scout
           description: "`morph plan --from-scout`: one session's answer as one patch card on its files."
           behavior: >

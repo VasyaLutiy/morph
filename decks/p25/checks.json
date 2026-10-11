@@ -1,0 +1,26 @@
+{
+  "phase": "p25",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates", "morph.config.yaml"],
+  "fullExclude": ["tests/cli/projectConfig.examples.test.ts", "tests/scout/runTool.examples.test.ts", "tests/scout/scoutCommand.examples.test.ts",
+    "tests/cli/parse.examples.test.ts", "tests/cli/main.p25.examples.test.ts"],
+  "cards": [
+    { "id": "load-config" },
+    { "id": "run-tool" },
+    { "id": "scout-command" },
+    { "id": "parse-command" },
+    { "id": "main" },
+    { "id": "load-config-judge", "files": [{ "file": "tests/cli/projectConfig.examples.test.ts", "min": 4, "max": 8, "new": true,
+      "lits": ["Load Config example 1", "Load Config example 2", "Load Config example 3", "Load Config example 4", "docs/TASK_",
+        "(known: version, scout)", "scout.grepSkip: must be a list", "morph.config.yaml is not a mapping at the top level",
+        "morph.config.yaml is not a valid config (2 problems): "] }] },
+    { "id": "run-tool-judge", "files": [{ "file": "tests/scout/runTool.examples.test.ts", "min": 8, "max": 10, "new": false,
+      "lits": ["Run Tool example 8", "docs/TASK_X.md", "GREP /hit/ in docs/: 2 matches in 2 files", "GREP /hit/ in decks/: 1 match in 1 file"] }] },
+    { "id": "scout-command-judge", "files": [{ "file": "tests/scout/scoutCommand.examples.test.ts", "min": 6, "max": 8, "new": false,
+      "lits": ["Scout Command example 6", "DEFAULT_SCOUT_SETTINGS", "900000", "60000", "Budget left: 4 calls, 3 file reads, 8894 chars, 5 rounds."] }] },
+    { "id": "parse-command-judge", "files": [{ "file": "tests/cli/parse.examples.test.ts", "min": 27, "max": 27, "new": false,
+      "lits": ["Parse Command example 17: the word scout and its flags", "deadlineSeconds: null"] }] },
+    { "id": "main-judge", "files": [{ "file": "tests/cli/main.p25.examples.test.ts", "min": 2, "max": 6, "new": true,
+      "lits": ["Main example 19", "Main example 20", "grepSkp", "morph scout: exit 2", "morph primer: exit 2", "docs/TASK_", "60000", "900000"] }] }
+  ]
+}
