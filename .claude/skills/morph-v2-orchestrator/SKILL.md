@@ -111,9 +111,13 @@ or record the departure (§1.3).
    `contour.yaml`, `wc -c` of the group's lines, not KiB): a phase that would take one over first compacts it as its own data commit —
    literals to fixtures by `ref`, behaviours reworded with every rule kept, no example's meaning
    changed — or puts the new Functions into a new Component. Examples carry full values, never
-   abbreviated. **A new code directory** (a new Component or package): its layer goes into
-   `decks/tools/layers.json` in the same data commit — the guard reads it in every acceptance, and a
-   directory it does not list is red on every card of it (until the record is the source, #41).
+   abbreviated. **Structure and rules live in the record** (P30–P31b): who imports whom is the
+   Functions' `uses: <Component>` steps (and `Component.dependsOn`); what a package may not do is a
+   canonical Guardrail (No Shell, No Clock, No Network, No Env, No Process, Stdlib Only, Pure) attached
+   where it binds; third-party modules are `System.dependencies` + `Component.uses`. A new package needs
+   its `uses` steps, never a `layers.json` entry (the project's guard must speak
+   `morph-guard-contract: 3`: else `plan --checks` exits 2 naming the template to copy). Any other
+   Guardrail name stays prose (`proseOnly` in the plan document). See `docs/CONTOUR.md`.
 4. **Expected values are measured, never recalled** — from the current code, a fixture, or a
    spike's real output.
 5. **The phase data of V2** (schema and example: the reference §2–§4):

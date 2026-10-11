@@ -103,7 +103,7 @@ A phase is done when:
 - Replay: MorphStudio with its record's "Injected Clock And Ids" / "No Network In Tests" mapped to rules. Its committed
   code stays green under the rules (no false red on HEAD).
 
-### P31b: the imports whitelist from the record, blamed per file (#42 §3, E2, size S–M, 4–6 cards)
+### P31b: imports from the record, blamed per file; layers.json out of the templates (#42) — done 11.10: run 20261011-175917, 7/7, 1 retry, $0.055 + scout $0.016
 - Allowed imports: the stdlib narrowed by the rules, plus the record dependencies of the directory's Components. The
   guard names the importing file, and the transaction's blame goes to that file's owner. The `imports` extras of
   `checks.json` are no longer needed for these cases (kept working, flagged as redundant in the plan document).
