@@ -49,7 +49,7 @@ export interface ScoutOptions {
   processor: string;
   issue: string;
   seedFile: string | null;
-  deadlineSeconds: number;
+  deadlineSeconds: number | null;
 }
 
 /** What Scout Command needs besides its arguments. */
@@ -59,6 +59,52 @@ export interface ScoutCommandDeps {
   cwd: string;
   transport: Transport | null;
 }
+
+/** The project's scout settings (Load Config's `scout` section). */
+export interface ScoutSettings {
+  grepSkip: string[];
+  budgets: {
+    calls: number;
+    reads: number;
+    chars: number;
+    rounds: number;
+    deadlineSeconds: number;
+  };
+  caps: {
+    readLines: number;
+    readChars: number;
+    grepHits: number;
+    grepLineChars: number;
+    listEntries: number;
+  };
+  seed: {
+    files: number;
+    chars: number;
+  };
+}
+
+/** The scout defaults, built from the constants of the pure modules. */
+export const DEFAULT_SCOUT_SETTINGS: ScoutSettings = {
+  grepSkip: [...DEFAULT_TOOL_CAPS.grepSkip],
+  budgets: {
+    calls: DEFAULT_BUDGETS.calls,
+    reads: DEFAULT_BUDGETS.reads,
+    chars: DEFAULT_BUDGETS.chars,
+    rounds: DEFAULT_BUDGETS.rounds,
+    deadlineSeconds: DEFAULT_BUDGETS.deadlineMs / 1000
+  },
+  caps: {
+    readLines: DEFAULT_TOOL_CAPS.readLines,
+    readChars: DEFAULT_TOOL_CAPS.readChars ?? 12000,
+    grepHits: DEFAULT_TOOL_CAPS.grepHits,
+    grepLineChars: DEFAULT_TOOL_CAPS.grepLineChars,
+    listEntries: DEFAULT_TOOL_CAPS.listEntries
+  },
+  seed: {
+    files: SEED_FILES,
+    chars: SEED_CHARS
+  }
+};
 
 /** What Scout Command resolves to: a code and one JSON document. */
 export interface ScoutResult {
@@ -220,7 +266,8 @@ function usageError(message: string): ScoutResult {
 export async function scoutCommand(
   root: string,
   args: ScoutOptions,
-  deps: ScoutCommandDeps
+  deps: ScoutCommandDeps,
+  settings: ScoutSettings = DEFAULT_SCOUT_SETTINGS
 ): Promise<ScoutResult> {
   const registry = readRegistry(deps.env);
   const config = registry.configs.find((entry) => entry.id === args.processor);
@@ -278,8 +325,8 @@ export async function scoutCommand(
     };
   } else {
     const ownership = readOwnership(readMorphLog(root, deps.env));
-    const seeded = seedFromOwnership(ownership, listing, SEED_FILES);
-    seedText = renderSeed(seeded, SEED_CHARS);
+    const seeded = seedFromOwnership(ownership, listing, settings.seed.files);
+    seedText = renderSeed(seeded, settings.seed.chars);
     seed = {
       source: "primer",
       path: null,
@@ -300,16 +347,21 @@ export async function scoutCommand(
 
   const start = deps.now();
   const budgets: ScoutBudgets = {
-    ...DEFAULT_BUDGETS,
-    deadlineMs: args.deadlineSeconds * 1000
+    calls: settings.budgets.calls,
+    reads: settings.budgets.reads,
+    chars: settings.budgets.chars,
+    rounds: settings.budgets.rounds,
+    deadlineMs:
+      (args.deadlineSeconds ?? settings.budgets.deadlineSeconds) * 1000
   };
+  const caps: ToolCaps = { ...settings.caps, grepSkip: settings.grepSkip };
   const session: ScoutSession = {
     question,
     tree: { root, files: listing },
     fs: NODE_SCOUT_FS,
     seedText,
     budgets,
-    caps: DEFAULT_TOOL_CAPS,
+    caps,
     maxTokens: null,
     historyText
   };
@@ -332,7 +384,7 @@ export async function scoutCommand(
     model: config.model,
     seed,
     budgets,
-    caps: DEFAULT_TOOL_CAPS,
+    caps,
     status: outcome.status,
     answer: outcome.answer,
     stopReason: outcome.stopReason,
