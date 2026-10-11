@@ -1,0 +1,115 @@
+import fs from "node:fs";
+import { expect, test } from "vitest";
+import { planCommand } from "../../src/cli/planCommand.js";
+import { fixture, tmpRoot } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+import type { PlanArgs, PlanDocument } from "../../src/cli/types.js";
+
+const MINI = [
+  "contour.yaml",
+  "morph-map.json",
+  "go.mod",
+  "internal/testhelp/testhelp.go",
+  "decks/m1/checks.json",
+  "decks/m1/parts/_clamp-value_probe_test.go",
+  "decks/m1/parts/_percent-of_probe_test.go",
+  "decks/m1/parts/_format-share_probe_test.go",
+];
+
+test("Plan Command example 19: contract 3 guards, proseOnly and layers.json unread", () => {
+  const r = tmpRoot();
+  try {
+    for (const f of MINI) {
+      r.write(f, fixture("go-mini/" + f));
+    }
+    r.write("contour.yaml", fixture("cli/goMiniGuarded.yaml"));
+    r.write("decks/tools/guard.mjs", "// morph-guard-contract: 3\n");
+    r.write("decks/tools/firstdiff.mjs", "// firstdiff\n");
+    const args: PlanArgs = {
+      name: "plan",
+      root: ".",
+      pretty: false,
+      spec: "contour.yaml",
+      components: ["calc", "report"],
+      map: "morph-map.json",
+      judge: true,
+      out: "decks/m1/deck.json",
+      checks: "decks/m1/checks.json",
+    };
+
+    const golden = JSON.parse(fixture("cli/goMiniGuarded.deck.json")) as Card[];
+    const expected = golden.map((card): Card => {
+      if (card.acceptance === null) return { ...card };
+      let acceptance = card.acceptance.replace(
+        "\n// guard\n",
+        "\n// morph-guard-contract: 3\n",
+      );
+      if (card.customId === "clamp-value") {
+        acceptance = acceptance.replace(
+          "node $P/guard.mjs src calc/clamp_value.go",
+          "node $P/guard.mjs src calc/clamp_value.go '' '{\"calc\":[]}' '{\"calc\":{\"no-shell\":\"Guardrail \\u0027No Shell\\u0027 of System mini\",\"pure\":\"Guardrail \\u0027Pure\\u0027 of Component calc\"}}'",
+        );
+      }
+      if (card.customId === "percent-of") {
+        acceptance = acceptance.replace(
+          "node $P/guard.mjs src calc/percent_of.go",
+          "node $P/guard.mjs src calc/percent_of.go '' '{\"calc\":[]}' '{\"calc\":{\"no-shell\":\"Guardrail \\u0027No Shell\\u0027 of System mini\",\"pure\":\"Guardrail \\u0027Pure\\u0027 of Component calc\"}}'",
+        );
+      }
+      if (card.customId === "format-share") {
+        acceptance = acceptance.replace(
+          "node $P/guard.mjs src report/format_share.go",
+          "node $P/guard.mjs src report/format_share.go '' '{\"report\":[\"calc\"]}' '{\"report\":{\"no-shell\":\"Guardrail \\u0027No Shell\\u0027 of System mini\"}}'",
+        );
+      }
+      return { ...card, acceptance };
+    });
+
+    const first = planCommand(r.root, args);
+    expect(first.code).toBe(0);
+    const document = first.document as PlanDocument & { proseOnly: string[] };
+    expect(document.cards).toStrictEqual(expected);
+    expect(JSON.parse(r.read("decks/m1/deck.json"))).toStrictEqual(expected);
+    expect(Object.keys(document)).toStrictEqual([
+      "spec",
+      "components",
+      "cards",
+      "generations",
+      "externalDependsOn",
+      "out",
+      "proseOnly",
+      "warnings",
+    ]);
+    expect(document.proseOnly).toStrictEqual(["Frozen Tree During Run"]);
+
+    r.write(
+      "decks/tools/layers.json",
+      "{\"layers\": {\"calc\": [\"report\"]}, \"pure\": [\"calc\"]}\n",
+    );
+    const again = planCommand(r.root, { ...args, out: "decks/m1/again.json" });
+    expect(again.code).toBe(0);
+    expect(r.read("decks/m1/again.json")).toBe(r.read("decks/m1/deck.json"));
+
+    r.write("decks/tools/guard.mjs", "// morph-guard-contract: 2\n");
+    const two = planCommand(r.root, { ...args, out: "decks/m1/two.json" });
+    expect(two.code).toBe(2);
+    expect(two.document).toStrictEqual({
+      error: {
+        code: 2,
+        kind: "DeckError",
+        message:
+          "decks/tools/guard.mjs speaks contract 2: copy templates/go/decks/tools/guard.mjs from MorphV2",
+      },
+    });
+    expect(r.exists("decks/m1/two.json")).toBe(false);
+
+    fs.rmSync(r.path("decks/tools/layers.json"));
+    r.write("decks/tools/guard.mjs", "// guard\n");
+    const hand = planCommand(r.root, { ...args, out: "decks/m1/hand.json" });
+    expect(hand.code).toBe(0);
+    expect((hand.document as PlanDocument).cards).toStrictEqual(golden);
+    expect("proseOnly" in (hand.document as object)).toBe(false);
+  } finally {
+    r.rm();
+  }
+});
