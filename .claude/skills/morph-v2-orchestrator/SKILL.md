@@ -164,7 +164,10 @@ or record the departure (§1.3).
      never the current file. Its kept neighbours (same package/module, not in the deck) then build
      against it in `deck check`; a break naming a kept file is a name the record does not hold (a
      private helper, an unrecorded export): add it to the record's Function, or put the neighbour
-     in the card's slice with "keep these names", before the run (#22);
+     in the card's slice with "keep these names", before the run (#22) — `deck check`'s `unproven` key lists every
+     target whose stub is the committed file or missing (a transaction deck without `_stubs/`: every committed target),
+     read it before the gate; at run time a red in a kept file of a target's package is blamed on the owner and
+     retried (P28);
    - a judge's test file: one passing test.
    Earlier generations' stubs stay in place for later cards.
 2. **The verdict, per probe:** each example red with a readable line (not a crash at import);

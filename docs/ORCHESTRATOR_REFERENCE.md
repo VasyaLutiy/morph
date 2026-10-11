@@ -94,6 +94,12 @@ example. Rules that cost runs:
 - a judge's test file: one passing test (`test("stub", () => { expect(1).toBe(1); })`).
 Real: `decks/p22b/_stubs/`. Every target needs its stub: a missing one is an error of
 `deck check` (builds) and of `gate`.
+What the build proves: kept files (no card's target) compile against the stubs, so the build names a kept file's use
+of a name the stub lacks (`calc/b.go:5:9: undefined: fmtOut`). A stub byte-identical to the committed file proves
+nothing about that file's names; `deck check` lists it under `unproven` ("the stub equals the committed file: the
+build proved nothing about its names"), as it lists a target with no stub ("no stub: the build used the committed
+file") and, for a transaction deck with no `_stubs/` at all, every committed target ("no _stubs/ beside the deck: no
+build ran"). Each entry is a warning; the exit is unchanged (P28b, #22).
 
 ## 5. The transaction
 
@@ -104,8 +110,12 @@ It is written by `morph plan … --checks <file> --only <ids>`, and only then: `
 `--checks` keeps the map's acceptances as they are, unmarked (`src/cli/planCommand.ts`). When the mark is there, `morph run`
 runs the deck as one transaction. Every card is written first. Then every acceptance runs on
 the full tree, no file is hidden from siblings, and a red line is blamed on the owner of the
-`file:line` it names. A red card is retried alone (P24, issue #16); a red after its retries rolls the whole
-subset back. `--only` marks a cut of new code too. It is required when the phase's Components hold
+`file:line` it names. A line naming a kept neighbour of a target — an existing file no card owns, in the same Go
+package (directory) as a target `.go`, or a TypeScript file whose tsc line names a relative module that resolves to a
+target (`src/b.ts(1,10): error TS2305: Module '"./a.js"' …`) — is blamed on that target's owner (P28a, #22): the
+answer dropped a name the neighbour uses. Any other existing unowned file is "outside the subset": a fault, rolled
+back without a retry (a record break of a caller; a Go importer in another package is one). A red card is retried
+alone (P24, issue #16); a red after its retries rolls the whole subset back. `--only` marks a cut of new code too. It is required when the phase's Components hold
 Functions outside the phase (skill `morph-v2-orchestrator` §5.2); otherwise cut by `--component` alone.
 
 ## 6. Commands and exit codes
@@ -116,7 +126,7 @@ All commands print one JSON document on stdout. The exit codes are shared: 0 ok,
 | command | does | exit |
 |---|---|---|
 | `morph plan --root . --spec contour.yaml --map morph-map.json --component <C>… --judge [--checks <f>] [--only <ids>] --out <deck>` | cuts the deck; with `--checks` builds acceptances | 0; 2 (record/map/checks invalid, acceptances not built); 4 (checks/guard/locator file not found) |
-| `morph deck check --root . --deck <deck> [--slice-cap-bytes N]` | errors: write-write (two owners of a path), read-write (a slice reads a same-generation target: add dependsOn); warnings: oversized-slice (over the cap, default 500 000 B), unordered-read, implicit-read (empty slice); **with `_stubs/` beside the deck**: compiles each card's stub tree (tsc / go build+vet): a missing stub or a break naming a file outside the card is an error | 0 when errors 0, else 2 |
+| `morph deck check --root . --deck <deck> [--slice-cap-bytes N]` | errors: write-write (two owners of a path), read-write (a slice reads a same-generation target: add dependsOn); warnings: oversized-slice (over the cap, default 500 000 B), unordered-read, implicit-read (empty slice); **with `_stubs/` beside the deck**: compiles each card's stub tree (tsc / go build+vet): a missing stub or a break naming a file outside the card is an error; `unproven` (last key): a committed target whose stub equals it or is missing, or every committed target of a transaction deck with no `_stubs/` — warnings (§4) | 0 when errors 0, else 2 |
 | `morph gate --root . --deck <deck> --stubs <dir> --refs <dir> [--mutants N]` | in a scratch clone of HEAD: every acceptance on stubs (red at its stage, no outside file), on references (green), chains ≤ 250 s, builds; `--mutants`: ≤ N mutants killed by the owner's acceptance, 20 min stop | 0; 1 only mutants survive/untried; 2 any other finding |
 | `morph run --root . --deck <deck> --processor <P> --deadline <s>` | branch `morph/<runId>`, a commit per accepted card, archive `.morph/runs/<runId>/` | 0 all written; 1 a card not written; 2/4 refused; 3 fault or archive failed |
 | `morph accept --root . --id <a,b,c> --from-run <runId> [--pick <card.rN.vM,…>] --commit` | replays archived answers of a run as a group: every acceptance, then a commit per card in `dependsOn` order; a card not picked takes its `v1`. Run it at the run's "deck and report" commit, not at its base: at the base the archive is untracked and every "files left in the tree" check goes red (P24b) | 0 all committed; 1 a member red (nothing committed, tree restored); 2 refused; 4 usage |
