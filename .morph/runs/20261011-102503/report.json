@@ -1,0 +1,201 @@
+{
+  "runId": "20261011-102503",
+  "completedAt": 1791714610744,
+  "branch": "morph/20261011-102503",
+  "processor": "ds",
+  "generations": 3,
+  "outcomes": [
+    {
+      "customId": "unproven-stubs",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "unproven-stubs.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/cli/deckCheck.p28.examples.test.ts(12,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(20,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(22,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(23,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(30,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(37,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(43,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(50,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(56,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(63,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(69,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(76,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(82,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(88,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(94,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(101,5): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": "0328b5c08c601e78a620d46933def1b72ad9b50b",
+      "diffstat": {
+        "files": 1,
+        "insertions": 70,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "deck-check",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "deck-check.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/cli/deckCheck.p28.examples.test.ts(12,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(20,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(22,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(23,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(30,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(37,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(43,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(50,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(56,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(63,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(69,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(76,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(82,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(88,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(94,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(101,5): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": "447d6039401cb11cea88c4018299cd5431ae10b9",
+      "diffstat": {
+        "files": 2,
+        "insertions": 7,
+        "deletions": 1
+      }
+    },
+    {
+      "customId": "unproven-stubs-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "unproven-stubs-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/unprovenStubs.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/cli/deckCheck.p28.examples.test.ts(12,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(20,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(22,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(23,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(30,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(37,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(43,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(50,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(56,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(63,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(69,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(76,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(82,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(88,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(94,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(101,5): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": "898010e1d3ff4e09fa375a0bc627fc1be83f15df",
+      "diffstat": {
+        "files": 1,
+        "insertions": 143,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "deck-check-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "deck-check-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/deckCheck.p28.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/cli/deckCheck.p28.examples.test.ts(12,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(20,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(22,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(23,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(30,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(37,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(43,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(50,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(56,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(63,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(69,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(76,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(82,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(88,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(94,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(101,5): error TS2304: Cannot find name 'expect'.\n"
+      ],
+      "commit": "d157a42445ba38788f1e8aa9c75ee096f59165ef",
+      "diffstat": {
+        "files": 1,
+        "insertions": 108,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 62438,
+    "outputTokens": 30070,
+    "cost": 0.05149764,
+    "requests": 7
+  },
+  "requests": [
+    {
+      "customId": "unproven-stubs.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791714304-JeSH4fgw1dCmIUD1gkeg",
+      "inputTokens": 7407,
+      "outputTokens": 1568,
+      "cost": 0.0041037,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "unproven-stubs.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791714304-SDHEyFZKwxcWmpcM1lYk",
+      "inputTokens": 7407,
+      "outputTokens": 2002,
+      "cost": 0.0046245,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "deck-check.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791714318-eWEv8QehTM4x8lhNUQbd",
+      "inputTokens": 7271,
+      "outputTokens": 2200,
+      "cost": 0.0048213,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "deck-check.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791714318-iBcgbmEJLn8rQ5T4D1Uc",
+      "inputTokens": 7271,
+      "outputTokens": 2124,
+      "cost": 0.0047301,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "unproven-stubs-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791714318-ruFRk8P09nygn4DyyTYj",
+      "inputTokens": 6413,
+      "outputTokens": 15078,
+      "cost": 0.0193263,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "deck-check-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791714424-e5EV4gxQZyrj77tEAl8T",
+      "inputTokens": 7532,
+      "outputTokens": 5031,
+      "cost": 0.0076056,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "deck-check-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791714473-y4RnV4Kb7j0MHH4MG02u",
+      "inputTokens": 19137,
+      "outputTokens": 2067,
+      "cost": 0.00628614,
+      "finishReason": "stop",
+      "error": null
+    }
+  ],
+  "rounds": [
+    {
+      "round": 0,
+      "reds": [
+        {
+          "customId": "unproven-stubs",
+          "blamed": [
+            "deck-check-judge"
+          ],
+          "log": "== tsc\ntests/cli/deckCheck.p28.examples.test.ts(12,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(20,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(22,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(23,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(30,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(37,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(43,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(50,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(56,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(63,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(69,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(76,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(82,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(88,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(94,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(101,5): error TS2304: Cannot find name 'expect'.\n"
+        },
+        {
+          "customId": "deck-check",
+          "blamed": [
+            "deck-check-judge"
+          ],
+          "log": "== tsc\ntests/cli/deckCheck.p28.examples.test.ts(12,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(20,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(22,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(23,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(30,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(37,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(43,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(50,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(56,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(63,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(69,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(76,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(82,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(88,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(94,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(101,5): error TS2304: Cannot find name 'expect'.\n"
+        },
+        {
+          "customId": "unproven-stubs-judge",
+          "blamed": [
+            "deck-check-judge"
+          ],
+          "log": "== tsc\ntests/cli/deckCheck.p28.examples.test.ts(12,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(20,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(22,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(23,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(30,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(37,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(43,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(50,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(56,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(63,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(69,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(76,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(82,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(88,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(94,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(101,5): error TS2304: Cannot find name 'expect'.\n"
+        },
+        {
+          "customId": "deck-check-judge",
+          "blamed": [
+            "deck-check-judge"
+          ],
+          "log": "== tsc\ntests/cli/deckCheck.p28.examples.test.ts(12,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(20,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(22,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(23,7): error TS2552: Cannot find name 'expect'. Did you mean 'expected'?\ntests/cli/deckCheck.p28.examples.test.ts(30,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(37,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(43,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(50,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(56,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(63,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(69,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(76,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(82,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(88,5): error TS2304: Cannot find name 'expect'.\ntests/cli/deckCheck.p28.examples.test.ts(94,1): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.\ntests/cli/deckCheck.p28.examples.test.ts(101,5): error TS2304: Cannot find name 'expect'.\n"
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "reds": []
+    }
+  ]
+}

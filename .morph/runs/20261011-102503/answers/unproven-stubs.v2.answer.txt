@@ -1,0 +1,68 @@
+```typescript
+import fs from "node:fs";
+import path from "node:path";
+import { isTransactionDeck } from "../cards/transaction.js";
+import type { Deck } from "../cards/types.js";
+
+export interface Unproven {
+  card: string;
+  path: string;
+  reason: string;
+}
+
+const REASON_NO_STUB = "no stub: the build used the committed file";
+const REASON_STUB_EQUALS =
+  "the stub equals the committed file: the build proved nothing about its names";
+const REASON_NO_STUB_DIR = "no _stubs/ beside the deck: no build ran";
+
+function isRegularFile(p: string): boolean {
+  try {
+    return fs.statSync(p).isFile();
+  } catch {
+    return false;
+  }
+}
+
+export function unprovenStubs(
+  root: string,
+  deckPath: string,
+  deck: Deck,
+): Unproven[] {
+  const stubDir = path.posix.join(path.posix.dirname(deckPath), "_stubs");
+  const stubDirAbs = path.resolve(root, stubDir);
+  let hasStubDir = false;
+  try {
+    hasStubDir = fs.statSync(stubDirAbs).isDirectory();
+  } catch {
+    hasStubDir = false;
+  }
+  const transaction = isTransactionDeck(deck.cards);
+
+  const result: Unproven[] = [];
+  for (const card of deck.cards) {
+    for (const t of card.targets) {
+      const committedAbs = path.resolve(root, t);
+      if (!isRegularFile(committedAbs)) continue;
+      if (hasStubDir) {
+        const stubAbs = path.resolve(root, stubDir, t);
+        if (!isRegularFile(stubAbs)) {
+          result.push({ card: card.customId, path: t, reason: REASON_NO_STUB });
+          continue;
+        }
+        const committedBytes = fs.readFileSync(committedAbs);
+        const stubBytes = fs.readFileSync(stubAbs);
+        if (committedBytes.equals(stubBytes)) {
+          result.push({
+            card: card.customId,
+            path: t,
+            reason: REASON_STUB_EQUALS,
+          });
+        }
+      } else if (transaction) {
+        result.push({ card: card.customId, path: t, reason: REASON_NO_STUB_DIR });
+      }
+    }
+  }
+  return result;
+}
+```

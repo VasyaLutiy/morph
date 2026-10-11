@@ -1,0 +1,7 @@
+morph run: unproven-stubs.v1 accepted stage 0 finish stop chars 1867
+morph run: unproven-stubs.v2 untried stage 0 finish stop chars 1935
+morph run: deck-check.v1 accepted stage 0 finish stop chars 5459
+morph run: deck-check.v2 untried stage 0 finish stop chars 5443
+morph run: unproven-stubs-judge.v1 accepted stage 0 finish stop chars 4415
+morph run: deck-check-judge.v1 accepted stage 0 finish stop chars 3867
+morph run: deck-check-judge.r1.v1 accepted stage 0 finish stop chars 3904
