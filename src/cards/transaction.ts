@@ -24,6 +24,85 @@ export interface TestLines {
   packageLine: string | null;
 }
 
+export interface NeighbourRule {
+  file: string;
+  directory: boolean;
+  testFile: string | null;
+  module: string | null;
+}
+
+function dirOf(path: string): string {
+  const i = path.lastIndexOf("/");
+  return i === -1 ? "" : path.slice(0, i);
+}
+
+function resolveAgainstDir(dir: string, spec: string): string {
+  const parts: string[] = dir === "" ? [] : dir.split("/");
+  for (const seg of spec.split("/")) {
+    if (seg === "" || seg === ".") continue;
+    if (seg === "..") {
+      parts.pop();
+      continue;
+    }
+    parts.push(seg);
+  }
+  return parts.join("/");
+}
+
+function withSourceExt(path: string): string {
+  const i = path.lastIndexOf(".");
+  if (i === -1) return path;
+  const ext = path.slice(i);
+  let replacement: string | null = null;
+  if (ext === ".js") replacement = ".ts";
+  else if (ext === ".jsx") replacement = ".tsx";
+  else if (ext === ".mjs") replacement = ".mts";
+  else if (ext === ".cjs") replacement = ".cts";
+  if (replacement === null) return path;
+  return path.slice(0, i) + replacement;
+}
+
+function neighboursOf(
+  rule: NeighbourRule,
+  p: string,
+  rest: string,
+  owners: Record<string, string>,
+): string[] {
+  const result = new Set<string>();
+  const dir = dirOf(p);
+  const fileRe = new RegExp(rule.file);
+  const testRe = rule.testFile === null ? null : new RegExp(rule.testFile);
+  const pIsTest = testRe !== null && testRe.test(p);
+  if (rule.directory) {
+    for (const k of Object.keys(owners)) {
+      if (!fileRe.test(k)) continue;
+      if (dirOf(k) !== dir) continue;
+      if (testRe !== null && !pIsTest && testRe.test(k)) continue;
+      result.add(k);
+    }
+  }
+  if (rule.module !== null) {
+    const moduleRe = new RegExp(rule.module, "g");
+    let m: RegExpExecArray | null = moduleRe.exec(rest);
+    while (m !== null) {
+      const g1 = m[1];
+      if (g1 !== undefined) {
+        const s = resolveAgainstDir(dir, g1);
+        const candidates = [s, withSourceExt(s)];
+        for (const c of candidates) {
+          if (Object.prototype.hasOwnProperty.call(owners, c)) {
+            result.add(c);
+            break;
+          }
+        }
+      }
+      if (m.index === moduleRe.lastIndex) moduleRe.lastIndex++;
+      m = moduleRe.exec(rest);
+    }
+  }
+  return Array.from(result);
+}
+
 export function blameLog(
   log: string,
   card: string,
@@ -31,6 +110,7 @@ export function blameLog(
   fileLines: readonly string[],
   exists: (path: string) => boolean,
   testLines: readonly TestLines[] = [],
+  neighbours: readonly NeighbourRule[] = [],
 ): Blame {
   const cards = new Set<string>();
   const outside = new Set<string>();
@@ -81,7 +161,21 @@ export function blameLog(
         } else if (!exists(path)) {
           cards.add(card);
         } else {
-          outside.add(path + rest);
+          let some = false;
+          for (const rule of neighbours) {
+            if (!new RegExp(rule.file).test(path)) continue;
+            const ns = neighboursOf(rule, path, rest, owners);
+            if (ns.length > 0) {
+              for (const k of ns) {
+                cards.add(owners[k]);
+              }
+              some = true;
+            }
+            break;
+          }
+          if (!some) {
+            outside.add(path + rest);
+          }
         }
         break;
       }

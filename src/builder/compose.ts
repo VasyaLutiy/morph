@@ -1,4 +1,6 @@
 import { codeTargets, testTarget } from "../language/paths.js";
+import { layersArg } from "../rules/layers.js";
+import { rulesArg } from "../rules/guardrails.js";
 import { heredoc, OWN_GIT_AFTER, OWN_GIT_BEFORE, eslintStep, ESLINT_VERDICT, frozenStep, namesKept, tscStep, untrackedStep, vitestStep, fullArgs, wrapScript } from "./steps.js";
 import { probeDir } from "./probeDir.js";
 import type { CardContext, JudgeFile } from "./types.js";
@@ -25,7 +27,7 @@ export function codeAcceptance(
   }
   body += tscStep(ctx.profile);
   body += eslintStep(ctx.profile, ctx.targets);
-  body += "echo '== guard'; node $P/guard.mjs src " + code.join(",") + allowArg(ctx.allowed ?? []);
+  body += "echo '== guard'; node $P/guard.mjs src " + code.join(",") + allowArg(ctx.allowed ?? []) + layersArg(ctx.allowed ?? [], ctx.layers) + rulesArg(ctx.rules);
   if (test !== null) {
     body += "; node $P/guard.mjs tests " + test + " 1 " + smoke;
   }

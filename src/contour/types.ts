@@ -6,24 +6,26 @@ export interface ContourFunction {
   requirements: string[]; guardrails: string[]; preconditions: string[];
   steps: Step[]; examples: Example[];
 }
-export interface DataObject { name: string; description: string; schema: string | null }
-export interface ContourInterface { name: string; description: string; exposes: string[] }
+export interface DataObject { name: string; description: string; schema: string | null; requirements: string[]; guardrails: string[] }
+export interface ContourEvent { name: string; description: string; requirements: string[]; guardrails: string[]; schema: string | null }
+export interface ContourInterface { name: string; description: string; exposes: string[]; requirements?: string[]; guardrails?: string[]; schema?: string | null }
 export interface Dependency { name: string; version: string; language: string; doc: string | null }
 export interface Component {
   name: string; description: string; language: string | null;
   requirements: string[]; guardrails: string[]; uses: string[];
   functions: ContourFunction[]; dataObjects: DataObject[]; interfaces: ContourInterface[];
+  events: ContourEvent[]; references: string[]; consumes: string[]; dependsOn: string[];
 }
 export interface ContourSystem {
   name: string; description: string; requirements: string[]; guardrails: string[]; groups: Component[];
   dependencies: Dependency[];
 }
 export interface Definition { name: string; description: string }
-export interface Actor { name: string; description: string; uses: string[] }
+export interface Actor { name: string; description: string; uses: string[]; requirements: string[]; guardrails: string[] }
 export interface ContourRecord {
   version: 1; system: ContourSystem; actors: Actor[]; requirements: Definition[]; guardrails: Definition[];
 }
-export type RecordResult = { ok: true; record: ContourRecord } | { ok: false; problems: string[] };
+export type RecordResult = { ok: true; record: ContourRecord; warnings?: string[] } | { ok: false; problems: string[] };
 export interface CardFields {
   customId: string | null; intent: "generate" | "patch" | null; targets: string[] | null;
   contextSlice: string[] | null; dependsOn: string[] | null; instruction: string | null;
@@ -39,7 +41,7 @@ export interface ContourMap {
 }
 export type MapResult = { ok: true; map: ContourMap } | { ok: false; problems: string[] };
 export type DocResult = { ok: true; doc: Record<string, unknown> } | { ok: false; error: string };
-export type LoadRecordResult = { ok: true; record: ContourRecord } | { ok: false; error: string };
+export type LoadRecordResult = { ok: true; record: ContourRecord; warnings?: string[] } | { ok: false; error: string };
 export type LoadMapResult = { ok: true; map: ContourMap } | { ok: false; error: string };
 export type SelectResult = { ok: true; components: Component[] } | { ok: false; error: string };
 export interface FunctionLink { function: string; calls: string[]; dataObjects: string[]; uses: string[] }

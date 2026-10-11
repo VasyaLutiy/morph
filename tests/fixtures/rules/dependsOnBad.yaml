@@ -1,0 +1,21 @@
+System:
+  name: depends-on
+  description: Components that depend on each other by Component.dependsOn (Contour's own Component edge).
+  groups:
+    - name: app
+      description: The app.
+      language: typescript
+      dependsOn: [nope, store, nope]
+      functions:
+        - {name: Run App, description: Runs the app., behavior: Runs., examples: [{given: g, when: w, then: t}]}
+    - name: store
+      description: The store.
+      language: typescript
+      dependsOn: [store]
+      functions:
+        - {name: Save Thing, description: Saves a thing., behavior: Saves., examples: [{given: g, when: w, then: t}]}
+    - name: util
+      description: Helpers.
+      language: typescript
+      functions:
+        - {name: Pad Text, description: Pads a text., behavior: Pads., steps: [{uses: store}], examples: [{given: g, when: w, then: t}]}

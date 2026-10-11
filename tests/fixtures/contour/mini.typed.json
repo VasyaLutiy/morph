@@ -83,7 +83,9 @@
           {
             "name": "Text File",
             "description": "A UTF-8 text file given by path.",
-            "schema": "{ path: string, text: string }"
+            "schema": "{ path: string, text: string }",
+            "requirements": [],
+            "guardrails": []
           }
         ],
         "interfaces": [
@@ -92,9 +94,16 @@
             "description": "The command line.",
             "exposes": [
               "Report Count"
-            ]
+            ],
+            "requirements": [],
+            "guardrails": [],
+            "schema": null
           }
-        ]
+        ],
+        "events": [],
+        "references": [],
+        "consumes": [],
+        "dependsOn": []
       },
       {
         "name": "store",
@@ -167,10 +176,16 @@
           {
             "name": "Count Record",
             "description": "One stored count.",
-            "schema": "{\n  \"path\": \"string\",\n  \"count\": \"number, >= 0\"\n}"
+            "schema": "{\n  \"path\": \"string\",\n  \"count\": \"number, >= 0\"\n}",
+            "requirements": [],
+            "guardrails": []
           }
         ],
-        "interfaces": []
+        "interfaces": [],
+        "events": [],
+        "references": [],
+        "consumes": [],
+        "dependsOn": []
       }
     ],
     "dependencies": []
@@ -181,7 +196,9 @@
       "description": "A person at a shell.",
       "uses": [
         "tally CLI"
-      ]
+      ],
+      "requirements": [],
+      "guardrails": []
     }
   ],
   "requirements": [

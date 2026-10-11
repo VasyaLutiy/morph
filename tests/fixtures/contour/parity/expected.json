@@ -1,0 +1,180 @@
+{
+  "ccledger": {
+    "cards": [
+      {
+        "customId": "classify",
+        "dependsOn": [],
+        "targets": [
+          "ccledger/classify.py",
+          "tests/test_classify.py"
+        ]
+      },
+      {
+        "customId": "load",
+        "dependsOn": [],
+        "targets": [
+          "ccledger/load.py",
+          "tests/test_load.py"
+        ]
+      },
+      {
+        "customId": "price",
+        "dependsOn": [],
+        "targets": [
+          "ccledger/price.py",
+          "tests/test_price.py"
+        ]
+      },
+      {
+        "customId": "render",
+        "dependsOn": [],
+        "targets": [
+          "ccledger/render.py",
+          "tests/test_render.py"
+        ]
+      },
+      {
+        "customId": "ledger",
+        "dependsOn": [
+          "load",
+          "price",
+          "classify"
+        ],
+        "targets": [
+          "ccledger/ledger.py",
+          "tests/test_ledger.py"
+        ]
+      },
+      {
+        "customId": "cli",
+        "dependsOn": [
+          "ledger",
+          "render"
+        ],
+        "targets": [
+          "ccledger/cli.py",
+          "ccledger/__main__.py",
+          "tests/test_cli.py",
+          "README.md"
+        ]
+      }
+    ],
+    "generations": [
+      [
+        "classify",
+        "load",
+        "price",
+        "render"
+      ],
+      [
+        "ledger"
+      ],
+      [
+        "cli"
+      ]
+    ],
+    "warnings": [
+      "no language on Component ccledger and none in the map: typescript assumed",
+      "ccledger/Load Session: no examples, no judge",
+      "ccledger/Price Call: no examples, no judge",
+      "ccledger/Classify Call: no examples, no judge",
+      "ccledger/Build Ledger: no examples, no judge",
+      "ccledger/Render Ledger: no examples, no judge",
+      "ccledger/Ledger CLI: no examples, no judge"
+    ]
+  },
+  "contour-engine": {
+    "cards": [
+      {
+        "customId": "diagram",
+        "dependsOn": [],
+        "targets": [
+          "contour_engine/diagram.py",
+          "tests/test_diagram.py"
+        ]
+      },
+      {
+        "customId": "schema",
+        "dependsOn": [],
+        "targets": [
+          "contour_engine/schema.py",
+          "tests/test_schema.py"
+        ]
+      },
+      {
+        "customId": "store",
+        "dependsOn": [],
+        "targets": [
+          "contour_engine/store.py",
+          "tests/test_store.py"
+        ]
+      },
+      {
+        "customId": "engine",
+        "dependsOn": [
+          "schema",
+          "store",
+          "diagram"
+        ],
+        "targets": [
+          "contour_engine/engine.py",
+          "tests/test_engine.py"
+        ]
+      },
+      {
+        "customId": "mcp",
+        "dependsOn": [
+          "engine"
+        ],
+        "targets": [
+          "contour_engine/mcp.py",
+          "tests/test_mcp.py"
+        ]
+      },
+      {
+        "customId": "rest",
+        "dependsOn": [
+          "engine"
+        ],
+        "targets": [
+          "contour_engine/rest.py",
+          "contour_engine/__main__.py",
+          "tests/test_rest.py",
+          "README.md"
+        ]
+      }
+    ],
+    "generations": [
+      [
+        "diagram",
+        "schema",
+        "store"
+      ],
+      [
+        "engine"
+      ],
+      [
+        "mcp",
+        "rest"
+      ]
+    ],
+    "warnings": [
+      "no language on Component contour-engine and none in the map: typescript assumed",
+      "contour-engine/Store Element: no examples, no judge",
+      "contour-engine/Delete Element: no examples, no judge",
+      "contour-engine/Retrieve Element: no examples, no judge",
+      "contour-engine/Validate Element: no examples, no judge",
+      "contour-engine/Store Requirement: no examples, no judge",
+      "contour-engine/Retrieve Requirement: no examples, no judge",
+      "contour-engine/Delete Requirement: no examples, no judge",
+      "contour-engine/Store Guardrail: no examples, no judge",
+      "contour-engine/Retrieve Guardrail: no examples, no judge",
+      "contour-engine/Delete Guardrail: no examples, no judge",
+      "contour-engine/Search Specifications: no examples, no judge",
+      "contour-engine/Search Requirements: no examples, no judge",
+      "contour-engine/Search Guardrails: no examples, no judge",
+      "contour-engine/Render Diagram: no examples, no judge",
+      "contour-engine/Render Element Diagram: no examples, no judge"
+    ]
+  }
+}

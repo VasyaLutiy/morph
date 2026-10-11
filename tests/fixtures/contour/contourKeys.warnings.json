@@ -1,0 +1,12 @@
+[
+  "(root): unknown key 'Extra' (ignored)",
+  "System: unknown key 'dataObjects' (ignored)",
+  "System.groups[0]: unknown key 'owner' (ignored)",
+  "System.groups[0].functions[0]: unknown key 'note' (ignored)",
+  "System.groups[0].functions[1].examples[0]: unknown key 'why' (ignored)",
+  "System.groups[0].interfaces[0]: unknown key 'version' (ignored)",
+  "System.groups[0].events[0]: unknown key 'topic' (ignored)",
+  "System.groups[1].dataObjects[0]: unknown key 'owner' (ignored)",
+  "Actor: unknown key 'role' (ignored)",
+  "Requirement[0]: unknown key 'level' (ignored)"
+]

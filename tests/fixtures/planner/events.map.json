@@ -1,0 +1,7 @@
+{
+  "package": "src",
+  "language": "typescript",
+  "docs": [],
+  "groups": { "prices": ["List Prices", "Format Price"] },
+  "cards": {}
+}

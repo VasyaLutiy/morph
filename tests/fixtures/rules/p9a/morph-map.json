@@ -1,0 +1,30 @@
+{
+  "language": "go",
+  "cards": {
+    "user-registry": {
+      "targets": [
+        "users/registry.go"
+      ]
+    },
+    "user-secrets": {
+      "targets": [
+        "users/secrets.go"
+      ]
+    },
+    "token-lookup": {
+      "targets": [
+        "users/tokens.go"
+      ]
+    },
+    "project-registry": {
+      "targets": [
+        "registry/registry.go"
+      ]
+    },
+    "phase-queue": {
+      "targets": [
+        "queue/queue.go"
+      ]
+    }
+  }
+}

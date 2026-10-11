@@ -26,7 +26,7 @@ import { processGeneration } from "./generation.js";
 import { buildRetry } from "./retry.js";
 import { blameLog } from "../cards/transaction.js";
 import { layerGenerations } from "../cards/layer.js";
-import { TREE_PROFILES, TEST_LINES } from "../language/treeProfiles.js";
+import { TREE_PROFILES, TEST_LINES, NEIGHBOUR_RULES } from "../language/treeProfiles.js";
 import { snapshotTargets, restoreSnapshot } from "../acceptance/snapshot.js";
 import { runAcceptance, DEFAULT_TIMEOUT_MS } from "../acceptance/run.js";
 import { buildAttemptDiff } from "../acceptance/diff.js";
@@ -359,7 +359,8 @@ export async function runTransaction(
           owners,
           TREE_PROFILES.map((profile) => profile.fileLine),
           (p) => fs.existsSync(path.join(root, p)),
-          TEST_LINES
+          TEST_LINES,
+          NEIGHBOUR_RULES
         );
         state.lastBlamesSelf = blame.cards.includes(card.customId);
         state.lastOutside = blame.outside;

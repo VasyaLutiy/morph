@@ -1,0 +1,38 @@
+version: 1
+System:
+  name: morphstudio
+  description: MorphStudio's P9a record trimmed to what the replays need (commits f85a8e7, 6672229; run 20261011-122303 of 0e8d7b7).
+  guardrails:
+    - Injected Clock And Ids
+    - No Network In Tests
+    - No Shell Outside Runner
+  groups:
+    - name: users
+      description: Package users in users/ — the user registry, the secret files and the token lookup; it imports nothing of the module.
+      language: go
+      functions:
+        - name: User Registry
+          description: The registry of users in one JSON file; a user's token is stored as its SHA-256 hash (sha256 lowercase hex).
+          behavior: users/registry.go keeps the users of base/users.json, rewritten whole and atomically.
+        - name: User Secrets
+          description: The per-user secret files with their modes.
+          behavior: users/secrets.go writes and reads a user's secret files under base/<user>/ (directory mode 0700, files 0600).
+        - name: Token Lookup
+          description: The constant-time bearer-token lookup with the operator's admin override.
+          behavior: users/tokens.go looks a bearer token up among the users' token hashes.
+    - name: registry
+      description: Package registry in registry/ — the project registry.
+      language: go
+      functions:
+        - name: Project Registry
+          description: The registry of projects.
+          behavior: registry/registry.go keeps the projects; it imports queue.
+          steps:
+            - uses: queue
+    - name: queue
+      description: Package queue in queue/.
+      language: go
+      functions:
+        - name: Phase Queue
+          description: The phase queue.
+          behavior: queue/queue.go holds the queue.

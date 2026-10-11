@@ -190,6 +190,37 @@ export function planSpec(input: PlanInput): PlanResult {
   const order = orderDeck(all.map((c) => c.card));
   if (!order.ok) return { ok: false, error: order.error };
 
+  const defined = new Set<string>();
+  for (const component of record.system.groups) {
+    for (const dataObject of component.dataObjects) defined.add(dataObject.name);
+    for (const event of component.events) defined.add(event.name);
+  }
+
+  const warnings: string[] = [];
+  const seenWarnings = new Set<string>();
+  const addWarning = (line: string): void => {
+    if (seenWarnings.has(line)) return;
+    seenWarnings.add(line);
+    warnings.push(line);
+  };
+  for (const component of selected) {
+    for (const fn of component.functions) {
+      for (const step of fn.steps) {
+        if (step.verb !== "reads" && step.verb !== "modifies" && step.verb !== "produces") {
+          continue;
+        }
+        if (defined.has(step.target)) continue;
+        addWarning(
+          `${component.name}/${fn.name}: step ${step.verb} '${step.target}' ` +
+            `names no Data Object or Event of the record`,
+        );
+      }
+      if (fn.examples.length === 0) {
+        addWarning(`${component.name}/${fn.name}: no examples, no judge`);
+      }
+    }
+  }
+
   return {
     ok: true,
     plan: {
@@ -200,5 +231,6 @@ export function planSpec(input: PlanInput): PlanResult {
       externalDependsOn: order.externalDependsOn,
     },
     uses,
+    warnings,
   };
 }

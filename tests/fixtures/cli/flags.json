@@ -1,0 +1,124 @@
+{
+  "bare": [
+    "--pretty",
+    "--judge",
+    "--write",
+    "--md",
+    "--commit"
+  ],
+  "valued": [
+    "--root",
+    "--deck",
+    "--processor",
+    "--run-id",
+    "--deadline",
+    "--max-cards",
+    "--max-retry-batches",
+    "--slice-cap-bytes",
+    "--spec",
+    "--component",
+    "--map",
+    "--out",
+    "--checks",
+    "--batch",
+    "--issue",
+    "--seed-file",
+    "--from-scout",
+    "--scout",
+    "--mutants",
+    "--mutant-timeout",
+    "--test",
+    "--id",
+    "--model",
+    "--from-run",
+    "--pick",
+    "--name",
+    "--language",
+    "--module",
+    "--templates",
+    "--only",
+    "--stubs",
+    "--refs"
+  ],
+  "takes": {
+    "every command": [
+      "--root",
+      "--pretty"
+    ],
+    "deck check": [
+      "--deck",
+      "--slice-cap-bytes"
+    ],
+    "run": [
+      "--deck",
+      "--processor",
+      "--run-id",
+      "--deadline",
+      "--max-cards",
+      "--max-retry-batches"
+    ],
+    "plan": [
+      "--spec",
+      "--component",
+      "--map",
+      "--judge",
+      "--out",
+      "--checks",
+      "--only"
+    ],
+    "review": [
+      "--spec",
+      "--map",
+      "--scout",
+      "--mutants",
+      "--mutant-timeout",
+      "--test",
+      "--write"
+    ],
+    "submit": [
+      "--deck",
+      "--processor"
+    ],
+    "collect": [
+      "--batch"
+    ],
+    "primer": [
+      "--write"
+    ],
+    "scout": [
+      "--processor",
+      "--issue",
+      "--seed-file",
+      "--deadline"
+    ],
+    "plan --from-scout": [
+      "--from-scout",
+      "--out"
+    ],
+    "card": [
+      "--deck",
+      "--id",
+      "--md"
+    ],
+    "accept": [
+      "--deck",
+      "--id",
+      "--model",
+      "--commit",
+      "--from-run",
+      "--pick"
+    ],
+    "init": [
+      "--name",
+      "--language",
+      "--module",
+      "--templates"
+    ],
+    "gate": [
+      "--deck",
+      "--stubs",
+      "--refs",
+      "--mutants"
+    ]
+  }
+}

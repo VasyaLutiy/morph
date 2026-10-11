@@ -1,0 +1,59 @@
+{
+  "api": [
+    "control"
+  ],
+  "bootstrap": [
+    "github",
+    "runner"
+  ],
+  "claude": [],
+  "cmd/morphd": [
+    "api",
+    "daemon",
+    "mcpserver",
+    "queue"
+  ],
+  "control": [
+    "eventlog",
+    "github",
+    "queue",
+    "session",
+    "stream"
+  ],
+  "daemon": [
+    "bootstrap",
+    "claude",
+    "control",
+    "eventlog",
+    "github",
+    "gitrules",
+    "registry",
+    "session",
+    "stream",
+    "supervisor",
+    "telegram"
+  ],
+  "eventlog": [],
+  "github": [],
+  "gitrules": [
+    "runner"
+  ],
+  "mcpserver": [
+    "control"
+  ],
+  "queue": [],
+  "registry": [],
+  "runner": [],
+  "session": [
+    "stream"
+  ],
+  "stream": [],
+  "supervisor": [
+    "control",
+    "gitrules",
+    "queue",
+    "stream"
+  ],
+  "telegram": [],
+  "users": []
+}

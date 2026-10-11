@@ -1,0 +1,11 @@
+{
+  "functionSection Place Order": "## Function Place Order\n\nPlaces an order for a cart.\n\nBehaviour: placeOrder(cart) returns the order and announces Order Placed.\n\nSteps:\n- reads: Cart\n- calls: Price Cart\n- produces: Order Placed\n- produces: string\n\nExamples (the tests must prove each one):\n1. given a cart of two items; when placed; then an order of two lines\n\nData Cart: A cart of items.\nSchema:\n{ items: string[] }\n\nEvent Order Placed: An order was placed.\nSchema:\n{\n  \"total\": \"integer\",\n  \"id\": \"string\"\n}",
+  "functionSection Price Cart": "## Function Price Cart\n\nPrices every item of a cart.\n\nSteps:\n- reads: Cart\n- modifies: Price Table\n\nData Cart: A cart of items.\nSchema:\n{ items: string[] }\n\nData Price Table: Prices by item.",
+  "dataBlocks Place Order, Cancel Order": [
+    "Data Cart: A cart of items.\nSchema:\n{ items: string[] }",
+    "Event Order Placed: An order was placed.\nSchema:\n{\n  \"total\": \"integer\",\n  \"id\": \"string\"\n}",
+    "Event Order Cancelled: An order was cancelled."
+  ],
+  "interfaceSection orders API": "## Interface orders API\n\nThe HTTP API of orders.\n\nSchema:\n{\n  \"delete\": {\n    \"path\": \"/orders/{id}\"\n  },\n  \"post\": {\n    \"body\": \"Cart\",\n    \"path\": \"/orders\"\n  }\n}\n\nExposes:\n- Place Order (`src/orders/placeOrder.ts`)\n- Cancel Order (`src/orders/cancelOrder.ts`)\n\nRequirements:\n- Exact Totals: Totals are exact integers of cents.\n\nGuardrails:\n- One Writer: Only the API writes orders.\n- Missing Rule (definition not found in the record)",
+  "interfaceSection orders API, no record": "## Interface orders API\n\nThe HTTP API of orders.\n\nSchema:\n{\n  \"delete\": {\n    \"path\": \"/orders/{id}\"\n  },\n  \"post\": {\n    \"body\": \"Cart\",\n    \"path\": \"/orders\"\n  }\n}\n\nExposes:\n- Place Order (`src/orders/placeOrder.ts`)\n- Cancel Order (`src/orders/cancelOrder.ts`)\n\nRequirements:\n- Exact Totals (definition not found in the record)\n\nGuardrails:\n- One Writer (definition not found in the record)\n- Missing Rule (definition not found in the record)"
+}

@@ -146,7 +146,7 @@ System:
         - name: Blame Log
           description: The cards a red acceptance log blames by the files its lines name, and the lines naming files outside them.
           behavior: >
-            blameLog(log, card, owners, fileLines, exists, testLines = []) in src/cards/transaction.ts, pure: log the red
+            blameLog(log, card, owners, fileLines, exists, testLines = [], neighbours = []) in src/cards/transaction.ts, pure: log the red
             acceptance's output; card the customId whose acceptance it is; owners a Record target path → owning customId;
             fileLines regular-expression sources (Tree Profiles' fileLine, in order: group 1 the path, group 2 the rest);
             exists(path) whether the path is on disk; testLines (P24c, issue #19) the Test Lines of Tree Profiles' TEST_LINES
@@ -156,7 +156,8 @@ System:
             space removed (trimEnd): a line that is "" or starts with "#" is skipped. A line that does not start with " " or
             "\t" goes to fileLines first: the FIRST of fileLines that matches it (new RegExp, in order) gives p = group 1 and
             rest = group 2; p an own key of owners → owners[p] is blamed; else exists(p) false → card is blamed (a file of
-            the acceptance itself, gone when it ends: a probe); else p + rest is an outside line. A line no fileLine matched
+            the acceptance itself, gone when it ends: a probe); else p is a kept file (on disk, no card's target): its
+            neighbours by the Neighbour Rules (P28, below) → the owner of each is blamed; none → p + rest is an outside line. A line no fileLine matched
             (an indented line always) goes to testLines: the first pattern that matches it, entry by entry in order and in
             each entry failLine, then locationLine, then packageLine (null ones skipped). A packageLine match blames
             nothing: its group 1 is the package of the bare file names around it. A failLine or locationLine match gives
@@ -172,7 +173,20 @@ System:
             unattributed red, Blame {cards: [], outside: []}; P24c, issue #19 item 2: a red nobody owns does not blame every
             card that saw it); else → card is blamed (a red naming no file: a guard, a message). → Blame {cards: the blamed
             ids, outside: the outside lines}, each once, sorted (JavaScript's default sort). The inputs are never changed.
-            testLines [] (the default) gives the result before P24c: no indented line is read.
+            testLines [] (the default) gives the result before P24c: no indented line is read. Neighbour Rules (P28, issue
+            #22: a re-cut that drops a name a kept file of its package uses is the card's red, retried, not a fault):
+            neighbours the Neighbour Rules of Tree Profiles' NEIGHBOUR_RULES in order, each {file, directory, testFile,
+            module}; `export interface NeighbourRule { file: string; directory: boolean; testFile: string | null; module:
+            string | null }` lives in src/cards/transaction.ts next to TestLines. The FIRST rule whose new RegExp(file) matches
+            the kept file p gives its neighbours, own keys k of owners; no rule matches → none. dir(x) = x before its last
+            "/", "" when x has none. directory true → every k that new RegExp(file) matches with dir(k) = dir(p), except,
+            when testFile is not null and new RegExp(testFile) does not match p, the k it matches (a package's code never
+            names its test files; a test file may name both). module not null → for every match of new RegExp(module, "g")
+            on rest, s = its group 1 resolved against dir(p) (the "/"-segments of dir(p), then of group 1; "" and "."
+            dropped, ".." removes the segment before it; joined by "/"), then k = s, or s with a final ".js", ".jsx",
+            ".mjs" or ".cjs" replaced by ".ts", ".tsx", ".mts" or ".cts", when it is an own key. Both may apply. No
+            node: module (dir and the resolution are string work). neighbours [] (the default) gives the result before
+            P28: every kept file is an outside line.
           steps:
             - produces: Blame
           examples:
@@ -208,6 +222,12 @@ System:
               ref: "tests/fixtures/cards/blameTestLogs.json"
               when: blameLog
               then: '{cards: ["pj"], outside: []} ("tests/test_calc.py:5: in test_half" by the python fileLine, "FAILED tests/test_calc.py::test_half - assert 2 == 4" by its failLine); then {cards: [], outside: ["tests/test_calc.py:5: in test_half"]} (a column-0 line keeps its outside rule); then {cards: ["pj"], outside: []} (before P24c: ["pc"])'
+            - given: 'P28, issue #22, Go. card "g"; owners OG = {"calc/a.go": "g", "calc/a_examples_test.go": "gj", "pump/flow.go": "p2"}; the three fileLines; exists always true; TEST_LINES; NEIGHBOUR_RULES; logs G1 = "# example.com/m/calc\ncalc/b.go:4:7: undefined: okView\ncalc/b.go:5:9: undefined: fmtOut\n# example.com/m/calc\nvet: calc/b.go:4:7: undefined: okView\n" (go build and go vet, measured), then "calc/b_test.go:7:2: undefined: helperT\n", then "cmd/tool/main.go:6:2: undefined: calc.Sum\n"; then G1 without the neighbours argument'
+              when: blameLog
+              then: '{cards: ["g"], outside: []} (calc/b.go is a kept file of package calc: its code neighbour calc/a.go, not the test file); then {cards: ["g", "gj"], outside: []} (a kept test file: both); then {cards: [], outside: ["cmd/tool/main.go:6:2: undefined: calc.Sum"]} (no target in cmd/tool: outside as before); then {cards: [], outside: ["calc/b.go:4:7: undefined: okView", "calc/b.go:5:9: undefined: fmtOut"]} (before P28)'
+            - given: 'P28, issue #22, TypeScript. card "a"; owners {"src/a.ts": "a", "tests/a.examples.test.ts": "aj"}; the three fileLines; exists always true; TEST_LINES; NEIGHBOUR_RULES; logs T1 = "src/b.ts(1,10): error TS2305: Module ''\"./a.js\"'' has no exported member ''fmtOut''.\nsrc/cli/c.ts(1,10): error TS2305: Module ''\"../a.js\"'' has no exported member ''fmtOut''.\n" (tsc, measured), then "src/a2.ts(3,4): error TS2304: Cannot find name ''q7''.\n", then "src/b.ts(1,10): error TS2305: Module ''\"./z.js\"'' has no exported member ''q''.\n"; then T1 without the neighbours argument'
+              when: blameLog
+              then: '{cards: ["a"], outside: []} (./a.js from src and ../a.js from src/cli both resolve to src/a.ts); then {cards: [], outside: ["src/a2.ts(3,4): error TS2304: Cannot find name ''q7''."]} (TypeScript is not by directory: no module named); then {cards: [], outside: ["src/b.ts(1,10): error TS2305: Module ''\"./z.js\"'' has no exported member ''q''."]} (src/z.ts is no target); then {cards: [], outside: [the two T1 lines]} (before P28)'
       dataObjects:
         - name: Blame
           description: What one red acceptance log blames.
@@ -1229,7 +1249,7 @@ System:
             Else rounds r = 0, 1, …: every card in deck order runs ITS acceptance (Run Acceptance(card.acceptance, root, {env:
             deps.env, timeoutMs: deps.acceptanceTimeoutMs ?? DEFAULT_TIMEOUT_MS})); exit 0 green, else red with Blame Log(its
             log, its customId, owners, TREE_PROFILES' fileLine in order, p → a file or directory exists at root/p,
-            TEST_LINES; P24c). All
+            TEST_LINES; P24c, then NEIGHBOUR_RULES; P28, issue #22: a kept file of a target's package blames the target's owner). All
             green → deps.commit(id, targets) per card in deck order, id = the customId of the attempt whose files are on the
             tree (the card's, or "<customId>.r<n>" of its last written retry); done. Some red: any outside line → fault
             "outside the subset: " + every red card's outside lines (each once, sorted) joined ", ", then rollback. Some
@@ -1318,6 +1338,12 @@ System:
             - given: 'P24c, issue #19 item 2. The stub; fenced a.md ''export const a = "A1";\n'', b.md ''export const b = "B2";\n''; cards a → out/a.ts M + "exit 0"; b → out/b.ts M + "touch out/zz.test.ts; echo \" FAIL  out/zz.test.ts > zz\"; exit 1"'
               when: runTransaction
               then: 'round 0: b red on a test file that exists and no card owns, its Blame {cards: [], outside: []}: no retry; rollback; report.stop "unattributed red: b", the last key; report.rounds [{round: 0, reds: [{customId: "b", blamed: [], log: " FAIL  out/zz.test.ts > zz\n"}]}], the key before stop; a "failed" "transaction rolled back" attempts 1 winningVariant "a.v1" lastRound "green" acceptanceLog "" earlierFailures []; b "failed" "transaction rolled back" attempts 1 winningVariant "b.v1" lastRound "red" acceptanceLog " FAIL  out/zz.test.ts > zz\n" earlierFailures []; requests a.v1, b.v1; no commit; out/a.ts and out/b.ts absent'
+            - given: 'P28, issue #22 acceptance, Go. The stub, maxRetryBatches 2; calc/b.go ''package calc\n\nfunc Report() string { return fmtOut() }\n'' on disk, no card''s target; fenced g.md ''package calc\n\nfunc Sum(a, b int) int { return a + b }\n'', g.r1.md ''package calc\n\nfunc Sum(a, b int) int { return a + b }\n\nfunc fmtOut() string { return \"\" }\n'', gj.md ''package calc\n''; L = "calc/b.go:3:31: undefined: fmtOut"; cards g → calc/a.go M + ''grep -q fmtOut calc/a.go || { echo "'' + L + ''"; exit 1; }'', gj → calc/a_examples_test.go dependsOn [g] M + ''grep -q fmtOut calc/a.go || { echo "vet: '' + L + ''"; exit 1; }''; deps.onVariant pushes each record; then a fresh root with mcp/count.go ''package mcp\n'' on disk instead of calc/b.go, the same answers, g → calc/a.go M + ''grep -q fmtOut calc/a.go || { echo "mcp/count.go:6:52: undefined: x"; exit 1; }'', gj → calc/a_examples_test.go dependsOn [g] M + "exit 0"'
+              when: runTransaction
+              then: 'round 0: g and gj red, both blaming g (calc/b.go is a kept file of package calc, its code neighbour calc/a.go is g''s; gj''s test file is not); only g retried, its request holding L; round 1 green: g "written" attempts 2 winningVariant "g.r1.v1" acceptanceLog "" earlierFailures [L + "\n"]; gj "written" attempts 1 winningVariant "gj.v1" acceptanceLog "" earlierFailures ["vet: " + L + "\n"]; requests g.v1, gj.v1, g.r1.v1; the hook fired g.r1, gj; report.rounds [{round: 0, reds: [{customId: "g", blamed: ["g"], log: L + "\n"}, {customId: "gj", blamed: ["g"], log: "vet: " + L + "\n"}]}, {round: 1, reds: []}]; no stop key, no fault key; calc/a.go holds fmtOut. Then (mcp holds no target: outside as before, measured on main): g "failed" reason "outside the subset" attempts 1 winningVariant "g.v1" lastRound "red" acceptanceLog "mcp/count.go:6:52: undefined: x\n" earlierFailures []; gj "failed" "transaction rolled back" attempts 1 winningVariant "gj.v1" lastRound "green" acceptanceLog "" earlierFailures []; requests g.v1, gj.v1; no commit; report.rounds [{round: 0, reds: [{customId: "g", blamed: [], log: "mcp/count.go:6:52: undefined: x\n"}]}]; report.fault "outside the subset: mcp/count.go:6:52: undefined: x", the last key; no stop key; calc/a.go absent'
+            - given: 'P28, issue #22 acceptance, TypeScript. The stub, maxRetryBatches 2; out/k.ts ''import { fmtOut } from "./a.js";\nexport const k = fmtOut;\n'' on disk, no card''s target; T = "out/k.ts(1,10): error TS2305: Module ''\"./a.js\"'' has no exported member ''fmtOut''." (tsc''s text, measured) written to k.log as T + "\n"; fenced a.md ''export const sum = 1;\n'', a.r1.md ''export const sum = 1;\nexport const fmtOut = 2;\n''; one card a → out/a.ts M + "grep -q fmtOut out/a.ts || { cat k.log; exit 1; }"; deps.onVariant pushes each record'
+              when: runTransaction
+              then: 'round 0: a red, blaming a (out/k.ts names the module ./a.js, which resolves to the target out/a.ts); a retried, its request holding "error TS2305"; round 1 green: a "written" attempts 2 winningVariant "a.r1.v1" acceptanceLog "" earlierFailures [T + "\n"]; requests a.v1, a.r1.v1; the hook fired a.r1; report.rounds [{round: 0, reds: [{customId: "a", blamed: ["a"], log: T + "\n"}]}, {round: 1, reds: []}]; no stop key, no fault key'
 
     # ---------------------------------------------------------------- P6
     - name: git
@@ -1360,14 +1386,17 @@ System:
               when: "runGit, then gitOk"
               then: 'runGit gives code 1, stdout "", stderr beginning "error: pathspec ''nope'' did not match"; gitOk throws an Error whose message begins "git checkout failed (exit 1): error: pathspec ''nope'' did not match"'
         - name: Open Run Branch
-          description: morph/<runId> from HEAD; refuses a dirty tree outside .morph/ and an existing branch.
+          description: morph/<runId> from HEAD; refuses a dirty tree (every git status entry, .morph/ included) and an existing branch.
           behavior: >
             openRunBranch(root, runId, env): runId must match ^[A-Za-z0-9._-]+$, else
             {ok: false, error: "invalid runId: <runId>"} and no git call. Then `git status
             --porcelain --untracked-files=all`: every entry's path (the text after the
-            two status letters and a space; for a rename the path after " -> ") that does
-            not start with ".morph/" is dirty; any dirty path → {ok: false, error: "dirty tree
-            outside .morph/: <dirty paths sorted, joined by ", ">"}. Then base = `git rev-parse
+            two status letters and a space; for a rename the path after " -> ") is dirty,
+            paths under .morph/ included (ignored files are never listed, so a .gitignore
+            covering .morph/ keeps them out): one definition of a dirty tree with every
+            acceptance's untracked step (P32, #43). Any dirty path → {ok: false, error: "dirty
+            tree: <dirty paths sorted, joined by ", "> (commit, remove or ignore them: every
+            acceptance fails on a file left in the tree)"}. Then base = `git rev-parse
             HEAD` (trimmed); a branch refs/heads/morph/<runId> that already exists → {ok: false,
             error: "branch morph/<runId> already exists"}; else `git checkout -q -b
             morph/<runId>` and {ok: true, branch: "morph/<runId>", base}. A refusal leaves the
@@ -1379,12 +1408,12 @@ System:
             - given: 'a fresh repo on main whose HEAD is <h>; runId "r1"'
               when: "opened"
               then: '{ok: true, branch: "morph/r1", base: <h>} (40 hex chars); `git rev-parse --abbrev-ref HEAD` now reads "morph/r1"'
-            - given: 'a fresh repo with the untracked files .morph/deck.json and .morph/runs/x/report.json; runId "r2"'
+            - given: 'a fresh repo with the untracked files .morph/deck.json and .morph/runs/x/report.json and no .gitignore; runId "r2"; then .gitignore ".morph/*\n" committed, the same two files still untracked, runId "r2" again'
               when: "opened"
-              then: '{ok: true, branch: "morph/r2", base: <h>} — files under .morph/ do not make the tree dirty'
+              then: '{ok: false, error: "dirty tree: .morph/deck.json, .morph/runs/x/report.json (commit, remove or ignore them: every acceptance fails on a file left in the tree)"}, the checkout still main and no branch morph/r2; then {ok: true, branch: "morph/r2", base: <HEAD after the .gitignore commit>}'
             - given: 'a repo with README.md committed and then modified, and an untracked src/a.ts; runId "r3"'
               when: "opened"
-              then: '{ok: false, error: "dirty tree outside .morph/: README.md, src/a.ts"}; the checkout is still main and no branch morph/r3 exists'
+              then: '{ok: false, error: "dirty tree: README.md, src/a.ts (commit, remove or ignore them: every acceptance fails on a file left in the tree)"}; the checkout is still main and no branch morph/r3 exists'
             - given: 'a fresh repo where the branch morph/r4 already exists (git branch morph/r4); runId "r4"; then runId "a b"'
               when: "opened"
               then: '{ok: false, error: "branch morph/r4 already exists"}, the checkout still main; then {ok: false, error: "invalid runId: a b"}'
@@ -1567,27 +1596,22 @@ System:
         The `morph` binary: src/cli/*.ts and the entry src/cli.ts (bin dist/cli.js): argv parsed, routed by Main, one JSON document on stdout, log
         lines on stderr, an exit code per outcome; only the entry touches the process.
         tests/fixtures/cli/examples.json["<Function> <n>"] holds the given and then of an example naming it.
-        tests/fixtures/cli/refs.json["<Function> <n>"] names the fixture files an example uses.
+        tests/fixtures/cli/refs.json["<Function> <n>"] names the fixture files an example uses. tests/fixtures/cli/flags.json
+        lists the flags: "bare" (no value), "valued" (one value), "takes" (command → the flags it accepts).
       language: typescript
       requirements: [One Document Out]
       functions:
         - name: Parse Command
           description: argv into one Command or a usage error.
           behavior: >
-            parseCommand(argv) scans argv left to right. A token starting with "--" is a flag: --pretty, --judge, --write, --md, --commit take no value; --root,
-            --deck, --processor, --run-id, --deadline, --max-cards, --max-retry-batches, --slice-cap-bytes, --spec, --component, --map, --out, --checks, --batch, --issue,
-            --seed-file, --from-scout, --scout, --mutants, --mutant-timeout, --test, --id, --model, --from-run, --pick, --name, --language, --module, --templates, --only,
-            --stubs, --refs take the next token whatever it is; another flag (--x=y too) → "unknown flag: <t>"; a value flag last → "flag <t> needs a value"; a flag
+            parseCommand(argv) scans argv left to right. A token starting with "--" is a flag: flags.json "bare" take no value, "valued" take the next token
+            whatever it is; another flag (--x=y too) → "unknown flag: <t>"; a value flag last → "flag <t> needs a value"; a flag
             twice → "flag <t> given twice", but --component repeats, values in argv order (the first error by argv wins). Other tokens are words naming the command:
             none → "no command (commands: deck check, plan, run, submit, collect, primer, scout, review, card, accept, init)"; run; plan ("plan --from-scout" with
             --from-scout); submit; collect; primer; scout; review + two words <base> <head>; card; accept; init; gate; deck check; a first word report → NotYetError
             "command report is not available yet"; deck add|status|reset|clear → NotYetError "command deck <w> is not available yet"; else "unknown command: <words,
             space-joined>". An extra word → "unexpected argument: <first extra>". Then in order: a flag the command does not take → "flag <f> does not apply to
-            <command>", in argv order (all take --root, --pretty; deck check --deck, --slice-cap-bytes; run --deck, --processor, --run-id, --deadline, --max-cards,
-            --max-retry-batches; plan --spec, --component, --map, --judge, --out, --checks, --only; review --spec, --map, --scout, --mutants, --mutant-timeout, --test,
-            --write; submit --deck, --processor; collect --batch; primer --write; scout --processor, --issue, --seed-file, --deadline; plan --from-scout --from-scout,
-            --out; card --deck, --id, --md; accept --deck, --id, --model, --commit, --from-run, --pick; init --name, --language, --module, --templates; gate --deck,
-            --stubs, --refs, --mutants). Below I = ^[A-Za-z0-9._-]+$, and "<f> ~ P" = a value not matching P → "<f> must match P (got '<v>')", P written out. card
+            <command>", in argv order (flags.json "takes": the flags of "every command" plus the command's own). Below I = ^[A-Za-z0-9._-]+$, and "<f> ~ P" = a value not matching P → "<f> must match P (got '<v>')", P written out. card
             and accept: no --deck → "missing --deck", no --id → "missing --id", --id ~ I (accept: an --id holding "," must be distinct ids joined by ",", each
             matching I, else "--id must be distinct card ids joined by \",\" (got '<v>')"); card done. accept: --from-run ~ I; --model with --from-run → "--model
             does not apply with --from-run"; --pick without it → "--pick needs --from-run"; without --from-run no --model → "missing --model", --model ~
@@ -1608,7 +1632,7 @@ System:
             card count), maxRetryBatches 2.
           steps: [{produces: Command}]
           examples:
-            - {given: 'parseArgv.json["1"]', ref: "tests/fixtures/cli/parseArgv.json (example number → its argv lists), parse.json (→ the result; a list for several)", when: parsed, then: 'parse.json["1"]'}
+            - {given: 'parseArgv.json["1"]', when: parsed, then: 'parse.json["1"]'}
             - {given: 'parseArgv.json["2"]', when: parsed, then: 'parse.json["2"]'}
             - {given: 'parseArgv.json["3"]', when: parsed, then: 'parse.json["3"]'}
             - {given: 'parseArgv.json["4"]', when: parsed, then: 'parse.json["4"]'}
@@ -1640,8 +1664,8 @@ System:
             keys in that order.
           steps: [{produces: Error Document}]
           examples:
-            - {given: 'examples.json["Emit Document 1"].given', when: "rendered", then: 'examples.json["Emit Document 1"].then'}
-            - {given: 'examples.json["Emit Document 2"].given', when: "rendered", then: 'examples.json["Emit Document 2"].then'}
+            - {given: 'examples.json["Emit Document 1"].given', when: rendered, then: 'examples.json["Emit Document 1"].then'}
+            - {given: 'examples.json["Emit Document 2"].given', when: rendered, then: 'examples.json["Emit Document 2"].then'}
             - {given: 'examples.json["Emit Document 3"].given', when: "rendered compact", then: 'examples.json["Emit Document 3"].then'}
         - name: Classify Error
           description: "Exit codes: 0 ok; 1 a card not written; 2 a refusal before spend; 3 a fault under way; 4 a usage error."
@@ -1651,9 +1675,9 @@ System:
             RuntimeError (3).
           steps: [{produces: Command Result}]
           examples:
-            - {given: 'examples.json["Classify Error 1"].given', when: "classifyThrown", then: 'examples.json["Classify Error 1"].then'}
-            - {given: 'examples.json["Classify Error 2"].given', when: "classifyThrown", then: 'examples.json["Classify Error 2"].then'}
-            - {given: 'examples.json["Classify Error 3"].given', when: "runExitCode", then: 'examples.json["Classify Error 3"].then'}
+            - {given: 'examples.json["Classify Error 1"].given', when: classifyThrown, then: 'examples.json["Classify Error 1"].then'}
+            - {given: 'examples.json["Classify Error 2"].given', when: classifyThrown, then: 'examples.json["Classify Error 2"].then'}
+            - {given: 'examples.json["Classify Error 3"].given', when: runExitCode, then: 'examples.json["Classify Error 3"].then'}
         - name: Read Deck File
           description: The deck file a command names, read by Load Deck.
           behavior: >
@@ -1664,7 +1688,7 @@ System:
           examples:
             - {given: 'examples.json["Read Deck File 1"].given', when: "readDeckFile(root, \"d.json\")", then: 'examples.json["Read Deck File 1"].then'}
             - {given: 'examples.json["Read Deck File 2"].given', when: "readDeckFile(root, \"nope.json\")", then: 'examples.json["Read Deck File 2"].then'}
-            - {given: 'examples.json["Read Deck File 3"].given', when: 'read', then: 'examples.json["Read Deck File 3"].then'}
+            - {given: 'examples.json["Read Deck File 3"].given', when: read, then: 'examples.json["Read Deck File 3"].then'}
         - name: Deck Check
           description: "`morph deck check`: generations, hazards, slice weights; with a stub tree, each card's tree compiled."
           behavior: >
@@ -1672,15 +1696,17 @@ System:
             hazards = Find Hazards(deck), then the weighing's; generations = Layer Generations(deck); document {deck: deckPath as given, cards: the count,
             generations, errors and warnings: the hazards of each severity counted, hazards, weights: the weighing's}, keys in that order; builds = Check
             Builds(root, deckPath, deck, generations, env): not null → document.builds = it (a key after weights), errors also counts every missing
-            and every break of it, warnings every note. Code 2 when errors > 0, else 0.
+            and every break of it, warnings every note. unproven = Unproven Stubs(root, deckPath, deck) (P28b): not empty →
+            document.unproven = it, the last key, and warnings also counts each. Code 2 when errors > 0, else 0.
           steps: [{calls: Read Deck File}, {uses: cards}, {uses: planner-subset}, {produces: Deck Check Document}]
           examples:
             - {given: 'examples.json["Deck Check 1"].given', when: "deckCheckCommand(root, \"d.json\", 500000)", then: 'examples.json["Deck Check 1"].then'}
             - {given: 'examples.json["Deck Check 2"].given', when: 'deckCheckCommand(root, "d.json", 500000)', then: 'examples.json["Deck Check 2"].then'}
-            - {given: 'examples.json["Deck Check 3"].given', when: "checked", then: 'examples.json["Deck Check 3"].then'}
+            - {given: 'examples.json["Deck Check 3"].given', when: checked, then: 'examples.json["Deck Check 3"].then'}
             - {given: 'examples.json["Deck Check 4"].given', when: 'deckCheckCommand(root, <deck>, 500000, {PATH})', then: 'examples.json["Deck Check 4"].then'}
             - {given: 'examples.json["Deck Check 5"].given', when: 'deckCheckCommand(root, <deck>, 500000, {PATH})', then: 'examples.json["Deck Check 5"].then'}
             - {given: 'examples.json["Deck Check 6"].given', when: main, then: 'examples.json["Deck Check 6"].then'}
+            - {given: 'examples.json["Deck Check 7"].given', when: 'deckCheckCommand(root, <deck>, 500000, {PATH})', then: 'examples.json["Deck Check 7"].then'}
         - name: Run Command
           description: "`morph run`: processor, deck, hazards, run branch, Run Deck, archive; one Run Document."
           behavior: >
@@ -1698,48 +1724,57 @@ System:
             none> chars <text length, or none>\n". The checkout stays on the run branch.
           steps: [{uses: processor}, {calls: Read Deck File}, {uses: git}, {uses: runloop}, {produces: Run Document}]
           examples:
-            - {given: 'examples.json["Run Command 1"].given', when: 'run', then: 'examples.json["Run Command 1"].then'}
-            - {given: 'examples.json["Run Command 2"].given', when: 'run', then: 'examples.json["Run Command 2"].then'}
-            - {given: 'examples.json["Run Command 3"].given', when: "run", then: 'examples.json["Run Command 3"].then'}
+            - {given: 'examples.json["Run Command 1"].given', when: run, then: 'examples.json["Run Command 1"].then'}
+            - {given: 'examples.json["Run Command 2"].given', when: run, then: 'examples.json["Run Command 2"].then'}
+            - {given: 'examples.json["Run Command 3"].given', when: run, then: 'examples.json["Run Command 3"].then'}
             - {given: 'examples.json["Run Command 4"].given', when: run, then: 'examples.json["Run Command 4"].then'}
-            - {given: 'examples.json["Run Command 5"].given', when: "run", then: 'examples.json["Run Command 5"].then'}
+            - {given: 'examples.json["Run Command 5"].given', when: run, then: 'examples.json["Run Command 5"].then'}
             - {given: 'examples.json["Run Command 6"].given', when: run, then: 'examples.json["Run Command 6"].then'}
             - {given: 'examples.json["Run Command 7"].given', when: variantLine, then: 'examples.json["Run Command 7"].then'}
-            - {given: 'examples.json["Run Command 8"].given', when: 'run', then: 'examples.json["Run Command 8"].then'}
-            - {given: 'examples.json["Run Command 9"].given', when: 'run', then: 'examples.json["Run Command 9"].then'}
-            - {given: 'examples.json["Run Command 10"].given', when: 'run', then: 'examples.json["Run Command 10"].then'}
-            - {given: 'examples.json["Run Command 11"].given', when: "run", then: 'examples.json["Run Command 11"].then'}
-            - {given: 'examples.json["Run Command 12"].given', when: 'run', then: 'examples.json["Run Command 12"].then'}
+            - {given: 'examples.json["Run Command 8"].given', when: run, then: 'examples.json["Run Command 8"].then'}
+            - {given: 'examples.json["Run Command 9"].given', when: run, then: 'examples.json["Run Command 9"].then'}
+            - {given: 'examples.json["Run Command 10"].given', when: run, then: 'examples.json["Run Command 10"].then'}
+            - {given: 'examples.json["Run Command 11"].given', when: run, then: 'examples.json["Run Command 11"].then'}
+            - {given: 'examples.json["Run Command 12"].given', when: run, then: 'examples.json["Run Command 12"].then'}
         - name: Plan Command
           description: "`morph plan --spec`: record and map cut by Plan Spec, the deck to --out; one Plan Document."
           behavior: >
-            planCommand(root, args), in order. The spec (path.resolve(root, args.spec)) not a regular file → 4 UsageError "spec file not found: <spec as given>"; a
-            given map not a regular file → 4 UsageError "map file not found: <map as given>". loadContour(the spec's text, args.spec), then loadMap(the map's text,
-            args.map) when given (else the empty map: version 1, every list [], the rest null); an error → 2 DeckError, it. Plan Spec({record, map, spec: args.spec,
-            components: args.components, judge: args.judge, hasFile: a path is a regular file under root}); an error → 2 DeckError, it. With args.only, Select
-            Cards(plan, args.only), an error → 2 DeckError, it; its plan replaces Plan Spec's, the checks keep only its cards. With args.checks: profile = Resolve
-            Profile(the first selected Component's language, map.language), an error → 2 DeckError "the map: " + it; Read Plan Checks(root, args.checks, profile) (a
-            failure is the result); Build Acceptances({cards, checks, profile, texts, uses: Plan Spec's uses, vendor: "vendor/modules.txt" is a regular file under
-            root, and with args.only transaction: true}), errors → 2 DeckError "acceptances not built (<n> error|errors):\n" + them "\n"-joined; its cards replace
-            the plan's, except a card the map gives an acceptance (map card by customId ?? id, extra card by customId). args.out not null → the cards written to
-            path.resolve(root, args.out) as JSON.stringify(cards, null, 2) + "\n", parents created. → {code: 0, document: {spec, components, cards, generations,
-            externalDependsOn, out: args.out}}. Nothing else written; nothing on an error.
-          steps: [{uses: contour}, {uses: planner}, {calls: Read Plan Checks}, {uses: builder}, {produces: Plan Document}]
+            planCommand(root, args), in order: the spec (path.resolve(root, args.spec)), then a given map, not a regular file → 4 UsageError "spec file not found:
+            <spec as given>" | "map file not found: <map as given>". loadContour(the spec's text, args.spec), then loadMap(the map's text, args.map) when given (else
+            the empty map: version 1, every list [], the rest null); Plan Spec({record, map, spec: args.spec, components: args.components, judge: args.judge,
+            hasFile: a path is a regular file under root}); with args.only Select Cards(plan, args.only) (its plan replaces Plan Spec's, the checks keep only its
+            cards); each error → 2 DeckError, it. With args.checks: profile = Resolve Profile(the first selected Component's language, map.language), an error → 2
+            DeckError "the map: " + it; Read Plan Checks(root, args.checks, profile) (a failure is the result); Plan Rules(record, map, "decks/tools/layers.json" is
+            a regular file under root, texts.guard, profile.id) (P31a), an error → 2 DeckError, it; Build Acceptances({cards, checks, profile, texts, uses: Plan
+            Spec's uses, vendor: "vendor/modules.txt" is a regular file under root, its layers, then its rules, each when not null, with args.only transaction: true}), errors → 2
+            DeckError "acceptances not built (<n> error|errors):\n" + them "\n"-joined; its cards replace the plan's, except a card the map gives an acceptance (map
+            card by customId ?? id, extra card by customId). args.out not null → the cards written to path.resolve(root, args.out) as JSON.stringify(cards, null, 2)
+            + "\n", parents created. → {code: 0, document: {spec, components, cards, generations, externalDependsOn, out: args.out, Plan Rules' proseOnly when non-empty, last warnings only when
+            non-empty}}; warnings (P34) = loadContour's, then per name of the plan's components whose record Component's language and map.language are both null
+            "no language on Component <name> and none in the map: typescript assumed", then Plan Spec's warnings (P34b), then with args.checks rules' Plan Notes(per checks card kept, {id, extra, targets of
+            its plan card or []}, the layers.json fact, texts.guard) (P31b). Nothing else written; nothing on an error.
+          steps: [{uses: contour}, {uses: planner}, {calls: Read Plan Checks}, {uses: rules}, {uses: builder}, {produces: Plan Document}]
           examples:
-            - {given: 'examples.json["Plan Command 1"].given', when: 'planCommand', then: 'examples.json["Plan Command 1"].then'}
-            - {given: 'examples.json["Plan Command 2"].given', when: 'planCommand', then: 'examples.json["Plan Command 2"].then'}
-            - {given: 'examples.json["Plan Command 3"].given', when: 'planCommand', then: 'examples.json["Plan Command 3"].then'}
-            - {given: 'examples.json["Plan Command 4"].given', when: 'planCommand', then: 'examples.json["Plan Command 4"].then'}
+            - {given: 'examples.json["Plan Command 1"].given', when: planCommand, then: 'examples.json["Plan Command 1"].then'}
+            - {given: 'examples.json["Plan Command 2"].given', when: planCommand, then: 'examples.json["Plan Command 2"].then'}
+            - {given: 'examples.json["Plan Command 3"].given', when: planCommand, then: 'examples.json["Plan Command 3"].then'}
+            - {given: 'examples.json["Plan Command 4"].given', when: planCommand, then: 'examples.json["Plan Command 4"].then'}
             - {given: 'examples.json["Plan Command 5"].given', when: main, then: 'examples.json["Plan Command 5"].then'}
-            - {given: 'examples.json["Plan Command 6"].given', when: 'planCommand', then: 'examples.json["Plan Command 6"].then'}
-            - {given: 'examples.json["Plan Command 7"].given', when: "planCommand", then: 'examples.json["Plan Command 7"].then'}
-            - {given: 'examples.json["Plan Command 8"].given', when: "planCommand", then: 'examples.json["Plan Command 8"].then'}
+            - {given: 'examples.json["Plan Command 6"].given', when: planCommand, then: 'examples.json["Plan Command 6"].then'}
+            - {given: 'examples.json["Plan Command 7"].given', when: planCommand, then: 'examples.json["Plan Command 7"].then'}
+            - {given: 'examples.json["Plan Command 8"].given', when: planCommand, then: 'examples.json["Plan Command 8"].then'}
             - {given: 'examples.json["Plan Command 9"].given', when: planCommand, then: 'examples.json["Plan Command 9"].then'}
             - {given: 'examples.json["Plan Command 10"].given', when: planCommand, then: 'examples.json["Plan Command 10"].then'}
             - {given: 'examples.json["Plan Command 11"].given', when: planCommand, then: 'examples.json["Plan Command 11"].then'}
             - {given: 'examples.json["Plan Command 12"].given', when: planCommand, then: 'examples.json["Plan Command 12"].then'}
             - {given: 'examples.json["Plan Command 13"].given', when: planCommand, then: 'examples.json["Plan Command 13"].then'}
             - {given: 'examples.json["Plan Command 14"].given', when: planCommand, then: 'examples.json["Plan Command 14"].then'}
+            - {given: 'examples.json["Plan Command 15"].given', when: planCommand, then: 'examples.json["Plan Command 15"].then'}
+            - {given: 'examples.json["Plan Command 16"].given', when: planCommand, then: 'examples.json["Plan Command 16"].then'}
+            - {given: 'examples.json["Plan Command 17"].given', when: planCommand, then: 'examples.json["Plan Command 17"].then'}
+            - {given: 'examples.json["Plan Command 18"].given', when: planCommand, then: 'examples.json["Plan Command 18"].then'}
+            - {given: 'examples.json["Plan Command 19"].given', when: planCommand, then: 'examples.json["Plan Command 19"].then'}
+            - {given: 'examples.json["Plan Command 20"].given', when: planCommand, then: 'examples.json["Plan Command 20"].then'}
         - name: Read Plan Checks
           description: Files of `plan --checks`.
           behavior: >
@@ -1770,26 +1805,26 @@ System:
             {stdout, stderr: the process streams' write}), sets process.exitCode to the result, never calls process.exit.
           steps: [{calls: Parse Command}, {calls: Deck Check}, {calls: Plan Command}, {calls: Run Command}, {uses: batches}, {uses: primer}, {uses: scout-session}, {uses: review-session}, {uses: debt}, {uses: scaffold}, {uses: gate}, {uses: config}, {calls: Emit Document}, {calls: Classify Error}]
           examples:
-            - {given: 'examples.json["Main 1"].given', when: 'main', then: 'examples.json["Main 1"].then'}
-            - {given: 'examples.json["Main 2"].given', when: 'main', then: 'examples.json["Main 2"].then'}
-            - {given: 'examples.json["Main 3"].given', when: 'main', then: 'examples.json["Main 3"].then'}
-            - {given: 'examples.json["Main 4"].given', when: 'spawned', then: 'examples.json["Main 4"].then'}
-            - {given: 'examples.json["Main 5"].given', when: 'spawned', then: 'examples.json["Main 5"].then'}
+            - {given: 'examples.json["Main 1"].given', when: main, then: 'examples.json["Main 1"].then'}
+            - {given: 'examples.json["Main 2"].given', when: main, then: 'examples.json["Main 2"].then'}
+            - {given: 'examples.json["Main 3"].given', when: main, then: 'examples.json["Main 3"].then'}
+            - {given: 'examples.json["Main 4"].given', when: spawned, then: 'examples.json["Main 4"].then'}
+            - {given: 'examples.json["Main 5"].given', when: spawned, then: 'examples.json["Main 5"].then'}
             - {given: 'examples.json["Main 6"].given', when: 'spawned (spawnSync, timeout 30000 ms)', then: 'examples.json["Main 6"].then'}
-            - {given: 'examples.json["Main 7"].given', when: 'main', then: 'examples.json["Main 7"].then'}
+            - {given: 'examples.json["Main 7"].given', when: main, then: 'examples.json["Main 7"].then'}
             - {given: 'examples.json["Main 8"].given', when: 'main, twice', then: 'examples.json["Main 8"].then'}
-            - {given: 'examples.json["Main 9"].given', when: 'main', then: 'examples.json["Main 9"].then'}
-            - {given: 'examples.json["Main 10"].given', when: 'main', then: 'examples.json["Main 10"].then'}
-            - {given: 'examples.json["Main 11"].given', when: 'main', then: 'examples.json["Main 11"].then'}
-            - {given: 'examples.json["Main 12"].given', when: 'main', then: 'examples.json["Main 12"].then'}
-            - {given: 'examples.json["Main 13"].given', when: 'main', then: 'examples.json["Main 13"].then'}
-            - {given: 'examples.json["Main 14"].given', when: 'main', then: 'examples.json["Main 14"].then'}
-            - {given: 'examples.json["Main 15"].given', when: 'main', then: 'examples.json["Main 15"].then'}
-            - {given: 'examples.json["Main 16"].given', when: 'main', then: 'examples.json["Main 16"].then'}
-            - {given: 'examples.json["Main 17"].given', when: 'main', then: 'examples.json["Main 17"].then'}
-            - {given: 'examples.json["Main 18"].given', when: 'main', then: 'examples.json["Main 18"].then'}
-            - {given: 'examples.json["Main 19"].given', when: 'main', then: 'examples.json["Main 19"].then'}
-            - {given: 'examples.json["Main 20"].given', when: 'main', then: 'examples.json["Main 20"].then'}
+            - {given: 'examples.json["Main 9"].given', when: main, then: 'examples.json["Main 9"].then'}
+            - {given: 'examples.json["Main 10"].given', when: main, then: 'examples.json["Main 10"].then'}
+            - {given: 'examples.json["Main 11"].given', when: main, then: 'examples.json["Main 11"].then'}
+            - {given: 'examples.json["Main 12"].given', when: main, then: 'examples.json["Main 12"].then'}
+            - {given: 'examples.json["Main 13"].given', when: main, then: 'examples.json["Main 13"].then'}
+            - {given: 'examples.json["Main 14"].given', when: main, then: 'examples.json["Main 14"].then'}
+            - {given: 'examples.json["Main 15"].given', when: main, then: 'examples.json["Main 15"].then'}
+            - {given: 'examples.json["Main 16"].given', when: main, then: 'examples.json["Main 16"].then'}
+            - {given: 'examples.json["Main 17"].given', when: main, then: 'examples.json["Main 17"].then'}
+            - {given: 'examples.json["Main 18"].given', when: main, then: 'examples.json["Main 18"].then'}
+            - {given: 'examples.json["Main 19"].given', when: main, then: 'examples.json["Main 19"].then'}
+            - {given: 'examples.json["Main 20"].given', when: main, then: 'examples.json["Main 20"].then'}
       dataObjects:
         - name: Command
           description: One parsed invocation.
@@ -1802,10 +1837,10 @@ System:
           schema: "{ code: 0|1|2|3|4, document: unknown }"
         - name: Deck Check Document
           description: stdout of deck check.
-          schema: "{ deck: string, cards: number, generations: string[][], errors: number, warnings: number, hazards: Hazard[], weights: SliceWeight[], builds?: Build Check[] }"
+          schema: "{ deck: string, cards: number, generations: string[][], errors: number, warnings: number, hazards: Hazard[], weights: SliceWeight[], builds?: Build Check[], unproven?: Unproven[] }"
         - name: Plan Document
           description: stdout of plan.
-          schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]>, out: string | null }"
+          schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]>, out: string | null, warnings?: string[] }"
         - name: Plan Checks
           description: What Read Plan Checks returns.
           schema: "{ ok: true, checks: Checks, texts: BuildTexts } | { ok: false, result: Command Result }"
@@ -2222,7 +2257,15 @@ System:
             "^\\s+\\u276f\\s+(?:\\S+\\s+)?(\\S+?\\.[cm]?[jt]sx?):\\d+:\\d+", packageLine null; python: failLine
             "^(?:FAILED|ERROR) (\\S+?\\.pyi?)(?:::|\\s|$)", locationLine null (pytest prints its locations at column 0:
             fileLine reads them), packageLine null; go: failLine null, locationLine "^\\s+(\\S+?\\.go):\\d+", packageLine
-            "^FAIL\\t(\\S+)". TREE_PROFILES and treeProfileFor are unchanged.
+            "^FAIL\\t(\\S+)". TREE_PROFILES and treeProfileFor are unchanged. NEIGHBOUR_RULES (P28, issue #22): `export const
+            NEIGHBOUR_RULES: readonly NeighbourProfile[]`, `export interface NeighbourProfile { id: string; file: string;
+            directory: boolean; testFile: string | null; module: string | null }`, one per profile of PROFILES in the same
+            order, pure data (no import), read by Blame Log: which targets a kept file (on disk, no card's target) can use
+            names of — file the kept files the entry is for; directory true: the targets in its directory (a package),
+            testFile the test files a code file never names; module a quoted relative module in a red line, group 1 the
+            specifier. typescript: file "\\.[cm]?tsx?$", directory false, testFile null, module
+            "'\"?(\\.\\.?/[^'\"]+)\"?'"; python: file "\\.pyi?$", directory false, testFile null, module null; go: file
+            "\\.go$", directory true, testFile "_test\\.go$", module null. TEST_LINES is unchanged.
           steps:
             - produces: Tree Profile
           examples:
@@ -2238,6 +2281,35 @@ System:
             - given: 'new RegExp(each non-null pattern of TEST_LINES) on " FAIL  tests/units/len.test.ts > one metre", " ❯ tests/units/len.test.ts:4:21", " ❯ toFeet src/units/len.ts:2:25", "FAILED tests/test_calc.py::test_half - assert 2 == 4", "    daemon_examples_test.go:16: OnExit:", "\t/tmp/morphlite/daemon/daemon_examples_test.go:22 +0x2", "FAIL\tmorphlite/daemon\t0.004s", "FAIL", "--- FAIL: TestDaemonCoreExample2 (0.00s)"'
               when: matched
               then: 'group 1: typescript failLine "tests/units/len.test.ts" on the first only; typescript locationLine "tests/units/len.test.ts" and "src/units/len.ts" on the second and third only; python failLine "tests/test_calc.py" on the fourth only; go locationLine "daemon_examples_test.go" and "/tmp/morphlite/daemon/daemon_examples_test.go" on the fifth and sixth only; go packageLine "morphlite/daemon" on the seventh only; nothing matches "FAIL" or the "--- FAIL" line'
+            - given: 'NEIGHBOUR_RULES'
+              when: read
+              then: 'three entries, ids "typescript", "python", "go" (PROFILES order), each value exactly as the behavior writes it'
+            - given: 'new RegExp(each file of NEIGHBOUR_RULES) on "src/b.ts", "src/cli/c.mts", "calc/b.go", "calc/b_test.go", "pkg/b.py", "README.md"; go''s testFile on "calc/b_test.go" and "calc/b.go"; new RegExp(typescript''s module, "g") on "(1,10): error TS2305: Module ''\"./a.js\"'' has no exported member ''fmtOut''.", "(1,1): error TS2307: Cannot find module ''../units/gone.js'' or its corresponding type declarations.", "(3,4): error TS2304: Cannot find name ''q7''."'
+              when: matched
+              then: 'typescript file matches src/b.ts and src/cli/c.mts only; go file calc/b.go and calc/b_test.go only; python file pkg/b.py only; README.md none; testFile true, false; module group 1 ["./a.js"], ["../units/gone.js"], [] (measured with node)'
+        - name: Canonical Guardrail
+          description: The rule id a Guardrail name stands for in one language, from the binary's own table (P31a, issue #42).
+          behavior: >
+            src/language/guardrails.ts, pure data and pure functions, importing types only. GUARDRAIL_RULES (exported) =
+            {typescript: {"no shell": "no-shell", "no clock": "no-clock", "no network": "no-network", "no env": "no-env",
+            "no process": "no-process", "stdlib only": "stdlib-only", "pure": "pure"}, python: {}, go: the typescript
+            entries but "no process"}, keys in that order. guardrailKey(name) = name trimmed, lower-cased, every run of
+            whitespace one space. guardrailRule(profile, name) → GUARDRAIL_RULES[profile.id][guardrailKey(name)] when that
+            table has the key as an own property, else null: an unknown name, or one with no rule in that language, stays
+            prose. The table is the binary's, never a project file; it never guesses (no aliases, no partial match).
+          steps:
+            - reads: Language Profile
+            - produces: string
+          examples:
+            - given: 'guardrailKey("  No   Shell "); guardrailKey("STDLIB\tOnly"); guardrailKey("No-Shell")'
+              when: guardrailKey
+              then: '"no shell"; "stdlib only"; "no-shell"'
+            - given: 'guardrailRule(TYPESCRIPT, "No Process"); guardrailRule(GO, "No Process"); guardrailRule(GO, " pure "); guardrailRule(GO, "no network"); guardrailRule(GO, "Stdlib Only"); guardrailRule(GO, "Interfaces Share One Core"); guardrailRule(GO, "Standard Library Only"); guardrailRule(PYTHON, "No Shell"); guardrailRule(TYPESCRIPT, "constructor")'
+              when: guardrailRule
+              then: '"no-process"; null; "pure"; "no-network"; "stdlib-only"; null — old mrph''s third name stays prose; null — no alias; null; null — own keys only'
+            - given: 'GUARDRAIL_RULES'
+              when: read
+              then: '{typescript: {"no shell": "no-shell", "no clock": "no-clock", "no network": "no-network", "no env": "no-env", "no process": "no-process", "stdlib only": "stdlib-only", "pure": "pure"}, python: {}, go: {"no shell": "no-shell", "no clock": "no-clock", "no network": "no-network", "no env": "no-env", "stdlib only": "stdlib-only", "pure": "pure"}} (toStrictEqual)'
       dataObjects:
         - name: Tree Profile
           description: How deck check compiles a stub tree in one language.
@@ -2245,6 +2317,9 @@ System:
         - name: Test Profile
           description: Per language, how a failing test's lines read (P24c, issue #19); Blame Log reads them.
           schema: "{ id: string; failLine: string | null; locationLine: string | null; packageLine: string | null }"
+        - name: Neighbour Profile
+          description: Per language, which targets a kept file can use names of (P28, issue #22); Blame Log reads them.
+          schema: "{ id: string; file: string; directory: boolean; testFile: string | null; module: string | null }"
         - name: Language Profile
           description: Everything the planner and the acceptance need to know about one language; templates hold {component}, {name}, {files}, {test}, {module}, {docs}.
           schema: "{ id: \"typescript\" | \"python\" | \"go\", extensions: string[], testDirs: string[], testFilePattern: string, nameCase: \"camel\" | \"snake\", codeTarget: string, testTarget: string, judgeTarget: string, parseLine: string, parseTakesFiles: boolean, lintLine: string, ownTestLine: string, fullRunLine: string, finale: string, judgeInstruction: string, helpersModule: string }"
@@ -2266,8 +2341,11 @@ System:
         with behaviour, steps, preconditions and counted examples, Data Objects with their
         schema text, Components selected by `--component`, the calls graph and the Data
         Objects each Function touches. Every problem of a document is named at once, one
-        "<path>: <message>" line each, in a pinned order. Unknown keys are rejected at every
-        level. No file is read here (the caller passes the text), no clock, no environment;
+        "<path>: <message>" line each, in a pinned order. The whole Contour key set is read
+        (P34, issue #44: a Contour record loads unchanged, as the old Morph promised); a key
+        outside Contour and V2's extensions is a warning "<path>: unknown key '<k>' (ignored)",
+        never a load error; a Function's behavior and examples are optional here (MorphV2's own
+        record keeps both on every Function: a project rule, Load Spec example 4). No file is read here (the caller passes the text), no clock, no environment;
         the package yaml is imported in Parse Document alone. Not wired into the cli: the
         planner is the first consumer. Since P19 (issue #10) a record declares the libraries its
         Components may import (System.dependencies, exact versions) and each Component names the
@@ -2281,43 +2359,59 @@ System:
           behavior: >
             validateRecord(doc: unknown). A doc that is not a plain object (null, an array, a
             scalar) → {ok: false, problems: ["(root): a record must be an object"]}. Otherwise
-            every object is checked against its key table (root: version, System, Actor,
-            Requirement, Guardrail; System: name, description, requirements, guardrails,
-            groups; Component: name, description, language, requirements, guardrails,
-            functions, dataObjects, interfaces; Function: name, description, behavior,
-            requirements, guardrails, preconditions, steps, examples; example: given, when,
-            then, ref; Data Object: name, description, schema; Interface: name, description,
-            exposes; Actor: name, description, uses; Requirement and Guardrail: name,
-            description; P19: System gains dependencies after groups, Component gains uses after
-            guardrails, a dependency: name, version, language, doc). Per object, in this order: each required key that is missing
-            ("<path>.<key>: required"), each key not in the table in the object's own order
-            ("<path>: unknown key '<k>' (known: <the table joined by ', '>)"), then the
-            present keys' values in the table's order, depth first. Required: the root's
-            System; every name and description; System.groups; a Function's behavior and
-            examples; an example's given, when, then; an Interface's exposes. version, when
-            present, must be 1 ("version: must be 1"); absent means 1. Texts must be non-empty
-            strings and are stored trimmed; lists must be lists; list items that are elements
-            must be objects; examples and exposes must not be empty; a step is an object with
-            exactly one key, a verb of calls, reads, modifies, produces, uses, whose value is a
-            non-empty string. A schema is a string, or a mapping of non-empty strings stored as
-            JSON.stringify(mapping, null, 2). A Component name repeated in the record, a
-            Function name repeated in its Component and a Data Object name repeated anywhere in
-            the record is a problem at the repeat's name. Absent lists become [], absent
-            language, ref and schema become null. Dependencies (P19): System.dependencies is a
-            list of objects, each requiring name, version and language (texts, trimmed; doc an
-            optional text, null when absent); a name repeated → "<path>.name: duplicate dependency
-            name '<n>'"; a version (trimmed) not matching /^v?[0-9]+(\.[0-9]+)*([-+][0-9A-Za-z.+-]+)?$/
-            → "<path>.version: must be an exact version (got '<v>')" (no range, tag or wildcard).
-            Component.uses is a list; per item in order: not a non-empty string → "<path>[i]: must be
-            a non-empty string"; its trimmed text not among the declared names → "<path>[i]: unknown
-            dependency '<n>' (declared: <names joined by ', ', or none>)"; a name already listed
-            before it → "<path>[i]: dependency '<n>' repeated". The declared names are read from the
-            document before the groups are walked: the trimmed name of every item of
-            System.dependencies that is an object with a non-empty string name, distinct, in order.
-            Absent dependencies and uses become []. Whether a dependency's language fits the
-            Component is the planner's check (the Component's language may come from the map). Any problem → {ok: false, problems} (all of
-            them, document order); none → {ok: true, record}. The paths read
-            System.groups[0].functions[3].examples[0].then; the root is "(root)".
+            every object is checked against its key table, the whole Contour key set plus V2's
+            extensions (P34, issue #44; contour.schema.json of the Contour author): root: version,
+            System, Actor, Requirement, Guardrail; System: name, description, requirements,
+            guardrails, groups, dependencies; Component: name, description, language,
+            requirements, guardrails, uses, functions, dataObjects, interfaces, events,
+            references, consumes, dependsOn; Function: name, description, behavior, requirements,
+            guardrails, preconditions, steps, examples; example: given, when, then, ref; Data
+            Object: name, description, schema, requirements, guardrails; Event: name,
+            description, requirements, guardrails, schema; Interface: name, description, exposes,
+            requirements, guardrails, schema; Actor: name, description, uses, requirements,
+            guardrails; Requirement and Guardrail: name, description; a dependency: name,
+            version, language, doc. Per object, in this order: each required key that is missing
+            ("<path>.<key>: required" — a problem), each key not in the table in the object's own
+            order ("<path>: unknown key '<k>' (ignored)" — a WARNING, never a problem; its value
+            is not read), then the present keys' values in the table's order, depth first.
+            Required: the root's System; every name and description (Event included);
+            System.groups; an example's given, when, then; an Interface's exposes. A Function's
+            behavior and examples are NOT required (absent: behavior "", examples []). version,
+            when present, must be 1 ("version: must be 1"); absent means 1. Texts must be
+            non-empty strings and are stored trimmed; lists must be lists; list items that are
+            elements must be objects; examples and exposes, when present, must not be empty; a
+            step is an object with exactly one key, a verb of calls, reads, modifies, produces,
+            uses, whose value is a non-empty string. requirements, guardrails, references,
+            consumes, dependsOn, exposes and an Actor's uses are lists of non-empty strings
+            (stored trimmed). Actor is one object (→ one Actor, path "Actor") or a list (paths
+            "Actor[i]"); anything else → "Actor: must be an object or a list". A schema (Data
+            Object, Event, Interface) is a non-empty string (trimmed), or a mapping: a mapping whose
+            every value is a string keeps today's text, each value trimmed and non-empty ("<path>.schema.<k>:
+            must be a non-empty string"), stored as JSON.stringify(mapping, null, 2) in the
+            document's key order; a mapping holding any other value (a mapping, a list, a number,
+            a boolean, null) is stored as JSON.stringify of it with the keys of every mapping at
+            every depth sorted ascending, indent 2 (the old reader's json.dumps sort_keys); anything
+            else → "<path>.schema: must be a non-empty string". A Component name repeated in the
+            record, a Function name repeated in its Component, a Data Object name repeated anywhere
+            in the record and an Event name repeated anywhere in the record is a problem at the
+            repeat's name ("duplicate Component|Function|Data Object|Event name '<n>'"). Absent
+            lists become [], absent language, ref and schema become null. Dependencies (P19):
+            System.dependencies is a list of objects, each requiring name, version and language
+            (texts, trimmed; doc an optional text, null when absent); a name repeated →
+            "<path>.name: duplicate dependency name '<n>'"; a version (trimmed) not matching
+            /^v?[0-9]+(\.[0-9]+)*([-+][0-9A-Za-z.+-]+)?$/ → "<path>.version: must be an exact
+            version (got '<v>')" (no range, tag or wildcard). Component.uses is a list; per item in
+            order: not a non-empty string → "<path>[i]: must be a non-empty string"; its trimmed
+            text not among the declared names → "<path>[i]: unknown dependency '<n>' (declared:
+            <names joined by ', ', or none>)"; a name already listed before it → "<path>[i]:
+            dependency '<n>' repeated". The declared names are read from the document before the
+            groups are walked: the trimmed name of every item of System.dependencies that is an
+            object with a non-empty string name, distinct, in order. Absent dependencies and uses
+            become []. Whether a dependency's language fits the Component is the planner's check
+            (the Component's language may come from the map). Any problem → {ok: false, problems}
+            (all of them, document order; the warnings are dropped); none → {ok: true, record},
+            plus a third key warnings (document order) only when there is at least one. The paths
+            read System.groups[0].functions[3].examples[0].then; the root is "(root)".
           steps:
             - reads: Contour Record
             - produces: Record Result
@@ -2325,11 +2419,11 @@ System:
             - given: 'the parsed mini record: 2 Components (tally, store), 4 Functions, 2 Data Objects, 1 Interface, 1 Actor, 1 Requirement, 1 Guardrail'
               ref: "tests/fixtures/contour/mini.json (the document), tests/fixtures/contour/mini.typed.json (the whole typed record)"
               when: "validated"
-              then: '{ok: true, record} with record equal to mini.typed.json: texts trimmed, absent lists [], absent ref/language/schema null, steps as {verb, target}, the mapping schema of Count Record as JSON text'
-            - given: 'the bad record: an unknown root key, version 2, a missing System description, a duplicate Function and Component, bad steps, an empty examples list, an example without then, a non-object group, a non-list Actor'
+              then: '{ok: true, record} with record equal to mini.typed.json: texts trimmed, absent lists [] (events, references, consumes, dependsOn and every requirements/guardrails included), absent ref/language/schema null, steps as {verb, target}, the mapping schema of Count Record as JSON text; no warnings key'
+            - given: 'the bad record: version 2, a missing System description, a duplicate Function and Component, bad steps, an empty examples list, an example without then, a numeric Data Object and Interface schema, a non-list Data Object guardrails, an Event without description, a non-object group, a string Actor (and two unknown keys, Extra and owner, which are warnings only)'
               ref: "tests/fixtures/contour/badRecord.json (the document), tests/fixtures/contour/badRecord.problems.json (the 19 problems in order)"
               when: "validated"
-              then: "{ok: false, problems} equal to the 19 lines of badRecord.problems.json, first \"(root): unknown key 'Extra' (known: version, System, Actor, Requirement, Guardrail)\", last \"Requirement[0].description: required\""
+              then: "{ok: false, problems} equal to the 19 lines of badRecord.problems.json, first \"version: must be 1\", among them \"System.groups[0].events[0].description: required\" and \"Actor: must be an object or a list\", last \"Requirement[0].description: required\"; no warnings key"
             - given: 'the documents [], null and "x"'
               when: "validated"
               then: '{ok: false, problems: ["(root): a record must be an object"]} for each'
@@ -2341,15 +2435,22 @@ System:
               then: '{ok: true, record: {version: 1, system: {name: "s", description: "d", requirements: [], guardrails: [], groups: [], dependencies: []}, actors: [], requirements: [], guardrails: []}} — no version means 1, texts trimmed, no Component is allowed, no dependency means []'
             - given: 'the document {version: "1", System: {name: "s", description: "d", groups: [{name: "c", description: "C.", functions: [{name: "f", description: "F.", behavior: "B."}]}]}}'
               when: "validated"
-              then: '{ok: false, problems: ["version: must be 1", "System.groups[0].functions[0].examples: required"]}'
+              then: '{ok: false, problems: ["version: must be 1"]} — a Function without examples is no problem'
             - given: 'the deps record: 3 Components (conf uses " zod " and yaml, diff uses github.com/google/go-cmp, plain uses []), 6 dependencies (names and texts padded with spaces, docs present and absent, versions 2.8.1, 3.23.8, v0.7.0, v0.0.0-20240521000000-abcdef123456, 6.0, 1.0.0-rc.1+build.5)'
               ref: "tests/fixtures/contour/deps.json (the document), tests/fixtures/contour/deps.typed.json (the whole typed record)"
               when: "validated"
               then: '{ok: true, record} with record equal to deps.typed.json: uses ["zod", "yaml"], ["github.com/google/go-cmp"], []; zod''s doc null; every version exact'
-            - given: 'the bad deps record (a uses naming an undeclared, a repeated, an empty and a non-string item; uses not a list; dependencies with an unknown key, a range, a tag, a missing language, a repeated name, an empty doc, a non-object, a missing name, two ranges); then {System: {name: "s", description: "d", groups: [one valid Component c with uses ["yaml"]]}}; then {System: {name: "s", description: "d", groups: [], dependencies: {}}}'
+            - given: 'the bad deps record (a uses naming an undeclared, a repeated, an empty and a non-string item; uses not a list; dependencies with an unknown key (a warning only) and a numeric doc, a range, a tag, a missing language, a repeated name, an empty doc, a non-object, a missing name, two ranges); then {System: {name: "s", description: "d", groups: [one valid Component c with uses ["yaml"]]}}; then {System: {name: "s", description: "d", groups: [], dependencies: {}}}'
               ref: "tests/fixtures/contour/badDeps.json (the document), tests/fixtures/contour/badDeps.problems.json (the 15 problems in order)"
               when: "validated"
               then: "{ok: false, problems} equal to the 15 lines of badDeps.problems.json, first \"System.groups[0].uses[1]: unknown dependency 'zod' (declared: yaml, pyyaml, ok)\", last \"System.dependencies[5].version: must be an exact version (got '>=1.0.0 <2')\"; then [\"System.groups[0].uses[0]: unknown dependency 'yaml' (declared: none)\"]; then [\"System.dependencies: must be a list\"]"
+            - given: 'the contour-keys record: every Contour key V2 did not read before — Component events (one with a nested mapping schema), references, consumes, dependsOn; Interface schema, requirements, guardrails; Data Object requirements, guardrails; one Actor object with requirements and guardrails; Functions without behavior or examples — and ten unknown keys, among them System.dataObjects'
+              ref: "tests/fixtures/contour/contourKeys.json (the document), tests/fixtures/contour/contourKeys.typed.json (the whole typed record), tests/fixtures/contour/contourKeys.warnings.json (the 10 warnings in order)"
+              when: "validated"
+              then: "{ok: true, record, warnings} with record equal to contourKeys.typed.json (Place Order behavior \"\" and examples [], the Event Order Placed's schema with sorted keys, the flat schema of Price List in its own order) and warnings equal to contourKeys.warnings.json, first \"(root): unknown key 'Extra' (ignored)\", second \"System: unknown key 'dataObjects' (ignored)\", last \"Requirement[0]: unknown key 'level' (ignored)\""
+            - given: 'the document {System: {name: "s", description: "d", groups: [{name: "c", description: "C.", dataObjects: [{name: "d", description: "D.", schema: {b: {z: 1, a: "x"}, a: ["q", {d: true, c: null}]}}]}]}}'
+              when: "validated"
+              then: '{ok: true, record} (no warnings key) whose Data Object d has schema JSON.stringify({a: ["q", {c: null, d: true}], b: {a: "x", z: 1}}, null, 2) — keys sorted at every depth, list order kept'
         - name: Validate Map
           description: Turns a parsed map document into a typed Contour Map, or every problem it has.
           behavior: >
@@ -2420,8 +2521,9 @@ System:
             Problems → {ok: false, error: "<name> is not a valid record (<n> problem[s]):\n"
             followed by the first 20 problems joined by "\n" and, when there are more, a last
             line "… and <n - 20> more"} ("map" for loadMap; "problem" when n is 1). Else {ok:
-            true, record} or {ok: true, map}. This repository's own contour.yaml and
-            morph-map.json load without a problem.
+            true, record} — plus warnings, Validate Record's own list, only when it gave one (P34)
+            — or {ok: true, map}. This repository's own contour.yaml and morph-map.json load
+            without a problem and without a warning.
           steps:
             - calls: Parse Document
             - calls: Validate Record
@@ -2441,6 +2543,10 @@ System:
             - given: "this repository's own contour.yaml and morph-map.json, read as text"
               when: "loadContour; loadMap"
               then: '{ok: true} for both: system.name "MorphV2", a Component named "contour", every Function with at least one example; map package "src" and a card with id "validate-record"'
+            - given: 'the text of contourKeys.json named "contourKeys.json"; then the text of this repository''s own contour.yaml named "contour.yaml"'
+              ref: "tests/fixtures/contour/contourKeys.json, tests/fixtures/contour/contourKeys.typed.json, tests/fixtures/contour/contourKeys.warnings.json"
+              when: "loadContour"
+              then: '{ok: true, record, warnings} with record equal to contourKeys.typed.json and warnings equal to contourKeys.warnings.json (10 lines); then {ok: true, record} with no warnings key ("warnings" in the result is false)'
         - name: Select Components
           description: The Components a plan cuts, by the names given with --component.
           behavior: >
@@ -2494,13 +2600,13 @@ System:
       dataObjects:
         - name: Contour Record
           description: The typed record (src/contour/types.ts); every list present, every optional text null when absent, texts trimmed.
-          schema: "{ version: 1, system: { name, description, requirements: string[], guardrails: string[], groups: Component[], dependencies: Dependency[] }, actors: { name, description, uses: string[] }[], requirements: { name, description }[], guardrails: { name, description }[] }; Dependency = { name, version, language, doc: string | null }; Component = { name, description, language: string | null, requirements, guardrails, uses: string[], functions: { name, description, behavior, requirements, guardrails, preconditions: string[], steps: { verb: 'calls'|'reads'|'modifies'|'produces'|'uses', target }[], examples: { given, when, then, ref: string | null }[] }[], dataObjects: { name, description, schema: string | null }[], interfaces: { name, description, exposes: string[] }[] }"
+          schema: "{ version: 1, system: { name, description, requirements: string[], guardrails: string[], groups: Component[], dependencies: Dependency[] }, actors: { name, description, uses: string[], requirements, guardrails }[], requirements: { name, description }[], guardrails: { name, description }[] }; Dependency = { name, version, language, doc: string | null }; Component = { name, description, language: string | null, requirements, guardrails, uses: string[], functions: { name, description, behavior (\"\" when absent), requirements, guardrails, preconditions: string[], steps: { verb: 'calls'|'reads'|'modifies'|'produces'|'uses', target }[], examples: { given, when, then, ref: string | null }[] }[], dataObjects: { name, description, schema: string | null, requirements, guardrails }[], interfaces: { name, description, exposes: string[], requirements?, guardrails?, schema?: string | null }[], events: { name, description, requirements, guardrails, schema: string | null }[], references, consumes, dependsOn: string[] }; the three Interface fields are optional in the type (an Interface built by hand in an older test still compiles) and always set by Validate Record"
         - name: Contour Map
           description: The typed map; snake_case keys of the document become camelCase fields, a key the map does not set is null.
           schema: "{ version: 1, package: string | null, language: string | null, docs: string[], groups: { name, functions: string[] }[], cards: ({ id } & CardFields)[], extraCards: ({ component: string | null } & CardFields)[] }; CardFields = { customId, intent: 'generate'|'patch', targets, contextSlice, dependsOn, instruction, acceptance, model, maxTokens, reasoningMaxTokens, variants }, each | null"
         - name: Record Result
           description: A typed record, or every problem.
-          schema: "{ ok: true, record: ContourRecord } | { ok: false, problems: string[] }"
+          schema: "{ ok: true, record: ContourRecord, warnings?: string[] } | { ok: false, problems: string[] }; warnings present only when non-empty (LoadRecordResult the same, with error in place of problems)"
         - name: Map Result
           description: A typed map, or every problem.
           schema: "{ ok: true, map: ContourMap } | { ok: false, problems: string[] }"
@@ -2548,13 +2654,14 @@ System:
           behavior: >
             dataBlocks(record, functions): for each reads, modifies or produces step of the
             functions (function order, step order) whose target names a Data Object of any
-            Component and was not taken yet, the block "Data <name>: <description>" followed by
+            Component, else an Event of any Component (P34b), and was not taken yet, the block
+            "Data <name>: <description>" ("Event <name>: …" for an Event) followed by
             "\nSchema:\n<schema>" when the schema is not null; other targets ("number",
             "string") are skipped. functionSection(record, fn): the blocks "## Function <name>",
             the description, "Behaviour: <behavior>", when there are preconditions
             "Preconditions:" and one "- <p>" line each, when there are steps "Steps:" and one
-            "- <verb>: <target>" line each, the examples heading "Examples (the tests must prove
-            each one):" with Render Examples on the next line, the Data blocks of [fn], when
+            "- <verb>: <target>" line each, when there are examples the heading "Examples (the tests
+            must prove each one):" with Render Examples on the next line, the Data blocks of [fn], when
             there are requirements "Requirements:" and one line per name, when there are
             guardrails "Guardrails:" and one line per name; blocks joined by "\n\n", lines of a
             block by "\n". A requirement or guardrail line is "- <name>: <description>" from the
@@ -2568,6 +2675,8 @@ System:
             - {given: 'examples.json["Render Function 1"].given', when: "functionSection", then: 'examples.json["Render Function 1"].then'}
             - {given: 'examples.json["Render Function 2"].given', when: "functionSection", then: 'examples.json["Render Function 2"].then'}
             - {given: 'examples.json["Render Function 3"].given', when: "dataBlocks", then: 'examples.json["Render Function 3"].then'}
+            - {given: 'examples.json["Render Function 4"].given', when: "dataBlocks", then: 'examples.json["Render Function 4"].then'}
+            - {given: 'examples.json["Render Function 5"].given', when: "functionSection", then: 'examples.json["Render Function 5"].then'}
         - name: Render Context
           description: The preamble, the inherited requirements and guardrails, and an Interface section.
           behavior: >
@@ -2579,9 +2688,12 @@ System:
             place kept; guardrails the same; both empty → ""; else the blocks "## Component
             requirements / guardrails", then "Requirements:" with its lines when any, then
             "Guardrails:" with its lines when any (lines as in Render Function), joined by
-            "\n\n". interfaceSection(iface, modules): the blocks "## Interface <name>", the
-            description, "Exposes:" with one line "- <name> (`<modules[i]>`)" per exposed
-            Function, joined by "\n\n".
+            "\n\n". interfaceSection(iface, modules, record?): the blocks "## Interface <name>",
+            the description, "Schema:\n<schema>" when its schema is neither null nor absent,
+            "Exposes:" with one line "- <name> (`<modules[i]>`)" per exposed Function, then its
+            requirements and guardrails as in Render Function, each when not empty or absent
+            (looked up in record; without it every line "(definition not found in the record)"),
+            joined by "\n\n".
           steps:
             - reads: Contour Record
             - produces: string
@@ -2590,6 +2702,7 @@ System:
             - {given: 'examples.json["Render Context 2"].given', when: "inheritedSection", then: 'examples.json["Render Context 2"].then'}
             - {given: 'examples.json["Render Context 3"].given', when: "inheritedSection", then: 'examples.json["Render Context 3"].then'}
             - {given: 'examples.json["Render Context 4"].given', when: "interfaceSection", then: 'examples.json["Render Context 4"].then'}
+            - {given: 'examples.json["Render Context 5"].given', when: "interfaceSection", then: 'examples.json["Render Context 5"].then'}
         - name: Card Budget
           description: The output budget of a code card and of a judge card.
           behavior: >
@@ -2653,7 +2766,7 @@ System:
             first target of every dependsOn entry that is a card of this cut (not yet present),
             and when that is empty the card's first target. instruction = the blocks preamble(docs,
             spec), Function sections, Interface sections (modules = the first final target of the
-            card owning each exposed Function), the inherited section unless "", "Write the files:
+            card owning each exposed Function; record), the inherited section unless "", "Write the files:
             `<t1>`, `<t2>`." (each target in backticks, joined by ", "), Dependency
             Finale(profile, the Component's dependencies) — the profile's finale itself when there
             is none — joined by "\n\n"; an override's instruction replaces the first block. Card = {customId,
@@ -2662,7 +2775,9 @@ System:
             override or the budget's, reasoning: {maxTokens: override reasoningMaxTokens or 2500},
             variants: override or the budget's, dependsOn}. → {ok: true, cuts}, one Cut Card per
             card in base order: {card, component, profile, functions: the unit's Functions ([] for
-            an Interface card), slicedByMap: the override set contextSlice}.
+            an Interface card), slicedByMap: the override set contextSlice, guardrails (P34b, for
+            #42): the names of its Functions' guardrails, its Interfaces', the System's, the
+            Component's, distinct, first place kept}.
           steps:
             - calls: Cut Units
             - calls: Render Function
@@ -2675,10 +2790,7 @@ System:
           preconditions:
             - Validate Record made the record, so every uses name is a declared dependency; a name no dependency carries is simply not found
           examples:
-            - given: 'the ledger record and map, Component ledger, docs ["docs/TASK.md"], spec "ledger.yaml"'
-              ref: "tests/fixtures/planner/ledger.yaml, tests/fixtures/planner/ledger.map.json, tests/fixtures/planner/ledger.cut.json (the four cards)"
-              when: "cutComponent"
-              then: 'ok; the cards equal ledger.cut.json: parse (renamed, targets and max_tokens overridden), checks (the group, Interface check API folded, deps ["parse"], variants 2), format-report (opening "Write the report formatter.", dependsOn ["checks", "outside"]), ledger-cli (the Interface card, dependsOn ["format-report", "checks"], slice ["docs/TASK.md", "src/ledger/formatReport.ts", "src/ledger/checks.ts"]); functions per card [Parse Entry], [Sum Entries, Check Ledger], [Format Report], []; slicedByMap false for all; profile the typescript profile'
+            - {given: 'examples.json["Cut Component 1"].given', when: "cutComponent", then: 'examples.json["Cut Component 1"].then'}
             - given: 'the same, Component store (python)'
               ref: "tests/fixtures/planner/store.cut.json (the two cards)"
               when: "cutComponent"
@@ -2690,19 +2802,18 @@ System:
               ref: "tests/fixtures/contour/badCalls.json"
               when: "cutComponent"
               then: "errors \"Component 'ledger': unknown language 'rust' (known: typescript, python, go)\"; \"Function 'A' calls unknown Function 'B' of Component 'loop'\"; \"Interface 'x' exposes unknown Function 'Nope'\"; \"duplicate customId 'parse-entry'\""
-            - given: 'the deps record and map, docs ["docs/TASK.md"], spec "deps.yaml"; Components conf (uses zod, yaml), diff (go, uses github.com/google/go-cmp), plain (none)'
-              ref: "tests/fixtures/planner/deps.yaml, tests/fixtures/planner/deps.map.json"
-              when: "cutComponent"
-              then: 'conf: read-config and check-config, each instruction ending "\n\n" + the typescript finale + " Imports: the standard library plus yaml@2.8.1, zod@3.23.8; their API is in docs/deps/yaml.md; no other import." (record order, not uses order); diff: diff-values ending "never your own helper; no t.Skip, no network, no clock, no goroutine left running. Imports: the standard library plus github.com/google/go-cmp@v0.7.0; their API is in docs/deps/go-cmp.md; no other import." and holding "Go 1.22, the standard library and the modules named at the end (go.mod requires them;"; plain: pad-left ending "\n\n" + the typescript finale exactly; componentDependencies(record, plain) = []'
+            - {given: 'examples.json["Cut Component 5"].given', when: "cutComponent", then: 'examples.json["Cut Component 5"].then'}
             - given: 'the deps record and map, Component wrong (typescript, uses github.com/google/go-cmp, a go dependency)'
               when: "cutComponent"
               then: "{ok: false, error: \"Component 'wrong' uses 'github.com/google/go-cmp', a go dependency (the Component is typescript)\"}"
+            - {given: 'examples.json["Cut Component 7"].given', when: "cutComponent", then: 'examples.json["Cut Component 7"].then'}
         - name: Cut Judges
           description: One judge card per card with a code target; examples, Data blocks, callee contracts and preconditions in its instruction.
           behavior: >
             cutJudges({record, cuts, map, docs, defaultProfile, hasFile}) → Card[], in cut order.
             Per Cut Card: profile = its profile, else Detect Profile of its first target, else
-            defaultProfile; code = codeTargets(profile, targets); none → no judge. Built id =
+            defaultProfile; code = codeTargets(profile, targets); none, or Functions none of which
+            has an example (P34b) → no judge. Built id =
             "<customId>-judge"; the map card with that id overrides as for a code card. Default
             target: the profile's judgeTarget filled with {component: the base name of code[0]'s
             directory, name: code[0]'s base name without its extension}. dependsOn = [the card's
@@ -2710,10 +2821,11 @@ System:
             targets) or targets[0]. Blocks: Judge Instruction(profile, {test, module: code[0],
             docs}); when the card has Functions: "The examples below are the criterion, and you
             are its independent author: write one test per example (no fewer, no merging), each
-            named after the Function and the example number, e.g. \"<first Function> example
-            1\".", one block "Examples of Function <name>:\n" + Render Examples per Function,
-            dataBlocks(record, functions), one block "Callee <name>: <description>\nBehaviour:
-            <behavior>" per callee (a calls target of the Functions that is none of them, a
+            named after the Function and the example number, e.g. \"<first Function with
+            examples> example 1\".", one block "Examples of Function <name>:\n" + Render Examples
+            per Function with examples,
+            dataBlocks(record, functions), one block "Callee <name>: <description>" +
+            "\nBehaviour: <behavior>" when its behavior is not "" per callee (a calls target of the Functions that is none of them, a
             Function of the Component, distinct, step order), and when any line exists the
             block "Preconditions a test's setup depends on:" with lines "- <Component> ·
             <Function> · <precondition>", distinct, from the card's Functions, then the callees,
@@ -2739,6 +2851,7 @@ System:
             - {given: 'examples.json["Cut Judges 2"].given', when: "cutJudges", then: 'examples.json["Cut Judges 2"].then'}
             - {given: 'examples.json["Cut Judges 3"].given', when: "cutJudges", then: 'examples.json["Cut Judges 3"].then'}
             - {given: 'examples.json["Cut Judges 4"].given', when: "cutJudges", then: 'examples.json["Cut Judges 4"].then'}
+            - {given: 'examples.json["Cut Judges 5"].given', when: "cutJudges", then: 'examples.json["Cut Judges 5"].then'}
         - name: Order Deck
           description: Kahn layers over dependsOn, the deck sorted by them, and the external dependencies.
           behavior: >
@@ -2784,7 +2897,11 @@ System:
             cards get none. Every card's contextSlice loses every
             entry equal to spec (the record never rides in a slice). The first customId repeated in card order →
             "duplicate customId '<id>'". Order Deck (its error is the result). → {ok: true, plan:
-            {spec, components: the selected names, cards, generations, externalDependsOn}, uses}
+            {spec, components: the selected names, cards, generations, externalDependsOn}, uses,
+            warnings} (warnings P34b: per selected Component, per Function in record order, each
+            reads/modifies/produces step naming no Data Object or Event of any Component
+            "<Component>/<Function>: step <verb> '<target>' names no Data Object or Event of the
+            record" (distinct), then for no examples "<Component>/<Function>: no examples, no judge")
             (uses {} with no dependency; Plan keeps its five keys, so the plan document and the
             deck of a dependency-free record are byte for byte what they were). On the
             same record and map the old `mrph plan --spec --judge` gives the same ids, dependsOn
@@ -2812,13 +2929,11 @@ System:
             - given: "this repository's own contour.yaml and morph-map.json, spec \"contour.yaml\", components [\"contour\"], judge true"
               when: "planSpec"
               then: 'generations [["validate-record"], ["select-components", "validate-map", "validate-record-judge"], ["load-spec", "select-components-judge", "validate-map-judge"], ["load-spec-judge"]] — the P9 deck old mrph cut; each card whose map entry sets an acceptance carries exactly that acceptance (P19: validate-record and its judge have none in the map, their acceptances are built by --checks)'
-            - given: 'the deps record and map, spec "deps.yaml", components ["conf", "diff", "plain"], judge true, hasFile always true'
-              ref: "tests/fixtures/planner/deps.yaml, tests/fixtures/planner/deps.map.json"
-              when: "planSpec"
-              then: 'ok; contextSlice of read-config ["docs/TASK.md", "docs/deps/yaml.md"], check-config ["docs/X.md", "docs/deps/yaml.md"] (the map''s slice, the doc appended), read-config-judge ["docs/TASK.md", "src/conf/readConfig.ts", "tests/helpers.ts", "docs/deps/yaml.md"], diff-values ["docs/TASK.md", "docs/deps/go-cmp.md"], diff-values-judge ["docs/TASK.md", "diff/diff_values.go", "internal/testhelp/testhelp.go", "docs/deps/go-cmp.md"], pad-left ["docs/TASK.md"], pad-left-judge ["docs/TASK.md", "src/plain/padLeft.ts", "tests/helpers.ts"]; uses {"read-config": ["yaml", "zod"], "check-config": ["yaml", "zod"], "diff-values": ["github.com/google/go-cmp"]} (no judge, no plain card); generations [["diff-values", "pad-left", "read-config"], ["check-config", "diff-values-judge", "pad-left-judge", "read-config-judge"], ["check-config-judge"]]'
+            - {given: 'examples.json["Plan Spec 6"].given', when: "planSpec", then: 'examples.json["Plan Spec 6"].then'}
             - given: 'the deps record and map; components ["conf", "diff"], judge false, hasFile false only for "docs/deps/go-cmp.md"; then components ["conf"], hasFile always false; then components ["plain"], judge true, hasFile always false'
               when: "planSpec"
               then: "{ok: false, error: \"dependency 'github.com/google/go-cmp' of Component 'diff': doc file not found: docs/deps/go-cmp.md\"}; then {ok: false, error: \"dependency 'yaml' of Component 'conf': doc file not found: docs/deps/yaml.md\"} (zod has no doc); then ok with uses {}"
+            - {given: 'examples.json["Plan Spec 8"].given', when: "planSpec", then: 'examples.json["Plan Spec 8"].then'}
 
       dataObjects:
         - name: Budget
@@ -2829,7 +2944,7 @@ System:
           schema: "{ id: string, name: string, functions: ContourFunction[], isGroup: boolean }"
         - name: Cut Card
           description: A card and what its judge needs.
-          schema: "{ card: Card, component: Component | null, profile: LanguageProfile | null, functions: ContourFunction[], slicedByMap: boolean }"
+          schema: "{ card: Card, component: Component | null, profile: LanguageProfile | null, functions: ContourFunction[], slicedByMap: boolean, guardrails?: string[] }"
         - name: Plan
           description: The result of planSpec and the body of the plan document.
           schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]> }"
@@ -3029,6 +3144,28 @@ System:
             - given: 'a tmp root: d.json = stub.cards.json; _stubs/ calc/a.go, report/c.go, src/t.ts, tests/t.test.ts; bin/go printing "vet: ./calc/zz.go:1:2: go ran with $GOFLAGS", node_modules/.bin/tsc printing "src/t.ts(1,1): error TS1: own" and "src/zz.ts(2,3): error TS2: tsc ran with $NO_COLOR $3", each exiting non-zero; env {PATH: <root>/bin + ":" + PATH}'
               when: checkBuilds
               then: 'checkBuilds.json["cards"]: a breaks ["calc/zz.go:1:2: go ran with -mod=mod"]; n note "the acceptance writes no $P/full.json: not built"; t breaks ["src/zz.ts(2,3): error TS2: tsc ran with 1 probe/t/tsconfig.card.json"] (its own src/t.ts line dropped); p note "python has no compile or typecheck step: not built"; b -mod=vendor, missing ["calc/n.go", "calc/b.go", "calc/b_test.go"]; u breaks both tsc lines (src/t.ts is not its own); j 5 missing'
+        - name: Unproven Stubs
+          description: The committed targets of a deck whose stub-tree build could not tell them from their stubs.
+          behavior: >
+            src/cli/unprovenStubs.ts (P28b, issue #22 M3), layer cli, node:fs and node:path and the cards layer only:
+            `export interface Unproven { card: string; path: string; reason: string }`, unprovenStubs(root, deckPath, deck)
+            → Unproven[]. stubDir = path.posix.join(path.posix.dirname(deckPath), "_stubs"), a directory under root
+            (path.resolve(root, stubDir)) or not. For every card of deck.cards in order and every target t of its targets in
+            order whose root/t is a regular file (the committed file the card re-cuts; a new file is never listed): with the
+            directory — stubDir/t under root not a regular file → {card: its customId, path: t, reason: "no stub: the build
+            used the committed file"}; its bytes equal to root/t's → reason "the stub equals the committed file: the build
+            proved nothing about its names"; else nothing. Without the directory — Transaction Deck marks deck.cards → reason
+            "no _stubs/ beside the deck: no build ran"; else nothing (a plain deck without stubs is as before). Nothing is
+            written. Why: a rewrite whose stub is the committed file hides every name a kept neighbour uses that the new
+            answer may drop (MorphStudio P8b, P7c); the list says the check did not see them.
+          steps:
+            - uses: cards
+            - produces: Unproven
+          examples:
+            - given: 'a tmp root holding the files of tests/fixtures/cli/unproven.json: calc/a.go, src/b.ts, src/c.ts; decks/q/deck.json (a [calc/a.go] generate, b [src/b.ts, src/c.ts] patch, n [calc/new.go] generate, acceptances "exit 0") with decks/q/_stubs/ calc/a.go equal to the tree''s, src/b.ts different, calc/new.go; decks/t/deck.json the same cards with TRANSACTION_MARK + "\n" before each acceptance, no _stubs/; decks/u/deck.json the plain cards, no _stubs/. Read Deck File of "decks/q/deck.json", then "decks/t/deck.json", then "decks/u/deck.json"'
+              ref: "tests/fixtures/cli/unproven.json"
+              when: unprovenStubs(root, deckPath, deck)
+              then: '[{card: "a", path: "calc/a.go", reason: "the stub equals the committed file: the build proved nothing about its names"}, {card: "b", path: "src/c.ts", reason: "no stub: the build used the committed file"}] (src/b.ts''s stub differs; calc/new.go is not on disk); then [{card: "a", path: "calc/a.go"}, {card: "b", path: "src/b.ts"}, {card: "b", path: "src/c.ts"}], each reason "no _stubs/ beside the deck: no build ran"; then []'
       dataObjects:
         - name: Go Tree
           description: The Go files of a module (relative, sorted) and, per file, the module's own packages it imports as directories.
@@ -3042,6 +3179,9 @@ System:
         - name: Stub Tree
           description: One card's first-attempt tree for the deck check.
           schema: "{ card: string; generation: number; language: string | null; exports: string[]; config: { name: string; text: string } | null; stubs: Record<string, string>; own: string[]; missing: string[] }"
+        - name: Unproven
+          description: One committed target the deck check's build proved nothing about (P28b).
+          schema: "{ card: string; path: string; reason: string }"
         - name: Build Check
           description: One card's stub tree compiled by deck check.
           schema: "{ card: string; generation: number; language: string | null; stubbed: number; missing: string[]; breaks: string[]; note: string | null }"
@@ -3177,7 +3317,7 @@ System:
             profile, test = testTarget when smoke is not null, else none. The body, in order: Probe Dir
             with the probe and ctx.siblings; OWN_GIT_BEFORE when ctx.ownGit; tscStep; eslintStep over
             ctx.targets; "echo '== guard'; node $P/guard.mjs src <code joined by ','>" + allowArg(ctx.allowed
-            ?? []) plus "; node $P/guard.mjs tests <test> 1 <smoke>" with a test, then "\n"; "echo '== probe'; " + vitestStep
+            ?? []) + rules' Layers Arg(ctx.allowed ?? [], ctx.layers) (P30) + rules' Rules Arg(ctx.rules) (P31a) plus "; node $P/guard.mjs tests <test> 1 <smoke>" with a test, then "\n"; "echo '== probe'; " + vitestStep
             with "--config $P/probe.config.mts"; with a test "echo '== own'; " + vitestStep with the test;
             ESLINT_VERDICT; extra when not null; "echo '== full'; " + vitestStep with fullArgs of
             ctx.fullExclude; OWN_GIT_AFTER when ctx.ownGit; frozenStep of ctx.frozen; untrackedStep of
@@ -3190,6 +3330,7 @@ System:
             - calls: Tree Steps
             - calls: Probe Dir
             - reads: Card Context
+            - uses: rules
             - produces: string
           examples:
             - given: 'ctx {id "a", phase "p1", targets ["src/x/a.ts"], siblings ["src/x/b.ts"], frozen DEFAULT_FROZEN, fullExclude [], ownGit false, the typescript profile, guard "// guard\n", firstdiff "// firstdiff\n"}; probe "// probe\n", smoke null, extra null'
@@ -3204,6 +3345,8 @@ System:
               ref: "tests/fixtures/builder/code1.txt, tests/fixtures/builder/code2.txt"
               when: "written"
               then: '""; " ''zod''"; " ''yaml,@scope/pkg''"; code1.txt with its line "echo ''== guard''; node $P/guard.mjs src src/x/a.ts" ending in " ''yaml,@scope/pkg''", nothing else changed; code2.txt with "guard.mjs src src/x/a.ts; node" become "guard.mjs src src/x/a.ts ''ajv''; node", nothing else changed; exactly code1.txt'
+            - {given: 'examples.json["Code Acceptance 4"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/code1.txt, tests/fixtures/builder/code2.txt", when: codeAcceptance, then: 'examples.json["Code Acceptance 4"].then'}
+            - {given: 'examples.json["Code Acceptance 5"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/code1.txt, tests/fixtures/builder/code2.txt", when: codeAcceptance, then: 'examples.json["Code Acceptance 5"].then'}
         - name: Judge Acceptance
           description: The acceptance of a judge card — per test file its bounds, literals and kept names, then the files run together.
           behavior: >
@@ -3311,43 +3454,36 @@ System:
             key → as before. P21c (#12): an optional transaction (Plan Command's for --only) true → every member's ctx siblings
             [], hide ignored, and its acceptance = TRANSACTION_MARK (Transaction Deck) + "\n" + its script with the exact text
             untrackedStep(its targets) replaced once by untrackedStep(every member's targets, checks' order, each once).
+            P30 (#41): an optional layers (Plan Command's, directory → allowed directories) gives every member's ctx
+            layers = rules' Card Layers(profile, its targets, layers); without it no ctx has the key. P31a (#42): an
+            optional rules (Plan Command's, directory → rule id → text) gives every member's ctx rules = rules' Card
+            Rules(profile, its targets, rules), the ctx's last key; without it no ctx has the key.
           steps:
             - calls: Code Acceptance
             - calls: Judge Acceptance
             - reads: Checks
             - uses: cards
             - uses: builder-go
+            - uses: rules
             - produces: Build Result
           examples:
             - given: 'the P10a deck file decks/p10/v2deck.json (12 cards) with every acceptance set to null; checks p10.checks.typed.json; the typescript profile; texts guard.p10.txt, firstdiff.p10.txt and probes {<id>: decks/p10/parts/<id>.probe.ts} for the six code cards'
               ref: "tests/fixtures/builder/guard.p10.txt, tests/fixtures/builder/firstdiff.p10.txt, tests/fixtures/builder/p10.checks.typed.json"
               when: "buildAcceptances"
               then: '{ok: true, cards} equal to the cards of decks/p10/v2deck.json — the 12 acceptances byte for byte as build.py p10 wrote them (the golden check)'
-            - given: 'cards a (targets ["src/x/a.ts"]), b (["src/x/b.ts"]), c (["src/x/c.ts"]), d (["src/x/d.ts"], dependsOn ["a"]), every acceptance null; checks phase "p1" with cards b, a, d; probes for a, b, d "// probe\n"; guard "// guard\n", firstdiff "// firstdiff\n"'
-              when: "buildAcceptances"
-              then: 'ok; a''s acceptance = codeAcceptance with siblings ["src/x/b.ts"], b''s with ["src/x/a.ts"], d''s with [] (generation 1 alone); c''s acceptance stays null'
-            - given: 'cards a (["src/x/a.ts", "tests/x/a.test.ts"]), j (["tests/x/j.examples.test.ts"]); checks cards a, j (files [tests/x/k.examples.test.ts]), z; probes {}; guard "x MORPH_PROBE_EOF"'
-              when: "buildAcceptances"
-              then: "{ok: false, errors: [\"the guard holds the heredoc tag MORPH_PROBE_EOF\", \"code card 'a' has no probe\", \"code card 'a' targets the test tests/x/a.test.ts but has no smoke cap\", \"judge 'j': files [\\\"tests/x/k.examples.test.ts\\\"] are not its targets [\\\"tests/x/j.examples.test.ts\\\"]\", \"checks card 'z' is not in the deck\"]}"
+            - {given: 'examples.json["Build Acceptances 2"].given', ref: "tests/fixtures/builder/examples.json", when: "buildAcceptances", then: 'examples.json["Build Acceptances 2"].then'}
+            - {given: 'examples.json["Build Acceptances 3"].given', ref: "tests/fixtures/builder/examples.json", when: "buildAcceptances", then: 'examples.json["Build Acceptances 3"].then'}
             - given: 'any input with the python profile'
               when: "buildAcceptances"
               then: "{ok: false, errors: [\"no acceptance builder for language 'python' (only typescript, go)\"]}"
-            - given: 'the go profile; cards percent-of (["calc/percent_of.go"]) and clamp-value-judge (["calc/clamp_value_examples_test.go"]), one generation, acceptances null; checks phase "m1", frozen ["go.mod", "internal"], cards percent-of and clamp-value-judge (files [{calc/clamp_value_examples_test.go, min 4, max 10, lits ["TestClampValueExample1"], new true}]); probes {percent-of: "package calc\n"}; guard "// guard\n", firstdiff "// firstdiff\n"'
-              ref: "tests/fixtures/builder/go/code1.txt (percent-of's whole script)"
-              when: "buildAcceptances"
-              then: 'ok; percent-of''s acceptance = code1.txt (goCodeAcceptance, siblings ["calc/clamp_value_examples_test.go"]); the judge''s = goJudgeAcceptance with siblings ["calc/percent_of.go"]'
-            - given: 'the go profile; cards a (["src/x/a.ts"]) and b (["calc/b.go"]); checks cards a, b; probes {a: "// probe\n"}; then probeFile(go, "percent-of") and probeFile(typescript, "a")'
-              when: "buildAcceptances; probeFile"
-              then: "{ok: false, errors: [\"card 'a' has no go target\", \"code card 'b' has no probe\"]}; \"_percent-of_probe_test.go\"; \"a.probe.ts\""
-            - given: 'cards a (["src/x/a.ts"]), b (["src/x/b.ts"]), acceptances null; checks phase "p7" with cards a, b; probes a, b "// probe\n"; guard "// guard\n", firstdiff "// firstdiff\n"; uses {"a": ["zod", "yaml"], "a-judge": ["ajv"], "c": ["x"]}, vendor true; then the same input without uses and vendor'
-              when: "buildAcceptances"
-              then: 'ok; a''s acceptance = codeAcceptance(ctx {id "a", phase "p7", targets ["src/x/a.ts"], siblings ["src/x/b.ts"], frozen DEFAULT_FROZEN, fullExclude [], ownGit false, typescript, the texts, allowed ["zod", "yaml"]}, "// probe\n", null, null), holding "node $P/guard.mjs src src/x/a.ts ''zod,yaml''\n"; b''s = codeAcceptance with siblings ["src/x/a.ts"], holding "node $P/guard.mjs src src/x/b.ts\n"; then a''s holds "node $P/guard.mjs src src/x/a.ts\n" and b''s is the same as before'
-            - given: 'the go input of example 5 plus uses {"percent-of": ["github.com/dustin/go-humanize", "golang.org/x/text"]} and vendor true'
-              ref: "tests/fixtures/builder/go/code1.txt"
-              when: "buildAcceptances"
-              then: 'ok; percent-of''s acceptance = code1.txt with "export GOFLAGS=-mod=mod " become "export GOFLAGS=-mod=vendor " and its guard line "node $P/guard.mjs src calc/percent_of.go" ending in " ''github.com/dustin/go-humanize,golang.org/x/text''"; the judge''s = goJudgeAcceptance(its ctx with siblings ["calc/percent_of.go"] and vendor true, files), holding "export GOFLAGS=-mod=vendor " and no "-mod=mod"'
+            - {given: 'examples.json["Build Acceptances 5"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/go/code1.txt (percent-of's whole script)", when: "buildAcceptances", then: 'examples.json["Build Acceptances 5"].then'}
+            - {given: 'examples.json["Build Acceptances 6"].given', ref: "tests/fixtures/builder/examples.json", when: "buildAcceptances; probeFile", then: 'examples.json["Build Acceptances 6"].then'}
+            - {given: 'examples.json["Build Acceptances 7"].given', ref: "tests/fixtures/builder/examples.json", when: buildAcceptances, then: 'examples.json["Build Acceptances 7"].then'}
+            - {given: 'examples.json["Build Acceptances 8"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/go/code1.txt", when: buildAcceptances, then: 'examples.json["Build Acceptances 8"].then'}
             - {given: 'examples.json["Build Acceptances 9"].given', ref: "tests/fixtures/builder/examples.json", when: buildAcceptances, then: 'examples.json["Build Acceptances 9"].then'}
             - {given: 'examples.json["Build Acceptances 10"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/go/code1.txt", when: buildAcceptances, then: 'examples.json["Build Acceptances 10"].then'}
+            - {given: 'examples.json["Build Acceptances 11"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/go/code1.txt", when: buildAcceptances, then: 'examples.json["Build Acceptances 11"].then'}
+            - {given: 'examples.json["Build Acceptances 12"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/go/code1.txt", when: buildAcceptances, then: 'examples.json["Build Acceptances 12"].then'}
       dataObjects:
         - name: Checks
           description: A phase's acceptance knobs, read from its checks document (decks/<phase>/checks.json).
@@ -3360,7 +3496,7 @@ System:
           schema: "{ ok: true, checks: Checks } | { ok: false, problems: string[] }"
         - name: Card Context
           description: What one card's acceptance is built from.
-          schema: "{ id: string, phase: string, targets: string[], siblings: string[], frozen: string[], fullExclude: string[], ownGit: boolean, profile: LanguageProfile, guard: string, firstdiff: string, allowed?: string[], vendor?: boolean }"
+          schema: "{ id: string, phase: string, targets: string[], siblings: string[], frozen: string[], fullExclude: string[], ownGit: boolean, profile: LanguageProfile, guard: string, firstdiff: string, allowed?: string[], vendor?: boolean, layers?: Record<string, string[]>, rules?: Record<string, Record<string, string>> }"
         - name: Build Result
           description: The cards with their acceptances, or every error.
           schema: "{ ok: true, cards: Card[] } | { ok: false, errors: string[] }"
@@ -3418,10 +3554,13 @@ System:
             P19: GO_ENV_VENDOR = GO_ENV with "-mod=mod" become "-mod=vendor", nothing else; goEnv(vendor) = GO_ENV_VENDOR
             when vendor, else GO_ENV; both acceptances begin with goEnv(ctx.vendor === true) in place of GO_ENV; the code
             card's guard line is "node $P/guard.mjs src <code joined by ','>" + builder's allowArg(ctx.allowed ?? []) before
-            the tests part. The judge's reads no allowed.
+            the tests part. The judge's reads no allowed. P30 (#41): right after allowArg the code card's guard line gets
+            rules' Layers Arg(ctx.allowed ?? [], ctx.layers), then (P31a, #42) rules' Rules Arg(ctx.rules); the judge's
+            reads no layers and no rules.
           steps:
             - uses: builder
             - uses: language
+            - uses: rules
             - reads: Card Context
             - reads: Judge File
             - produces: string
@@ -3453,6 +3592,291 @@ System:
               ref: "tests/fixtures/builder/go/code1.txt, judge1.txt, code2.txt"
               when: "goCodeAcceptance; goJudgeAcceptance"
               then: 'code1.txt with its GO_ENV line become GO_ENV_VENDOR''s and its guard line ending in " ''github.com/dustin/go-humanize''", nothing else changed; judge1.txt with only its GO_ENV line become GO_ENV_VENDOR''s; code2.txt with "guard.mjs src report/a.go; node" become "guard.mjs src report/a.go ''golang.org/x/mod''; node", nothing else changed; exactly code1.txt'
+            - given: 'goCodeAcceptance of the ctx of example 1 with layers {"calc": []}; with allowed ["github.com/dustin/go-humanize"] and layers {"calc": ["report"]}; of the ctx of example 2 with layers {"report": ["calc"]} (probe, smoke 5, extra as there); goJudgeAcceptance of the ctx and files of example 3 with layers {"calc": []}'
+              ref: "tests/fixtures/builder/go/code1.txt, code2.txt, judge1.txt"
+              when: "goCodeAcceptance; goJudgeAcceptance"
+              then: 'code1.txt with its guard line "echo ''== guard''; node $P/guard.mjs src calc/percent_of.go" ending in " '''' ''{\"calc\":[]}''", nothing else changed; code1.txt with that line ending in " ''github.com/dustin/go-humanize'' ''{\"calc\":[\"report\"]}''"; code2.txt with "guard.mjs src report/a.go; node" become "guard.mjs src report/a.go '''' ''{\"report\":[\"calc\"]}''; node"; exactly judge1.txt'
+            - given: 'goCodeAcceptance of the ctx of example 1 with layers {"calc": []} and rules {"calc": {"no-shell": "Guardrail ''No Shell'' of System mini"}}; of the ctx of example 2 with layers {"report": ["calc"]} and rules {"report": {}} (probe, smoke 5, extra as there); goJudgeAcceptance of the ctx and files of example 3 with layers {"calc": []} and rules {"calc": {}}'
+              ref: "tests/fixtures/builder/go/code1.txt, code2.txt, judge1.txt"
+              when: "goCodeAcceptance; goJudgeAcceptance"
+              then: 'code1.txt with its guard line "echo ''== guard''; node $P/guard.mjs src calc/percent_of.go" ending in " '''' ''{\"calc\":[]}'' ''{\"calc\":{\"no-shell\":\"Guardrail \\u0027No Shell\\u0027 of System mini\"}}''", nothing else changed; code2.txt with "guard.mjs src report/a.go; node" become "guard.mjs src report/a.go '''' ''{\"report\":[\"calc\"]}'' ''{\"report\":{}}''; node", nothing else changed; exactly judge1.txt'
+
+    # ---------------------------------------------------------------- P30
+    - name: rules
+      description: >
+        The acceptance rules the record states (P30, issue #41): src/rules/layers.ts, pure (node:path only; no file
+        read, no clock, no environment), importing contour and language only. The layer rule — which directories a
+        card's code may import — is read off the record: a Function step `uses: <Component>` lets the directories of
+        that Function's code targets import the used Component's directories (and Contour's Component.dependsOn lets all
+        of a Component's directories import the named Component's, P34), so the guard reads no hand copy
+        (decks/tools/layers.json "layers"). P31a (issues #42, #46): the record's canonical Guardrail names (language's
+        Canonical Guardrail) give each code directory its guard rule ids (Guardrail Rules, src/rules/guardrails.ts), and
+        the project guard's contract line, not the presence of layers.json, decides what is emitted. cli's Plan Command
+        calls Plan Rules; builder writes Card Layers and Card Rules through Layers Arg and Rules Arg into the guard line of
+        every code card; the template guards (data, contract 3) read both arguments. P31b (issue #42 Must hold 3, ledger
+        3–5): the guards check every rule per given code FILE, imports included (the standard library narrowed only by
+        the canonical rules, plus the record's dependencies of the card's Component), and read no file beside the record;
+        Plan Notes (src/rules/notes.ts) names in the plan document the hand copies a project still keeps beside it.
+        P31c (issue #42 ledger item 9): a System Guardrail binds every code file, a Component one every code file of its
+        directories, a Function or Interface one only the code files of that card — Guardrail Rules keys it by file, Card
+        Rules folds a card's own file entries into its directories, so the guard argument keeps contract 3's shape.
+      language: typescript
+      requirements: [Deterministic Core]
+      functions:
+        - name: Layer Edges
+          description: For every code directory of the record, the directories it may import.
+          behavior: >
+            layerEdges(record, map) → Layer Edges Result, over the WHOLE record and map (never a cut's subset). Per
+            Component C in record order: profile = Resolve Profile(C.language, map.language), an error → "Component
+            '<C>': <it>". Per Function F of C: its unit is the first map group whose functions hold F's name, else F; the
+            unit name is that group's name, else F's name; targets = the targets of the map card whose id is
+            slugName(unit name) when that card gives targets, else [code, test] of Name Targets(profile, C.name, unit
+            name) (an error → "Component '<C>': <it>"); dirs(F) = path.posix.dirname of each of codeTargets(profile,
+            targets) (test files and other extensions left out; "." for a root file), distinct. C's directories = the
+            union of dirs(F) over its Functions. Every directory of every dirs(F) is a key of edges. Per step `uses: X` of
+            a Function F (of any Component): X names a Component when X equals its name or componentSlug(X) equals
+            componentSlug(its name); X is a dependency when a System dependency is named exactly X. Both → the error
+            "Function '<F>': 'uses: <X>' names the Component '<that Component's name>' and the dependency '<X>'". A
+            Component only → for each d of dirs(F), every directory of that Component but d itself joins edges[d]. A
+            dependency or neither → nothing (a module: Component.uses and the guard's module argument). Then, after C's
+            Functions, per name X of C.dependsOn (Contour's own Component → Component edge, P34, issue #44), in order: X
+            names a Component (its name equals X or componentSlug equals componentSlug(X)) → for each directory d of C,
+            every directory of that Component but d itself joins edges[d]; no Component → the error "Component '<C>':
+            dependsOn '<X>' names no Component of the record". Any error →
+            {ok: false, errors} (record order, each text once); else {ok: true, edges}: the keys and each list sorted
+            ascending by code unit, no duplicates; a directory whose Functions use no Component maps to [].
+          steps:
+            - reads: Contour Record
+            - reads: Contour Map
+            - uses: contour
+            - uses: language
+            - produces: Layer Edges Result
+          examples:
+            - given: 'the record and the map of tests/fixtures/ts-rename.json (its "contour.yaml" and "morph-map.json" texts through Load Spec and Load Map)'
+              ref: "tests/fixtures/ts-rename.json"
+              when: layerEdges
+              then: '{ok: true, edges: {"src/report": ["src/units"], "src/units": []}} — Length Line uses units'
+            - {given: 'examples.json["Layer Edges 2"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/morphstudio.edges.json (the whole edges), tests/fixtures/rules/morphstudio/layers.json (f85a8e7's hand table, no users key)", when: "layerEdges", then: 'examples.json["Layer Edges 2"].then'}
+            - {given: 'examples.json["Layer Edges 3"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/union/contour.yaml, tests/fixtures/rules/union/morph-map.json", when: "layerEdges", then: 'examples.json["Layer Edges 3"].then'}
+            - {given: 'examples.json["Layer Edges 4"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/both.yaml", when: "layerEdges", then: 'examples.json["Layer Edges 4"].then'}
+            - {given: 'examples.json["Layer Edges 5"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/dependsOn.yaml, tests/fixtures/rules/dependsOnBad.yaml", when: "layerEdges", then: 'examples.json["Layer Edges 5"].then'}
+        - name: Card Layers
+          description: The part of the edges one card's guard gets — its code directories.
+          behavior: >
+            cardLayers(profile, targets, edges) → an object: for each directory d of codeTargets(profile, targets)
+            (path.posix.dirname, "." for a root file; distinct, first seen first, so the keys keep that order) the
+            entry d → edges[d] when edges has the own key d, else []. No code target → {}.
+          steps:
+            - reads: Layer Edges Result
+            - produces: Record<string, string[]>
+          examples:
+            - given: 'E = the edges of tests/fixtures/rules/morphstudio.edges.json; cardLayers(go, ["users/registry.go"], E); cardLayers(go, ["daemon/pump.go", "daemon/pump_test.go"], E); cardLayers(typescript, ["src/report/line.ts", "tests/report/line.test.ts"], {"src/report": ["src/units"], "src/units": []}); cardLayers(go, ["new/a.go", "new/b.go", "main.go"], {}); cardLayers(go, ["users/registry_examples_test.go"], E)'
+              ref: "tests/fixtures/rules/morphstudio.edges.json"
+              when: cardLayers
+              then: '{"users": []}; {"daemon": E["daemon"]} (the 11 directories); {"src/report": ["src/units"]}; {"new": [], ".": []} with the keys in that order; {}'
+        - name: Layers Arg
+          description: The guard's layers argument, after the module argument of builder's allowArg.
+          behavior: >
+            layersArg(allowed, layers) → string. layers undefined → "" (the guard line stays byte for byte). Else the
+            module argument's placeholder " ''" when allowed is empty (allowArg wrote nothing there), then " '" +
+            JSON.stringify(layers) + "'". The template guards (templates/go and templates/typescript decks/tools/guard.mjs:
+            contract 2 in P30, contract 3 since P31a, which never reads layers.json and is red without the argument — Rules
+            Arg) read it as the fourth argument of `src`; Go keys a package by its directory, TypeScript a file by its
+            first folder under src/ (the argument's directories mapped the same way); an import of another key not in
+            the importing key's list is red, per importing file (P31b): Go "guard: <file>:<line>: imports <import path>: the
+            record has no 'uses' from <dir> to <target dir> (allowed: <list joined by ', '> or none)", TypeScript "guard: <file>:<line> layer
+            <layer> imports layer <layer2>: the record has no 'uses' from <layer> to <layer2> (allowed: … or none)".
+          steps:
+            - produces: string
+          examples:
+            - given: 'layersArg([], undefined); layersArg(["zod"], undefined); layersArg([], {"users": []}); layersArg(["github.com/x/y"], {"pkg": ["x", "y"], ".": []})'
+              when: layersArg
+              then: '""; ""; " '''' ''{\"users\":[]}''"; " ''{\"pkg\":[\"x\",\"y\"],\".\":[]}''"'
+            - {given: 'examples.json["Layers Arg 2"].given', ref: "tests/fixtures/rules/examples.json, templates/go/decks/tools/guard.mjs", when: "the guard runs in the module (GOFLAGS=-mod=mod GOPROXY=off GOTOOLCHAIN=local GOWORK=off)", then: 'examples.json["Layers Arg 2"].then'}
+            - {given: 'examples.json["Layers Arg 3"].given', ref: "tests/fixtures/rules/examples.json, templates/typescript/decks/tools/guard.mjs", when: "the guard runs in the tree", then: 'examples.json["Layers Arg 3"].then'}
+        - name: Plan Layers
+          description: What `plan --checks` gives the builder — the edges when the project keeps decks/tools/layers.json and its guard speaks contract 2.
+          behavior: >
+            planLayers(record, map, layersFile, guard, language) → Plan Layers Result. layersFile false → {ok: true,
+            layers: null}, nothing else read (no layers.json: no argument, every deck byte for byte). Else Layer Edges(
+            record, map): errors → {ok: false, error: the errors joined by "\n"}; edges with at least one key and a guard
+            text that does not contain GUARD_CONTRACT = "morph-guard-contract: 2" (exported) → {ok: false, error:
+            "decks/tools/guard.mjs speaks contract 1: copy templates/<language>/decks/tools/guard.mjs from MorphV2"} (an
+            old copy would ignore the argument); else {ok: true, layers: the edges}.
+          steps:
+            - calls: Layer Edges
+            - produces: Plan Layers Result
+          examples:
+            - given: 'R, M = the ts-rename record and map (Layer Edges example 1); planLayers(R, M, false, "// guard\n", "typescript"); planLayers(the both.yaml record, EMPTY_MAP, false, "// guard\n", "typescript")'
+              when: planLayers
+              then: '{ok: true, layers: null}; {ok: true, layers: null}'
+            - given: 'planLayers(R, M, true, "// guard\n", "typescript"); planLayers(R, M, true, "// morph-guard-contract: 2\n", "typescript"); planLayers(the both.yaml record, EMPTY_MAP, true, "// morph-guard-contract: 2\n", "typescript")'
+              when: planLayers
+              then: "{ok: false, error: \"decks/tools/guard.mjs speaks contract 1: copy templates/typescript/decks/tools/guard.mjs from MorphV2\"}; {ok: true, layers: {\"src/report\": [\"src/units\"], \"src/units\": []}}; {ok: false, error: \"Function 'Read Config': 'uses: yaml' names the Component 'yaml' and the dependency 'yaml'\"}"
+            - given: 'R with the map {"language": "typescript", "cards": {"to-metres": {"targets": ["docs/a.md"]}, "length-line": {"targets": ["docs/b.md"]}}} (no code target); planLayers(R, that map, true, "// guard\n", "go")'
+              when: planLayers
+              then: '{ok: true, layers: {}} — no directory to emit, so the old guard is not refused'
+        - name: Guardrail Rules
+          description: For every code directory of the record, the guard rule ids its canonical Guardrails give, and the names that stay prose (P31a, issue #42).
+          behavior: >
+            guardrailRules(record, map) → Guardrail Rules Result, over the WHOLE record and map (never a cut's subset). Per
+            Component C in record order: profile = Resolve Profile(C.language, map.language), an error → "Component '<C>':
+            <it>" and C is skipped. C's units, in order: each Function F of C, then each Interface I of C whose exposes does
+            not hold exactly one name. A unit's targets: for F as in Layer Edges (the first map group holding F's name gives
+            the unit name, else F's name; the targets of the map card whose id is slugName(unit name) when that card gives
+            targets, else [code, test] of Name Targets(profile, C.name, unit name)); for I the map card slugName(I.name) when
+            it gives targets, else [code, test] of Name Targets(profile, C.name, I.name); a Name Targets error → "Component
+            '<C>': <it>". The unit's dirs = path.posix.dirname of each of codeTargets(profile, targets) ("." for a root file),
+            distinct; every dir is a key of rules (an object, {} when no rule falls on it). The unit's names, in order, each
+            with its place: for F, F.guardrails ("Function <F.name>"), then the guardrails (`?? []`) of every Interface of C
+            whose exposes is exactly [F.name] ("Interface <I.name>"), in C's order; for I, I's guardrails ("Interface
+            <I.name>"); then C.guardrails ("Component <C.name>"); then record.system.guardrails ("System <system name>"). Per
+            name N: id = Canonical Guardrail's guardrailRule(profile, N); null → N joins proseOnly unless a name with the
+            same guardrailKey is already in it; else the text "Guardrail '<N>' of <place>" goes, unless the key already has
+            id (the first place, the most specific, wins), to: for a Function or Interface place, the key f of each code
+            file f of codeTargets(profile, targets) of the unit (the file key is created, as {}, when its first rule falls
+            on it: a code file with no Function or Interface rule is no key); for a Component or System place, the key d of
+            each dir of the unit. So a Function's rule never reaches a sibling card's file of its directory. Any error →
+            {ok: false, errors} (record order, each text once); else {ok: true, rules, proseOnly}: the keys of rules and of
+            each entry sorted ascending by code unit (new objects built in that order; a dir sorts before its files),
+            proseOnly in first-seen order, each name as written.
+            Data Object, Event and Actor guardrails are not read.
+          steps:
+            - reads: Contour Record
+            - reads: Contour Map
+            - uses: contour
+            - uses: language
+            - produces: Guardrail Rules Result
+          examples:
+            - given: 'the record and the map of tests/fixtures/rules/parity/go/ (contour.yaml, morph-map.json: calc, clock and shell carry the Guardrail Pure, app none)'
+              ref: "tests/fixtures/rules/parity/go/contour.yaml, tests/fixtures/rules/parity/go/morph-map.json"
+              when: guardrailRules
+              then: "{ok: true, rules: {\"app\": {}, \"calc\": {\"pure\": \"Guardrail 'Pure' of Component calc\"}, \"clock\": {\"pure\": \"Guardrail 'Pure' of Component clock\"}, \"shell\": {\"pure\": \"Guardrail 'Pure' of Component shell\"}}, proseOnly: []}"
+            - {given: 'examples.json["Guardrail Rules 2"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/parity/typescript/contour.yaml, tests/fixtures/rules/parity/typescript/morph-map.json", when: "guardrailRules", then: 'examples.json["Guardrail Rules 2"].then'}
+            - {given: 'examples.json["Guardrail Rules 3"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/guarded.yaml", when: "guardrailRules", then: 'examples.json["Guardrail Rules 3"].then'}
+            - given: 'the record tests/fixtures/rules/badLanguage.yaml (Component legacy, language cobol; Component fresh, go; System Pure) and the empty map'
+              ref: "tests/fixtures/rules/badLanguage.yaml"
+              when: guardrailRules
+              then: "{ok: false, errors: [\"Component 'legacy': unknown language 'cobol' (known: typescript, python, go)\"]}"
+            - {given: 'examples.json["Guardrail Rules 5"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/scope/cases.json", when: "guardrailRules", then: 'examples.json["Guardrail Rules 5"].then'}
+        - name: Card Rules
+          description: The part of the rules one card's guard gets — its code directories.
+          behavior: >
+            cardRules(profile, targets, rules) → an object: for each directory d of codeTargets(profile, targets)
+            (path.posix.dirname, "." for a root file; distinct, first seen first, so the keys keep that order) the entry
+            d → a new object: first, for each code target t of the card in d, in target order, every id of rules[t] (own key
+            t) not yet in it; then every id of rules[d] (own key d) not yet in it (the file's rule, the more specific, wins);
+            its keys sorted ascending (default sort). No code target → {}. The contract-3 guard reads its rules by directory
+            and is given only this card's code files, so the entry of d is the rule set of each of the card's files in d: the
+            System and Component rules of d plus this card's Function and Interface rules, never a sibling card's.
+          steps:
+            - reads: Guardrail Rules Result
+            - produces: Record<string, Record<string, string>>
+          examples:
+            - given: 'RG = the rules of Guardrail Rules example 1, RT = those of example 3; cardRules(go, ["calc/add.go", "calc/add_test.go"], RG); cardRules(typescript, ["src/orders/placeOrder.ts", "tests/orders/placeOrder.test.ts"], RT); cardRules(go, ["new/a.go", "new/b.go", "main.go"], {}); cardRules(go, ["calc/add_examples_test.go"], RG)'
+              when: cardRules
+              then: '{"calc": RG["calc"]}; {"src/orders": {"no-clock": "Guardrail ''no  CLOCK'' of Component orders", "no-network": "Guardrail ''No Network'' of System guarded", "no-shell": "Guardrail ''No Shell'' of Function Place Order"}} (its dir and its file, not the sibling cards'' files); {"new": {}, ".": {}} with the keys in that order; {}'
+            - {given: 'examples.json["Card Rules 2"].given', ref: "tests/fixtures/rules/examples.json", when: "cardRules", then: 'examples.json["Card Rules 2"].then'}
+        - name: Rules Arg
+          description: The guard's rules argument, after the layers argument of Layers Arg.
+          behavior: >
+            rulesArg(rules) → string. rules undefined → "" (the guard line stays byte for byte). Else " '" +
+            JSON.stringify(rules), every "'" in it written as the six characters \u0027 (the shell word stays
+            single-quoted; JSON reads it back as '), + "'". It is written right after Layers Arg, so the guard reads it as the fifth
+            argument of `src`. The template guards of contract 3 (templates/go and templates/typescript
+            decks/tools/guard.mjs, the line "// morph-guard-contract: 3"; data) take `src <files> <mods> <layers> <rules>`:
+            a missing layers argument → exit 1 and "guard: no layer edges given — re-cut with morph plan", a missing rules
+            argument → "guard: no Guardrail rules given — re-cut with morph plan" (fail closed, never "everything allowed":
+            issue #46); no file beside the record is read (P31b: decks/tools/layers.json not at all, TypeScript's packages
+            come from the `pkgs` argument only, the record's dependencies of the card's Component). Per given code file (Go: never a _test.go) the rules of its directory, as each guard's header lists
+            them (no-shell, no-clock, no-network, no-env, no-process for TypeScript only, stdlib-only, pure), are checked
+            on the syntax tree (Go: a go/parser scan run by `go run` in a temporary module; TypeScript: its compiler API);
+            each finding is one line "guard: <file>:<line>: imports <path>|uses <name>: <the rule's text>", for the first
+            rule in that order that forbids it. P31b (#42 Must hold 3, #40 item 3): imports are checked per given code file
+            too, never per package — an import no rule forbids is allowed when it is of the standard library, of the
+            module (then the layer rule of Layers Arg) or of the `mods`/`pkgs` argument; any other is one line, Go "guard:
+            <file>:<line>: imports <path>: not a dependency the record gives this Component (allowed: the standard
+            library[, <mods joined by ', '>])", TypeScript as before ("guard: <file>:<line> package import \"<spec>\" (allowed:
+            node:*[, <pkgs>])"). Only the card's own files are read, so a package-mate's import is never its red: Blame
+            Log blames the card whose acceptance it is, the owner of the named file.
+          steps:
+            - produces: string
+          examples:
+            - given: 'rulesArg(undefined); rulesArg({}); rulesArg({"calc": {"pure": "Guardrail ''Pure'' of Component calc"}})'
+              when: rulesArg
+              then: "\"\"; \" '{}'\"; \" '{\\\"calc\\\":{\\\"pure\\\":\\\"Guardrail \\\\u0027Pure\\\\u0027 of Component calc\\\"}}'\""
+            - {given: 'examples.json["Rules Arg 2"].given', ref: "tests/fixtures/rules/examples.json, templates/go/decks/tools/guard.mjs", when: "the guard runs in the module (GOFLAGS=-mod=mod GOPROXY=off GOTOOLCHAIN=local GOWORK=off)", then: 'examples.json["Rules Arg 2"].then'}
+            - {given: 'examples.json["Rules Arg 3"].given', ref: "tests/fixtures/rules/examples.json, templates/typescript/decks/tools/guard.mjs", when: "the guard runs in the tree", then: 'examples.json["Rules Arg 3"].then'}
+            - {given: 'examples.json["Rules Arg 4"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/parity/trees.json, tests/fixtures/rules/guard2/go.guard.txt, tests/fixtures/rules/guard2/typescript.guard.txt", when: "both guards run in the tree (the Go environment of example 2)", then: 'examples.json["Rules Arg 4"].then'}
+            - {given: 'examples.json["Rules Arg 5"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/issue46/tree.json, tests/fixtures/rules/issue46/contour.yaml, tests/fixtures/rules/issue46/morph-map.json", when: "the guard runs in each state (the Go environment of example 2)", then: 'examples.json["Rules Arg 5"].then'}
+            - {given: 'examples.json["Rules Arg 6"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/p9a/", when: "the guard runs per file (the Go environment of example 2), then blameLog", then: 'examples.json["Rules Arg 6"].then'}
+            - {given: 'examples.json["Rules Arg 7"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/p9a/", when: "layerEdges, then the guard per file", then: 'examples.json["Rules Arg 7"].then'}
+            - {given: 'examples.json["Rules Arg 8"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/scope/cases.json", when: "planRules, cardRules per card, then the guard per file", then: 'examples.json["Rules Arg 8"].then'}
+        - name: Guard Contract
+          description: The contract number a project guard declares.
+          behavior: >
+            guardContract(guard) → number: the digits of the first match of /morph-guard-contract: (\d+)/ in the guard's
+            text, as a number; no match → 0 (a hand guard, or a template copy older than P30).
+          steps:
+            - produces: number
+          examples:
+            - given: 'guardContract("// guard\n"); guardContract("// morph-guard-contract: 2\n"); guardContract("x\n// morph-guard-contract: 3\n// morph-guard-contract: 2\n"); guardContract("// morph-guard-contract: x\n")'
+              when: guardContract
+              then: '0; 2; 3; 0'
+        - name: Plan Rules
+          description: What `plan --checks` gives the builder — layers and rules when the project guard speaks their contract (P31a, issues #42 and #46).
+          behavior: >
+            planRules(record, map, layersFile, guard, language) → Plan Rules Result. n = Guard Contract(guard). n < 2 and
+            layersFile false → {ok: true, layers: null, rules: null, proseOnly: []}, nothing else read (a hand guard: MorphV2's
+            own, every deck byte for byte). Else layers = Plan Layers(record, map, true, n ≥ 2 ? GUARD_CONTRACT : guard,
+            language) (so a guard of contract 2 or more gets the record's edges whether decks/tools/layers.json exists or
+            not, issue #46; an older copy beside a layers.json is refused as in P30), its error → {ok: false, error: it}; then
+            Guardrail Rules(record, map), errors → {ok: false, error: them joined by "\n"}. n ≥ 3 → {ok: true, layers: its
+            layers, rules, proseOnly}. Else, when some key of rules (a directory or a file) has a rule → {ok: false, error:
+            "decks/tools/guard.mjs speaks contract <n, at least 1>: copy templates/<language>/decks/tools/guard.mjs from
+            MorphV2"} (an older guard would ignore the rules); else {ok: true, layers: its layers, rules: null, proseOnly: []}.
+          steps:
+            - calls: Guard Contract
+            - calls: Guardrail Rules
+            - uses: rules
+            - produces: Plan Rules Result
+          examples:
+            - {given: 'examples.json["Plan Rules 1"].given', ref: "tests/fixtures/rules/examples.json", when: "planRules", then: 'examples.json["Plan Rules 1"].then'}
+            - {given: 'examples.json["Plan Rules 2"].given', ref: "tests/fixtures/rules/examples.json", when: "planRules", then: 'examples.json["Plan Rules 2"].then'}
+            - {given: 'examples.json["Plan Rules 3"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/issue46/contour.yaml, tests/fixtures/rules/issue46/morph-map.json", when: "planRules", then: 'examples.json["Plan Rules 3"].then'}
+            - {given: 'examples.json["Plan Rules 4"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/single/cases.json", when: "planRules and planSpec, then the Go guard (the environment of Rules Arg 2)", then: 'examples.json["Plan Rules 4"].then'}
+            - {given: 'examples.json["Plan Rules 5"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/single/cases.json", when: "planRules and planSpec, then the TypeScript guard", then: 'examples.json["Plan Rules 5"].then'}
+        - name: Plan Notes
+          description: The notes `plan --checks` adds to the plan document when a file beside the record repeats what the record states (P31b, issue #42 Must hold 3 and ledger 3).
+          behavior: >
+            src/rules/notes.ts, pure (imports Guard Contract from ./guardrails.js and node:path's posix only):
+            `export interface NoteCard { id: string; extra: string | null; targets: readonly string[] }` and
+            planNotes(cards: readonly NoteCard[], layersFile: boolean, guard: string) → string[]. Guard Contract(guard)
+            below 3 → [] (a hand guard or an older copy may still read its files: nothing is said). Else, in order:
+            layersFile true → "decks/tools/layers.json is not read: the record is the source; delete it"; then per card, in
+            the given order, whose extra is not null and includes "== imports" (an `imports` stage of checks.json: a hand
+            whitelist) → "<id>: checks.json extra 'imports' checks <dir> against a hand list; the record's rules and
+            dependencies already govern imports per file: remove it", dir = the posix dirname of the card's first target,
+            "." when it has none. A note is not an error: the extra keeps running (it is phase data).
+          steps:
+            - calls: Guard Contract
+            - produces: string
+          examples:
+            - {given: 'examples.json["Plan Notes 1"].given', ref: "tests/fixtures/rules/examples.json", when: "planNotes", then: 'examples.json["Plan Notes 1"].then'}
+            - {given: 'examples.json["Plan Notes 2"].given', ref: "tests/fixtures/rules/examples.json", when: "planNotes", then: 'examples.json["Plan Notes 2"].then'}
+      dataObjects:
+        - name: Layer Edges Result
+          description: Every code directory of the record with the directories it may import, or every error.
+          schema: "{ ok: true, edges: Record<string, string[]> } | { ok: false, errors: string[] }"
+        - name: Plan Layers Result
+          description: The edges for the builder (null without decks/tools/layers.json), or the one error.
+          schema: "{ ok: true, layers: Record<string, string[]> | null } | { ok: false, error: string }"
+        - name: Guardrail Rules Result
+          description: Every code directory of the record with its rule ids and their texts, and the names that stay prose; or every error.
+          schema: "{ ok: true, rules: Record<string, Record<string, string>>, proseOnly: string[] } | { ok: false, errors: string[] }"
+        - name: Plan Rules Result
+          description: The layers and rules for the builder (each null when the guard does not speak its contract) and the prose-only names, or the one error.
+          schema: "{ ok: true, layers: Record<string, string[]> | null, rules: Record<string, Record<string, string>> | null, proseOnly: string[] } | { ok: false, error: string }"
 
     # ---------------------------------------------------------------- P12a
     - name: primer
@@ -4441,6 +4865,7 @@ System:
             - {given: 'fillTemplate on "{{name}}:{{module}}:{{language}}" with {name: "{{module}}", module: "x/y", language: "go"}; then on "{name} {{Name}} {{name}" with {name: "n", module: "m", language: "l"}', when: fillTemplate, then: '"{{module}}:x/y:go" (one pass); then "{name} {{Name}} {{name}" unchanged'}
             - {given: 'a root holding b.txt and .a; a root that is a file f.txt; an absent root with language typescript on the fixture tree; an absent root with templates "nope" (cwd t)', when: initProject, then: 'code 2 RefusalError "target directory is not empty (first entry: .a)", the root still holds only .a and b.txt; "target is not a directory"; "template folder not found: typescript"; "template folder not found: common"; the absent roots still absent'}
             - {given: 'templates null; root t/gx (absent)', ref: "templates/", when: 'defaultTemplatesDir(); initProject(t/gx, {project: "gx", language: "go", module: "example.com/gx", templates: null}, "/"); listTemplateFiles on the fixture tree''s common and on t/none', then: 'path.resolve(<the repository root>, "templates"); code 0 with files = the distinct paths of listTemplateFiles(templates/common) and (templates/go) in code-unit order, among them "CLAUDE.md", "docs/AUTONOMY.md", "go.mod", "internal/testhelp/testhelp.go", "decks/tools/guard.mjs", "tools/tg.sh"; go.mod begins "module example.com/gx\n"; no written file holds "{{name}}", "{{module}}" or "{{language}}"; tools/tg.sh executable; [".gitignore", "README.md", "docs/notes.md", "tools/hello.sh"]; []'}
+            - {given: 'templates null; for each language "go", "typescript", "python" a fresh root t/<language> (absent); then the text of templates/<language>/decks/tools/guard.mjs for each language that has one (go, typescript)', ref: "templates/", when: 'initProject(t/<language>, {project: "p", language, module: null, templates: null}, "/")', then: 'code 0 each, no listed file and no written file is decks/tools/layers.json or ends in "layers.json" (P31b, #42 ledger 3: the record is the source); neither guard text contains "layers.json" (python has no guard)'}
       dataObjects:
         - name: Template Folder
           description: Morph's templates/<common|typescript|python|go>/, data; text files with the placeholders {{name}}, {{module}}, {{language}}.

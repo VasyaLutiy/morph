@@ -1,0 +1,64 @@
+version: 1
+System:
+  name: union
+  description: >
+    P30 fixture (Layer Edges): two Components with code in one Go package (pkg/) and different `uses`, a grouped card,
+    a Function with no map card, a dependency and a free word as `uses` targets.
+  groups:
+    - name: alpha
+      description: Alpha's half of package pkg.
+      language: go
+      functions:
+        - name: Alpha Step
+          description: Alpha's step.
+          behavior: Uses x and the declared module golang.org/x/text.
+          steps: [{uses: x}, {uses: golang.org/x/text}, {produces: int}]
+          examples: [{given: "1", when: called, then: "1"}]
+    - name: beta
+      description: Beta's half of package pkg.
+      language: go
+      functions:
+        - name: Beta Step
+          description: Beta's step.
+          behavior: Uses y and the shell.
+          steps: [{uses: y}, {uses: the shell}, {produces: int}]
+          examples: [{given: "2", when: called, then: "2"}]
+    - name: x
+      description: Package x.
+      language: go
+      functions:
+        - name: X Value
+          description: X's value.
+          behavior: Returns 1.
+          steps: [{produces: int}]
+          examples: [{given: "nothing", when: called, then: "1"}]
+    - name: y
+      description: Package y.
+      language: go
+      functions:
+        - name: Y Value
+          description: Y's value.
+          behavior: Returns 2.
+          steps: [{produces: int}]
+          examples: [{given: "nothing", when: called, then: "2"}]
+    - name: gamma
+      description: Package gamma; two Functions in one map group, one with no map card.
+      language: go
+      functions:
+        - name: Gamma One
+          description: Gamma's first.
+          behavior: Uses alpha.
+          steps: [{uses: alpha}, {produces: int}]
+          examples: [{given: "3", when: called, then: "3"}]
+        - name: Gamma Two
+          description: Gamma's second.
+          behavior: Calls Gamma One.
+          steps: [{calls: Gamma One}, {produces: int}]
+          examples: [{given: "4", when: called, then: "4"}]
+        - name: Gamma Three
+          description: Gamma's third, no map card (default targets).
+          behavior: Uses gamma itself.
+          steps: [{uses: gamma}, {produces: int}]
+          examples: [{given: "5", when: called, then: "5"}]
+  dependencies:
+    - {name: golang.org/x/text, version: "v0.20.0", language: go}

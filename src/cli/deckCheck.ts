@@ -3,6 +3,7 @@ import { layerGenerations } from "../cards/layer.js";
 import { weighSlices } from "../cards/weigh.js";
 import { checkBuilds } from "./checkBuilds.js";
 import { readDeckFile } from "./document.js";
+import { unprovenStubs } from "./unprovenStubs.js";
 import type { CommandResult, DeckCheckDocument } from "./types.js";
 
 export function deckCheckCommand(
@@ -28,6 +29,9 @@ export function deckCheckCommand(
     }
   }
 
+  const unproven = unprovenStubs(root, deckPath, loaded.deck);
+  warnings += unproven.length;
+
   const document: DeckCheckDocument = {
     deck: deckPath,
     cards: loaded.deck.cards.length,
@@ -38,6 +42,7 @@ export function deckCheckCommand(
     weights: weighing.weights,
   };
   if (builds !== null) document.builds = builds;
+  if (unproven.length > 0) document.unproven = unproven;
 
   return { code: errors > 0 ? 2 : 0, document };
 }

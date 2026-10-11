@@ -1,0 +1,122 @@
+{
+  "go": {
+    "map": "{\n  \"language\": \"go\",\n  \"cards\": {\n    \"app-main\": {\n      \"targets\": [\n        \"app/app.go\"\n      ]\n    },\n    \"lib-name\": {\n      \"targets\": [\n        \"lib/lib.go\"\n      ]\n    }\n  }\n}\n",
+    "tree": {
+      "go.mod": "module m\n\ngo 1.22\n",
+      "lib/lib.go": "package lib\n\nconst Name = \"lib\"\n",
+      "app/app.go": "package app\n\nimport (\n\t\"net/http\"\n\t\"os\"\n\t\"os/exec\"\n\t\"time\"\n\n\t\"example.com/dep\"\n\t\"m/lib\"\n)\n\nfunc Main() string {\n\t_ = exec.Command(\"true\").Run()\n\t_ = http.MethodGet\n\treturn os.Getenv(\"HOME\") + time.Now().String() + dep.Name + lib.Name\n}\n"
+    },
+    "file": "app/app.go",
+    "card": "app-main",
+    "records": {
+      "base": "version: 1\nSystem:\n  name: single\n  description: The single-source case of P31b (issue #42 ledger item 4) — every rule the guard enforces comes from this record.\n  dependencies:\n    - {name: example.com/dep, version: \"v1.0.0\", language: go}\n  groups:\n    - name: app\n      description: The app; its code imports lib and example.com/dep, runs a command, reads the clock and the environment, names net/http.\n      language: go\n      uses: [example.com/dep]\n      functions:\n        - name: App Main\n          description: The app's entry.\n          behavior: Main() string joins the environment, the clock, the dependency's and lib's names.\n          steps:\n            - uses: lib\n    - name: lib\n      description: The lib.\n      language: go\n      functions:\n        - name: Lib Name\n          description: The lib's name.\n          behavior: Name is the constant \"lib\".\n",
+      "layers": "version: 1\nSystem:\n  name: single\n  description: The single-source case of P31b (issue #42 ledger item 4) — every rule the guard enforces comes from this record.\n  dependencies:\n    - {name: example.com/dep, version: \"v1.0.0\", language: go}\n  groups:\n    - name: app\n      description: The app; its code imports lib and example.com/dep, runs a command, reads the clock and the environment, names net/http.\n      language: go\n      uses: [example.com/dep]\n      functions:\n        - name: App Main\n          description: The app's entry.\n          behavior: Main() string joins the environment, the clock, the dependency's and lib's names.\n    - name: lib\n      description: The lib.\n      language: go\n      functions:\n        - name: Lib Name\n          description: The lib's name.\n          behavior: Name is the constant \"lib\".\n",
+      "dependencies": "version: 1\nSystem:\n  name: single\n  description: The single-source case of P31b (issue #42 ledger item 4) — every rule the guard enforces comes from this record.\n  dependencies:\n    - {name: example.com/dep, version: \"v1.0.0\", language: go}\n  groups:\n    - name: app\n      description: The app; its code imports lib and example.com/dep, runs a command, reads the clock and the environment, names net/http.\n      language: go\n      functions:\n        - name: App Main\n          description: The app's entry.\n          behavior: Main() string joins the environment, the clock, the dependency's and lib's names.\n          steps:\n            - uses: lib\n    - name: lib\n      description: The lib.\n      language: go\n      functions:\n        - name: Lib Name\n          description: The lib's name.\n          behavior: Name is the constant \"lib\".\n",
+      "Pure": "version: 1\nSystem:\n  name: single\n  description: The single-source case of P31b (issue #42 ledger item 4) — every rule the guard enforces comes from this record.\n  dependencies:\n    - {name: example.com/dep, version: \"v1.0.0\", language: go}\n  groups:\n    - name: app\n      description: The app; its code imports lib and example.com/dep, runs a command, reads the clock and the environment, names net/http.\n      language: go\n      uses: [example.com/dep]\n      guardrails: [Pure]\n      functions:\n        - name: App Main\n          description: The app's entry.\n          behavior: Main() string joins the environment, the clock, the dependency's and lib's names.\n          steps:\n            - uses: lib\n    - name: lib\n      description: The lib.\n      language: go\n      functions:\n        - name: Lib Name\n          description: The lib's name.\n          behavior: Name is the constant \"lib\".\n",
+      "No Shell": "version: 1\nSystem:\n  name: single\n  description: The single-source case of P31b (issue #42 ledger item 4) — every rule the guard enforces comes from this record.\n  dependencies:\n    - {name: example.com/dep, version: \"v1.0.0\", language: go}\n  groups:\n    - name: app\n      description: The app; its code imports lib and example.com/dep, runs a command, reads the clock and the environment, names net/http.\n      language: go\n      uses: [example.com/dep]\n      guardrails: [No Shell]\n      functions:\n        - name: App Main\n          description: The app's entry.\n          behavior: Main() string joins the environment, the clock, the dependency's and lib's names.\n          steps:\n            - uses: lib\n    - name: lib\n      description: The lib.\n      language: go\n      functions:\n        - name: Lib Name\n          description: The lib's name.\n          behavior: Name is the constant \"lib\".\n",
+      "No Clock": "version: 1\nSystem:\n  name: single\n  description: The single-source case of P31b (issue #42 ledger item 4) — every rule the guard enforces comes from this record.\n  dependencies:\n    - {name: example.com/dep, version: \"v1.0.0\", language: go}\n  groups:\n    - name: app\n      description: The app; its code imports lib and example.com/dep, runs a command, reads the clock and the environment, names net/http.\n      language: go\n      uses: [example.com/dep]\n      guardrails: [No Clock]\n      functions:\n        - name: App Main\n          description: The app's entry.\n          behavior: Main() string joins the environment, the clock, the dependency's and lib's names.\n          steps:\n            - uses: lib\n    - name: lib\n      description: The lib.\n      language: go\n      functions:\n        - name: Lib Name\n          description: The lib's name.\n          behavior: Name is the constant \"lib\".\n",
+      "No Network": "version: 1\nSystem:\n  name: single\n  description: The single-source case of P31b (issue #42 ledger item 4) — every rule the guard enforces comes from this record.\n  dependencies:\n    - {name: example.com/dep, version: \"v1.0.0\", language: go}\n  groups:\n    - name: app\n      description: The app; its code imports lib and example.com/dep, runs a command, reads the clock and the environment, names net/http.\n      language: go\n      uses: [example.com/dep]\n      guardrails: [No Network]\n      functions:\n        - name: App Main\n          description: The app's entry.\n          behavior: Main() string joins the environment, the clock, the dependency's and lib's names.\n          steps:\n            - uses: lib\n    - name: lib\n      description: The lib.\n      language: go\n      functions:\n        - name: Lib Name\n          description: The lib's name.\n          behavior: Name is the constant \"lib\".\n",
+      "No Env": "version: 1\nSystem:\n  name: single\n  description: The single-source case of P31b (issue #42 ledger item 4) — every rule the guard enforces comes from this record.\n  dependencies:\n    - {name: example.com/dep, version: \"v1.0.0\", language: go}\n  groups:\n    - name: app\n      description: The app; its code imports lib and example.com/dep, runs a command, reads the clock and the environment, names net/http.\n      language: go\n      uses: [example.com/dep]\n      guardrails: [No Env]\n      functions:\n        - name: App Main\n          description: The app's entry.\n          behavior: Main() string joins the environment, the clock, the dependency's and lib's names.\n          steps:\n            - uses: lib\n    - name: lib\n      description: The lib.\n      language: go\n      functions:\n        - name: Lib Name\n          description: The lib's name.\n          behavior: Name is the constant \"lib\".\n",
+      "Stdlib Only": "version: 1\nSystem:\n  name: single\n  description: The single-source case of P31b (issue #42 ledger item 4) — every rule the guard enforces comes from this record.\n  dependencies:\n    - {name: example.com/dep, version: \"v1.0.0\", language: go}\n  groups:\n    - name: app\n      description: The app; its code imports lib and example.com/dep, runs a command, reads the clock and the environment, names net/http.\n      language: go\n      uses: [example.com/dep]\n      guardrails: [Stdlib Only]\n      functions:\n        - name: App Main\n          description: The app's entry.\n          behavior: Main() string joins the environment, the clock, the dependency's and lib's names.\n          steps:\n            - uses: lib\n    - name: lib\n      description: The lib.\n      language: go\n      functions:\n        - name: Lib Name\n          description: The lib's name.\n          behavior: Name is the constant \"lib\".\n"
+    },
+    "beside": {
+      "decks/tools/layers.json": "{\"layers\": {\"app\": [\"lib\"]}, \"pure\": [], \"packages\": [\"example.com/dep\"]}\n",
+      "decks/tools/guardrails.json": "{\"Pure\": \"none\", \"No Shell\": \"none\"}\n"
+    },
+    "then": {
+      "base": {
+        "status": 0,
+        "stdout": ""
+      },
+      "layers": {
+        "status": 1,
+        "stdout": "guard: app/app.go:10: imports m/lib: the record has no 'uses' from app to lib (allowed: none)\n"
+      },
+      "dependencies": {
+        "status": 1,
+        "stdout": "guard: app/app.go:9: imports example.com/dep: not a dependency the record gives this Component (allowed: the standard library)\n"
+      },
+      "Pure": {
+        "status": 1,
+        "stdout": "guard: app/app.go:4: imports net/http: Guardrail 'Pure' of Component app\nguard: app/app.go:5: imports os: Guardrail 'Pure' of Component app\nguard: app/app.go:6: imports os/exec: Guardrail 'Pure' of Component app\nguard: app/app.go:7: imports time: Guardrail 'Pure' of Component app\nguard: app/app.go:16: uses os.Getenv: Guardrail 'Pure' of Component app\nguard: app/app.go:16: uses time.Now: Guardrail 'Pure' of Component app\n"
+      },
+      "No Shell": {
+        "status": 1,
+        "stdout": "guard: app/app.go:6: imports os/exec: Guardrail 'No Shell' of Component app\n"
+      },
+      "No Clock": {
+        "status": 1,
+        "stdout": "guard: app/app.go:16: uses time.Now: Guardrail 'No Clock' of Component app\n"
+      },
+      "No Network": {
+        "status": 1,
+        "stdout": "guard: app/app.go:4: imports net/http: Guardrail 'No Network' of Component app\n"
+      },
+      "No Env": {
+        "status": 1,
+        "stdout": "guard: app/app.go:16: uses os.Getenv: Guardrail 'No Env' of Component app\n"
+      },
+      "Stdlib Only": {
+        "status": 1,
+        "stdout": "guard: app/app.go:9: imports example.com/dep: Guardrail 'Stdlib Only' of Component app\n"
+      }
+    }
+  },
+  "typescript": {
+    "map": "{\n  \"language\": \"typescript\",\n  \"cards\": {\n    \"app-main\": {\n      \"targets\": [\n        \"src/app/main.ts\"\n      ]\n    },\n    \"lib-name\": {\n      \"targets\": [\n        \"src/lib/name.ts\"\n      ]\n    }\n  }\n}\n",
+    "tree": {
+      "src/lib/name.ts": "export const NAME = \"lib\";\n",
+      "src/app/main.ts": "import { z } from \"zod\";\nimport { NAME } from \"../lib/name.js\";\n\nexport function main(): string {\n  return NAME + String(z) + String(Date.now()) + String(process.env[\"HOME\"]);\n}\n"
+    },
+    "file": "src/app/main.ts",
+    "card": "app-main",
+    "records": {
+      "base": "version: 1\nSystem:\n  name: single\n  description: The single-source case of P31b (issue #42 ledger item 4) in TypeScript.\n  dependencies:\n    - {name: zod, version: \"3.23.8\", language: typescript}\n  groups:\n    - name: app\n      description: The app; its code imports lib and zod, reads the clock and the environment.\n      language: typescript\n      uses: [zod]\n      functions:\n        - name: App Main\n          description: The app's entry.\n          behavior: main() joins lib's name, zod, the clock and the environment.\n          steps:\n            - uses: lib\n    - name: lib\n      description: The lib.\n      language: typescript\n      functions:\n        - name: Lib Name\n          description: The lib's name.\n          behavior: NAME is the constant \"lib\".\n",
+      "layers": "version: 1\nSystem:\n  name: single\n  description: The single-source case of P31b (issue #42 ledger item 4) in TypeScript.\n  dependencies:\n    - {name: zod, version: \"3.23.8\", language: typescript}\n  groups:\n    - name: app\n      description: The app; its code imports lib and zod, reads the clock and the environment.\n      language: typescript\n      uses: [zod]\n      functions:\n        - name: App Main\n          description: The app's entry.\n          behavior: main() joins lib's name, zod, the clock and the environment.\n    - name: lib\n      description: The lib.\n      language: typescript\n      functions:\n        - name: Lib Name\n          description: The lib's name.\n          behavior: NAME is the constant \"lib\".\n",
+      "dependencies": "version: 1\nSystem:\n  name: single\n  description: The single-source case of P31b (issue #42 ledger item 4) in TypeScript.\n  dependencies:\n    - {name: zod, version: \"3.23.8\", language: typescript}\n  groups:\n    - name: app\n      description: The app; its code imports lib and zod, reads the clock and the environment.\n      language: typescript\n      functions:\n        - name: App Main\n          description: The app's entry.\n          behavior: main() joins lib's name, zod, the clock and the environment.\n          steps:\n            - uses: lib\n    - name: lib\n      description: The lib.\n      language: typescript\n      functions:\n        - name: Lib Name\n          description: The lib's name.\n          behavior: NAME is the constant \"lib\".\n",
+      "Pure": "version: 1\nSystem:\n  name: single\n  description: The single-source case of P31b (issue #42 ledger item 4) in TypeScript.\n  dependencies:\n    - {name: zod, version: \"3.23.8\", language: typescript}\n  groups:\n    - name: app\n      description: The app; its code imports lib and zod, reads the clock and the environment.\n      language: typescript\n      uses: [zod]\n      guardrails: [Pure]\n      functions:\n        - name: App Main\n          description: The app's entry.\n          behavior: main() joins lib's name, zod, the clock and the environment.\n          steps:\n            - uses: lib\n    - name: lib\n      description: The lib.\n      language: typescript\n      functions:\n        - name: Lib Name\n          description: The lib's name.\n          behavior: NAME is the constant \"lib\".\n",
+      "No Clock": "version: 1\nSystem:\n  name: single\n  description: The single-source case of P31b (issue #42 ledger item 4) in TypeScript.\n  dependencies:\n    - {name: zod, version: \"3.23.8\", language: typescript}\n  groups:\n    - name: app\n      description: The app; its code imports lib and zod, reads the clock and the environment.\n      language: typescript\n      uses: [zod]\n      guardrails: [No Clock]\n      functions:\n        - name: App Main\n          description: The app's entry.\n          behavior: main() joins lib's name, zod, the clock and the environment.\n          steps:\n            - uses: lib\n    - name: lib\n      description: The lib.\n      language: typescript\n      functions:\n        - name: Lib Name\n          description: The lib's name.\n          behavior: NAME is the constant \"lib\".\n",
+      "No Env": "version: 1\nSystem:\n  name: single\n  description: The single-source case of P31b (issue #42 ledger item 4) in TypeScript.\n  dependencies:\n    - {name: zod, version: \"3.23.8\", language: typescript}\n  groups:\n    - name: app\n      description: The app; its code imports lib and zod, reads the clock and the environment.\n      language: typescript\n      uses: [zod]\n      guardrails: [No Env]\n      functions:\n        - name: App Main\n          description: The app's entry.\n          behavior: main() joins lib's name, zod, the clock and the environment.\n          steps:\n            - uses: lib\n    - name: lib\n      description: The lib.\n      language: typescript\n      functions:\n        - name: Lib Name\n          description: The lib's name.\n          behavior: NAME is the constant \"lib\".\n",
+      "No Process": "version: 1\nSystem:\n  name: single\n  description: The single-source case of P31b (issue #42 ledger item 4) in TypeScript.\n  dependencies:\n    - {name: zod, version: \"3.23.8\", language: typescript}\n  groups:\n    - name: app\n      description: The app; its code imports lib and zod, reads the clock and the environment.\n      language: typescript\n      uses: [zod]\n      guardrails: [No Process]\n      functions:\n        - name: App Main\n          description: The app's entry.\n          behavior: main() joins lib's name, zod, the clock and the environment.\n          steps:\n            - uses: lib\n    - name: lib\n      description: The lib.\n      language: typescript\n      functions:\n        - name: Lib Name\n          description: The lib's name.\n          behavior: NAME is the constant \"lib\".\n",
+      "Stdlib Only": "version: 1\nSystem:\n  name: single\n  description: The single-source case of P31b (issue #42 ledger item 4) in TypeScript.\n  dependencies:\n    - {name: zod, version: \"3.23.8\", language: typescript}\n  groups:\n    - name: app\n      description: The app; its code imports lib and zod, reads the clock and the environment.\n      language: typescript\n      uses: [zod]\n      guardrails: [Stdlib Only]\n      functions:\n        - name: App Main\n          description: The app's entry.\n          behavior: main() joins lib's name, zod, the clock and the environment.\n          steps:\n            - uses: lib\n    - name: lib\n      description: The lib.\n      language: typescript\n      functions:\n        - name: Lib Name\n          description: The lib's name.\n          behavior: NAME is the constant \"lib\".\n"
+    },
+    "beside": {
+      "decks/tools/layers.json": "{\"layers\": {\"app\": [\"lib\"]}, \"pure\": [], \"packages\": [\"zod\"]}\n",
+      "decks/tools/guardrails.json": "{\"Pure\": \"none\", \"No Clock\": \"none\"}\n"
+    },
+    "then": {
+      "base": {
+        "status": 0,
+        "stdout": ""
+      },
+      "layers": {
+        "status": 1,
+        "stdout": "guard: src/app/main.ts:2 layer app imports layer lib: the record has no 'uses' from app to lib (allowed: none)\n"
+      },
+      "dependencies": {
+        "status": 1,
+        "stdout": "guard: src/app/main.ts:1 package import \"zod\" (allowed: node:*)\n"
+      },
+      "Pure": {
+        "status": 1,
+        "stdout": "guard: src/app/main.ts:5: uses Date: Guardrail 'Pure' of Component app\nguard: src/app/main.ts:5: uses process: Guardrail 'Pure' of Component app\n"
+      },
+      "No Clock": {
+        "status": 1,
+        "stdout": "guard: src/app/main.ts:5: uses Date: Guardrail 'No Clock' of Component app\n"
+      },
+      "No Env": {
+        "status": 1,
+        "stdout": "guard: src/app/main.ts:5: uses process.env: Guardrail 'No Env' of Component app\n"
+      },
+      "No Process": {
+        "status": 1,
+        "stdout": "guard: src/app/main.ts:5: uses process: Guardrail 'No Process' of Component app\n"
+      },
+      "Stdlib Only": {
+        "status": 1,
+        "stdout": "guard: src/app/main.ts:1: imports zod: Guardrail 'Stdlib Only' of Component app\n"
+      }
+    }
+  }
+}

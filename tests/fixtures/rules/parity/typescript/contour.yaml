@@ -1,0 +1,55 @@
+version: 1
+System:
+  name: parity-ts
+  description: Six TypeScript folders; core, clock and net are pure and src/main/cli.ts is the entry in the old decks/tools/layers.json, so core, clock and net carry the Guardrail Pure and every Component but main carries No Process (#42 ledger item 2).
+  guardrails: []
+  groups:
+    - name: core
+      description: Pure and clean.
+      language: typescript
+      guardrails: [Pure]
+      functions:
+        - name: Add Numbers
+          description: Adds two numbers.
+          behavior: add(a, b) returns a + b.
+    - name: clock
+      description: Pure, but its code reads the clock.
+      language: typescript
+      guardrails: [Pure]
+      functions:
+        - name: Stamp Now
+          description: The current time.
+          behavior: stamp() returns Date.now().
+    - name: net
+      description: Pure, but its code fetches.
+      language: typescript
+      guardrails: [Pure]
+      functions:
+        - name: Get Page
+          description: Fetches a page.
+          behavior: getPage(url) returns fetch(url).
+    - name: app
+      description: Not the entry, but its code logs.
+      language: typescript
+      guardrails: [No Process]
+      functions:
+        - name: Run App
+          description: The app.
+          behavior: runApp() logs with console.log.
+    - name: util
+      description: Not the entry and clean.
+      language: typescript
+      guardrails: [No Process]
+      functions:
+        - name: Pad Text
+          description: Pads a text.
+          behavior: pad(s) returns s.padStart(4).
+    - name: main
+      description: The entry; it logs and sets the exit code.
+      language: typescript
+      functions:
+        - name: Main Entry
+          description: The entry.
+          behavior: main() runs the app, logs and sets process.exitCode.
+          steps:
+            - uses: app

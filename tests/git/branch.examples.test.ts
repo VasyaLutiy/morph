@@ -22,13 +22,12 @@ test("Open Run Branch example 1: fresh repo opens morph/r1 at HEAD", () => {
   }
 });
 
-test("Open Run Branch example 2: untracked files under .morph/ do not make the tree dirty", () => {
+test("Open Run Branch example 2: untracked files under .morph/ are dirty unless .gitignore covers them", () => {
   const r = tmpRepo();
   try {
     r.write(".morph/deck.json", "{}");
     r.write(".morph/runs/x/report.json", "{}");
-    const head = r.git(["rev-parse", "HEAD"]);
-    const got = openRunBranch(r.root, "r2", {
+    const env = {
       PATH: process.env.PATH ?? "",
       HOME: r.root,
       GIT_CONFIG_NOSYSTEM: "1",
@@ -36,8 +35,21 @@ test("Open Run Branch example 2: untracked files under .morph/ do not make the t
       GIT_AUTHOR_EMAIL: "ada@example.invalid",
       GIT_COMMITTER_NAME: "Ada",
       GIT_COMMITTER_EMAIL: "ada@example.invalid",
+    };
+    const got = openRunBranch(r.root, "r2", env);
+    expect(got).toStrictEqual({
+      ok: false,
+      error:
+        "dirty tree: .morph/deck.json, .morph/runs/x/report.json (commit, remove or ignore them: every acceptance fails on a file left in the tree)",
     });
-    expect(got).toStrictEqual({ ok: true, branch: "morph/r2", base: head });
+    expect(r.git(["rev-parse", "--abbrev-ref", "HEAD"])).toBe("main");
+    expect(r.git(["for-each-ref", "refs/heads/morph/r2"])).toBe("");
+    r.write(".gitignore", ".morph/*\n");
+    r.git(["add", ".gitignore"]);
+    r.git(["commit", "-q", "-m", "ignore"]);
+    const head = r.git(["rev-parse", "HEAD"]);
+    const got2 = openRunBranch(r.root, "r2", env);
+    expect(got2).toStrictEqual({ ok: true, branch: "morph/r2", base: head });
   } finally {
     r.rm();
   }
@@ -62,7 +74,8 @@ test("Open Run Branch example 3: modified tracked file and untracked file refuse
     });
     expect(got).toStrictEqual({
       ok: false,
-      error: "dirty tree outside .morph/: README.md, src/a.ts",
+      error:
+        "dirty tree: README.md, src/a.ts (commit, remove or ignore them: every acceptance fails on a file left in the tree)",
     });
     expect(r.git(["rev-parse", "--abbrev-ref", "HEAD"])).toBe("main");
     expect(r.git(["for-each-ref", "refs/heads/morph/r3"])).toBe("");
@@ -147,13 +160,17 @@ test("Open Run Branch own: a staged rename outside .morph/ names the destination
       GIT_COMMITTER_NAME: "Ada",
       GIT_COMMITTER_EMAIL: "ada@example.invalid",
     });
-    expect(got).toStrictEqual({ ok: false, error: "dirty tree outside .morph/: b.ts" });
+    expect(got).toStrictEqual({
+      ok: false,
+      error:
+        "dirty tree: b.ts (commit, remove or ignore them: every acceptance fails on a file left in the tree)",
+    });
   } finally {
     r.rm();
   }
 });
 
-test("Open Run Branch own: a staged rename into .morph/ is not dirty", () => {
+test("Open Run Branch own: a staged rename into .morph/ is dirty", () => {
   const r = tmpRepo();
   try {
     r.write(".morph/.keep", "");
@@ -161,7 +178,6 @@ test("Open Run Branch own: a staged rename into .morph/ is not dirty", () => {
     r.git(["add", "src/x.ts"]);
     r.git(["commit", "-q", "-m", "x"]);
     r.git(["mv", "src/x.ts", ".morph/x.ts"]);
-    const head = r.git(["rev-parse", "HEAD"]);
     const got = openRunBranch(r.root, "r6", {
       PATH: process.env.PATH ?? "",
       HOME: r.root,
@@ -171,20 +187,24 @@ test("Open Run Branch own: a staged rename into .morph/ is not dirty", () => {
       GIT_COMMITTER_NAME: "Ada",
       GIT_COMMITTER_EMAIL: "ada@example.invalid",
     });
-    expect(got).toStrictEqual({ ok: true, branch: "morph/r6", base: head });
+    expect(got).toStrictEqual({
+      ok: false,
+      error:
+        "dirty tree: .morph/.keep, .morph/x.ts (commit, remove or ignore them: every acceptance fails on a file left in the tree)",
+    });
+    expect(r.git(["rev-parse", "--abbrev-ref", "HEAD"])).toBe("main");
   } finally {
     r.rm();
   }
 });
 
-test("Open Run Branch own: a modified tracked file under .morph/ is not dirty", () => {
+test("Open Run Branch own: a modified tracked file under .morph/ is dirty", () => {
   const r = tmpRepo();
   try {
     r.write(".morph/deck.json", "[]");
     r.git(["add", ".morph/deck.json"]);
     r.git(["commit", "-q", "-m", "deck"]);
     r.write(".morph/deck.json", "[1]");
-    const head = r.git(["rev-parse", "HEAD"]);
     const got = openRunBranch(r.root, "r7", {
       PATH: process.env.PATH ?? "",
       HOME: r.root,
@@ -194,7 +214,12 @@ test("Open Run Branch own: a modified tracked file under .morph/ is not dirty", 
       GIT_COMMITTER_NAME: "Ada",
       GIT_COMMITTER_EMAIL: "ada@example.invalid",
     });
-    expect(got).toStrictEqual({ ok: true, branch: "morph/r7", base: head });
+    expect(got).toStrictEqual({
+      ok: false,
+      error:
+        "dirty tree: .morph/deck.json (commit, remove or ignore them: every acceptance fails on a file left in the tree)",
+    });
+    expect(r.git(["rev-parse", "--abbrev-ref", "HEAD"])).toBe("main");
   } finally {
     r.rm();
   }
@@ -234,7 +259,11 @@ test("Open Run Branch own: dirty paths sort in code-unit order", () => {
       GIT_COMMITTER_NAME: "Ada",
       GIT_COMMITTER_EMAIL: "ada@example.invalid",
     });
-    expect(got).toStrictEqual({ ok: false, error: "dirty tree outside .morph/: B.ts, a.ts" });
+    expect(got).toStrictEqual({
+      ok: false,
+      error:
+        "dirty tree: B.ts, a.ts (commit, remove or ignore them: every acceptance fails on a file left in the tree)",
+    });
   } finally {
     r.rm();
   }
@@ -256,7 +285,11 @@ test("Open Run Branch own: a staged deletion of a tracked file is dirty", () => 
       GIT_COMMITTER_NAME: "Ada",
       GIT_COMMITTER_EMAIL: "ada@example.invalid",
     });
-    expect(got).toStrictEqual({ ok: false, error: "dirty tree outside .morph/: del.ts" });
+    expect(got).toStrictEqual({
+      ok: false,
+      error:
+        "dirty tree: del.ts (commit, remove or ignore them: every acceptance fails on a file left in the tree)",
+    });
   } finally {
     r.rm();
   }

@@ -1,0 +1,11 @@
+{
+  "language": "typescript",
+  "cards": {
+    "add-numbers": { "targets": ["src/core/add.ts"] },
+    "stamp-now": { "targets": ["src/clock/now.ts"] },
+    "get-page": { "targets": ["src/net/page.ts"] },
+    "run-app": { "targets": ["src/app/run.ts"] },
+    "pad-text": { "targets": ["src/util/pad.ts"] },
+    "main-entry": { "targets": ["src/main/cli.ts"] }
+  }
+}

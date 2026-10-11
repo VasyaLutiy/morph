@@ -1,0 +1,620 @@
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { expect, test } from "vitest";
+import { EMPTY_MAP } from "../../src/cli/planCommand.js";
+import { loadContour, loadMap } from "../../src/contour/load.js";
+import { GO, TYPESCRIPT } from "../../src/language/profiles.js";
+import {
+  cardRules,
+  guardContract,
+  guardrailRules,
+  planRules,
+  rulesArg,
+} from "../../src/rules/guardrails.js";
+import { layerEdges } from "../../src/rules/layers.js";
+import { fixture, fixtureJson, fixturePath, tmpRoot } from "../helpers.js";
+
+const ROOT = path.resolve(fixturePath("."), "..", "..");
+const GUARD = (lang: string): string =>
+  path.join(ROOT, "templates", lang, "decks", "tools", "guard.mjs");
+const ENV = {
+  ...process.env,
+  GOFLAGS: "-mod=mod",
+  GOPROXY: "off",
+  GOTOOLCHAIN: "local",
+  GOWORK: "off",
+};
+const run = (cwd: string, lang: string, args: string[]) =>
+  spawnSync("node", [GUARD(lang), ...args], { cwd, encoding: "utf8", env: ENV });
+
+test("Guardrail Rules example 1: the Pure guardrails of the Go parity record", () => {
+  const R = loadContour(fixture("rules/parity/go/contour.yaml"), "contour.yaml");
+  const M = loadMap(fixture("rules/parity/go/morph-map.json"), "morph-map.json");
+  if (!R.ok || !M.ok) throw new Error("fixture");
+  expect(guardrailRules(R.record, M.map)).toStrictEqual({
+    ok: true,
+    rules: {
+      app: {},
+      calc: { pure: "Guardrail 'Pure' of Component calc" },
+      clock: { pure: "Guardrail 'Pure' of Component clock" },
+      shell: { pure: "Guardrail 'Pure' of Component shell" },
+    },
+    proseOnly: [],
+  });
+});
+
+test("Guardrail Rules example 2: the TypeScript parity record", () => {
+  const R = loadContour(fixture("rules/parity/typescript/contour.yaml"), "contour.yaml");
+  const M = loadMap(fixture("rules/parity/typescript/morph-map.json"), "morph-map.json");
+  if (!R.ok || !M.ok) throw new Error("fixture");
+  expect(guardrailRules(R.record, M.map)).toStrictEqual({
+    ok: true,
+    rules: {
+      "src/app": { "no-process": "Guardrail 'No Process' of Component app" },
+      "src/clock": { pure: "Guardrail 'Pure' of Component clock" },
+      "src/core": { pure: "Guardrail 'Pure' of Component core" },
+      "src/main": {},
+      "src/net": { pure: "Guardrail 'Pure' of Component net" },
+      "src/util": { "no-process": "Guardrail 'No Process' of Component util" },
+    },
+    proseOnly: [],
+  });
+});
+
+test("Guardrail Rules example 3: every place a guardrail is written", () => {
+  const R = loadContour(fixture("rules/guarded.yaml"), "guarded.yaml");
+  if (!R.ok) throw new Error("fixture");
+  expect(guardrailRules(R.record, EMPTY_MAP)).toStrictEqual({
+    ok: true,
+    rules: {
+      catalog: {
+        "no-network": "Guardrail 'No Network' of System guarded",
+        "stdlib-only": "Guardrail 'Stdlib Only' of Component catalog",
+      },
+      "src/orders": {
+        "no-clock": "Guardrail 'no  CLOCK' of Component orders",
+        "no-network": "Guardrail 'No Network' of System guarded",
+      },
+      "src/orders/cancelOrder.ts": {
+        "no-process": "Guardrail 'No Process' of Interface cancel hook",
+        pure: "Guardrail 'Pure' of Function Cancel Order",
+      },
+      "src/orders/ordersApi.ts": {
+        "no-env": "Guardrail 'No Env' of Interface orders API",
+      },
+      "src/orders/placeOrder.ts": {
+        "no-shell": "Guardrail 'No Shell' of Function Place Order",
+      },
+    },
+    proseOnly: [
+      "Interfaces Share One Core",
+      "Frozen Tree During Run",
+      "Missing Rule",
+      "No Process",
+    ],
+  });
+});
+
+test("Guardrail Rules example 4: an unknown Component language is an error", () => {
+  const R = loadContour(fixture("rules/badLanguage.yaml"), "badLanguage.yaml");
+  if (!R.ok) throw new Error("fixture");
+  expect(guardrailRules(R.record, EMPTY_MAP)).toStrictEqual({
+    ok: false,
+    errors: ["Component 'legacy': unknown language 'cobol' (known: typescript, python, go)"],
+  });
+});
+
+test("Card Rules example 1: the rules of the code directories of the card", () => {
+  const R = loadContour(fixture("rules/parity/go/contour.yaml"), "contour.yaml");
+  const M = loadMap(fixture("rules/parity/go/morph-map.json"), "morph-map.json");
+  const G = loadContour(fixture("rules/guarded.yaml"), "guarded.yaml");
+  if (!R.ok || !M.ok || !G.ok) throw new Error("fixture");
+  const RG = guardrailRules(R.record, M.map);
+  const RT = guardrailRules(G.record, EMPTY_MAP);
+  if (!RG.ok || !RT.ok) throw new Error("rules");
+  expect(cardRules(GO, ["calc/add.go", "calc/add_test.go"], RG.rules)).toStrictEqual({
+    calc: RG.rules["calc"],
+  });
+  expect(
+    cardRules(
+      TYPESCRIPT,
+      ["src/orders/placeOrder.ts", "tests/orders/placeOrder.test.ts"],
+      RT.rules,
+    ),
+  ).toStrictEqual({
+    "src/orders": {
+      "no-clock": "Guardrail 'no  CLOCK' of Component orders",
+      "no-network": "Guardrail 'No Network' of System guarded",
+      "no-shell": "Guardrail 'No Shell' of Function Place Order",
+    },
+  });
+  expect(cardRules(GO, ["new/a.go", "new/b.go", "main.go"], {})).toStrictEqual({
+    new: {},
+    ".": {},
+  });
+  expect(cardRules(GO, ["calc/add_examples_test.go"], RG.rules)).toStrictEqual({});
+});
+
+test("Rules Arg example 1: the guard line argument of the rules", () => {
+  expect(rulesArg(undefined)).toBe("");
+  expect(rulesArg({})).toBe(" '{}'");
+  expect(rulesArg({ calc: { pure: "Guardrail 'Pure' of Component calc" } })).toBe(
+    " '{\"calc\":{\"pure\":\"Guardrail \\u0027Pure\\u0027 of Component calc\"}}'",
+  );
+});
+
+test("Rules Arg example 2: the Go guard reads the rules", () => {
+  const r = tmpRoot();
+  try {
+    r.write("go.mod", "module m\n\ngo 1.22\n");
+    r.write("d/shell.go", "package d\n\nimport \"os/exec\"\n");
+    r.write(
+      "d/clock.go",
+      "package d\n\nimport (\n\t\"crypto/rand\"\n\t\"time\"\n)\n\nfunc Clock() string {\n\n\treturn time.Now().Format(time.RFC3339)\n}\n",
+    );
+    r.write(
+      "d/env.go",
+      "package d\n\nimport goos \"os\"\n\nfunc Env() string { return goos.Getenv(\"HOME\") }\n",
+    );
+    r.write("d/net.go", "package d\n\nimport (\n\t\"net/http\"\n\t\"net/url\"\n)\n");
+    r.write(
+      "d/ok.go",
+      "package d\n\nimport \"time\"\n\nfunc Ok() time.Duration { return 2 * time.Second }\n",
+    );
+    r.write(
+      "p/p.go",
+      "package p\n\nimport \"time\"\n\nfunc Ok() time.Duration { return 2 * time.Second }\n",
+    );
+
+    const L = { d: [], p: [] };
+    const R = {
+      d: {
+        "no-shell": "Guardrail 'No Shell' of Component d",
+        "no-clock": "Guardrail 'No Clock' of System m",
+        "no-env": "Guardrail 'No Env' of Function Read Env",
+        "no-network": "Guardrail 'No Network' of Interface d API",
+      },
+      p: { pure: "Guardrail 'Pure' of Component p" },
+    };
+
+    const shell = run(r.root, "go", [
+      "src",
+      "d/shell.go",
+      "",
+      JSON.stringify(L),
+      JSON.stringify(R),
+    ]);
+    expect(shell.status).toBe(1);
+    expect(shell.stdout).toBe(
+      "guard: d/shell.go:3: imports os/exec: Guardrail 'No Shell' of Component d\n",
+    );
+
+    const clock = run(r.root, "go", [
+      "src",
+      "d/clock.go",
+      "",
+      JSON.stringify(L),
+      JSON.stringify(R),
+    ]);
+    expect(clock.status).toBe(1);
+    expect(clock.stdout).toBe(
+      "guard: d/clock.go:4: imports crypto/rand: Guardrail 'No Clock' of System m\nguard: d/clock.go:10: uses time.Now: Guardrail 'No Clock' of System m\n",
+    );
+
+    const env = run(r.root, "go", [
+      "src",
+      "d/env.go",
+      "",
+      JSON.stringify(L),
+      JSON.stringify(R),
+    ]);
+    expect(env.status).toBe(1);
+    expect(env.stdout).toBe(
+      "guard: d/env.go:5: uses os.Getenv: Guardrail 'No Env' of Function Read Env\n",
+    );
+
+    const net = run(r.root, "go", [
+      "src",
+      "d/net.go",
+      "",
+      JSON.stringify(L),
+      JSON.stringify(R),
+    ]);
+    expect(net.status).toBe(1);
+    expect(net.stdout).toBe(
+      "guard: d/net.go:4: imports net/http: Guardrail 'No Network' of Interface d API\n",
+    );
+
+    const ok = run(r.root, "go", [
+      "src",
+      "d/ok.go",
+      "",
+      JSON.stringify(L),
+      JSON.stringify(R),
+    ]);
+    expect(ok.status).toBe(0);
+    expect(ok.stdout).toBe("");
+
+    const pkg = run(r.root, "go", [
+      "src",
+      "p/p.go",
+      "",
+      JSON.stringify(L),
+      JSON.stringify(R),
+    ]);
+    expect(pkg.status).toBe(1);
+    expect(pkg.stdout).toBe(
+      "guard: p/p.go:3: imports time: Guardrail 'Pure' of Component p\n",
+    );
+
+    const alone = run(r.root, "go", ["src", "d/ok.go"]);
+    expect(alone.status).toBe(1);
+    expect(alone.stdout).toBe("guard: no layer edges given — re-cut with morph plan\n");
+
+    const noRules = run(r.root, "go", ["src", "d/ok.go", "", JSON.stringify(L)]);
+    expect(noRules.status).toBe(1);
+    expect(noRules.stdout).toBe("guard: no Guardrail rules given — re-cut with morph plan\n");
+  } finally {
+    r.rm();
+  }
+}, 60000);
+
+test("Rules Arg example 3: the TypeScript guard reads the rules", () => {
+  const r = tmpRoot();
+  try {
+    r.write(
+      "src/d/shell.ts",
+      "import { execSync } from \"node:child_process\";\n\nexecSync(\"true\");\n",
+    );
+    r.write(
+      "src/d/clock.ts",
+      "export function t(): number {\n  return new Date().getTime() + Math.random();\n}\n",
+    );
+    r.write(
+      "src/d/net.ts",
+      "import https from \"node:https\";\n\nexport function start(): unknown {\n  return [https, fetch];\n}\n",
+    );
+    r.write(
+      "src/d/env.ts",
+      "export function h(): string | undefined {\n  return process.env.HOME;\n}\n",
+    );
+    r.write("src/d/log.ts", "export function l(): void {\n  console.log(\"x\");\n}\n");
+    r.write("src/d/dep.ts", "import z from \"zod\";\n\nz.string();\n");
+    r.write("src/d/ok.ts", "import path from \"node:path\";\n\npath.join(\"a\", \"b\");\n");
+
+    const R = {
+      "src/d": {
+        "no-shell": "Guardrail 'No Shell' of Component d",
+        "no-clock": "Guardrail 'No Clock' of Component d",
+        "no-network": "Guardrail 'No Network' of Component d",
+        "no-env": "Guardrail 'No Env' of Component d",
+        "no-process": "Guardrail 'No Process' of Component d",
+        "stdlib-only": "Guardrail 'Stdlib Only' of Component d",
+      },
+    };
+    const layers = JSON.stringify({ "src/d": [] });
+
+    const shell = run(r.root, "typescript", [
+      "src",
+      "src/d/shell.ts",
+      "zod",
+      layers,
+      JSON.stringify(R),
+    ]);
+    expect(shell.status).toBe(1);
+    expect(shell.stdout).toBe(
+      "guard: src/d/shell.ts:1: imports node:child_process: Guardrail 'No Shell' of Component d\n",
+    );
+
+    const clock = run(r.root, "typescript", [
+      "src",
+      "src/d/clock.ts",
+      "zod",
+      layers,
+      JSON.stringify(R),
+    ]);
+    expect(clock.status).toBe(1);
+    expect(clock.stdout).toBe(
+      "guard: src/d/clock.ts:2: uses Date: Guardrail 'No Clock' of Component d\nguard: src/d/clock.ts:2: uses Math.random: Guardrail 'No Clock' of Component d\n",
+    );
+
+    const net = run(r.root, "typescript", [
+      "src",
+      "src/d/net.ts",
+      "zod",
+      layers,
+      JSON.stringify(R),
+    ]);
+    expect(net.status).toBe(1);
+    expect(net.stdout).toBe(
+      "guard: src/d/net.ts:1: imports node:https: Guardrail 'No Network' of Component d\nguard: src/d/net.ts:4: uses fetch: Guardrail 'No Network' of Component d\n",
+    );
+
+    const env = run(r.root, "typescript", [
+      "src",
+      "src/d/env.ts",
+      "zod",
+      layers,
+      JSON.stringify(R),
+    ]);
+    expect(env.status).toBe(1);
+    expect(env.stdout).toBe(
+      "guard: src/d/env.ts:2: uses process.env: Guardrail 'No Env' of Component d\nguard: src/d/env.ts:2: uses process: Guardrail 'No Process' of Component d\n",
+    );
+
+    const log = run(r.root, "typescript", [
+      "src",
+      "src/d/log.ts",
+      "zod",
+      layers,
+      JSON.stringify(R),
+    ]);
+    expect(log.status).toBe(1);
+    expect(log.stdout).toBe(
+      "guard: src/d/log.ts:2: uses console: Guardrail 'No Process' of Component d\n",
+    );
+
+    const dep = run(r.root, "typescript", [
+      "src",
+      "src/d/dep.ts",
+      "zod",
+      layers,
+      JSON.stringify(R),
+    ]);
+    expect(dep.status).toBe(1);
+    expect(dep.stdout).toBe(
+      "guard: src/d/dep.ts:1: imports zod: Guardrail 'Stdlib Only' of Component d\n",
+    );
+
+    const ok = run(r.root, "typescript", [
+      "src",
+      "src/d/ok.ts",
+      "zod",
+      layers,
+      JSON.stringify(R),
+    ]);
+    expect(ok.status).toBe(0);
+    expect(ok.stdout).toBe("");
+
+    const RPure = {
+      "src/d": { pure: "Guardrail 'Pure' of Component d" },
+    };
+    const okPure = run(r.root, "typescript", [
+      "src",
+      "src/d/ok.ts",
+      "",
+      layers,
+      JSON.stringify(RPure),
+    ]);
+    expect(okPure.status).toBe(0);
+    expect(okPure.stdout).toBe("");
+
+    const envPure = run(r.root, "typescript", [
+      "src",
+      "src/d/env.ts",
+      "",
+      layers,
+      JSON.stringify(RPure),
+    ]);
+    expect(envPure.status).toBe(1);
+    expect(envPure.stdout).toBe(
+      "guard: src/d/env.ts:2: uses process: Guardrail 'Pure' of Component d\n",
+    );
+
+    const alone = run(r.root, "typescript", ["src", "src/d/ok.ts"]);
+    expect(alone.status).toBe(1);
+    expect(alone.stdout).toBe("guard: no layer edges given — re-cut with morph plan\n");
+
+    const noRules = run(r.root, "typescript", ["src", "src/d/ok.ts", "", "{}"]);
+    expect(noRules.status).toBe(1);
+    expect(noRules.stdout).toBe("guard: no Guardrail rules given — re-cut with morph plan\n");
+  } finally {
+    r.rm();
+  }
+}, 60000);
+
+test("Rules Arg example 4: the old guard and the record-driven guard agree", () => {
+  const trees = fixtureJson("rules/parity/trees.json") as Record<
+    string,
+    Record<string, string>
+  >;
+  const cases: [string, string[], number[]][] = [
+    ["go", ["calc/add.go", "clock/now.go", "shell/run.go", "app/app.go"], [0, 1, 1, 0]],
+    [
+      "typescript",
+      [
+        "src/core/add.ts",
+        "src/clock/now.ts",
+        "src/net/page.ts",
+        "src/app/run.ts",
+        "src/util/pad.ts",
+        "src/main/cli.ts",
+      ],
+      [0, 1, 1, 1, 0, 0],
+    ],
+  ];
+  for (const [lang, list, want] of cases) {
+    const R = loadContour(fixture("rules/parity/" + lang + "/contour.yaml"), "contour.yaml");
+    const M = loadMap(fixture("rules/parity/" + lang + "/morph-map.json"), "morph-map.json");
+    if (!R.ok || !M.ok) throw new Error("fixture");
+    const edges = layerEdges(R.record, M.map);
+    if (!edges.ok) throw new Error("edges");
+    const rules = guardrailRules(R.record, M.map);
+    if (!rules.ok) throw new Error("rules");
+    const tree = trees[lang];
+    if (tree === undefined) throw new Error("tree");
+    const r = tmpRoot();
+    try {
+      for (const [p, text] of Object.entries(tree)) r.write(p, text);
+      r.write("old-guard.mjs", fixture("rules/guard2/" + lang + ".guard.txt"));
+      fs.symlinkSync(path.join(ROOT, "node_modules"), r.path("node_modules"));
+      for (let i = 0; i < list.length; i++) {
+        const file = list[i];
+        const expected = want[i];
+        const oldRun = spawnSync("node", [r.path("old-guard.mjs"), "src", file], {
+          cwd: r.root,
+          encoding: "utf8",
+          env: ENV,
+        });
+        const newRun = run(r.root, lang, [
+          "src",
+          file,
+          "",
+          JSON.stringify(edges.edges),
+          JSON.stringify(rules.rules),
+        ]);
+        expect(oldRun.status).toBe(expected);
+        expect(newRun.status).toBe(expected);
+      }
+    } finally {
+      r.rm();
+    }
+  }
+}, 60000);
+
+test("Rules Arg example 5: a missing edge is red whatever layers.json says", () => {
+  const R = loadContour(fixture("rules/issue46/contour.yaml"), "contour.yaml");
+  const M = loadMap(fixture("rules/issue46/morph-map.json"), "morph-map.json");
+  if (!R.ok || !M.ok) throw new Error("fixture");
+  const planned = planRules(R.record, M.map, true, "// morph-guard-contract: 3\n", "go");
+  if (!planned.ok || planned.layers === null || planned.rules === null) {
+    throw new Error("plan");
+  }
+  const L = planned.layers;
+  const RR = planned.rules;
+  const T = fixtureJson("rules/issue46/tree.json") as {
+    tree: Record<string, string>;
+    layersJson: Record<string, string>;
+  };
+  const states: (string | undefined)[] = [
+    T.layersJson["with layers"],
+    T.layersJson["layers key removed"],
+    undefined,
+  ];
+  for (const layers of states) {
+    const r = tmpRoot();
+    try {
+      for (const [p, text] of Object.entries(T.tree)) r.write(p, text);
+      if (layers !== undefined) r.write("decks/tools/layers.json", layers);
+      const red = run(r.root, "go", [
+        "src",
+        "daemon/daemon.go",
+        "",
+        JSON.stringify(L),
+        JSON.stringify(RR),
+      ]);
+      expect(red.status).toBe(1);
+      expect(red.stdout).toBe(
+        "guard: daemon/daemon.go:3: imports m/runner: the record has no 'uses' from daemon to runner (allowed: none)\n",
+      );
+    } finally {
+      r.rm();
+    }
+  }
+  const r = tmpRoot();
+  try {
+    for (const [p, text] of Object.entries(T.tree)) r.write(p, text);
+    const alone = run(r.root, "go", ["src", "daemon/daemon.go"]);
+    expect(alone.status).toBe(1);
+    expect(alone.stdout).toBe("guard: no layer edges given — re-cut with morph plan\n");
+  } finally {
+    r.rm();
+  }
+}, 60000);
+
+test("Guard Contract example 1: the contract line of the guard", () => {
+  expect(guardContract("// guard\n")).toBe(0);
+  expect(guardContract("// morph-guard-contract: 2\n")).toBe(2);
+  expect(guardContract("x\n// morph-guard-contract: 3\n// morph-guard-contract: 2\n")).toBe(3);
+  expect(guardContract("// morph-guard-contract: x\n")).toBe(0);
+});
+
+test("Plan Rules example 1: without decks/tools/layers.json nothing changes", () => {
+  const ts = fixtureJson("ts-rename.json") as Record<string, string>;
+  const R = loadContour(ts["contour.yaml"], "contour.yaml");
+  const M = loadMap(ts["morph-map.json"], "morph-map.json");
+  if (!R.ok || !M.ok) throw new Error("fixture");
+  expect(planRules(R.record, M.map, false, "// guard\n", "typescript")).toStrictEqual({
+    ok: true,
+    layers: null,
+    rules: null,
+    proseOnly: [],
+  });
+  expect(planRules(R.record, M.map, true, "// guard\n", "typescript")).toStrictEqual({
+    ok: false,
+    error:
+      "decks/tools/guard.mjs speaks contract 1: copy templates/typescript/decks/tools/guard.mjs from MorphV2",
+  });
+});
+
+test("Plan Rules example 2: the contract line is the switch", () => {
+  const ts = fixtureJson("ts-rename.json") as Record<string, string>;
+  const R = loadContour(ts["contour.yaml"], "contour.yaml");
+  const M = loadMap(ts["morph-map.json"], "morph-map.json");
+  if (!R.ok || !M.ok) throw new Error("fixture");
+  expect(
+    planRules(R.record, M.map, false, "// morph-guard-contract: 2\n", "typescript"),
+  ).toStrictEqual({
+    ok: true,
+    layers: { "src/report": ["src/units"], "src/units": [] },
+    rules: null,
+    proseOnly: [],
+  });
+  expect(
+    planRules(R.record, M.map, false, "// morph-guard-contract: 3\n", "typescript"),
+  ).toStrictEqual({
+    ok: true,
+    layers: { "src/report": ["src/units"], "src/units": [] },
+    rules: { "src/report": {}, "src/units": {} },
+    proseOnly: [],
+  });
+  expect(
+    planRules(R.record, M.map, true, "// morph-guard-contract: 3\n", "typescript"),
+  ).toStrictEqual({
+    ok: true,
+    layers: { "src/report": ["src/units"], "src/units": [] },
+    rules: { "src/report": {}, "src/units": {} },
+    proseOnly: [],
+  });
+});
+
+test("Plan Rules example 3: the issue #46 record and its guard", () => {
+  const R = loadContour(fixture("rules/issue46/contour.yaml"), "contour.yaml");
+  const M = loadMap(fixture("rules/issue46/morph-map.json"), "morph-map.json");
+  if (!R.ok || !M.ok) throw new Error("fixture");
+  expect(
+    planRules(R.record, M.map, true, "// morph-guard-contract: 3\n", "go"),
+  ).toStrictEqual({
+    ok: true,
+    layers: { daemon: [], runner: [] },
+    rules: {
+      daemon: { "no-shell": "Guardrail 'No Shell' of System issue46" },
+      runner: { "no-shell": "Guardrail 'No Shell' of System issue46" },
+    },
+    proseOnly: [],
+  });
+  expect(
+    planRules(R.record, M.map, false, "// morph-guard-contract: 3\n", "go"),
+  ).toStrictEqual({
+    ok: true,
+    layers: { daemon: [], runner: [] },
+    rules: {
+      daemon: { "no-shell": "Guardrail 'No Shell' of System issue46" },
+      runner: { "no-shell": "Guardrail 'No Shell' of System issue46" },
+    },
+    proseOnly: [],
+  });
+  expect(
+    planRules(R.record, M.map, false, "// morph-guard-contract: 2\n", "go"),
+  ).toStrictEqual({
+    ok: false,
+    error:
+      "decks/tools/guard.mjs speaks contract 2: copy templates/go/decks/tools/guard.mjs from MorphV2",
+  });
+  expect(planRules(R.record, M.map, true, "// guard\n", "go")).toStrictEqual({
+    ok: false,
+    error:
+      "decks/tools/guard.mjs speaks contract 1: copy templates/go/decks/tools/guard.mjs from MorphV2",
+  });
+});

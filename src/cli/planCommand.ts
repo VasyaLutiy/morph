@@ -6,6 +6,8 @@ import { selectCards } from "../planner/selectCards.js";
 import { buildAcceptances } from "../builder/buildAcceptances.js";
 import { resolveProfile } from "../language/profiles.js";
 import { readPlanChecks } from "./readPlanChecks.js";
+import { planRules } from "../rules/guardrails.js";
+import { planNotes } from "../rules/notes.js";
 import { errorDocument } from "./document.js";
 import type { ContourMap } from "../contour/types.js";
 import type { PlanResult } from "../planner/types.js";
@@ -88,6 +90,8 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
     plan = selected.plan;
   }
 
+  let proseOnly: string[] = [];
+  let notes: string[] = [];
   let cards: Card[] = plan.cards;
   if (args.checks !== undefined) {
     const first = record.system.groups.find((g) => g.name === plan.components[0]);
@@ -99,11 +103,25 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
     if (!read.ok) {
       return read.result;
     }
+    const r = planRules(record, map, hasFile("decks/tools/layers.json"), read.texts.guard, profiled.profile.id);
+    if (!r.ok) {
+      return { code: 2, document: errorDocument(2, "DeckError", r.error) };
+    }
+    proseOnly = r.proseOnly;
     let checks = read.checks;
     if (args.only !== undefined) {
       const kept = new Set<string>(plan.cards.map((card) => card.customId));
       checks = { ...checks, cards: checks.cards.filter((c) => kept.has(c.id)) };
     }
+    notes = planNotes(
+      checks.cards.map((c) => ({
+        id: c.id,
+        extra: c.extra,
+        targets: plan.cards.find((k) => k.customId === c.id)?.targets ?? [],
+      })),
+      hasFile("decks/tools/layers.json"),
+      read.texts.guard,
+    );
     const input = {
       cards: plan.cards,
       checks,
@@ -111,6 +129,8 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
       texts: read.texts,
       uses: planned.uses,
       vendor: hasFile("vendor/modules.txt"),
+      ...(r.layers !== null ? { layers: r.layers } : {}),
+      ...(r.rules !== null ? { rules: r.rules } : {}),
     };
     const built = buildAcceptances(
       args.only !== undefined ? { ...input, transaction: true } : input,
@@ -147,6 +167,18 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
     fs.writeFileSync(outAbs, JSON.stringify(cards, null, 2) + "\n", "utf8");
   }
 
+  const warnings: string[] = [...(loadedRecord.warnings ?? [])];
+  for (const name of plan.components) {
+    const component = record.system.groups.find((g) => g.name === name);
+    if (component !== undefined && component.language === null && map.language === null) {
+      warnings.push(
+        "no language on Component " + name + " and none in the map: typescript assumed",
+      );
+    }
+  }
+  warnings.push(...planned.warnings);
+  warnings.push(...notes);
+
   return {
     code: 0,
     document: {
@@ -156,6 +188,8 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
       generations: plan.generations,
       externalDependsOn: plan.externalDependsOn,
       out: args.out,
+      ...(proseOnly.length > 0 ? { proseOnly } : {}),
+      ...(warnings.length > 0 ? { warnings } : {}),
     },
   };
 }

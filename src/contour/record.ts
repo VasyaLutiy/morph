@@ -1,8 +1,10 @@
 import type {
   Actor,
   Component,
+  ContourEvent,
   ContourFunction,
   ContourInterface,
+  ContourRecord,
   ContourSystem,
   DataObject,
   Definition,
@@ -23,21 +25,36 @@ const SYSTEM_KEYS: readonly string[] = [
 ];
 const COMPONENT_KEYS: readonly string[] = [
   "name", "description", "language", "requirements", "guardrails", "uses",
-  "functions", "dataObjects", "interfaces",
+  "functions", "dataObjects", "interfaces", "events", "references", "consumes", "dependsOn",
 ];
 const FUNCTION_KEYS: readonly string[] = [
   "name", "description", "behavior", "requirements", "guardrails",
   "preconditions", "steps", "examples",
 ];
 const EXAMPLE_KEYS: readonly string[] = ["given", "when", "then", "ref"];
-const DATA_OBJECT_KEYS: readonly string[] = ["name", "description", "schema"];
-const INTERFACE_KEYS: readonly string[] = ["name", "description", "exposes"];
-const ACTOR_KEYS: readonly string[] = ["name", "description", "uses"];
+const DATA_OBJECT_KEYS: readonly string[] = ["name", "description", "schema", "requirements", "guardrails"];
+const EVENT_KEYS: readonly string[] = ["name", "description", "requirements", "guardrails", "schema"];
+const INTERFACE_KEYS: readonly string[] = ["name", "description", "exposes", "requirements", "guardrails", "schema"];
+const ACTOR_KEYS: readonly string[] = ["name", "description", "uses", "requirements", "guardrails"];
 const DEFINITION_KEYS: readonly string[] = ["name", "description"];
 const DEPENDENCY_KEYS: readonly string[] = ["name", "version", "language", "doc"];
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+function sortKeysDeep(v: unknown): unknown {
+  if (Array.isArray(v)) {
+    return v.map((item) => sortKeysDeep(item));
+  }
+  if (isPlainObject(v)) {
+    const out: Record<string, unknown> = {};
+    for (const k of Object.keys(v).sort()) {
+      out[k] = sortKeysDeep(v[k]);
+    }
+    return out;
+  }
+  return v;
 }
 
 function keyPath(parent: string, key: string): string {
@@ -46,8 +63,10 @@ function keyPath(parent: string, key: string): string {
 
 class RecordWalker {
   readonly problems: string[] = [];
+  readonly warnings: string[] = [];
   private readonly componentNames: Set<string> = new Set();
   private readonly dataObjectNames: Set<string> = new Set();
+  private readonly eventNames: Set<string> = new Set();
   private readonly dependencyNames: Set<string> = new Set();
   private declaredDependencyNames: string[] = [];
 
@@ -84,13 +103,14 @@ class RecordWalker {
         dependencies: [],
       };
     }
-    const actors = this.elementList(doc, "Actor", "(root)", (o, p) => this.walkActor(o, p));
+    const actors = this.readActors(doc);
     const requirements = this.elementList(doc, "Requirement", "(root)", (o, p) => this.walkDefinition(o, p));
     const guardrails = this.elementList(doc, "Guardrail", "(root)", (o, p) => this.walkDefinition(o, p));
     if (this.problems.length > 0) {
       return { ok: false, problems: this.problems };
     }
-    return { ok: true, record: { version: 1, system, actors, requirements, guardrails } };
+    const record: ContourRecord = { version: 1, system, actors, requirements, guardrails };
+    return this.warnings.length > 0 ? { ok: true, record, warnings: this.warnings } : { ok: true, record };
   }
 
   private checkKeys(
@@ -106,7 +126,7 @@ class RecordWalker {
     }
     for (const key of Object.keys(o)) {
       if (!table.includes(key)) {
-        this.problems.push(`${path}: unknown key '${key}' (known: ${table.join(", ")})`);
+        this.warnings.push(`${path}: unknown key '${key}' (ignored)`);
       }
     }
   }
@@ -134,6 +154,29 @@ class RecordWalker {
       }
     }
     return out;
+  }
+
+  private readActors(doc: Record<string, unknown>): Actor[] {
+    if (!("Actor" in doc)) return [];
+    const v = doc.Actor;
+    if (Array.isArray(v)) {
+      const out: Actor[] = [];
+      for (let i = 0; i < v.length; i += 1) {
+        const item = v[i];
+        const path = `Actor[${i}]`;
+        if (isPlainObject(item)) {
+          out.push(this.walkActor(item, path));
+        } else {
+          this.problems.push(`${path}: must be an object`);
+        }
+      }
+      return out;
+    }
+    if (isPlainObject(v)) {
+      return [this.walkActor(v, "Actor")];
+    }
+    this.problems.push("Actor: must be an object or a list");
+    return [];
   }
 
   private stringList(o: Record<string, unknown>, key: string, path: string): string[] {
@@ -257,6 +300,10 @@ class RecordWalker {
     const functions = this.elementList(o, "functions", path, (f, p) => this.walkFunction(f, p, functionNames));
     const dataObjects = this.elementList(o, "dataObjects", path, (d, p) => this.walkDataObject(d, p));
     const interfaces = this.elementList(o, "interfaces", path, (i, p) => this.walkInterface(i, p));
+    const events = this.elementList(o, "events", path, (e, p) => this.walkEvent(e, p));
+    const references = this.stringList(o, "references", path);
+    const consumes = this.stringList(o, "consumes", path);
+    const dependsOn = this.stringList(o, "dependsOn", path);
     return {
       name: name ?? "",
       description: description ?? "",
@@ -267,6 +314,10 @@ class RecordWalker {
       functions,
       dataObjects,
       interfaces,
+      events,
+      references,
+      consumes,
+      dependsOn,
     };
   }
 
@@ -295,7 +346,7 @@ class RecordWalker {
   }
 
   private walkFunction(o: Record<string, unknown>, path: string, functionNames: Set<string>): ContourFunction {
-    this.checkKeys(o, FUNCTION_KEYS, ["name", "description", "behavior", "examples"], path);
+    this.checkKeys(o, FUNCTION_KEYS, ["name", "description"], path);
     const name = this.readText(o, "name", path);
     if (name !== null) {
       if (functionNames.has(name)) {
@@ -404,9 +455,36 @@ class RecordWalker {
     }
     const description = this.readText(o, "description", path);
     const schema = this.readSchema(o, path);
+    const requirements = this.stringList(o, "requirements", path);
+    const guardrails = this.stringList(o, "guardrails", path);
     return {
       name: name ?? "",
       description: description ?? "",
+      schema,
+      requirements,
+      guardrails,
+    };
+  }
+
+  private walkEvent(o: Record<string, unknown>, path: string): ContourEvent {
+    this.checkKeys(o, EVENT_KEYS, ["name", "description"], path);
+    const name = this.readText(o, "name", path);
+    if (name !== null) {
+      if (this.eventNames.has(name)) {
+        this.problems.push(`${keyPath(path, "name")}: duplicate Event name '${name}'`);
+      } else {
+        this.eventNames.add(name);
+      }
+    }
+    const description = this.readText(o, "description", path);
+    const requirements = this.stringList(o, "requirements", path);
+    const guardrails = this.stringList(o, "guardrails", path);
+    const schema = this.readSchema(o, path);
+    return {
+      name: name ?? "",
+      description: description ?? "",
+      requirements,
+      guardrails,
       schema,
     };
   }
@@ -424,16 +502,21 @@ class RecordWalker {
       return null;
     }
     if (isPlainObject(v)) {
-      const out: Record<string, string> = {};
-      for (const k of Object.keys(v)) {
-        const val = v[k];
-        if (typeof val === "string" && val.trim() !== "") {
-          out[k] = val.trim();
-        } else {
-          this.problems.push(`${keyPath(parent, "schema")}.${k}: must be a non-empty string`);
+      const keys = Object.keys(v);
+      const allStrings = keys.every((k) => typeof v[k] === "string");
+      if (allStrings) {
+        const out: Record<string, string> = {};
+        for (const k of keys) {
+          const val = v[k];
+          if (typeof val === "string" && val.trim() !== "") {
+            out[k] = val.trim();
+          } else {
+            this.problems.push(`${keyPath(parent, "schema")}.${k}: must be a non-empty string`);
+          }
         }
+        return JSON.stringify(out, null, 2);
       }
-      return JSON.stringify(out, null, 2);
+      return JSON.stringify(sortKeysDeep(v), null, 2);
     }
     this.problems.push(`${keyPath(parent, "schema")}: must be a non-empty string`);
     return null;
@@ -447,10 +530,16 @@ class RecordWalker {
     if ("exposes" in o && Array.isArray(o.exposes) && o.exposes.length === 0) {
       this.problems.push(`${keyPath(path, "exposes")}: must hold at least one name`);
     }
+    const requirements = this.stringList(o, "requirements", path);
+    const guardrails = this.stringList(o, "guardrails", path);
+    const schema = this.readSchema(o, path);
     return {
       name: name ?? "",
       description: description ?? "",
       exposes,
+      requirements,
+      guardrails,
+      schema,
     };
   }
 
@@ -459,10 +548,14 @@ class RecordWalker {
     const name = this.readText(o, "name", path);
     const description = this.readText(o, "description", path);
     const uses = this.stringList(o, "uses", path);
+    const requirements = this.stringList(o, "requirements", path);
+    const guardrails = this.stringList(o, "guardrails", path);
     return {
       name: name ?? "",
       description: description ?? "",
       uses,
+      requirements,
+      guardrails,
     };
   }
 

@@ -54,6 +54,9 @@ export function loadContour(text: string, name: string): LoadRecordResult {
   if (!result.ok) {
     return { ok: false, error: invalidMessage(name, "record", result.problems) };
   }
+  if (result.warnings !== undefined) {
+    return { ok: true, record: result.record, warnings: result.warnings };
+  }
   return { ok: true, record: result.record };
 }
 

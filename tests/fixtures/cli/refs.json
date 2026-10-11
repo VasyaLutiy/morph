@@ -1,4 +1,5 @@
 {
+  "Parse Command 1": "tests/fixtures/cli/parseArgv.json (example number → its argv lists), parse.json (→ the result; a list for several)",
   "Read Deck File 1": "tests/fixtures/decks/tiny.json (one card a → src/a.ts)",
   "Read Deck File 3": "tests/fixtures/decks/cycle.json, tests/fixtures/decks/duplicate.json",
   "Deck Check 1": "tests/fixtures/decks/hazardsWriteWrite.json, tests/fixtures/cli/deckCheck.writeWrite.json",
@@ -18,11 +19,14 @@
   "Plan Command 12": "tests/fixtures/go-mini/, tests/fixtures/cli/goMini.sameGen.map.json",
   "Plan Command 13": "tests/fixtures/go-mini/, tests/fixtures/cli/goMini.deck.json",
   "Plan Command 14": "tests/fixtures/go-p7b/",
+  "Plan Command 16": "tests/fixtures/contour/parity/ (ccledger.contour.yaml, ccledger.map.json, contour-engine.contour.yaml, contour-engine.map.json, expected.json; the old decks ccledger.deck.json, contour-engine.deck.json)",
+  "Plan Command 17": "tests/fixtures/contour/contourKeys.json, tests/fixtures/contour/contourKeys.warnings.json",
   "Read Plan Checks 1": "tests/fixtures/cli/p1.checks.json (cards a, b, a-judge), tests/fixtures/cli/p1.planChecks.json",
   "Main 2": "tests/fixtures/decks/hazardsWriteWrite.json",
   "Main 4": "tests/fixtures/cli/literals.json",
   "Main 14": "tests/fixtures/debt/deck.json",
   "Main 15": "tests/fixtures/debt/accept.deck.json",
   "Main 16": "tests/fixtures/scaffold/tpl/",
-  "Main 18": "tests/fixtures/debt/group.deck.json, tests/fixtures/debt/group.run.json"
+  "Main 18": "tests/fixtures/debt/group.deck.json, tests/fixtures/debt/group.run.json",
+  "Plan Command 19": "tests/fixtures/cli/goMiniGuarded.yaml, tests/fixtures/cli/goMiniGuarded.deck.json"
 }

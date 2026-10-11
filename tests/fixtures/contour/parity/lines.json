@@ -1,0 +1,22 @@
+{
+  "ccledger": {
+    "load": [
+      "Event Session Loaded: Журнал прочитан, вызовы схлопнуты."
+    ],
+    "ledger": [
+      "Event Ledger Built: Гроссбух сессии собран."
+    ]
+  },
+  "contour-engine": {
+    "engine": [
+      "Event Element Stored: Announces that one Contour element (its record and declared outgoing relationships) has been created or updated and persisted. Reports a completed state change (past tense per Section 3.5).\nSchema:\n{\n  \"name\": \"string\",\n  \"modelId\": \"uuid\",\n  \"version\": \"integer\",\n  \"storedAt\": \"timestamp\",\n  \"elementId\": \"uuid\",\n  \"elementType\": \"enum(System, Component, Function, Interface, Event, DataObject, Actor)\"\n}",
+      "Event Element Deleted: Announces that one previously stored Contour element, its record, and its relationships have been removed. Reports a completed state change (past tense per Section 3.5).\nSchema:\n{\n  \"modelId\": \"uuid\",\n  \"deletedAt\": \"timestamp\",\n  \"elementId\": \"uuid\"\n}"
+    ],
+    "rest": [
+      "## Interface Contour REST API\n\nREST/JSON API for creating, searching, retrieving, and rendering Contour specifications, worked at element granularity rather than as a whole submitted model. Primary contract of the system, designed to also back a future UI.\n\nSchema:\n./contour-engine.openapi.yaml\n\nExposes:\n- Store Element (`contour_engine/engine.py`)\n- Delete Element (`contour_engine/engine.py`)\n- Store Requirement (`contour_engine/engine.py`)\n- Delete Requirement (`contour_engine/engine.py`)\n- Store Guardrail (`contour_engine/engine.py`)\n- Delete Guardrail (`contour_engine/engine.py`)\n- Search Specifications (`contour_engine/engine.py`)\n- Retrieve Element (`contour_engine/engine.py`)\n- Retrieve Requirement (`contour_engine/engine.py`)\n- Retrieve Guardrail (`contour_engine/engine.py`)\n- Render Diagram (`contour_engine/engine.py`)\n- Search Requirements (`contour_engine/engine.py`)\n- Search Guardrails (`contour_engine/engine.py`)\n- Render Element Diagram (`contour_engine/engine.py`)\n\nRequirements:\n- Keep OpenAPI specification up-to-date: Model OpenAPI specification as a separate artifact in resources, keep it as a source of truth for code generation, keep it updated when change is requested. OpenAPI specification is a contract for external requests and responses."
+    ],
+    "mcp": [
+      "## Interface Contour MCP Server\n\nModel Context Protocol interface exposing a read-and-store subset of the engine's capability to LLM/agent callers, over the same underlying Functions as the REST API.\n\nSchema:\nMCP tools map one-to-one onto engine Functions (search_specifications, search_requirements, search_guardrails, retrieve_element, delete_element, store_element, retrieve_requirement, delete_requirement, store_requirement, retrieve_guardrail, delete_guardrail, store_guardrail, render_diagram, render_element_diagram). MCP is a protocol, not a radar-listed runtime; see guardrail \"Interfaces Share One Core\".\n\nExposes:\n- Store Element (`contour_engine/engine.py`)\n- Delete Element (`contour_engine/engine.py`)\n- Store Requirement (`contour_engine/engine.py`)\n- Delete Requirement (`contour_engine/engine.py`)\n- Store Guardrail (`contour_engine/engine.py`)\n- Delete Guardrail (`contour_engine/engine.py`)\n- Search Specifications (`contour_engine/engine.py`)\n- Retrieve Element (`contour_engine/engine.py`)\n- Retrieve Requirement (`contour_engine/engine.py`)\n- Retrieve Guardrail (`contour_engine/engine.py`)\n- Render Diagram (`contour_engine/engine.py`)\n- Search Requirements (`contour_engine/engine.py`)\n- Search Guardrails (`contour_engine/engine.py`)\n- Render Element Diagram (`contour_engine/engine.py`)\n\nGuardrails:\n- Interfaces Share One Core: The MCP Server and the REST API must delegate to the same engine Functions and persistence. Neither interface may reimplement storage, search, or validation logic of its own; they are alternative front doors to one core. Any future UI must go through the REST API rather than the datastore."
+    ]
+  }
+}

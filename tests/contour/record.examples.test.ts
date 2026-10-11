@@ -45,7 +45,7 @@ test("Validate Record example 5: no version means 1 and texts are trimmed", () =
   });
 });
 
-test("Validate Record example 6: version must be the number 1 and examples are required", () => {
+test("Validate Record example 6: version must be the number 1 and examples are optional", () => {
   expect(
     validateRecord({
       version: "1",
@@ -63,7 +63,7 @@ test("Validate Record example 6: version must be the number 1 and examples are r
     }),
   ).toStrictEqual({
     ok: false,
-    problems: ["version: must be 1", "System.groups[0].functions[0].examples: required"],
+    problems: ["version: must be 1"],
   });
 });
 
@@ -204,13 +204,21 @@ test("Validate Record own: a mapping schema with an empty value gives a problem 
   });
 });
 
-test("Validate Record own: unknown keys come after required and before values, in the object's key order", () => {
+test("Validate Record own: an unknown key is a warning, dropped when there is a problem", () => {
   expect(validateRecord({ extra: 1 })).toStrictEqual({
     ok: false,
-    problems: [
-      "System: required",
-      "(root): unknown key 'extra' (known: version, System, Actor, Requirement, Guardrail)",
-    ],
+    problems: ["System: required"],
+  });
+  expect(validateRecord({ System: { name: "s", description: "d", groups: [] }, extra: 1 })).toStrictEqual({
+    ok: true,
+    record: {
+      version: 1,
+      system: { name: "s", description: "d", requirements: [], guardrails: [], groups: [], dependencies: [] },
+      actors: [],
+      requirements: [],
+      guardrails: [],
+    },
+    warnings: ["(root): unknown key 'extra' (ignored)"],
   });
 });
 
@@ -280,4 +288,41 @@ test("Validate Record example 8: every dependency and uses fault named", () => {
     ok: false,
     problems: ["System.dependencies: must be a list"],
   });
+});
+
+test("Validate Record example 9: the contour-keys record gives the typed record and the ten warnings", () => {
+  expect(validateRecord(fixtureJson("contour/contourKeys.json"))).toStrictEqual({
+    ok: true,
+    record: fixtureJson("contour/contourKeys.typed.json"),
+    warnings: fixtureJson("contour/contourKeys.warnings.json"),
+  });
+});
+
+test("Validate Record example 10: a nested mapping schema sorts keys at every depth", () => {
+  const r = validateRecord({
+    System: {
+      name: "s",
+      description: "d",
+      groups: [
+        {
+          name: "c",
+          description: "C.",
+          dataObjects: [
+            {
+              name: "d",
+              description: "D.",
+              schema: { b: { z: 1, a: "x" }, a: ["q", { d: true, c: null }] },
+            },
+          ],
+        },
+      ],
+    },
+  });
+  expect(r.ok).toBe(true);
+  if (r.ok) {
+    expect(r.record.system.groups[0].dataObjects[0].schema).toBe(
+      JSON.stringify({ a: ["q", { c: null, d: true }], b: { a: "x", z: 1 } }, null, 2),
+    );
+  }
+  expect("warnings" in r).toBe(false);
 });

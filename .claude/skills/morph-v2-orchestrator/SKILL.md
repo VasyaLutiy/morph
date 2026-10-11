@@ -29,6 +29,10 @@ or record the departure (§1.3).
 1. **Data only.** The data is: the record (`contour.yaml`), the map, the spec `docs/TASK_<p>.md`,
    fixtures, `decks/<p>/checks.json`, the probes, `_stubs/`, the deck. Code (`src/`, test files)
    comes from cards only. A hand edit of code breaks the experiment.
+   **Beside the record lives only what the record cannot say** (the old Morph's rule): placement (map targets,
+   slices, budgets) and one phase's inputs (spec, fixtures, probes, stubs, judge bounds). A rule of the project
+   (who imports whom, what is pure, which imports are allowed) is stated in the record. When you find yourself
+   writing such a rule into a file beside it, stop and name it in the report: it is a defect of Morph (#41, #42).
 2. **Never read MorphV2's `src/` or `dist/`, never run `--help`.** The metric of this skill is
    0 such reads. A read you needed is a finding for the reference: name it in the report.
    **Exception — MorphV2's own phase:** there `src/` is the product, so reading it by address
@@ -41,7 +45,8 @@ or record the departure (§1.3).
    an experiment: its own branch, named so in the commit, no fix and no re-run counted on it.
 5. **Not in this scheme, never during preparation:** reference implementations, mutants, chain
    timing against 250 s, byte-identity re-cuts with two binaries, fullvet over stub trees,
-   MEASURE / TASK §11 / DECISIONS / State-at-handoff bookkeeping. `morph gate` is optional.
+   MEASURE / TASK §11 / DECISIONS / State-at-handoff bookkeeping — not even one row, even when the
+   project keeps the file (the operator's session writes it). `morph gate` is optional.
 6. **Paid calls** (scout, run, smoke) only through the wrapper the header names. Wrapper denied:
    stop at once and report; no workaround, and no preparation without the scout.
 7. **Keys are never printed**: no `env`, no `cat .env`, no echo of a `*_API_KEY`.
@@ -101,11 +106,17 @@ or record the departure (§1.3).
 2. **Splitting a phase:** only when the header allows it or the deck would exceed 10 cards. The
    split goes into §7 ("item N → next phase") and is the FIRST line of the report.
 3. **The record.** Every Function has `behavior:`; a Python project's map carries
-   `"language": "python"`. **A Component ≤ 30 KB of record** (raw bytes of its group in
-   `contour.yaml`): a phase that would take one over first compacts it as its own data commit —
+   `"language": "python"`. **A Component ≤ 30 000 bytes of record** (raw bytes of its group in
+   `contour.yaml`, `wc -c` of the group's lines, not KiB): a phase that would take one over first compacts it as its own data commit —
    literals to fixtures by `ref`, behaviours reworded with every rule kept, no example's meaning
    changed — or puts the new Functions into a new Component. Examples carry full values, never
-   abbreviated.
+   abbreviated. **Structure and rules live in the record** (P30–P31b): who imports whom is the
+   Functions' `uses: <Component>` steps (and `Component.dependsOn`); what a package may not do is a
+   canonical Guardrail (No Shell, No Clock, No Network, No Env, No Process, Stdlib Only, Pure) attached
+   where it binds; third-party modules are `System.dependencies` + `Component.uses`. A new package needs
+   its `uses` steps, never a `layers.json` entry (the project's guard must speak
+   `morph-guard-contract: 3`: else `plan --checks` exits 2 naming the template to copy). Any other
+   Guardrail name stays prose (`proseOnly` in the plan document). See `docs/CONTOUR.md`.
 4. **Expected values are measured, never recalled** — from the current code, a fixture, or a
    spike's real output.
 5. **The phase data of V2** (schema and example: the reference §2–§4):
@@ -117,18 +128,28 @@ or record the departure (§1.3).
    - `decks/<p>/_stubs/`: a stub per target. **For an `--only` cut it is required**: without it
      `deck check` builds no generation.
 6. **A re-cut card's probe starts from its previous phase's probe**; only the changed and the new
-   examples change. On stubs it must go red exactly on those, and green on the unchanged rows.
+   examples change. On stubs it must go red exactly on those, and green on the unchanged rows —
+   except for an existing file re-cut with intent `generate`: its stub throws (§6.1), so every row is
+   red, the unchanged ones included; that is by design, and the report names it.
 7. **Judges: say what they must contain.** A judge's `lits` appear verbatim in the text the judge
    is given — check each against the record example and the spec's skeleton (a path built by
    concatenation is not a literal). In the map instruction of a judge, list its guard literals and
    the TYPES of the example values (Go `int` vs `float64`, a pointer vs a value); name the imports
-   it needs (`context`). Most reds of past runs were judges, not code.
+   it needs (`context`). A judge that PATCHES an existing test file also gets the types of that file's
+   own variables it will touch (e.g. "`PlanDocument` has no key `warnings`"). Whitespace inside an example
+   value does not survive the record's rendering (runs of spaces collapse): put such a value in a fixture. Most reds of past runs were judges, not code.
 8. **The Contour never goes into a slice whole**; a card that needs text outside its Function
    gets an excerpt. A map `instruction` override is the card's opening; the Function follows.
 9. **Guards check code, not text** (AST / ESLint rules, never grep); never write a forbidden token
    as prose in an instruction.
-10. **Commit the data before cutting**, explicit paths (§11): `plan`, `deck check` and `run` read
-   the committed tree.
+10. **Validate every data file you edited** before committing: `python3 -m json.tool <file>` for
+   JSON, `plan` exit 0 for the record and the map. A large JSON is rewritten whole, not patched
+   piece by piece.
+11. **Commit the data before cutting**, explicit paths (§11): `plan`, `deck check` and `run` read
+   the committed tree. **The scout's output** (`.morph/scout/<id>/`) is committed with the data or
+   removed, unless the project's `.gitignore` covers it (`.morph/*` with `!.morph/runs/`; never
+   `.morph/` whole: the run's archive commit fails): `morph run` refuses an untracked file there
+   (P32), and an older binary starts and turns every card red at the last stage.
 
 ## 5. The deck
 
@@ -137,11 +158,13 @@ or record the departure (§1.3).
    card, never widen the slice.
 2. **Cut:**
    ```
-   <morph> plan --root . --spec contour.yaml --map morph-map.json --component <C>… --judge \
+   <morph> plan --root . --spec contour.yaml --map morph-map.json --component <C> [--component <C2> …] --judge \
      --checks decks/<p>/checks.json [--only <ids>] --out decks/<p>/deck.json
    ```
    - `--checks` builds acceptances for TypeScript and Go only; a Python project keeps the map's
      acceptances and has no transaction.
+   - **A map card's `acceptance` overrides `--checks`.** A card that held an old literal acceptance
+     (from a phase before `--checks`) gets the key deleted in the map; an empty string is refused.
    - **`--only` is required whenever the phase's Components hold Functions outside the phase**,
      new code included. With `--checks` the deck is a **transaction**: every card is written first,
      a red card is retried alone, a red after its retries rolls the subset back. Name it in the report.
@@ -149,26 +172,35 @@ or record the departure (§1.3).
 3. **Processor `ds`:** `python3 $MORPHV2/decks/tools/scale_tokens.py decks/<p>/deck.json 3`.
 4. **`<morph> deck check --root . --deck decks/<p>/deck.json`: errors 0.** With `_stubs/` beside
    the deck it compiles each card's stub tree; a break it names is a data defect, fixed before
-   the run. Read the largest slice off its weights.
+   the run. It compiles only: the guard and the probes run in §6. The key `unproven` appears only
+   when it lists something; absent means none. Read the largest slice off its weights.
 5. Commit the deck.
 
 ## 6. Stubs — the only dry check
 
-1. **Each card's acceptance runs once** in a scratch worktree, stubs in place of its targets:
+1. **Each card's acceptance runs once** in a scratch worktree, stubs in place of its targets. It is
+   the card's own `acceptance` text from `deck.json`, run whole (or `morph gate`), never a script that
+   imitates some of its stages: only the real acceptance reads the guard's data, the toolchain and
+   the tree as the run will:
    - a new code file: its typed exports, every body throwing `stub <name>`;
    - a patch target (intent `patch`): the current file plus only the declarations the probe needs
-     to compile (a new optional key or type), no behaviour;
+     to compile (a new optional key or type), no behaviour — when it needs none, the stub IS the
+     current file, and `deck check`'s `unproven` lists it: expected for a patch, name it;
    - **an existing file re-cut with intent `generate`** (rewritten from the record, the card never
      sees the old text): ONLY the names the record gives that file, typed, every body throwing —
      never the current file. Its kept neighbours (same package/module, not in the deck) then build
      against it in `deck check`; a break naming a kept file is a name the record does not hold (a
      private helper, an unrecorded export): add it to the record's Function, or put the neighbour
-     in the card's slice with "keep these names", before the run (#22);
-   - a judge's test file: one passing test.
+     in the card's slice with "keep these names", before the run (#22) — `deck check`'s `unproven` key lists every
+     target whose stub is the committed file or missing (a transaction deck without `_stubs/`: every committed target),
+     read it before the gate; at run time a red in a kept file of a target's package is blamed on the owner and
+     retried (P28);
+   - a judge's test file: one passing test, its name unique in the package (Go: two judge stubs
+     with `func TestStub` in one package do not build).
    Earlier generations' stubs stay in place for later cards.
 2. **The verdict, per probe:** each example red with a readable line (not a crash at import);
-   unchanged rows green and named; a judge red at its guard; `decks/tools/stubcheck.mjs` exit 0 on
-   each log where the tree has it. A probe that imports what an earlier card writes cannot be
+   unchanged rows green and named; a judge red at its guard; `node decks/tools/stubcheck.mjs <log> <stage> <targets,…>` (stage `probe` for a
+   code card, `guard` for a judge; reference §4) exit 0 on each log where the tree has it. A probe that imports what an earlier card writes cannot be
    checked this way: name it.
 3. **`node_modules` in a scratch worktree** is a real directory of per-entry symlinks, so the
    project's `.gitignore` covers it. Never edit `.git/info/exclude`: it is shared with the repo.
@@ -188,9 +220,12 @@ fix the data and check again. A second failure: stop and report.
 2. **Start it as ONE background call**, the command in its foreground:
    `<morph> run --root . --deck decks/<p>/deck.json --processor <P> --deadline <s> > /tmp/<p>/run-1.json 2> /tmp/<p>/run-1.err; echo EXIT=$?`
    with `run_in_background: true`; no `nohup`, no `&`. The harness wakes you when it ends.
-3. **No polling.** No `sleep` loops, no `pgrep` loops, no periodic `tail`: each wake rereads your
-   whole context (P7b: 18 polls ≈ 4.9M tokens for nothing). Look once at `morph run:` lines in the
-   `.err` only if asked.
+3. **No polling — of ANY background command** (scout, run, gate, a long test). No `sleep`, no
+   `pgrep` loops, no periodic `cat`/`tail` of an output: each wake rereads your whole context (P7b:
+   18 polls ≈ 4.9M tokens for nothing). Look once at `morph run:` lines in the `.err` only if asked.
+   **End your turn only while a background command of yours is still running** — the harness wakes
+   you when it exits. With none running, keep working in the same turn: a turn that ends on "now I
+   will do X" with no tool call is a stop, not a plan (P31c, 11.10).
 4. **Keep out of the tree while it runs**: no edit, no commit, no primer, no scout.
 
 ## 9. Verify and the live reproduction
@@ -206,7 +241,10 @@ fix the data and check again. A second failure: stop and report.
 
 ## 10. A red run: salvage first, then one fix, then stop
 
-1. **Salvage from the archive first** — free, and not counted as the fix. When
+1. **Salvage from the archive first** — free, and not counted as the fix. A red caused by a defect of the committed
+   tree (your data, e.g. a deleted fixture a test reads) is fixed first — the fix commit goes on the run branch,
+   above its "deck and report" commit — then salvaged on top of it. Before deleting a fixture, grep for its
+   path built by concatenation (`"go-mini/" + p`), not only for the literal. When
    `.morph/runs/<run>/` holds a green answer for every card of the deck (any round, any variant):
    ```
    <morph> accept --root . --deck .morph/runs/<run>/deck.json --id <all ids> --from-run <run> \
@@ -238,7 +276,7 @@ fix the data and check again. A second failure: stop and report.
 ## 12. Report — numbers, one format, ≤ 40 lines
 
 1. The split, if any, as the FIRST line. The MorphV2 commit of the binary.
-2. **Times (UTC):** start, primer, scout, spec+record, deck cut, stubs, gate, run end, verify end,
+2. **Times (UTC)**, each from `date -u` at the moment, never typed: start, primer, scout, spec+record, deck cut, stubs, gate, run end, verify end,
    smoke start/end, re-run start/end, end. Prep = start → gate, in minutes, and your tool calls.
 3. **Scout:** $ and minutes; deck targets it named out of the total; roles you changed — two
    numbers, never one merged; a rejected answer's targets apart.

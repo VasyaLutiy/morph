@@ -1,0 +1,223 @@
+{
+  "spec": "events.yaml",
+  "components": [
+    "orders",
+    "catalog"
+  ],
+  "cards": [
+    {
+      "customId": "cancel-order",
+      "intent": "patch",
+      "targets": [
+        "src/orders/cancelOrder.ts",
+        "tests/orders/cancelOrder.test.ts"
+      ],
+      "contextSlice": [
+        "src/orders/cancelOrder.ts"
+      ],
+      "instruction": "Every name you need is below -- the record `events.yaml` is cut into this instruction; do not invent names, keys or files.\n\n## Function Cancel Order\n\nCancels an order.\n\nBehaviour: cancelOrder(id) announces Order Cancelled.\n\nSteps:\n- produces: Order Cancelled\n\nExamples (the tests must prove each one):\n1. given a placed order; when cancelled; then Order Cancelled is announced\n\nEvent Order Cancelled: An order was cancelled.\n\nGuardrails:\n- One Writer: Only the API writes orders.\n- No Network: No network call in code or tests.\n\n## Component requirements / guardrails\n\nGuardrails:\n- No Network: No network call in code or tests.\n\nWrite the files: `src/orders/cancelOrder.ts`, `tests/orders/cancelOrder.test.ts`.\n\nTypeScript with `strict` on, ESM with NodeNext resolution: every relative import carries the `.js` extension and types are imported with `import type`. No `any`: use `unknown` and narrow. Tests are vitest: `toBe` on scalars and short strings, `toStrictEqual` on a whole result; stubs come from `tests/helpers.ts`, never your own.",
+      "acceptance": "D=/tmp/morph/cancel-order; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp src/orders/cancelOrder.ts $D/0-$S.ts 2>/dev/null\ncp tests/orders/cancelOrder.test.ts $D/1-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint src/orders/cancelOrder.ts tests/orders/cancelOrder.test.ts\n node_modules/.bin/vitest run tests/orders/cancelOrder.test.ts --reporter=dot\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+      "model": null,
+      "maxTokens": 14500,
+      "reasoning": {
+        "maxTokens": 2500
+      },
+      "variants": 1,
+      "dependsOn": []
+    },
+    {
+      "customId": "price-cart",
+      "intent": "patch",
+      "targets": [
+        "src/orders/priceCart.ts",
+        "tests/orders/priceCart.test.ts"
+      ],
+      "contextSlice": [
+        "src/orders/priceCart.ts"
+      ],
+      "instruction": "Every name you need is below -- the record `events.yaml` is cut into this instruction; do not invent names, keys or files.\n\n## Function Price Cart\n\nPrices every item of a cart.\n\nSteps:\n- reads: Cart\n- modifies: Price Table\n\nData Cart: A cart of items.\nSchema:\n{ items: string[] }\n\nData Price Table: Prices by item.\n\n## Component requirements / guardrails\n\nGuardrails:\n- No Network: No network call in code or tests.\n\nWrite the files: `src/orders/priceCart.ts`, `tests/orders/priceCart.test.ts`.\n\nTypeScript with `strict` on, ESM with NodeNext resolution: every relative import carries the `.js` extension and types are imported with `import type`. No `any`: use `unknown` and narrow. Tests are vitest: `toBe` on scalars and short strings, `toStrictEqual` on a whole result; stubs come from `tests/helpers.ts`, never your own.",
+      "acceptance": "D=/tmp/morph/price-cart; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp src/orders/priceCart.ts $D/0-$S.ts 2>/dev/null\ncp tests/orders/priceCart.test.ts $D/1-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint src/orders/priceCart.ts tests/orders/priceCart.test.ts\n node_modules/.bin/vitest run tests/orders/priceCart.test.ts --reporter=dot\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+      "model": null,
+      "maxTokens": 16000,
+      "reasoning": {
+        "maxTokens": 2500
+      },
+      "variants": 1,
+      "dependsOn": []
+    },
+    {
+      "customId": "prices",
+      "intent": "patch",
+      "targets": [
+        "src/catalog/prices.ts",
+        "tests/catalog/prices.test.ts"
+      ],
+      "contextSlice": [
+        "src/catalog/prices.ts"
+      ],
+      "instruction": "Every name you need is below -- the record `events.yaml` is cut into this instruction; do not invent names, keys or files.\n\n## Function List Prices\n\nLists the price table.\n\nBehaviour: listPrices() returns the rows of the table.\n\nSteps:\n- produces: Price Table\n\nExamples (the tests must prove each one):\n1. given a table of three rows; when listed; then the three rows\n\nData Price Table: Prices by item.\n\n## Function Format Price\n\nFormats one price.\n\nBehaviour: formatPrice(cents) returns the text.\n\nSteps:\n- reads: number\n- produces: string\n\nWrite the files: `src/catalog/prices.ts`, `tests/catalog/prices.test.ts`.\n\nTypeScript with `strict` on, ESM with NodeNext resolution: every relative import carries the `.js` extension and types are imported with `import type`. No `any`: use `unknown` and narrow. Tests are vitest: `toBe` on scalars and short strings, `toStrictEqual` on a whole result; stubs come from `tests/helpers.ts`, never your own.",
+      "acceptance": "D=/tmp/morph/prices; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp src/catalog/prices.ts $D/0-$S.ts 2>/dev/null\ncp tests/catalog/prices.test.ts $D/1-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint src/catalog/prices.ts tests/catalog/prices.test.ts\n node_modules/.bin/vitest run tests/catalog/prices.test.ts --reporter=dot\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+      "model": null,
+      "maxTokens": 22500,
+      "reasoning": {
+        "maxTokens": 2500
+      },
+      "variants": 2,
+      "dependsOn": []
+    },
+    {
+      "customId": "cancel-order-judge",
+      "intent": "patch",
+      "targets": [
+        "tests/orders/cancelOrder.examples.test.ts"
+      ],
+      "contextSlice": [
+        "src/orders/cancelOrder.ts",
+        "tests/helpers.ts"
+      ],
+      "instruction": "Write ONLY the test file `tests/orders/cancelOrder.examples.test.ts`: one test per example of `src/orders/cancelOrder.ts` taken from this instruction, in example order, each named \"<Function> example <n>: <what>\". Do not write or modify `src/orders/cancelOrder.ts`: the author of the criterion is not the author of the code. vitest, stubs imported from `tests/helpers.ts`; TypeScript with `strict` on, ESM, no `any`.\n\nThe examples below are the criterion, and you are its independent author: write one test per example (no fewer, no merging), each named after the Function and the example number, e.g. \"Cancel Order example 1\".\n\nExamples of Function Cancel Order:\n1. given a placed order; when cancelled; then Order Cancelled is announced\n\nEvent Order Cancelled: An order was cancelled.",
+      "acceptance": "D=/tmp/morph/cancel-order-judge; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp tests/orders/cancelOrder.examples.test.ts $D/0-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint tests/orders/cancelOrder.examples.test.ts\n node_modules/.bin/vitest run tests/orders/cancelOrder.examples.test.ts --reporter=dot\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+      "model": null,
+      "maxTokens": 17000,
+      "reasoning": {
+        "maxTokens": 2500
+      },
+      "variants": 1,
+      "dependsOn": [
+        "cancel-order"
+      ]
+    },
+    {
+      "customId": "place-order",
+      "intent": "patch",
+      "targets": [
+        "src/orders/placeOrder.ts",
+        "tests/orders/placeOrder.test.ts"
+      ],
+      "contextSlice": [
+        "src/orders/priceCart.ts"
+      ],
+      "instruction": "Every name you need is below -- the record `events.yaml` is cut into this instruction; do not invent names, keys or files.\n\n## Function Place Order\n\nPlaces an order for a cart.\n\nBehaviour: placeOrder(cart) returns the order and announces Order Placed.\n\nSteps:\n- reads: Cart\n- calls: Price Cart\n- produces: Order Placed\n- produces: string\n\nExamples (the tests must prove each one):\n1. given a cart of two items; when placed; then an order of two lines\n\nData Cart: A cart of items.\nSchema:\n{ items: string[] }\n\nEvent Order Placed: An order was placed.\nSchema:\n{\n  \"total\": \"integer\",\n  \"id\": \"string\"\n}\n\n## Component requirements / guardrails\n\nGuardrails:\n- No Network: No network call in code or tests.\n\nWrite the files: `src/orders/placeOrder.ts`, `tests/orders/placeOrder.test.ts`.\n\nTypeScript with `strict` on, ESM with NodeNext resolution: every relative import carries the `.js` extension and types are imported with `import type`. No `any`: use `unknown` and narrow. Tests are vitest: `toBe` on scalars and short strings, `toStrictEqual` on a whole result; stubs come from `tests/helpers.ts`, never your own.",
+      "acceptance": "D=/tmp/morph/place-order; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp src/orders/placeOrder.ts $D/0-$S.ts 2>/dev/null\ncp tests/orders/placeOrder.test.ts $D/1-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint src/orders/placeOrder.ts tests/orders/placeOrder.test.ts\n node_modules/.bin/vitest run tests/orders/placeOrder.test.ts --reporter=dot\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+      "model": null,
+      "maxTokens": 20500,
+      "reasoning": {
+        "maxTokens": 2500
+      },
+      "variants": 2,
+      "dependsOn": [
+        "price-cart"
+      ]
+    },
+    {
+      "customId": "prices-judge",
+      "intent": "patch",
+      "targets": [
+        "tests/catalog/prices.examples.test.ts"
+      ],
+      "contextSlice": [
+        "src/catalog/prices.ts",
+        "tests/helpers.ts"
+      ],
+      "instruction": "Write ONLY the test file `tests/catalog/prices.examples.test.ts`: one test per example of `src/catalog/prices.ts` taken from this instruction, in example order, each named \"<Function> example <n>: <what>\". Do not write or modify `src/catalog/prices.ts`: the author of the criterion is not the author of the code. vitest, stubs imported from `tests/helpers.ts`; TypeScript with `strict` on, ESM, no `any`.\n\nThe examples below are the criterion, and you are its independent author: write one test per example (no fewer, no merging), each named after the Function and the example number, e.g. \"List Prices example 1\".\n\nExamples of Function List Prices:\n1. given a table of three rows; when listed; then the three rows\n\nData Price Table: Prices by item.",
+      "acceptance": "D=/tmp/morph/prices-judge; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp tests/catalog/prices.examples.test.ts $D/0-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint tests/catalog/prices.examples.test.ts\n node_modules/.bin/vitest run tests/catalog/prices.examples.test.ts --reporter=dot\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+      "model": null,
+      "maxTokens": 17000,
+      "reasoning": {
+        "maxTokens": 2500
+      },
+      "variants": 1,
+      "dependsOn": [
+        "prices"
+      ]
+    },
+    {
+      "customId": "orders-api",
+      "intent": "patch",
+      "targets": [
+        "src/orders/ordersApi.ts",
+        "tests/orders/ordersApi.test.ts"
+      ],
+      "contextSlice": [
+        "src/orders/placeOrder.ts",
+        "src/orders/cancelOrder.ts"
+      ],
+      "instruction": "Every name you need is below -- the record `events.yaml` is cut into this instruction; do not invent names, keys or files.\n\n## Interface orders API\n\nThe HTTP API of orders.\n\nSchema:\n{\n  \"delete\": {\n    \"path\": \"/orders/{id}\"\n  },\n  \"post\": {\n    \"body\": \"Cart\",\n    \"path\": \"/orders\"\n  }\n}\n\nExposes:\n- Place Order (`src/orders/placeOrder.ts`)\n- Cancel Order (`src/orders/cancelOrder.ts`)\n\nRequirements:\n- Exact Totals: Totals are exact integers of cents.\n\nGuardrails:\n- One Writer: Only the API writes orders.\n- Missing Rule (definition not found in the record)\n\n## Component requirements / guardrails\n\nGuardrails:\n- No Network: No network call in code or tests.\n\nWrite the files: `src/orders/ordersApi.ts`, `tests/orders/ordersApi.test.ts`.\n\nTypeScript with `strict` on, ESM with NodeNext resolution: every relative import carries the `.js` extension and types are imported with `import type`. No `any`: use `unknown` and narrow. Tests are vitest: `toBe` on scalars and short strings, `toStrictEqual` on a whole result; stubs come from `tests/helpers.ts`, never your own.",
+      "acceptance": "D=/tmp/morph/orders-api; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp src/orders/ordersApi.ts $D/0-$S.ts 2>/dev/null\ncp tests/orders/ordersApi.test.ts $D/1-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint src/orders/ordersApi.ts tests/orders/ordersApi.test.ts\n node_modules/.bin/vitest run tests/orders/ordersApi.test.ts --reporter=dot\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+      "model": null,
+      "maxTokens": 12000,
+      "reasoning": {
+        "maxTokens": 2500
+      },
+      "variants": 1,
+      "dependsOn": [
+        "place-order",
+        "cancel-order"
+      ]
+    },
+    {
+      "customId": "place-order-judge",
+      "intent": "patch",
+      "targets": [
+        "tests/orders/placeOrder.examples.test.ts"
+      ],
+      "contextSlice": [
+        "src/orders/placeOrder.ts",
+        "tests/helpers.ts"
+      ],
+      "instruction": "Write ONLY the test file `tests/orders/placeOrder.examples.test.ts`: one test per example of `src/orders/placeOrder.ts` taken from this instruction, in example order, each named \"<Function> example <n>: <what>\". Do not write or modify `src/orders/placeOrder.ts`: the author of the criterion is not the author of the code. vitest, stubs imported from `tests/helpers.ts`; TypeScript with `strict` on, ESM, no `any`.\n\nThe examples below are the criterion, and you are its independent author: write one test per example (no fewer, no merging), each named after the Function and the example number, e.g. \"Place Order example 1\".\n\nExamples of Function Place Order:\n1. given a cart of two items; when placed; then an order of two lines\n\nData Cart: A cart of items.\nSchema:\n{ items: string[] }\n\nEvent Order Placed: An order was placed.\nSchema:\n{\n  \"total\": \"integer\",\n  \"id\": \"string\"\n}\n\nCallee Price Cart: Prices every item of a cart.",
+      "acceptance": "D=/tmp/morph/place-order-judge; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp tests/orders/placeOrder.examples.test.ts $D/0-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint tests/orders/placeOrder.examples.test.ts\n node_modules/.bin/vitest run tests/orders/placeOrder.examples.test.ts --reporter=dot\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+      "model": null,
+      "maxTokens": 17000,
+      "reasoning": {
+        "maxTokens": 2500
+      },
+      "variants": 1,
+      "dependsOn": [
+        "place-order"
+      ]
+    },
+    {
+      "customId": "orders-api-judge",
+      "intent": "patch",
+      "targets": [
+        "tests/orders/ordersApi.examples.test.ts"
+      ],
+      "contextSlice": [
+        "src/orders/ordersApi.ts",
+        "tests/helpers.ts"
+      ],
+      "instruction": "Write ONLY the test file `tests/orders/ordersApi.examples.test.ts`: one test per example of `src/orders/ordersApi.ts` taken from this instruction, in example order, each named \"<Function> example <n>: <what>\". Do not write or modify `src/orders/ordersApi.ts`: the author of the criterion is not the author of the code. vitest, stubs imported from `tests/helpers.ts`; TypeScript with `strict` on, ESM, no `any`.",
+      "acceptance": "D=/tmp/morph/orders-api-judge; mkdir -p $D; S=$(date +%s)-$$; L=$D/acc-$S.log\ncp tests/orders/ordersApi.examples.test.ts $D/0-$S.ts 2>/dev/null\n(\n set -e\n node_modules/.bin/tsc --noEmit\n node_modules/.bin/eslint tests/orders/ordersApi.examples.test.ts\n node_modules/.bin/vitest run tests/orders/ordersApi.examples.test.ts --reporter=dot\n node_modules/.bin/vitest run --reporter=dot\n) > $L 2>&1; rc=$?; cat $L; exit $rc\n",
+      "model": null,
+      "maxTokens": 16000,
+      "reasoning": {
+        "maxTokens": 2500
+      },
+      "variants": 1,
+      "dependsOn": [
+        "orders-api"
+      ]
+    }
+  ],
+  "generations": [
+    [
+      "cancel-order",
+      "price-cart",
+      "prices"
+    ],
+    [
+      "cancel-order-judge",
+      "place-order",
+      "prices-judge"
+    ],
+    [
+      "orders-api",
+      "place-order-judge"
+    ],
+    [
+      "orders-api-judge"
+    ]
+  ],
+  "externalDependsOn": {}
+}

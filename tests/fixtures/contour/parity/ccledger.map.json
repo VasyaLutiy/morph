@@ -1,0 +1,97 @@
+{
+ "package": "ccledger",
+ "docs": [
+  "docs/TASK_ccledger.md",
+  "contour.yaml"
+ ],
+ "cards": {
+  "load-session": {
+   "custom_id": "load",
+   "targets": [
+    "ccledger/load.py",
+    "tests/test_load.py"
+   ],
+   "context_slice": [
+    "docs/TASK_ccledger.md",
+    "contour.yaml",
+    "tests/fixtures/sessions/sample-excerpt.jsonl"
+   ],
+   "max_tokens": 20000,
+   "reasoning_max_tokens": 2000,
+   "variants": 2
+  },
+  "price-call": {
+   "custom_id": "price",
+   "targets": [
+    "ccledger/price.py",
+    "tests/test_price.py"
+   ],
+   "context_slice": [
+    "docs/TASK_ccledger.md"
+   ],
+   "max_tokens": 12000,
+   "reasoning_max_tokens": 1500
+  },
+  "classify-call": {
+   "custom_id": "classify",
+   "targets": [
+    "ccledger/classify.py",
+    "tests/test_classify.py"
+   ],
+   "context_slice": [
+    "docs/TASK_ccledger.md",
+    "contour.yaml"
+   ],
+   "max_tokens": 14000,
+   "reasoning_max_tokens": 1500
+  },
+  "build-ledger": {
+   "custom_id": "ledger",
+   "targets": [
+    "ccledger/ledger.py",
+    "tests/test_ledger.py"
+   ],
+   "context_slice": [
+    "docs/TASK_ccledger.md",
+    "ccledger/load.py",
+    "ccledger/price.py",
+    "ccledger/classify.py",
+    "tests/fixtures/sessions/sample-excerpt.jsonl"
+   ],
+   "max_tokens": 20000,
+   "reasoning_max_tokens": 2000,
+   "variants": 2
+  },
+  "render-ledger": {
+   "custom_id": "render",
+   "targets": [
+    "ccledger/render.py",
+    "tests/test_render.py"
+   ],
+   "context_slice": [
+    "docs/TASK_ccledger.md",
+    "contour.yaml"
+   ],
+   "max_tokens": 16000,
+   "reasoning_max_tokens": 2000
+  },
+  "ledger-cli": {
+   "custom_id": "cli",
+   "targets": [
+    "ccledger/cli.py",
+    "ccledger/__main__.py",
+    "tests/test_cli.py",
+    "README.md"
+   ],
+   "context_slice": [
+    "docs/TASK_ccledger.md",
+    "contour.yaml",
+    "ccledger/ledger.py",
+    "ccledger/render.py",
+    "tests/test_ledger.py"
+   ],
+   "max_tokens": 20000,
+   "reasoning_max_tokens": 2000
+  }
+ }
+}

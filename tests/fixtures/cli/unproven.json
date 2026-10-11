@@ -1,0 +1,11 @@
+{
+  "calc/a.go": "package calc\n",
+  "src/b.ts": "export const b = 1;\n",
+  "src/c.ts": "export const c = 1;\n",
+  "decks/q/deck.json": "[\n  {\n    \"customId\": \"a\",\n    \"intent\": \"generate\",\n    \"targets\": [\n      \"calc/a.go\"\n    ],\n    \"instruction\": \"write calc/a.go\",\n    \"acceptance\": \"exit 0\"\n  },\n  {\n    \"customId\": \"b\",\n    \"intent\": \"patch\",\n    \"targets\": [\n      \"src/b.ts\",\n      \"src/c.ts\"\n    ],\n    \"instruction\": \"patch src/b.ts and src/c.ts\",\n    \"acceptance\": \"exit 0\"\n  },\n  {\n    \"customId\": \"n\",\n    \"intent\": \"generate\",\n    \"targets\": [\n      \"calc/new.go\"\n    ],\n    \"instruction\": \"write calc/new.go\",\n    \"acceptance\": \"exit 0\"\n  }\n]\n",
+  "decks/q/_stubs/calc/a.go": "package calc\n",
+  "decks/q/_stubs/src/b.ts": "export const b: number = 0;\n",
+  "decks/q/_stubs/calc/new.go": "package calc\n",
+  "decks/t/deck.json": "[\n  {\n    \"customId\": \"a\",\n    \"intent\": \"generate\",\n    \"targets\": [\n      \"calc/a.go\"\n    ],\n    \"instruction\": \"write calc/a.go\",\n    \"acceptance\": \"# morph: subset transaction\\nexit 0\"\n  },\n  {\n    \"customId\": \"b\",\n    \"intent\": \"patch\",\n    \"targets\": [\n      \"src/b.ts\",\n      \"src/c.ts\"\n    ],\n    \"instruction\": \"patch src/b.ts and src/c.ts\",\n    \"acceptance\": \"# morph: subset transaction\\nexit 0\"\n  },\n  {\n    \"customId\": \"n\",\n    \"intent\": \"generate\",\n    \"targets\": [\n      \"calc/new.go\"\n    ],\n    \"instruction\": \"write calc/new.go\",\n    \"acceptance\": \"# morph: subset transaction\\nexit 0\"\n  }\n]\n",
+  "decks/u/deck.json": "[\n  {\n    \"customId\": \"a\",\n    \"intent\": \"generate\",\n    \"targets\": [\n      \"calc/a.go\"\n    ],\n    \"instruction\": \"write calc/a.go\",\n    \"acceptance\": \"exit 0\"\n  },\n  {\n    \"customId\": \"b\",\n    \"intent\": \"patch\",\n    \"targets\": [\n      \"src/b.ts\",\n      \"src/c.ts\"\n    ],\n    \"instruction\": \"patch src/b.ts and src/c.ts\",\n    \"acceptance\": \"exit 0\"\n  },\n  {\n    \"customId\": \"n\",\n    \"intent\": \"generate\",\n    \"targets\": [\n      \"calc/new.go\"\n    ],\n    \"instruction\": \"write calc/new.go\",\n    \"acceptance\": \"exit 0\"\n  }\n]\n"
+}

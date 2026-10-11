@@ -1,0 +1,20 @@
+version: 1
+System:
+  name: issue46
+  description: Issue #46's negative case. Package daemon imports package runner, but the record has no step `uses: runner`, so the edge is missing and the layer check must be red whatever decks/tools/layers.json says.
+  guardrails: [No Shell]
+  groups:
+    - name: daemon
+      description: The daemon; its code imports runner.
+      language: go
+      functions:
+        - name: Daemon Core
+          description: Starts a run.
+          behavior: Start() string returns runner.Name.
+    - name: runner
+      description: The runner.
+      language: go
+      functions:
+        - name: Run Step
+          description: The runner's name.
+          behavior: Name is the constant "runner".

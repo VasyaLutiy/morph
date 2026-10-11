@@ -1,0 +1,220 @@
+# Contour model — ccledger
+#
+# Запись в стиле Contour (https://github.com/mykhailo-kulish/contour, схема
+# contour.schema.json, структурная форма раздела 3): владение через вложение,
+# ссылки между границами — по имени. Написана ДО кода как спека для колоды
+# Морфа; проверяется тем, что колода из неё нарезается, а приёмка карт
+# соответствует Requirement/Guardrail. Что запись не смогла выразить — в
+# docs/TASK_ccledger.md §11 после прогона.
+
+System:
+  name: ccledger
+  description: >
+    Гроссбух сессий Claude Code: читает журналы сессий (JSONL в
+    ~/.claude/projects/<slug>/) и отвечает числами — сколько было вызовов
+    модели, каких токенов и на сколько долларов, чем эти вызовы занимались
+    (чтение, письмо, тесты, git) и сколько вызовов ушло на ориентировку до
+    первой правки и до первого коммита. Один Component, без сети и без
+    зависимостей вне стандартной библиотеки Python.
+  requirements: [Numbers Only, Stdlib Only, Deterministic]
+  guardrails: [No Network, Never Echo Content]
+  groups:
+    - name: ccledger
+      description: >
+        Библиотека и CLI. Чистые функции над словарями: журнал → вызовы →
+        цена и категория каждого → гроссбух сессии → отчёт. Файловая система
+        читается в одном месте (загрузка журнала), stdout пишется в одном
+        месте (CLI).
+      requirements: [Numbers Only, Stdlib Only, Deterministic, Tolerant Reader]
+      guardrails: [No Network, Never Echo Content, One Reader One Writer]
+
+      functions:
+        - name: Load Session
+          description: >
+            Читает один журнал сессии и журналы её субагентов и возвращает
+            список вызовов модели (Api Call), по одному на message.id.
+          behavior: >
+            Открывает <path>.jsonl и все <path>/subagents/*.jsonl, если каталог
+            есть. Строку, которая не разбирается как JSON, пропускает. Берёт
+            только записи type == "assistant" с message.usage, у которых
+            message.model не "<synthetic>". Потоковый ответ даёт несколько
+            записей с одним message.id — они схлопываются в один вызов: usage
+            берётся из последней записи, блоки tool_use накапливаются в порядке
+            появления, timestamp — из первой. Вызов из журнала субагента
+            помечается source = "subagent:<имя файла>", из основного —
+            source = "main". Порядок вызовов — порядок первого появления,
+            основной журнал раньше субагентов.
+          requirements: [Tolerant Reader]
+          guardrails: [Never Echo Content]
+          steps:
+            - reads: Session Log
+            - produces: Session Loaded
+
+        - name: Price Call
+          description: >
+            Оценивает стоимость одного вызова в долларах по его usage и модели.
+          behavior: >
+            Семейство модели определяется подстрокой имени: "haiku" → haiku,
+            "sonnet" → sonnet, иначе — старшее семейство (opus, fable).
+            Цена = input·in + output·out + cache_read·cr + cache_write_1h·cw1h
+            + cache_write_5m·cw5m по таблице Price Table за миллион токенов.
+            Неизвестное поле usage считается нулём; None — нулём.
+          steps:
+            - reads: Price Table
+
+        - name: Classify Call
+          description: >
+            Относит вызов к одной категории по инструментам, которые он вызвал.
+          behavior: >
+            Категории и приоритет при нескольких инструментах в одном вызове:
+            write (Edit, Write, MultiEdit, NotebookEdit, либо Bash с записью —
+            перенаправление >, >>, tee, sed -i, cp, mv, mkdir, touch, git commit),
+            test (Bash с pytest, unittest, vitest, npm test, tsc, ruff, mypy),
+            git (Bash с git add/commit/push/checkout/merge/rebase/stash/pull/fetch),
+            ops (Bash с ssh, scp, docker, kubectl, hcloud, gh, curl, wget),
+            web (WebFetch, WebSearch), agent (Agent, Task, SendMessage),
+            read (Read, Grep, Glob, LS, любой другой Bash), other (остальные
+            инструменты), talk (ни одного инструмента). Первая по этому списку
+            категория, которая присутствует, — ответ. Bash судится по строке
+            команды целыми словами, без учёта регистра.
+
+        - name: Build Ledger
+          description: >
+            Собирает из вызовов гроссбух сессии: счётчики, токены, доллары,
+            разбивку по категориям и меры ориентировки.
+          behavior: >
+            Для каждого вызова — Price Call и Classify Call. Суммирует токены по
+            пяти видам, доллары всего и по категориям, число вызовов всего, в
+            основном журнале и у субагентов, по моделям и по инструментам.
+            Ориентировка считается только по вызовам основного журнала:
+            calls_before_first_write — сколько вызовов было ДО первого вызова
+            категории write (None, если такого нет); calls_before_first_commit —
+            то же до первого Bash с "git commit". Если в журнале есть записи
+            type == "cost-state", recorded_usd = totalCostUSD последней из них и
+            ratio = estimated_usd / recorded_usd; иначе оба None. span — первый
+            и последний timestamp вызовов и разница в секундах.
+          requirements: [Numbers Only, Deterministic]
+          steps:
+            - calls: Load Session
+            - calls: Price Call
+            - calls: Classify Call
+            - produces: Ledger Built
+
+        - name: Render Ledger
+          description: >
+            Печатает гроссбух одной сессии или таблицу по нескольким как Markdown.
+          behavior: >
+            Для одной сессии — заголовок с session_id и span, таблица токенов
+            (пять видов и доля cache_read во входе), строка долларов
+            (оценка, запись cost-state, отношение), таблица категорий
+            (вызовы, доллары, доля), строки ориентировки. Для списка сессий —
+            одна таблица: строка на сессию, столбцы calls, output, cache_read,
+            usd, before_first_write, before_first_commit. Отсутствующее
+            значение печатается как "—". Никакого текста из журнала.
+          requirements: [Numbers Only]
+          guardrails: [Never Echo Content]
+
+        - name: Ledger CLI
+          description: >
+            Командная строка: одна сессия или все сессии каталога, JSON или Markdown.
+          behavior: >
+            `python -m ccledger session <path.jsonl> [--json]` — гроссбух одной
+            сессии; `python -m ccledger project <dir> [--json]` — гроссбухи всех
+            *.jsonl каталога, отсортированные по span.start, плюс итоговая
+            строка. Без --json печатается Markdown из Render Ledger. Код
+            возврата 0; несуществующий путь — сообщение в stderr и код 2.
+            stdout содержит только отчёт.
+          guardrails: [One Reader One Writer]
+          steps:
+            - calls: Build Ledger
+            - calls: Render Ledger
+
+      interfaces:
+        - name: ccledger CLI
+          description: Точка входа `python -m ccledger` с подкомандами session и project.
+          exposes: [Ledger CLI]
+
+      dataObjects:
+        - name: Session Log
+          description: >
+            Журнал сессии Claude Code: файл <session-id>.jsonl, по одной записи
+            JSON на строку, плюс необязательный каталог <session-id>/subagents/
+            с журналами того же формата. Внешний формат, ccledger его не пишет.
+          schema:
+            record.type: "assistant | user | system | cost-state | attachment | file-history-snapshot | mode | ... (другие пропускаются)"
+            record.message.id: "string — идентификатор ответа; повторяется у записей одного потокового ответа"
+            record.message.model: "string, например claude-opus-5-5; '<synthetic>' — не вызов"
+            record.message.usage: "input_tokens, output_tokens, cache_read_input_tokens, cache_creation_input_tokens, cache_creation.ephemeral_1h_input_tokens, cache_creation.ephemeral_5m_input_tokens"
+            record.message.content: "список блоков; блок tool_use имеет name и input"
+            record.timestamp: "ISO-8601 с Z"
+            record.totalCostUSD: "только у type == cost-state — счёт сессии по версии Claude Code"
+
+        - name: Api Call
+          description: Один вызов модели после схлопывания потоковых записей.
+          schema:
+            id: string
+            model: string
+            source: "main | subagent:<file>"
+            timestamp: "ISO-8601 или null"
+            stop_reason: "string или null"
+            usage: "{input, output, cache_read, cache_write_1h, cache_write_5m} — целые"
+            tools: "[{name, input}] в порядке появления"
+
+        - name: Price Table
+          description: Цены за миллион токенов по семействам моделей; данные, не код.
+          schema:
+            family: "opus | sonnet | haiku"
+            fields: "in, out, cr, cw1h, cw5m — доллары за 1M токенов"
+            defaults: "opus 5/25/0.5/10/6.25; sonnet 3/15/0.3/6/3.75; haiku 1/5/0.1/2/1.25"
+
+        - name: Ledger
+          description: Гроссбух одной сессии — то, что печатает CLI с --json.
+          schema:
+            session_id: string
+            path: string
+            calls: "{total, main, subagents}"
+            models: "{model: calls}"
+            tools: "{tool_name: calls}"
+            tokens: "{input, output, cache_read, cache_write_1h, cache_write_5m}"
+            cost: "{estimated_usd, recorded_usd | null, ratio | null}"
+            categories: "{category: {calls, usd}}"
+            orientation: "{calls_before_first_write | null, calls_before_first_commit | null}"
+            span: "{start, end, seconds}"
+
+      events:
+        - name: Session Loaded
+          description: Журнал прочитан, вызовы схлопнуты.
+        - name: Ledger Built
+          description: Гроссбух сессии собран.
+
+Actor:
+  - name: Operator
+    description: Человек или оркестратор, измеряющий сессии.
+    uses: [ccledger CLI]
+
+Requirement:
+  - name: Numbers Only
+    description: >
+      Выход содержит числа, имена моделей, имена инструментов и идентификаторы
+      сессий. Ни одного символа из текста сообщений, команд, путей файлов или
+      результатов инструментов.
+  - name: Stdlib Only
+    description: Никаких зависимостей вне стандартной библиотеки Python 3.9+.
+  - name: Deterministic
+    description: Один и тот же журнал даёт байт в байт одинаковый гроссбух.
+  - name: Tolerant Reader
+    description: >
+      Битая строка, отсутствующее поле, неизвестный тип записи, отсутствующий
+      каталог субагентов — пропуск, не исключение. Пустой журнал — гроссбух
+      с нулями.
+
+Guardrail:
+  - name: No Network
+    description: Ни одного сетевого обращения ни в коде, ни в тестах.
+  - name: Never Echo Content
+    description: >
+      Текст сообщений и содержимое инструментов не покидают загрузчика:
+      Api Call хранит имя инструмента и его input только для классификации,
+      Ledger и отчёт их не содержат.
+  - name: One Reader One Writer
+    description: Файлы читает только Load Session; stdout пишет только Ledger CLI.

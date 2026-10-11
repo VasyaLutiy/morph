@@ -1,0 +1,162 @@
+{
+  "Extra": 1,
+  "System": {
+    "name": " shop ",
+    "description": "A shop.",
+    "dataObjects": [
+      {
+        "name": "Stray",
+        "description": "S."
+      }
+    ],
+    "groups": [
+      {
+        "name": "orders",
+        "description": "Orders.",
+        "language": "typescript",
+        "owner": "me",
+        "references": [
+          " Price List "
+        ],
+        "consumes": [
+          "Stock Low"
+        ],
+        "dependsOn": [
+          " catalog "
+        ],
+        "functions": [
+          {
+            "name": "Place Order",
+            "description": "Places an order.",
+            "steps": [
+              {
+                "reads": "Price List"
+              },
+              {
+                "produces": "Order Placed"
+              }
+            ],
+            "note": "x"
+          },
+          {
+            "name": "Cancel Order",
+            "description": "Cancels an order.",
+            "behavior": "Marks it cancelled.",
+            "examples": [
+              {
+                "given": "g",
+                "when": "w",
+                "then": "t",
+                "why": "y"
+              }
+            ]
+          }
+        ],
+        "interfaces": [
+          {
+            "name": "Orders API",
+            "description": "REST.",
+            "exposes": [
+              "Place Order",
+              "Cancel Order"
+            ],
+            "requirements": [
+              "Exact Sums"
+            ],
+            "guardrails": [
+              "No Network"
+            ],
+            "schema": " openapi.yaml#/orders ",
+            "version": "1"
+          }
+        ],
+        "events": [
+          {
+            "name": "Order Placed",
+            "description": "An order was placed.",
+            "requirements": [
+              "Exact Sums"
+            ],
+            "guardrails": [
+              "No Network"
+            ],
+            "schema": {
+              "total": {
+                "currency": "string",
+                "cents": "integer"
+              },
+              "id": "string"
+            },
+            "topic": "orders"
+          }
+        ]
+      },
+      {
+        "name": "catalog",
+        "description": "Prices of the shop.",
+        "functions": [
+          {
+            "name": "List Prices",
+            "description": "Lists the prices.",
+            "behavior": "Every price.",
+            "steps": [
+              {
+                "produces": "Price List"
+              }
+            ]
+          }
+        ],
+        "dataObjects": [
+          {
+            "name": "Price List",
+            "description": "Prices.",
+            "requirements": [
+              "Exact Sums"
+            ],
+            "guardrails": [
+              "No Network"
+            ],
+            "schema": {
+              "sku": "string",
+              "cents": " integer "
+            },
+            "owner": "x"
+          }
+        ],
+        "events": [
+          {
+            "name": "Stock Low",
+            "description": "Stock ran low."
+          }
+        ]
+      }
+    ]
+  },
+  "Actor": {
+    "name": "Buyer",
+    "description": "Buys.",
+    "uses": [
+      "Orders API"
+    ],
+    "requirements": [
+      "Exact Sums"
+    ],
+    "guardrails": [
+      "No Network"
+    ],
+    "role": "x"
+  },
+  "Requirement": [
+    {
+      "name": "Exact Sums",
+      "description": "Sums in cents.",
+      "level": "must"
+    }
+  ],
+  "Guardrail": [
+    {
+      "name": "No Network",
+      "description": "No sockets."
+    }
+  ]
+}

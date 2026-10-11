@@ -50,3 +50,22 @@ P24c, P24b. PM = the MorphStudio PM's live phases P7b, P7c, P8a (10.10).
 | §10.5 retries with `file:line` | PM P7b (#19) | the only way to see whether blame names the right card |
 | §11.1 explicit paths only | PM | `commit -a` swept another agent's uncommitted record edit into public `main` |
 | §12.6 minutes per round only | P24c (#20) | the run report has no per-card time yet |
+| §1.5 no MEASURE row, even one | beta MorphStudio P9a (#40), 11.10 | the orchestrator wrote a MEASURE row the operator's session owns |
+| §4.3 a new code directory needs its layer | beta MorphStudio P9a (#40), 11.10 | `users` missing from `layers.json`: every `users` card red at guard in run 1, $0.24 (the fix moves the rule into the record: #41) |
+| §4.6 generate re-cut: every row red | beta MorphStudio P8b/P9a (#40) | the throwing stub of §6.1 cannot keep unchanged rows green; the two rules read as a conflict |
+| §4.10 validate edited data | beta MorphStudio P9a (#40), GLM-5.3 | a garbled Edit corrupted `morph-map.json`; caught only by luck before the cut |
+| §4.11 scout output committed or removed | beta MorphStudio P7c-2, P9a (#40) | untracked `.morph/scout/<id>/scout.json`: every card red at the last stage, 2 runs lost |
+| §5.4 `deck check` compiles only; `unproven` absent = none | beta MorphStudio P9a (#40) | `deck check` 0 errors while the guard was red for 3 cards; the absent key was read as a missing check |
+| §6.1 the real acceptance, never an emulation | beta MorphStudio P9a (#40), reproduced 11.10 | "stubcheck 8/8" over `guardcheck.py`; the real acceptances on the same stubs stop at `== guard` for 3 cards — $0 to see, 1 run to learn |
+| §6.1 judge stub names unique per package | beta MorphStudio P9a (#40) | two `func TestStub` in package `users`: redeclared, one `deck check` round lost |
+| §12.2 times from `date -u` | beta MorphStudio P7c-3 (#40) | a hand-written times file one hour off UTC |
+| §5.2 a map `acceptance` overrides `--checks` | P32, 11.10 | the P6 literal acceptances of open-branch and its judge won over `--checks`; one data fix |
+| §4.11 ignore `.morph/*` + `!.morph/runs/`, not `.morph/` | P32 smoke, 11.10 | `.morph/` ignored whole: `archive … written but not committed: git add failed`, exit 3 |
+| §1.1 beside the record only what it cannot say | P9a / #40, P30, 11.10 | layers.json held the project's layer rules: the record grew a Component, the copy did not, run 1 lost; the old Morph's criterion (TASK_plan_spec.md §1) restored |
+| §10.1 tree defect: fix, then salvage | P30, 11.10 | a deleted fixture (`go-mini/decks/tools/layers.json`) read by a test through path concatenation: every card red at `== full`; data fix, then `accept` 10/10 |
+| §4.3 30 000 bytes, raw | P34a, 11.10 | cli at 30 198 B read as "29.5 KiB, under 30 KB" |
+| §4.7 a patching judge gets its test's variable types; whitespace in examples collapses | P34b, P31a, 11.10 | `'warnings' does not exist in type 'PlanDocument'`: 1 retry; `"  No   Shell "` rendered as `" No Shell "` |
+| §10.1 tree-defect fix on the run branch; grep concatenated fixture paths | P30, P34a, 11.10 | a fixture read as `"go-mini/" + path` deleted: every card red at `== full` |
+| §4.3 structure and rules in the record, not layers.json | P30–P31b, 11.10 | the layer, pure and imports rules moved from hand data into the record; layers.json is gone from the templates |
+| §8.3 no polling of any background command; end the turn only while one runs | P31c, 11.10 (operator caught it) | `sleep 60; cat …output; tail scout.err` on the scout; then a turn ended on "Now the record: rules Component." with nothing running — the session stopped until the operator resumed it |
+| §6.1 a patch stub equal to the committed file is expected in `unproven` | P31c, 11.10 | the probe needed no new declaration; `unproven` always lists such a stub |

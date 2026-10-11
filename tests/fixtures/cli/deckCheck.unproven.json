@@ -1,0 +1,243 @@
+{
+  "q": {
+    "deck": "decks/q/deck.json",
+    "cards": 3,
+    "generations": [
+      [
+        "a",
+        "b",
+        "n"
+      ]
+    ],
+    "errors": 0,
+    "warnings": 8,
+    "hazards": [
+      {
+        "kind": "implicit-read",
+        "severity": "warning",
+        "cards": [
+          "a"
+        ],
+        "path": null,
+        "repair": null
+      },
+      {
+        "kind": "implicit-read",
+        "severity": "warning",
+        "cards": [
+          "b"
+        ],
+        "path": null,
+        "repair": null
+      },
+      {
+        "kind": "implicit-read",
+        "severity": "warning",
+        "cards": [
+          "n"
+        ],
+        "path": null,
+        "repair": null
+      }
+    ],
+    "weights": [
+      {
+        "card": "a",
+        "bytes": 13,
+        "missing": []
+      },
+      {
+        "card": "b",
+        "bytes": 40,
+        "missing": []
+      },
+      {
+        "card": "n",
+        "bytes": 0,
+        "missing": [
+          "calc/new.go"
+        ]
+      }
+    ],
+    "builds": [
+      {
+        "card": "a",
+        "generation": 0,
+        "language": "go",
+        "stubbed": 0,
+        "missing": [],
+        "breaks": [],
+        "note": "the acceptance writes no $P/full.json: not built"
+      },
+      {
+        "card": "b",
+        "generation": 0,
+        "language": "typescript",
+        "stubbed": 0,
+        "missing": [],
+        "breaks": [],
+        "note": "the acceptance writes no $P/tsconfig.card.json: not built"
+      },
+      {
+        "card": "n",
+        "generation": 0,
+        "language": "go",
+        "stubbed": 0,
+        "missing": [],
+        "breaks": [],
+        "note": "the acceptance writes no $P/full.json: not built"
+      }
+    ],
+    "unproven": [
+      {
+        "card": "a",
+        "path": "calc/a.go",
+        "reason": "the stub equals the committed file: the build proved nothing about its names"
+      },
+      {
+        "card": "b",
+        "path": "src/c.ts",
+        "reason": "no stub: the build used the committed file"
+      }
+    ]
+  },
+  "t": {
+    "deck": "decks/t/deck.json",
+    "cards": 3,
+    "generations": [
+      [
+        "a",
+        "b",
+        "n"
+      ]
+    ],
+    "errors": 0,
+    "warnings": 6,
+    "hazards": [
+      {
+        "kind": "implicit-read",
+        "severity": "warning",
+        "cards": [
+          "a"
+        ],
+        "path": null,
+        "repair": null
+      },
+      {
+        "kind": "implicit-read",
+        "severity": "warning",
+        "cards": [
+          "b"
+        ],
+        "path": null,
+        "repair": null
+      },
+      {
+        "kind": "implicit-read",
+        "severity": "warning",
+        "cards": [
+          "n"
+        ],
+        "path": null,
+        "repair": null
+      }
+    ],
+    "weights": [
+      {
+        "card": "a",
+        "bytes": 13,
+        "missing": []
+      },
+      {
+        "card": "b",
+        "bytes": 40,
+        "missing": []
+      },
+      {
+        "card": "n",
+        "bytes": 0,
+        "missing": [
+          "calc/new.go"
+        ]
+      }
+    ],
+    "unproven": [
+      {
+        "card": "a",
+        "path": "calc/a.go",
+        "reason": "no _stubs/ beside the deck: no build ran"
+      },
+      {
+        "card": "b",
+        "path": "src/b.ts",
+        "reason": "no _stubs/ beside the deck: no build ran"
+      },
+      {
+        "card": "b",
+        "path": "src/c.ts",
+        "reason": "no _stubs/ beside the deck: no build ran"
+      }
+    ]
+  },
+  "u": {
+    "deck": "decks/u/deck.json",
+    "cards": 3,
+    "generations": [
+      [
+        "a",
+        "b",
+        "n"
+      ]
+    ],
+    "errors": 0,
+    "warnings": 3,
+    "hazards": [
+      {
+        "kind": "implicit-read",
+        "severity": "warning",
+        "cards": [
+          "a"
+        ],
+        "path": null,
+        "repair": null
+      },
+      {
+        "kind": "implicit-read",
+        "severity": "warning",
+        "cards": [
+          "b"
+        ],
+        "path": null,
+        "repair": null
+      },
+      {
+        "kind": "implicit-read",
+        "severity": "warning",
+        "cards": [
+          "n"
+        ],
+        "path": null,
+        "repair": null
+      }
+    ],
+    "weights": [
+      {
+        "card": "a",
+        "bytes": 13,
+        "missing": []
+      },
+      {
+        "card": "b",
+        "bytes": 40,
+        "missing": []
+      },
+      {
+        "card": "n",
+        "bytes": 0,
+        "missing": [
+          "calc/new.go"
+        ]
+      }
+    ]
+  }
+}

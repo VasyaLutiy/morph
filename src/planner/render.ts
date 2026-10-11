@@ -1,5 +1,6 @@
 import type {
   Component,
+  ContourEvent,
   ContourFunction,
   ContourInterface,
   ContourRecord,
@@ -34,6 +35,14 @@ function findDataObject(record: ContourRecord, name: string): Definition & { sch
   return null;
 }
 
+function findEvent(record: ContourRecord, name: string): ContourEvent | null {
+  for (const component of record.system.groups) {
+    const event = component.events.find((e) => e.name === name);
+    if (event !== undefined) return event;
+  }
+  return null;
+}
+
 export function dataBlocks(
   record: ContourRecord,
   functions: readonly ContourFunction[],
@@ -45,12 +54,22 @@ export function dataBlocks(
       if (step.verb !== "reads" && step.verb !== "modifies" && step.verb !== "produces") continue;
       if (taken.has(step.target)) continue;
       const dataObject = findDataObject(record, step.target);
-      if (dataObject === null) continue;
+      if (dataObject !== null) {
+        taken.add(step.target);
+        blocks.push(
+          dataObject.schema === null
+            ? `Data ${dataObject.name}: ${dataObject.description}`
+            : `Data ${dataObject.name}: ${dataObject.description}\nSchema:\n${dataObject.schema}`,
+        );
+        continue;
+      }
+      const event = findEvent(record, step.target);
+      if (event === null) continue;
       taken.add(step.target);
       blocks.push(
-        dataObject.schema === null
-          ? `Data ${dataObject.name}: ${dataObject.description}`
-          : `Data ${dataObject.name}: ${dataObject.description}\nSchema:\n${dataObject.schema}`,
+        event.schema === null
+          ? `Event ${event.name}: ${event.description}`
+          : `Event ${event.name}: ${event.description}\nSchema:\n${event.schema}`,
       );
     }
   }
@@ -75,7 +94,9 @@ export function functionSection(record: ContourRecord, fn: ContourFunction): str
   if (fn.steps.length > 0) {
     blocks.push(["Steps:", ...fn.steps.map((s) => `- ${s.verb}: ${s.target}`)].join("\n"));
   }
-  blocks.push(`${EXAMPLES_HEADING}\n${renderExamples(fn.examples)}`);
+  if (fn.examples.length > 0) {
+    blocks.push(`${EXAMPLES_HEADING}\n${renderExamples(fn.examples)}`);
+  }
   for (const block of dataBlocks(record, [fn])) blocks.push(block);
   if (fn.requirements.length > 0) {
     blocks.push(["Requirements:", ...fn.requirements.map((n) => definitionLine(record.requirements, n))].join("\n"));
@@ -118,12 +139,33 @@ export function inheritedSection(record: ContourRecord, component: Component): s
   return blocks.join("\n\n");
 }
 
-export function interfaceSection(iface: ContourInterface, modules: readonly string[]): string {
+export function interfaceSection(
+  iface: ContourInterface,
+  modules: readonly string[],
+  record?: ContourRecord,
+): string {
   const blocks: string[] = [`## Interface ${iface.name}`, iface.description];
+  if (iface.schema !== null && iface.schema !== undefined) {
+    blocks.push(`Schema:\n${iface.schema}`);
+  }
   blocks.push([
     "Exposes:",
     ...iface.exposes.map((name, i) => `- ${name} (\`${modules[i] ?? ""}\`)`),
   ].join("\n"));
+  const requirements = iface.requirements;
+  if (requirements !== undefined && requirements.length > 0) {
+    blocks.push([
+      "Requirements:",
+      ...requirements.map((n) => definitionLine(record?.requirements ?? [], n)),
+    ].join("\n"));
+  }
+  const guardrails = iface.guardrails;
+  if (guardrails !== undefined && guardrails.length > 0) {
+    blocks.push([
+      "Guardrails:",
+      ...guardrails.map((n) => definitionLine(record?.guardrails ?? [], n)),
+    ].join("\n"));
+  }
   return blocks.join("\n\n");
 }
 

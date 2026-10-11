@@ -1,0 +1,157 @@
+{
+ "go": {
+  "map": "{\n  \"language\": \"go\",\n  \"cards\": {\n    \"stamp-line\": {\n      \"targets\": [\n        \"report/stamp.go\"\n      ]\n    },\n    \"plain-line\": {\n      \"targets\": [\n        \"report/plain.go\"\n      ]\n    },\n    \"unit-name\": {\n      \"targets\": [\n        \"units/units.go\"\n      ]\n    }\n  }\n}\n",
+  "tree": {
+   "go.mod": "module m\n\ngo 1.22\n",
+   "report/stamp.go": "package report\n\nimport \"time\"\n\n// Stamp is the report line with the time.\nfunc Stamp() string {\n\treturn \"at \" + time.Now().String()\n}\n",
+   "report/plain.go": "package report\n\nimport \"time\"\n\n// Plain is the report line; it reads the clock too.\nfunc Plain() string {\n\treturn \"line \" + time.Now().String()\n}\n",
+   "units/units.go": "package units\n\nimport \"time\"\n\n// Unit is the unit name; it reads the clock too.\nfunc Unit() string {\n\treturn \"m \" + time.Now().String()\n}\n"
+  },
+  "files": {
+   "report/stamp.go": "stamp-line",
+   "report/plain.go": "plain-line",
+   "units/units.go": "unit-name"
+  },
+  "records": {
+   "function": "version: 1\nSystem:\n  name: scope\n  description: The scope of a Guardrail by where it is attached (P31c, issue #42 ledger item 9) — every code file reads the clock.\n  guardrails: []\n  groups:\n    - name: report\n      description: Two Functions whose code files share one directory.\n      language: go\n      guardrails: []\n      functions:\n        - name: Stamp Line\n          description: The report line with the time.\n          behavior: Stamp() returns the line with the time.\n          guardrails: [No Clock]\n        - name: Plain Line\n          description: The report line.\n          behavior: Plain() returns the line.\n    - name: units\n      description: Another directory.\n      language: go\n      functions:\n        - name: Unit Name\n          description: The unit name.\n          behavior: Unit() returns the unit name.\n",
+   "interface": "version: 1\nSystem:\n  name: scope\n  description: The scope of a Guardrail by where it is attached (P31c, issue #42 ledger item 9) — every code file reads the clock.\n  guardrails: []\n  groups:\n    - name: report\n      description: Two Functions whose code files share one directory.\n      language: go\n      guardrails: []\n      functions:\n        - name: Stamp Line\n          description: The report line with the time.\n          behavior: Stamp() returns the line with the time.\n          guardrails: []\n        - name: Plain Line\n          description: The report line.\n          behavior: Plain() returns the line.\n      interfaces:\n        - name: stamp hook\n          description: The stamp call alone.\n          exposes: [Stamp Line]\n          guardrails: [No Clock]\n    - name: units\n      description: Another directory.\n      language: go\n      functions:\n        - name: Unit Name\n          description: The unit name.\n          behavior: Unit() returns the unit name.\n",
+   "component": "version: 1\nSystem:\n  name: scope\n  description: The scope of a Guardrail by where it is attached (P31c, issue #42 ledger item 9) — every code file reads the clock.\n  guardrails: []\n  groups:\n    - name: report\n      description: Two Functions whose code files share one directory.\n      language: go\n      guardrails: [No Clock]\n      functions:\n        - name: Stamp Line\n          description: The report line with the time.\n          behavior: Stamp() returns the line with the time.\n          guardrails: []\n        - name: Plain Line\n          description: The report line.\n          behavior: Plain() returns the line.\n    - name: units\n      description: Another directory.\n      language: go\n      functions:\n        - name: Unit Name\n          description: The unit name.\n          behavior: Unit() returns the unit name.\n",
+   "system": "version: 1\nSystem:\n  name: scope\n  description: The scope of a Guardrail by where it is attached (P31c, issue #42 ledger item 9) — every code file reads the clock.\n  guardrails: [No Clock]\n  groups:\n    - name: report\n      description: Two Functions whose code files share one directory.\n      language: go\n      guardrails: []\n      functions:\n        - name: Stamp Line\n          description: The report line with the time.\n          behavior: Stamp() returns the line with the time.\n          guardrails: []\n        - name: Plain Line\n          description: The report line.\n          behavior: Plain() returns the line.\n    - name: units\n      description: Another directory.\n      language: go\n      functions:\n        - name: Unit Name\n          description: The unit name.\n          behavior: Unit() returns the unit name.\n"
+  },
+  "then": {
+   "function": {
+    "report/stamp.go": {
+     "status": 1,
+     "stdout": "guard: report/stamp.go:7: uses time.Now: Guardrail 'No Clock' of Function Stamp Line\n"
+    },
+    "report/plain.go": {
+     "status": 0,
+     "stdout": ""
+    },
+    "units/units.go": {
+     "status": 0,
+     "stdout": ""
+    }
+   },
+   "interface": {
+    "report/stamp.go": {
+     "status": 1,
+     "stdout": "guard: report/stamp.go:7: uses time.Now: Guardrail 'No Clock' of Interface stamp hook\n"
+    },
+    "report/plain.go": {
+     "status": 0,
+     "stdout": ""
+    },
+    "units/units.go": {
+     "status": 0,
+     "stdout": ""
+    }
+   },
+   "component": {
+    "report/stamp.go": {
+     "status": 1,
+     "stdout": "guard: report/stamp.go:7: uses time.Now: Guardrail 'No Clock' of Component report\n"
+    },
+    "report/plain.go": {
+     "status": 1,
+     "stdout": "guard: report/plain.go:7: uses time.Now: Guardrail 'No Clock' of Component report\n"
+    },
+    "units/units.go": {
+     "status": 0,
+     "stdout": ""
+    }
+   },
+   "system": {
+    "report/stamp.go": {
+     "status": 1,
+     "stdout": "guard: report/stamp.go:7: uses time.Now: Guardrail 'No Clock' of System scope\n"
+    },
+    "report/plain.go": {
+     "status": 1,
+     "stdout": "guard: report/plain.go:7: uses time.Now: Guardrail 'No Clock' of System scope\n"
+    },
+    "units/units.go": {
+     "status": 1,
+     "stdout": "guard: units/units.go:7: uses time.Now: Guardrail 'No Clock' of System scope\n"
+    }
+   }
+  }
+ },
+ "typescript": {
+  "map": "{\n  \"language\": \"typescript\",\n  \"cards\": {\n    \"stamp-line\": {\n      \"targets\": [\n        \"src/report/stamp.ts\"\n      ]\n    },\n    \"plain-line\": {\n      \"targets\": [\n        \"src/report/plain.ts\"\n      ]\n    },\n    \"unit-name\": {\n      \"targets\": [\n        \"src/units/units.ts\"\n      ]\n    }\n  }\n}\n",
+  "tree": {
+   "src/report/stamp.ts": "// The report line with the time.\nexport function stamp(): string {\n  return \"at \" + String(Date.now());\n}\n",
+   "src/report/plain.ts": "// The report line; it reads the clock too.\nexport function plain(): string {\n  return \"line \" + String(Date.now());\n}\n",
+   "src/units/units.ts": "// The unit name; it reads the clock too.\nexport function unit(): string {\n  return \"m \" + String(Date.now());\n}\n"
+  },
+  "files": {
+   "src/report/stamp.ts": "stamp-line",
+   "src/report/plain.ts": "plain-line",
+   "src/units/units.ts": "unit-name"
+  },
+  "records": {
+   "function": "version: 1\nSystem:\n  name: scope\n  description: The scope of a Guardrail by where it is attached (P31c, issue #42 ledger item 9) — every code file reads the clock.\n  guardrails: []\n  groups:\n    - name: report\n      description: Two Functions whose code files share one directory.\n      language: typescript\n      guardrails: []\n      functions:\n        - name: Stamp Line\n          description: The report line with the time.\n          behavior: Stamp() returns the line with the time.\n          guardrails: [No Clock]\n        - name: Plain Line\n          description: The report line.\n          behavior: Plain() returns the line.\n    - name: units\n      description: Another directory.\n      language: typescript\n      functions:\n        - name: Unit Name\n          description: The unit name.\n          behavior: Unit() returns the unit name.\n",
+   "interface": "version: 1\nSystem:\n  name: scope\n  description: The scope of a Guardrail by where it is attached (P31c, issue #42 ledger item 9) — every code file reads the clock.\n  guardrails: []\n  groups:\n    - name: report\n      description: Two Functions whose code files share one directory.\n      language: typescript\n      guardrails: []\n      functions:\n        - name: Stamp Line\n          description: The report line with the time.\n          behavior: Stamp() returns the line with the time.\n          guardrails: []\n        - name: Plain Line\n          description: The report line.\n          behavior: Plain() returns the line.\n      interfaces:\n        - name: stamp hook\n          description: The stamp call alone.\n          exposes: [Stamp Line]\n          guardrails: [No Clock]\n    - name: units\n      description: Another directory.\n      language: typescript\n      functions:\n        - name: Unit Name\n          description: The unit name.\n          behavior: Unit() returns the unit name.\n",
+   "component": "version: 1\nSystem:\n  name: scope\n  description: The scope of a Guardrail by where it is attached (P31c, issue #42 ledger item 9) — every code file reads the clock.\n  guardrails: []\n  groups:\n    - name: report\n      description: Two Functions whose code files share one directory.\n      language: typescript\n      guardrails: [No Clock]\n      functions:\n        - name: Stamp Line\n          description: The report line with the time.\n          behavior: Stamp() returns the line with the time.\n          guardrails: []\n        - name: Plain Line\n          description: The report line.\n          behavior: Plain() returns the line.\n    - name: units\n      description: Another directory.\n      language: typescript\n      functions:\n        - name: Unit Name\n          description: The unit name.\n          behavior: Unit() returns the unit name.\n",
+   "system": "version: 1\nSystem:\n  name: scope\n  description: The scope of a Guardrail by where it is attached (P31c, issue #42 ledger item 9) — every code file reads the clock.\n  guardrails: [No Clock]\n  groups:\n    - name: report\n      description: Two Functions whose code files share one directory.\n      language: typescript\n      guardrails: []\n      functions:\n        - name: Stamp Line\n          description: The report line with the time.\n          behavior: Stamp() returns the line with the time.\n          guardrails: []\n        - name: Plain Line\n          description: The report line.\n          behavior: Plain() returns the line.\n    - name: units\n      description: Another directory.\n      language: typescript\n      functions:\n        - name: Unit Name\n          description: The unit name.\n          behavior: Unit() returns the unit name.\n"
+  },
+  "then": {
+   "function": {
+    "src/report/stamp.ts": {
+     "status": 1,
+     "stdout": "guard: src/report/stamp.ts:3: uses Date: Guardrail 'No Clock' of Function Stamp Line\n"
+    },
+    "src/report/plain.ts": {
+     "status": 0,
+     "stdout": ""
+    },
+    "src/units/units.ts": {
+     "status": 0,
+     "stdout": ""
+    }
+   },
+   "interface": {
+    "src/report/stamp.ts": {
+     "status": 1,
+     "stdout": "guard: src/report/stamp.ts:3: uses Date: Guardrail 'No Clock' of Interface stamp hook\n"
+    },
+    "src/report/plain.ts": {
+     "status": 0,
+     "stdout": ""
+    },
+    "src/units/units.ts": {
+     "status": 0,
+     "stdout": ""
+    }
+   },
+   "component": {
+    "src/report/stamp.ts": {
+     "status": 1,
+     "stdout": "guard: src/report/stamp.ts:3: uses Date: Guardrail 'No Clock' of Component report\n"
+    },
+    "src/report/plain.ts": {
+     "status": 1,
+     "stdout": "guard: src/report/plain.ts:3: uses Date: Guardrail 'No Clock' of Component report\n"
+    },
+    "src/units/units.ts": {
+     "status": 0,
+     "stdout": ""
+    }
+   },
+   "system": {
+    "src/report/stamp.ts": {
+     "status": 1,
+     "stdout": "guard: src/report/stamp.ts:3: uses Date: Guardrail 'No Clock' of System scope\n"
+    },
+    "src/report/plain.ts": {
+     "status": 1,
+     "stdout": "guard: src/report/plain.ts:3: uses Date: Guardrail 'No Clock' of System scope\n"
+    },
+    "src/units/units.ts": {
+     "status": 1,
+     "stdout": "guard: src/units/units.ts:3: uses Date: Guardrail 'No Clock' of System scope\n"
+    }
+   }
+  }
+ }
+}

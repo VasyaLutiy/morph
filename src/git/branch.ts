@@ -18,12 +18,16 @@ export function openRunBranch(
     if (arrow !== -1) {
       p = p.slice(arrow + " -> ".length);
     }
-    if (!p.startsWith(".morph/")) {
-      dirty.push(p);
-    }
+    dirty.push(p);
   }
   if (dirty.length > 0) {
-    return { ok: false, error: "dirty tree outside .morph/: " + dirty.sort().join(", ") };
+    return {
+      ok: false,
+      error:
+        "dirty tree: " +
+        dirty.sort().join(", ") +
+        " (commit, remove or ignore them: every acceptance fails on a file left in the tree)",
+    };
   }
   const base = gitOk(root, ["rev-parse", "HEAD"], env).trim();
   const existing = runGit(
