@@ -1,0 +1,6 @@
+morph run: load-config.v1 accepted stage 0 finish stop chars 7491
+morph run: load-config.v2 untried stage 0 finish stop chars 7567
+morph run: session-text.v1 accepted stage 0 finish stop chars 5215
+morph run: session-text.v2 untried stage 0 finish stop chars 5331
+morph run: load-config-judge.v1 accepted stage 0 finish stop chars 7231
+morph run: session-text-judge.v1 accepted stage 0 finish stop chars 7658

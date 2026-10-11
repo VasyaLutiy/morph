@@ -1,0 +1,149 @@
+{
+  "runId": "20261011-073652",
+  "completedAt": 1791704364771,
+  "branch": "morph/20261011-073652",
+  "processor": "ds",
+  "generations": 2,
+  "outcomes": [
+    {
+      "customId": "load-config",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "load-config.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "bf3580e137644a7c006b1fb1f0e1fede5c2790d9",
+      "diffstat": {
+        "files": 1,
+        "insertions": 28,
+        "deletions": 3
+      }
+    },
+    {
+      "customId": "session-text",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "session-text.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "5bc8e6d467d3413a9a4254448693a2bb31faf862",
+      "diffstat": {
+        "files": 1,
+        "insertions": 4,
+        "deletions": 2
+      }
+    },
+    {
+      "customId": "load-config-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "load-config-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/projectConfig.examples.test.ts\n== names tests/cli/projectConfig.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "093996c818a3f59e1364d220286c59877589f739",
+      "diffstat": {
+        "files": 1,
+        "insertions": 59,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "session-text-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "session-text-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/scout/sessionText.examples.test.ts\n== names tests/scout/sessionText.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "9f8b70fa6d018fb3d3965dd7ad460babd4b4c42b",
+      "diffstat": {
+        "files": 1,
+        "insertions": 55,
+        "deletions": 1
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 57101,
+    "outputTokens": 18304,
+    "cost": 0.03674502,
+    "requests": 6
+  },
+  "requests": [
+    {
+      "customId": "load-config.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791704213-brNkBFeBaZ1LWZBdArTt",
+      "inputTokens": 9036,
+      "outputTokens": 2791,
+      "cost": 0.00606,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "load-config.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791704213-VOHmUOrzRpvulTHPXlOU",
+      "inputTokens": 9036,
+      "outputTokens": 2577,
+      "cost": 0.0058032,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "session-text.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791704213-CeCH2lt2RuEGxSUDDwOV",
+      "inputTokens": 9120,
+      "outputTokens": 2091,
+      "cost": 0.0052452,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "session-text.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791704225-lIZHDgUUkfN6JF0mSHSb",
+      "inputTokens": 9120,
+      "outputTokens": 2210,
+      "cost": 0.00303792,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "load-config-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791704237-NfxbWc8ULPC1LeHLoHvu",
+      "inputTokens": 9886,
+      "outputTokens": 4471,
+      "cost": 0.008331,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "session-text-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791704237-uBM2m4QgfYHTC8TnD7FC",
+      "inputTokens": 10903,
+      "outputTokens": 4164,
+      "cost": 0.0082677,
+      "finishReason": "stop",
+      "error": null
+    }
+  ],
+  "rounds": [
+    {
+      "round": 0,
+      "reds": []
+    }
+  ]
+}
