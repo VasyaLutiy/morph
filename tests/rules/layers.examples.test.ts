@@ -136,7 +136,7 @@ test("Layers Arg example 2: the Go guard reads the record's layers", () => {
     const red = run(r.root, "go", ["src", "registry/x.go", "", JSON.stringify(L2), "{}"]);
     expect(red.status).toBe(1);
     expect(red.stdout).toBe(
-      "guard: package registry imports m/users: the record has no 'uses' from registry to users (allowed: queue)\n",
+      "guard: registry/x.go:5: imports m/users: the record has no 'uses' from registry to users (allowed: queue)\n",
     );
   } finally {
     r.rm();
