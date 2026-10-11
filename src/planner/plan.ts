@@ -3,7 +3,7 @@ import { resolveProfile } from "../language/profiles.js";
 import { componentDependencies, cutComponent } from "./cut.js";
 import { cutJudges } from "./judges.js";
 import type { Card } from "../cards/types.js";
-import type { CutCard, OrderResult, PlanInput, PlanResult } from "./types.js";
+import type { CardCriterion, CutCard, OrderResult, PlanInput, PlanResult } from "./types.js";
 
 export function orderDeck(cards: readonly Card[]): OrderResult {
   const ids = new Set<string>(cards.map((c) => c.customId));
@@ -139,6 +139,7 @@ export function planSpec(input: PlanInput): PlanResult {
     });
   }
 
+  const judgeCardIds = new Set<string>();
   if (judge) {
     const judgeCards = cutJudges({
       record,
@@ -149,6 +150,7 @@ export function planSpec(input: PlanInput): PlanResult {
       hasFile,
     });
     for (const card of judgeCards) {
+      judgeCardIds.add(card.customId);
       all.push({ card, component: null, profile: null, functions: [], slicedByMap: true });
     }
   }
@@ -221,6 +223,29 @@ export function planSpec(input: PlanInput): PlanResult {
     }
   }
 
+  const cutById = new Map<string, CutCard>();
+  for (const cut of all) cutById.set(cut.card.customId, cut);
+
+  const criteria: Record<string, CardCriterion> = {};
+  for (const card of order.cards) {
+    if (judgeCardIds.has(card.customId)) {
+      const codeId = card.dependsOn[0];
+      const codeCut = codeId === undefined ? undefined : cutById.get(codeId);
+      const functions =
+        codeCut === undefined
+          ? []
+          : codeCut.functions.map((f) => ({ name: f.name, examples: f.examples }));
+      criteria[card.customId] = { judge: true, functions };
+    } else {
+      const cut = cutById.get(card.customId);
+      const functions =
+        cut === undefined
+          ? []
+          : cut.functions.map((f) => ({ name: f.name, examples: f.examples }));
+      criteria[card.customId] = { judge: false, functions };
+    }
+  }
+
   return {
     ok: true,
     plan: {
@@ -232,5 +257,6 @@ export function planSpec(input: PlanInput): PlanResult {
     },
     uses,
     warnings,
+    criteria,
   };
 }

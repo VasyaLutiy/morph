@@ -1,5 +1,5 @@
 import type { Card } from "../cards/types.js";
-import type { Component, ContourFunction, ContourMap, ContourRecord } from "../contour/types.js";
+import type { Component, ContourFunction, ContourMap, ContourRecord, Example } from "../contour/types.js";
 import type { LanguageProfile } from "../language/types.js";
 
 export interface Budget { maxTokens: number; reasoningMaxTokens: number; variants: number }
@@ -26,4 +26,5 @@ export interface Plan {
   spec: string; components: string[]; cards: Card[]; generations: string[][];
   externalDependsOn: Record<string, string[]>;
 }
-export type PlanResult = { ok: true; plan: Plan; uses: Record<string, string[]>; warnings: string[] } | { ok: false; error: string };
+export interface CardCriterion { judge: boolean; functions: { name: string; examples: Example[] }[] }
+export type PlanResult = { ok: true; plan: Plan; uses: Record<string, string[]>; warnings: string[]; criteria: Record<string, CardCriterion> } | { ok: false; error: string };
