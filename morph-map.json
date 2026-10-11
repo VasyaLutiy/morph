@@ -1,7 +1,7 @@
 {
   "package": "src",
   "docs": [
-    "docs/TASK_P25_config.md"
+    "docs/TASK_P28a_neighbour.md"
   ],
   "groups": {
     "card-model": [
@@ -3277,22 +3277,22 @@
         "src/language/treeProfiles.ts"
       ],
       "context_slice": [
-        "docs/TASK_P24c_blame.md",
+        "docs/TASK_P28a_neighbour.md",
         "docs/CONVENTIONS.md",
         "src/language/profiles.ts"
       ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000,
-      "instruction": "Read docs/TASK_P24c_blame.md sections 2.2 (src/language/treeProfiles.ts) and 4. Patch src/language/treeProfiles.ts (its current text follows) and return it WHOLE: append `export interface TestProfile { id: string; failLine: string | null; locationLine: string | null; packageLine: string | null }` and `export const TEST_LINES: readonly TestProfile[]`, three entries in the order typescript, python, go, every pattern string exactly as the Tree Profiles behaviour below writes it (they are JavaScript string literals: copy them character for character, the double backslashes included). TreeProfile, TREE_PROFILES and treeProfileFor stay exactly as they are. Pure data: no import at all, no process, no console. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P28a_neighbour.md sections 2.2 (src/language/treeProfiles.ts) and 4. Patch src/language/treeProfiles.ts (its current text follows) and return it WHOLE: append `export interface NeighbourProfile { id: string; file: string; directory: boolean; testFile: string | null; module: string | null }` and `export const NEIGHBOUR_RULES: readonly NeighbourProfile[]`, three entries in the order typescript, python, go, every string exactly as section 2.2 of the spec writes them (JavaScript string literals: copy them character for character, the double backslashes and the escaped double quotes included). TreeProfile, TREE_PROFILES, treeProfileFor, TestProfile and TEST_LINES stay exactly as they are. Pure data: no import at all, no process, no console. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "tree-profiles-judge": {
       "intent": "generate",
       "targets": [
-        "tests/language/treeProfiles.p24c.examples.test.ts"
+        "tests/language/treeProfiles.p28.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P24c_blame.md",
+        "docs/TASK_P28a_neighbour.md",
         "docs/CONVENTIONS.md",
         "src/language/treeProfiles.ts"
       ],
@@ -3300,7 +3300,7 @@
         "tree-profiles"
       ],
       "max_tokens": 12000,
-      "instruction": "You write tests/language/treeProfiles.p24c.examples.test.ts only, a NEW file with the tests of Tree Profiles examples 3 and 4 (examples 1-2 are already tested in tests/language/treeProfiles.examples.test.ts, which you do not touch). Read docs/TASK_P24c_blame.md sections 2.2 and 2.3. Import TEST_LINES from \"../../src/language/treeProfiles.js\". Two tests in record order, named \"Tree Profiles example 3: <what>\" and \"Tree Profiles example 4: <what>\": example 3 checks TEST_LINES with one toStrictEqual against the three entries written out as literals; example 4 checks group 1 (or null) of new RegExp(pattern).exec(line) for every non-null pattern on every line its `given` names; a line holding a tab is written with \\t. Then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole result or list with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/language/treeProfiles.p28.examples.test.ts only, a NEW file with the tests of Tree Profiles examples 5 and 6 (examples 1-4 are already tested in tests/language/treeProfiles.examples.test.ts and tests/language/treeProfiles.p24c.examples.test.ts, which you do not touch). Read docs/TASK_P28a_neighbour.md sections 2.2 and 2.3. Import NEIGHBOUR_RULES from \"../../src/language/treeProfiles.js\". Two tests in record order, named \"Tree Profiles example 5: <what>\" and \"Tree Profiles example 6: <what>\": example 5 checks NEIGHBOUR_RULES with one toStrictEqual against the three entries written out as literals; example 6 checks, for every path its `given` names, which entries' file patterns match (new RegExp(file).test), go's testFile on its two paths, and the group 1 list of new RegExp(typescript's module, \"g\") on each of the three lines ([...line.matchAll(re)].map((m) => m[1])); the lines holding both quote kinds go in backquoted template literals. Then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole result or list with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "tree-check": {
       "intent": "generate",
@@ -3344,54 +3344,44 @@
         "src/cards/transaction.ts"
       ],
       "context_slice": [
-        "docs/TASK_P24c_blame.md",
+        "docs/TASK_P28a_neighbour.md",
         "docs/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "tests/fixtures/cards/blameTestLogs.json"
+        "src/cards/types.ts"
       ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000,
-      "instruction": "Read docs/TASK_P24c_blame.md sections 2.1 (the logs) and 2.2 (src/cards/transaction.ts and its table) and 4. Patch src/cards/transaction.ts (its current text follows) and return it WHOLE: add `export interface TestLines { failLine: string | null; locationLine: string | null; packageLine: string | null }` next to Blame, and give blameLog a sixth parameter `testLines: readonly TestLines[] = []` with the behaviour of Blame Log below: indented lines and lines no fileLine matched go to the testLines patterns; a bare location name is joined to the package of the first packageLine match on a LATER line (else the last earlier one); candidates are the path without a leading \"/\" and then with its leading segments dropped one at a time, walked to the first owned (blame its owner) or existing (blame nothing); none: a relative path blames card, an absolute one nothing; at the end, nothing blamed and nothing outside → cards [] when some testLines pattern matched, else [card]. With testLines [] every result is exactly main's. TRANSACTION_MARK, isTransactionDeck and Blame are unchanged; keep `import type { Card } from \"./types.js\"` as the only import. Pure: no process, no console, no file read, no node: module; the inputs are never changed. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P28a_neighbour.md sections 2.1 (the measured lines) and 2.2 (src/cards/transaction.ts and its table) and 4. Patch src/cards/transaction.ts (its current text follows) and return it WHOLE: add `export interface NeighbourRule { file: string; directory: boolean; testFile: string | null; module: string | null }` next to TestLines, and give blameLog a seventh parameter `neighbours: readonly NeighbourRule[] = []` with the Neighbour Rules of Blame Log below. Only one case changes: a column-0 line whose path p exists and is no own key of owners (today an outside line). The first rule whose new RegExp(rule.file) matches p gives p's neighbours (own keys of owners): directory true → every key the same file pattern matches whose directory equals p's (dir(x) = x before its last \"/\", \"\" when none), leaving out the keys testFile matches unless testFile matches p too; module not null → every match of new RegExp(rule.module, \"g\") on rest, group 1 resolved against dir(p) by string work (split on \"/\", drop \"\" and \".\", \"..\" pops), the result or the result with a final .js/.jsx/.mjs/.cjs replaced by .ts/.tsx/.mts/.cts, when an own key. Some neighbour → blame the owner of each (no outside line for p); none → p + rest is an outside line as now. With neighbours [] every result is exactly main's. TRANSACTION_MARK, isTransactionDeck, Blame, TestLines and the testLines handling are unchanged; keep `import type { Card } from \"./types.js\"` as the only import. Pure: no process, no console, no file read, no node: module; the inputs are never changed. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "transaction-deck-judge": {
       "intent": "generate",
       "targets": [
-        "tests/cards/transaction.p24c.examples.test.ts"
+        "tests/cards/transaction.p28.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P24c_blame.md",
+        "docs/TASK_P28a_neighbour.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/cards/transaction.ts",
-        "src/language/treeProfiles.ts",
-        "tests/fixtures/cards/blameTestLogs.json"
+        "src/language/treeProfiles.ts"
       ],
       "depends_on": [
         "transaction-deck",
         "tree-profiles"
       ],
       "max_tokens": 16000,
-      "instruction": "You write tests/cards/transaction.p24c.examples.test.ts only, a NEW file with the tests of Blame Log examples 5 to 8 (examples 1-4 are already tested in tests/cards/transaction.examples.test.ts, which you do not touch). Read docs/TASK_P24c_blame.md sections 2.1 (the logs and the Blame Log harness) and 2.2 and 2.3. Import blameLog from \"../../src/cards/transaction.js\", TREE_PROFILES and TEST_LINES from \"../../src/language/treeProfiles.js\", fixtureJson from \"../helpers.js\". Four tests in record order, named \"Blame Log example 5: <what>\" … \"Blame Log example 8: <what>\", the log read with fixtureJson(\"cards/blameTestLogs.json\"), every call of the example's `given` checked with toStrictEqual against the whole Blame its `then` names; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole result or list with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/cards/transaction.p28.examples.test.ts only, a NEW file with the tests of Blame Log examples 9 and 10 (examples 1-8 are already tested in tests/cards/transaction.examples.test.ts and tests/cards/transaction.p24c.examples.test.ts, which you do not touch). Read docs/TASK_P28a_neighbour.md sections 2.1 (the measured lines and the Blame Log harness) and 2.2 and 2.3. Import blameLog from \"../../src/cards/transaction.js\", TREE_PROFILES, TEST_LINES and NEIGHBOUR_RULES from \"../../src/language/treeProfiles.js\". Two tests in record order, named \"Blame Log example 9: <what>\" and \"Blame Log example 10: <what>\", every call of the example's `given` (the logs written out as string literals, exists `() => true`) checked with toStrictEqual against the whole Blame its `then` names; the TypeScript lines hold both quote kinds: write them in backquoted template literals, e.g. `src/b.ts(1,10): error TS2305: Module '\"./a.js\"' has no exported member 'fmtOut'.`. Then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole result or list with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "run-transaction": {
       "intent": "patch",
       "targets": [
-        "src/runloop/transaction.ts",
-        "src/runloop/types.ts"
+        "src/runloop/transaction.ts"
       ],
       "context_slice": [
-        "docs/TASK_P24c_blame.md",
+        "docs/TASK_P28a_neighbour.md",
         "docs/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/cards/layer.ts",
         "src/cards/transaction.ts",
-        "src/language/treeProfiles.ts",
-        "src/runloop/generation.ts",
-        "src/runloop/retry.ts",
-        "src/acceptance/types.ts",
-        "src/acceptance/snapshot.ts",
-        "src/acceptance/run.ts"
+        "src/language/treeProfiles.ts"
       ],
       "depends_on": [
         "transaction-deck",
@@ -3399,29 +3389,27 @@
       ],
       "variants": 2,
       "max_tokens": 16000,
-      "instruction": "Read docs/TASK_P24c_blame.md sections 2.2 (src/runloop/types.ts and src/runloop/transaction.ts: the table, what changes against main) and 4. Patch src/runloop/transaction.ts and src/runloop/types.ts (their current texts follow) and return both WHOLE. types.ts: add `export interface RoundRed { customId: string; blamed: string[]; log: string }` and `export interface TransactionRound { round: number; reds: RoundRed[] }`; RunReport gains `rounds?: TransactionRound[]` between `requests?` and `stop?`; nothing else changes. transaction.ts: (1) import TEST_LINES with TREE_PROFILES from \"../language/treeProfiles.js\" and pass it as blameLog's sixth argument; (2) every round that runs pushes {round: r, reds: [{customId, blamed: blame.cards, log}] for its red cards in deck order} (reds [] when green); (3) after the outside-the-subset check and before the caps: some red card whose Blame has no card → stop = \"unattributed red: \" + those cards' customIds in deck order joined \", \", then the rollback exactly as a cap stop does; (4) finish() sets report.rounds (when at least one round ran) after requests and before stop and fault. Every other behaviour (outside fault, caps, deadline, layers, interrupt, thrown values, reasons, attempts, earlierFailures, written outcomes) stays exactly as it is. Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P28a_neighbour.md section 2.2 (src/runloop/transaction.ts) and 4. Patch src/runloop/transaction.ts (its current text follows) and return it WHOLE with exactly one change: import NEIGHBOUR_RULES together with TREE_PROFILES and TEST_LINES from \"../language/treeProfiles.js\" and pass it as the seventh argument of the blameLog call, after TEST_LINES. Every other line of the file stays exactly as it is: the outside fault, rounds, caps, deadline, layers, interrupt, thrown values, reasons, attempts, earlierFailures and written outcomes. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "run-transaction-judge": {
       "intent": "generate",
       "targets": [
-        "tests/runloop/transaction.p24c.examples.test.ts"
+        "tests/runloop/transaction.p28.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P24c_blame.md",
+        "docs/TASK_P28a_neighbour.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
-        "tests/runloop/transaction.p24.examples.test.ts",
+        "tests/runloop/transaction.p24c.examples.test.ts",
         "src/cards/types.ts",
-        "src/cards/transaction.ts",
         "src/processor/types.ts",
-        "src/runloop/types.ts",
-        "src/runloop/transaction.ts"
+        "src/runloop/types.ts"
       ],
       "depends_on": [
         "run-transaction"
       ],
       "max_tokens": 24000,
-      "instruction": "You write tests/runloop/transaction.p24c.examples.test.ts only, a NEW file with the tests of Run Transaction examples 12 and 13 (examples 1-11 are already tested in tests/runloop/transaction.examples.test.ts and tests/runloop/transaction.p24.examples.test.ts, which you do not touch). Read docs/TASK_P24c_blame.md sections 2.1 (the Run Transaction harness) and 2.2 and 2.3; copy the helpers you use (M, fence, card, once, deps, input) from tests/runloop/transaction.p24.examples.test.ts. Import runTransaction from \"../../src/runloop/transaction.js\", TRANSACTION_MARK from \"../../src/cards/transaction.js\", fakeFetch and tmpRoot from \"../helpers.js\", types with `import type`. Two tests in record order, named \"Run Transaction example 12: <what>\" and \"Run Transaction example 13: <what>\", each on its own tmp root (the stub's answersDir), removed in finally, checking every value its `then` names: status, reason, attempts, winningVariant, lastRound, acceptanceLog, earlierFailures, the request customIds, the hook's ids, report.rounds with one toStrictEqual, report.stop (example 13: \"unattributed red: b\" and Object.keys(report).pop() \"stop\"; example 12: undefined), report.fault undefined; then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole result or list with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
+      "instruction": "You write tests/runloop/transaction.p28.examples.test.ts only, a NEW file with the tests of Run Transaction examples 14 and 15 (examples 1-13 are already tested in the other tests/runloop/transaction*.examples.test.ts files, which you do not touch). Read docs/TASK_P28a_neighbour.md sections 2.1 (the Run Transaction harness) and 2.2 and 2.3; copy the helpers you use (M, fence, card, deps, input, summary) from tests/runloop/transaction.p24c.examples.test.ts and give deps an onVariant that pushes each record into a list. Import runTransaction from \"../../src/runloop/transaction.js\", TRANSACTION_MARK from \"../../src/cards/transaction.js\", fakeFetch and tmpRoot from \"../helpers.js\", types with `import type`. Two tests in record order, named \"Run Transaction example 14: <what>\" and \"Run Transaction example 15: <what>\", each call on its own tmp root (the stub's answersDir), removed in finally, checking every value its `then` names: status, reason, attempts, winningVariant, lastRound, acceptanceLog, earlierFailures, the request customIds, the hook's ids, report.rounds with one toStrictEqual, report.stop undefined, report.fault (undefined, or the outside text and Object.keys(report).pop() \"fault\"), the retry record's JSON.stringify(record.request) holding the text the example names, the target's text on disk. Example 15's line holds both quote kinds: write it in a backquoted template literal and r.write(\"k.log\", T + \"\\n\"). Then at most 6 of your own on section 2.2 rows. Strings with toBe, a whole result or list with toStrictEqual; a literal holding a single quote goes in a double-quoted string. No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned."
     },
     "stub-verdict": {
       "intent": "generate",

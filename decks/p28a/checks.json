@@ -1,0 +1,20 @@
+{
+  "phase": "p28a",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates"],
+  "fullExclude": ["tests/cards/transaction.p28.examples.test.ts", "tests/language/treeProfiles.p28.examples.test.ts",
+    "tests/runloop/transaction.p28.examples.test.ts"],
+  "cards": [
+    { "id": "transaction-deck" },
+    { "id": "tree-profiles" },
+    { "id": "run-transaction" },
+    { "id": "transaction-deck-judge", "files": [{ "file": "tests/cards/transaction.p28.examples.test.ts", "min": 2, "max": 8, "new": true,
+      "lits": ["Blame Log example 9", "Blame Log example 10", "NEIGHBOUR_RULES", "calc/b.go:5:9: undefined: fmtOut", "calc/b_test.go",
+        "cmd/tool/main.go:6:2: undefined: calc.Sum", "src/cli/c.ts(1,10)", "src/a2.ts(3,4)", "gj"] }] },
+    { "id": "tree-profiles-judge", "files": [{ "file": "tests/language/treeProfiles.p28.examples.test.ts", "min": 2, "max": 8, "new": true,
+      "lits": ["Tree Profiles example 5", "Tree Profiles example 6", "NEIGHBOUR_RULES", "_test\\\\.go$", "src/cli/c.mts", "../units/gone.js"] }] },
+    { "id": "run-transaction-judge", "files": [{ "file": "tests/runloop/transaction.p28.examples.test.ts", "min": 2, "max": 8, "new": true,
+      "lits": ["Run Transaction example 14", "Run Transaction example 15", "calc/b.go:3:31: undefined: fmtOut", "g.r1.v1", "a.r1.v1",
+        "mcp/count.go:6:52: undefined: x", "outside the subset", "k.log", "error TS2305"] }] }
+  ]
+}

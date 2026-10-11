@@ -146,7 +146,7 @@ System:
         - name: Blame Log
           description: The cards a red acceptance log blames by the files its lines name, and the lines naming files outside them.
           behavior: >
-            blameLog(log, card, owners, fileLines, exists, testLines = []) in src/cards/transaction.ts, pure: log the red
+            blameLog(log, card, owners, fileLines, exists, testLines = [], neighbours = []) in src/cards/transaction.ts, pure: log the red
             acceptance's output; card the customId whose acceptance it is; owners a Record target path → owning customId;
             fileLines regular-expression sources (Tree Profiles' fileLine, in order: group 1 the path, group 2 the rest);
             exists(path) whether the path is on disk; testLines (P24c, issue #19) the Test Lines of Tree Profiles' TEST_LINES
@@ -156,7 +156,8 @@ System:
             space removed (trimEnd): a line that is "" or starts with "#" is skipped. A line that does not start with " " or
             "\t" goes to fileLines first: the FIRST of fileLines that matches it (new RegExp, in order) gives p = group 1 and
             rest = group 2; p an own key of owners → owners[p] is blamed; else exists(p) false → card is blamed (a file of
-            the acceptance itself, gone when it ends: a probe); else p + rest is an outside line. A line no fileLine matched
+            the acceptance itself, gone when it ends: a probe); else p is a kept file (on disk, no card's target): its
+            neighbours by the Neighbour Rules (P28, below) → the owner of each is blamed; none → p + rest is an outside line. A line no fileLine matched
             (an indented line always) goes to testLines: the first pattern that matches it, entry by entry in order and in
             each entry failLine, then locationLine, then packageLine (null ones skipped). A packageLine match blames
             nothing: its group 1 is the package of the bare file names around it. A failLine or locationLine match gives
@@ -172,7 +173,20 @@ System:
             unattributed red, Blame {cards: [], outside: []}; P24c, issue #19 item 2: a red nobody owns does not blame every
             card that saw it); else → card is blamed (a red naming no file: a guard, a message). → Blame {cards: the blamed
             ids, outside: the outside lines}, each once, sorted (JavaScript's default sort). The inputs are never changed.
-            testLines [] (the default) gives the result before P24c: no indented line is read.
+            testLines [] (the default) gives the result before P24c: no indented line is read. Neighbour Rules (P28, issue
+            #22: a re-cut that drops a name a kept file of its package uses is the card's red, retried, not a fault):
+            neighbours the Neighbour Rules of Tree Profiles' NEIGHBOUR_RULES in order, each {file, directory, testFile,
+            module}; `export interface NeighbourRule { file: string; directory: boolean; testFile: string | null; module:
+            string | null }` lives in src/cards/transaction.ts next to TestLines. The FIRST rule whose new RegExp(file) matches
+            the kept file p gives its neighbours, own keys k of owners; no rule matches → none. dir(x) = x before its last
+            "/", "" when x has none. directory true → every k that new RegExp(file) matches with dir(k) = dir(p), except,
+            when testFile is not null and new RegExp(testFile) does not match p, the k it matches (a package's code never
+            names its test files; a test file may name both). module not null → for every match of new RegExp(module, "g")
+            on rest, s = its group 1 resolved against dir(p) (the "/"-segments of dir(p), then of group 1; "" and "."
+            dropped, ".." removes the segment before it; joined by "/"), then k = s, or s with a final ".js", ".jsx",
+            ".mjs" or ".cjs" replaced by ".ts", ".tsx", ".mts" or ".cts", when it is an own key. Both may apply. No
+            node: module (dir and the resolution are string work). neighbours [] (the default) gives the result before
+            P28: every kept file is an outside line.
           steps:
             - produces: Blame
           examples:
@@ -208,6 +222,12 @@ System:
               ref: "tests/fixtures/cards/blameTestLogs.json"
               when: blameLog
               then: '{cards: ["pj"], outside: []} ("tests/test_calc.py:5: in test_half" by the python fileLine, "FAILED tests/test_calc.py::test_half - assert 2 == 4" by its failLine); then {cards: [], outside: ["tests/test_calc.py:5: in test_half"]} (a column-0 line keeps its outside rule); then {cards: ["pj"], outside: []} (before P24c: ["pc"])'
+            - given: 'P28, issue #22, Go. card "g"; owners OG = {"calc/a.go": "g", "calc/a_examples_test.go": "gj", "pump/flow.go": "p2"}; the three fileLines; exists always true; TEST_LINES; NEIGHBOUR_RULES; logs G1 = "# example.com/m/calc\ncalc/b.go:4:7: undefined: okView\ncalc/b.go:5:9: undefined: fmtOut\n# example.com/m/calc\nvet: calc/b.go:4:7: undefined: okView\n" (go build and go vet, measured), then "calc/b_test.go:7:2: undefined: helperT\n", then "cmd/tool/main.go:6:2: undefined: calc.Sum\n"; then G1 without the neighbours argument'
+              when: blameLog
+              then: '{cards: ["g"], outside: []} (calc/b.go is a kept file of package calc: its code neighbour calc/a.go, not the test file); then {cards: ["g", "gj"], outside: []} (a kept test file: both); then {cards: [], outside: ["cmd/tool/main.go:6:2: undefined: calc.Sum"]} (no target in cmd/tool: outside as before); then {cards: [], outside: ["calc/b.go:4:7: undefined: okView", "calc/b.go:5:9: undefined: fmtOut"]} (before P28)'
+            - given: 'P28, issue #22, TypeScript. card "a"; owners {"src/a.ts": "a", "tests/a.examples.test.ts": "aj"}; the three fileLines; exists always true; TEST_LINES; NEIGHBOUR_RULES; logs T1 = "src/b.ts(1,10): error TS2305: Module ''\"./a.js\"'' has no exported member ''fmtOut''.\nsrc/cli/c.ts(1,10): error TS2305: Module ''\"../a.js\"'' has no exported member ''fmtOut''.\n" (tsc, measured), then "src/a2.ts(3,4): error TS2304: Cannot find name ''q7''.\n", then "src/b.ts(1,10): error TS2305: Module ''\"./z.js\"'' has no exported member ''q''.\n"; then T1 without the neighbours argument'
+              when: blameLog
+              then: '{cards: ["a"], outside: []} (./a.js from src and ../a.js from src/cli both resolve to src/a.ts); then {cards: [], outside: ["src/a2.ts(3,4): error TS2304: Cannot find name ''q7''."]} (TypeScript is not by directory: no module named); then {cards: [], outside: ["src/b.ts(1,10): error TS2305: Module ''\"./z.js\"'' has no exported member ''q''."]} (src/z.ts is no target); then {cards: [], outside: [the two T1 lines]} (before P28)'
       dataObjects:
         - name: Blame
           description: What one red acceptance log blames.
@@ -1229,7 +1249,7 @@ System:
             Else rounds r = 0, 1, …: every card in deck order runs ITS acceptance (Run Acceptance(card.acceptance, root, {env:
             deps.env, timeoutMs: deps.acceptanceTimeoutMs ?? DEFAULT_TIMEOUT_MS})); exit 0 green, else red with Blame Log(its
             log, its customId, owners, TREE_PROFILES' fileLine in order, p → a file or directory exists at root/p,
-            TEST_LINES; P24c). All
+            TEST_LINES; P24c, then NEIGHBOUR_RULES; P28, issue #22: a kept file of a target's package blames the target's owner). All
             green → deps.commit(id, targets) per card in deck order, id = the customId of the attempt whose files are on the
             tree (the card's, or "<customId>.r<n>" of its last written retry); done. Some red: any outside line → fault
             "outside the subset: " + every red card's outside lines (each once, sorted) joined ", ", then rollback. Some
@@ -1318,6 +1338,12 @@ System:
             - given: 'P24c, issue #19 item 2. The stub; fenced a.md ''export const a = "A1";\n'', b.md ''export const b = "B2";\n''; cards a → out/a.ts M + "exit 0"; b → out/b.ts M + "touch out/zz.test.ts; echo \" FAIL  out/zz.test.ts > zz\"; exit 1"'
               when: runTransaction
               then: 'round 0: b red on a test file that exists and no card owns, its Blame {cards: [], outside: []}: no retry; rollback; report.stop "unattributed red: b", the last key; report.rounds [{round: 0, reds: [{customId: "b", blamed: [], log: " FAIL  out/zz.test.ts > zz\n"}]}], the key before stop; a "failed" "transaction rolled back" attempts 1 winningVariant "a.v1" lastRound "green" acceptanceLog "" earlierFailures []; b "failed" "transaction rolled back" attempts 1 winningVariant "b.v1" lastRound "red" acceptanceLog " FAIL  out/zz.test.ts > zz\n" earlierFailures []; requests a.v1, b.v1; no commit; out/a.ts and out/b.ts absent'
+            - given: 'P28, issue #22 acceptance, Go. The stub, maxRetryBatches 2; calc/b.go ''package calc\n\nfunc Report() string { return fmtOut() }\n'' on disk, no card''s target; fenced g.md ''package calc\n\nfunc Sum(a, b int) int { return a + b }\n'', g.r1.md ''package calc\n\nfunc Sum(a, b int) int { return a + b }\n\nfunc fmtOut() string { return \"\" }\n'', gj.md ''package calc\n''; L = "calc/b.go:3:31: undefined: fmtOut"; cards g → calc/a.go M + ''grep -q fmtOut calc/a.go || { echo "'' + L + ''"; exit 1; }'', gj → calc/a_examples_test.go dependsOn [g] M + ''grep -q fmtOut calc/a.go || { echo "vet: '' + L + ''"; exit 1; }''; deps.onVariant pushes each record; then a fresh root with mcp/count.go ''package mcp\n'' on disk instead of calc/b.go, the same answers, g → calc/a.go M + ''grep -q fmtOut calc/a.go || { echo "mcp/count.go:6:52: undefined: x"; exit 1; }'', gj → calc/a_examples_test.go dependsOn [g] M + "exit 0"'
+              when: runTransaction
+              then: 'round 0: g and gj red, both blaming g (calc/b.go is a kept file of package calc, its code neighbour calc/a.go is g''s; gj''s test file is not); only g retried, its request holding L; round 1 green: g "written" attempts 2 winningVariant "g.r1.v1" acceptanceLog "" earlierFailures [L + "\n"]; gj "written" attempts 1 winningVariant "gj.v1" acceptanceLog "" earlierFailures ["vet: " + L + "\n"]; requests g.v1, gj.v1, g.r1.v1; the hook fired g.r1, gj; report.rounds [{round: 0, reds: [{customId: "g", blamed: ["g"], log: L + "\n"}, {customId: "gj", blamed: ["g"], log: "vet: " + L + "\n"}]}, {round: 1, reds: []}]; no stop key, no fault key; calc/a.go holds fmtOut. Then (mcp holds no target: outside as before, measured on main): g "failed" reason "outside the subset" attempts 1 winningVariant "g.v1" lastRound "red" acceptanceLog "mcp/count.go:6:52: undefined: x\n" earlierFailures []; gj "failed" "transaction rolled back" attempts 1 winningVariant "gj.v1" lastRound "green" acceptanceLog "" earlierFailures []; requests g.v1, gj.v1; no commit; report.rounds [{round: 0, reds: [{customId: "g", blamed: [], log: "mcp/count.go:6:52: undefined: x\n"}]}]; report.fault "outside the subset: mcp/count.go:6:52: undefined: x", the last key; no stop key; calc/a.go absent'
+            - given: 'P28, issue #22 acceptance, TypeScript. The stub, maxRetryBatches 2; out/k.ts ''import { fmtOut } from "./a.js";\nexport const k = fmtOut;\n'' on disk, no card''s target; T = "out/k.ts(1,10): error TS2305: Module ''\"./a.js\"'' has no exported member ''fmtOut''." (tsc''s text, measured) written to k.log as T + "\n"; fenced a.md ''export const sum = 1;\n'', a.r1.md ''export const sum = 1;\nexport const fmtOut = 2;\n''; one card a → out/a.ts M + "grep -q fmtOut out/a.ts || { cat k.log; exit 1; }"; deps.onVariant pushes each record'
+              when: runTransaction
+              then: 'round 0: a red, blaming a (out/k.ts names the module ./a.js, which resolves to the target out/a.ts); a retried, its request holding "error TS2305"; round 1 green: a "written" attempts 2 winningVariant "a.r1.v1" acceptanceLog "" earlierFailures [T + "\n"]; requests a.v1, a.r1.v1; the hook fired a.r1; report.rounds [{round: 0, reds: [{customId: "a", blamed: ["a"], log: T + "\n"}]}, {round: 1, reds: []}]; no stop key, no fault key'
 
     # ---------------------------------------------------------------- P6
     - name: git
@@ -2222,7 +2248,15 @@ System:
             "^\\s+\\u276f\\s+(?:\\S+\\s+)?(\\S+?\\.[cm]?[jt]sx?):\\d+:\\d+", packageLine null; python: failLine
             "^(?:FAILED|ERROR) (\\S+?\\.pyi?)(?:::|\\s|$)", locationLine null (pytest prints its locations at column 0:
             fileLine reads them), packageLine null; go: failLine null, locationLine "^\\s+(\\S+?\\.go):\\d+", packageLine
-            "^FAIL\\t(\\S+)". TREE_PROFILES and treeProfileFor are unchanged.
+            "^FAIL\\t(\\S+)". TREE_PROFILES and treeProfileFor are unchanged. NEIGHBOUR_RULES (P28, issue #22): `export const
+            NEIGHBOUR_RULES: readonly NeighbourProfile[]`, `export interface NeighbourProfile { id: string; file: string;
+            directory: boolean; testFile: string | null; module: string | null }`, one per profile of PROFILES in the same
+            order, pure data (no import), read by Blame Log: which targets a kept file (on disk, no card's target) can use
+            names of — file the kept files the entry is for; directory true: the targets in its directory (a package),
+            testFile the test files a code file never names; module a quoted relative module in a red line, group 1 the
+            specifier. typescript: file "\\.[cm]?tsx?$", directory false, testFile null, module
+            "'\"?(\\.\\.?/[^'\"]+)\"?'"; python: file "\\.pyi?$", directory false, testFile null, module null; go: file
+            "\\.go$", directory true, testFile "_test\\.go$", module null. TEST_LINES is unchanged.
           steps:
             - produces: Tree Profile
           examples:
@@ -2238,6 +2272,12 @@ System:
             - given: 'new RegExp(each non-null pattern of TEST_LINES) on " FAIL  tests/units/len.test.ts > one metre", " ❯ tests/units/len.test.ts:4:21", " ❯ toFeet src/units/len.ts:2:25", "FAILED tests/test_calc.py::test_half - assert 2 == 4", "    daemon_examples_test.go:16: OnExit:", "\t/tmp/morphlite/daemon/daemon_examples_test.go:22 +0x2", "FAIL\tmorphlite/daemon\t0.004s", "FAIL", "--- FAIL: TestDaemonCoreExample2 (0.00s)"'
               when: matched
               then: 'group 1: typescript failLine "tests/units/len.test.ts" on the first only; typescript locationLine "tests/units/len.test.ts" and "src/units/len.ts" on the second and third only; python failLine "tests/test_calc.py" on the fourth only; go locationLine "daemon_examples_test.go" and "/tmp/morphlite/daemon/daemon_examples_test.go" on the fifth and sixth only; go packageLine "morphlite/daemon" on the seventh only; nothing matches "FAIL" or the "--- FAIL" line'
+            - given: 'NEIGHBOUR_RULES'
+              when: read
+              then: 'three entries, ids "typescript", "python", "go" (PROFILES order), each value exactly as the behavior writes it'
+            - given: 'new RegExp(each file of NEIGHBOUR_RULES) on "src/b.ts", "src/cli/c.mts", "calc/b.go", "calc/b_test.go", "pkg/b.py", "README.md"; go''s testFile on "calc/b_test.go" and "calc/b.go"; new RegExp(typescript''s module, "g") on "(1,10): error TS2305: Module ''\"./a.js\"'' has no exported member ''fmtOut''.", "(1,1): error TS2307: Cannot find module ''../units/gone.js'' or its corresponding type declarations.", "(3,4): error TS2304: Cannot find name ''q7''."'
+              when: matched
+              then: 'typescript file matches src/b.ts and src/cli/c.mts only; go file calc/b.go and calc/b_test.go only; python file pkg/b.py only; README.md none; testFile true, false; module group 1 ["./a.js"], ["../units/gone.js"], [] (measured with node)'
       dataObjects:
         - name: Tree Profile
           description: How deck check compiles a stub tree in one language.
@@ -2245,6 +2285,9 @@ System:
         - name: Test Profile
           description: Per language, how a failing test's lines read (P24c, issue #19); Blame Log reads them.
           schema: "{ id: string; failLine: string | null; locationLine: string | null; packageLine: string | null }"
+        - name: Neighbour Profile
+          description: Per language, which targets a kept file can use names of (P28, issue #22); Blame Log reads them.
+          schema: "{ id: string; file: string; directory: boolean; testFile: string | null; module: string | null }"
         - name: Language Profile
           description: Everything the planner and the acceptance need to know about one language; templates hold {component}, {name}, {files}, {test}, {module}, {docs}.
           schema: "{ id: \"typescript\" | \"python\" | \"go\", extensions: string[], testDirs: string[], testFilePattern: string, nameCase: \"camel\" | \"snake\", codeTarget: string, testTarget: string, judgeTarget: string, parseLine: string, parseTakesFiles: boolean, lintLine: string, ownTestLine: string, fullRunLine: string, finale: string, judgeInstruction: string, helpersModule: string }"
