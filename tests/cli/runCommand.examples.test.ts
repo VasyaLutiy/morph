@@ -173,7 +173,7 @@ test("Run Command example 4: a dirty tree refuses before the branch is opened", 
         error: {
           code: 2,
           kind: "RefusalError",
-          message: "dirty tree outside .morph/: notes.txt",
+          message: "dirty tree: notes.txt (commit, remove or ignore them: every acceptance fails on a file left in the tree)",
         },
       },
     });
