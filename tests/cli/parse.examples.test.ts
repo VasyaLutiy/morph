@@ -442,7 +442,7 @@ test("Parse Command example 17: the word scout and its flags", () => {
     processor: "ds",
     issue: "task.txt",
     seedFile: null,
-    deadlineSeconds: 1800,
+    deadlineSeconds: null,
   };
   expect(bare).toStrictEqual({ ok: true, command: bareCommand });
 
