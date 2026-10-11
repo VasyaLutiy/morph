@@ -25,7 +25,7 @@
   },
   "Plan Command 1": {
     "given": "a tmp root holding ledger.yaml and ledger.map.json (the planner fixtures' texts) and a tests/helpers.ts; args spec \"ledger.yaml\", components [\"ledger\", \"store\"], map \"ledger.map.json\", judge true, out \"decks/p.json\"",
-    "then": "code 0; document equal to ledger.plan.json plus out \"decks/p.json\"; the file decks/p.json is exactly JSON.stringify(document.cards, null, 2) + \"\\n\"; Read Deck File of it is ok with 17 cards and externalDependsOn [\"outside\"]"
+    "then": "code 0; document equal to ledger.plan.json plus out \"decks/p.json\" and, last, warnings (P34b) [\"ledger/Sum Entries: step produces 'number' names no Data Object or Event of the record\", \"ledger/Format Report: step produces 'string' names no Data Object or Event of the record\"]; the file decks/p.json is exactly JSON.stringify(document.cards, null, 2) + \"\\n\"; Read Deck File of it is ok with 17 cards and externalDependsOn [\"outside\"]"
   },
   "Main 8": {
     "given": "the setup of Submit Deck 1, argv [\"submit\", \"--deck\", \"d.json\", \"--processor\", \"b\", \"--root\", t]; then the transport and now of Collect Batch 1 in new deps, argv [\"collect\", \"--batch\", <its id>, \"--root\", t]",
@@ -53,7 +53,7 @@
   },
   "Plan Command 6": {
     "given": "example 1 plus checks decks/l1/checks.json, decks/tools/guard.mjs \"// guard\\n\", firstdiff.mjs \"// firstdiff\\n\", decks/l1/parts/parse.probe.ts, ledger-types.probe.ts \"// probe\\n\"",
-    "then": "code 0; example 1 but parse's acceptance codeAcceptance(ctx {phase \"l1\", siblings [\"src/ledger/types.ts\"]}, \"// probe\\n\", null, null), parse-judge's judgeAcceptance(ctx, files); ledger-types keeps the map's \"exit 0\\n\""
+    "then": "code 0; example 1 (its warnings included) but parse's acceptance codeAcceptance(ctx {phase \"l1\", siblings [\"src/ledger/types.ts\"]}, \"// probe\\n\", null, null), parse-judge's judgeAcceptance(ctx, files); ledger-types keeps the map's \"exit 0\\n\""
   },
   "Run Command 12": {
     "given": "example 1, deck [x → out/x.ts \"true\", q → out/q.ts no acceptance, d → out/d.ts \" \\n\"]",
@@ -265,10 +265,15 @@
   },
   "Plan Command 16": {
     "given": "a tmp root holding contour.yaml = the text of tests/fixtures/contour/parity/ccledger.contour.yaml and morph-map.json = the text of parity/ccledger.map.json; args spec \"contour.yaml\", map \"morph-map.json\", components [], judge false, out null; then the same args with judge true; then a fresh tmp root holding parity/contour-engine.contour.yaml and parity/contour-engine.map.json as contour.yaml and morph-map.json, components [\"contour-engine\"], judge false (the two Contour records of the old Morph's experiments 27.09, ccledger 6/6 and contour-engine 8/8: Events, Interface schema and bounds, Data Object bounds, no examples, no language)",
-    "then": "code 0 each; the ccledger document's cards mapped to {customId, dependsOn, targets} (in document order) and its generations equal parity/expected.json[\"ccledger\"].cards and .generations (the old mrph deck parity/ccledger.deck.json: the same 6 ids, targets and depends_on; generations [[\"classify\", \"load\", \"price\", \"render\"], [\"ledger\"], [\"cli\"]]) and its warnings equal expected.json[\"ccledger\"].warnings, [\"no language on Component ccledger and none in the map: typescript assumed\"]; with judge true the same 6 cards (no judge card: no target is typescript code); the contour-engine document the same against expected.json[\"contour-engine\"] (6 ids, generations [[\"diagram\", \"schema\", \"store\"], [\"engine\"], [\"mcp\", \"rest\"]], warnings [\"no language on Component contour-engine and none in the map: typescript assumed\"])"
+    "then": "code 0 each; the ccledger document's cards mapped to {customId, dependsOn, targets} (in document order) and its generations equal parity/expected.json[\"ccledger\"].cards and .generations (the old mrph deck parity/ccledger.deck.json: the same 6 ids, targets and depends_on; generations [[\"classify\", \"load\", \"price\", \"render\"], [\"ledger\"], [\"cli\"]]) and its warnings equal expected.json[\"ccledger\"].warnings, the language line and 6 lines \"ccledger/<Function>: no examples, no judge\" (P34b), the same with judge true; with judge true the same 6 cards (no judge card: no target is typescript code); the contour-engine document the same against expected.json[\"contour-engine\"] (6 ids, generations [[\"diagram\", \"schema\", \"store\"], [\"engine\"], [\"mcp\", \"rest\"]], warnings the language line and 15 \"no examples, no judge\" lines)"
   },
   "Plan Command 17": {
     "given": "a tmp root holding contour.json = the text of tests/fixtures/contour/contourKeys.json (no map); args spec \"contour.json\", map null, components [\"orders\", \"catalog\"], judge false, out null",
-    "then": "code 0; the document's warnings equal the 10 lines of contourKeys.warnings.json followed by \"no language on Component catalog and none in the map: typescript assumed\" (11 lines; orders has language typescript); \"warnings\" is the document's last key; its generations [[\"cancel-order\", \"list-prices\", \"place-order\"], [\"orders-api\"]]"
+    "then": "code 0; the document's warnings equal the 10 lines of contourKeys.warnings.json followed by \"no language on Component catalog and none in the map: typescript assumed\", \"orders/Place Order: no examples, no judge\", \"catalog/List Prices: no examples, no judge\" (13 lines; orders has language typescript); \"warnings\" is the document's last key; its generations [[\"cancel-order\", \"list-prices\", \"place-order\"], [\"orders-api\"]]"
+  },
+  "Plan Command 18": {
+    "given": "the tmp roots of Plan Command 16 (ccledger: components [], judge true; contour-engine: components [\"contour-engine\"], judge true)",
+    "ref": "tests/fixtures/contour/parity/lines.json ({ccledger, \"contour-engine\"}: {<customId>: texts its instruction holds})",
+    "then": "code 0 each; for every record, card id and text of lines.json, the card of that customId in the document has an instruction that holds the text: ccledger load \"Event Session Loaded: …\", ledger \"Event Ledger Built: …\"; contour-engine engine the Event blocks Element Stored and Element Deleted with their schemas, rest and mcp their whole Interface section (Schema, Exposes, Requirements, Guardrails); the contour-engine document's cards are diagram, schema, store, diagram-judge, engine, schema-judge, store-judge, mcp, rest in that order (no judge for a card none of whose Functions has an example)"
   }
 }

@@ -1,0 +1,80 @@
+version: 1
+Requirement:
+  - name: Exact Totals
+    description: Totals are exact integers of cents.
+Guardrail:
+  - name: No Network
+    description: No network call in code or tests.
+  - name: One Writer
+    description: Only the API writes orders.
+System:
+  name: shop
+  description: A small shop, the P34b fixture of Events and the Interface contract.
+  groups:
+    - name: orders
+      description: Orders are placed and cancelled.
+      language: typescript
+      guardrails: [No Network]
+      functions:
+        - name: Place Order
+          description: Places an order for a cart.
+          behavior: placeOrder(cart) returns the order and announces Order Placed.
+          steps:
+            - reads: Cart
+            - calls: Price Cart
+            - produces: Order Placed
+            - produces: string
+          examples:
+            - {given: "a cart of two items", when: "placed", then: "an order of two lines"}
+        - name: Price Cart
+          description: Prices every item of a cart.
+          steps:
+            - reads: Cart
+            - modifies: Price Table
+        - name: Cancel Order
+          description: Cancels an order.
+          behavior: cancelOrder(id) announces Order Cancelled.
+          guardrails: [One Writer, No Network]
+          steps:
+            - produces: Order Cancelled
+          examples:
+            - {given: "a placed order", when: "cancelled", then: "Order Cancelled is announced"}
+      interfaces:
+        - name: orders API
+          description: The HTTP API of orders.
+          exposes: [Place Order, Cancel Order]
+          schema:
+            post: {path: /orders, body: Cart}
+            delete: {path: "/orders/{id}"}
+          requirements: [Exact Totals]
+          guardrails: [One Writer, Missing Rule]
+      events:
+        - name: Order Placed
+          description: An order was placed.
+          schema: {total: integer, id: string}
+    - name: catalog
+      description: The catalog of prices.
+      language: typescript
+      functions:
+        - name: List Prices
+          description: Lists the price table.
+          behavior: listPrices() returns the rows of the table.
+          steps:
+            - produces: Price Table
+          examples:
+            - {given: "a table of three rows", when: "listed", then: "the three rows"}
+        - name: Format Price
+          description: Formats one price.
+          behavior: formatPrice(cents) returns the text.
+          steps:
+            - reads: number
+            - produces: string
+      dataObjects:
+        - name: Cart
+          description: A cart of items.
+          schema: "{ items: string[] }"
+        - name: Price Table
+          description: Prices by item.
+      events:
+        - name: Order Cancelled
+          description: An order was cancelled.

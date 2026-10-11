@@ -1756,7 +1756,7 @@ System:
             card by customId ?? id, extra card by customId). args.out not null → the cards written to path.resolve(root, args.out) as JSON.stringify(cards, null, 2)
             + "\n", parents created. → {code: 0, document: {spec, components, cards, generations, externalDependsOn, out: args.out, last warnings only when
             non-empty}}; warnings (P34) = loadContour's, then per name of the plan's components whose record Component's language and map.language are both null
-            "no language on Component <name> and none in the map: typescript assumed". Nothing else written; nothing on an error.
+            "no language on Component <name> and none in the map: typescript assumed", then Plan Spec's warnings (P34b). Nothing else written; nothing on an error.
           steps: [{uses: contour}, {uses: planner}, {calls: Read Plan Checks}, {uses: rules}, {uses: builder}, {produces: Plan Document}]
           examples:
             - {given: 'examples.json["Plan Command 1"].given', when: planCommand, then: 'examples.json["Plan Command 1"].then'}
@@ -1776,6 +1776,7 @@ System:
             - {given: 'examples.json["Plan Command 15"].given', when: planCommand, then: 'examples.json["Plan Command 15"].then'}
             - {given: 'examples.json["Plan Command 16"].given', when: planCommand, then: 'examples.json["Plan Command 16"].then'}
             - {given: 'examples.json["Plan Command 17"].given', when: planCommand, then: 'examples.json["Plan Command 17"].then'}
+            - {given: 'examples.json["Plan Command 18"].given', when: planCommand, then: 'examples.json["Plan Command 18"].then'}
         - name: Read Plan Checks
           description: Files of `plan --checks`.
           behavior: >
@@ -2632,13 +2633,14 @@ System:
           behavior: >
             dataBlocks(record, functions): for each reads, modifies or produces step of the
             functions (function order, step order) whose target names a Data Object of any
-            Component and was not taken yet, the block "Data <name>: <description>" followed by
+            Component, else an Event of any Component (P34b), and was not taken yet, the block
+            "Data <name>: <description>" ("Event <name>: …" for an Event) followed by
             "\nSchema:\n<schema>" when the schema is not null; other targets ("number",
             "string") are skipped. functionSection(record, fn): the blocks "## Function <name>",
             the description, "Behaviour: <behavior>", when there are preconditions
             "Preconditions:" and one "- <p>" line each, when there are steps "Steps:" and one
-            "- <verb>: <target>" line each, the examples heading "Examples (the tests must prove
-            each one):" with Render Examples on the next line, the Data blocks of [fn], when
+            "- <verb>: <target>" line each, when there are examples the heading "Examples (the tests
+            must prove each one):" with Render Examples on the next line, the Data blocks of [fn], when
             there are requirements "Requirements:" and one line per name, when there are
             guardrails "Guardrails:" and one line per name; blocks joined by "\n\n", lines of a
             block by "\n". A requirement or guardrail line is "- <name>: <description>" from the
@@ -2652,6 +2654,8 @@ System:
             - {given: 'examples.json["Render Function 1"].given', when: "functionSection", then: 'examples.json["Render Function 1"].then'}
             - {given: 'examples.json["Render Function 2"].given', when: "functionSection", then: 'examples.json["Render Function 2"].then'}
             - {given: 'examples.json["Render Function 3"].given', when: "dataBlocks", then: 'examples.json["Render Function 3"].then'}
+            - {given: 'examples.json["Render Function 4"].given', when: "dataBlocks", then: 'examples.json["Render Function 4"].then'}
+            - {given: 'examples.json["Render Function 5"].given', when: "functionSection", then: 'examples.json["Render Function 5"].then'}
         - name: Render Context
           description: The preamble, the inherited requirements and guardrails, and an Interface section.
           behavior: >
@@ -2663,9 +2667,12 @@ System:
             place kept; guardrails the same; both empty → ""; else the blocks "## Component
             requirements / guardrails", then "Requirements:" with its lines when any, then
             "Guardrails:" with its lines when any (lines as in Render Function), joined by
-            "\n\n". interfaceSection(iface, modules): the blocks "## Interface <name>", the
-            description, "Exposes:" with one line "- <name> (`<modules[i]>`)" per exposed
-            Function, joined by "\n\n".
+            "\n\n". interfaceSection(iface, modules, record?): the blocks "## Interface <name>",
+            the description, "Schema:\n<schema>" when its schema is neither null nor absent,
+            "Exposes:" with one line "- <name> (`<modules[i]>`)" per exposed Function, then its
+            requirements and guardrails as in Render Function, each when not empty or absent
+            (looked up in record; without it every line "(definition not found in the record)"),
+            joined by "\n\n".
           steps:
             - reads: Contour Record
             - produces: string
@@ -2674,6 +2681,7 @@ System:
             - {given: 'examples.json["Render Context 2"].given', when: "inheritedSection", then: 'examples.json["Render Context 2"].then'}
             - {given: 'examples.json["Render Context 3"].given', when: "inheritedSection", then: 'examples.json["Render Context 3"].then'}
             - {given: 'examples.json["Render Context 4"].given', when: "interfaceSection", then: 'examples.json["Render Context 4"].then'}
+            - {given: 'examples.json["Render Context 5"].given', when: "interfaceSection", then: 'examples.json["Render Context 5"].then'}
         - name: Card Budget
           description: The output budget of a code card and of a judge card.
           behavior: >
@@ -2737,7 +2745,7 @@ System:
             first target of every dependsOn entry that is a card of this cut (not yet present),
             and when that is empty the card's first target. instruction = the blocks preamble(docs,
             spec), Function sections, Interface sections (modules = the first final target of the
-            card owning each exposed Function), the inherited section unless "", "Write the files:
+            card owning each exposed Function; record), the inherited section unless "", "Write the files:
             `<t1>`, `<t2>`." (each target in backticks, joined by ", "), Dependency
             Finale(profile, the Component's dependencies) — the profile's finale itself when there
             is none — joined by "\n\n"; an override's instruction replaces the first block. Card = {customId,
@@ -2746,7 +2754,9 @@ System:
             override or the budget's, reasoning: {maxTokens: override reasoningMaxTokens or 2500},
             variants: override or the budget's, dependsOn}. → {ok: true, cuts}, one Cut Card per
             card in base order: {card, component, profile, functions: the unit's Functions ([] for
-            an Interface card), slicedByMap: the override set contextSlice}.
+            an Interface card), slicedByMap: the override set contextSlice, guardrails (P34b, for
+            #42): the names of its Functions' guardrails, its Interfaces', the System's, the
+            Component's, distinct, first place kept}.
           steps:
             - calls: Cut Units
             - calls: Render Function
@@ -2775,12 +2785,14 @@ System:
             - given: 'the deps record and map, Component wrong (typescript, uses github.com/google/go-cmp, a go dependency)'
               when: "cutComponent"
               then: "{ok: false, error: \"Component 'wrong' uses 'github.com/google/go-cmp', a go dependency (the Component is typescript)\"}"
+            - {given: 'examples.json["Cut Component 7"].given', when: "cutComponent", then: 'examples.json["Cut Component 7"].then'}
         - name: Cut Judges
           description: One judge card per card with a code target; examples, Data blocks, callee contracts and preconditions in its instruction.
           behavior: >
             cutJudges({record, cuts, map, docs, defaultProfile, hasFile}) → Card[], in cut order.
             Per Cut Card: profile = its profile, else Detect Profile of its first target, else
-            defaultProfile; code = codeTargets(profile, targets); none → no judge. Built id =
+            defaultProfile; code = codeTargets(profile, targets); none, or Functions none of which
+            has an example (P34b) → no judge. Built id =
             "<customId>-judge"; the map card with that id overrides as for a code card. Default
             target: the profile's judgeTarget filled with {component: the base name of code[0]'s
             directory, name: code[0]'s base name without its extension}. dependsOn = [the card's
@@ -2788,10 +2800,11 @@ System:
             targets) or targets[0]. Blocks: Judge Instruction(profile, {test, module: code[0],
             docs}); when the card has Functions: "The examples below are the criterion, and you
             are its independent author: write one test per example (no fewer, no merging), each
-            named after the Function and the example number, e.g. \"<first Function> example
-            1\".", one block "Examples of Function <name>:\n" + Render Examples per Function,
-            dataBlocks(record, functions), one block "Callee <name>: <description>\nBehaviour:
-            <behavior>" per callee (a calls target of the Functions that is none of them, a
+            named after the Function and the example number, e.g. \"<first Function with
+            examples> example 1\".", one block "Examples of Function <name>:\n" + Render Examples
+            per Function with examples,
+            dataBlocks(record, functions), one block "Callee <name>: <description>" +
+            "\nBehaviour: <behavior>" when its behavior is not "" per callee (a calls target of the Functions that is none of them, a
             Function of the Component, distinct, step order), and when any line exists the
             block "Preconditions a test's setup depends on:" with lines "- <Component> ·
             <Function> · <precondition>", distinct, from the card's Functions, then the callees,
@@ -2817,6 +2830,7 @@ System:
             - {given: 'examples.json["Cut Judges 2"].given', when: "cutJudges", then: 'examples.json["Cut Judges 2"].then'}
             - {given: 'examples.json["Cut Judges 3"].given', when: "cutJudges", then: 'examples.json["Cut Judges 3"].then'}
             - {given: 'examples.json["Cut Judges 4"].given', when: "cutJudges", then: 'examples.json["Cut Judges 4"].then'}
+            - {given: 'examples.json["Cut Judges 5"].given', when: "cutJudges", then: 'examples.json["Cut Judges 5"].then'}
         - name: Order Deck
           description: Kahn layers over dependsOn, the deck sorted by them, and the external dependencies.
           behavior: >
@@ -2862,7 +2876,11 @@ System:
             cards get none. Every card's contextSlice loses every
             entry equal to spec (the record never rides in a slice). The first customId repeated in card order →
             "duplicate customId '<id>'". Order Deck (its error is the result). → {ok: true, plan:
-            {spec, components: the selected names, cards, generations, externalDependsOn}, uses}
+            {spec, components: the selected names, cards, generations, externalDependsOn}, uses,
+            warnings} (warnings P34b: per selected Component, per Function in record order, each
+            reads/modifies/produces step naming no Data Object or Event of any Component
+            "<Component>/<Function>: step <verb> '<target>' names no Data Object or Event of the
+            record" (distinct), then for no examples "<Component>/<Function>: no examples, no judge")
             (uses {} with no dependency; Plan keeps its five keys, so the plan document and the
             deck of a dependency-free record are byte for byte what they were). On the
             same record and map the old `mrph plan --spec --judge` gives the same ids, dependsOn
@@ -2894,6 +2912,7 @@ System:
             - given: 'the deps record and map; components ["conf", "diff"], judge false, hasFile false only for "docs/deps/go-cmp.md"; then components ["conf"], hasFile always false; then components ["plain"], judge true, hasFile always false'
               when: "planSpec"
               then: "{ok: false, error: \"dependency 'github.com/google/go-cmp' of Component 'diff': doc file not found: docs/deps/go-cmp.md\"}; then {ok: false, error: \"dependency 'yaml' of Component 'conf': doc file not found: docs/deps/yaml.md\"} (zod has no doc); then ok with uses {}"
+            - {given: 'examples.json["Plan Spec 8"].given', when: "planSpec", then: 'examples.json["Plan Spec 8"].then'}
 
       dataObjects:
         - name: Budget
@@ -2904,7 +2923,7 @@ System:
           schema: "{ id: string, name: string, functions: ContourFunction[], isGroup: boolean }"
         - name: Cut Card
           description: A card and what its judge needs.
-          schema: "{ card: Card, component: Component | null, profile: LanguageProfile | null, functions: ContourFunction[], slicedByMap: boolean }"
+          schema: "{ card: Card, component: Component | null, profile: LanguageProfile | null, functions: ContourFunction[], slicedByMap: boolean, guardrails?: string[] }"
         - name: Plan
           description: The result of planSpec and the body of the plan document.
           schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]> }"

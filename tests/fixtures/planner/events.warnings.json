@@ -1,0 +1,7 @@
+[
+  "orders/Place Order: step produces 'string' names no Data Object or Event of the record",
+  "orders/Price Cart: no examples, no judge",
+  "catalog/Format Price: step reads 'number' names no Data Object or Event of the record",
+  "catalog/Format Price: step produces 'string' names no Data Object or Event of the record",
+  "catalog/Format Price: no examples, no judge"
+]

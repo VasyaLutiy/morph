@@ -1,0 +1,30 @@
+{
+  "phase": "p34b",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates"],
+  "fullExclude": ["tests/planner/render.p34b.examples.test.ts", "tests/planner/judges.p34b.examples.test.ts",
+    "tests/planner/cut.p34b.examples.test.ts", "tests/planner/plan.p34b.examples.test.ts",
+    "tests/cli/planCommand.examples.test.ts", "tests/cli/planChecks.examples.test.ts", "tests/cli/planCommand.p34.examples.test.ts"],
+  "cards": [
+    { "id": "render" },
+    { "id": "cut-judges" },
+    { "id": "cut-component" },
+    { "id": "plan-spec" },
+    { "id": "plan-command" },
+    { "id": "render-judge", "files": [{ "file": "tests/planner/render.p34b.examples.test.ts", "min": 3, "max": 6, "new": true,
+      "lits": ["Render Function example 4", "Render Function example 5", "Render Context example 5", "planner/events.yaml", "planner/events.texts.json"] }] },
+    { "id": "cut-judges-judge", "files": [{ "file": "tests/planner/judges.p34b.examples.test.ts", "min": 1, "max": 3, "new": true,
+      "lits": ["Cut Judges example 5", "planner/events.yaml", "planner/events.plan.json", "Callee Price Cart: Prices every item of a cart."] }] },
+    { "id": "cut-component-judge", "files": [{ "file": "tests/planner/cut.p34b.examples.test.ts", "min": 1, "max": 3, "new": true,
+      "lits": ["Cut Component example 7", "planner/events.yaml", "planner/events.map.json", "Missing Rule"] }] },
+    { "id": "plan-spec-judge", "files": [{ "file": "tests/planner/plan.p34b.examples.test.ts", "min": 1, "max": 4, "new": true,
+      "lits": ["Plan Spec example 8", "planner/events.plan.json", "planner/events.warnings.json", "planner/ledger.plan.json"] }] },
+    { "id": "plan-command-judge", "files": [
+      { "file": "tests/cli/planCommand.examples.test.ts", "min": 5, "max": 5, "new": false,
+        "lits": ["ledger/Sum Entries: step produces 'number' names no Data Object or Event of the record"] },
+      { "file": "tests/cli/planChecks.examples.test.ts", "min": 3, "max": 3, "new": false,
+        "lits": ["ledger/Sum Entries: step produces 'number' names no Data Object or Event of the record"] },
+      { "file": "tests/cli/planCommand.p34.examples.test.ts", "min": 3, "max": 6, "new": false,
+        "lits": ["Plan Command example 18", "contour/parity/lines.json", "orders/Place Order: no examples, no judge", "catalog/List Prices: no examples, no judge"] }] }
+  ]
+}

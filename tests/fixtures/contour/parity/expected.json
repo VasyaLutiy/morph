@@ -74,7 +74,13 @@
       ]
     ],
     "warnings": [
-      "no language on Component ccledger and none in the map: typescript assumed"
+      "no language on Component ccledger and none in the map: typescript assumed",
+      "ccledger/Load Session: no examples, no judge",
+      "ccledger/Price Call: no examples, no judge",
+      "ccledger/Classify Call: no examples, no judge",
+      "ccledger/Build Ledger: no examples, no judge",
+      "ccledger/Render Ledger: no examples, no judge",
+      "ccledger/Ledger CLI: no examples, no judge"
     ]
   },
   "contour-engine": {
@@ -153,7 +159,22 @@
       ]
     ],
     "warnings": [
-      "no language on Component contour-engine and none in the map: typescript assumed"
+      "no language on Component contour-engine and none in the map: typescript assumed",
+      "contour-engine/Store Element: no examples, no judge",
+      "contour-engine/Delete Element: no examples, no judge",
+      "contour-engine/Retrieve Element: no examples, no judge",
+      "contour-engine/Validate Element: no examples, no judge",
+      "contour-engine/Store Requirement: no examples, no judge",
+      "contour-engine/Retrieve Requirement: no examples, no judge",
+      "contour-engine/Delete Requirement: no examples, no judge",
+      "contour-engine/Store Guardrail: no examples, no judge",
+      "contour-engine/Retrieve Guardrail: no examples, no judge",
+      "contour-engine/Delete Guardrail: no examples, no judge",
+      "contour-engine/Search Specifications: no examples, no judge",
+      "contour-engine/Search Requirements: no examples, no judge",
+      "contour-engine/Search Guardrails: no examples, no judge",
+      "contour-engine/Render Diagram: no examples, no judge",
+      "contour-engine/Render Element Diagram: no examples, no judge"
     ]
   }
 }

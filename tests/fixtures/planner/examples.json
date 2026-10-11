@@ -102,5 +102,35 @@
     "given": "the ledger record and map, Component ledger, docs [\"docs/TASK.md\"], spec \"ledger.yaml\"",
     "ref": "tests/fixtures/planner/ledger.yaml, tests/fixtures/planner/ledger.map.json, tests/fixtures/planner/ledger.cut.json (the four cards)",
     "then": "ok; the cards equal ledger.cut.json: parse (renamed, targets and max_tokens overridden), checks (the group, Interface check API folded, deps [\"parse\"], variants 2), format-report (opening \"Write the report formatter.\", dependsOn [\"checks\", \"outside\"]), ledger-cli (the Interface card, dependsOn [\"format-report\", \"checks\"], slice [\"docs/TASK.md\", \"src/ledger/formatReport.ts\", \"src/ledger/checks.ts\"]); functions per card [Parse Entry], [Sum Entries, Check Ledger], [Format Report], []; slicedByMap false for all; profile the typescript profile"
+  },
+  "Render Function 4": {
+    "given": "the events record, Functions Place Order and Cancel Order of Component orders (Data Object Cart and Event Order Cancelled of Component catalog, Event Order Placed of orders, a step produces string)",
+    "ref": "tests/fixtures/planner/events.yaml (the record), tests/fixtures/planner/events.texts.json (the texts)",
+    "then": "events.texts.json[\"dataBlocks Place Order, Cancel Order\"]: three blocks, \"Data Cart: …\", \"Event Order Placed: An order was placed.\\nSchema:\\n…\", \"Event Order Cancelled: An order was cancelled.\" (no schema); string yields no block"
+  },
+  "Render Function 5": {
+    "given": "the events record, Functions Price Cart (no behavior, no examples) and Place Order",
+    "ref": "tests/fixtures/planner/events.yaml (the record), tests/fixtures/planner/events.texts.json (the texts)",
+    "then": "functionSection equals events.texts.json[\"functionSection Price Cart\"] (no \"Behaviour:\" block, no \"Examples (the tests must prove each one):\" heading) and [\"functionSection Place Order\"]"
+  },
+  "Render Context 5": {
+    "given": "the events record, Interface orders API of Component orders (schema, requirements [Exact Totals], guardrails [One Writer, Missing Rule]), modules [\"src/orders/placeOrder.ts\", \"src/orders/cancelOrder.ts\"]",
+    "ref": "tests/fixtures/planner/events.yaml (the record), tests/fixtures/planner/events.texts.json (the texts)",
+    "then": "with the record: events.texts.json[\"interfaceSection orders API\"] (Schema block after the description, sorted-key JSON; Requirements and Guardrails after Exposes; \"- Missing Rule (definition not found in the record)\"); without it: [\"interfaceSection orders API, no record\"]"
+  },
+  "Cut Component 7": {
+    "given": "the events record and map, Component orders, docs [], spec \"events.yaml\"",
+    "ref": "tests/fixtures/planner/events.yaml, tests/fixtures/planner/events.map.json, tests/fixtures/planner/events.texts.json",
+    "then": "ok; ids [\"place-order\", \"price-cart\", \"cancel-order\", \"orders-api\"]; guardrails [\"No Network\"], [\"No Network\"], [\"One Writer\", \"No Network\"], [\"One Writer\", \"Missing Rule\", \"No Network\"]; orders-api's instruction holds events.texts.json[\"interfaceSection orders API\"]"
+  },
+  "Cut Judges 5": {
+    "given": "the Cut Cards of Components orders then catalog of the events record and map (docs [], spec \"events.yaml\"); defaultProfile typescript; hasFile true only for \"tests/helpers.ts\"",
+    "ref": "tests/fixtures/planner/events.yaml, tests/fixtures/planner/events.map.json, tests/fixtures/planner/events.plan.json (the whole plan)",
+    "then": "ids [\"place-order-judge\", \"cancel-order-judge\", \"orders-api-judge\", \"prices-judge\"] (no judge for price-cart: Price Cart has no example), each equal to the card of that id in events.plan.json; place-order-judge's instruction ends \"\\n\\nCallee Price Cart: Prices every item of a cart.\" (no Behaviour line); prices-judge's holds \"e.g. \\\"List Prices example 1\\\".\" and \"Examples of Function List Prices:\" and not \"Examples of Function Format Price\""
+  },
+  "Plan Spec 8": {
+    "given": "the events record and map, spec \"events.yaml\", components [\"orders\", \"catalog\"], judge true, hasFile true only for \"tests/helpers.ts\"; then Plan Spec example 1's ledger record and map; then this repository's own contour.yaml and morph-map.json, components [\"contour\"], judge true, hasFile always true",
+    "ref": "tests/fixtures/planner/events.plan.json (the whole plan), tests/fixtures/planner/events.warnings.json (its 5 warnings)",
+    "then": "ok; plan equals events.plan.json; warnings equal events.warnings.json; then the ledger plan still equals ledger.plan.json and warnings [\"ledger/Sum Entries: step produces 'number' names no Data Object or Event of the record\", \"ledger/Format Report: step produces 'string' names no Data Object or Event of the record\"]; then warnings []"
   }
 }
