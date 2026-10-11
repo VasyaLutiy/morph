@@ -4,6 +4,8 @@ import { loadContour, loadMap } from "../contour/load.js";
 import { planSpec } from "../planner/plan.js";
 import { selectCards } from "../planner/selectCards.js";
 import { buildAcceptances } from "../builder/buildAcceptances.js";
+import { defaultChecks } from "../criterion/defaultChecks.js";
+import { probeFile } from "../builder/buildAcceptances.js";
 import { resolveProfile } from "../language/profiles.js";
 import { readPlanChecks } from "./readPlanChecks.js";
 import { planRules } from "../rules/guardrails.js";
@@ -92,8 +94,17 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
 
   let proseOnly: string[] = [];
   let notes: string[] = [];
+  let overrides: string[] = [];
   let cards: Card[] = plan.cards;
   if (args.checks !== undefined) {
+    const overridden = new Set<string>();
+    for (const m of map.cards) {
+      if (m.acceptance !== null) overridden.add(m.customId ?? m.id);
+    }
+    for (const e of map.extraCards) {
+      if (e.acceptance !== null && e.customId !== null) overridden.add(e.customId);
+    }
+
     const first = record.system.groups.find((g) => g.name === plan.components[0]);
     const profiled = resolveProfile(first?.language ?? null, map.language);
     if (!profiled.ok) {
@@ -113,6 +124,28 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
       const kept = new Set<string>(plan.cards.map((card) => card.customId));
       checks = { ...checks, cards: checks.cards.filter((c) => kept.has(c.id)) };
     }
+    const d = defaultChecks({
+      checks,
+      cards: plan.cards,
+      all: planned.plan.cards.map((c) => c.customId),
+      criteria: planned.criteria,
+      profile: profiled.profile,
+      mapAcceptance: Array.from(overridden),
+      hasFile,
+      record: record.system.groups
+        .flatMap((g) => g.functions)
+        .map((f) => ({ name: f.name, count: f.examples.length })),
+      probes: read.texts.probes,
+      readProbe: (id: string) => {
+        const p = path.resolve(root, checks.parts, probeFile(profiled.profile, id));
+        return isRegularFile(p) ? fs.readFileSync(p, "utf8") : null;
+      },
+    });
+    if (!d.ok) {
+      return { code: 2, document: errorDocument(2, "DeckError", d.message) };
+    }
+    checks = d.checks;
+    overrides = d.overrides;
     notes = planNotes(
       checks.cards.map((c) => ({
         id: c.id,
@@ -126,7 +159,7 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
       cards: plan.cards,
       checks,
       profile: profiled.profile,
-      texts: read.texts,
+      texts: { ...read.texts, probes: d.probes },
       uses: planned.uses,
       vendor: hasFile("vendor/modules.txt"),
       ...(r.layers !== null ? { layers: r.layers } : {}),
@@ -150,13 +183,6 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
             built.errors.join("\n"),
         ),
       };
-    }
-    const overridden = new Set<string>();
-    for (const m of map.cards) {
-      if (m.acceptance !== null) overridden.add(m.customId ?? m.id);
-    }
-    for (const e of map.extraCards) {
-      if (e.acceptance !== null && e.customId !== null) overridden.add(e.customId);
     }
     cards = built.cards.map((c, i) => (overridden.has(c.customId) ? plan.cards[i] : c));
   }
@@ -189,6 +215,7 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
       externalDependsOn: plan.externalDependsOn,
       out: args.out,
       ...(proseOnly.length > 0 ? { proseOnly } : {}),
+      ...(overrides.length > 0 ? { overrides } : {}),
       ...(warnings.length > 0 ? { warnings } : {}),
     },
   };
