@@ -2759,10 +2759,7 @@ System:
           preconditions:
             - Validate Record made the record, so every uses name is a declared dependency; a name no dependency carries is simply not found
           examples:
-            - given: 'the ledger record and map, Component ledger, docs ["docs/TASK.md"], spec "ledger.yaml"'
-              ref: "tests/fixtures/planner/ledger.yaml, tests/fixtures/planner/ledger.map.json, tests/fixtures/planner/ledger.cut.json (the four cards)"
-              when: "cutComponent"
-              then: 'ok; the cards equal ledger.cut.json: parse (renamed, targets and max_tokens overridden), checks (the group, Interface check API folded, deps ["parse"], variants 2), format-report (opening "Write the report formatter.", dependsOn ["checks", "outside"]), ledger-cli (the Interface card, dependsOn ["format-report", "checks"], slice ["docs/TASK.md", "src/ledger/formatReport.ts", "src/ledger/checks.ts"]); functions per card [Parse Entry], [Sum Entries, Check Ledger], [Format Report], []; slicedByMap false for all; profile the typescript profile'
+            - {given: 'examples.json["Cut Component 1"].given', when: "cutComponent", then: 'examples.json["Cut Component 1"].then'}
             - given: 'the same, Component store (python)'
               ref: "tests/fixtures/planner/store.cut.json (the two cards)"
               when: "cutComponent"
@@ -2774,10 +2771,7 @@ System:
               ref: "tests/fixtures/contour/badCalls.json"
               when: "cutComponent"
               then: "errors \"Component 'ledger': unknown language 'rust' (known: typescript, python, go)\"; \"Function 'A' calls unknown Function 'B' of Component 'loop'\"; \"Interface 'x' exposes unknown Function 'Nope'\"; \"duplicate customId 'parse-entry'\""
-            - given: 'the deps record and map, docs ["docs/TASK.md"], spec "deps.yaml"; Components conf (uses zod, yaml), diff (go, uses github.com/google/go-cmp), plain (none)'
-              ref: "tests/fixtures/planner/deps.yaml, tests/fixtures/planner/deps.map.json"
-              when: "cutComponent"
-              then: 'conf: read-config and check-config, each instruction ending "\n\n" + the typescript finale + " Imports: the standard library plus yaml@2.8.1, zod@3.23.8; their API is in docs/deps/yaml.md; no other import." (record order, not uses order); diff: diff-values ending "never your own helper; no t.Skip, no network, no clock, no goroutine left running. Imports: the standard library plus github.com/google/go-cmp@v0.7.0; their API is in docs/deps/go-cmp.md; no other import." and holding "Go 1.22, the standard library and the modules named at the end (go.mod requires them;"; plain: pad-left ending "\n\n" + the typescript finale exactly; componentDependencies(record, plain) = []'
+            - {given: 'examples.json["Cut Component 5"].given', when: "cutComponent", then: 'examples.json["Cut Component 5"].then'}
             - given: 'the deps record and map, Component wrong (typescript, uses github.com/google/go-cmp, a go dependency)'
               when: "cutComponent"
               then: "{ok: false, error: \"Component 'wrong' uses 'github.com/google/go-cmp', a go dependency (the Component is typescript)\"}"
@@ -2896,10 +2890,7 @@ System:
             - given: "this repository's own contour.yaml and morph-map.json, spec \"contour.yaml\", components [\"contour\"], judge true"
               when: "planSpec"
               then: 'generations [["validate-record"], ["select-components", "validate-map", "validate-record-judge"], ["load-spec", "select-components-judge", "validate-map-judge"], ["load-spec-judge"]] — the P9 deck old mrph cut; each card whose map entry sets an acceptance carries exactly that acceptance (P19: validate-record and its judge have none in the map, their acceptances are built by --checks)'
-            - given: 'the deps record and map, spec "deps.yaml", components ["conf", "diff", "plain"], judge true, hasFile always true'
-              ref: "tests/fixtures/planner/deps.yaml, tests/fixtures/planner/deps.map.json"
-              when: "planSpec"
-              then: 'ok; contextSlice of read-config ["docs/TASK.md", "docs/deps/yaml.md"], check-config ["docs/X.md", "docs/deps/yaml.md"] (the map''s slice, the doc appended), read-config-judge ["docs/TASK.md", "src/conf/readConfig.ts", "tests/helpers.ts", "docs/deps/yaml.md"], diff-values ["docs/TASK.md", "docs/deps/go-cmp.md"], diff-values-judge ["docs/TASK.md", "diff/diff_values.go", "internal/testhelp/testhelp.go", "docs/deps/go-cmp.md"], pad-left ["docs/TASK.md"], pad-left-judge ["docs/TASK.md", "src/plain/padLeft.ts", "tests/helpers.ts"]; uses {"read-config": ["yaml", "zod"], "check-config": ["yaml", "zod"], "diff-values": ["github.com/google/go-cmp"]} (no judge, no plain card); generations [["diff-values", "pad-left", "read-config"], ["check-config", "diff-values-judge", "pad-left-judge", "read-config-judge"], ["check-config-judge"]]'
+            - {given: 'examples.json["Plan Spec 6"].given', when: "planSpec", then: 'examples.json["Plan Spec 6"].then'}
             - given: 'the deps record and map; components ["conf", "diff"], judge false, hasFile false only for "docs/deps/go-cmp.md"; then components ["conf"], hasFile always false; then components ["plain"], judge true, hasFile always false'
               when: "planSpec"
               then: "{ok: false, error: \"dependency 'github.com/google/go-cmp' of Component 'diff': doc file not found: docs/deps/go-cmp.md\"}; then {ok: false, error: \"dependency 'yaml' of Component 'conf': doc file not found: docs/deps/yaml.md\"} (zod has no doc); then ok with uses {}"
