@@ -3831,46 +3831,40 @@
       "instruction": "You write tests/language/guardrails.examples.test.ts only, a NEW file with one test per example of Canonical Guardrail (3 tests, named \"Canonical Guardrail example <N>: <what>\"). Import GUARDRAIL_RULES, guardrailKey, guardrailRule from \"../../src/language/guardrails.js\" and GO, PYTHON, TYPESCRIPT from \"../../src/language/profiles.js\". Example 1: guardrailKey of \"  No   Shell \", \"STDLIB\\tOnly\" (a tab) and \"No-Shell\" toBe \"no shell\", \"stdlib only\", \"no-shell\". Example 2: the nine guardrailRule calls, each toBe its value (a string or null). Example 3: GUARDRAIL_RULES toStrictEqual the whole object of the example, and Object.keys(GUARDRAIL_RULES) toStrictEqual [\"typescript\", \"python\", \"go\"]. The tests write nothing and spawn nothing. Strings with toBe, a whole document, result or state with toStrictEqual, a substring with toContain; a literal holding a single quote goes in a double-quoted string. Every tmp root is removed in finally (r.rm()). No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned; import test and expect from \"vitest\"."
     },
     "guardrail-rules": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "src/rules/guardrails.ts"
       ],
       "context_slice": [
-        "docs/TASK_P31a_guardrails.md",
+        "docs/TASK_P31c_scope.md",
         "docs/CONVENTIONS.md",
         "src/contour/types.ts",
         "src/language/types.ts",
-        "src/language/guardrails.ts",
-        "src/rules/layers.ts"
+        "src/language/paths.ts"
       ],
-      "depends_on": [
-        "canonical-guardrail"
-      ],
+      "depends_on": [],
       "variants": 2,
       "max_tokens": 14000,
-      "instruction": "Read docs/TASK_P31a_guardrails.md sections 2.2 (src/rules/guardrails.ts) and 4. Write src/rules/guardrails.ts, a NEW file with the five Functions below and the two result types of section 2.2. Imports exactly: `import { posix } from \"node:path\";`, resolveProfile from \"../language/profiles.js\", cutTargets and slugName from \"../language/naming.js\", codeTargets from \"../language/paths.js\", guardrailKey and guardrailRule from \"../language/guardrails.js\", GUARD_CONTRACT and planLayers from \"./layers.js\", and the types ContourMap, ContourRecord (\"../contour/types.js\") and LanguageProfile (\"../language/types.js\") with `import type`; src/rules/layers.ts (in your slice) shows how those helpers are called (the unit and targets of a Function exactly as layerEdges finds them). Pure: no file read, no clock, no environment, no process. rulesArg writes each ' of the JSON as the six characters \\u0027 (`.replaceAll(\"'\", \"\\\\u0027\")`). Write no test file: a probe tests you and a judge writes the example tests."
+      "instruction": "Read docs/TASK_P31c_scope.md sections 1 (Design), 2.2 (src/rules/guardrails.ts) and 4. Patch src/rules/guardrails.ts (its current text follows) and return it WHOLE; change only the bodies of guardrailRules and cardRules (and the Unit interface, which gains `files: string[]`), every export, signature, type, import, message and order stays as it is. In guardrailRules each unit also keeps its code files: codeTargets(profile, targets), distinct, in order (codeTargets is already imported). Then, for each canonical name: a place starting with \"Function \" or \"Interface \" writes its text to the key of each code file of the unit (create rules[file] = {} when it is missing), a place starting with \"Component \" or \"System \" to the key of each dir of the unit, as today; in both the first text for an id wins (Object.hasOwn). Every dir stays a key; the final sort walks every key. In cardRules, per dir d (first seen first) build a new object: for each code target t in d, in target order, each id of rules[t] (when Object.hasOwn(rules, t)) not yet set; then each id of rules[d] (when Object.hasOwn(rules, d)) not yet set; then copy it with its keys sorted (Object.keys(o).sort()). Pure: no file read, no clock, no environment, no process. Write no test file: a probe tests you and a judge writes the example tests."
     },
     "guardrail-rules-judge": {
       "intent": "patch",
       "targets": [
         "tests/rules/guardrails.examples.test.ts",
-        "tests/rules/guardrails.p31b.examples.test.ts"
+        "tests/rules/guardrails.p31c.examples.test.ts"
       ],
       "context_slice": [
-        "docs/TASK_P31b_imports.md",
+        "docs/TASK_P31c_scope.md",
         "docs/CONVENTIONS.md",
         "tests/helpers.ts",
         "tests/fixtures/rules/examples.json",
-        "src/rules/guardrails.ts",
-        "src/planner/types.ts",
-        "src/language/treeProfiles.ts",
-        "src/cards/transaction.ts"
+        "src/rules/guardrails.ts"
       ],
       "depends_on": [
         "guardrail-rules"
       ],
       "max_tokens": 30000,
-      "instruction": "You write two test files and return each WHOLE. (1) tests/rules/guardrails.examples.test.ts (its current text follows): in \"Rules Arg example 5\" the expected stdout of the red daemon run becomes exactly \"guard: daemon/daemon.go:3: imports m/runner: the record has no 'uses' from daemon to runner (allowed: none)\\n\" (the Go guard now names the importing file and line); change nothing else in that file, every test, its name and every other expectation kept (14 tests). (2) tests/rules/guardrails.p31b.examples.test.ts, a NEW file: one test per example of Rules Arg 6, Rules Arg 7, Plan Rules 4 and Plan Rules 5 (4 tests in that order, named \"<Function> example <N>: <what>\"). Read docs/TASK_P31b_imports.md section 2.1 (the fixture shapes and the harnesses: GUARD, ENV, spawnSync, the node_modules symlink for the TypeScript guard, planSpec's uses as the mods argument, blameLog with TREE_PROFILES' fileLine) and tests/fixtures/rules/examples.json (in your slice: the given and then of each). Fixture shapes: rules/p9a/tree.json is {tree: Record<string, string>, forbidden: Record<string, string>, layersJson: string, owners: Record<string, string>}; rules/single/cases.json is {go, typescript} each {map: string (the map's JSON text), tree: Record<string, string>, file: string, card: string, records: Record<string, string> (record texts), beside: Record<string, string>, then: Record<string, {status: number, stdout: string}>}; read them with fixtureJson and a cast. Plan Rules 4 and 5 loop over Object.keys(records) and Object.keys(beside): each run in a fresh tmp root, {status, stdout} toStrictEqual then[K], and for K other than \"base\" expect(then[K]).not.toStrictEqual(then.base). The Rules Arg 6 red line and blame are exactly \"guard: users/registry.go:5: imports github.com/google/uuid: not a dependency the record gives this Component (allowed: the standard library)\\n\" and {cards: [\"user-registry\"], outside: []}; Rules Arg 7's edges are {queue: [], registry: [\"queue\"], users: []} (layerEdges returns {ok: true, edges}). Import planRules from \"../../src/rules/guardrails.js\", layerEdges from \"../../src/rules/layers.js\", planSpec from \"../../src/planner/plan.js\", blameLog from \"../../src/cards/transaction.js\", TREE_PROFILES from \"../../src/language/treeProfiles.js\", loadContour and loadMap from \"../../src/contour/load.js\", fixture, fixtureJson, fixturePath and tmpRoot from \"../helpers.js\", spawnSync from \"node:child_process\", fs from \"node:fs\", path from \"node:path\". Give each test a timeout of 120000 ms (the Go guard runs `go run`). Strings with toBe, a whole document, result or state with toStrictEqual, a substring with toContain; a literal holding a single quote goes in a double-quoted string. Every tmp root is removed in finally (r.rm()). No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned; import test and expect from \"vitest\"."
+      "instruction": "You write two test files and return each WHOLE. (1) tests/rules/guardrails.examples.test.ts (its current text follows): change only two tests. In \"Guardrail Rules example 3\" the expected rules become the five keys of docs/TASK_P31c_scope.md section 2.2 (catalog as now; \"src/orders\" with no-clock and no-network only; \"src/orders/cancelOrder.ts\" with no-process and pure; \"src/orders/ordersApi.ts\" with no-env; \"src/orders/placeOrder.ts\" with no-shell; the texts verbatim), proseOnly as now. In \"Card Rules example 1\" the second expectation becomes {\"src/orders\": {\"no-clock\": \"Guardrail 'no  CLOCK' of Component orders\", \"no-network\": \"Guardrail 'No Network' of System guarded\", \"no-shell\": \"Guardrail 'No Shell' of Function Place Order\"}}. Change nothing else in that file: every test, its name and every other expectation kept (14 tests). (2) tests/rules/guardrails.p31c.examples.test.ts, a NEW file: one test per example of Guardrail Rules 5, Card Rules 2 and Rules Arg 8 (3 tests in that order, named \"<Function> example <N>: <what>\"); the given and then of each are in tests/fixtures/rules/examples.json (in your slice). The fixture rules/scope/cases.json is {go, typescript} each {map: string (the map's JSON text), tree: Record<string, string>, files: Record<string, string> (code file to card id), records: Record<string, string> (record texts: function, interface, component, system), then: Record<string, Record<string, {status: number, stdout: string}>>}; read it with fixtureJson and a cast. Guardrail Rules 5 loads the records with loadContour(text, \"contour.yaml\") and the map with loadMap(text, \"morph-map.json\") (each returns {ok, record} / {ok, map}; throw when not ok). Card Rules 2 uses GO and keeps the literals of its given verbatim; check the key order of the first result with Object.keys. Rules Arg 8 is the harness of section 2.1 verbatim: two loops (language, record key), then the files; every run in a fresh tmp root; {status, stdout} toStrictEqual then[K][file]; a test timeout of 240000 ms. Import guardrailRules, cardRules, planRules from \"../../src/rules/guardrails.js\", loadContour and loadMap from \"../../src/contour/load.js\", GO and TYPESCRIPT from \"../../src/language/profiles.js\", fixtureJson, fixturePath and tmpRoot from \"../helpers.js\", spawnSync from \"node:child_process\", fs from \"node:fs\", path from \"node:path\". Strings with toBe, a whole result with toStrictEqual; a literal holding a single quote goes in a double-quoted string. Every tmp root is removed in finally (r.rm()). No vi.mock, vi.stubGlobal, vi.useFakeTimers, no timer (setTimeout, setInterval, setImmediate), no function or variable named fetch or Fake*. Import only what you use; eslint rejects an unused import or constant and a `let` never reassigned; import test and expect from \"vitest\"."
     },
     "plan-notes": {
       "intent": "generate",

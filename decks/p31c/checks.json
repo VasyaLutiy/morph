@@ -1,0 +1,17 @@
+{
+  "phase": "p31c",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates"],
+  "fullExclude": ["tests/rules/guardrails.examples.test.ts", "tests/rules/guardrails.p31c.examples.test.ts"],
+  "cards": [
+    { "id": "guardrail-rules" },
+    { "id": "guardrail-rules-judge", "files": [
+      { "file": "tests/rules/guardrails.examples.test.ts", "min": 14, "max": 14, "new": false,
+        "lits": ["Guardrail Rules example 3", "Card Rules example 1", "src/orders/cancelOrder.ts", "src/orders/ordersApi.ts",
+          "src/orders/placeOrder.ts", "Guardrail 'No Shell' of Function Place Order"] },
+      { "file": "tests/rules/guardrails.p31c.examples.test.ts", "min": 3, "max": 6, "new": true,
+        "lits": ["Guardrail Rules example 5", "Card Rules example 2", "Rules Arg example 8", "rules/scope/cases.json",
+          "Guardrail 'No Clock' of Function Stamp Line", "Guardrail 'No Clock' of Interface stamp hook",
+          "Guardrail 'No Clock' of Component report", "morph-guard-contract: 3", "node_modules", "GOTOOLCHAIN", "d/x.go"] }] }
+  ]
+}

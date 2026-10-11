@@ -3617,6 +3617,9 @@ System:
         3–5): the guards check every rule per given code FILE, imports included (the standard library narrowed only by
         the canonical rules, plus the record's dependencies of the card's Component), and read no file beside the record;
         Plan Notes (src/rules/notes.ts) names in the plan document the hand copies a project still keeps beside it.
+        P31c (issue #42 ledger item 9): a System Guardrail binds every code file, a Component one every code file of its
+        directories, a Function or Interface one only the code files of that card — Guardrail Rules keys it by file, Card
+        Rules folds a card's own file entries into its directories, so the guard argument keeps contract 3's shape.
       language: typescript
       requirements: [Deterministic Core]
       functions:
@@ -3729,10 +3732,14 @@ System:
             whose exposes is exactly [F.name] ("Interface <I.name>"), in C's order; for I, I's guardrails ("Interface
             <I.name>"); then C.guardrails ("Component <C.name>"); then record.system.guardrails ("System <system name>"). Per
             name N: id = Canonical Guardrail's guardrailRule(profile, N); null → N joins proseOnly unless a name with the
-            same guardrailKey is already in it; else for each dir d of the unit, rules[d][id] = "Guardrail '<N>' of <place>"
-            unless rules[d] already has id (the first place, the most specific, wins). Any error → {ok: false, errors}
-            (record order, each text once); else {ok: true, rules, proseOnly}: the keys of rules and of each entry sorted
-            ascending by code unit (new objects built in that order), proseOnly in first-seen order, each name as written.
+            same guardrailKey is already in it; else the text "Guardrail '<N>' of <place>" goes, unless the key already has
+            id (the first place, the most specific, wins), to: for a Function or Interface place, the key f of each code
+            file f of codeTargets(profile, targets) of the unit (the file key is created, as {}, when its first rule falls
+            on it: a code file with no Function or Interface rule is no key); for a Component or System place, the key d of
+            each dir of the unit. So a Function's rule never reaches a sibling card's file of its directory. Any error →
+            {ok: false, errors} (record order, each text once); else {ok: true, rules, proseOnly}: the keys of rules and of
+            each entry sorted ascending by code unit (new objects built in that order; a dir sorts before its files),
+            proseOnly in first-seen order, each name as written.
             Data Object, Event and Actor guardrails are not read.
           steps:
             - reads: Contour Record
@@ -3751,19 +3758,25 @@ System:
               ref: "tests/fixtures/rules/badLanguage.yaml"
               when: guardrailRules
               then: "{ok: false, errors: [\"Component 'legacy': unknown language 'cobol' (known: typescript, python, go)\"]}"
+            - {given: 'examples.json["Guardrail Rules 5"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/scope/cases.json", when: "guardrailRules", then: 'examples.json["Guardrail Rules 5"].then'}
         - name: Card Rules
           description: The part of the rules one card's guard gets — its code directories.
           behavior: >
             cardRules(profile, targets, rules) → an object: for each directory d of codeTargets(profile, targets)
             (path.posix.dirname, "." for a root file; distinct, first seen first, so the keys keep that order) the entry
-            d → rules[d] when rules has the own key d, else {}. No code target → {}.
+            d → a new object: first, for each code target t of the card in d, in target order, every id of rules[t] (own key
+            t) not yet in it; then every id of rules[d] (own key d) not yet in it (the file's rule, the more specific, wins);
+            its keys sorted ascending (default sort). No code target → {}. The contract-3 guard reads its rules by directory
+            and is given only this card's code files, so the entry of d is the rule set of each of the card's files in d: the
+            System and Component rules of d plus this card's Function and Interface rules, never a sibling card's.
           steps:
             - reads: Guardrail Rules Result
             - produces: Record<string, Record<string, string>>
           examples:
             - given: 'RG = the rules of Guardrail Rules example 1, RT = those of example 3; cardRules(go, ["calc/add.go", "calc/add_test.go"], RG); cardRules(typescript, ["src/orders/placeOrder.ts", "tests/orders/placeOrder.test.ts"], RT); cardRules(go, ["new/a.go", "new/b.go", "main.go"], {}); cardRules(go, ["calc/add_examples_test.go"], RG)'
               when: cardRules
-              then: '{"calc": RG["calc"]}; {"src/orders": RT["src/orders"]} (the six rules); {"new": {}, ".": {}} with the keys in that order; {}'
+              then: '{"calc": RG["calc"]}; {"src/orders": {"no-clock": "Guardrail ''no  CLOCK'' of Component orders", "no-network": "Guardrail ''No Network'' of System guarded", "no-shell": "Guardrail ''No Shell'' of Function Place Order"}} (its dir and its file, not the sibling cards'' files); {"new": {}, ".": {}} with the keys in that order; {}'
+            - {given: 'examples.json["Card Rules 2"].given', ref: "tests/fixtures/rules/examples.json", when: "cardRules", then: 'examples.json["Card Rules 2"].then'}
         - name: Rules Arg
           description: The guard's rules argument, after the layers argument of Layers Arg.
           behavior: >
@@ -3798,6 +3811,7 @@ System:
             - {given: 'examples.json["Rules Arg 5"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/issue46/tree.json, tests/fixtures/rules/issue46/contour.yaml, tests/fixtures/rules/issue46/morph-map.json", when: "the guard runs in each state (the Go environment of example 2)", then: 'examples.json["Rules Arg 5"].then'}
             - {given: 'examples.json["Rules Arg 6"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/p9a/", when: "the guard runs per file (the Go environment of example 2), then blameLog", then: 'examples.json["Rules Arg 6"].then'}
             - {given: 'examples.json["Rules Arg 7"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/p9a/", when: "layerEdges, then the guard per file", then: 'examples.json["Rules Arg 7"].then'}
+            - {given: 'examples.json["Rules Arg 8"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/scope/cases.json", when: "planRules, cardRules per card, then the guard per file", then: 'examples.json["Rules Arg 8"].then'}
         - name: Guard Contract
           description: The contract number a project guard declares.
           behavior: >
@@ -3818,7 +3832,7 @@ System:
             language) (so a guard of contract 2 or more gets the record's edges whether decks/tools/layers.json exists or
             not, issue #46; an older copy beside a layers.json is refused as in P30), its error → {ok: false, error: it}; then
             Guardrail Rules(record, map), errors → {ok: false, error: them joined by "\n"}. n ≥ 3 → {ok: true, layers: its
-            layers, rules, proseOnly}. Else, when some directory of rules has a rule → {ok: false, error:
+            layers, rules, proseOnly}. Else, when some key of rules (a directory or a file) has a rule → {ok: false, error:
             "decks/tools/guard.mjs speaks contract <n, at least 1>: copy templates/<language>/decks/tools/guard.mjs from
             MorphV2"} (an older guard would ignore the rules); else {ok: true, layers: its layers, rules: null, proseOnly: []}.
           steps:
