@@ -1,0 +1,198 @@
+```ts
+import { test, expect } from "vitest";
+import { main } from "../../src/cli/main.js";
+import { DEFAULT_BUDGETS } from "../../src/scout/spendBudget.js";
+import { DEFAULT_TOOL_CAPS } from "../../src/scout/runTool.js";
+import { tmpRepo, tmpRoot } from "../helpers.js";
+
+test("Main example 19: an invalid config stops every command before it runs", async () => {
+  const t = tmpRepo();
+  const s = tmpRoot();
+  const stdout: string[] = [];
+  const stderr: string[] = [];
+  const io = {
+    stdout(text: string): void {
+      stdout.push(text);
+    },
+    stderr(text: string): void {
+      stderr.push(text);
+    },
+  };
+  try {
+    t.write("README.md", "# r\n");
+    t.git(["add", "."]);
+    t.git(["commit", "-q", "-m", "readme"]);
+    t.write(
+      "morph.config.yaml",
+      'version: 1\nscout:\n  grepSkp: []\n  budgets: {calls: "30"}\n',
+    );
+    s.write("task.txt", "Make b twice a.\n");
+    s.write("ans/scout.t1.md", 'ANSWER {"targets": ["README.md"]}');
+    const deps = {
+      env: {
+        PATH: process.env.PATH ?? "",
+        MORPH_PROCESSOR_s_TYPE: "stub",
+        MORPH_PROCESSOR_s_ANSWERS_DIR: s.path("ans"),
+      },
+      now: (): number => 1791500000000,
+      cwd: s.root,
+      transport: null,
+    };
+
+    const code1 = await main(
+      ["scout", "--processor", "s", "--issue", "task.txt", "--root", t.root],
+      deps,
+      io,
+    );
+    expect(code1).toBe(2);
+    expect(stdout).toHaveLength(1);
+    expect(JSON.parse(stdout[0]!)).toStrictEqual({
+      error: {
+        code: 2,
+        kind: "DeckError",
+        message:
+          "morph.config.yaml is not a valid config (2 problems): scout: unknown key 'grepSkp' (known: grepSkip, budgets, caps, seed); scout.budgets.calls: must be a positive integer",
+      },
+    });
+    expect(stderr).toStrictEqual(["morph scout: exit 2\n"]);
+
+    const code2 = await main(["primer", "--root", t.root], deps, io);
+    expect(code2).toBe(2);
+    expect(stdout).toHaveLength(2);
+    expect(JSON.parse(stdout[1]!)).toStrictEqual({
+      error: {
+        code: 2,
+        kind: "DeckError",
+        message:
+          "morph.config.yaml is not a valid config (2 problems): scout: unknown key 'grepSkp' (known: grepSkip, budgets, caps, seed); scout.budgets.calls: must be a positive integer",
+      },
+    });
+    expect(stderr).toStrictEqual([
+      "morph scout: exit 2\n",
+      "morph primer: exit 2\n",
+    ]);
+    expect(t.exists(".morph")).toBe(false);
+  } finally {
+    t.rm();
+    s.rm();
+  }
+});
+
+test("Main example 20: the config gives the scout's budgets and grepSkip, the flag beats it", async () => {
+  const tA = tmpRepo();
+  const tB = tmpRepo();
+  const tC = tmpRepo();
+  const s = tmpRoot();
+  const stdout: string[] = [];
+  const stderr: string[] = [];
+  const io = {
+    stdout(text: string): void {
+      stdout.push(text);
+    },
+    stderr(text: string): void {
+      stderr.push(text);
+    },
+  };
+  try {
+    for (const t of [tA, tB, tC]) {
+      t.write("src/a.ts", "export const a = 1;\n");
+      t.git(["add", "."]);
+      t.git(["commit", "-q", "-m", "a"]);
+    }
+    const config =
+      "scout:\n  grepSkip: [.morph/, decks/, docs/TASK_]\n  budgets: {calls: 7, deadlineSeconds: 900}\n";
+    tA.write("morph.config.yaml", config);
+    tB.write("morph.config.yaml", config);
+    s.write("task.txt", "Make b twice a.\n");
+    s.write("ans/scout.t1.md", 'ANSWER {"targets": ["src/a.ts"]}');
+    const deps = {
+      env: {
+        PATH: process.env.PATH ?? "",
+        MORPH_PROCESSOR_s_TYPE: "stub",
+        MORPH_PROCESSOR_s_ANSWERS_DIR: s.path("ans"),
+      },
+      now: (): number => 1791500000000,
+      cwd: s.root,
+      transport: null,
+    };
+
+    const codeA = await main(
+      ["scout", "--processor", "s", "--issue", "task.txt", "--root", tA.root, "--deadline", "60"],
+      deps,
+      io,
+    );
+    expect(codeA).toBe(0);
+
+    const codeB = await main(
+      ["scout", "--processor", "s", "--issue", "task.txt", "--root", tB.root],
+      deps,
+      io,
+    );
+    expect(codeB).toBe(0);
+
+    const codeC = await main(
+      ["scout", "--processor", "s", "--issue", "task.txt", "--root", tC.root],
+      deps,
+      io,
+    );
+    expect(codeC).toBe(0);
+
+    expect(stdout).toHaveLength(3);
+
+    const docA = JSON.parse(stdout[0]!) as { scout: string };
+    const sessionA = JSON.parse(tA.read(docA.scout)) as {
+      budgets: unknown;
+      caps: { grepSkip: string[] };
+    };
+    expect(sessionA.budgets).toStrictEqual({
+      calls: 7,
+      reads: 12,
+      chars: 120000,
+      rounds: 40,
+      deadlineMs: 60000,
+    });
+    expect(sessionA.caps.grepSkip).toStrictEqual([
+      ".morph/",
+      "decks/",
+      "docs/TASK_",
+    ]);
+
+    const docB = JSON.parse(stdout[1]!) as { scout: string };
+    const sessionB = JSON.parse(tB.read(docB.scout)) as {
+      budgets: unknown;
+      caps: { grepSkip: string[] };
+    };
+    expect(sessionB.budgets).toStrictEqual({
+      calls: 7,
+      reads: 12,
+      chars: 120000,
+      rounds: 40,
+      deadlineMs: 900000,
+    });
+    expect(sessionB.caps.grepSkip).toStrictEqual([
+      ".morph/",
+      "decks/",
+      "docs/TASK_",
+    ]);
+
+    const docC = JSON.parse(stdout[2]!) as { scout: string };
+    const sessionC = JSON.parse(tC.read(docC.scout)) as {
+      budgets: unknown;
+      caps: unknown;
+    };
+    expect(sessionC.budgets).toStrictEqual(DEFAULT_BUDGETS);
+    expect(sessionC.caps).toStrictEqual(DEFAULT_TOOL_CAPS);
+
+    expect(stderr).toStrictEqual([
+      "morph scout: exit 0\n",
+      "morph scout: exit 0\n",
+      "morph scout: exit 0\n",
+    ]);
+  } finally {
+    tA.rm();
+    tB.rm();
+    tC.rm();
+    s.rm();
+  }
+});
+```

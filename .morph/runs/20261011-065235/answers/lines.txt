@@ -1,0 +1,15 @@
+morph run: load-config.v1 accepted stage 0 finish stop chars 6819
+morph run: load-config.v2 untried stage 0 finish stop chars 7577
+morph run: main.v1 accepted stage 0 finish stop chars 4294
+morph run: main.v2 untried stage 0 finish stop chars 4200
+morph run: parse-command.v1 accepted stage 0 finish stop chars 26245
+morph run: parse-command.v2 untried stage 0 finish stop chars 26245
+morph run: run-tool.v1 accepted stage 0 finish stop chars 8600
+morph run: run-tool.v2 untried stage 0 finish stop chars 8652
+morph run: scout-command.v1 accepted stage 0 finish stop chars 12039
+morph run: scout-command.v2 untried stage 0 finish stop chars 12062
+morph run: load-config-judge.v1 accepted stage 0 finish stop chars 5618
+morph run: main-judge.v1 accepted stage 0 finish stop chars 5615
+morph run: parse-command-judge.v1 accepted stage 0 finish stop chars 28444
+morph run: run-tool-judge.v1 accepted stage 0 finish stop chars 16195
+morph run: scout-command-judge.v1 accepted stage 0 finish stop chars 18298
