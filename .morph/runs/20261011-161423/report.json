@@ -1,0 +1,444 @@
+{
+  "runId": "20261011-161423",
+  "completedAt": 1791735860402,
+  "branch": "morph/20261011-161423",
+  "processor": "ds",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "cut-judges",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "cut-judges.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+      ],
+      "commit": "8b991bb0b42cfc44593136c93dbe707368506d4c",
+      "diffstat": {
+        "files": 1,
+        "insertions": 6,
+        "deletions": 3
+      }
+    },
+    {
+      "customId": "render",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "render.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+      ],
+      "commit": "797ffb326ef09850d5d89403c93425856be24bf5",
+      "diffstat": {
+        "files": 1,
+        "insertions": 48,
+        "deletions": 6
+      }
+    },
+    {
+      "customId": "cut-component",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "cut-component.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+      ],
+      "commit": "f00545d3e10e67d0994c64a603b18df9653da8e4",
+      "diffstat": {
+        "files": 2,
+        "insertions": 21,
+        "deletions": 3
+      }
+    },
+    {
+      "customId": "render-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "render-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/planner/render.p34b.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+      ],
+      "commit": "7dfbb96f6d46e3ff684e25f90a28e1ad0f48133b",
+      "diffstat": {
+        "files": 1,
+        "insertions": 38,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "cut-component-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "cut-component-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/planner/cut.p34b.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+      ],
+      "commit": "67cdd1a27f51fad6e1d50b9c707ae53a1c989e55",
+      "diffstat": {
+        "files": 1,
+        "insertions": 41,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "cut-judges-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "cut-judges-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/planner/judges.p34b.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+      ],
+      "commit": "3141cd4691e24485c192423d8dd94aeccf85b8fb",
+      "diffstat": {
+        "files": 1,
+        "insertions": 53,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+      ],
+      "commit": "30832afd0f96d0fe417768b2d9041746034dc1a3",
+      "diffstat": {
+        "files": 1,
+        "insertions": 1,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-spec",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-spec.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+      ],
+      "commit": "1b058bfedf37467b71c693e65131792b0c9acacc",
+      "diffstat": {
+        "files": 1,
+        "insertions": 32,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "plan-command-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/planCommand.examples.test.ts\n== guard tests/cli/planChecks.examples.test.ts\n== guard tests/cli/planCommand.p34.examples.test.ts\n== names tests/cli/planCommand.examples.test.ts\n== names tests/cli/planChecks.examples.test.ts\n== names tests/cli/planCommand.p34.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+      ],
+      "commit": "72e0b6c33e024199370d7fe54ee3c25883a15589",
+      "diffstat": {
+        "files": 3,
+        "insertions": 87,
+        "deletions": 2
+      }
+    },
+    {
+      "customId": "plan-spec-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-spec-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/planner/plan.p34b.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+      ],
+      "commit": "db5745f13ed9b30b49389d37fd2eef90db1efb83",
+      "diffstat": {
+        "files": 1,
+        "insertions": 60,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 213070,
+    "outputTokens": 62041,
+    "cost": 0.05992302000000001,
+    "requests": 16
+  },
+  "requests": [
+    {
+      "customId": "cut-judges.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791735263-WVrVXodlTqw219slknWS",
+      "inputTokens": 9870,
+      "outputTokens": 4169,
+      "cost": 0.0039819,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-judges.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791735263-LQJtBbMSgaHjgiBeJaCK",
+      "inputTokens": 9870,
+      "outputTokens": 2441,
+      "cost": 0.0029451,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "render.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791735263-CpLkiVO5s1RsEBysWNc2",
+      "inputTokens": 10872,
+      "outputTokens": 2814,
+      "cost": 0.0033192,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "render.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791735277-OeyCk0qpqGDVZuzrRF7B",
+      "inputTokens": 10872,
+      "outputTokens": 2979,
+      "cost": 0.0020358,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-component.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791735297-b1PpbOW85QSF067QPxm1",
+      "inputTokens": 14561,
+      "outputTokens": 8457,
+      "cost": 0.00532299,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-component.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791735297-O15mxXyOKN2jN1pdiSZg",
+      "inputTokens": 14561,
+      "outputTokens": 6481,
+      "cost": 0.00607275,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "render-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791735297-pr2c0xR4CyB4oSsWvvph",
+      "inputTokens": 11560,
+      "outputTokens": 1930,
+      "cost": 0.00282288,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-component-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791735351-oA5EjZhSqtZQcOW3CukS",
+      "inputTokens": 13490,
+      "outputTokens": 1372,
+      "cost": 0.00201726,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "cut-judges-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791735351-sqeZOzBFc7ZLLcZWaOlz",
+      "inputTokens": 14439,
+      "outputTokens": 4044,
+      "cost": 0.00341721,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791735351-8GWi2slVl8lNcjnPmrPG",
+      "inputTokens": 11470,
+      "outputTokens": 1770,
+      "cost": 0.0027825,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791735362-wvgJvoCEeIJ2Jgk7R3HI",
+      "inputTokens": 11470,
+      "outputTokens": 2055,
+      "cost": 0.00143286,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791735363-BYDBJhDWQIUysKEFUirJ",
+      "inputTokens": 11714,
+      "outputTokens": 2698,
+      "cost": 0.0033759,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791735375-VrYbxNB2Bj8Z52iyux9f",
+      "inputTokens": 11714,
+      "outputTokens": 2609,
+      "cost": 0.00180186,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791735391-N3fcj6XKcgOsNnNdYrnw",
+      "inputTokens": 16171,
+      "outputTokens": 7515,
+      "cost": 0.00693465,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-spec-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791735391-vq9zL221b5RZIUEfDnIl",
+      "inputTokens": 14088,
+      "outputTokens": 908,
+      "cost": 0.00182856,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791735473-q3aN9wB9gNU4xkBmyLkc",
+      "inputTokens": 26348,
+      "outputTokens": 9799,
+      "cost": 0.0098316,
+      "finishReason": "stop",
+      "error": null
+    }
+  ],
+  "rounds": [
+    {
+      "round": 0,
+      "reds": [
+        {
+          "customId": "cut-judges",
+          "blamed": [
+            "plan-command-judge"
+          ],
+          "log": "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+        },
+        {
+          "customId": "render",
+          "blamed": [
+            "plan-command-judge"
+          ],
+          "log": "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+        },
+        {
+          "customId": "cut-component",
+          "blamed": [
+            "plan-command-judge"
+          ],
+          "log": "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+        },
+        {
+          "customId": "render-judge",
+          "blamed": [
+            "plan-command-judge"
+          ],
+          "log": "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+        },
+        {
+          "customId": "cut-component-judge",
+          "blamed": [
+            "plan-command-judge"
+          ],
+          "log": "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+        },
+        {
+          "customId": "cut-judges-judge",
+          "blamed": [
+            "plan-command-judge"
+          ],
+          "log": "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+        },
+        {
+          "customId": "plan-command",
+          "blamed": [
+            "plan-command-judge"
+          ],
+          "log": "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+        },
+        {
+          "customId": "plan-spec",
+          "blamed": [
+            "plan-command-judge"
+          ],
+          "log": "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+        },
+        {
+          "customId": "plan-command-judge",
+          "blamed": [
+            "plan-command-judge"
+          ],
+          "log": "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+        },
+        {
+          "customId": "plan-spec-judge",
+          "blamed": [
+            "plan-command-judge"
+          ],
+          "log": "== tsc\ntests/cli/planCommand.examples.test.ts(39,7): error TS2353: Object literal may only specify known properties, and 'warnings' does not exist in type 'PlanDocument'.\n"
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "reds": []
+    }
+  ]
+}

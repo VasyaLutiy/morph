@@ -1,0 +1,16 @@
+morph run: cut-judges.v1 accepted stage 0 finish stop chars 6779
+morph run: cut-judges.v2 untried stage 0 finish stop chars 6851
+morph run: render.v1 accepted stage 0 finish stop chars 6799
+morph run: render.v2 untried stage 0 finish stop chars 6743
+morph run: cut-component.v1 accepted stage 0 finish stop chars 11336
+morph run: cut-component.v2 untried stage 0 finish stop chars 11571
+morph run: render-judge.v1 accepted stage 0 finish stop chars 2168
+morph run: cut-component-judge.v1 accepted stage 0 finish stop chars 1473
+morph run: cut-judges-judge.v1 accepted stage 0 finish stop chars 2229
+morph run: plan-command.v1 accepted stage 0 finish stop chars 5696
+morph run: plan-command.v2 untried stage 0 finish stop chars 5696
+morph run: plan-spec.v1 accepted stage 0 finish stop chars 8047
+morph run: plan-spec.v2 untried stage 0 finish stop chars 7909
+morph run: plan-command-judge.v1 accepted stage 0 finish stop chars 16901
+morph run: plan-spec-judge.v1 accepted stage 0 finish stop chars 2346
+morph run: plan-command-judge.r1.v1 accepted stage 0 finish stop chars 16927

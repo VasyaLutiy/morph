@@ -1,0 +1,491 @@
+FILE: tests/cli/planCommand.examples.test.ts
+```
+import { expect, test } from "vitest";
+import { planCommand } from "../../src/cli/planCommand.js";
+import { main } from "../../src/cli/main.js";
+import { readDeckFile } from "../../src/cli/document.js";
+import { fixture, fixtureJson, tmpRoot } from "../helpers.js";
+import type { TmpRoot } from "../helpers.js";
+import type { Plan } from "../../src/planner/types.js";
+import type { CliDeps, CliIo, ExitCode, PlanArgs, PlanDocument } from "../../src/cli/types.js";
+
+function planRoot(): TmpRoot {
+  const r = tmpRoot();
+  r.write("ledger.yaml", fixture("planner/ledger.yaml"));
+  r.write("ledger.map.json", fixture("planner/ledger.map.json"));
+  r.write("tests/helpers.ts", "export {};\n");
+  return r;
+}
+
+function planArgs(root: string, over: Partial<Omit<PlanArgs, "name">>): PlanArgs {
+  return {
+    name: "plan",
+    root: "",
+    pretty: false,
+    spec: "ledger.yaml",
+    components: ["ledger", "store"],
+    map: "ledger.map.json",
+    judge: true,
+    out: "decks/p.json",
+    ...over,
+  };
+}
+
+test("Plan Command example 1: the ledger record with a map plans into decks/p.json", () => {
+  const r = planRoot();
+  try {
+    const result = planCommand(r.root, planArgs(r.root, {}));
+    const expected: PlanDocument = {
+      ...(fixtureJson("planner/ledger.plan.json") as Plan),
+      out: "decks/p.json",
+      warnings: [
+        "ledger/Sum Entries: step produces 'number' names no Data Object or Event of the record",
+        "ledger/Format Report: step produces 'string' names no Data Object or Event of the record",
+      ],
+    };
+    expect(result).toStrictEqual({ code: 0, document: expected });
+    const text = JSON.stringify(expected.cards, null, 2) + "\n";
+    expect(r.read("decks/p.json")).toBe(text);
+    const deck = readDeckFile(r.root, "decks/p.json");
+    expect(deck.ok).toBe(true);
+    if (deck.ok) {
+      expect(deck.deck.cards.length).toBe(17);
+      expect(deck.deck.externalDependsOn).toStrictEqual(["outside"]);
+    }
+  } finally {
+    r.rm();
+  }
+});
+
+test("Plan Command example 2: a missing spec or map file answers exit 4", () => {
+  const r = planRoot();
+  try {
+    const specMissing = planCommand(r.root, planArgs(r.root, { spec: "nope.yaml", map: null }));
+    expect(specMissing).toStrictEqual({
+      code: 4,
+      document: { error: { code: 4, kind: "UsageError", message: "spec file not found: nope.yaml" } },
+    });
+    const mapMissing = planCommand(r.root, planArgs(r.root, { map: "m.json" }));
+    expect(mapMissing).toStrictEqual({
+      code: 4,
+      document: { error: { code: 4, kind: "UsageError", message: "map file not found: m.json" } },
+    });
+  } finally {
+    r.rm();
+  }
+});
+
+test("Plan Command example 3: an invalid record or map answers exit 2 with its problems", () => {
+  const r = planRoot();
+  try {
+    r.write("bad.yaml", "System: {}\n");
+    const badRecord = planCommand(r.root, planArgs(r.root, { spec: "bad.yaml", map: null }));
+    expect(badRecord).toStrictEqual({
+      code: 2,
+      document: {
+        error: {
+          code: 2,
+          kind: "DeckError",
+          message:
+            "bad.yaml is not a valid record (3 problems):\nSystem.name: required\nSystem.description: required\nSystem.groups: required",
+        },
+      },
+    });
+    r.write("m.json", "{\"docs\": \"x\"}");
+    const badMap = planCommand(r.root, planArgs(r.root, { map: "m.json" }));
+    expect(badMap).toStrictEqual({
+      code: 2,
+      document: {
+        error: {
+          code: 2,
+          kind: "DeckError",
+          message: "m.json is not a valid map (1 problem):\ndocs: must be a list",
+        },
+      },
+    });
+  } finally {
+    r.rm();
+  }
+});
+
+test("Plan Command example 4: an unknown Component answers exit 2 and writes nothing", () => {
+  const r = planRoot();
+  try {
+    const result = planCommand(r.root, planArgs(r.root, { components: ["nope"], out: "decks/q.json" }));
+    expect(result).toStrictEqual({
+      code: 2,
+      document: {
+        error: {
+          code: 2,
+          kind: "DeckError",
+          message: "no Component 'nope' in the record (have: ledger, store)",
+        },
+      },
+    });
+    expect(r.exists("decks/q.json")).toBe(false);
+  } finally {
+    r.rm();
+  }
+});
+
+test("Plan Command example 5: main dispatches a plan argv and writes nothing without --out", async () => {
+  const r = planRoot();
+  const out: string[] = [];
+  const err: string[] = [];
+  const io: CliIo = {
+    stdout: (t: string) => {
+      out.push(t);
+    },
+    stderr: (t: string) => {
+      err.push(t);
+    },
+  };
+  const deps: CliDeps = { env: {}, now: () => 0, cwd: "/", transport: null };
+  try {
+    const before = JSON.stringify(r.exists("decks") ? r.read("decks/p.json") : null);
+    const code: ExitCode = await main(
+      [
+        "plan",
+        "--root",
+        r.root,
+        "--spec",
+        "ledger.yaml",
+        "--component",
+        "store",
+        "--map",
+        "ledger.map.json",
+      ],
+      deps,
+      io,
+    );
+    expect(code).toBe(0);
+    expect(out.length).toBe(1);
+    const doc = JSON.parse(out[0]) as PlanDocument;
+    expect(doc.components).toStrictEqual(["store"]);
+    expect(doc.cards.length).toBe(4);
+    expect(doc.out).toBe(null);
+    expect(err).toStrictEqual(["morph plan: exit 0\n"]);
+    const after = JSON.stringify(r.exists("decks") ? r.read("decks/p.json") : null);
+    expect(after).toBe(before);
+  } finally {
+    r.rm();
+  }
+});
+```
+
+FILE: tests/cli/planChecks.examples.test.ts
+```
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { test, expect } from "vitest";
+import { planCommand } from "../../src/cli/planCommand.js";
+import { codeAcceptance, judgeAcceptance } from "../../src/builder/compose.js";
+import { DEFAULT_FROZEN } from "../../src/builder/readChecks.js";
+import { TYPESCRIPT } from "../../src/language/profiles.js";
+import { loadDeck } from "../../src/cards/model.js";
+import type { CardContext } from "../../src/builder/types.js";
+import type { PlanArgs, PlanDocument } from "../../src/cli/types.js";
+import type { Plan } from "../../src/planner/types.js";
+import { fixture, fixtureJson, tmpRoot } from "../helpers.js";
+import type { TmpRoot } from "../helpers.js";
+
+const REPO = fileURLToPath(new URL("../..", import.meta.url));
+function l1Root(): TmpRoot {
+  const r = tmpRoot();
+  r.write("ledger.yaml", fixture("planner/ledger.yaml"));
+  r.write("ledger.map.json", fixture("planner/ledger.map.json"));
+  r.write("tests/helpers.ts", "export {};\n");
+  r.write("decks/tools/guard.mjs", "// guard\n");
+  r.write("decks/tools/firstdiff.mjs", "// firstdiff\n");
+  r.write("decks/l1/checks.json", fixture("cli/l1.checks.json"));
+  r.write("decks/l1/parts/parse.probe.ts", "// probe\n");
+  r.write("decks/l1/parts/ledger-types.probe.ts", "// probe\n");
+  return r;
+}
+const args = (over: Partial<PlanArgs>): PlanArgs => ({ name: "plan", root: ".", pretty: false, spec: "ledger.yaml",
+  components: ["ledger", "store"], map: "ledger.map.json", judge: true, out: "decks/p.json", checks: "decks/l1/checks.json", ...over });
+const ctx = (over: Partial<CardContext>): CardContext => ({
+  id: "parse", phase: "l1", targets: ["src/ledger/parse.ts"], siblings: ["src/ledger/types.ts"], frozen: DEFAULT_FROZEN,
+  fullExclude: [], ownGit: false, profile: TYPESCRIPT, guard: "// guard\n", firstdiff: "// firstdiff\n", ...over,
+});
+const JUDGE_FILE = { file: "tests/ledger/parse.examples.test.ts", min: 1, max: 9, lits: [], drop: [], new: false };
+
+test("Plan Command example 6: checks build the acceptances, the map override wins", () => {
+  const r = l1Root();
+  try {
+    const result = planCommand(r.root, args({}));
+    const plan = fixtureJson("planner/ledger.plan.json") as Plan;
+    const cards = plan.cards.map((c) => {
+      if (c.customId === "parse") {
+        return { ...c, acceptance: codeAcceptance(ctx({}), "// probe\n", null, null) };
+      }
+      if (c.customId === "parse-judge") {
+        return {
+          ...c,
+          acceptance: judgeAcceptance(ctx({ id: "parse-judge", targets: [JUDGE_FILE.file], siblings: [] }), [JUDGE_FILE]),
+        };
+      }
+      return c;
+    });
+    expect(result).toStrictEqual({
+      code: 0,
+      document: {
+        ...plan,
+        cards,
+        out: "decks/p.json",
+        warnings: [
+          "ledger/Sum Entries: step produces 'number' names no Data Object or Event of the record",
+          "ledger/Format Report: step produces 'string' names no Data Object or Event of the record",
+        ],
+      },
+    });
+    const ledgerTypes = cards.find((c) => c.customId === "ledger-types");
+    if (ledgerTypes === undefined) throw new Error("ledger-types missing from the plan");
+    expect(ledgerTypes.acceptance).toBe("exit 0\n");
+    expect(r.read("decks/p.json")).toBe(JSON.stringify(cards, null, 2) + "\n");
+  } finally {
+    r.rm();
+  }
+});
+
+test("Plan Command example 7: an unknown checks card is a DeckError", () => {
+  const r = l1Root();
+  try {
+    r.write("decks/l2/checks.json", JSON.stringify({ phase: "l2", cards: [{ id: "zz" }] }) + "\n");
+    const result = planCommand(r.root, args({ checks: "decks/l2/checks.json", out: "decks/q.json" }));
+    expect(result).toStrictEqual({
+      code: 2,
+      document: {
+        error: {
+          code: 2,
+          kind: "DeckError",
+          message: "acceptances not built (1 error):\nchecks card 'zz' is not in the deck",
+        },
+      },
+    });
+    expect(r.exists("decks/q.json")).toBe(false);
+  } finally {
+    r.rm();
+  }
+});
+
+test("Plan Command example 8: the P10a deck byte for byte on the repository", () => {
+  const result = planCommand(REPO, {
+    name: "plan",
+    root: ".",
+    pretty: false,
+    spec: "contour.yaml",
+    components: ["planner", "cli"],
+    map: "tests/fixtures/cli/p10.map.json",
+    judge: true,
+    out: null,
+    checks: "decks/p10/checks.json",
+  });
+  expect(result.code).toBe(0);
+  if (result.code !== 0) throw new Error("unreachable");
+  const document = result.document as PlanDocument;
+  const oldGuard = fixture("builder/guard.p10.txt").trimEnd();
+  const liveGuard = fs.readFileSync(path.join(REPO, "decks/tools/guard.mjs"), "utf8").trimEnd();
+  const loaded = loadDeck(fs.readFileSync(path.join(REPO, "decks/p10/v2deck.json"), "utf8"));
+  if (!loaded.ok) throw new Error("v2deck.json does not load");
+  const byId = new Map(document.cards.map((c) => [c.customId, c]));
+  for (const card of loaded.deck.cards) {
+    const got = byId.get(card.customId);
+    if (got === undefined) throw new Error("card missing from the plan: " + card.customId);
+    expect(got.acceptance).toBe((card.acceptance ?? "").split(oldGuard).join(liveGuard));
+  }
+});
+```
+
+FILE: tests/cli/planCommand.p34.examples.test.ts
+```
+import { test, expect } from "vitest";
+import { planCommand } from "../../src/cli/planCommand.js";
+import { fixture, fixtureJson, tmpRoot } from "../helpers.js";
+import type { PlanArgs, PlanDocument } from "../../src/cli/types.js";
+
+test("Plan Command example 16: the two Contour records of the old Morph's experiments load and cut like the old decks", () => {
+  const want = fixtureJson("contour/parity/expected.json") as Record<
+    string,
+    {
+      cards: { customId: string; dependsOn: string[]; targets: string[] }[];
+      generations: string[][];
+      warnings: string[];
+    }
+  >;
+  const r = tmpRoot();
+  try {
+    r.write("contour.yaml", fixture("contour/parity/ccledger.contour.yaml"));
+    r.write("morph-map.json", fixture("contour/parity/ccledger.map.json"));
+    const args: PlanArgs = {
+      name: "plan",
+      root: ".",
+      pretty: false,
+      spec: "contour.yaml",
+      components: [],
+      map: "morph-map.json",
+      judge: false,
+      out: null,
+    };
+    const res = planCommand(r.root, args);
+    expect(res.code).toBe(0);
+    const doc = res.document as PlanDocument & { warnings?: string[] };
+    expect(
+      doc.cards.map((c) => ({
+        customId: c.customId,
+        dependsOn: c.dependsOn,
+        targets: c.targets,
+      })),
+    ).toStrictEqual(want["ccledger"].cards);
+    expect(doc.generations).toStrictEqual(want["ccledger"].generations);
+    expect(doc.warnings).toStrictEqual(want["ccledger"].warnings);
+
+    const resJudge = planCommand(r.root, { ...args, judge: true });
+    expect(resJudge.code).toBe(0);
+    const docJudge = resJudge.document as PlanDocument & { warnings?: string[] };
+    expect(
+      docJudge.cards.map((c) => ({
+        customId: c.customId,
+        dependsOn: c.dependsOn,
+        targets: c.targets,
+      })),
+    ).toStrictEqual(want["ccledger"].cards);
+    expect(docJudge.generations).toStrictEqual(want["ccledger"].generations);
+    expect(docJudge.warnings).toStrictEqual(want["ccledger"].warnings);
+  } finally {
+    r.rm();
+  }
+
+  const rEngine = tmpRoot();
+  try {
+    rEngine.write("contour.yaml", fixture("contour/parity/contour-engine.contour.yaml"));
+    rEngine.write("morph-map.json", fixture("contour/parity/contour-engine.map.json"));
+    const args: PlanArgs = {
+      name: "plan",
+      root: ".",
+      pretty: false,
+      spec: "contour.yaml",
+      components: ["contour-engine"],
+      map: "morph-map.json",
+      judge: false,
+      out: null,
+    };
+    const res = planCommand(rEngine.root, args);
+    expect(res.code).toBe(0);
+    const doc = res.document as PlanDocument & { warnings?: string[] };
+    expect(
+      doc.cards.map((c) => ({
+        customId: c.customId,
+        dependsOn: c.dependsOn,
+        targets: c.targets,
+      })),
+    ).toStrictEqual(want["contour-engine"].cards);
+    expect(doc.generations).toStrictEqual(want["contour-engine"].generations);
+    expect(doc.warnings).toStrictEqual(want["contour-engine"].warnings);
+  } finally {
+    rEngine.rm();
+  }
+});
+
+test("Plan Command example 17: the plan document warns the record's 10 unknown keys and the assumed language, warnings last", () => {
+  const r = tmpRoot();
+  try {
+    r.write("contour.json", fixture("contour/contourKeys.json"));
+    const args: PlanArgs = {
+      name: "plan",
+      root: ".",
+      pretty: false,
+      spec: "contour.json",
+      components: ["orders", "catalog"],
+      map: null,
+      judge: false,
+      out: null,
+    };
+    const res = planCommand(r.root, args);
+    expect(res.code).toBe(0);
+    const doc = res.document as PlanDocument & { warnings?: string[] };
+    expect(doc.warnings).toStrictEqual([
+      ...(fixtureJson("contour/contourKeys.warnings.json") as string[]),
+      "no language on Component catalog and none in the map: typescript assumed",
+      "orders/Place Order: no examples, no judge",
+      "catalog/List Prices: no examples, no judge",
+    ]);
+    expect(Object.keys(doc).at(-1)).toBe("warnings");
+    expect(doc.generations).toStrictEqual([
+      ["cancel-order", "list-prices", "place-order"],
+      ["orders-api"],
+    ]);
+  } finally {
+    r.rm();
+  }
+});
+
+test("Plan Command example 18: the Events and the Interface contract render in the card instructions", () => {
+  const lines = fixtureJson("contour/parity/lines.json") as Record<string, Record<string, string[]>>;
+  const r = tmpRoot();
+  try {
+    r.write("contour.yaml", fixture("contour/parity/ccledger.contour.yaml"));
+    r.write("morph-map.json", fixture("contour/parity/ccledger.map.json"));
+    const args: PlanArgs = {
+      name: "plan",
+      root: ".",
+      pretty: false,
+      spec: "contour.yaml",
+      components: [],
+      map: "morph-map.json",
+      judge: true,
+      out: null,
+    };
+    const res = planCommand(r.root, args);
+    expect(res.code).toBe(0);
+    const doc = res.document as PlanDocument;
+    for (const [id, texts] of Object.entries(lines["ccledger"])) {
+      const card = doc.cards.find((c) => c.customId === id);
+      for (const text of texts) {
+        expect(card?.instruction).toContain(text);
+      }
+    }
+  } finally {
+    r.rm();
+  }
+
+  const rEngine = tmpRoot();
+  try {
+    rEngine.write("contour.yaml", fixture("contour/parity/contour-engine.contour.yaml"));
+    rEngine.write("morph-map.json", fixture("contour/parity/contour-engine.map.json"));
+    const args: PlanArgs = {
+      name: "plan",
+      root: ".",
+      pretty: false,
+      spec: "contour.yaml",
+      components: ["contour-engine"],
+      map: "morph-map.json",
+      judge: true,
+      out: null,
+    };
+    const res = planCommand(rEngine.root, args);
+    expect(res.code).toBe(0);
+    const doc = res.document as PlanDocument;
+    expect(doc.cards.map((c) => c.customId)).toStrictEqual([
+      "diagram",
+      "schema",
+      "store",
+      "diagram-judge",
+      "engine",
+      "schema-judge",
+      "store-judge",
+      "mcp",
+      "rest",
+    ]);
+    for (const [id, texts] of Object.entries(lines["contour-engine"])) {
+      const card = doc.cards.find((c) => c.customId === id);
+      for (const text of texts) {
+        expect(card?.instruction).toContain(text);
+      }
+    }
+  } finally {
+    rEngine.rm();
+  }
+});
+```
