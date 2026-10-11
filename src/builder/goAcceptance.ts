@@ -1,5 +1,6 @@
 import { posix } from "node:path";
 import { codeTargets, hasExtension, testTarget } from "../language/paths.js";
+import { layersArg } from "../rules/layers.js";
 import { allowArg, litsJson } from "./compose.js";
 import { frozenStep, heredoc, OWN_GIT_AFTER, OWN_GIT_BEFORE, untrackedStep, wrapScript } from "./steps.js";
 import type { CardContext, JudgeFile } from "./types.js";
@@ -120,7 +121,11 @@ export function goCodeAcceptance(
   }
   body += "echo '== build'; go build -overlay $P/overlay.json " + goPackages(code).join(" ") + "\n";
   body += goLintSteps(ctx.targets.filter((t) => hasExtension(ctx.profile, t)));
-  body += "echo '== guard'; node $P/guard.mjs src " + code.join(",") + allowArg(ctx.allowed ?? []);
+  body +=
+    "echo '== guard'; node $P/guard.mjs src " +
+    code.join(",") +
+    allowArg(ctx.allowed ?? []) +
+    layersArg(ctx.allowed ?? [], ctx.layers);
   if (test !== null && smoke !== null) {
     body += "; node $P/guard.mjs tests " + test + " 1 " + smoke;
   }
