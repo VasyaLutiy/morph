@@ -59,7 +59,7 @@ A phase is done when:
 - OTHER_PROJECT.md: #40 items 8 and 9 (open-model orchestrator: validate JSON/YAML after edits; headless `claude -p`
   notes).
 
-### P32: one definition of a dirty tree (#43 from #40 item 1, E1, size XS, 2 cards)
+### P32: one definition of a dirty tree (#43 from #40 item 1, E1) — done 11.10: run 20261011-134046, 3/3 first pass, $0.023 + scout $0.064; main 1023f30
 - Class: every acceptance ends with the untracked/frozen stage, so a file that is already untracked or modified before
   the run turns every card red, and no answer can fix it (P7c-2 and P9a: 2 runs).
 - Found in recon: the run already refuses a dirty tree (Open Run Branch), but it **exempts `.morph/`** (P6, when
