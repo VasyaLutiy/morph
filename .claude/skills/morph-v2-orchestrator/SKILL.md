@@ -138,8 +138,9 @@ or record the departure (§1.3).
    piece by piece.
 11. **Commit the data before cutting**, explicit paths (§11): `plan`, `deck check` and `run` read
    the committed tree. **The scout's output** (`.morph/scout/<id>/`) is committed with the data or
-   removed, unless the project's `.gitignore` covers it: an untracked file left in the tree turns
-   every card red at the last stage of every acceptance, and no retry can fix it.
+   removed, unless the project's `.gitignore` covers it (`.morph/*` with `!.morph/runs/`; never
+   `.morph/` whole: the run's archive commit fails): `morph run` refuses an untracked file there
+   (P32), and an older binary starts and turns every card red at the last stage.
 
 ## 5. The deck
 
@@ -153,6 +154,8 @@ or record the departure (§1.3).
    ```
    - `--checks` builds acceptances for TypeScript and Go only; a Python project keeps the map's
      acceptances and has no transaction.
+   - **A map card's `acceptance` overrides `--checks`.** A card that held an old literal acceptance
+     (from a phase before `--checks`) gets the key deleted in the map; an empty string is refused.
    - **`--only` is required whenever the phase's Components hold Functions outside the phase**,
      new code included. With `--checks` the deck is a **transaction**: every card is written first,
      a red card is retried alone, a red after its retries rolls the subset back. Name it in the report.

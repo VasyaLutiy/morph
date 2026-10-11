@@ -59,3 +59,5 @@ P24c, P24b. PM = the MorphStudio PM's live phases P7b, P7c, P8a (10.10).
 | §6.1 the real acceptance, never an emulation | beta MorphStudio P9a (#40), reproduced 11.10 | "stubcheck 8/8" over `guardcheck.py`; the real acceptances on the same stubs stop at `== guard` for 3 cards — $0 to see, 1 run to learn |
 | §6.1 judge stub names unique per package | beta MorphStudio P9a (#40) | two `func TestStub` in package `users`: redeclared, one `deck check` round lost |
 | §12.2 times from `date -u` | beta MorphStudio P7c-3 (#40) | a hand-written times file one hour off UTC |
+| §5.2 a map `acceptance` overrides `--checks` | P32, 11.10 | the P6 literal acceptances of open-branch and its judge won over `--checks`; one data fix |
+| §4.11 ignore `.morph/*` + `!.morph/runs/`, not `.morph/` | P32 smoke, 11.10 | `.morph/` ignored whole: `archive … written but not committed: git add failed`, exit 3 |
