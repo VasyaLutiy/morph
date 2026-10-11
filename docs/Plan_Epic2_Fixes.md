@@ -59,14 +59,15 @@ A phase is done when:
 - OTHER_PROJECT.md: #40 items 8 and 9 (open-model orchestrator: validate JSON/YAML after edits; headless `claude -p`
   notes).
 
-### P32: `morph run` refuses a dirty tree (#40 item 1, E1, size S, 3–4 cards)
+### P32: one definition of a dirty tree (#43 from #40 item 1, E1, size XS, 2 cards)
 - Class: every acceptance ends with the untracked/frozen stage, so a file that is already untracked or modified before
   the run turns every card red, and no answer can fix it (P7c-2 and P9a: 2 runs).
-- Must hold: `morph run`, before the branch and any spend, refuses (exit 2, RefusalError, 0 requests) when
-  `git status --porcelain --untracked-files=all` lists any path outside the paths the acceptances tolerate. The tolerated
-  set is the one the acceptance's untracked step uses, from one shared definition. The refusal lists the paths.
-- Record: Run Command step 3 (beside the hazards) + Guardrail "Frozen Tree During Run" cited. Scout keeps writing under
-  `.morph/scout/`; the template `.gitignore` already ignores `.morph/*` except `runs/`.
+- Found in recon: the run already refuses a dirty tree (Open Run Branch), but it **exempts `.morph/`** (P6, when
+  decks lived there). The acceptance's untracked step has no such exemption. Two definitions of "dirty": the run starts
+  on a tree that every acceptance rejects.
+- Must hold (issue #43): Open Run Branch treats every `git status` entry as dirty, `.morph/` included (ignored files
+  are never listed). The refusal names the paths and the remedy. One code card (git) + its judge. The acceptance text is
+  unchanged, so every deck stays byte-identical.
 - Replay: MorphStudio P7c-2 tree with an untracked `.morph/scout/<id>/scout.json` → `run` exit 2, $0. Committed or
   removed → the run starts.
 
