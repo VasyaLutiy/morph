@@ -61,3 +61,5 @@ P24c, P24b. PM = the MorphStudio PM's live phases P7b, P7c, P8a (10.10).
 | §12.2 times from `date -u` | beta MorphStudio P7c-3 (#40) | a hand-written times file one hour off UTC |
 | §5.2 a map `acceptance` overrides `--checks` | P32, 11.10 | the P6 literal acceptances of open-branch and its judge won over `--checks`; one data fix |
 | §4.11 ignore `.morph/*` + `!.morph/runs/`, not `.morph/` | P32 smoke, 11.10 | `.morph/` ignored whole: `archive … written but not committed: git add failed`, exit 3 |
+| §1.1 beside the record only what it cannot say | P9a / #40, P30, 11.10 | layers.json held the project's layer rules: the record grew a Component, the copy did not, run 1 lost; the old Morph's criterion (TASK_plan_spec.md §1) restored |
+| §10.1 tree defect: fix, then salvage | P30, 11.10 | a deleted fixture (`go-mini/decks/tools/layers.json`) read by a test through path concatenation: every card red at `== full`; data fix, then `accept` 10/10 |

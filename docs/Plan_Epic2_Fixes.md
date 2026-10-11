@@ -38,7 +38,7 @@ Facts measured 11.10:
 
 ## 2. Phases
 
-Order: D1 → P32 → P30 → P31a → P31b, then P33 when the operator decides. Each phase is one fresh
+Order (operator 11.10): D1 → P32 → P30 → **#44 (the loader reads the whole Contour: until it does, nothing else stands on the Contour)** → P31a/P31b (#42) → #45 → P33. Each phase is one fresh
 `/morph-v2-orchestrator` session, processor `ds` (maxTokens ×3), cap **$5 per phase**, paid run only on the
 operator's word.
 
@@ -71,7 +71,8 @@ A phase is done when:
 - Replay: MorphStudio P7c-2 tree with an untracked `.morph/scout/<id>/scout.json` → `run` exit 2, $0. Committed or
   removed → the run starts.
 
-### P30: layers from the record (#41, E2, size M, 6–8 cards)
+### P30: layers from the record (#41, E2) — done 11.10: run 20261011-142527 red on a data defect (fixture deleted), one data fix 8d57e72, salvage `morph accept` 10/10, $0.24; main b67f0b4
+- Measured in the phase: MorphStudio's record covers 30 of the 41 real import edges of its code (0e8d7b7). It misses 11, in api, cmd/morphd, daemon, mcpserver and registry. The claim of 11.10 "34/34, nothing changes for MorphStudio" checked only record ⊆ layers.json, not the reverse: it was wrong. Rollout to the tester: add the 11 `uses` steps to the record, then copy the contract-2 guard.
 - Must hold: #41 §1–6. Edges come from a Function step `uses: <Component>`. Directories are the posix dirnames of the
   code targets of the used Component's Functions, from the whole record and map (never the `--only` subset). The union
   is taken per directory.
@@ -128,3 +129,19 @@ that is ≈ $1 in total, far below the $5 per-phase cap. The orchestrator sessio
 1. Order: P32 first (it cost the tester 2 runs, and it is small) or P30 first (the epic's core)?
 2. New Component `rules`, or let planner/builder pass 30 KB and split them later? Proposal: `rules`.
 3. Does P33 (MorphV2 on its own rules) go into this epic or later?
+
+## 6. Transition ledger (copy of #42 body, operator 11.10: "nothing may be forgotten")
+The authoritative list is the body of issue #42 (8 items). It covers:
+1. the switch moves from the presence of layers.json to the guard's `morph-guard-contract` line;
+2. pure, entry and packages move into the record, with tests that the verdicts stay the same;
+3. layers.json is removed from the templates (tests: init, grep, a plan note);
+4. a single-source invariant test per rule kind;
+5. the MorphStudio P9a run 1 and run 2 replays become fixtures;
+6. P33 (MorphV2's 9 missing `uses` steps, Guardrails, the guard on the template contract);
+7. the old Morph's criterion: beside the record only what the record cannot say;
+8. Guardrail inheritance, the interface-only rule, Frozen → `frozen`.
+
+Each phase's brief names the ledger items it owns. #42 closes only when all 8 are test-checked.
+
+## 7. Contour parity (#44, #45; audit 11.10 in #44's first comment)
+V2's loader refuses all four proven Contour records: ccledger, contour-engine, ETHSmartChecker and Megatron. Parity means the same logic and functions as old mrph, not the same bytes. #44 is P0 and comes next. #45 generates probes and judge bounds from `examples`.

@@ -30,6 +30,10 @@ or record the departure (§1.3).
 1. **Data only.** The data is: the record (`contour.yaml`), the map, the spec `docs/TASK_<p>.md`,
    fixtures, `decks/<p>/checks.json`, the probes, `_stubs/`, the deck. Code (`src/`, test files)
    comes from cards only. A hand edit of code breaks the experiment.
+   **Beside the record lives only what the record cannot say** (the old Morph's rule): placement (map targets,
+   slices, budgets) and one phase's inputs (spec, fixtures, probes, stubs, judge bounds). A rule of the project
+   (who imports whom, what is pure, which imports are allowed) is stated in the record. When you find yourself
+   writing such a rule into a file beside it, stop and name it in the report: it is a defect of Morph (#41, #42).
 2. **Never read MorphV2's `src/` or `dist/`, never run `--help`.** The metric of this skill is
    0 such reads. A read you needed is a finding for the reference: name it in the report.
    **Exception — MorphV2's own phase:** there `src/` is the product, so reading it by address
@@ -228,7 +232,8 @@ fix the data and check again. A second failure: stop and report.
 
 ## 10. A red run: salvage first, then one fix, then stop
 
-1. **Salvage from the archive first** — free, and not counted as the fix. When
+1. **Salvage from the archive first** — free, and not counted as the fix. A red caused by a defect of the committed
+   tree (your data, e.g. a deleted fixture a test reads) is fixed first, then salvaged on top of the fix commit. When
    `.morph/runs/<run>/` holds a green answer for every card of the deck (any round, any variant):
    ```
    <morph> accept --root . --deck .morph/runs/<run>/deck.json --id <all ids> --from-run <run> \
