@@ -118,6 +118,30 @@ export function layerEdges(record: ContourRecord, map: ContourMap): LayerEdgesRe
         }
       }
     }
+    const ownDirs = componentDirs.get(c.name);
+    for (const X of c.dependsOn) {
+      let matched: Component | undefined;
+      for (const other of components) {
+        if (other.name === X || componentSlug(other.name) === componentSlug(X)) {
+          matched = other;
+          break;
+        }
+      }
+      if (matched === undefined) {
+        addError("Component '" + c.name + "': dependsOn '" + X + "' names no Component of the record");
+        continue;
+      }
+      if (ownDirs === undefined || ownDirs === null) continue;
+      const targetDirs = componentDirs.get(matched.name);
+      if (targetDirs === undefined || targetDirs === null) continue;
+      for (const d of ownDirs) {
+        const set = edgeMap.get(d);
+        if (set === undefined) continue;
+        for (const td of targetDirs) {
+          if (td !== d) set.add(td);
+        }
+      }
+    }
   }
 
   if (errors.length > 0) return { ok: false, errors };
