@@ -1,6 +1,7 @@
 import { posix } from "node:path";
 import { codeTargets, hasExtension, testTarget } from "../language/paths.js";
 import { layersArg } from "../rules/layers.js";
+import { rulesArg } from "../rules/guardrails.js";
 import { allowArg, litsJson } from "./compose.js";
 import { frozenStep, heredoc, OWN_GIT_AFTER, OWN_GIT_BEFORE, untrackedStep, wrapScript } from "./steps.js";
 import type { CardContext, JudgeFile } from "./types.js";
@@ -125,7 +126,8 @@ export function goCodeAcceptance(
     "echo '== guard'; node $P/guard.mjs src " +
     code.join(",") +
     allowArg(ctx.allowed ?? []) +
-    layersArg(ctx.allowed ?? [], ctx.layers);
+    layersArg(ctx.allowed ?? [], ctx.layers) +
+    rulesArg(ctx.rules);
   if (test !== null && smoke !== null) {
     body += "; node $P/guard.mjs tests " + test + " 1 " + smoke;
   }
