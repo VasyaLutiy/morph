@@ -93,7 +93,7 @@ A phase is done when:
 - Replay: MorphStudio P9a at `f85a8e7` with the new guard copy. The stub play of the 3 `users` code cards reaches
   `== probe`. A full cut at MorphStudio HEAD gives the same guard verdicts as today's `layers.json` (34 edges).
 
-### P31a: Guardrails → guard rules (#42 §1, 2, 4, 5, E2, size M, 6–8 cards)
+### P31a: Guardrails → guard rules (#42 §1, 2, 4, 5 + #46, E2) — done 11.10: run 20261011-171122, 10/10 first try, $0.093 + scout $0.019; canonical names table in the binary, guard contract 3 fail-closed, switch on the contract line
 - Function **Guardrail Rules**(record) in `rules`: the normalised Guardrail name, inherited System → Component →
   Function, is looked up in `templates/<lang>/decks/tools/guardrails.json` (data) and gives rule ids per directory
   (union per directory, as in P30). Unknown names go to the plan document as `prose only`.

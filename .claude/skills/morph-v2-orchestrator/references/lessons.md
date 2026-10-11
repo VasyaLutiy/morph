@@ -63,3 +63,6 @@ P24c, P24b. PM = the MorphStudio PM's live phases P7b, P7c, P8a (10.10).
 | §4.11 ignore `.morph/*` + `!.morph/runs/`, not `.morph/` | P32 smoke, 11.10 | `.morph/` ignored whole: `archive … written but not committed: git add failed`, exit 3 |
 | §1.1 beside the record only what it cannot say | P9a / #40, P30, 11.10 | layers.json held the project's layer rules: the record grew a Component, the copy did not, run 1 lost; the old Morph's criterion (TASK_plan_spec.md §1) restored |
 | §10.1 tree defect: fix, then salvage | P30, 11.10 | a deleted fixture (`go-mini/decks/tools/layers.json`) read by a test through path concatenation: every card red at `== full`; data fix, then `accept` 10/10 |
+| §4.3 30 000 bytes, raw | P34a, 11.10 | cli at 30 198 B read as "29.5 KiB, under 30 KB" |
+| §4.7 a patching judge gets its test's variable types; whitespace in examples collapses | P34b, P31a, 11.10 | `'warnings' does not exist in type 'PlanDocument'`: 1 retry; `"  No   Shell "` rendered as `" No Shell "` |
+| §10.1 tree-defect fix on the run branch; grep concatenated fixture paths | P30, P34a, 11.10 | a fixture read as `"go-mini/" + path` deleted: every card red at `== full` |

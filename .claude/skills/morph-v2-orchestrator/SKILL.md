@@ -107,8 +107,8 @@ or record the departure (§1.3).
 2. **Splitting a phase:** only when the header allows it or the deck would exceed 10 cards. The
    split goes into §7 ("item N → next phase") and is the FIRST line of the report.
 3. **The record.** Every Function has `behavior:`; a Python project's map carries
-   `"language": "python"`. **A Component ≤ 30 KB of record** (raw bytes of its group in
-   `contour.yaml`): a phase that would take one over first compacts it as its own data commit —
+   `"language": "python"`. **A Component ≤ 30 000 bytes of record** (raw bytes of its group in
+   `contour.yaml`, `wc -c` of the group's lines, not KiB): a phase that would take one over first compacts it as its own data commit —
    literals to fixtures by `ref`, behaviours reworded with every rule kept, no example's meaning
    changed — or puts the new Functions into a new Component. Examples carry full values, never
    abbreviated. **A new code directory** (a new Component or package): its layer goes into
@@ -132,7 +132,9 @@ or record the departure (§1.3).
    is given — check each against the record example and the spec's skeleton (a path built by
    concatenation is not a literal). In the map instruction of a judge, list its guard literals and
    the TYPES of the example values (Go `int` vs `float64`, a pointer vs a value); name the imports
-   it needs (`context`). Most reds of past runs were judges, not code.
+   it needs (`context`). A judge that PATCHES an existing test file also gets the types of that file's
+   own variables it will touch (e.g. "`PlanDocument` has no key `warnings`"). Whitespace inside an example
+   value does not survive the record's rendering (runs of spaces collapse): put such a value in a fixture. Most reds of past runs were judges, not code.
 8. **The Contour never goes into a slice whole**; a card that needs text outside its Function
    gets an excerpt. A map `instruction` override is the card's opening; the Function follows.
 9. **Guards check code, not text** (AST / ESLint rules, never grep); never write a forbidden token
@@ -233,7 +235,9 @@ fix the data and check again. A second failure: stop and report.
 ## 10. A red run: salvage first, then one fix, then stop
 
 1. **Salvage from the archive first** — free, and not counted as the fix. A red caused by a defect of the committed
-   tree (your data, e.g. a deleted fixture a test reads) is fixed first, then salvaged on top of the fix commit. When
+   tree (your data, e.g. a deleted fixture a test reads) is fixed first — the fix commit goes on the run branch,
+   above its "deck and report" commit — then salvaged on top of it. Before deleting a fixture, grep for its
+   path built by concatenation (`"go-mini/" + p`), not only for the literal. When
    `.morph/runs/<run>/` holds a green answer for every card of the deck (any round, any variant):
    ```
    <morph> accept --root . --deck .morph/runs/<run>/deck.json --id <all ids> --from-run <run> \
