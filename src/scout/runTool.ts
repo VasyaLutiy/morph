@@ -161,9 +161,12 @@ function grepTool(
   const c = caged.path;
 
   const where = c === "" ? "the tree" : `${c}/`;
-  const namedFirst = c === "" ? "" : c.split("/")[0];
+  const entries = caps.grepSkip.map((e) => (e.includes("/") ? e : e + "/"));
+  const cp = c + "/";
   const skip =
-    c !== "" && caps.grepSkip.includes(namedFirst) ? [] : caps.grepSkip;
+    c === ""
+      ? entries
+      : entries.filter((e) => !(cp.startsWith(e) || e.startsWith(cp)));
 
   const prefix = c === "" ? "" : `${c}/`;
   const sorted = [...tree.files].sort();
@@ -176,7 +179,7 @@ function grepTool(
 
   for (const file of sorted) {
     if (c !== "" && !file.startsWith(prefix)) continue;
-    if (skip.includes(file.split("/")[0])) continue;
+    if (skip.some((e) => file.startsWith(e))) continue;
 
     const fileCaged = cagePath(tree, file, "file", fs);
     if (!fileCaged.ok) {
