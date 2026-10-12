@@ -1,0 +1,126 @@
+import { readFileSync, statSync } from "node:fs";
+import { join, posix } from "node:path";
+import { loadContour, loadMap } from "../contour/load.js";
+import { layerEdges } from "../rules/layers.js";
+import { guardContract } from "../rules/guardrails.js";
+import type { LanguageProfile } from "../language/types.js";
+import { recordGaps, codeFiles } from "./recordGaps.js";
+import { importGaps } from "./importGaps.js";
+import type { CodeText } from "./importGaps.js";
+import { renderRecord } from "./renderRecord.js";
+import type { RecordSection } from "./renderRecord.js";
+
+function readText(root: string, rel: string): string | null {
+  const p = join(root, rel);
+  try {
+    if (!statSync(p).isFile()) return null;
+    return readFileSync(p, "utf8");
+  } catch {
+    return null;
+  }
+}
+
+function firstLine(message: string): string {
+  const i = message.indexOf("\n");
+  return i === -1 ? message : message.slice(0, i);
+}
+
+function reduceError(error: string): string {
+  const line = firstLine(error);
+  return line.endsWith(":") ? line.slice(0, -1) : line;
+}
+
+function notRead(reason: string): RecordSection {
+  return { state: "not read", reason };
+}
+
+function readGoModule(root: string): string {
+  const text = readText(root, "go.mod");
+  if (text === null) return "";
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("module ")) {
+      return trimmed.slice("module ".length).trim();
+    }
+  }
+  return "";
+}
+
+export function recordSection(
+  root: string,
+  files: readonly string[],
+  profile: LanguageProfile,
+  owned: readonly string[],
+): string {
+  const contourText = readText(root, "contour.yaml");
+  if (contourText === null) {
+    return renderRecord(notRead("no contour.yaml"));
+  }
+
+  const mapText = readText(root, "morph-map.json");
+  if (mapText === null) {
+    return renderRecord(notRead("no morph-map.json"));
+  }
+
+  const loadedContour = loadContour(contourText, "contour.yaml");
+  if (!loadedContour.ok) {
+    return renderRecord(notRead(reduceError(loadedContour.error)));
+  }
+
+  const loadedMap = loadMap(mapText, "morph-map.json");
+  if (!loadedMap.ok) {
+    return renderRecord(notRead(reduceError(loadedMap.error)));
+  }
+
+  const record = loadedContour.record;
+  const map = loadedMap.map;
+
+  const gaps = recordGaps({
+    record,
+    map,
+    recordText: contourText,
+    loaderWarnings: loadedContour.warnings ?? [],
+    files,
+    profile,
+    owned,
+  });
+
+  const guardText = readText(root, "decks/tools/guard.mjs") ?? "";
+  const contract = guardContract(guardText);
+
+  let layers:
+    | { checked: false; reason: string }
+    | { checked: true; gaps: ReturnType<typeof importGaps> };
+
+  if (contract < 2) {
+    layers = {
+      checked: false,
+      reason: "decks/tools/guard.mjs speaks contract " + contract,
+    };
+  } else if (profile.id !== "typescript" && profile.id !== "go") {
+    layers = { checked: false, reason: "no import rule for " + profile.id };
+  } else {
+    const edgesResult = layerEdges(record, map);
+    if (!edgesResult.ok) {
+      layers = { checked: false, reason: edgesResult.errors.join("; ") };
+    } else {
+      const edges = edgesResult.edges;
+      const module = profile.id === "go" ? readGoModule(root) : "";
+      const texts: CodeText[] = [];
+      for (const file of codeFiles(profile, files)) {
+        const dir = posix.dirname(file);
+        if (!Object.hasOwn(edges, dir)) continue;
+        const text = readText(root, file);
+        if (text === null) continue;
+        texts.push({ path: file, text });
+      }
+      layers = {
+        checked: true,
+        gaps: importGaps(profile.id, module, texts, edges),
+      };
+    }
+  }
+
+  const section: RecordSection = { state: "read", gaps, layers };
+  return renderRecord(section);
+}
