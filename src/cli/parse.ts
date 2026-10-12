@@ -75,6 +75,7 @@ const PLAN_FLAGS: ReadonlySet<string> = new Set([
   "--out",
   "--checks",
   "--only",
+  "--write-probes",
 ]);
 
 const SUBMIT_FLAGS: ReadonlySet<string> = new Set([
@@ -185,7 +186,8 @@ export function parseCommand(argv: string[]): ParseResult {
         t !== "--judge" &&
         t !== "--write" &&
         t !== "--md" &&
-        t !== "--commit"
+        t !== "--commit" &&
+        t !== "--write-probes"
       ) {
         return { ok: false, error: errorDocument(4, "UsageError", "unknown flag: " + t) };
       }
@@ -644,6 +646,15 @@ export function parseCommand(argv: string[]): ParseResult {
         };
       }
     }
+    if (seen.has("--write-probes") && !values.has("--checks")) {
+      return { ok: false, error: errorDocument(4, "UsageError", "--write-probes needs --checks") };
+    }
+    if (seen.has("--write-probes") && values.has("--out")) {
+      return {
+        ok: false,
+        error: errorDocument(4, "UsageError", "--write-probes writes no deck: drop --out"),
+      };
+    }
     const command: Command = {
       name: "plan",
       root,
@@ -655,6 +666,7 @@ export function parseCommand(argv: string[]): ParseResult {
       out: values.get("--out") ?? null,
       ...(values.has("--checks") ? { checks: values.get("--checks") ?? "" } : {}),
       ...(only !== undefined ? { only } : {}),
+      ...(seen.has("--write-probes") ? { writeProbes: true as const } : {}),
     };
     return { ok: true, command };
   }
