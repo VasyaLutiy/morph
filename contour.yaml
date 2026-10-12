@@ -1730,8 +1730,10 @@ System:
             onVariant: line = variantLine(record), keep {...record, line}, log given → log(line)}. 7. Archive Run(root, {runId, deck, report, answers: the kept
             records}, deps.env). → {code: 3 when report.fault is set (the partial report archived), else runExitCode(report, archive), document: {runId, branch,
             base, report, archive}}. variantLine(r) (exported) = "morph run: <r.request.customId> <verdict> stage <stages>[ <lastStage>] finish <finishReason, or
-            none> chars <text length, or none>\n". The checkout stays on the run branch.
-          steps: [{uses: processor}, {calls: Read Deck File}, {uses: git}, {uses: runloop}, {produces: Run Document}]
+            none> chars <text length, or none>\n". The checkout stays on the run branch. P37 (#49): when report.fault is not
+            set, right after Archive Run, suite = await Suite Net(root, deck.cards, deps.env); not null → the document's last
+            key suite, and the code 1 when runExitCode gave 0 and suite.ok is false (a red net never undoes a commit).
+          steps: [{uses: processor}, {calls: Read Deck File}, {uses: git}, {uses: runloop}, {calls: Suite Net}, {produces: Run Document}]
           examples:
             - {given: 'examples.json["Run Command 1"].given', when: run, then: 'examples.json["Run Command 1"].then'}
             - {given: 'examples.json["Run Command 2"].given', when: run, then: 'examples.json["Run Command 2"].then'}
@@ -1745,6 +1747,30 @@ System:
             - {given: 'examples.json["Run Command 10"].given', when: run, then: 'examples.json["Run Command 10"].then'}
             - {given: 'examples.json["Run Command 11"].given', when: run, then: 'examples.json["Run Command 11"].then'}
             - {given: 'examples.json["Run Command 12"].given', when: run, then: 'examples.json["Run Command 12"].then'}
+            - {given: 'examples.json["Run Command 13"].given', ref: "tests/fixtures/cli/suiteNet.json", when: run, then: 'examples.json["Run Command 13"].then'}
+            - {given: 'examples.json["Run Command 14"].given', ref: "tests/fixtures/cli/suiteNet.json", when: run, then: 'examples.json["Run Command 14"].then'}
+            - {given: 'examples.json["Run Command 15"].given', when: run, then: 'examples.json["Run Command 15"].then'}
+        - name: Suite Net
+          description: The whole suite once per run, after the last generation, when the deck's acceptances ran only the related tests (P37, #49).
+          behavior: >
+            suiteNet(root, cards, env, timeoutMs?) → Promise<Suite Result | null>, src/cli/suiteNet.ts. RELATED_MARK = "echo '== full'; "
+            + builder's RELATED_LINE up to "{test}" (= "echo '== full'; node_modules/.bin/vitest related --run "). No card's
+            acceptance (a string) holds RELATED_MARK → null, nothing run. Else SUITE_LINE = "node_modules/.bin/vitest run
+            --reporter=dot" (the typescript profile's fullRunLine) runs once: r = acceptance's Run Acceptance(SUITE_SCRIPT, root,
+            {env, timeoutMs}), SUITE_SCRIPT = "L=$(mktemp); " + SUITE_LINE + " > $L 2>&1; rc=$?; [ $rc = 0 ] || grep -E '^ FAIL '
+            $L || tail -20 $L; rm -f $L; exit $rc". r.exit 0 → {command: SUITE_LINE, ok: true, failing: [], cards: [], log:
+            r.log}. Else ok false; failing = every line of r.log that starts " FAIL  ", the rest after those 7 characters, each
+            once, first seen first; the failing files = the first space-separated word of each; cards = the customIds, deck
+            order, of the cards with a target that is a failing file or a file one of them imports, directly or through other
+            files: per file read (UTF-8, at root, each once) every specifier of `from "<s>"`, `import "<s>"` and `import("<s>")`
+            (either quote) that starts "./" or "../", joined to the file's directory (posix, normalised), a ".js" ending
+            made ".ts"; a path that is not a regular file at root is dropped. log = r.log.
+          steps: [{uses: acceptance}, {uses: builder}, {reads: Card}, {produces: Suite Result}]
+          examples:
+            - {given: 'examples.json["Suite Net 1"].given', ref: "tests/fixtures/cli/suiteNet.json", when: suiteNet, then: 'examples.json["Suite Net 1"].then'}
+            - {given: 'examples.json["Suite Net 2"].given', ref: "tests/fixtures/cli/suiteNet.json", when: suiteNet, then: 'examples.json["Suite Net 2"].then'}
+            - {given: 'examples.json["Suite Net 3"].given', ref: "tests/fixtures/cli/suiteNet.json", when: suiteNet, then: 'examples.json["Suite Net 3"].then'}
+            - {given: 'examples.json["Suite Net 4"].given', ref: "tests/fixtures/cli/suiteNet.json", when: suiteNet, then: 'examples.json["Suite Net 4"].then'}
         - name: Main
           description: Routing, one document, log lines, exit code; src/cli.ts wires the process.
           behavior: >
@@ -1803,7 +1829,10 @@ System:
           schema: "{ ok: true, checks: Checks, texts: BuildTexts } | { ok: false, result: Command Result }"
         - name: Run Document
           description: stdout of run.
-          schema: "{ runId: string, branch: string, base: string, report: RunReport, archive: ArchiveResult }"
+          schema: "{ runId: string, branch: string, base: string, report: RunReport, archive: ArchiveResult, suite?: Suite Result }"
+        - name: Suite Result
+          description: What the run's whole-suite net found (P37).
+          schema: "{ command: string, ok: boolean, failing: string[], cards: string[], log: string }"
       interfaces:
         - name: morph CLI
           description: The only entry point.
@@ -3338,11 +3367,14 @@ System:
             ctx.targets; "echo '== guard'; node $P/guard.mjs src <code joined by ','>" + allowArg(ctx.allowed
             ?? []) + rules' Layers Arg(ctx.allowed ?? [], ctx.layers) (P30) + rules' Rules Arg(ctx.rules) (P31a) plus "; node $P/guard.mjs tests <test> 1 <smoke>" with a test, then "\n"; "echo '== probe'; " + vitestStep
             with "--config $P/probe.config.mts"; with a test "echo '== own'; " + vitestStep with the test;
-            ESLINT_VERDICT; extra when not null; "echo '== full'; " + vitestStep with fullArgs of
-            ctx.fullExclude; OWN_GIT_AFTER when ctx.ownGit; frozenStep of ctx.frozen; untrackedStep of
+            ESLINT_VERDICT; extra when not null; fullStep(ctx); OWN_GIT_AFTER when ctx.ownGit; frozenStep of ctx.frozen; untrackedStep of
             ctx.targets. The result is wrapScript(ctx.id, ctx.phase, ctx.targets, body). allowArg(allowed)
             (exported, P19) = "" when allowed is empty, else " '" + allowed joined by "," + "'" — the
             guard's third argument, the packages it allows in these code files; ctx.vendor is not read.
+            P37 (#49): RELATED_LINE (exported) = "node_modules/.bin/vitest related --run {test} --reporter=dot";
+            fullStep(ctx) (exported) = "echo '== full'; " + vitestStep of {...ctx.profile, ownTestLine: RELATED_LINE}
+            with ctx.targets joined by " " + " " + fullArgs(ctx.fullExclude): only the tests that import the targets
+            (cli's Suite Net runs the whole suite once per run).
           steps:
             - calls: Wrap Script
             - calls: Check Steps
@@ -3362,6 +3394,10 @@ System:
             - {given: 'examples.json["Code Acceptance 3"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/code1.txt, tests/fixtures/builder/code2.txt", when: written, then: 'examples.json["Code Acceptance 3"].then'}
             - {given: 'examples.json["Code Acceptance 4"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/code1.txt, tests/fixtures/builder/code2.txt", when: codeAcceptance, then: 'examples.json["Code Acceptance 4"].then'}
             - {given: 'examples.json["Code Acceptance 5"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/code1.txt, tests/fixtures/builder/code2.txt", when: codeAcceptance, then: 'examples.json["Code Acceptance 5"].then'}
+            - given: 'RELATED_LINE; fullStep of the ctx of example 1; fullStep of the ctx of example 2'
+              ref: "tests/fixtures/builder/code1.txt, tests/fixtures/builder/code2.txt"
+              when: "written"
+              then: '"node_modules/.bin/vitest related --run {test} --reporter=dot"; the line of code1.txt that begins "echo ''== full''; " with its newline, holding "vitest related --run src/x/a.ts --passWithNoTests --reporter=dot"; the line of code2.txt that begins so, holding "vitest related --run src/x/a.ts tests/x/a.test.ts --passWithNoTests --exclude tests/x/old.test.ts --reporter=dot"'
         - name: Judge Acceptance
           description: The acceptance of a judge card — per test file its bounds, literals and kept names, then the files run together.
           behavior: >
@@ -3371,7 +3407,7 @@ System:
             the n-th file (from 0) the heredoc $P/lits<n>.json (MORPH_LITS_EOF) of litsJson and "echo '==
             guard <file>'; node $P/guard.mjs tests <file> <min> <max> $P/lits<n>.json\n"; namesKept for
             every file that is not new, with its drop list; "echo '== own'; " + vitestStep with the
-            targets joined by " "; ESLINT_VERDICT; the full step, OWN_GIT_AFTER, frozen and untracked as a
+            targets joined by " "; ESLINT_VERDICT; fullStep(ctx), OWN_GIT_AFTER, frozen and untracked as a
             code card. The result is wrapScript(ctx.id, ctx.phase, ctx.targets, body).
           steps:
             - calls: Wrap Script
@@ -3484,9 +3520,9 @@ System:
             - produces: Build Result
           examples:
             - given: 'the P10a deck file decks/p10/v2deck.json (12 cards) with every acceptance set to null; checks p10.checks.typed.json; the typescript profile; texts guard.p10.txt, firstdiff.p10.txt and probes {<id>: decks/p10/parts/<id>.probe.ts} for the six code cards'
-              ref: "tests/fixtures/builder/guard.p10.txt, tests/fixtures/builder/firstdiff.p10.txt, tests/fixtures/builder/p10.checks.typed.json"
+              ref: "tests/fixtures/builder/guard.p10.txt, tests/fixtures/builder/firstdiff.p10.txt, tests/fixtures/builder/p10.checks.typed.json, tests/fixtures/builder/p10.related.json"
               when: "buildAcceptances"
-              then: '{ok: true, cards} equal to the cards of decks/p10/v2deck.json — the 12 acceptances byte for byte as build.py p10 wrote them (the golden check)'
+              then: '{ok: true, cards} equal to the cards of tests/fixtures/builder/p10.related.json — decks/p10/v2deck.json''s cards with each acceptance''s "== full" line become Code Acceptance''s fullStep (P37), every other byte as build.py p10 wrote them (the golden check)'
             - {given: 'examples.json["Build Acceptances 2"].given', ref: "tests/fixtures/builder/examples.json", when: "buildAcceptances", then: 'examples.json["Build Acceptances 2"].then'}
             - {given: 'examples.json["Build Acceptances 3"].given', ref: "tests/fixtures/builder/examples.json", when: "buildAcceptances", then: 'examples.json["Build Acceptances 3"].then'}
             - given: 'any input with the python profile'

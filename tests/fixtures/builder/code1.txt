@@ -40,7 +40,7 @@ echo '== eslint'; E=0; node_modules/.bin/eslint src/x/a.ts || E=1
 echo '== guard'; node $P/guard.mjs src src/x/a.ts
 echo '== probe'; node_modules/.bin/vitest run --config $P/probe.config.mts --reporter=dot > $P/vt.log 2>&1 || { if grep -q '^ FAIL ' $P/vt.log; then awk '/^ FAIL /{p=1} p' $P/vt.log | grep -vE '^ +(Start at|Duration) ' | head -200; else tail -60 $P/vt.log; fi; node $P/firstdiff.mjs $P/vt.log; exit 1; }
 [ "$E" = 0 ] || { echo "== eslint failed (see above); every step between it and here passed"; exit 1; }
-echo '== full'; node_modules/.bin/vitest run --passWithNoTests --reporter=dot > $P/vt.log 2>&1 || { if grep -q '^ FAIL ' $P/vt.log; then awk '/^ FAIL /{p=1} p' $P/vt.log | grep -vE '^ +(Start at|Duration) ' | head -200; else tail -60 $P/vt.log; fi; node $P/firstdiff.mjs $P/vt.log; exit 1; }
+echo '== full'; node_modules/.bin/vitest related --run src/x/a.ts --passWithNoTests --reporter=dot > $P/vt.log 2>&1 || { if grep -q '^ FAIL ' $P/vt.log; then awk '/^ FAIL /{p=1} p' $P/vt.log | grep -vE '^ +(Start at|Duration) ' | head -200; else tail -60 $P/vt.log; fi; node $P/firstdiff.mjs $P/vt.log; exit 1; }
 echo '== frozen'; git diff --quiet HEAD -- contour.yaml morph-map.json docs decks tests/fixtures || { echo "changed outside the targets: $(git diff --name-only HEAD -- contour.yaml morph-map.json docs decks tests/fixtures | tr "\n" " ")"; exit 1; }
 X=$(git ls-files --others --exclude-standard | grep -vxF -e src/x/a.ts || true); [ -z "$X" ] || { echo "files left in the tree: $X"; exit 1; }
 ) > $L 2>&1; rc=$?; cat $L; exit $rc

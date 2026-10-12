@@ -1,0 +1,27 @@
+{
+  "phase": "p37",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates", "documentation"],
+  "fullExclude": ["tests/builder/compose.p37.examples.test.ts", "tests/builder/buildAcceptances.examples.test.ts",
+    "tests/cli/suiteNet.examples.test.ts", "tests/cli/runCommand.p37.examples.test.ts"],
+  "cards": [
+    { "id": "compose" },
+    { "id": "suite-net" },
+    { "id": "run-command" },
+    { "id": "compose-judge", "files": [
+      { "file": "tests/builder/compose.p37.examples.test.ts", "min": 3, "max": 9, "new": true,
+        "lits": ["Code Acceptance example 6", "builder/code1.txt", "builder/code2.txt",
+          "node_modules/.bin/vitest related --run {test} --reporter=dot", "echo '== full'; "] }] },
+    { "id": "build-acceptances-judge", "files": [
+      { "file": "tests/builder/buildAcceptances.examples.test.ts", "min": 8, "max": 9, "new": false,
+        "lits": ["builder/p10.related.json", "Build Acceptances example 1"] }] },
+    { "id": "suite-net-judge", "files": [
+      { "file": "tests/cli/suiteNet.examples.test.ts", "min": 4, "max": 10, "new": true,
+        "lits": ["Suite Net example 1", "Suite Net example 2", "Suite Net example 3", "Suite Net example 4",
+          "cli/suiteNet.json", "node_modules/.bin/vitest run --reporter=dot", "vitest.args"] }] },
+    { "id": "run-command-judge", "files": [
+      { "file": "tests/cli/runCommand.p37.examples.test.ts", "min": 3, "max": 9, "new": true,
+        "lits": ["Run Command example 13", "Run Command example 14", "Run Command example 15", "cli/suiteNet.json",
+          "node_modules/.bin/vitest"] }] }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "files": {
+    "src/a.ts": "export const a = 1;\n",
+    "src/b.ts": "export const b = 2;\n",
+    "src/m/c.ts": "export const c = 3;\n",
+    "tests/a.test.ts": "import { test } from \"vitest\";\nimport { a } from \"../src/a.js\";\nimport { gone } from './gone.js';\ntest(\"A example 1: red\", () => { void a; void gone; });\n",
+    "tests/helper.ts": "export { c as h } from \"../src/m/c.js\";\n",
+    "tests/c.test.ts": "import { test } from \"vitest\";\nconst helper = import('./helper.js');\ntest(\"C example 2: red\", () => { void helper; });\n"
+  },
+  "cards": [
+    {
+      "customId": "a",
+      "targets": [
+        "src/a.ts"
+      ],
+      "acceptance": "test -f src/a.ts\necho '== full'; node_modules/.bin/vitest related --run src/a.ts --passWithNoTests --reporter=dot\n"
+    },
+    {
+      "customId": "b",
+      "targets": [
+        "src/b.ts"
+      ],
+      "acceptance": "exit 0"
+    },
+    {
+      "customId": "c",
+      "targets": [
+        "src/m/c.ts"
+      ],
+      "acceptance": "exit 0"
+    },
+    {
+      "customId": "j",
+      "targets": [
+        "tests/a.test.ts"
+      ],
+      "acceptance": "exit 0"
+    }
+  ],
+  "vitest": {
+    "red": "#!/bin/sh\necho \"$*\" >> vitest.args\necho \" FAIL  tests/a.test.ts > A example 1: red\"\necho \" FAIL  tests/a.test.ts > A example 1: red\"\necho \" FAIL  tests/c.test.ts [ tests/c.test.ts ]\"\necho \" Test Files  2 failed (2)\"\nexit 1\n",
+    "green": "#!/bin/sh\necho \"$*\" >> vitest.args\necho \" Test Files  3 passed (3)\"\nexit 0\n",
+    "broken": "#!/bin/sh\necho \"$*\" >> vitest.args\necho \"Error: [vitest-worker]: Timeout calling onTaskUpdate\"\necho \" Tests  3 passed (3)\"\nexit 1\n",
+    "runRed": "#!/bin/sh\n[ \"$1\" = related ] && exit 0\necho \" FAIL  tests/a.test.ts > A example 1: red\"\nexit 1\n",
+    "runGreen": "#!/bin/sh\nexit 0\n"
+  },
+  "repo": {
+    "tests/a.test.ts": "import { a } from \"../out/a.js\";\nvoid a;\n"
+  }
+}
