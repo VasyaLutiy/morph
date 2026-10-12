@@ -1581,22 +1581,22 @@
       "max_tokens": 12000
     },
     "plan-command-judge": {
-      "intent": "patch",
+      "intent": "generate",
       "targets": [
-        "tests/cli/planChecks.examples.test.ts"
+        "tests/cli/planCommand.p35b.examples.test.ts"
       ],
       "context_slice": [
         "documentation/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/cli/types.ts",
-        "src/cards/types.ts",
-        "tests/fixtures/cli/p33.renderGuard.txt"
+        "src/cli/planCommand.ts",
+        "tests/cli/planCommand.p35.examples.test.ts",
+        "tests/fixtures/cli/examples.json"
       ],
       "depends_on": [
         "plan-command"
       ],
-      "max_tokens": 16000,
-      "instruction": "Patch tests/cli/planChecks.examples.test.ts. Replace exactly one test, the one titled \"Plan Command example 8: the P10a deck byte for byte on the repository\", by one test titled \"Plan Command example 8: the repository's own cut speaks contract 3\"; keep examples 6 and 7, l1Root, args, ctx, JUDGE_FILE, REPO and every import byte for byte (drop an import only if nothing uses it any more). The new test, in this order:\n1. const result = planCommand(REPO, {name: \"plan\", root: \".\", pretty: false, spec: \"contour.yaml\", components: [\"planner\", \"cli\", \"cli-plan\"], map: \"tests/fixtures/cli/p10.map.json\", judge: true, out: null, checks: \"decks/p10/checks.json\"}); expect(result.code).toBe(0); then if (result.code !== 0) throw new Error(\"unreachable\").\n2. const document = result.document as PlanDocument; const ids = document.cards.map((c) => c.customId); const loaded = loadDeck(fs.readFileSync(path.join(REPO, \"decks/p10/v2deck.json\"), \"utf8\")); if (!loaded.ok) throw; for every card of loaded.deck.cards: expect(ids).toContain(card.customId).\n3. PlanDocument has no key proseOnly: read (result.document as unknown as { proseOnly?: string[] }).proseOnly and expect it toStrictEqual [\"No Network In Tests\", \"No Shell Outside Acceptance\", \"Frozen Tree During Run\"].\n4. const line = fixture(\"cli/p33.renderGuard.txt\").trimEnd(); const liveGuard = fs.readFileSync(path.join(REPO, \"decks/tools/guard.mjs\"), \"utf8\").trimEnd(); expect(liveGuard).toContain(\"morph-guard-contract: 3\"); const render = document.cards.find((c) => c.customId === \"render\"); its acceptance is string | null: const acceptance = render?.acceptance ?? \"\"; expect(acceptance).toContain(line); expect(acceptance).toContain(liveGuard).\nNever write the guard line itself into the test: it holds backslashes; it comes from the fixture. No test.skip, no vi.mock, no real timers."
+      "max_tokens": 16000
     },
     "read-checks": {
       "intent": "patch",
