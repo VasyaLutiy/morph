@@ -85,7 +85,7 @@ ledger item 7 repeats it.
 **Why it matters.** In MorphStudio P9a the record gained a Component `users` and the hand table
 `decks/tools/layers.json` did not. Every `users` card went red at `guard: users is not a package of
 decks/tools/layers.json`. No answer could fix that, and one run was lost (issue #41 "Why";
-issue #40 item 2; `docs/TASK_P30_rules.md:10-13`). A second copy of the record fails silently until
+issue #40 item 2; `decks/p30/TASK.md:10-13`). A second copy of the record fails silently until
 a run pays for it.
 
 V2's own record rules: the record keeps only the current contract, no history (`docs/PLAN.md:912`).
@@ -130,7 +130,7 @@ bytes (`SKILL.md:110-114`). The Contour author's advice (06.10) behind these rul
    (`plan_spec.py:454-465`, `:757`).
 7. **Order** into generations by Kahn layers (`plan.ts:8-38`). Plan warnings list a step target that names no
    Data Object or Event (`plan.ts:206-217`). Since P34b this is a warning only, and the card text does not
-   change (`docs/TASK_P34b_contour.md:9-12`).
+   change (`decks/p34b/TASK.md:9-12`).
 
 ```mermaid
 flowchart LR
@@ -214,7 +214,7 @@ stages:
   `docs/DECISIONS.md:50`, `:108`, `:123`). The record contributed only `Component.uses` → allowed
   packages (`compose.ts:30`, `buildAcceptances.ts:138-141`, P19);
 - **probe**: `decks/<p>/parts/<id>.probe.ts`, the record's examples re-typed by hand
-  (`docs/ORCHESTRATOR_REFERENCE.md:77-89`). A missing probe is an error (`buildAcceptances.ts:80-85`);
+  (`documentation/ORCHESTRATOR_REFERENCE.md:77-89`). A missing probe is an error (`buildAcceptances.ts:80-85`);
 - **judge bounds**: `min`/`max`/`lits` per judge file in `checks.json` (`compose.ts:59-64`), typed by
   hand. For example, `decks/p31a/checks.json` lists `"Canonical Guardrail example 1"…`;
 - **frozen**: `DEFAULT_FROZEN` is hard-coded (`src/builder/readChecks.ts:3-9`), and a phase may
@@ -263,7 +263,7 @@ stages:
   `frozen` stays in `checks.json`. The reason is measured: MorphV2 has 42 phases (20 use the default,
   20 add `templates`, 2 add `morph.config.yaml`). MorphStudio has 12 phases, each with its own list
   (P1: none; P9a: 17 paths). So the frozen paths are one phase's inputs, not a project rule
-  (`docs/TASK_P31b_imports.md:40-46`).
+  (`decks/p31b/TASK.md:40-46`).
 
 Real output (same scratch project; guard = template contract 3). The cut line:
 
@@ -337,14 +337,14 @@ Status at `120a849`. "Parity" means the same effect, not the same bytes (#44).
 | `calls` | `dependsOn`, slice | — | `plan_spec.py:557-565` | `cut.ts:118-121`; self-call error | parity |
 | `reads/modifies/produces` Data Object | text + schema | — | `plan_spec.py:292-308` | `render.ts:46-77` | parity |
 | same, Event | text + schema | — | `plan_spec.py:293` | `render.ts:66-73` | restored P34a/P34b (#44) |
-| undefined step target | "(definition not found)" in card | — | `plan_spec.py:303-304` | plan warning only, card unchanged | changed by decision (`TASK_P34b_contour.md:9-12`) |
+| undefined step target | "(definition not found)" in card | — | `plan_spec.py:303-304` | plan warning only, card unchanged | changed by decision (`decks/p34b/TASK.md:9-12`) |
 | step `uses: <Component>` | text; judge preconditions | layer edge | text only | `layers.ts:83-119` | new in P30 (#41, closed) |
 | `Component.dependsOn` | — | layer edge | ignored | `layers.ts:122-144` | new in P34a (#44) |
 | `examples` | numbered in card; +500 tokens | judge card text | `plan_spec.py:289-291`, `:691-768` | `render.ts:20-28`, `judges.ts:108-116` | parity |
 | `examples` → probe, judge `min`/`lits` | — | decisive `== probe` stage; judge guard | skill-side hand data | hand data (`checks.json`, `parts/`) | **open, #45** |
 | Function/Interface/Component/System Guardrail | text with definition | rule id per dir; unknown → `proseOnly` | grep line, 3 names, Python only | `rules/guardrails.ts:45-171`; 7 names TS, 6 Go, **0 Python** | restored P31a for TS/Go; Python **open, #30** |
 | "interfaces share one core" | text | Interface cards only | `plan_spec.py:73`, `:665-667` | maps to no rule; stays prose (`contour.yaml:2307-2309`, Canonical Guardrail example 2) | not restored; #42 ledger item 8 |
-| "Frozen Tree During Run" (MorphV2 System Guardrail) | text | none: `frozen` is phase data in `checks.json` (default `readChecks.ts:3-9`) | — | stays `proseOnly` | decided in P31b: stays prose; `frozen` stays phase data (measured: per-phase lists, `TASK_P31b_imports.md:40-46`) |
+| "Frozen Tree During Run" (MorphV2 System Guardrail) | text | none: `frozen` is phase data in `checks.json` (default `readChecks.ts:3-9`) | — | stays `proseOnly` | decided in P31b: stays prose; `frozen` stays phase data (measured: per-phase lists, `decks/p31b/TASK.md:40-46`) |
 | Function-level Guardrail scope | text on its card | per card file since P31c: a Function's or Interface's rule binds only its card's code files; System and Component rules stay per directory (`src/rules/guardrails.ts`, `tests/rules/guardrails.p31c.examples.test.ts`) | per card | per card file | **restored in P31c** |
 | imports: stdlib + record dependencies | finale, dependency doc | guard per FILE, red names `file:line`; `checks.json` `imports` extra gets a "remove it" note | — | template guards (`go/parser`, TS AST); `src/rules/notes.ts` | restored P31b (#42 §3) |
 | `decks/tools/layers.json` (a second copy) | — | not read; a leftover gets a plan note | — | template files deleted (435bfd2) | retired P31b (#42 ledger 3) |

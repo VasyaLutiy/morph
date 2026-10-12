@@ -6,7 +6,7 @@ cut form of checks.json (10 cards); P35b = the probe skeleton writer `--write-pr
 ## 1. Why this
 
 In V2 the record's examples reach the code check only through hand copies: the probe re-types them, checks.json
-re-types each judge's `min`/`max`/`lits` and repeats the cut's cards (#45, #44 gaps 2 and 8; docs/CONTOUR.md §8).
+re-types each judge's `min`/`max`/`lits` and repeats the cut's cards (#45, #44 gaps 2 and 8; documentation/CONTOUR.md §8).
 Measured on the committed decks (P35a recon: a script over the 44 `decks/*/checks.json` at the commit that last
 touched each, plus the 5 identity-corpus entries; the record of that commit):
 - probes: 1 holds a title the record does not give (p19a `cut-component`: "Cut Component example 7", the record at
@@ -209,5 +209,5 @@ import, no file read, no clock, no environment (the file reads stay in Plan Comm
 - The old form's defaults: a judge missing from a `cards` list stays without a built acceptance and without a note
   (Plan Command 6's golden lists 2 of 17 cards); the old form gets only the name check of titles the record does not
   give (p15 and the golden of Plan Command 6 hold fewer titles than examples).
-- `docs/ORCHESTRATOR_REFERENCE.md` §2 (root keys, the cut form) — after the merge, with `refcheck.mjs`.
+- `documentation/ORCHESTRATOR_REFERENCE.md` §2 (root keys, the cut form) — after the merge, with `refcheck.mjs`.
 - The skill's §4.5 and §4.7 (probes and judge bounds) for the cut form — the operator's session.

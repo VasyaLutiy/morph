@@ -2,7 +2,7 @@
 
 The order of work is the skill `morph-v2-orchestrator` (`.claude/skills/morph-v2-orchestrator/` of this repo; delivering it into another project's session
 is MorphStudio's harness, until then the header names its path); the phase's data and the
-exit codes are `docs/ORCHESTRATOR_REFERENCE.md`. This file has the binary, the wrapper, what to change
+exit codes are `documentation/ORCHESTRATOR_REFERENCE.md`. This file has the binary, the wrapper, what to change
 in an mrph project's data, and the task header. It was checked dry (no paid call) on a scratch clone
 of ETHSmartChecker (Python, an mrph project with 27 runs) on 10.10.
 
@@ -70,7 +70,7 @@ these conditions:
   "never end the turn while a run is going".
 - **One simple command per call.** Compound commands (`;`, `&&`, `|`, `$VAR`) and `>` redirection need an approval
   nobody gives headless, even into `--add-dir` folders. Outputs come from the tool result.
-- **Sandbox reach.** A sandbox limited to the project cannot read `$MORPHV2/docs/ORCHESTRATOR_REFERENCE.md` or the
+- **Sandbox reach.** A sandbox limited to the project cannot read `$MORPHV2/documentation/ORCHESTRATOR_REFERENCE.md` or the
   skill's `references/lessons.md`. Add them with `--add-dir` (read only).
 - **Tool-call quality.** On P9a, 35 tool errors over 175 requests: parameter names leaked into Edit values, and one
   such Edit corrupted `morph-map.json`. The skill's §4.10 (validate every edited data file) is a must for such a model.

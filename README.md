@@ -93,8 +93,8 @@ rolls the subset back.
 | `morph init --language ts\|go\|python` | a project template |
 | `morph review`, `morph submit`, `morph collect` | reviewer, batch submit and collect |
 
-The data format and the exit codes for orchestrators: `docs/ORCHESTRATOR_REFERENCE.md`.
-MorphV2 on another project: `docs/OTHER_PROJECT.md`.
+The data format and the exit codes for orchestrators: `documentation/ORCHESTRATOR_REFERENCE.md`.
+MorphV2 on another project: `documentation/OTHER_PROJECT.md`.
 
 ## Morph-Orchestrator
 
@@ -104,7 +104,7 @@ How a phase is prepared and run, under the old-Morph scheme.
 one phase in one fresh session — step 0 environment, recon, spec and data, the cut, stubs, an
 auto gate, the run, verify with the live smoke, salvage from the archive, the report. Its
 receipts are in `references/lessons.md` beside it. The phase data and the exit codes are in
-`docs/ORCHESTRATOR_REFERENCE.md`; another project's binary and wrapper in `docs/OTHER_PROJECT.md`.
+`documentation/ORCHESTRATOR_REFERENCE.md`; another project's binary and wrapper in `documentation/OTHER_PROJECT.md`.
 Delivering the skill to a project outside this repo is MorphStudio's job (its Go harness runs the
 agent sessions); until then the task header names the skill's path. The old mrph cycle stays the skill
 `morph-orchestrator`.

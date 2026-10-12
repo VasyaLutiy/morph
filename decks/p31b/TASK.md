@@ -1,7 +1,7 @@
 # TASK_P31b — issue #42 (Must hold 3, ledger 3, 4, 5, 8) and #40 item 3: imports from the record, blamed per file; layers.json leaves the templates (`src/rules/notes.ts`, `src/cli/planCommand.ts`; template guards as data)
 
 Old-Morph scheme (the deck is cut from the record mechanically; beside it only what it cannot say — #42 ledger 7). Plan:
-`docs/Plan_Epic2_Fixes.md` §P31b, §6. Previous part: `docs/TASK_P31a_guardrails.md` (§7 lists what this phase owns).
+`docs/Plan_Epic2_Fixes.md` §P31b, §6. Previous part: `decks/p31a/TASK.md` (§7 lists what this phase owns).
 Record: Component **rules** (new Function Plan Notes; Rules Arg behaviour and examples 5–7; Layers Arg behaviour and
 example 2; Plan Rules examples 4–5; Layers Arg 2–3, Plan Rules 1–2 and Plan Notes 1–2 by key in
 `tests/fixtures/rules/examples.json`: a compaction, rules would be 32.1 KB, now 29.1 KB); **cli** (Plan Command

@@ -2,7 +2,7 @@
 
 > Phase P19b of `docs/PLAN.md` ("Фазы по записи (после P2)": `P19 | contour + language + planner + builder
 > (dependencies) | issue #10`), operator 08.10. Issue VasyaLutiy/morph#10 (label `P19-deps`, #10 only). P19a (the record
-> half, run 20261008-141116) is merged; this half is exactly `docs/TASK_P19a_deps.md` §7: Components **builder** (Code
+> half, run 20261008-141116) is merged; this half is exactly `decks/p19a/TASK.md` §7: Components **builder** (Code
 > Acceptance, Build Acceptances), **builder-go** (Go Acceptance) and **cli** (Plan Command) as code cards; the guards,
 > MorphV2's own `yaml`, the templates' regulation and issue #10's two smoke recipes as data. The deck is cut by V2
 > (`morph plan --component builder --component builder-go --component cli --judge --checks decks/p19b/checks.json`),
@@ -23,8 +23,8 @@
 - **Ripple, measured** (the reference code in a scratch worktree from a4e53ef with this phase's data, full suite):
   **0 of 776** red — the new fields are optional (§2.2), so every existing `ctx`/`buildAcceptances` literal still
   type-checks and every existing fixture is byte for byte; no `fullExclude`. The record with `yaml` declared and Component
-  contour `uses: [yaml]` (and `docs/deps/yaml.md`): **0 of 776** red; `morph plan --component contour` on main's binary
-  exit 0 (the contour cards gain the finale sentence and `docs/deps/yaml.md` in their slices; no deck of this repository
+  contour `uses: [yaml]` (and `documentation/deps/yaml.md`): **0 of 776** red; `morph plan --component contour` on main's binary
+  exit 0 (the contour cards gain the finale sentence and `documentation/deps/yaml.md` in their slices; no deck of this repository
   is re-cut from it, §2.4).
 - **Record sizes** (bytes of each Component block, from its `- name:` line to the next): builder 25 820 → **29 240**;
   builder-go 8 587 → **10 315**; cli 28 035 → **28 554** (the Plan Command examples' text lives in
@@ -57,7 +57,7 @@
 | `builder/go/code1.txt` | text | Go Acceptance 1's; line 6 the GO_ENV line, line 23 `echo '== guard'; node $P/guard.mjs src calc/percent_of.go` | GA 7, BA 8: line 6 → GO_ENV_VENDOR's text, line 23 + ` '<paths>'` |
 | `builder/go/judge1.txt` | text | Go Acceptance 3's; line 6 the GO_ENV line | GA 7: only line 6 changed |
 | `builder/go/code2.txt` | text | Go Acceptance 2's; line 25 `… guard.mjs src report/a.go; node $P/guard.mjs tests report/a_test.go 1 5` | GA 7: `report/a.go 'golang.org/x/mod'; node` |
-| `planner/deps.yaml` | the record TEXT (P19a) | dependencies yaml 2.8.1 (typescript, doc docs/deps/yaml.md), github.com/google/go-cmp v0.7.0 (go, doc docs/deps/go-cmp.md), zod 3.23.8 (typescript, no doc), in that order; conf uses [zod, yaml]; diff uses [go-cmp]; plain none | PC 10: read-config's and check-config's allowed `["yaml", "zod"]`; PC 11: diff-values' `["github.com/google/go-cmp"]` |
+| `planner/deps.yaml` | the record TEXT (P19a) | dependencies yaml 2.8.1 (typescript, doc documentation/deps/yaml.md), github.com/google/go-cmp v0.7.0 (go, doc documentation/deps/go-cmp.md), zod 3.23.8 (typescript, no doc), in that order; conf uses [zod, yaml]; diff uses [go-cmp]; plain none | PC 10: read-config's and check-config's allowed `["yaml", "zod"]`; PC 11: diff-values' `["github.com/google/go-cmp"]` |
 | `planner/deps.map.json` | the map TEXT (P19a) | docs `["docs/TASK.md"]`; check-config's slice `["docs/X.md"]` | PC 10, 11 |
 | `cli/examples.json` (2 keys added) | ONE object | "Plan Command 10", "Plan Command 11": given/then of §2.2's table | — |
 
@@ -80,9 +80,9 @@ const goCtx = (over: Partial<CardContext>): CardContext => ({
 //   acceptance: null, model: null, maxTokens: null, reasoning: null, variants: 1, dependsOn}); checks(phase, cards, frozen = DEFAULT_FROZEN) =
 //   {version: 1, phase, parts: "decks/<phase>/parts", frozen, fullExclude: [], ownGit: false, cards}; a code card {id, smoke: null, extra: null, files: null}
 // Plan Command 10-11 (the deps root): const r = tmpRoot(); r.write("contour.yaml", fixture("planner/deps.yaml"));
-//   r.write("morph-map.json", fixture("planner/deps.map.json")); r.write("docs/deps/yaml.md", "# yaml\n"); r.write("decks/tools/guard.mjs", "// guard\n");
+//   r.write("morph-map.json", fixture("planner/deps.map.json")); r.write("documentation/deps/yaml.md", "# yaml\n"); r.write("decks/tools/guard.mjs", "// guard\n");
 //   r.write("decks/tools/firstdiff.mjs", "// firstdiff\n"); r.write("decks/d1/checks.json", JSON.stringify({phase: "d1", cards: [{id: "read-config", smoke: 3}, {id: "pad-left", smoke: 2}]}));
-//   probes decks/d1/parts/read-config.probe.ts, pad-left.probe.ts "// probe\n"; for 11 also docs/deps/go-cmp.md "# go-cmp\n",
+//   probes decks/d1/parts/read-config.probe.ts, pad-left.probe.ts "// probe\n"; for 11 also documentation/deps/go-cmp.md "# go-cmp\n",
 //   decks/d2/checks.json {phase: "d2", cards: [{id: "diff-values", smoke: 4}]}, decks/d2/parts/_diff-values_probe_test.go "package diff\n";
 //   planCommand(r.root, {name: "plan", root: ".", pretty: false, spec: "contour.yaml", map: "morph-map.json", components, judge: false, out, checks}); r.rm() in finally
 ```
@@ -156,7 +156,7 @@ export function goEnv(vendor: boolean): string;   // vendor ? GO_ENV_VENDOR : GO
 | example | given (tests/fixtures/cli/examples.json) | result |
 |---|---|---|
 | Plan Command 10 | the deps root (§2.1), components ["conf", "plain"], judge false, checks decks/d1/checks.json, out decks/d1/deck.json; then vendor/modules.txt `"# github.com/google/go-cmp v0.7.0\n"` written, out decks/d1/deck2.json | code 0; cards pad-left `[src/plain/padLeft.ts, tests/plain/padLeft.test.ts]`, read-config `[src/conf/readConfig.ts, tests/conf/readConfig.test.ts]`, check-config `[src/conf/checkConfig.ts, tests/conf/checkConfig.test.ts]` in that order; read-config's acceptance = codeAcceptance(ctx {id "read-config", phase "d1", its two targets, siblings pad-left's two, DEFAULT_FROZEN, [], false, TYPESCRIPT, the texts, allowed ["yaml", "zod"]}, "// probe\n", 3, null), holding `node $P/guard.mjs src src/conf/readConfig.ts 'yaml,zod'; node $P/guard.mjs tests tests/conf/readConfig.test.ts 1 3\n` (record order, not uses order); pad-left's = codeAcceptance of its ctx (siblings read-config's two, no allowed), smoke 2, holding `node $P/guard.mjs src src/plain/padLeft.ts; node`; check-config keeps the plan's acceptance; then deck2.json equal to deck.json byte for byte (a TypeScript acceptance does not read vendor) |
-| Plan Command 11 | the deps root + docs/deps/go-cmp.md, decks/d2 (diff-values, smoke 4), no vendor/modules.txt; components ["diff"], checks decks/d2/checks.json, out decks/d2/deck.json; then vendor/modules.txt `"# github.com/google/go-cmp v0.7.0\n## explicit; go 1.11\ngithub.com/google/go-cmp/cmp\n"`, out decks/d2/deck2.json | code 0; one card diff-values `[diff/diff_values.go, diff/diff_values_test.go]`, its acceptance = goCodeAcceptance(ctx {id "diff-values", phase "d2", those targets, siblings [], DEFAULT_FROZEN, [], false, GO, the texts, allowed ["github.com/google/go-cmp"], vendor false}, "package diff\n", 4, null): GO_ENV once and `node $P/guard.mjs src diff/diff_values.go 'github.com/google/go-cmp'; node $P/guard.mjs tests diff/diff_values_test.go 1 4\n`; then the card equal but its acceptance, which is the first with `export GOFLAGS=-mod=mod ` → `export GOFLAGS=-mod=vendor `, nothing else |
+| Plan Command 11 | the deps root + documentation/deps/go-cmp.md, decks/d2 (diff-values, smoke 4), no vendor/modules.txt; components ["diff"], checks decks/d2/checks.json, out decks/d2/deck.json; then vendor/modules.txt `"# github.com/google/go-cmp v0.7.0\n## explicit; go 1.11\ngithub.com/google/go-cmp/cmp\n"`, out decks/d2/deck2.json | code 0; one card diff-values `[diff/diff_values.go, diff/diff_values_test.go]`, its acceptance = goCodeAcceptance(ctx {id "diff-values", phase "d2", those targets, siblings [], DEFAULT_FROZEN, [], false, GO, the texts, allowed ["github.com/google/go-cmp"], vendor false}, "package diff\n", 4, null): GO_ENV once and `node $P/guard.mjs src diff/diff_values.go 'github.com/google/go-cmp'; node $P/guard.mjs tests diff/diff_values_test.go 1 4\n`; then the card equal but its acceptance, which is the first with `export GOFLAGS=-mod=mod ` → `export GOFLAGS=-mod=vendor `, nothing else |
 
 **The guards (data, written by the orchestrator; not a card's target).** `node guard.mjs src <file,file,…> [<name,name,…>]`:
 the optional third argument is the card's allowed list (the builder writes it only when non-empty, single-quoted).
@@ -193,8 +193,8 @@ the optional third argument is the card's allowed list (the builder writes it on
 - **MorphV2's guard** · unchanged; `yaml` declared in `contour.yaml` with `uses: [yaml]` on Component contour reaches its
   cards as the finale sentence, the doc in the slice and the guard argument, which this guard ignores · the operator's
   P19 scope (#10): the one-file rule stays, stricter than the Component-wide declaration.
-- **MorphV2's `yaml`** · `{name: yaml, version: "2.9.1", language: typescript, doc: docs/deps/yaml.md}` (package-lock's
-  exact version; quoted) after the groups; `docs/deps/yaml.md` 4 437 B, from the package's README and `.d.ts` files, every
+- **MorphV2's `yaml`** · `{name: yaml, version: "2.9.1", language: typescript, doc: documentation/deps/yaml.md}` (package-lock's
+  exact version; quoted) after the groups; `documentation/deps/yaml.md` 4 437 B, from the package's README and `.d.ts` files, every
   value measured on 2.9.1 · issue #10 item 5.
 - **Templates** · `templates/common/docs/{AUTONOMY,TASK_TEMPLATE,PLAN}.md` gain the dependency regulation (§7 of this
   spec lists it as data); no phase number, project name or date in templates (`decks/p18/smoke/leak.sh` 0 lines) · P18.
@@ -232,7 +232,7 @@ the optional third argument is the card's allowed list (the builder writes it on
   stays green) and the P15 deck re-cut, by main's binary (a4e53ef) and by this phase's reference binary on the same tree
   (§11).
 - The decks of this repository are not re-cut by this phase: a re-cut of a deck holding contour cards would now carry the
-  `yaml` finale sentence and `docs/deps/yaml.md` (by design, P19a); P9's and P19a's decks stay as committed.
+  `yaml` finale sentence and `documentation/deps/yaml.md` (by design, P19a); P9's and P19a's decks stay as committed.
 - 776 tests in 121 files green at every card (no deck-wide exclusion); after the run **776 + CA 1 + JA 1 + GA 2 + BA 2 +
   PC 2 = 784** in 125 files (± the judges' own tests).
 
@@ -285,7 +285,7 @@ min = the record's new examples; max = min + 6 (new files).
 
 The data of this phase (written by the orchestrator, committed before the run, no card touches it):
 1. the guards (§2.2): `decks/tools/goguard.mjs`, `templates/go/decks/tools/guard.mjs`, `templates/typescript/decks/tools/guard.mjs`;
-2. MorphV2's `contour.yaml` declaring `yaml` 2.9.1 with Component contour `uses: [yaml]`; `docs/deps/yaml.md`;
+2. MorphV2's `contour.yaml` declaring `yaml` 2.9.1 with Component contour `uses: [yaml]`; `documentation/deps/yaml.md`;
 3. `templates/common/docs/AUTONOMY.md`, `TASK_TEMPLATE.md`, `PLAN.md`: the architect declares dependencies in the record,
    the operator approves them with the plan, P0 installs them once with the network (Go: `go get`, a tools.go with
    `//go:build tools`, `go mod tidy`, `go mod vendor`, commit vendor/; TypeScript: exact versions in package.json +

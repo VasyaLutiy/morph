@@ -1,6 +1,6 @@
 # TASK_P31c — issue #42 ledger item 9: a Function-level Guardrail binds its card's code files, not its directory (`src/rules/guardrails.ts`)
 
-Previous parts: `docs/TASK_P31a_guardrails.md`, `docs/TASK_P31b_imports.md` (merged; main 120a849). Record: Component
+Previous parts: `decks/p31a/TASK.md`, `decks/p31b/TASK.md` (merged; main 120a849). Record: Component
 **rules** (description; Guardrail Rules behaviour and examples 3, 5; Card Rules behaviour and examples 1, 2; Rules Arg
 example 8; Plan Rules wording). The phase's first data commit compacted rules 29 112 B → 27 327 B (Layer Edges examples
 2–5 to `tests/fixtures/rules/examples.json` by key); after this phase's record edit 29 509 B. Cut with `--only` (rules

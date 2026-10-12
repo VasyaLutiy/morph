@@ -13,8 +13,11 @@ Headless-оркестратор пакетной генерации кода н�
   из `morph-lab` с `--root <репо>`. Скиллы оркестратора — в `mrph/.claude/skills/`.
 - Автономный режим (с P3 на VPS) — по `docs/AUTONOMY.md`; решения по дырам записи —
   в `docs/DECISIONS.md`.
-- Спека фазы — по `docs/TASK_TEMPLATE.md` (свой шаблон V2; шаблон mrph заморожен).
-- Руками (агент) пишутся только данные: запись, map, `docs/TASK_P<N>_*.md`, фикстуры,
+- Спека фазы — по `docs/TASK_TEMPLATE.md` (свой шаблон V2; шаблон mrph заморожен), живёт в
+  `decks/p<N>/TASK.md`; в карты (slice, instruction) не попадает, спеки прошлых фаз в recon не читаются.
+- `docs/` — проектные PLAN/MEASURE/AUTONOMY/DECISIONS (их читает primer) и TASK_TEMPLATE;
+  `documentation/` — справочник Морфа (CONTOUR, ORCHESTRATOR_REFERENCE, OTHER_PROJECT, CONVENTIONS, deps).
+- Руками (агент) пишутся только данные: запись, map, спека `decks/p<N>/TASK.md`, фикстуры,
   сборщик приёмок `decks/tools/build.py` (до P10b2; с P10b2 в `decks/tools/archive/`, приёмки режет `morph plan --checks`), `decks/<phase>/checks.json`, пробы `decks/p<N>/parts/*.probe.ts`,
   `package-lock.json` после scaffold. Правка кода руками — нарушение эксперимента.
 - Платные прогоны — только по слову оператора; потолок **$5 на фазу** (решение 06.10).

@@ -138,5 +138,5 @@ test writes only under `tmpRoot()` and removes it; a judge writes only its test 
 - Filling the probe bodies (the orchestrator); a skeleton for a judge card; overwriting an existing probe.
 - The cut form's strict name check of a re-cut (patch) card's probe: it asks for every example of the Function, so a
   phase re-cutting an existing Function keeps the old form (this phase does). Found in P35b prep; for #45.
-- `docs/ORCHESTRATOR_REFERENCE.md` §2–§3 (the cut form, `--write-probes`) and the skill's §4.5 — after the merge.
+- `documentation/ORCHESTRATOR_REFERENCE.md` §2–§3 (the cut form, `--write-probes`) and the skill's §4.5 — after the merge.
 - The cli Component's size: the record of cli is 30 935 bytes after this phase (cap 30 000); splitting it is #48's.

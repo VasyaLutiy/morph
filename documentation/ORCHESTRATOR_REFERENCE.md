@@ -145,7 +145,7 @@ All commands print one JSON document on stdout. The exit codes are shared: 0 ok,
 ```bash
 morph primer --root . --write                       # read .morph/primer.md
 morph scout --root . --issue /tmp/<p>/issue.md --processor ds
-# write: record/map edits, docs/TASK_<p>.md, fixtures, decks/<p>/checks.json, parts/*.probe.ts, _stubs/
+# write: record/map edits, decks/<p>/TASK.md, fixtures, decks/<p>/checks.json, parts/*.probe.ts, _stubs/
 git add <the data paths> && git commit -m "<p> data"     # explicit paths, never -A
 morph plan --root . --spec contour.yaml --map morph-map.json --component <C> --judge \
   --checks decks/<p>/checks.json [--only <ids>] --out decks/<p>/deck.json

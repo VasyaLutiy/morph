@@ -1,7 +1,7 @@
 # TASK_P12b — primer ownership by trailers (`src/git/{log,ownership}.ts`, `src/primer/{renderPrimer,primerCommand}.ts`)
 
 > Phase P12b of `docs/PLAN.md` ("Фазы по записи (после P2)": `P12b | primer | владение по трейлерам`), the part P12a left
-> out (`docs/TASK_P12_primer.md` §7). Components of `contour.yaml`: **git** (two new Functions: Read Morph Log, Read
+> out (`decks/p12/TASK.md` §7). Components of `contour.yaml`: **git** (two new Functions: Read Morph Log, Read
 > Ownership — git writes the Morph trailers in Commit Card and Archive Run, and now reads them back) and **primer**
 > (Render Primer and Primer Command patched). Plus the operator's two notes of 08.10 on the totals (debt rows; MEASURE's
 > running total vs the archive total). The deck is cut by V2 (`morph plan --checks decks/p12b/checks.json`), filtered to

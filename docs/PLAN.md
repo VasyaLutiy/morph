@@ -210,9 +210,9 @@ Guardrail слоёв, проверяемый `guard.mjs` на каждой ка�
 
 Общие данные фазы, сделанные руками до прогона: `decks/pN-<comp>/map.json` (генерируется
 `decks/tools/mapgen.py` из `contour.yaml`: camelCase `targets`, срез судьи =
-`docs/CONVENTIONS.md` + кодовая цель + `tests/helpers.ts`, `depends_on` += `scaffold`);
+`documentation/CONVENTIONS.md` + кодовая цель + `tests/helpers.ts`, `depends_on` += `scaffold`);
 приёмки собирает `decks/tools/build.py`; пробы в `decks/pN/parts/`; фикстуры в
-`tests/fixtures/`. `docs/CONVENTIONS.md` ≤ 3 КБ — единственная запись `docs`; запись
+`tests/fixtures/`. `documentation/CONVENTIONS.md` ≤ 3 КБ — единственная запись `docs`; запись
 Contour в срез не идёт. Судья дополнительно проверяется `guard.mjs`: не меньше одного
 `it(` на пример и каждый литерал из `examples` Function присутствует в тесте.
 
@@ -779,7 +779,7 @@ Scaffold (P0) — отдельная одно-карточная колода `d
 ```json
 {
   "package": "src",
-  "docs": ["docs/TASK_P1_cards.md"],
+  "docs": ["decks/p1/TASK.md"],
   "groups": {
     "card-model": ["Validate Card", "Load Deck"],
     "layering": ["Layer Generations"],
@@ -788,36 +788,36 @@ Scaffold (P0) — отдельная одно-карточная колода `d
   "cards": {
     "card-model": {
       "targets": ["src/cards/model.ts"],
-      "context_slice": ["docs/TASK_P1_cards.md", "tests/helpers.ts", "src/types.ts"],
+      "context_slice": ["decks/p1/TASK.md", "tests/helpers.ts", "src/types.ts"],
       "depends_on": [],
       "instruction": "Write src/cards/model.ts only: validateCard(input: unknown): {card: Card} | {faults: Fault[]} and loadDeck(text: string): {deck: Deck} | {faults: Fault[]}. Types come from src/types.ts (scaffold). No test file: the judge writes it.",
       "max_tokens": 16000, "variants": 2
     },
     "card-model-judge": {
       "targets": ["tests/cards/model.examples.test.ts"],
-      "context_slice": ["docs/TASK_P1_cards.md", "src/cards/model.ts", "src/types.ts", "tests/helpers.ts"]
+      "context_slice": ["decks/p1/TASK.md", "src/cards/model.ts", "src/types.ts", "tests/helpers.ts"]
     },
     "layering": {
       "targets": ["src/cards/layer.ts"],
-      "context_slice": ["docs/TASK_P1_cards.md", "src/cards/model.ts", "src/types.ts", "tests/helpers.ts"],
+      "context_slice": ["decks/p1/TASK.md", "src/cards/model.ts", "src/types.ts", "tests/helpers.ts"],
       "depends_on": ["card-model"],
       "instruction": "Write src/cards/layer.ts only: layerGenerations(deck: Deck): string[][]. No test file.",
       "max_tokens": 12000
     },
     "layering-judge": {
       "targets": ["tests/cards/layer.examples.test.ts"],
-      "context_slice": ["docs/TASK_P1_cards.md", "src/cards/layer.ts", "src/cards/model.ts", "src/types.ts", "tests/helpers.ts"]
+      "context_slice": ["decks/p1/TASK.md", "src/cards/layer.ts", "src/cards/model.ts", "src/types.ts", "tests/helpers.ts"]
     },
     "hazards": {
       "targets": ["src/cards/hazards.ts"],
-      "context_slice": ["docs/TASK_P1_cards.md", "src/cards/model.ts", "src/cards/layer.ts", "src/types.ts", "tests/helpers.ts"],
+      "context_slice": ["decks/p1/TASK.md", "src/cards/model.ts", "src/cards/layer.ts", "src/types.ts", "tests/helpers.ts"],
       "depends_on": ["card-model", "layering"],
       "instruction": "Write src/cards/hazards.ts only: findHazards(deck: Deck): Hazard[] and weighSlices(deck: Deck, root: string, cap = 500000): Hazard[]. No test file.",
       "max_tokens": 16000, "variants": 2
     },
     "hazards-judge": {
       "targets": ["tests/cards/hazards.examples.test.ts"],
-      "context_slice": ["docs/TASK_P1_cards.md", "src/cards/hazards.ts", "src/cards/model.ts", "src/cards/layer.ts", "src/types.ts", "tests/helpers.ts"]
+      "context_slice": ["decks/p1/TASK.md", "src/cards/hazards.ts", "src/cards/model.ts", "src/cards/layer.ts", "src/types.ts", "tests/helpers.ts"]
     }
   }
 }
@@ -884,14 +884,14 @@ compiler), а `store` и `wait` выделял в свои, хотя в запи
 | P16 | primer (go) | issue #7: Go-тесты в primer только из `*_test.go`, которые гоняет `go test ./...` — без `_`-проб, `decks/`, `testdata/`, без `TestMain` | оператор 08.10; **новый флоу: одна фаза — одна свежая сессия** (AUTONOMY «One phase, one session»); первая фаза без mrph-сверки |
 | P17 | cards/acceptance/git + cli (debt) | issue #8 (метка `P17-debt`): `morph card` (бриф долга по карте), `morph accept [--commit]` (приёмка карты на текущем дереве, коммит только целей с трейлерами `Morph-Debt: true`), опц. `run --only`; AUTONOMY: долг на колоде V2 платит сама сессия (Fable по брифу `morph card` → `accept --commit`), один на фазу | оператор 08.10: долг без оператора; можно P17a/P17b; после мержа — сразу P18 (новый флоу) |
 | P18 | scaffold (template) + cli | issue #9 (метка `P18-template`): `morph init --name --language` из `templates/` (common + typescript/go/python), обобщённые AUTONOMY/CLAUDE.md/TASK_TEMPLATE/tools без следов MorphV2; smoke init → plan --checks → deck check на трёх языках, Go до прогона на ds | оператор 08.10: шаблон проекта для Morph Studio; после мержа — 🧪 стоп оператору; MorphV2 готов к упаковке |
-| P19 | contour + language + planner + builder (dependencies) | issue #10 (метка `P19-deps`): `System.dependencies` + `Component.uses` в записи; директива профиля из записи (без зависимостей — байт в байт как сейчас); дайджест API `docs/deps/<name>.md` в срезе; guard TS/Go разрешает только объявленные; Go `-mod=vendor` при `vendor/modules.txt`, `GOPROXY=off` всегда; P0 ставит зависимости один раз с сетью; шаблоны и AUTONOMY; `yaml` MorphV2 — обычная объявленная зависимость; smoke Go вживую на ds + TS до stub-прогона | оператор 08.10 (вопрос morph-pm про MCP SDK в Morph Studio); можно P19a/P19b; после мержа — 🧪 стоп оператору |
+| P19 | contour + language + planner + builder (dependencies) | issue #10 (метка `P19-deps`): `System.dependencies` + `Component.uses` в записи; директива профиля из записи (без зависимостей — байт в байт как сейчас); дайджест API `documentation/deps/<name>.md` в срезе; guard TS/Go разрешает только объявленные; Go `-mod=vendor` при `vendor/modules.txt`, `GOPROXY=off` всегда; P0 ставит зависимости один раз с сетью; шаблоны и AUTONOMY; `yaml` MorphV2 — обычная объявленная зависимость; smoke Go вживую на ds + TS до stub-прогона | оператор 08.10 (вопрос morph-pm про MCP SDK в Morph Studio); можно P19a/P19b; после мержа — 🧪 стоп оператору |
 | P20 | planner + cli (re-cut) + templates/go + gate | issue #11 (метка `P20-rerun`): `--only <cards>` в `morph plan` и/или `morph run` — нарезка подмножества с overlay по текущему дереву (принятые файлы не затираются); guard Go-шаблона пускает в тесты прямые require из go.mod (проверить TS/Python); проверка на заглушках на гейте считает строки vet/build наравне с guard | оператор 08.10 по P6 MorphStudio (прогоны 20261008-200807, 20261008-201843; долг Fable $2.40 против $0.0986 исполнителя); можно P20a/P20b; конец каждой сессии — `~/.morph-wait-operator` (флаги общие с MorphStudio); после мержа — 🧪 стоп оператору |
 | P21 | planner (subset overlay / generations) + checks + gate | issue #12 (метка `P21-breaking-recut`): нарезка `--only`, где запись меняет экспортируемый Go-идентификатор, которым пользуются цели более поздних поколений того же подмножества, проходит гейт без ручной правки и без compat-имён; карта судится на компилирующемся дереве; файлы вне подмножества не прячутся, их поломка названа до платного прогона; без `--only` байт в байт; желательно предупреждение plan --only с file:line | запрос PM MorphStudio 09.10 (`docs/MORPHV2_REQUEST_breaking-recut.md`, P7b); направления A/B/C — выбирает фаза; можно P21a/P21b; конец каждой сессии — `~/.morph-wait-operator`; после мержа — 🧪 стоп оператору |
-| P21b | language (Tree Profiles) + planner-subset (Stub Trees, Check Builds) + acceptance (Tree Check) + cli (deck check) + checks | issue #12 п. 3.5 (поправка оператора 09.10, комментарий 6075790078; запрос MorphStudio eb52a5a — ОБЯЗАТЕЛЬНО), общность по комментарию 6077766447: `morph deck check` на колоде с `<каталог колоды>/_stubs/` собирает копию дерева первой попытки каждой карты (её конфиг — full.json/tsconfig.card.json, заглушки целей её языка из более ранних поколений и своих) шагом компиляции её языка (Go `go build` + `go vet`, TypeScript `tsc --noEmit`; Python — примечание «нет шага», не молчаливый пропуск) и выходит с кодом 2, называя `file:line` вне её целей; приёмка — go-p7b: старая нарезка (f6cf44d) называет `supervisor/guard.go:20`, нарезка P21a — 0; ts-rename (переименование TS через модули, 3 поколения) — 2 с `src/report/line.ts(1,17)` | `docs/TASK_P21b_deckcheck.md`; 10 карт, 4 поколения; разделение по комментарию 6077412737 п. 3: P21b = п. 1, P21c = п. 2; в src/ нет имён P7b; cli сжат до 29 921 Б; конец сессии — `~/.morph-wait-operator` |
+| P21b | language (Tree Profiles) + planner-subset (Stub Trees, Check Builds) + acceptance (Tree Check) + cli (deck check) + checks | issue #12 п. 3.5 (поправка оператора 09.10, комментарий 6075790078; запрос MorphStudio eb52a5a — ОБЯЗАТЕЛЬНО), общность по комментарию 6077766447: `morph deck check` на колоде с `<каталог колоды>/_stubs/` собирает копию дерева первой попытки каждой карты (её конфиг — full.json/tsconfig.card.json, заглушки целей её языка из более ранних поколений и своих) шагом компиляции её языка (Go `go build` + `go vet`, TypeScript `tsc --noEmit`; Python — примечание «нет шага», не молчаливый пропуск) и выходит с кодом 2, называя `file:line` вне её целей; приёмка — go-p7b: старая нарезка (f6cf44d) называет `supervisor/guard.go:20`, нарезка P21a — 0; ts-rename (переименование TS через модули, 3 поколения) — 2 с `src/report/line.ts(1,17)` | `decks/p21b/TASK.md`; 10 карт, 4 поколения; разделение по комментарию 6077412737 п. 3: P21b = п. 1, P21c = п. 2; в src/ нет имён P7b; cli сжат до 29 921 Б; конец сессии — `~/.morph-wait-operator` |
 | P21c | runloop (subset transaction) + cli/run + checks | issue #12 комментарий 6077412737 п. 2, MorphStudio 4efde92 §6, комментарий оператора 6077766447: транзакция над ВСЕМ подмножеством `--only`, независимая от языка (в цикле прогона: группа, отложенная приёмка, перепроверка до неподвижной точки; ничто не называет Go, пакеты или `go vet`) — карты пишутся по поколениям как сейчас; все стадии приёмки каждой карты откладываются, пока не написаны все карты подмножества, и идут на полном новом дереве; строки `file:line` вывода ЛЮБОЙ стадии (fileLine профиля, таблица Tree Profiles из P21b) винят карту-владельца файла, перезапускается только она (на том же дереве); после каждой повторной попытки все приёмки заново до неподвижной точки, раунды ограничены как сегодняшние попытки; файл вне подмножества — поломка записи «outside the subset», стоп; только колоды `--only`, полные нарезки и старые колоды байт в байт; прятать поздние файлы во время прогона — отвергнуто | гейт: go-p7b и ts-rename (минимум) — зелёные под транзакцией и красные с верной виной без неё (демо показывает оба); ВЫНУЖДЕННЫЙ повтор судьи после того, как его сосед по поколению 2 уже записан (демо на заглушечном процессоре; в живом смоуке go-p7b на ds — без ручной правки кода); фикстуры blame и outside-subset; если не влезает в 12 карт/$5 — делить дальше (P21d), не сужая общность; после мержа — 🧪 стоп оператору |
 | P22 | gate (new) + reviewer (mutants) + planner (identity corpus) + cli | issue #13 (метка `P22-gate`): `morph gate --deck --stubs --refs` — механический гейт одной headless-командой с JSON-вердиктом (заглушки/эталоны по поколениям, stubcheck/fullvet внутри, цепочки), мутанты через `morph review --mutants` (≤30/≤20 мин), байт-тождество — закоммиченный корпус + тест; опц. `morph report`, `plan --scale-tokens` | оператор 09.10 по разбору логов P20–P21b (ритуал гейта 79 мин/$14 + пересборки кэша 23 %); можно P22a/P22b; гейт самой фазы — первым через `morph gate`; после мержа — 🧪 стоп оператору |
-| P22a | gate (NEW: Stub Verdict, Gate Plan, Play Gate, Gate Command) + cli (Parse Command, Main) | issue #13 п. 1: `morph gate --deck --stubs --refs` — заглушки и эталоны по поколениям в scratch-клоне HEAD (заглушка красная на ожидаемой стадии без строки build/vet/tsc вне целей; эталон зелёный; без метки транзакции — повтор каждой карты поколения после записи всего поколения, дерево красного смоука P21a), Check Builds на заглушках, цепочки против 250 с, один JSON-вердикт (код 0/2); регламент AUTONOMY шаги 1–2 и шаблоны переключаются на `morph gate` с мержа | `docs/TASK_P22a_gate.md`; 10 карт, 4 поколения, колода-транзакция (`--only`); гейт самой фазы — руками (эталонным бинарём), после прогона сессия переигрывает его бинарём прогона (dogfood) |
-| P22b | gate + reviewer (Run Mutants: время остановки) + identity corpus | issue #13 пп. 2–3 (обязательно): мутанты внутри `morph gate` через planMutants/runMutants с приёмкой карты-владельца как убийцей (≤ 30, ≤ 20 мин, каждый под 120 с, выжившие и неопробованные в вердикте); байт-тождество как закоммиченный корпус (дерево@коммит + аргументы plan + sha256 нарезки: go-mini, P15, go-p7b, свои колоды) и тест, красный на изменённом выводе планировщика | `docs/TASK_P22b_mutants.md`; 10 карт (5 код, 5 судей), 4 поколения, колода-транзакция (`--only`), без расщепления (≤ 12 карт); новый Component gate-proof (Gate Mutants, Check Identity), Run Mutants Until (review-session), `gate --mutants <n>` (cli, gate); выжившие/неопробованные мутанты — код 1 с card/file/line; корпус тождества — 5 нарезок (go-mini, go-p7b, P15, P21c, P22a) в `tests/gate/identity.examples.test.ts`; гейт фазы — `morph gate` main-бинарём, мутанты ещё руками |
+| P22a | gate (NEW: Stub Verdict, Gate Plan, Play Gate, Gate Command) + cli (Parse Command, Main) | issue #13 п. 1: `morph gate --deck --stubs --refs` — заглушки и эталоны по поколениям в scratch-клоне HEAD (заглушка красная на ожидаемой стадии без строки build/vet/tsc вне целей; эталон зелёный; без метки транзакции — повтор каждой карты поколения после записи всего поколения, дерево красного смоука P21a), Check Builds на заглушках, цепочки против 250 с, один JSON-вердикт (код 0/2); регламент AUTONOMY шаги 1–2 и шаблоны переключаются на `morph gate` с мержа | `decks/p22a/TASK.md`; 10 карт, 4 поколения, колода-транзакция (`--only`); гейт самой фазы — руками (эталонным бинарём), после прогона сессия переигрывает его бинарём прогона (dogfood) |
+| P22b | gate + reviewer (Run Mutants: время остановки) + identity corpus | issue #13 пп. 2–3 (обязательно): мутанты внутри `morph gate` через planMutants/runMutants с приёмкой карты-владельца как убийцей (≤ 30, ≤ 20 мин, каждый под 120 с, выжившие и неопробованные в вердикте); байт-тождество как закоммиченный корпус (дерево@коммит + аргументы plan + sha256 нарезки: go-mini, P15, go-p7b, свои колоды) и тест, красный на изменённом выводе планировщика | `decks/p22b/TASK.md`; 10 карт (5 код, 5 судей), 4 поколения, колода-транзакция (`--only`), без расщепления (≤ 12 карт); новый Component gate-proof (Gate Mutants, Check Identity), Run Mutants Until (review-session), `gate --mutants <n>` (cli, gate); выжившие/неопробованные мутанты — код 1 с card/file/line; корпус тождества — 5 нарезок (go-mini, go-p7b, P15, P21c, P22a) в `tests/gate/identity.examples.test.ts`; гейт фазы — `morph gate` main-бинарём, мутанты ещё руками |
 | P22c | cli (report) + planner (scale-tokens) | issue #13 пп. 4–5 (опционально): `morph report --run --deck --gate` (строка MEASURE и числовой скелет §11), `morph plan --scale-tokens <k>` и хэш входов нарезки в колоде | по слову оператора; после P22 — 🧪 стоп оператору |
 
 Итого (07.10): P0–P14 с подфазами P1b, P9b, P9c, P10a, P10b1, P10b2, P10c, P13a, P13b; после P10b1 остаются P10b2, P10c, P11, P11b, P11c, P12, P13a, P13b, P14 (P11c добавлена оператором 07.10). Оценка по P1–P2: ≈$0.1–0.2 исполнителя на фазу

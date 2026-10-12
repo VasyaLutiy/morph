@@ -37,7 +37,7 @@ or wrong code green for the whole deck. The old Morph paid for each rule below:
   (`/tmp/morph/parse-answer-p2/acc-*.log`, filtered by `build.py`), so the clip matters
   for unfiltered commands (P0's `npm install` and `tsc` steps).
 - **Rollback.** A rejected variant must leave the tree byte for byte; P2 burned 5
-  variants (`docs/TASK_P2_compiler.md` §11), each of which was written and rolled back by
+  variants (`decks/p2/TASK.md` §11), each of which was written and rolled back by
   the old Morph's equivalent of Verify Card. A missing rollback of a *new* target leaves
   an untracked file that reddens the next variant's "files left in the tree" step.
 - **Retry diagnosis.** The P2 regeneration of `parse-answer.r1` carried the previous

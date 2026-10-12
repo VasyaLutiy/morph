@@ -1,4 +1,4 @@
-// MorphV2 guard: the layer rules of docs/CONVENTIONS.md and the test-file rules, checked on
+// MorphV2 guard: the layer rules of documentation/CONVENTIONS.md and the test-file rules, checked on
 // the TypeScript syntax tree. Inlined into every acceptance by decks/tools/build.py.
 //   node guard.mjs src [file,file,...]                   every .ts under src/, or only these
 //   node guard.mjs helpers <file> <name,name,...>        the stub module: node:* only, exports
@@ -15,37 +15,37 @@ const LAYERS = {
   response: ["cards"], store: ["cards"], compiler: ["cards"], language: ["cards"],
   contour: ["cards"], git: ["cards"], acceptance: ["cards", "wait", "compiler"],
   processor: ["cards", "wait", "compiler"], planner: ["cards", "contour", "language"],
-  // P30: builder writes rules' Layers Arg and Card Layers into the guard line (docs/TASK_P30_rules.md §4)
+  // P30: builder writes rules' Layers Arg and Card Layers into the guard line (decks/p30/TASK.md §4)
   builder: ["cards", "language", "rules"],
   // P30: rules reads the layer rule off the record (contour's types and componentSlug, language's profiles, naming and
-  // paths) (docs/TASK_P30_rules.md §4)
+  // paths) (decks/p30/TASK.md §4)
   rules: ["contour", "language"],
   // P35a: criterion checks probes and builds judge defaults from the cut (builder's types and probeFile, planner's
-  // Card Criterion, contour's Example, language's naming and paths) (docs/TASK_P35a_criterion.md §2.2)
+  // Card Criterion, contour's Example, language's naming and paths) (decks/p35a/TASK.md §2.2)
   criterion: ["cards", "builder", "contour", "language", "planner"],
   primer: ["cards", "git", "store", "language"],
-  // P13a: the seed reads language's profiles (and, from P13b, git's ownership) (docs/TASK_P13a_scout.md §4)
-  // P13b: the round loop builds the processor's Request and Message (compiler's types) (docs/TASK_P13b_scout.md §4)
+  // P13a: the seed reads language's profiles (and, from P13b, git's ownership) (decks/p13a/TASK.md §4)
+  // P13b: the round loop builds the processor's Request and Message (compiler's types) (decks/p13b/TASK.md §4)
   scout: ["cards", "processor", "wait", "primer", "language", "git", "compiler"],
-  // P14a: obligations from the record need language's naming and profiles (docs/TASK_P14_reviewer.md §4)
-  // P14b: the mutant runs go through acceptance's runner and snapshot (docs/TASK_P14b_reviewer.md §4)
+  // P14a: obligations from the record need language's naming and profiles (decks/p14/TASK.md §4)
+  // P14b: the mutant runs go through acceptance's runner and snapshot (decks/p14b/TASK.md §4)
   reviewer: ["cards", "contour", "primer", "scout", "git", "language", "acceptance"],
   runloop: ["cards", "wait", "store", "compiler", "response", "acceptance", "language",
     "git", "processor"],
   // P11b2: the detached batch commands (morph submit / morph collect), the processor layer's second Component
   batches: ["cards", "wait", "compiler", "processor"],
   // P17: the debt commands (morph card / morph accept, issue #8) read the deck through cards, run the card's acceptance
-  // through acceptance and commit through git (docs/TASK_P17_debt.md §4)
+  // through acceptance and commit through git (decks/p17/TASK.md §4)
   // P24b: the group accept (issue #16) writes archived answers parsed by compiler's parseAnswer, as the run does
-  // (docs/TASK_P24b_group.md §4)
+  // (decks/p24b/TASK.md §4)
   debt: ["cards", "compiler", "acceptance", "git"],
-  // P18: morph init (issue #9) copies the template folders into a new project: no other layer (docs/TASK_P18_template.md §4)
+  // P18: morph init (issue #9) copies the template folders into a new project: no other layer (decks/p18/TASK.md §4)
   scaffold: [],
   // P22a: morph gate (issue #13) plays a deck's stubs and references in a scratch clone: the deck through cards, the
   // acceptances through acceptance, the clone and its commits through git, the file:line patterns through language
-  // (docs/TASK_P22a_gate.md §4)
+  // (decks/p22a/TASK.md §4)
   // P22b: the gate's mutants go through the reviewer's Plan Mutants and Run Mutants; Check Identity hashes a cut with
-  // node:crypto (docs/TASK_P22b_mutants.md §4)
+  // node:crypto (decks/p22b/TASK.md §4)
   gate: ["cards", "acceptance", "git", "language", "reviewer"],
   cli: "*",
 };
@@ -56,44 +56,44 @@ const CONSOLE = new Set(["cli"]);                      // console, process.exit
 const PROCESS = new Set(["cli", "processor", "acceptance"]);
 const NO_CLOCK = new Set(["cards", "compiler", "response", "language", "contour", "planner", "builder", "batches", "primer",
   "scout", "reviewer", "debt", "scaffold", "gate", "rules"]);
-// P12a: the one file of src/primer that turns the clock parameter deps.now() into an ISO string (docs/TASK_P12_primer.md §4)
-// P13b: the one file of src/scout that turns deps.now() into the session id and createdAt (docs/TASK_P13b_scout.md §4)
+// P12a: the one file of src/primer that turns the clock parameter deps.now() into an ISO string (decks/p12/TASK.md §4)
+// P13b: the one file of src/scout that turns deps.now() into the session id and createdAt (decks/p13b/TASK.md §4)
 const CLOCK_FORMATTERS = new Set(["src/primer/primerCommand.ts", "src/scout/scoutCommand.ts"]);
 const YAML = new Set(["contour"]);
-// P3: the acceptance gets the child's environment as a parameter (docs/TASK_P3_acceptance.md §4)
+// P3: the acceptance gets the child's environment as a parameter (decks/p3/TASK.md §4)
 const NO_ENV = new Set(["acceptance", "processor", "git", "batches", "primer", "scout", "reviewer", "debt", "scaffold", "gate",
   "rules"]);
-// P4: the one file of a NO_ENV layer that may read process.env (Read Registry, docs/TASK_P4_processor.md §4)
+// P4: the one file of a NO_ENV layer that may read process.env (Read Registry, decks/p4/TASK.md §4)
 const ENV_READERS = new Set(["src/processor/registry.ts"]);
-// P6: the one file of src/git that spawns (Run Git, docs/TASK_P6_git.md §4); git takes the env whole
+// P6: the one file of src/git that spawns (Run Git, decks/p6/TASK.md §4); git takes the env whole
 const GIT_SPAWNER = "src/git/run.ts";
 // P7: the binary's entry is src/cli.ts (package.json bin dist/cli.js), layer cli; it alone touches
 // process (env, argv, cwd, stdout, exitCode) and the wall clock: src/cli/* gets them as parameters
-// (docs/TASK_P7_cli.md §4)
+// (decks/p7/TASK.md §4)
 const CLI_ENTRY = "src/cli.ts";
 // P8: language is pure data and pure functions; of the Node modules only node:path (posix) is allowed
-// (docs/TASK_P8_language.md §4)
+// (decks/p8/TASK.md §4)
 // P9: contour reads text it is given: no Node module at all, and the package yaml only in Parse Document
-// (src/contour/load.ts) (docs/TASK_P9_contour.md §4)
-// P10a: planner is pure like language: of the Node modules only node:path (docs/TASK_P10a_planner.md §4)
-// P10b: builder is pure the same way (docs/TASK_P10b_builder.md §4)
+// (src/contour/load.ts) (decks/p9/TASK.md §4)
+// P10a: planner is pure like language: of the Node modules only node:path (decks/p10a/TASK.md §4)
+// P10b: builder is pure the same way (decks/p10b/TASK.md §4)
 // P13a: scout reaches the file system only through its ScoutFs parameter: of the Node modules only node:path
-// (docs/TASK_P13a_scout.md §4; P13b adds the one node:fs adapter file)
+// (decks/p13a/TASK.md §4; P13b adds the one node:fs adapter file)
 const NODE_ONLY = { language: new Set(["node:path"]), contour: new Set(), planner: new Set(["node:path"]),
   builder: new Set(["node:path"]), rules: new Set(["node:path"]), scout: new Set(["node:path"]), reviewer: new Set(),
   debt: new Set(["node:fs", "node:path"]), scaffold: new Set(["node:fs", "node:path", "node:url"]),
   gate: new Set(["node:fs", "node:os", "node:path", "node:crypto"]) };
 // P18: scaffold reads the template folders and writes the new project (node:fs, node:path) and finds the package root from
-// its own module file (node:url's fileURLToPath of import.meta.url); it spawns nothing (docs/TASK_P18_template.md §4)
+// its own module file (node:url's fileURLToPath of import.meta.url); it spawns nothing (decks/p18/TASK.md §4)
 // P17: debt reads the deck file, the card's files and the run archive (node:fs, node:path); it spawns only through
-// acceptance's runAcceptance and git's gitOk (docs/TASK_P17_debt.md §4)
+// acceptance's runAcceptance and git's gitOk (decks/p17/TASK.md §4)
 // P14a: the reviewer's checks are pure functions of git's outputs, the record and the texts they are given: no Node
-// module at all (docs/TASK_P14_reviewer.md §4; P14b adds the review command's I/O file)
+// module at all (decks/p14/TASK.md §4; P14b adds the review command's I/O file)
 // P13b: the two I/O files of src/scout, the commands `morph scout` (the node:fs ScoutFs adapter, git ls-files, the
 // scout.json write, the question's sha256) and `morph plan --from-scout` (reads scout.json, writes the deck); every other
-// scout file stays pure (docs/TASK_P13b_scout.md §4)
+// scout file stays pure (decks/p13b/TASK.md §4)
 // P14b: the one I/O file of src/reviewer, `morph review` (the record, the map and scout.json read, the review written);
-// Run Mutants writes and restores through acceptance's snapshot, so it imports no Node module (docs/TASK_P14b_reviewer.md §4)
+// Run Mutants writes and restores through acceptance's snapshot, so it imports no Node module (decks/p14b/TASK.md §4)
 const NODE_FILES = { "src/scout/scoutCommand.ts": new Set(["node:fs", "node:crypto"]),
   "src/scout/planFromScout.ts": new Set(["node:fs"]),
   "src/reviewer/reviewCommand.ts": new Set(["node:fs", "node:path"]) };

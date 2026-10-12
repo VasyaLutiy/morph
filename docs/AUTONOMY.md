@@ -91,7 +91,7 @@ never `~/.morph-phase-done` (flag files shared with MorphStudio's session; the c
 **Previous state (the stop that led here):**
 
 **Stop: P22a is red after its one fix, issue #15 (label `debt`).** Nothing of P22a is merged but its data, decks and two
-run archives. P22 was split by the preparation (`docs/TASK_P22a_gate.md`): **P22a** = issue #13 item 1, `morph gate
+run archives. P22 was split by the preparation (`decks/p22a/TASK.md`): **P22a** = issue #13 item 1, `morph gate
 --deck --stubs --refs` (NEW Component `gate`, src/gate/, + a cli parse card), 10 cards, an `--only` cut, so one
 transaction; **P22b** = item 2 (mutants inside the gate) + item 3 (byte-identity corpus + test); **P22c** (optional) =
 `morph report`, `plan --scale-tokens`. Runs: 20261009-153356 (`decks/p22a/deck.json`, 0/10, $0.4599, 113 min: four judge
@@ -109,7 +109,7 @@ too.** Running total $6.9335 of $30. Every MorphV2 session ends with `~/.morph-w
 `/home/morph/MorphStudio` or its tmux session `MorphStudio`. Issue #12 stays open (MorphStudio's PM re-checks P7b);
 issue #13 stays open.
 
-**P21c is merged** (`docs/TASK_P21c_transaction.md`, issue #12 item 2, general per language): runs 20261009-114343 (9/10,
+**P21c is merged** (`decks/p21c/TASK.md`, issue #12 item 2, general per language): runs 20261009-114343 (9/10,
 plan-command-judge `budget-exceeded` on the 2400 s deadline, never tried — ENV[time], no re-cut) and 20261009-122642 (the
 plain re-run, 1/1); $0.4484, 49 min; vitest 862/862. An `--only` cut with `--checks` now prefixes every acceptance with
 `# morph: subset transaction` (NEW Transaction Deck, Blame Log in cards; Hide Later no longer applied under the mark); a
@@ -124,7 +124,7 @@ subset. **Live smoke on ds GREEN** (run 20261009-123941, go-p7b `--only` 8 cards
 8/8, the judge retried after its gen-2 sibling wrote, $0.0142, no hand edit; `decks/p21c/smoke/`). Running total
 $6.2984 of $30. Lesson: size `--deadline` to a deck's slowest chain (4 generations of large judges on ds overran 2400 s).
 
-**P21b is merged** (`docs/TASK_P21b_deckcheck.md`, issue #12 item 3.5, general per language): runs 20261009-094451 (9/10,
+**P21b is merged** (`decks/p21b/TASK.md`, issue #12 item 3.5, general per language): runs 20261009-094451 (9/10,
 check-builds-judge DATA[spec]: its own tests wrote a deck as `{"cards": …}`) and 20261009-101744 (the one fix, 1/1);
 $0.2508, 33 min; vitest 834/834. `morph deck check` on a deck with `<deck dir>/_stubs/` copies the tree of every card's
 first attempt (earlier and own-generation targets as stubs), runs its language's step (NEW Tree Profiles in language:
@@ -135,7 +135,7 @@ run's binary: go-p7b deck.p20 exit 2 naming `supervisor/guard.go:20:23`, deck.p2
 `src/report/line.ts(1,17)`; cuts byte for byte (go-mini 75 416 B, P15 398 622 B, go-p7b 100 388 B). Step 1's fullvet.mjs line is
 unchanged (the operator decides whether `deck check`'s `builds` replaces it). Running total $5.8358 of $30.
 
-**P21a is merged** (`docs/TASK_P21a_breaking.md`, issue #12, request MorphStudio eb52a5a incl. the operator's amendment,
+**P21a is merged** (`decks/p21a/TASK.md`, issue #12, request MorphStudio eb52a5a incl. the operator's amendment,
 comment 6075790078): run 20261009-074114 on ds, 8/8 on the first attempt, $0.1969, 21.7 min, no fix; vitest 812/812. A
 Go `morph plan --only` cut now hides, per card, every subset target of its own and LATER generations (NEW Hide Later in
 planner-subset, NEW Read Go Tree in cli), except a package's files while a visible file lies in it or imports it (the keep
@@ -153,7 +153,7 @@ in the tool; acceptance: non-zero naming `supervisor/guard.go:20` on go-p7b cut 
 the run re-hiding a kept package's later files once a sibling in it is accepted). MorphStudio's PM re-checks P7b itself.
 Running total $5.5850 of $30.
 
-**P20 is closed** (issue #11, label `P20-rerun`; `docs/TASK_P20_rerun.md`): run 20261008-221549 on ds, 6/6 on the first
+**P20 is closed** (issue #11, label `P20-rerun`; `decks/p20/TASK.md`): run 20261008-221549 on ds, 6/6 on the first
 attempt, $0.0629, 16 min, no fix. (1) `morph plan … --only <id>,<id>,…` (Parse Command, NEW Select Cards in Component
 planner-subset, Plan Command narrows the checks to the subset): the acceptances are built over the subset, so a card
 outside it is never a sibling and its accepted file never blanked; a re-run of failed cards re-cuts with `--only`, never
@@ -166,7 +166,7 @@ line naming a file outside the card's targets. Reproduced on go-mini by `decks/p
 **P19 is closed** (issue #10, label `P19-deps`): P19a (record half, run 20261008-141116, 8/8, $0.0935) and
 P19b (builder half: per-card allowed packages in the TS/Go guard, `GOFLAGS=-mod=vendor` exactly when
 `vendor/modules.txt` exists, `GOPROXY=off` always, Plan Command wiring, MorphV2's own `yaml` declared in `contour.yaml` +
-`docs/deps/yaml.md`, templates/common docs; run 20261008-152814, 8/8, $0.0934) are merged. Issue #10's smokes are green
+`documentation/deps/yaml.md`, templates/common docs; run 20261008-152814, 8/8, $0.0934) are merged. Issue #10's smokes are green
 (Go live on ds with vendored go-humanize v1.0.1 offline, TypeScript with change-case up to stub runs; `decks/p19b/smoke/`,
 TASK_P19b §11).
 **Processor `ds`** (maxTokens ×3; glm53 the fallback; batch route glm53b). No mrph cross-check

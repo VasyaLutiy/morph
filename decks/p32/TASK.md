@@ -26,7 +26,7 @@ Run Command example 4 (`tests/fixtures/cli/examples.json["Run Command 4"]`, the 
 - **Existing, on main**: `src/git/branch.ts` — `openRunBranch(root, runId, env): BranchResult`; `src/git/run.ts` —
   `runGit`, `gitOk`; `src/git/types.ts` — `BranchResult = {ok: true; branch; base} | {ok: false; error}`.
 - **Tests**: a repo is `tmpRepo()` of `tests/helpers.ts` (`r.write`, `r.git` trims, `r.exists`, `r.rm()`); the env
-  exactly as `docs/TASK_P6_git.md` §2.1 (`{PATH: process.env.PATH ?? "", HOME: r.root, GIT_CONFIG_NOSYSTEM: "1",
+  exactly as `decks/p6/TASK.md` §2.1 (`{PATH: process.env.PATH ?? "", HOME: r.root, GIT_CONFIG_NOSYSTEM: "1",
   GIT_AUTHOR_NAME: "Ada", GIT_AUTHOR_EMAIL: "ada@example.invalid", GIT_COMMITTER_NAME: "Ada", GIT_COMMITTER_EMAIL:
   "ada@example.invalid"}`). Ignoring `.morph/` in example 2: `r.write(".gitignore", ".morph/*\n")`, then
   `r.git(["add", ".gitignore"])` and `r.git(["commit", "-q", "-m", "ignore"])` (a committed `.gitignore`, so git
@@ -35,7 +35,7 @@ Run Command example 4 (`tests/fixtures/cli/examples.json["Run Command 4"]`, the 
 
 ### 2.2. OUTPUT data shapes
 
-**`openRunBranch`** (`src/git/branch.ts`, PATCH; steps 1, 3, 4, 5 of `docs/TASK_P6_git.md` §2.2 unchanged). Step 2:
+**`openRunBranch`** (`src/git/branch.ts`, PATCH; steps 1, 3, 4, 5 of `decks/p6/TASK.md` §2.2 unchanged). Step 2:
 `gitOk(root, ["status", "--porcelain", "--untracked-files=all"], env)`; for each non-empty line `p = line.slice(3)`;
 for a staged rename (`p` contains `" -> "`) `p` = the text after it; **every** such `p` is dirty, `.morph/` paths
 included. Any dirty →

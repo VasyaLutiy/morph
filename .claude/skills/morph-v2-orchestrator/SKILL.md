@@ -11,10 +11,10 @@ build judges them. Every rule below is a MUST and was paid for: the receipts are
 
 **Names used below.**
 - `<morph>` — the MorphV2 binary the header names; by default the wrapper `~/bin/morphv2`
-  (it maps the processor keys and runs a COPY of `dist/`, see `$MORPHV2/docs/OTHER_PROJECT.md` §1).
+  (it maps the processor keys and runs a COPY of `dist/`, see `$MORPHV2/documentation/OTHER_PROJECT.md` §1).
 - `$MORPHV2` — the MorphV2 checkout: `/home/john/Documents/Work2026/MorphV2` on the laptop,
   `/home/morph/MorphV2` on the VPS.
-- **The reference** — `$MORPHV2/docs/ORCHESTRATOR_REFERENCE.md`: the phase files, the
+- **The reference** — `$MORPHV2/documentation/ORCHESTRATOR_REFERENCE.md`: the phase files, the
   `checks.json` schema with an example, probes, `_stubs/`, the transaction, every command with
   its exit codes. Read it whole once per session; it replaces reading MorphV2's `src/` or `dist/`.
 - `/tmp/<p>/` — your scratch dir for the phase (issue text, logs, run documents, times).
@@ -27,13 +27,16 @@ or record the departure (§1.3).
 
 ## 1. Roles and prohibitions
 
-1. **Data only.** The data is: the record (`contour.yaml`), the map, the spec `docs/TASK_<p>.md`,
+1. **Data only.** The data is: the record (`contour.yaml`), the map, the spec `decks/<p>/TASK.md`,
    fixtures, `decks/<p>/checks.json`, the probes, `_stubs/`, the deck. Code (`src/`, test files)
    comes from cards only. A hand edit of code breaks the experiment.
    **Beside the record lives only what the record cannot say** (the old Morph's rule): placement (map targets,
    slices, budgets) and one phase's inputs (spec, fixtures, probes, stubs, judge bounds). A rule of the project
    (who imports whom, what is pure, which imports are allowed) is stated in the record. When you find yourself
    writing such a rule into a file beside it, stop and name it in the report: it is a defect of Morph (#41, #42).
+   **The spec is for the gate and the report, never for a card.** No card's slice or map
+   instruction names a spec — this phase's or a past one. What a card must know is in the record
+   (Function, Data Object `schema`), in a fixture by `ref`, or in its own map instruction, whole.
 2. **Never read MorphV2's `src/` or `dist/`, never run `--help`.** The metric of this skill is
    0 such reads. A read you needed is a finding for the reference: name it in the report.
    **Exception — MorphV2's own phase:** there `src/` is the product, so reading it by address
@@ -99,11 +102,15 @@ or record the departure (§1.3).
    card. It measures values (§4.4); it does not design code.
 8. **Semantic gap.** For each change: what does it make silent, lose or reorder? A gap goes into
    the spec — §7 out of scope, or a record change — never quietly into a card.
+9. **Past specs are history, not recon.** Do not read `decks/*/TASK.md` of other phases: what was
+   decided is in the record, `docs/DECISIONS.md` and the issues. A gap you can only fill from an old
+   spec is a gap of the record — fix the record.
 
 ## 4. Spec and data
 
 1. **The spec follows the project's `TASK_TEMPLATE`.** §7 (out of scope) is an explicit list. No
-   cards in the spec. Every input shape a card must CONSTRUCT is named with its address.
+   cards in the spec. Every input shape a card must CONSTRUCT is in the record or a fixture by
+   `ref`; the spec points to it.
 2. **Splitting a phase:** only when the header allows it or the deck would exceed 10 cards. The
    split goes into §7 ("item N → next phase") and is the FIRST line of the report.
 3. **The record.** Every Function has `behavior:`; a Python project's map carries
@@ -117,13 +124,13 @@ or record the departure (§1.3).
    where it binds; third-party modules are `System.dependencies` + `Component.uses`. A new package needs
    its `uses` steps, never a `layers.json` entry (the project's guard must speak
    `morph-guard-contract: 3`: else `plan --checks` exits 2 naming the template to copy). Any other
-   Guardrail name stays prose (`proseOnly` in the plan document). See `docs/CONTOUR.md`.
+   Guardrail name stays prose (`proseOnly` in the plan document). See `documentation/CONTOUR.md`.
 4. **Expected values are measured, never recalled** — from the current code, a fixture, or a
    spike's real output.
 5. **The phase data of V2** (schema and example: the reference §2–§4):
    - `decks/<p>/checks.json`: one entry per card; a judge lists its files with `min`/`max`,
      `lits`, `new`, `drop`. **For an `--only` cut it is required**: without `--checks` there is no
-     transaction.
+     transaction. MorphV2's `frozen` adds `documentation` (the built-in default predates it).
    - `decks/<p>/parts/<id>.probe.ts` (Go: `_<id>_probe_test.go`): one per code card, the record's
      examples as tests named after them ("<Function> example N: …").
    - `decks/<p>/_stubs/`: a stub per target. **For an `--only` cut it is required**: without it
@@ -133,7 +140,7 @@ or record the departure (§1.3).
    except for an existing file re-cut with intent `generate`: its stub throws (§6.1), so every row is
    red, the unchanged ones included; that is by design, and the report names it.
 7. **Judges: say what they must contain.** A judge's `lits` appear verbatim in the text the judge
-   is given — check each against the record example and the spec's skeleton (a path built by
+   is given — check each against the record example and the harness skeleton in the judge's map instruction (a path built by
    concatenation is not a literal). In the map instruction of a judge, list its guard literals and
    the TYPES of the example values (Go `int` vs `float64`, a pointer vs a value); name the imports
    it needs (`context`). A judge that PATCHES an existing test file also gets the types of that file's
@@ -271,7 +278,9 @@ fix the data and check again. A second failure: stop and report.
    shared tree holds other sessions' uncommitted edits.
 2. **No merge, no push** unless the header gives it. A merge is fast-forward only, never while
    another run owns the repo; no force-push.
-3. After the run the checkout is on `morph/<runId>`: leave it so for the operator, or return to
+3. **After the merge the map drops this phase's `instruction` and `acceptance` overrides** (one
+   data commit): an override lives for one cut, the map keeps only placement.
+4. After the run the checkout is on `morph/<runId>`: leave it so for the operator, or return to
    the base branch before any further data commit.
 
 ## 12. Report — numbers, one format, ≤ 40 lines

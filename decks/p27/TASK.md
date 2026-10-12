@@ -33,9 +33,9 @@ Components hold Functions outside the phase (Cage Path, Spend Budget, Seed From 
   `runScout`; `src/scout/scoutCommand.ts` — `scoutCommand` and its helpers; `src/git/run.ts` — `runGit(root, args,
   env): {code, stdout, stderr}`, `gitOk`.
 - **The trees** are those of the existing tests, unchanged: Run Tool examples 1–5 the §2.1 tree of
-  `docs/TASK_P13a_scout.md` (README.md `"alpha here\n"` = 1 line, src/a.ts 5 lines, src/b.ts 3 lines, src/bin.dat
+  `decks/p13a/TASK.md` (README.md `"alpha here\n"` = 1 line, src/a.ts 5 lines, src/b.ts 3 lines, src/bin.dat
   binary, src/e.ts `""` = 0 lines, dirlink → src (unreadable as a file), out.txt → outside (refused)); Run Scout and
-  Scout Command the §2.1 tree of `docs/TASK_P13b_scout.md` (README.md `"tiny\n"` 1 line, src/a.ts 1 line, src/b.ts
+  Scout Command the §2.1 tree of `decks/p13b/TASK.md` (README.md `"tiny\n"` 1 line, src/a.ts 1 line, src/b.ts
   2 lines). Their tool texts now (DEFAULT_TOOL_CAPS): LIST "" = `"LIST .: 2 entries\nREADME.md (1 line)\nsrc/ (2
   files)"` (51 chars); LIST src = `"LIST src/: 2 entries\na.ts (1 line)\nb.ts (2 lines)"` (49); READ src/b.ts 86, READ
   src/a.ts 51 (unchanged); GREP `export const a` -- src 80.

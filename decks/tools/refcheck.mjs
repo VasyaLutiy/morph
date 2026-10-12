@@ -1,11 +1,11 @@
-// refcheck.mjs — docs/ORCHESTRATOR_REFERENCE.md against the built binary (issue #17).
+// refcheck.mjs — documentation/ORCHESTRATOR_REFERENCE.md against the built binary (issue #17).
 // Usage (repo root, after `npm run build`): node decks/tools/refcheck.mjs [reference] [dist]
 // Exit 0 = the marked parts of the reference agree with dist/; exit 1 = a line per mismatch.
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-const ref = process.argv[2] ?? "docs/ORCHESTRATOR_REFERENCE.md";
+const ref = process.argv[2] ?? "documentation/ORCHESTRATOR_REFERENCE.md";
 const dist = path.resolve(process.argv[3] ?? "dist");
 const load = (rel) => import(pathToFileURL(path.join(dist, rel)).href);
 const { validateChecks, DEFAULT_FROZEN } = await load("builder/readChecks.js");

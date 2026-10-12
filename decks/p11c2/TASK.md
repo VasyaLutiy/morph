@@ -1,6 +1,6 @@
 # TASK_P11c2 — runner hardening, part 2: no acceptance is no write, a signal stops the run with its archive (`src/runloop/`, `src/acceptance/run.ts`, `src/cli/runCommand.ts`, `src/cli.ts`)
 
-> Phase P11c2 of `docs/PLAN.md` (row P11c, its second part; `docs/TASK_P11c_runner.md` §7 defines it). It answers the
+> Phase P11c2 of `docs/PLAN.md` (row P11c, its second part; `decks/p11c/TASK.md` §7 defines it). It answers the
 > last two findings of issue #5 (label `P11c-runner`, the code review of 07.10 by Claude Fable 5.1): **4** (`acceptance:
 > null` counts as written) and **6** (SIGINT/SIGTERM leaves the acceptance group running and no archive). Its merge
 > closes #5. Components of `contour.yaml`: `runloop` (Process Generation, Run Deck), `acceptance` (Run Acceptance),

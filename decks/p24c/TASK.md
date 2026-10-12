@@ -39,7 +39,7 @@ three code cards re-cut code on main, and their Components hold other Functions)
 - **Blame Log harness** (examples 5–8): `fixtureJson("cards/blameTestLogs.json") as Record<string, string>`;
   `const FL = TREE_PROFILES.map((p) => p.fileLine)`; `const on = (paths: string[]) => (p: string) => paths.includes(p)`;
   `blameLog(log, card, owners, FL, exists, TEST_LINES)`.
-- **Run Transaction harness** (examples 12–13): the P24 skeleton (`docs/TASK_P24_transaction.md` §2.1, also in
+- **Run Transaction harness** (examples 12–13): the P24 skeleton (`decks/p24/TASK.md` §2.1, also in
   `tests/runloop/transaction.p24.examples.test.ts`): `M`, `fence`, `card`, `once`, the stub `deps`, `input`. The answers of
   example 12 are `a.md`, `c.md`, `j.md`, `j.r1.md`; `j` targets `out/j.test.ts`. Example 13's b acceptance is
   `M + 'touch out/zz.test.ts; echo " FAIL  out/zz.test.ts > zz"; exit 1'`.

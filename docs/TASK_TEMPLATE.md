@@ -1,10 +1,14 @@
-# Task template of MorphV2 (`docs/TASK_P<N>_<component>.md`)
+# Task template of MorphV2 (`decks/p<N>/TASK.md`)
 
 > The spec of one phase. The old Morph's `mrph/documentation/TASK_TEMPLATE.md` is the
 > ancestor and is frozen with it; this file holds the same sections and the rules this
 > repository paid for. Every rule below names the phase that paid for it. The card
 > breakdown is never written here: that is the orchestrator's deck, cut from the record
 > and `morph-map.json`.
+>
+> **The spec reaches no card** (12.10): no slice or map instruction names it. What a card
+> must know lives in the record, a fixture by `ref`, or the card's own map instruction,
+> whole; the spec states it for the gate and points to where it lives.
 
 ## 1. Why this
 
@@ -15,7 +19,8 @@ The motive with numbers (what reddens, how often, measured where). No number, no
 ### 2.1. INPUT data shapes the code must build
 
 For every shape the code or a test must **construct or parse**: what it looks like and
-which module or file defines it; that module is in the slice of every card that builds it.
+which module or file defines it (the record or a fixture says it; the spec points there); that
+module is in the slice of every card that builds it.
 
 **Fixtures are described by type, not by name** (P1 → P1b, 06.10: five of five judge
 defects of P1 and one more found at the re-cut traced to this line; fixing it alone,
@@ -52,8 +57,8 @@ because it read the neighbouring modules, which glm never sees outside its slice
   (P5: `MARK`/`NOMARK`; the rollback keeps the file the acceptance greps).
 - **A harness skeleton, not a prohibition list.** A judge whose setup builds more than a
   config literal (transport, commit hook, clock, answer writer, tree) gets a skeleton of
-  ≤ 10 lines in §2.1, built only from `tests/helpers.ts` and checked by the probe; the
-  judge's map instruction points to it. Prohibitions in the instruction did not prevent a
+  ≤ 10 lines, built only from `tests/helpers.ts` and checked by the probe; it goes into the
+  judge's map instruction whole (§2.1 repeats it for the gate). Prohibitions in the instruction did not prevent a
   single P5 red.
 - **Output budget from the answer.** The judge's `max_tokens` in `morph-map.json` is sized
   from the expected file (code 12 000, judges 24 000, the heaviest judges 28 000; the judge

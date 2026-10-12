@@ -1,6 +1,6 @@
 # TASK_P11b2 — detached batches: `morph submit` and `morph collect` (`src/batches/`, `src/git/archive.ts`, `src/cli/{types,parse,main}.ts`)
 
-> Phase P11 of `docs/PLAN.md` ("Фазы по записи (после P2)", row P11b), second part **P11b2** (`docs/TASK_P11b_processor.md`
+> Phase P11 of `docs/PLAN.md` ("Фазы по записи (после P2)", row P11b), second part **P11b2** (`decks/p11b/TASK.md`
 > §7 defines it). No issue is labelled `P11b2-processor` or `P11b-processor` (both lists empty, 07.10). Components of
 > `contour.yaml`: **batches** (NEW: Submit Deck, Collect Batch — the processor side's second Component, PLAN rule 2: a
 > record over 30 KB is two Components; its own directory `src/batches/`, its own guard layer), `git` (Archive Run:

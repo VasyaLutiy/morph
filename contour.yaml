@@ -5275,7 +5275,7 @@ System:
           description: The checks with their cards built, the probes read and the override lines of the plan document; or the error message.
           schema: "{ ok: true, checks: Checks, probes: Record<string, string>, overrides: string[] } | { ok: false, message: string }"
   dependencies:
-    - {name: yaml, version: "2.9.1", language: typescript, doc: docs/deps/yaml.md}
+    - {name: yaml, version: "2.9.1", language: typescript, doc: documentation/deps/yaml.md}
 Actor:
   - name: Operator
     description: A human or an agent session driving Morph from a shell.

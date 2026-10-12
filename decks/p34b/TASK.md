@@ -1,7 +1,7 @@
 # TASK_P34b — issue #44 (part b): the planner renders Events and the Interface contract, gaps are plan warnings (`src/planner/{render,judges,cut,types,plan}.ts`, `src/cli/planCommand.ts`)
 
 Plan: `docs/Plan_Epic2_Fixes.md` §7. Contract: issue #44 "Must hold" 2 (planner part), 3, 4, 5 and its first comment (the
-parity audit); `docs/TASK_P34a_contour.md` §7 is this phase's list. Parity = the same logic and functions as old mrph
+parity audit); `decks/p34a/TASK.md` §7 is this phase's list. Parity = the same logic and functions as old mrph
 (`mrph/cards/plan_spec.py`: Events PS:293, Interface PS:322–330 and PS:661, undefined target PS:303–304, behaviour
 PS:284), not the same bytes. Record: Component planner (Render Function, Render Context, Cut Component, Cut Judges, Plan
 Spec, Data Object Cut Card) and cli (Plan Command, examples 1, 6, 16, 17 changed, 18 new). Cut with `--only` (the
