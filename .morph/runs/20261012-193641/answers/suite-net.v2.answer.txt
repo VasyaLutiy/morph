@@ -1,0 +1,149 @@
+```ts
+import fs from "node:fs";
+import { posix } from "node:path";
+import { runAcceptance, DEFAULT_TIMEOUT_MS } from "../acceptance/run.js";
+import { RELATED_LINE } from "../builder/compose.js";
+import type { Card } from "../cards/types.js";
+
+export const RELATED_MARK =
+  "echo '== full'; " + RELATED_LINE.slice(0, RELATED_LINE.indexOf("{test}"));
+
+export const SUITE_LINE = "node_modules/.bin/vitest run --reporter=dot";
+
+export const SUITE_SCRIPT =
+  "L=$(mktemp); " +
+  SUITE_LINE +
+  " > $L 2>&1; rc=$?; [ $rc = 0 ] || grep -E '^ FAIL ' $L || tail -20 $L; rm -f $L; exit $rc";
+
+export interface SuiteResult {
+  command: string;
+  ok: boolean;
+  failing: string[];
+  cards: string[];
+  log: string;
+}
+
+const FAIL_PREFIX = " FAIL  ";
+
+function isRegularFile(root: string, rel: string): boolean {
+  const abs = posix.join(root, rel);
+  try {
+    return fs.statSync(abs).isFile();
+  } catch {
+    return false;
+  }
+}
+
+function readFileText(root: string, rel: string): string | null {
+  if (!isRegularFile(root, rel)) {
+    return null;
+  }
+  try {
+    return fs.readFileSync(posix.join(root, rel), "utf8");
+  } catch {
+    return null;
+  }
+}
+
+const SPECIFIER = /\b(?:from|import)\s*\(?\s*["']([^"']+)["']/g;
+
+function importedSpecifiers(text: string): string[] {
+  const specs: string[] = [];
+  SPECIFIER.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = SPECIFIER.exec(text)) !== null) {
+    const s = m[1];
+    if (s !== undefined && (s.startsWith("./") || s.startsWith("../"))) {
+      specs.push(s);
+    }
+  }
+  return specs;
+}
+
+function resolveSpecifier(file: string, spec: string): string {
+  const joined = posix.normalize(posix.join(posix.dirname(file), spec));
+  if (joined.endsWith(".js")) {
+    return joined.slice(0, -3) + ".ts";
+  }
+  return joined;
+}
+
+function reachableFiles(root: string, seedFiles: readonly string[]): Set<string> {
+  const seen = new Set<string>();
+  const queue: string[] = [];
+  for (const f of seedFiles) {
+    if (!seen.has(f)) {
+      seen.add(f);
+      queue.push(f);
+    }
+  }
+  while (queue.length > 0) {
+    const file = queue.shift()!;
+    const text = readFileText(root, file);
+    if (text === null) {
+      continue;
+    }
+    for (const spec of importedSpecifiers(text)) {
+      const resolved = resolveSpecifier(file, spec);
+      if (!seen.has(resolved) && isRegularFile(root, resolved)) {
+        seen.add(resolved);
+        queue.push(resolved);
+      }
+    }
+  }
+  return seen;
+}
+
+export async function suiteNet(
+  root: string,
+  cards: readonly Card[],
+  env: Record<string, string>,
+  timeoutMs?: number,
+): Promise<SuiteResult | null> {
+  const marked = cards.some(
+    (c) => c.acceptance !== null && c.acceptance.includes(RELATED_MARK),
+  );
+  if (!marked) {
+    return null;
+  }
+
+  const r = await runAcceptance(SUITE_SCRIPT, root, {
+    env,
+    timeoutMs: timeoutMs ?? DEFAULT_TIMEOUT_MS,
+  });
+
+  if (r.exit === 0) {
+    return { command: SUITE_LINE, ok: true, failing: [], cards: [], log: r.log };
+  }
+
+  const seenFail = new Set<string>();
+  const failing: string[] = [];
+  for (const raw of r.log.split("\n")) {
+    if (raw.startsWith(FAIL_PREFIX)) {
+      const rest = raw.slice(FAIL_PREFIX.length);
+      if (!seenFail.has(rest)) {
+        seenFail.add(rest);
+        failing.push(rest);
+      }
+    }
+  }
+
+  const failFiles = new Set<string>();
+  for (const f of failing) {
+    const idx = f.indexOf(" ");
+    const file = idx === -1 ? f : f.slice(0, idx);
+    failFiles.add(file);
+  }
+
+  const reachable = reachableFiles(root, [...failFiles]);
+
+  const matched: string[] = [];
+  for (const card of cards) {
+    if (card.targets.some((t) => reachable.has(t))) {
+      matched.push(card.customId);
+    }
+  }
+
+  return { command: SUITE_LINE, ok: false, failing, cards: matched, log: r.log };
+}
+```

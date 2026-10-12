@@ -1,0 +1,154 @@
+```typescript
+import fs from "node:fs";
+import { posix } from "node:path";
+import { runAcceptance, DEFAULT_TIMEOUT_MS } from "../acceptance/run.js";
+import { RELATED_LINE } from "../builder/compose.js";
+import type { Card } from "../cards/types.js";
+
+export const RELATED_MARK =
+  "echo '== full'; " + RELATED_LINE.slice(0, RELATED_LINE.indexOf("{test}"));
+
+export const SUITE_LINE = "node_modules/.bin/vitest run --reporter=dot";
+
+export const SUITE_SCRIPT =
+  "L=$(mktemp); " +
+  SUITE_LINE +
+  " > $L 2>&1; rc=$?; [ $rc = 0 ] || grep -E '^ FAIL ' $L || tail -20 $L; rm -f $L; exit $rc";
+
+export interface SuiteResult {
+  command: string;
+  ok: boolean;
+  failing: string[];
+  cards: string[];
+  log: string;
+}
+
+const FAIL_PREFIX = " FAIL  ";
+
+const SPECIFIER_RE = /(?:from\s+|import\s*|import\(\s*)["']([^"']+)["']/g;
+
+function specifiersOf(text: string): string[] {
+  const out: string[] = [];
+  SPECIFIER_RE.lastIndex = 0;
+  let m: RegExpExecArray | null = SPECIFIER_RE.exec(text);
+  while (m !== null) {
+    const s = m[1];
+    if (s !== undefined) {
+      out.push(s);
+    }
+    m = SPECIFIER_RE.exec(text);
+  }
+  return out;
+}
+
+function resolveImport(fromFile: string, spec: string): string | null {
+  if (!spec.startsWith("./") && !spec.startsWith("../")) {
+    return null;
+  }
+  const joined = posix.normalize(posix.join(posix.dirname(fromFile), spec));
+  if (joined.endsWith(".js")) {
+    return joined.slice(0, -3) + ".ts";
+  }
+  return joined;
+}
+
+function readFileAt(root: string, rel: string): string | null {
+  try {
+    const abs = posix.join(root, rel);
+    if (!fs.statSync(abs).isFile()) {
+      return null;
+    }
+    return fs.readFileSync(abs, "utf8");
+  } catch {
+    return null;
+  }
+}
+
+export async function suiteNet(
+  root: string,
+  cards: readonly Card[],
+  env: Record<string, string>,
+  timeoutMs?: number,
+): Promise<SuiteResult | null> {
+  let runsRelated = false;
+  for (const card of cards) {
+    if (typeof card.acceptance === "string" && card.acceptance.includes(RELATED_MARK)) {
+      runsRelated = true;
+      break;
+    }
+  }
+  if (!runsRelated) {
+    return null;
+  }
+
+  const r = await runAcceptance(SUITE_SCRIPT, root, {
+    env,
+    timeoutMs: timeoutMs ?? DEFAULT_TIMEOUT_MS,
+  });
+
+  if (r.exit === 0) {
+    return { command: SUITE_LINE, ok: true, failing: [], cards: [], log: r.log };
+  }
+
+  const failing: string[] = [];
+  const seen: Set<string> = new Set<string>();
+  for (const line of r.log.split("\n")) {
+    if (!line.startsWith(FAIL_PREFIX)) {
+      continue;
+    }
+    const rest = line.slice(FAIL_PREFIX.length);
+    if (seen.has(rest)) {
+      continue;
+    }
+    seen.add(rest);
+    failing.push(rest);
+  }
+
+  const reachable: Set<string> = new Set<string>();
+  const queue: string[] = [];
+  for (const entry of failing) {
+    const file = entry.split(" ")[0];
+    if (file === undefined || file.length === 0) {
+      continue;
+    }
+    if (!reachable.has(file)) {
+      reachable.add(file);
+      queue.push(file);
+    }
+  }
+
+  for (let i = 0; i < queue.length; i++) {
+    const file = queue[i] as string;
+    const text = readFileAt(root, file);
+    if (text === null) {
+      continue;
+    }
+    for (const spec of specifiersOf(text)) {
+      const resolved = resolveImport(file, spec);
+      if (resolved === null) {
+        continue;
+      }
+      if (reachable.has(resolved)) {
+        continue;
+      }
+      if (readFileAt(root, resolved) === null) {
+        continue;
+      }
+      reachable.add(resolved);
+      queue.push(resolved);
+    }
+  }
+
+  const matched: string[] = [];
+  for (const card of cards) {
+    for (const target of card.targets) {
+      if (reachable.has(target)) {
+        matched.push(card.customId);
+        break;
+      }
+    }
+  }
+
+  return { command: SUITE_LINE, ok: false, failing, cards: matched, log: r.log };
+}
+```

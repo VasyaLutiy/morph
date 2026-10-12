@@ -1,0 +1,11 @@
+morph run: check-identity-judge.v1 accepted stage 0 finish stop chars 3568
+morph run: compose.v1 accepted stage 0 finish stop chars 3220
+morph run: compose.v2 untried stage 0 finish stop chars 3233
+morph run: suite-net.v1 accepted stage 0 finish stop chars 3812
+morph run: suite-net.v2 untried stage 0 finish stop chars 3777
+morph run: build-acceptances-judge.v1 accepted stage 0 finish stop chars 8048
+morph run: compose-judge.v1 accepted stage 0 finish stop chars 1788
+morph run: run-command.v1 accepted stage 0 finish stop chars 9953
+morph run: run-command.v2 untried stage 0 finish stop chars 10059
+morph run: suite-net-judge.v1 accepted stage 0 finish stop chars 3314
+morph run: run-command-judge.v1 accepted stage 0 finish stop chars 5804

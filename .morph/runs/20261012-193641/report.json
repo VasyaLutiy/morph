@@ -1,0 +1,264 @@
+{
+  "runId": "20261012-193641",
+  "completedAt": 1791834467217,
+  "branch": "morph/20261012-193641",
+  "processor": "ds",
+  "generations": 3,
+  "outcomes": [
+    {
+      "customId": "check-identity-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "check-identity-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/gate/identity.examples.test.ts\n== names tests/gate/identity.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "6b50e1ced9c6d33451846f6abda5c686684f55bd",
+      "diffstat": {
+        "files": 1,
+        "insertions": 3,
+        "deletions": 3
+      }
+    },
+    {
+      "customId": "compose",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "compose.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "189fdbf9619d9789046545322080577fa04f82d8",
+      "diffstat": {
+        "files": 1,
+        "insertions": 5,
+        "deletions": 2
+      }
+    },
+    {
+      "customId": "suite-net",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "suite-net.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "99be38ae9f2ef3c0a24d7f544e15c03159d3f580",
+      "diffstat": {
+        "files": 1,
+        "insertions": 152,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "build-acceptances-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "build-acceptances-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/buildAcceptances.examples.test.ts\n== names tests/builder/buildAcceptances.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "c64e1c2c1027444382152421d116576a814fcf82",
+      "diffstat": {
+        "files": 1,
+        "insertions": 3,
+        "deletions": 1
+      }
+    },
+    {
+      "customId": "compose-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "compose-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/compose.p37.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "0151433119f0205223362214d2e6a1a7e80429c2",
+      "diffstat": {
+        "files": 1,
+        "insertions": 57,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "run-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "e05c06e6496c9b604b17bc0c819a6e52837d023d",
+      "diffstat": {
+        "files": 2,
+        "insertions": 10,
+        "deletions": 2
+      }
+    },
+    {
+      "customId": "suite-net-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "suite-net-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/suiteNet.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "5296f3b645f28d385c546d2487b126bf4ef999ce",
+      "diffstat": {
+        "files": 1,
+        "insertions": 106,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "run-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "run-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/runCommand.p37.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "541f401aefe86521867a4f67cff90ccd49f28bd3",
+      "diffstat": {
+        "files": 1,
+        "insertions": 191,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 144566,
+    "outputTokens": 52673,
+    "cost": 0.04927974,
+    "requests": 11
+  },
+  "requests": [
+    {
+      "customId": "check-identity-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791833802-ZRnT4YANpIdscrBsf8KF",
+      "inputTokens": 5121,
+      "outputTokens": 1178,
+      "cost": 0.00147495,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "compose.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791833802-IbzfYHnnwnFJ2k8DBw2A",
+      "inputTokens": 5569,
+      "outputTokens": 1132,
+      "cost": 0.00151455,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "compose.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791833802-XM0pyPQyKYkS8Ed9SYD0",
+      "inputTokens": 5569,
+      "outputTokens": 1049,
+      "cost": 0.00146475,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "suite-net.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791833811-vhZ0cQgKlPT95vGh10fe",
+      "inputTokens": 23200,
+      "outputTokens": 11867,
+      "cost": 0.0074898,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "suite-net.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791833811-K3mF5MjNhnBmaFKOLGNw",
+      "inputTokens": 23200,
+      "outputTokens": 7471,
+      "cost": 0.0079626,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791833921-DdEqLzlaGAjPygkXlGBr",
+      "inputTokens": 7257,
+      "outputTokens": 4728,
+      "cost": 0.00392535,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "compose-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791833921-C2FgwbpfB08kfxLcDeOB",
+      "inputTokens": 9002,
+      "outputTokens": 674,
+      "cost": 0.0017547,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791833921-CISKu2HYmW103HSUcY9d",
+      "inputTokens": 7112,
+      "outputTokens": 8188,
+      "cost": 0.0059796,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791833927-1nGfJaVFLD5MSwgzdOVf",
+      "inputTokens": 7112,
+      "outputTokens": 2806,
+      "cost": 0.00185184,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "suite-net-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791833945-gQCkIW6gOgZ6H7jjP6NP",
+      "inputTokens": 22631,
+      "outputTokens": 4217,
+      "cost": 0.00592485,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791833983-ZOXJXrO6vtuC2T4o3hYO",
+      "inputTokens": 28793,
+      "outputTokens": 9363,
+      "cost": 0.00993675,
+      "finishReason": "stop",
+      "error": null
+    }
+  ],
+  "rounds": [
+    {
+      "round": 0,
+      "reds": []
+    }
+  ]
+}

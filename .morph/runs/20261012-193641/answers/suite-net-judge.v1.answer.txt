@@ -1,0 +1,108 @@
+```ts
+import fs from "node:fs";
+import { test, expect } from "vitest";
+import { suiteNet } from "../../src/cli/suiteNet.js";
+import { fixtureJson, tmpRoot } from "../helpers.js";
+import type { Card } from "../../src/cards/types.js";
+
+interface SuiteFixture {
+  files: Record<string, string>;
+  cards: { customId: string; targets: string[]; acceptance: string }[];
+  vitest: Record<string, string>;
+}
+
+function build(variant: string): { t: ReturnType<typeof tmpRoot>; cards: Card[] } {
+  const f = fixtureJson("cli/suiteNet.json") as SuiteFixture;
+  const t = tmpRoot();
+  for (const [rel, text] of Object.entries(f.files)) {
+    t.write(rel, text);
+  }
+  const script = f.vitest[variant];
+  if (script === undefined) {
+    throw new Error(`missing vitest variant: ${variant}`);
+  }
+  fs.chmodSync(t.write("node_modules/.bin/vitest", script), 0o755);
+  const cards = f.cards.map(
+    (c) =>
+      ({
+        ...c,
+        intent: "generate",
+        contextSlice: [],
+        instruction: "x",
+        model: null,
+        maxTokens: null,
+        reasoning: null,
+        variants: 1,
+        dependsOn: [],
+      }) as Card,
+  );
+  return { t, cards };
+}
+
+test("Suite Net example 1: red suite with related mark, deduped failing list and reachable cards", async () => {
+  const { t, cards } = build("red");
+  try {
+    const got = await suiteNet(t.root, cards, { PATH: process.env.PATH ?? "" });
+    expect(got).toStrictEqual({
+      command: "node_modules/.bin/vitest run --reporter=dot",
+      ok: false,
+      failing: [
+        "tests/a.test.ts > A example 1: red",
+        "tests/c.test.ts [ tests/c.test.ts ]",
+      ],
+      cards: ["a", "c", "j"],
+      log: " FAIL  tests/a.test.ts > A example 1: red\n FAIL  tests/a.test.ts > A example 1: red\n FAIL  tests/c.test.ts [ tests/c.test.ts ]\n",
+    });
+    expect(t.read("vitest.args")).toBe("run --reporter=dot\n");
+  } finally {
+    t.rm();
+  }
+});
+
+test("Suite Net example 2: green suite reports ok with no failing entries", async () => {
+  const { t, cards } = build("green");
+  try {
+    const got = await suiteNet(t.root, cards, { PATH: process.env.PATH ?? "" });
+    expect(got).toStrictEqual({
+      command: "node_modules/.bin/vitest run --reporter=dot",
+      ok: true,
+      failing: [],
+      cards: [],
+      log: "",
+    });
+    expect(t.read("vitest.args")).toBe("run --reporter=dot\n");
+  } finally {
+    t.rm();
+  }
+});
+
+test("Suite Net example 3: no card holds the related mark so nothing runs", async () => {
+  const { t, cards } = build("red");
+  try {
+    for (const card of cards) {
+      card.acceptance = "exit 0";
+    }
+    const got = await suiteNet(t.root, cards, { PATH: process.env.PATH ?? "" });
+    expect(got).toBe(null);
+    expect(t.exists("vitest.args")).toBe(false);
+  } finally {
+    t.rm();
+  }
+});
+
+test("Suite Net example 4: failing vitest with no FAIL lines yields empty failing and cards", async () => {
+  const { t, cards } = build("broken");
+  try {
+    const got = await suiteNet(t.root, cards, { PATH: process.env.PATH ?? "" });
+    expect(got).toStrictEqual({
+      command: "node_modules/.bin/vitest run --reporter=dot",
+      ok: false,
+      failing: [],
+      cards: [],
+      log: "Error: [vitest-worker]: Timeout calling onTaskUpdate\n Tests  3 passed (3)\n",
+    });
+  } finally {
+    t.rm();
+  }
+});
+```
