@@ -179,10 +179,6 @@
       "targets": [
         "src/cards/model.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 10000
@@ -191,12 +187,6 @@
       "intent": "generate",
       "targets": [
         "tests/cards/model.p11c.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/types.ts",
-        "src/cards/model.ts"
       ],
       "depends_on": [
         "card-model"
@@ -209,13 +199,6 @@
         "src/cards/layer.ts",
         "tests/cards/layer.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/cards/model.ts",
-        "tests/helpers.ts",
-        "tests/fixtures/decks/layered.json"
-      ],
       "depends_on": [
         "card-model"
       ],
@@ -226,15 +209,6 @@
       "intent": "generate",
       "targets": [
         "tests/cards/layer.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/cards/model.ts",
-        "src/cards/layer.ts",
-        "tests/helpers.ts",
-        "tests/fixtures/decks/layered.json",
-        "tests/fixtures/decks/layeredExternal.json"
       ]
     },
     "weigh": {
@@ -242,13 +216,6 @@
       "targets": [
         "src/cards/weigh.ts",
         "tests/cards/weigh.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/cards/model.ts",
-        "tests/helpers.ts",
-        "tests/fixtures/decks/weigh.json"
       ],
       "depends_on": [
         "card-model"
@@ -260,16 +227,6 @@
       "intent": "generate",
       "targets": [
         "tests/cards/weigh.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/cards/model.ts",
-        "src/cards/weigh.ts",
-        "tests/helpers.ts",
-        "tests/fixtures/decks/weigh.json",
-        "tests/fixtures/weigh/ten.txt",
-        "tests/fixtures/weigh/hundred.txt"
       ]
     },
     "hazards": {
@@ -277,15 +234,6 @@
       "targets": [
         "src/cards/hazards.ts",
         "tests/cards/hazards.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/cards/model.ts",
-        "src/cards/layer.ts",
-        "tests/helpers.ts",
-        "tests/fixtures/decks/hazardsWriteWrite.json",
-        "tests/fixtures/decks/hazardsReadWrite.json"
       ],
       "depends_on": [
         "card-model",
@@ -298,20 +246,6 @@
       "intent": "generate",
       "targets": [
         "tests/cards/hazards.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/cards/model.ts",
-        "src/cards/layer.ts",
-        "src/cards/hazards.ts",
-        "tests/helpers.ts",
-        "tests/fixtures/decks/hazardsWriteWrite.json",
-        "tests/fixtures/decks/hazardsReadWrite.json",
-        "tests/fixtures/decks/hazardsUnordered.json",
-        "tests/fixtures/decks/tiny.json",
-        "tests/fixtures/decks/hazardsTwoWriters.json",
-        "tests/fixtures/decks/hazardsAllKinds.json"
       ]
     },
     "capture-inputs": {
@@ -320,13 +254,6 @@
         "src/compiler/types.ts",
         "src/compiler/capture.ts",
         "tests/compiler/capture.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/types.ts",
-        "src/cards/model.ts",
-        "tests/fixtures/compiler/cards/digest.json"
       ],
       "depends_on": [],
       "variants": 2,
@@ -338,10 +265,6 @@
         "src/compiler/directive.ts",
         "tests/compiler/directive.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000
@@ -351,15 +274,6 @@
       "targets": [
         "src/compiler/parse.ts",
         "tests/compiler/parse.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/types.ts",
-        "src/compiler/types.ts",
-        "tests/fixtures/compiler/answers/single.md",
-        "tests/fixtures/compiler/answers/twoFiles.md",
-        "tests/fixtures/compiler/answers/truncated.md"
       ],
       "depends_on": [
         "capture-inputs"
@@ -372,11 +286,6 @@
       "targets": [
         "src/compiler/compile.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/compiler/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 10000
@@ -385,25 +294,12 @@
       "intent": "generate",
       "targets": [
         "tests/compiler/capture.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/types.ts",
-        "src/cards/model.ts",
-        "src/compiler/types.ts",
-        "src/compiler/capture.ts",
-        "tests/fixtures/compiler/cards/digest.json"
       ]
     },
     "output-directive-judge": {
       "intent": "generate",
       "targets": [
         "tests/compiler/directive.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/compiler/directive.ts"
       ],
       "depends_on": [
         "output-directive"
@@ -414,33 +310,12 @@
       "intent": "generate",
       "targets": [
         "tests/compiler/parse.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/types.ts",
-        "src/compiler/types.ts",
-        "src/compiler/parse.ts",
-        "tests/fixtures/compiler/answers/single.md",
-        "tests/fixtures/compiler/answers/missingSection.md",
-        "tests/fixtures/compiler/answers/truncated.md",
-        "tests/fixtures/compiler/answers/twoFiles.md",
-        "tests/fixtures/compiler/answers/proseSingle.md",
-        "tests/fixtures/compiler/answers/proseTwoFiles.md",
-        "tests/fixtures/compiler/answers/outsideTargets.md",
-        "tests/fixtures/compiler/answers/leadingDashes.md"
       ]
     },
     "compile-card-judge": {
       "intent": "patch",
       "targets": [
         "tests/compiler/compile.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/compiler/compile.ts",
-        "tests/fixtures/compiler/cards/fencedF.json",
-        "tests/fixtures/compiler/project/docs/F.md"
       ],
       "depends_on": [
         "compile-card"
@@ -452,10 +327,6 @@
       "targets": [
         "src/acceptance/types.ts",
         "src/acceptance/snapshot.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/compiler/types.ts"
       ],
       "depends_on": [],
       "variants": 2,
@@ -475,10 +346,6 @@
       "targets": [
         "src/acceptance/run.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/acceptance/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000
@@ -488,11 +355,6 @@
       "targets": [
         "src/acceptance/verify.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/compiler/types.ts",
-        "src/acceptance/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 10000
@@ -501,24 +363,12 @@
       "intent": "generate",
       "targets": [
         "tests/acceptance/snapshot.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/compiler/types.ts",
-        "src/acceptance/types.ts",
-        "src/acceptance/snapshot.ts"
       ]
     },
     "build-attempt-diff-judge": {
       "intent": "generate",
       "targets": [
         "tests/acceptance/diff.p11c.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/acceptance/diff.ts"
       ],
       "depends_on": [
         "build-attempt-diff"
@@ -529,12 +379,6 @@
       "intent": "generate",
       "targets": [
         "tests/acceptance/run.p11c2.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/acceptance/types.ts",
-        "src/acceptance/run.ts"
       ],
       "depends_on": [
         "run-acceptance"
@@ -548,10 +392,6 @@
         "tests/runloop/generation.p9b.examples.test.ts",
         "tests/runloop/deck.p9b.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/acceptance/verify.ts"
-      ],
       "depends_on": [
         "verify-card"
       ],
@@ -562,10 +402,6 @@
       "targets": [
         "src/processor/registry.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/processor/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000
@@ -574,12 +410,6 @@
       "intent": "generate",
       "targets": [
         "src/processor/assemble.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/compiler/types.ts",
-        "src/processor/types.ts"
       ],
       "depends_on": [
         "read-registry"
@@ -593,14 +423,6 @@
         "src/processor/response.ts",
         "src/processor/stub.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/compiler/types.ts",
-        "src/processor/types.ts",
-        "tests/fixtures/processor/okResponse.json",
-        "tests/fixtures/processor/errorResponse.json"
-      ],
       "depends_on": [
         "read-registry"
       ],
@@ -611,12 +433,6 @@
       "intent": "patch",
       "targets": [
         "src/processor/send.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/compiler/types.ts",
-        "src/processor/types.ts",
-        "src/processor/batch.ts"
       ],
       "depends_on": [
         "send-batch"
@@ -629,11 +445,6 @@
       "targets": [
         "tests/processor/registry.p11b.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/processor/registry.ts"
-      ],
       "depends_on": [
         "read-registry"
       ],
@@ -643,32 +454,11 @@
       "targets": [
         "tests/processor/assemble.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/types.ts",
-        "src/compiler/types.ts",
-        "src/processor/types.ts",
-        "src/processor/assemble.ts",
-        "tests/fixtures/processor/glmConfig.json"
-      ],
       "intent": "generate"
     },
     "read-response-judge": {
       "targets": [
         "tests/processor/response.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/types.ts",
-        "src/compiler/types.ts",
-        "src/processor/types.ts",
-        "src/processor/response.ts",
-        "src/processor/stub.ts",
-        "tests/fixtures/processor/okResponse.json",
-        "tests/fixtures/processor/lengthResponse.json",
-        "tests/fixtures/processor/errorResponse.json"
       ],
       "intent": "generate"
     },
@@ -676,14 +466,6 @@
       "intent": "patch",
       "targets": [
         "tests/processor/send.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/compiler/types.ts",
-        "src/processor/types.ts",
-        "src/processor/send.ts",
-        "tests/fixtures/processor/batchConfig.json"
       ],
       "depends_on": [
         "send-generation"
@@ -696,13 +478,6 @@
         "src/runloop/types.ts",
         "src/runloop/resolve.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/compiler/types.ts",
-        "src/processor/types.ts",
-        "src/acceptance/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 12000
@@ -712,13 +487,6 @@
       "targets": [
         "src/runloop/generation.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/compiler/types.ts",
-        "src/processor/types.ts",
-        "src/acceptance/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 10000
@@ -727,10 +495,6 @@
       "intent": "patch",
       "targets": [
         "src/runloop/retry.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts"
       ],
       "depends_on": [],
       "variants": 2,
@@ -742,12 +506,6 @@
         "src/runloop/deck.ts",
         "src/runloop/types.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/compiler/types.ts",
-        "src/processor/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 12000
@@ -757,13 +515,6 @@
       "targets": [
         "tests/runloop/resolve.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/types.ts",
-        "src/runloop/types.ts",
-        "src/runloop/resolve.ts"
-      ],
       "depends_on": [
         "resolve"
       ]
@@ -772,14 +523,6 @@
       "intent": "patch",
       "targets": [
         "tests/runloop/generation.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/types.ts",
-        "src/processor/types.ts",
-        "src/runloop/types.ts",
-        "src/runloop/generation.ts"
       ],
       "depends_on": [
         "process-generation"
@@ -792,11 +535,6 @@
         "tests/runloop/retry.examples.test.ts",
         "tests/runloop/retry.p9b.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/runloop/retry.ts"
-      ],
       "depends_on": [
         "build-retry"
       ],
@@ -806,13 +544,6 @@
       "intent": "generate",
       "targets": [
         "tests/runloop/deck.p11c2.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/types.ts",
-        "src/runloop/types.ts",
-        "src/runloop/deck.ts"
       ],
       "depends_on": [
         "run-deck"
@@ -825,10 +556,6 @@
         "src/git/types.ts",
         "src/git/run.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 12000
@@ -837,11 +564,6 @@
       "intent": "patch",
       "targets": [
         "src/git/branch.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/git/types.ts",
-        "src/git/run.ts"
       ],
       "depends_on": [
         "run-git"
@@ -854,11 +576,6 @@
       "targets": [
         "src/git/commit.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/git/types.ts",
-        "src/git/run.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000
@@ -868,10 +585,6 @@
       "targets": [
         "src/git/archive.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/git/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000
@@ -880,12 +593,6 @@
       "intent": "generate",
       "targets": [
         "tests/git/run.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/git/types.ts",
-        "src/git/run.ts"
       ],
       "depends_on": [
         "run-git"
@@ -897,12 +604,6 @@
       "targets": [
         "tests/git/branch.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/git/types.ts",
-        "src/git/branch.ts"
-      ],
       "depends_on": [
         "open-branch"
       ],
@@ -913,12 +614,6 @@
       "targets": [
         "tests/git/commit.p11c.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/git/types.ts",
-        "src/git/commit.ts"
-      ],
       "depends_on": [
         "commit-card"
       ],
@@ -928,11 +623,6 @@
       "intent": "generate",
       "targets": [
         "tests/git/archive.p11b2.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/git/archive.ts"
       ],
       "depends_on": [
         "archive-run"
@@ -945,14 +635,6 @@
         "src/cli/types.ts",
         "src/cli/document.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/processor/types.ts",
-        "src/runloop/types.ts",
-        "src/git/types.ts",
-        "src/cards/model.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 12000
@@ -963,10 +645,6 @@
         "src/cli/types.ts",
         "src/cli/parse.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/fixtures/cli/flags.json"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 30000
@@ -976,11 +654,6 @@
       "targets": [
         "src/cli/deckCheck.ts",
         "src/cli/types.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/cli/unprovenStubs.ts"
       ],
       "depends_on": [
         "unproven-stubs"
@@ -993,13 +666,6 @@
       "targets": [
         "src/cli/runCommand.ts",
         "src/cli/types.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/git/types.ts",
-        "src/processor/types.ts",
-        "src/runloop/types.ts"
       ],
       "depends_on": [
         "run-deck"
@@ -1021,17 +687,6 @@
       "targets": [
         "tests/cli/document.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cli/types.ts",
-        "src/cli/document.ts",
-        "src/runloop/types.ts",
-        "src/git/types.ts",
-        "tests/fixtures/decks/tiny.json",
-        "tests/fixtures/decks/cycle.json",
-        "tests/fixtures/decks/duplicate.json"
-      ],
       "depends_on": [
         "document"
       ],
@@ -1041,12 +696,6 @@
       "intent": "generate",
       "targets": [
         "tests/cli/parse.p35b.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cli/types.ts",
-        "tests/cli/parse.p20.examples.test.ts"
       ],
       "depends_on": [
         "parse-command"
@@ -1058,13 +707,6 @@
       "targets": [
         "tests/cli/deckCheck.p28.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cli/types.ts",
-        "src/cli/deckCheck.ts",
-        "src/cli/unprovenStubs.ts"
-      ],
       "depends_on": [
         "deck-check"
       ],
@@ -1074,11 +716,6 @@
       "intent": "patch",
       "targets": [
         "tests/cli/runCommand.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cli/types.ts"
       ],
       "depends_on": [
         "run-command"
@@ -1090,13 +727,6 @@
       "targets": [
         "tests/cli/main.p25.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cli/main.ts",
-        "tests/cli/main.p13b.examples.test.ts",
-        "tests/fixtures/cli/examples.json"
-      ],
       "depends_on": [
         "main"
       ],
@@ -1107,10 +737,6 @@
       "targets": [
         "src/debt/cardBrief.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 16000
@@ -1119,15 +745,6 @@
       "intent": "generate",
       "targets": [
         "src/debt/acceptCard.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/debt/cardBrief.ts",
-        "src/acceptance/run.ts",
-        "src/acceptance/types.ts",
-        "src/git/commit.ts",
-        "src/git/run.ts",
-        "src/git/types.ts"
       ],
       "depends_on": [
         "card-brief"
@@ -1140,15 +757,6 @@
       "targets": [
         "tests/debt/cardBrief.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/debt/cardBrief.ts",
-        "tests/fixtures/debt/deck.json",
-        "tests/fixtures/debt/archive.json",
-        "tests/fixtures/debt/brief.fmt.x.md",
-        "tests/fixtures/debt/brief.solo.md"
-      ],
       "depends_on": [
         "card-brief"
       ],
@@ -1158,13 +766,6 @@
       "intent": "generate",
       "targets": [
         "tests/debt/acceptCard.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/debt/acceptCard.ts",
-        "src/debt/cardBrief.ts",
-        "tests/fixtures/debt/accept.deck.json"
       ],
       "depends_on": [
         "accept-card"
@@ -1177,10 +778,6 @@
         "src/language/types.ts",
         "src/language/profiles.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/fixtures/language/go.json"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 16000
@@ -1189,11 +786,6 @@
       "intent": "generate",
       "targets": [
         "src/language/paths.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/language/types.ts",
-        "src/language/profiles.ts"
       ],
       "depends_on": [
         "profiles"
@@ -1206,11 +798,6 @@
       "targets": [
         "src/language/naming.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/language/types.ts",
-        "src/language/profiles.ts"
-      ],
       "depends_on": [
         "profiles"
       ],
@@ -1221,13 +808,6 @@
       "intent": "generate",
       "targets": [
         "src/language/template.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/language/types.ts",
-        "src/language/profiles.ts",
-        "src/language/paths.ts",
-        "tests/fixtures/language/scriptTs.txt"
       ],
       "depends_on": [
         "paths"
@@ -1240,12 +820,6 @@
       "targets": [
         "tests/language/profiles.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/language/types.ts",
-        "src/language/profiles.ts"
-      ],
       "depends_on": [
         "profiles"
       ],
@@ -1255,13 +829,6 @@
       "intent": "generate",
       "targets": [
         "tests/language/paths.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/language/types.ts",
-        "src/language/profiles.ts",
-        "src/language/paths.ts"
       ],
       "depends_on": [
         "paths"
@@ -1273,13 +840,6 @@
       "targets": [
         "tests/language/naming.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/language/types.ts",
-        "src/language/profiles.ts",
-        "src/language/naming.ts"
-      ],
       "depends_on": [
         "naming"
       ],
@@ -1289,16 +849,6 @@
       "intent": "generate",
       "targets": [
         "tests/language/template.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/language/types.ts",
-        "src/language/profiles.ts",
-        "src/language/template.ts",
-        "src/language/paths.ts",
-        "tests/fixtures/language/scriptTs.txt",
-        "tests/fixtures/language/scriptPy.txt"
       ],
       "depends_on": [
         "template"
@@ -1320,10 +870,6 @@
       "targets": [
         "src/contour/map.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/contour/types.ts"
-      ],
       "depends_on": [
         "validate-record"
       ],
@@ -1335,10 +881,6 @@
       "targets": [
         "src/contour/select.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/contour/types.ts"
-      ],
       "depends_on": [
         "validate-record"
       ],
@@ -1349,11 +891,6 @@
       "intent": "patch",
       "targets": [
         "src/contour/load.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/contour/types.ts",
-        "src/contour/record.ts"
       ],
       "depends_on": [
         "validate-record",
@@ -1367,12 +904,6 @@
       "targets": [
         "tests/contour/record.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/contour/types.ts",
-        "src/contour/record.ts"
-      ],
       "depends_on": [
         "validate-record"
       ],
@@ -1382,12 +913,6 @@
       "intent": "generate",
       "targets": [
         "tests/contour/map.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/contour/types.ts",
-        "src/contour/map.ts"
       ],
       "depends_on": [
         "validate-map"
@@ -1399,13 +924,6 @@
       "targets": [
         "tests/contour/select.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/contour/types.ts",
-        "src/contour/record.ts",
-        "src/contour/select.ts"
-      ],
       "depends_on": [
         "select-components"
       ],
@@ -1415,12 +933,6 @@
       "intent": "generate",
       "targets": [
         "tests/contour/load.p34.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/contour/types.ts",
-        "src/contour/load.ts"
       ],
       "depends_on": [
         "load-spec"
@@ -1432,10 +944,6 @@
       "targets": [
         "src/planner/render.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/contour/types.ts"
-      ],
       "variants": 2,
       "max_tokens": 16000,
       "depends_on": []
@@ -1445,12 +953,6 @@
       "targets": [
         "src/planner/types.ts",
         "src/planner/cut.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/contour/types.ts",
-        "src/cards/types.ts",
-        "src/planner/render.ts"
       ],
       "depends_on": [
         "render"
@@ -1463,10 +965,6 @@
       "targets": [
         "src/planner/judges.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/contour/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 12000
@@ -1476,10 +974,6 @@
       "targets": [
         "src/planner/plan.ts",
         "src/planner/types.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/contour/types.ts"
       ],
       "depends_on": [
         "cut-component"
@@ -1491,13 +985,6 @@
       "intent": "patch",
       "targets": [
         "src/cli/planCommand.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cli/types.ts",
-        "src/builder/types.ts",
-        "src/planner/types.ts",
-        "src/criterion/probeSkeleton.ts"
       ],
       "depends_on": [
         "probe-skeleton",
@@ -1511,13 +998,6 @@
       "targets": [
         "tests/planner/render.p34b.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/contour/types.ts",
-        "src/contour/load.ts",
-        "src/planner/render.ts"
-      ],
       "depends_on": [
         "render"
       ],
@@ -1528,14 +1008,6 @@
       "targets": [
         "tests/planner/cut.p34b.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/contour/types.ts",
-        "src/contour/load.ts",
-        "src/planner/types.ts",
-        "src/planner/cut.ts"
-      ],
       "depends_on": [
         "cut-component"
       ],
@@ -1545,15 +1017,6 @@
       "intent": "generate",
       "targets": [
         "tests/planner/judges.p34b.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/contour/types.ts",
-        "src/contour/load.ts",
-        "src/planner/types.ts",
-        "src/planner/cut.ts",
-        "src/planner/judges.ts"
       ],
       "depends_on": [
         "cut-judges",
@@ -1566,15 +1029,6 @@
       "targets": [
         "tests/planner/plan.p35.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/contour/types.ts",
-        "src/contour/load.ts",
-        "src/planner/types.ts",
-        "src/planner/plan.ts",
-        "tests/fixtures/planner/examples.json"
-      ],
       "depends_on": [
         "plan-spec"
       ],
@@ -1584,14 +1038,6 @@
       "intent": "generate",
       "targets": [
         "tests/cli/planCommand.p35b.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cli/types.ts",
-        "src/cli/planCommand.ts",
-        "tests/cli/planCommand.p35.examples.test.ts",
-        "tests/fixtures/cli/examples.json"
       ],
       "depends_on": [
         "plan-command"
@@ -1613,11 +1059,6 @@
       "targets": [
         "src/builder/steps.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/language/types.ts",
-        "src/language/profiles.ts"
-      ],
       "variants": 2,
       "max_tokens": 12000
     },
@@ -1625,10 +1066,6 @@
       "intent": "generate",
       "targets": [
         "src/builder/probeDir.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/builder/steps.ts"
       ],
       "depends_on": [
         "steps"
@@ -1640,11 +1077,6 @@
       "intent": "patch",
       "targets": [
         "src/builder/compose.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/builder/types.ts",
-        "src/rules/guardrails.ts"
       ],
       "depends_on": [
         "build-acceptances"
@@ -1658,10 +1090,6 @@
         "src/builder/types.ts",
         "src/builder/buildAcceptances.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/rules/guardrails.ts"
-      ],
       "depends_on": [
         "guardrail-rules"
       ],
@@ -1672,12 +1100,6 @@
       "intent": "generate",
       "targets": [
         "tests/builder/steps.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/language/profiles.ts",
-        "src/builder/steps.ts"
       ],
       "depends_on": [
         "steps"
@@ -1690,13 +1112,6 @@
         "tests/builder/readChecks.examples.test.ts",
         "tests/builder/readChecks.p35.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/builder/types.ts",
-        "src/builder/readChecks.ts",
-        "tests/fixtures/builder/examples.json"
-      ],
       "depends_on": [
         "read-checks"
       ],
@@ -1706,11 +1121,6 @@
       "intent": "generate",
       "targets": [
         "tests/builder/probeDir.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/builder/probeDir.ts"
       ],
       "depends_on": [
         "probe-dir"
@@ -1722,14 +1132,6 @@
       "targets": [
         "tests/builder/compose.p30.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/builder/types.ts",
-        "src/builder/compose.ts",
-        "tests/builder/compose.p19.examples.test.ts",
-        "tests/fixtures/builder/examples.json"
-      ],
       "depends_on": [
         "compose"
       ],
@@ -1739,16 +1141,6 @@
       "intent": "generate",
       "targets": [
         "tests/builder/buildAcceptances.p31a.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/builder/types.ts",
-        "src/builder/buildAcceptances.ts",
-        "src/builder/compose.ts",
-        "src/rules/guardrails.ts",
-        "tests/fixtures/builder/examples.json",
-        "tests/builder/buildAcceptances.p30.examples.test.ts"
       ],
       "depends_on": [
         "build-acceptances",
@@ -1762,11 +1154,6 @@
       "targets": [
         "src/cli/readPlanChecks.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cli/document.ts",
-        "src/builder/types.ts"
-      ],
       "variants": 2,
       "max_tokens": 10000
     },
@@ -1774,12 +1161,6 @@
       "intent": "generate",
       "targets": [
         "tests/cli/readPlanChecks.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cli/readPlanChecks.ts",
-        "src/builder/types.ts"
       ],
       "depends_on": [
         "read-plan-checks"
@@ -1791,13 +1172,6 @@
       "targets": [
         "src/processor/batchRequest.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/compiler/types.ts",
-        "src/processor/types.ts",
-        "src/processor/assemble.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 6000
@@ -1806,11 +1180,6 @@
       "intent": "patch",
       "targets": [
         "src/processor/batchResponse.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/processor/types.ts",
-        "src/processor/response.ts"
       ],
       "depends_on": [],
       "variants": 2,
@@ -1821,12 +1190,6 @@
       "targets": [
         "src/processor/types.ts",
         "src/processor/batch.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/compiler/types.ts",
-        "src/processor/batchRequest.ts",
-        "src/processor/batchResponse.ts"
       ],
       "depends_on": [
         "read-batch"
@@ -1839,13 +1202,6 @@
       "targets": [
         "tests/processor/batchRequest.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/compiler/types.ts",
-        "src/processor/batchRequest.ts",
-        "tests/fixtures/processor/batchConfig.json"
-      ],
       "depends_on": [
         "assemble-batch"
       ],
@@ -1855,12 +1211,6 @@
       "intent": "generate",
       "targets": [
         "tests/processor/batchResponse.p11b.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/processor/batchResponse.ts",
-        "tests/fixtures/processor/replies.json"
       ],
       "depends_on": [
         "read-batch"
@@ -1872,15 +1222,6 @@
       "targets": [
         "tests/processor/batch.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/compiler/types.ts",
-        "src/processor/types.ts",
-        "src/processor/batch.ts",
-        "tests/fixtures/processor/batchConfig.json",
-        "tests/fixtures/processor/sendBatch.json"
-      ],
       "depends_on": [
         "send-batch"
       ],
@@ -1891,14 +1232,6 @@
       "targets": [
         "src/batches/submit.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/compiler/types.ts",
-        "src/processor/types.ts",
-        "src/processor/batchRequest.ts",
-        "src/processor/batchResponse.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000
@@ -1907,13 +1240,6 @@
       "intent": "generate",
       "targets": [
         "tests/batches/submit.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/batches/submit.ts",
-        "tests/fixtures/batches/deck.json",
-        "tests/fixtures/batches/documents.json"
       ],
       "depends_on": [
         "submit-deck"
@@ -1924,15 +1250,6 @@
       "intent": "generate",
       "targets": [
         "src/batches/collect.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/compiler/types.ts",
-        "src/processor/types.ts",
-        "src/processor/batchRequest.ts",
-        "src/processor/batchResponse.ts",
-        "src/batches/submit.ts"
       ],
       "depends_on": [
         "submit-deck",
@@ -1945,15 +1262,6 @@
       "intent": "generate",
       "targets": [
         "tests/batches/collect.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/batches/submit.ts",
-        "src/batches/collect.ts",
-        "src/git/archive.ts",
-        "tests/fixtures/batches/documents.json",
-        "tests/fixtures/processor/replies.json"
       ],
       "depends_on": [
         "collect-batch"
@@ -1983,11 +1291,6 @@
       "targets": [
         "src/primer/renderPrimer.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/fixtures/primer/primer1.md",
-        "tests/fixtures/primer/primer2.md"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 16000
@@ -1996,11 +1299,6 @@
       "intent": "patch",
       "targets": [
         "src/primer/primerCommand.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/language/types.ts",
-        "src/primerRecord/recordSection.ts"
       ],
       "depends_on": [
         "record-section"
@@ -2013,12 +1311,6 @@
       "targets": [
         "tests/primer/readRuns.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/primer/readRuns.ts",
-        "tests/fixtures/primer/runs.json"
-      ],
       "depends_on": [
         "read-runs"
       ],
@@ -2028,12 +1320,6 @@
       "intent": "generate",
       "targets": [
         "tests/primer/readStory.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/primer/readStory.ts",
-        "tests/fixtures/primer/story.json"
       ],
       "depends_on": [
         "read-story"
@@ -2046,11 +1332,6 @@
         "tests/primer/renderPrimer.examples.test.ts",
         "tests/primer/renderPrimer.p12b.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/primer/renderPrimer.ts"
-      ],
       "depends_on": [
         "primer-command"
       ],
@@ -2061,12 +1342,6 @@
       "targets": [
         "tests/primer/primerCommand.p16.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/primer/primerCommand.ts",
-        "tests/fixtures/primer/examples.json"
-      ],
       "depends_on": [
         "primer-command"
       ],
@@ -2076,11 +1351,6 @@
       "intent": "generate",
       "targets": [
         "src/git/log.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/git/run.ts",
-        "src/git/types.ts"
       ],
       "depends_on": [],
       "variants": 2,
@@ -2100,12 +1370,6 @@
       "targets": [
         "tests/git/log.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/git/log.ts",
-        "src/git/run.ts"
-      ],
       "depends_on": [
         "read-morph-log"
       ],
@@ -2115,11 +1379,6 @@
       "intent": "generate",
       "targets": [
         "tests/git/ownership.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/git/ownership.ts"
       ],
       "depends_on": [
         "read-ownership"
@@ -2149,10 +1408,6 @@
       "targets": [
         "src/scout/runTool.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/scout/cagePath.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 12000
@@ -2171,10 +1426,6 @@
       "targets": [
         "src/scout/seedFromOwnership.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/language/paths.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000
@@ -2183,10 +1434,6 @@
       "intent": "patch",
       "targets": [
         "tests/scout/parseTurn.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/scout/parseTurn.ts"
       ],
       "depends_on": [
         "parse-turn"
@@ -2198,11 +1445,6 @@
       "targets": [
         "tests/scout/cagePath.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/scout/cagePath.ts"
-      ],
       "depends_on": [
         "cage-path"
       ],
@@ -2212,11 +1454,6 @@
       "intent": "patch",
       "targets": [
         "tests/scout/runTool.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/scout/runTool.ts"
       ],
       "depends_on": [
         "run-tool"
@@ -2228,11 +1465,6 @@
       "targets": [
         "tests/scout/spendBudget.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/scout/spendBudget.ts"
-      ],
       "depends_on": [
         "spend-budget"
       ],
@@ -2243,11 +1475,6 @@
       "targets": [
         "tests/scout/seedFromOwnership.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/scout/seedFromOwnership.ts"
-      ],
       "depends_on": [
         "seed-from-ownership"
       ],
@@ -2257,15 +1484,6 @@
       "intent": "patch",
       "targets": [
         "src/scout/runScout.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/fixtures/scout/protocol.txt",
-        "src/scout/parseTurn.ts",
-        "src/scout/cagePath.ts",
-        "src/scout/runTool.ts",
-        "src/scout/spendBudget.ts",
-        "src/scout/sessionText.ts"
       ],
       "depends_on": [
         "parse-turn",
@@ -2280,12 +1498,6 @@
       "targets": [
         "tests/scout/runScout.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/scout/runScout.ts",
-        "src/scout/sessionText.ts"
-      ],
       "depends_on": [
         "run-scout"
       ],
@@ -2296,11 +1508,6 @@
       "targets": [
         "src/scout/scoutCommand.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/scout/spendBudget.ts",
-        "src/scout/seedFromOwnership.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 16000
@@ -2309,13 +1516,6 @@
       "intent": "patch",
       "targets": [
         "tests/scout/scoutCommand.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/scout/scoutCommand.ts",
-        "src/scout/sessionText.ts",
-        "tests/fixtures/scout/examples.json"
       ],
       "depends_on": [
         "scout-command"
@@ -2327,15 +1527,6 @@
       "targets": [
         "src/scout/planFromScout.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/scout/cagePath.ts",
-        "src/language/paths.ts",
-        "src/language/types.ts",
-        "src/language/profiles.ts",
-        "src/cards/types.ts",
-        "tests/fixtures/scout/session.json"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 14000
@@ -2344,13 +1535,6 @@
       "intent": "generate",
       "targets": [
         "tests/scout/planFromScout.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/scout/planFromScout.ts",
-        "tests/fixtures/scout/session.json",
-        "tests/fixtures/scout/noAnswer.json"
       ],
       "depends_on": [
         "plan-from-scout"
@@ -2362,13 +1546,6 @@
       "targets": [
         "src/reviewer/findObligations.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/contour/types.ts",
-        "src/language/naming.ts",
-        "src/language/profiles.ts",
-        "src/language/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 12000
@@ -2378,10 +1555,6 @@
       "targets": [
         "src/reviewer/checkEnvelope.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/git/ownership.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 12000
@@ -2390,11 +1563,6 @@
       "intent": "generate",
       "targets": [
         "src/reviewer/checkGuardrails.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/language/paths.ts",
-        "src/language/types.ts"
       ],
       "depends_on": [],
       "variants": 2,
@@ -2414,11 +1582,6 @@
       "targets": [
         "src/reviewer/renderFindings.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/fixtures/reviewer/review.input.json",
-        "tests/fixtures/reviewer/review.md"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 14000
@@ -2427,14 +1590,6 @@
       "intent": "generate",
       "targets": [
         "tests/reviewer/findObligations.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/reviewer/findObligations.ts",
-        "src/contour/load.ts",
-        "tests/fixtures/reviewer/record.yaml",
-        "tests/fixtures/reviewer/map.json"
       ],
       "depends_on": [
         "find-obligations"
@@ -2446,12 +1601,6 @@
       "targets": [
         "tests/reviewer/checkEnvelope.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/reviewer/checkEnvelope.ts",
-        "src/git/ownership.ts"
-      ],
       "depends_on": [
         "check-envelope"
       ],
@@ -2461,11 +1610,6 @@
       "intent": "generate",
       "targets": [
         "tests/reviewer/checkGuardrails.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/reviewer/checkGuardrails.ts"
       ],
       "depends_on": [
         "check-guardrails"
@@ -2477,11 +1621,6 @@
       "targets": [
         "tests/reviewer/planMutants.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/reviewer/planMutants.ts"
-      ],
       "depends_on": [
         "plan-mutants"
       ],
@@ -2491,13 +1630,6 @@
       "intent": "generate",
       "targets": [
         "tests/reviewer/renderFindings.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/reviewer/renderFindings.ts",
-        "tests/fixtures/reviewer/review.input.json",
-        "tests/fixtures/reviewer/review.md"
       ],
       "depends_on": [
         "render-findings"
@@ -2509,13 +1641,6 @@
       "targets": [
         "src/reviewer/runMutants.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/reviewer/planMutants.ts",
-        "src/acceptance/run.ts",
-        "src/acceptance/snapshot.ts",
-        "src/acceptance/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 12000
@@ -2524,22 +1649,6 @@
       "intent": "generate",
       "targets": [
         "src/reviewer/reviewCommand.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/reviewer/runMutants.ts",
-        "src/reviewer/findObligations.ts",
-        "src/reviewer/checkEnvelope.ts",
-        "src/reviewer/checkGuardrails.ts",
-        "src/reviewer/planMutants.ts",
-        "src/reviewer/renderFindings.ts",
-        "src/git/run.ts",
-        "src/git/log.ts",
-        "src/git/ownership.ts",
-        "src/contour/load.ts",
-        "src/contour/types.ts",
-        "src/language/paths.ts",
-        "src/language/types.ts"
       ],
       "depends_on": [
         "run-mutants"
@@ -2552,12 +1661,6 @@
       "targets": [
         "tests/reviewer/runMutants.p22b.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/reviewer/runMutants.ts",
-        "src/reviewer/planMutants.ts"
-      ],
       "depends_on": [
         "run-mutants"
       ],
@@ -2567,15 +1670,6 @@
       "intent": "generate",
       "targets": [
         "tests/reviewer/reviewCommand.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/reviewer/reviewCommand.ts",
-        "src/reviewer/runMutants.ts",
-        "tests/fixtures/reviewer/record.yaml",
-        "tests/fixtures/reviewer/map.json",
-        "tests/fixtures/reviewer/review.tiny.md"
       ],
       "depends_on": [
         "review-command"
@@ -2587,11 +1681,6 @@
       "targets": [
         "src/builder/goAcceptance.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/builder/types.ts",
-        "src/rules/guardrails.ts"
-      ],
       "depends_on": [
         "build-acceptances"
       ],
@@ -2602,13 +1691,6 @@
       "intent": "generate",
       "targets": [
         "tests/builder/goAcceptance.p30.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/builder/types.ts",
-        "src/builder/goAcceptance.ts",
-        "tests/builder/goAcceptance.p19.examples.test.ts"
       ],
       "depends_on": [
         "go-acceptance"
@@ -2629,11 +1711,6 @@
       "targets": [
         "tests/scaffold/initProject.p31b.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/scaffold/initProject.ts"
-      ],
       "depends_on": [
         "init-project"
       ],
@@ -2644,11 +1721,6 @@
       "targets": [
         "src/language/dependencyFinale.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/language/types.ts",
-        "src/language/profiles.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 12000
@@ -2657,13 +1729,6 @@
       "intent": "generate",
       "targets": [
         "tests/language/dependencyFinale.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/language/types.ts",
-        "src/language/profiles.ts",
-        "src/language/dependencyFinale.ts"
       ],
       "depends_on": [
         "dependency-finale"
@@ -2675,12 +1740,6 @@
       "targets": [
         "src/planner/selectCards.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/planner/types.ts",
-        "src/planner/plan.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000
@@ -2689,14 +1748,6 @@
       "intent": "generate",
       "targets": [
         "tests/planner/selectCards.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/types.ts",
-        "src/planner/types.ts",
-        "src/planner/selectCards.ts",
-        "tests/fixtures/planner/subset.plan.json"
       ],
       "depends_on": [
         "select-cards"
@@ -2708,11 +1759,6 @@
       "targets": [
         "src/planner/hideLater.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/planner/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000
@@ -2721,10 +1767,6 @@
       "intent": "generate",
       "targets": [
         "src/cli/goTree.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/planner/hideLater.ts"
       ],
       "depends_on": [
         "hide-later"
@@ -2737,15 +1779,6 @@
       "targets": [
         "tests/planner/hideLater.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/types.ts",
-        "src/planner/types.ts",
-        "src/planner/hideLater.ts",
-        "tests/fixtures/planner/hide.plan.json",
-        "tests/fixtures/planner/hide.tree.json"
-      ],
       "depends_on": [
         "hide-later"
       ],
@@ -2756,14 +1789,6 @@
       "targets": [
         "tests/cli/goTree.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/planner/hideLater.ts",
-        "src/cli/goTree.ts",
-        "tests/fixtures/cli/goTree.json",
-        "tests/fixtures/cli/goP7b.tree.json"
-      ],
       "depends_on": [
         "read-go-tree"
       ],
@@ -2773,11 +1798,6 @@
       "intent": "patch",
       "targets": [
         "src/planner/stubTrees.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/cards/transaction.ts"
       ],
       "depends_on": [
         "transaction-deck"
@@ -2790,15 +1810,6 @@
       "targets": [
         "tests/planner/stubTrees.p21c.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/types.ts",
-        "src/cards/transaction.ts",
-        "src/planner/stubTrees.ts",
-        "tests/fixtures/planner/stub.cards.json",
-        "tests/fixtures/planner/stub.trees.p21c.json"
-      ],
       "depends_on": [
         "stub-trees"
       ],
@@ -2808,14 +1819,6 @@
       "intent": "generate",
       "targets": [
         "src/cli/checkBuilds.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/language/profiles.ts",
-        "src/language/treeProfiles.ts",
-        "src/planner/stubTrees.ts",
-        "src/acceptance/treeCheck.ts"
       ],
       "depends_on": [
         "stub-trees",
@@ -2830,15 +1833,6 @@
       "targets": [
         "tests/cli/checkBuilds.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/types.ts",
-        "src/cli/document.ts",
-        "src/cards/layer.ts",
-        "src/cli/checkBuilds.ts",
-        "tests/fixtures/cli/oneCard.deck.json"
-      ],
       "depends_on": [
         "check-builds"
       ],
@@ -2849,10 +1843,6 @@
       "targets": [
         "src/language/treeProfiles.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/language/profiles.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000
@@ -2861,10 +1851,6 @@
       "intent": "generate",
       "targets": [
         "tests/language/treeProfiles.p28.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/language/treeProfiles.ts"
       ],
       "depends_on": [
         "tree-profiles"
@@ -2876,10 +1862,6 @@
       "targets": [
         "src/acceptance/treeCheck.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/acceptance/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 10000
@@ -2888,15 +1870,6 @@
       "intent": "generate",
       "targets": [
         "tests/acceptance/treeCheck.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/acceptance/treeCheck.ts",
-        "tests/fixtures/acceptance/treeOutput.json",
-        "tests/fixtures/acceptance/tree/a/a.go",
-        "tests/fixtures/acceptance/tree/b/b.go",
-        "tests/fixtures/acceptance/tree/_stubs/b/b.go"
       ],
       "depends_on": [
         "tree-check"
@@ -2908,10 +1881,6 @@
       "targets": [
         "src/cards/transaction.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000
@@ -2920,12 +1889,6 @@
       "intent": "generate",
       "targets": [
         "tests/cards/transaction.p28.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/transaction.ts",
-        "src/language/treeProfiles.ts"
       ],
       "depends_on": [
         "transaction-deck",
@@ -2937,11 +1900,6 @@
       "intent": "patch",
       "targets": [
         "src/runloop/transaction.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/transaction.ts",
-        "src/language/treeProfiles.ts"
       ],
       "depends_on": [
         "transaction-deck",
@@ -2955,14 +1913,6 @@
       "targets": [
         "tests/runloop/transaction.p28.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "tests/runloop/transaction.p24c.examples.test.ts",
-        "src/cards/types.ts",
-        "src/processor/types.ts",
-        "src/runloop/types.ts"
-      ],
       "depends_on": [
         "run-transaction"
       ],
@@ -2973,10 +1923,6 @@
       "targets": [
         "src/gate/stubVerdict.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/language/treeProfiles.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000
@@ -2986,11 +1932,6 @@
       "targets": [
         "src/gate/gatePlan.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/cards/transaction.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000
@@ -2999,16 +1940,6 @@
       "intent": "generate",
       "targets": [
         "src/gate/playGate.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/acceptance/types.ts",
-        "src/acceptance/run.ts",
-        "src/git/run.ts",
-        "src/language/treeProfiles.ts",
-        "src/gate/stubVerdict.ts",
-        "src/gate/gatePlan.ts"
       ],
       "depends_on": [
         "stub-verdict",
@@ -3023,11 +1954,6 @@
         "src/gate/playGate.ts",
         "src/gate/gateCommand.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/gate/gateMutants.ts"
-      ],
       "depends_on": [
         "gate-mutants"
       ],
@@ -3039,14 +1965,6 @@
       "targets": [
         "tests/gate/stubVerdict.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/gate/stubVerdict.ts",
-        "src/language/treeProfiles.ts",
-        "tests/fixtures/gate/stubLogs.json",
-        "tests/fixtures/gate/verdicts.json"
-      ],
       "depends_on": [
         "stub-verdict"
       ],
@@ -3056,13 +1974,6 @@
       "intent": "generate",
       "targets": [
         "tests/gate/gatePlan.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/types.ts",
-        "src/gate/gatePlan.ts",
-        "tests/fixtures/gate/plans.json"
       ],
       "depends_on": [
         "gate-plan"
@@ -3074,14 +1985,6 @@
       "targets": [
         "tests/gate/playGate.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/types.ts",
-        "src/gate/gatePlan.ts",
-        "src/gate/playGate.ts",
-        "tests/fixtures/gate/playGate.json"
-      ],
       "depends_on": [
         "play-gate"
       ],
@@ -3091,15 +1994,6 @@
       "intent": "generate",
       "targets": [
         "tests/gate/gateCommand.p22b.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/types.ts",
-        "src/gate/gateMutants.ts",
-        "src/gate/gateCommand.ts",
-        "src/cli/document.ts",
-        "src/cli/checkBuilds.ts"
       ],
       "depends_on": [
         "gate-command"
@@ -3111,10 +2005,6 @@
       "targets": [
         "src/gate/identity.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/git/run.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000
@@ -3123,13 +2013,6 @@
       "intent": "generate",
       "targets": [
         "src/gate/gateMutants.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/language/paths.ts",
-        "src/reviewer/planMutants.ts",
-        "src/reviewer/runMutants.ts"
       ],
       "depends_on": [
         "run-mutants"
@@ -3142,12 +2025,6 @@
       "targets": [
         "tests/gate/identity.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/gate/identity.ts",
-        "src/cli/main.ts"
-      ],
       "depends_on": [
         "check-identity"
       ],
@@ -3157,12 +2034,6 @@
       "intent": "generate",
       "targets": [
         "tests/gate/gateMutants.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cards/types.ts",
-        "src/gate/gateMutants.ts"
       ],
       "depends_on": [
         "gate-mutants"
@@ -3174,20 +2045,6 @@
       "targets": [
         "src/debt/acceptGroup.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/debt/acceptCard.ts",
-        "src/debt/cardBrief.ts",
-        "src/cards/types.ts",
-        "src/cards/layer.ts",
-        "src/compiler/types.ts",
-        "src/compiler/parse.ts",
-        "src/acceptance/types.ts",
-        "src/acceptance/snapshot.ts",
-        "src/acceptance/run.ts",
-        "src/git/commit.ts",
-        "src/git/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 14000
@@ -3196,14 +2053,6 @@
       "intent": "generate",
       "targets": [
         "tests/debt/acceptGroup.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/debt/acceptGroup.ts",
-        "src/debt/cardBrief.ts",
-        "tests/fixtures/debt/group.deck.json",
-        "tests/fixtures/debt/group.run.json"
       ],
       "depends_on": [
         "accept-group"
@@ -3215,11 +2064,6 @@
       "targets": [
         "src/scout/sessionText.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/scout/cagePath.ts",
-        "src/scout/spendBudget.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 12000
@@ -3228,12 +2072,6 @@
       "intent": "patch",
       "targets": [
         "tests/scout/sessionText.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "tests/fixtures/scout/examples.json",
-        "src/scout/sessionText.ts"
       ],
       "depends_on": [
         "session-text"
@@ -3245,11 +2083,6 @@
       "targets": [
         "src/cli/projectConfig.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/contour/load.ts",
-        "src/cli/document.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 12000
@@ -3258,11 +2091,6 @@
       "intent": "patch",
       "targets": [
         "tests/cli/projectConfig.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cli/projectConfig.ts"
       ],
       "depends_on": [
         "load-config"
@@ -3274,11 +2102,6 @@
       "targets": [
         "src/cli/unprovenStubs.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/cards/types.ts",
-        "src/cards/transaction.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000
@@ -3287,12 +2110,6 @@
       "intent": "generate",
       "targets": [
         "tests/cli/unprovenStubs.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/cli/unprovenStubs.ts",
-        "src/cli/document.ts"
       ],
       "depends_on": [
         "unproven-stubs"
@@ -3303,11 +2120,6 @@
       "intent": "patch",
       "targets": [
         "src/rules/layers.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/contour/types.ts",
-        "src/contour/select.ts"
       ],
       "depends_on": [
         "validate-record"
@@ -3320,11 +2132,6 @@
       "targets": [
         "tests/rules/layers.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "tests/fixtures/rules/examples.json"
-      ],
       "depends_on": [
         "layer-edges"
       ],
@@ -3335,10 +2142,6 @@
       "targets": [
         "src/language/guardrails.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/language/types.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 6000
@@ -3347,12 +2150,6 @@
       "intent": "generate",
       "targets": [
         "tests/language/guardrails.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/language/types.ts",
-        "src/language/guardrails.ts"
       ],
       "depends_on": [
         "canonical-guardrail"
@@ -3364,12 +2161,6 @@
       "targets": [
         "src/rules/guardrails.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/contour/types.ts",
-        "src/language/types.ts",
-        "src/language/paths.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 14000
@@ -3379,12 +2170,6 @@
       "targets": [
         "tests/rules/guardrails.examples.test.ts",
         "tests/rules/guardrails.p31c.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "tests/fixtures/rules/examples.json",
-        "src/rules/guardrails.ts"
       ],
       "depends_on": [
         "guardrail-rules"
@@ -3396,10 +2181,6 @@
       "targets": [
         "src/rules/notes.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/rules/guardrails.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 6000
@@ -3408,12 +2189,6 @@
       "intent": "generate",
       "targets": [
         "tests/rules/notes.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/rules/notes.ts",
-        "tests/fixtures/rules/examples.json"
       ],
       "depends_on": [
         "plan-notes"
@@ -3425,11 +2200,6 @@
       "targets": [
         "src/criterion/probeNames.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/language/types.ts",
-        "src/language/naming.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000
@@ -3438,14 +2208,6 @@
       "intent": "generate",
       "targets": [
         "tests/criterion/probeNames.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/criterion/probeNames.ts",
-        "tests/fixtures/criterion/examples.json",
-        "tests/fixtures/criterion/titles1.ts.txt",
-        "tests/fixtures/criterion/titles2.ts.txt"
       ],
       "depends_on": [
         "probe-names"
@@ -3456,16 +2218,6 @@
       "intent": "generate",
       "targets": [
         "src/criterion/defaultChecks.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/builder/types.ts",
-        "src/cards/types.ts",
-        "src/contour/types.ts",
-        "src/language/types.ts",
-        "src/language/paths.ts",
-        "src/planner/types.ts",
-        "src/criterion/probeNames.ts"
       ],
       "depends_on": [
         "probe-names",
@@ -3480,13 +2232,6 @@
       "targets": [
         "tests/criterion/defaultChecks.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/criterion/defaultChecks.ts",
-        "src/builder/types.ts",
-        "tests/fixtures/criterion/examples.json"
-      ],
       "depends_on": [
         "default-checks"
       ],
@@ -3497,12 +2242,6 @@
       "targets": [
         "src/criterion/probeSkeleton.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/contour/types.ts",
-        "src/language/types.ts",
-        "src/criterion/probeNames.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000
@@ -3511,13 +2250,6 @@
       "intent": "generate",
       "targets": [
         "tests/criterion/probeSkeleton.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/criterion/probeSkeleton.ts",
-        "tests/fixtures/criterion/examples.json",
-        "tests/fixtures/criterion/skeleton1.input.json"
       ],
       "depends_on": [
         "probe-skeleton"
@@ -3529,14 +2261,6 @@
       "targets": [
         "src/primerRecord/recordGaps.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/contour/types.ts",
-        "src/language/types.ts",
-        "src/language/paths.ts",
-        "src/language/naming.ts",
-        "src/language/profiles.ts"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 12000
@@ -3545,9 +2269,6 @@
       "intent": "generate",
       "targets": [
         "src/primerRecord/importGaps.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md"
       ],
       "depends_on": [],
       "variants": 2,
@@ -3558,10 +2279,6 @@
       "targets": [
         "src/primerRecord/renderRecord.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/fixtures/primerRecord/section1.md"
-      ],
       "depends_on": [],
       "variants": 2,
       "max_tokens": 8000
@@ -3570,15 +2287,6 @@
       "intent": "generate",
       "targets": [
         "src/primerRecord/recordSection.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "src/contour/load.ts",
-        "src/contour/types.ts",
-        "src/language/types.ts",
-        "src/primerRecord/recordGaps.ts",
-        "src/primerRecord/importGaps.ts",
-        "src/primerRecord/renderRecord.ts"
       ],
       "depends_on": [
         "record-gaps",
@@ -3593,13 +2301,6 @@
       "targets": [
         "tests/primerRecord/recordGaps.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/primerRecord/recordGaps.ts",
-        "src/contour/load.ts",
-        "tests/fixtures/primerRecord/examples.json"
-      ],
       "depends_on": [
         "record-gaps"
       ],
@@ -3609,12 +2310,6 @@
       "intent": "generate",
       "targets": [
         "tests/primerRecord/importGaps.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/primerRecord/importGaps.ts",
-        "tests/fixtures/primerRecord/examples.json"
       ],
       "depends_on": [
         "import-gaps"
@@ -3626,13 +2321,6 @@
       "targets": [
         "tests/primerRecord/renderRecord.examples.test.ts"
       ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/primerRecord/renderRecord.ts",
-        "tests/fixtures/primerRecord/section1.md",
-        "tests/fixtures/primerRecord/examples.json"
-      ],
       "depends_on": [
         "render-record"
       ],
@@ -3642,12 +2330,6 @@
       "intent": "generate",
       "targets": [
         "tests/primerRecord/recordSection.examples.test.ts"
-      ],
-      "context_slice": [
-        "documentation/CONVENTIONS.md",
-        "tests/helpers.ts",
-        "src/primerRecord/recordSection.ts",
-        "tests/fixtures/primerRecord/examples.json"
       ],
       "depends_on": [
         "record-section"

@@ -146,7 +146,8 @@ or record the departure (§1.3).
    it needs (`context`). A judge that PATCHES an existing test file also gets the types of that file's
    own variables it will touch (e.g. "`PlanDocument` has no key `warnings`"). Whitespace inside an example
    value does not survive the record's rendering (runs of spaces collapse): put such a value in a fixture. Most reds of past runs were judges, not code.
-8. **The Contour never goes into a slice whole**; a card that needs text outside its Function
+8. **A map `context_slice` replaces the cut's slice whole** (the docs and the targets of the
+   cards it depends on are no longer added): list them too, or give no slice. **The Contour never goes into a slice whole**; a card that needs text outside its Function
    gets an excerpt. A map `instruction` override is the card's opening; the Function follows.
 9. **Guards check code, not text** (AST / ESLint rules, never grep); never write a forbidden token
    as prose in an instruction.
@@ -276,10 +277,10 @@ fix the data and check again. A second failure: stop and report.
 
 1. **Explicit paths only**: `git add <path>…`; never `git add -A`, `commit -a` or `git add .` — a
    shared tree holds other sessions' uncommitted edits.
-2. **No merge, no push** unless the header gives it. A merge is fast-forward only, never while
-   another run owns the repo; no force-push.
-3. **After the merge the map drops this phase's `instruction` and `acceptance` overrides** (one
-   data commit): an override lives for one cut, the map keeps only placement.
+2. **No merge, no push** unless the header gives it; "close it on merge" gives both (merge,
+   push, close). A merge is fast-forward only, never while another run owns the repo; no force-push.
+3. **After the merge the map drops this phase's `instruction`, `acceptance` and `context_slice`
+   overrides** (one data commit): an override lives for one cut, the map keeps only placement.
 4. After the run the checkout is on `morph/<runId>`: leave it so for the operator, or return to
    the base branch before any further data commit.
 

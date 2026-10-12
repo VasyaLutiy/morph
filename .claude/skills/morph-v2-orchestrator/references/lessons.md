@@ -71,3 +71,5 @@ P24c, P24b. PM = the MorphStudio PM's live phases P7b, P7c, P8a (10.10).
 | §6.1 a patch stub equal to the committed file is expected in `unproven` | P31c, 11.10 | the probe needed no new declaration; `unproven` always lists such a stub |
 | §1.1 the spec reaches no card; §3.9 past specs not read | operator, 12.10 | 210 map overrides (52 specs) opened with "Read docs/TASK_Pxx §2.2", `map.docs` held a two-day-old spec in every card; the record's own cut already says "every name you need is below" |
 | §11.3 the map drops the phase's instruction/acceptance overrides after the merge | operator, 12.10 | overrides never left the map: 1 040 KB of it, 42 inlined guard copies in acceptances; after cleaning 86 KB |
+| §4.8 a slice override replaces the cut's slice; §11.3 slices dropped too | P36, 12.10 | 206 old slices left by the 12.10 cleanup hid the dependency targets from P36's cards: two data commits after the first cut |
+| §11.2 "close it on merge" gives merge and push | P36, 12.10 | the orchestrator read it so, unsure; one-line header |
