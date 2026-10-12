@@ -5205,13 +5205,14 @@ System:
             copies <stubDir or refDir>/<target> to scratch/<target>, parents created; start = deps.now(); Run
             Acceptance(card.acceptance ?? "", scratch, {env: deps.env, timeoutMs: deps.timeoutMs}); seconds =
             Math.round((deps.now() − start) / 100) / 10. A stub step: v = Stub Verdict(log, expectedStage(acceptance ?? ""),
-            targets, TREE_PROFILES' fileLine), probeBreaks = the lines of v.outside whose FIRST fileLine match (new
-            RegExp each, in order) has a probe file (cards' isProbeFile) as group 1, once each, order kept, outside = the
-            rest (issue #50, F1: a build error naming a probe file — the card's own or another card's — is the
-            orchestrator's data, not an outside line); ok = exit !== 0 and v.stage === v.expected and v.outside empty and
+            targets, TREE_PROFILES' fileLine), probeBreaks = Probe Lines (cards) of the whole result log, FILE_LINES — a
+            probe's compile line prints at the probe stage, where Stub Verdict's stages collect nothing: its `outside` is
+            empty there (issue #50, F1: a build error naming a probe file — the card's own or another card's — is the
+            orchestrator's data, not an outside line); outside = v.outside without the probeBreaks lines, order kept.
+            ok = exit !== 0 and v.stage === v.expected and v.outside empty and
             probeBreaks empty; a ref or
-            retry step: v = Stub Verdict(log, "", targets, the fileLines, null) (every stage), the same probeBreaks split
-            of v.outside, ok = exit === 0. Row
+            retry step: v = Stub Verdict(log, "", targets, the fileLines, null) (every stage), the same probeBreaks of
+            the log and the same split of v.outside, ok = exit === 0. Row
             {phase, generation, card, exit, timedOut, seconds, stage: v.stage, expected: v.expected for a stub step else
             null, outside, failures: v.failures, probeBreaks, ok} — probeBreaks after failures, an empty list written,
             never omitted. Then a non-empty commit: gitOk(scratch, ["add", "-A", "-f",

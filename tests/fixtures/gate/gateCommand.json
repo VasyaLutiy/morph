@@ -774,7 +774,7 @@
      "card": "p",
      "generation": 0,
      "language": null,
-     "stubbed": 1,
+     "stubbed": 0,
      "missing": [],
      "breaks": [],
      "note": "no language profile claims src/p.txt: not built"
