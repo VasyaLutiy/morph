@@ -5,6 +5,7 @@ import { planSpec } from "../planner/plan.js";
 import { selectCards } from "../planner/selectCards.js";
 import { buildAcceptances } from "../builder/buildAcceptances.js";
 import { defaultChecks } from "../criterion/defaultChecks.js";
+import { probeSkeleton } from "../criterion/probeSkeleton.js";
 import { probeFile } from "../builder/buildAcceptances.js";
 import { resolveProfile } from "../language/profiles.js";
 import { readPlanChecks } from "./readPlanChecks.js";
@@ -146,6 +147,24 @@ export function planCommand(root: string, args: PlanArgs): CommandResult {
     }
     checks = d.checks;
     overrides = d.overrides;
+    if (args.writeProbes === true) {
+      const probes: string[] = [];
+      for (const c of checks.cards) {
+        if (c.files !== null || d.probes[c.id] !== undefined) continue;
+        const rel = checks.parts + "/" + probeFile(profiled.profile, c.id);
+        const text = probeSkeleton({
+          id: c.id,
+          profile: profiled.profile,
+          functions: planned.criteria[c.id]?.functions ?? [],
+          targets: plan.cards.find((k) => k.customId === c.id)?.targets ?? [],
+        });
+        const abs = path.resolve(root, rel);
+        fs.mkdirSync(path.dirname(abs), { recursive: true });
+        fs.writeFileSync(abs, text, "utf8");
+        probes.push(rel);
+      }
+      return { code: 0, document: { spec: plan.spec, components: plan.components, probes } };
+    }
     notes = planNotes(
       checks.cards.map((c) => ({
         id: c.id,
