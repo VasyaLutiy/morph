@@ -177,7 +177,7 @@ kept since); the ds batch slug is slow (~73 min); a `--checks` deck mixing langu
 language; gofmt can redden otherwise correct Go (the retry sees the diff); the primer's Go call rule misses a signature split
 across lines or a `testing` import under another name (P16); `morph accept` compares `git status --porcelain` paths without `-z`, so a quoted path (spaces, non-ASCII) reads as outside the targets (P17); `--only` keeps the cards in plan order, never the order given (Order Deck sorts each layer; an equivalent mutant, P20); the template leak scan finds `templates/common/tools/vps-start.sh:20` "(operator 08.10)" (bc311aa, P20).
 Lessons for the next preparations: default code targets add a test file (give a smoke cap or code-only targets); new
-files need `"intent": "generate"` in the map; a new `src/` folder needs its layer in `decks/tools/guard.mjs`; size a judge
+files need `"intent": "generate"` in the map; a new `src/` folder needs its `uses` steps (or `dependsOn`) and Guardrails in `contour.yaml`, never a guard table (P33); size a judge
 from its expected answer (≥ 28 000 for a ~20 KB answer, before the ×3); vary every constant the code must not hard-code
 across the examples; every mutant run under a 120 s timeout; kill leftover watchers/workers of the scratch tree; a Go repo
 installs `decks/tools/goguard.mjs` and `gofirstdiff.mjs` as its guard.mjs/firstdiff.mjs.

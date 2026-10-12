@@ -216,8 +216,8 @@
     "then": "2 DeckError \"acceptances not built (1 error):\\nchecks card 'zz' is not in the deck\""
   },
   "Plan Command 8": {
-    "given": "the repository; contour.yaml, planner, cli, judge, map tests/fixtures/cli/p10.map.json, checks decks/p10/checks.json",
-    "then": "code 0; v2deck.json's 12 acceptances byte for byte, guard.p10.txt (trimEnd) replaced by decks/tools/guard.mjs"
+    "given": "the repository; contour.yaml, planner, cli, cli-plan, judge, map tests/fixtures/cli/p10.map.json, checks decks/p10/checks.json, out null",
+    "then": "code 0; every customId of v2deck.json is a card of the cut; document.proseOnly [\"No Network In Tests\", \"No Shell Outside Acceptance\", \"Frozen Tree During Run\"]; card render's acceptance contains p33.renderGuard.txt (trimEnd) and decks/tools/guard.mjs (trimEnd), which contains \"morph-guard-contract: 3\""
   },
   "Main 16": {
     "given": "a tmpRoot t; deps {env {PATH}, now () => 0, cwd t.root, transport null}; argv A = init --root p --name acme --language go --module example.com/acme --templates <the fixture tree tests/fixtures/scaffold/tpl, absolute>; then A again; then init --name acme --language rust; then t/t2 holding common/a.txt \"{{name}}\\n\" and python/b.txt \"{{language}}\\n\", argv init --root q --name b --language python --templates t2",

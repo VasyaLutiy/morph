@@ -238,7 +238,7 @@ stages:
   document as `proseOnly` (`rules/guardrails.ts:139-142`, `planCommand.ts:191`).
 - **Contract line is the switch.** If `decks/tools/guard.mjs` declares `morph-guard-contract: 3`,
   layers and rules are always passed (`rules/guardrails.ts:212-234`). Contract < 2 with no `layers.json`
-  means nothing is passed, so old projects and MorphV2 itself stay byte for byte. Contract < 3 with a
+  means nothing is passed, so old projects stay byte for byte (MorphV2 itself speaks contract 3 since P33). Contract < 3 with a
   rule to pass is exit 2: "copy templates/<lang>/decks/tools/guard.mjs" (`:246-257`).
 - **Fail closed.** The template guard rejects a `src` call without the layers or rules argument:
   `guard: no layer edges given — re-cut with morph plan`
@@ -357,7 +357,7 @@ Status at `120a849`. "Parity" means the same effect, not the same bytes (#44).
 | `language` | profile, targets, finale | acceptance stages | default `python` | default `typescript` + plan warning (`planCommand.ts:171-178`) | changed, warned since P34a |
 | `preconditions` | card + judge | — | — | `render.ts:91-93`, `judges.ts:64-81` | V2 addition |
 | unknown key | ignored | — | `record.py:157-158` | warning (`record.ts:127-131`) | restored P34a (#44) |
-| MorphV2's own record | cuts every V2 deck | **nothing**: own guard has no contract line, so no layers/rules arguments | — | `decks/tools/guard.mjs:1-82`; `decks/p31a/deck.json` guard line `node $P/guard.mjs src src/language/guardrails.ts` | **open, P33** |
+| MorphV2's own record | cuts every V2 deck | layers from `uses`/`dependsOn`, canonical Guardrails per Component (Function level where a directory mate breaks the rule) | — | `decks/tools/guard.mjs` = the template guard, contract 3 (P33, #48) | done, P33 |
 
 ## 7. The life cycle of a record change
 
@@ -404,25 +404,28 @@ Open:
    (a judge left out of `checks.json` keeps the template acceptance) is part of item 3.
 2. **#42 ledger item 9: Function-level Guardrail scope — done in P31c (11.10).** Card Rules merges the rules of a card's own files into its directories' entries, so `No Clock` on `Render Total` no longer reaches its sibling `Stamp Line`. Fixtures in `tests/fixtures/rules/scope/cases.json` cover Go and TS at Function, Interface, Component and System level. The guard contract stays 3.
    Also on the #42 ledger: the Interface-only rule ("interfaces share one core" maps to no rule,
-   `contour.yaml:2307-2309`) and item 6 (P33).
+   `contour.yaml:2307-2309`; prose by decision, DECISIONS P33) and item 6 (P33, done).
 3. **#47: primer reads the record.** A $0 "Record vs code" section listing: recorded but not built,
    built but not recorded, Component weight against 30 000 B, the plan warnings, layer gaps.
 4. **#30: Python parity.** This covers the canonical Guardrail rows. The V2 table is empty for Python
    (`language/guardrails.ts:13`), and the acceptance builder refuses Python (`buildAcceptances.ts:41-48`).
    Old Morph's only machine Guardrails were Python greps (`plan_spec_guards.py:52-56`).
-5. **P33: MorphV2 eats its own rule** (`docs/Plan_Epic2_Fixes.md:114-117`). MorphV2's guard is a hand
-   file with no contract line. It says it is "inlined … by decks/tools/build.py", which is archived
-   (`decks/tools/guard.mjs:1-2`). Its record declares fewer `uses` than `LAYERS` (9 missing edges, #42
-   ledger item 6). Its three System Guardrails (`No Network In Tests`, `No Shell Outside Acceptance`,
-   `Frozen Tree During Run`) are not canonical names, so all three would be `proseOnly`. No Component
-   carries a canonical Guardrail. Its decks' guard lines get no record argument (`decks/p31a/deck.json`).
+5. **P33: MorphV2 eats its own rule — done (#48).** `decks/tools/guard.mjs` is the TypeScript template guard
+   (contract 3); its hand tables are gone. The record gained the 9 missing edges as `Component.dependsOn`, canonical
+   Guardrails on every Component, and lost the 22 `produces` steps of a primitive type. Rules are keyed by
+   DIRECTORY, so a Component's Guardrail binds every Component sharing its directory (runloop and runloop-subset, cli,
+   cli-plan, config and planner-subset, scout and scout-session, reviewer and review-session, gate and gate-proof,
+   builder and builder-go): a rule true for one file only is attached at Function level. What the hand tables said and
+   no canonical name can say stays prose: the one spawning file of git and of acceptance beyond No Shell, the one
+   env reader (Read Registry), the clock formatters (Primer Command, Scout Command; No Clock at Function level on
+   their siblings), `yaml` in Parse Document alone (the Component's `uses` allows it in all of `src/contour`), the
+   node:fs sets of the I/O files, `Date.now` in `src/cli`. "Interfaces share one core" stays prose by decision
+   (DECISIONS P33): no AST rule states it, and old Morph's only machine form was a Python grep.
 6. **The `uses` slice gap (not filed).** A step `uses: <Component>` gives a layer edge but no
    `dependsOn` and no slice entry. The card that uses `units` does not see `src/units/addCents.ts`
    (demo §3). Old Morph behaved the same.
-7. **Stale text.** DECISIONS P9 lines still say unknown keys and missing examples are rejected
-   (`docs/DECISIONS.md:115-116`). P34a changed both, and DECISIONS has no entries after P22b
-   (`DECISIONS.md:712`). The skill's `layers.json` line was fixed in 120a849 (`SKILL.md:114-119` now
-   says "never a `layers.json` entry").
+7. **Stale text — fixed in P33.** DECISIONS P9's "unknown keys and missing examples are rejected" carries a
+   superseding line (P33) pointing here: P34a warns on an unknown key and loads a Function with no example.
 
 Regression tests that hold the line today:
 
@@ -441,9 +444,9 @@ Regression tests that hold the line today:
   - `tests/rules/guardrails.p31b.examples.test.ts:113` (Go) and `:161` (TypeScript), cases
     `tests/fixtures/rules/single/cases.json`;
   - changing only the record changes the guard verdict. Go covers 8 rule kinds (layers, dependencies,
-    Pure, No Shell, No Clock, No Network, No Env, Stdlib Only). TypeScript covers 7 (layers,
-    dependencies, Pure, No Clock, No Env, No Process, Stdlib Only). Each language has 9 and 8 records,
-    counting a base record;
+    Pure, No Shell, No Clock, No Network, No Env, Stdlib Only). TypeScript covers 9 (layers,
+    dependencies, Pure, No Shell, No Clock, No Network, No Env, No Process, Stdlib Only; No Shell and No Network
+    since P33). Each language has 9 and 10 records, counting a base record;
   - a file beside the record (`decks/tools/layers.json` allowing everything, a stale
     `decks/tools/guardrails.json`) changes nothing.
 - **MorphStudio P9a replays (ledger 5):** `tests/rules/guardrails.p31b.examples.test.ts:36` (run 2:
@@ -455,4 +458,5 @@ Regression tests that hold the line today:
 - `tests/gate/identity.examples.test.ts`: committed cuts stay byte-identical. This includes MorphV2
   decks, so P33 must change them on purpose.
 
-The single-source cases do not cover No Shell and No Network for TypeScript, or any Python rule (see #30).
+The single-source cases cover every TypeScript rule kind since P33 (No Shell and No Network added to
+`tests/fixtures/rules/single/cases.json`); no Python rule is covered (see #30).

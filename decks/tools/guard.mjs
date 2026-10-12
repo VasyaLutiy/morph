@@ -1,107 +1,39 @@
-// MorphV2 guard: the layer rules of documentation/CONVENTIONS.md and the test-file rules, checked on
-// the TypeScript syntax tree. Inlined into every acceptance by decks/tools/build.py.
-//   node guard.mjs src [file,file,...]                   every .ts under src/, or only these
-//   node guard.mjs helpers <file> <name,name,...>        the stub module: node:* only, exports
-//   node guard.mjs tests <file> <min> <max> [lits.json]  one test file; lits = strings it must hold
+// Guard of a TypeScript project: the layer rules and the Guardrail rules of the record, and the test-file rules,
+// checked on the TypeScript syntax tree (never by grep: a word in a comment is not an import). `morph plan --checks`
+// inlines this file into every acceptance.
+// morph-guard-contract: 3
+//   node guard.mjs src <file,file,...> <pkgs> <layers> <rules>  these files, all four arguments written by
+//                                                        `morph plan --checks` from the record:
+//     pkgs   = the packages the card's Component declares (`uses`, of System.dependencies), ","-joined ('' none): the
+//              only npm packages these files may import (node:* is always allowed unless a rule forbids it);
+//     layers = JSON {"<dir>": ["<dir it may import>", ...]} from the `uses: <Component>` steps (contract 2); a dir's
+//              layer is its first folder under src/;
+//     rules  = JSON {"<dir>": {"<rule id>": "<the Guardrail and where the record attaches it>"}} from the record's
+//              canonical Guardrail names (contract 3), keyed by the file's directory.
+//              A missing layers or rules argument is red, never "everything allowed" (issue #46): re-cut with morph plan.
+//   node guard.mjs helpers <file> <name,name,...>        the stub module: node:* only, these exports
+//   node guard.mjs tests <file> <min> <max> [lits.json]  one test file; lits = strings it must hold; it may import
+//                                                        vitest, node:*, relative paths and package.json's dependencies
+// Rule ids (a red names the file and line):
+//   no-shell     no import of node:child_process
+//   no-clock     no Date, no Math.random
+//   no-network   no fetch, WebSocket, XMLHttpRequest; no import of node:net, node:http, node:https, node:http2,
+//                node:dgram, node:tls
+//   no-env       no process.env
+//   no-process   no process, no console
+//   stdlib-only  no package import (node:* and relative paths only), the declared packages included
+//   pure         of node:* only node:path; no fetch, WebSocket, XMLHttpRequest, Date, console, process, Math.random
+// No file beside the record is read: every allowed package, layer and rule comes in the arguments (P31b, issue #42).
 import ts from "typescript";
 import fs from "node:fs";
 import path from "node:path";
 
 const bad = [];
-
-// which internal layers a layer may import; "*" = any; unknown dirs are reported
-const LAYERS = {
-  cards: [], wait: [],
-  response: ["cards"], store: ["cards"], compiler: ["cards"], language: ["cards"],
-  contour: ["cards"], git: ["cards"], acceptance: ["cards", "wait", "compiler"],
-  processor: ["cards", "wait", "compiler"], planner: ["cards", "contour", "language"],
-  // P30: builder writes rules' Layers Arg and Card Layers into the guard line (decks/p30/TASK.md §4)
-  builder: ["cards", "language", "rules"],
-  // P30: rules reads the layer rule off the record (contour's types and componentSlug, language's profiles, naming and
-  // paths) (decks/p30/TASK.md §4)
-  rules: ["contour", "language"],
-  // P35a: criterion checks probes and builds judge defaults from the cut (builder's types and probeFile, planner's
-  // Card Criterion, contour's Example, language's naming and paths) (decks/p35a/TASK.md §2.2)
-  criterion: ["cards", "builder", "contour", "language", "planner"],
-  primer: ["cards", "git", "store", "language"],
-  // P13a: the seed reads language's profiles (and, from P13b, git's ownership) (decks/p13a/TASK.md §4)
-  // P13b: the round loop builds the processor's Request and Message (compiler's types) (decks/p13b/TASK.md §4)
-  scout: ["cards", "processor", "wait", "primer", "language", "git", "compiler"],
-  // P14a: obligations from the record need language's naming and profiles (decks/p14/TASK.md §4)
-  // P14b: the mutant runs go through acceptance's runner and snapshot (decks/p14b/TASK.md §4)
-  reviewer: ["cards", "contour", "primer", "scout", "git", "language", "acceptance"],
-  runloop: ["cards", "wait", "store", "compiler", "response", "acceptance", "language",
-    "git", "processor"],
-  // P11b2: the detached batch commands (morph submit / morph collect), the processor layer's second Component
-  batches: ["cards", "wait", "compiler", "processor"],
-  // P17: the debt commands (morph card / morph accept, issue #8) read the deck through cards, run the card's acceptance
-  // through acceptance and commit through git (decks/p17/TASK.md §4)
-  // P24b: the group accept (issue #16) writes archived answers parsed by compiler's parseAnswer, as the run does
-  // (decks/p24b/TASK.md §4)
-  debt: ["cards", "compiler", "acceptance", "git"],
-  // P18: morph init (issue #9) copies the template folders into a new project: no other layer (decks/p18/TASK.md §4)
-  scaffold: [],
-  // P22a: morph gate (issue #13) plays a deck's stubs and references in a scratch clone: the deck through cards, the
-  // acceptances through acceptance, the clone and its commits through git, the file:line patterns through language
-  // (decks/p22a/TASK.md §4)
-  // P22b: the gate's mutants go through the reviewer's Plan Mutants and Run Mutants; Check Identity hashes a cut with
-  // node:crypto (decks/p22b/TASK.md §4)
-  gate: ["cards", "acceptance", "git", "language", "reviewer"],
-  cli: "*",
-};
-const ROOT_FILES = new Set(["src/index.ts"]);
-const SHELL = new Set(["acceptance", "git"]);          // node:child_process
-const NET = new Set(["processor"]);                    // fetch, WebSocket, XMLHttpRequest
-const CONSOLE = new Set(["cli"]);                      // console, process.exit
-const PROCESS = new Set(["cli", "processor", "acceptance"]);
-const NO_CLOCK = new Set(["cards", "compiler", "response", "language", "contour", "planner", "builder", "batches", "primer",
-  "scout", "reviewer", "debt", "scaffold", "gate", "rules"]);
-// P12a: the one file of src/primer that turns the clock parameter deps.now() into an ISO string (decks/p12/TASK.md §4)
-// P13b: the one file of src/scout that turns deps.now() into the session id and createdAt (decks/p13b/TASK.md §4)
-const CLOCK_FORMATTERS = new Set(["src/primer/primerCommand.ts", "src/scout/scoutCommand.ts"]);
-const YAML = new Set(["contour"]);
-// P3: the acceptance gets the child's environment as a parameter (decks/p3/TASK.md §4)
-const NO_ENV = new Set(["acceptance", "processor", "git", "batches", "primer", "scout", "reviewer", "debt", "scaffold", "gate",
-  "rules"]);
-// P4: the one file of a NO_ENV layer that may read process.env (Read Registry, decks/p4/TASK.md §4)
-const ENV_READERS = new Set(["src/processor/registry.ts"]);
-// P6: the one file of src/git that spawns (Run Git, decks/p6/TASK.md §4); git takes the env whole
-const GIT_SPAWNER = "src/git/run.ts";
-// P7: the binary's entry is src/cli.ts (package.json bin dist/cli.js), layer cli; it alone touches
-// process (env, argv, cwd, stdout, exitCode) and the wall clock: src/cli/* gets them as parameters
-// (decks/p7/TASK.md §4)
-const CLI_ENTRY = "src/cli.ts";
-// P8: language is pure data and pure functions; of the Node modules only node:path (posix) is allowed
-// (decks/p8/TASK.md §4)
-// P9: contour reads text it is given: no Node module at all, and the package yaml only in Parse Document
-// (src/contour/load.ts) (decks/p9/TASK.md §4)
-// P10a: planner is pure like language: of the Node modules only node:path (decks/p10a/TASK.md §4)
-// P10b: builder is pure the same way (decks/p10b/TASK.md §4)
-// P13a: scout reaches the file system only through its ScoutFs parameter: of the Node modules only node:path
-// (decks/p13a/TASK.md §4; P13b adds the one node:fs adapter file)
-const NODE_ONLY = { language: new Set(["node:path"]), contour: new Set(), planner: new Set(["node:path"]),
-  builder: new Set(["node:path"]), rules: new Set(["node:path"]), scout: new Set(["node:path"]), reviewer: new Set(),
-  debt: new Set(["node:fs", "node:path"]), scaffold: new Set(["node:fs", "node:path", "node:url"]),
-  gate: new Set(["node:fs", "node:os", "node:path", "node:crypto"]) };
-// P18: scaffold reads the template folders and writes the new project (node:fs, node:path) and finds the package root from
-// its own module file (node:url's fileURLToPath of import.meta.url); it spawns nothing (decks/p18/TASK.md §4)
-// P17: debt reads the deck file, the card's files and the run archive (node:fs, node:path); it spawns only through
-// acceptance's runAcceptance and git's gitOk (decks/p17/TASK.md §4)
-// P14a: the reviewer's checks are pure functions of git's outputs, the record and the texts they are given: no Node
-// module at all (decks/p14/TASK.md §4; P14b adds the review command's I/O file)
-// P13b: the two I/O files of src/scout, the commands `morph scout` (the node:fs ScoutFs adapter, git ls-files, the
-// scout.json write, the question's sha256) and `morph plan --from-scout` (reads scout.json, writes the deck); every other
-// scout file stays pure (decks/p13b/TASK.md §4)
-// P14b: the one I/O file of src/reviewer, `morph review` (the record, the map and scout.json read, the review written);
-// Run Mutants writes and restores through acceptance's snapshot, so it imports no Node module (decks/p14b/TASK.md §4)
-const NODE_FILES = { "src/scout/scoutCommand.ts": new Set(["node:fs", "node:crypto"]),
-  "src/scout/planFromScout.ts": new Set(["node:fs"]),
-  "src/reviewer/reviewCommand.ts": new Set(["node:fs", "node:path"]) };
-const YAML_FILE = "src/contour/load.ts";
+const RULE_ORDER = ["no-shell", "no-clock", "no-network", "no-env", "no-process", "stdlib-only", "pure"];
+const NET_MODULES = ["net", "http", "https", "http2", "dgram", "tls"];
 
 function parse(file) {
-  return ts.createSourceFile(file, fs.readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true,
-    ts.ScriptKind.TS);
+  return ts.createSourceFile(file, fs.readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
 }
 function line(sf, node) {
   return sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1;
@@ -149,68 +81,88 @@ function moduleSpecifiers(sf) {
   return out;
 }
 function layerOf(rel) {
-  if (rel === CLI_ENTRY) return "cli";
   const parts = rel.split("/");
   return parts.length >= 3 && parts[0] === "src" ? parts[1] : null;
 }
 
-function checkSrc(files) {
+// the layers argument keyed by layer: a dir's layer is the first folder under src/ (src/report/x → report)
+function edgeLayers(edges) {
+  const out = {};
+  for (const [dir, dirs] of Object.entries(edges)) {
+    const key = layerOf(dir + "/_");
+    if (key === null) continue;
+    out[key] ??= [];
+    for (const d of dirs) {
+      const k = layerOf(d + "/_");
+      if (k !== null && !out[key].includes(k)) out[key].push(k);
+    }
+  }
+  return out;
+}
+
+function bare(spec) {
+  return spec.startsWith("node:") ? spec.slice(5) : spec;
+}
+function importRules(spec) {
+  const out = [];
+  const rel = spec.startsWith("./") || spec.startsWith("../");
+  const name = bare(spec);
+  if (name === "child_process") out.push("no-shell");
+  if (NET_MODULES.includes(name)) out.push("no-network");
+  if (!rel && !spec.startsWith("node:")) out.push("stdlib-only");
+  if (spec.startsWith("node:") && spec !== "node:path") out.push("pure");
+  return out;
+}
+function nameRules(n) {
+  if (n === "Date") return ["no-clock", "pure"];
+  if (["fetch", "WebSocket", "XMLHttpRequest"].includes(n)) return ["no-network", "pure"];
+  if (n === "process" || n === "console") return ["no-process", "pure"];
+  return [];
+}
+
+function checkSrc(files, allowed, edges, rules) {
+  const packages = allowed;
+  const layers = edgeLayers(edges);
   for (const file of files ?? tsFiles("src")) {
     const sf = parse(file);
     const rel = file.split(path.sep).join("/");
     const layer = layerOf(rel);
-    if (layer === null && !ROOT_FILES.has(rel)) { bad.push(`guard: ${rel} is not under a layer directory`); continue; }
-    if (layer !== null && !(layer in LAYERS)) { bad.push(`guard: ${rel} is in an unknown layer "${layer}"`); continue; }
-    const allowed = layer === null ? [] : LAYERS[layer];
+    const active = rules[path.posix.dirname(rel)] ?? {};
+    const first = (ids) => RULE_ORDER.find((id) => ids.includes(id) && id in active);
+    const rule = (node, what, ids) => {
+      const id = first(ids);
+      if (id) bad.push(`guard: ${rel}:${line(sf, node)}: ${what}: ${active[id]}`);
+      return id !== undefined;
+    };
     for (const [node, spec] of moduleSpecifiers(sf)) {
-      if (spec.startsWith("node:")) {
-        if (layer in NODE_ONLY && !NODE_ONLY[layer].has(spec) && !(NODE_FILES[rel]?.has(spec)))
-          report(sf, node, `${spec} in the pure layer ${layer} (only ${[...NODE_ONLY[layer]].join(", ") || "none"})`);
-        if (spec === "node:child_process" && !SHELL.has(layer))
-          report(sf, node, `node:child_process outside src/acceptance and src/git`);
-        if (spec === "node:child_process" && layer === "git" && rel !== GIT_SPAWNER)
-          report(sf, node, `node:child_process in ${rel} (only ${GIT_SPAWNER} spawns git)`);
+      if (rule(node, `imports ${spec}`, importRules(spec))) continue;
+      if (spec.startsWith("node:")) continue;
+      if (!spec.startsWith("./") && !spec.startsWith("../")) {
+        if (!packages.some((p) => spec === p || spec.startsWith(p + "/")))
+          report(sf, node, `package import "${spec}" (allowed: node:*${packages.length ? ", " + packages.join(", ") : ""})`);
         continue;
       }
-      if (spec === "yaml") {
-        if (!YAML.has(layer)) report(sf, node, `"yaml" outside src/contour`);
-        else if (rel !== YAML_FILE) report(sf, node, `"yaml" in ${rel} (only ${YAML_FILE} parses text)`);
-        continue;
-      }
-      if (!spec.startsWith("./") && !spec.startsWith("../")) { report(sf, node, `package import "${spec}" (node:* only)`); continue; }
       const target = path.posix.normalize(path.posix.join(path.posix.dirname(rel), spec));
       const tl = layerOf(target);
-      if (tl === null) { if (!ROOT_FILES.has(target)) report(sf, node, `import of "${spec}" outside src/<layer>/`); continue; }
-      if (tl !== layer && allowed !== "*" && !allowed.includes(tl))
-        report(sf, node, `layer ${layer ?? "src"} imports layer ${tl} (allowed: ${allowed.join(", ") || "none"})`);
+      if (layer === null || tl === null || tl === layer) continue;
+      const may = layers[layer] ?? [];
+      if (!may.includes(tl))
+        report(sf, node, `layer ${layer} imports layer ${tl}: the record has no 'uses' from ${layer} to ${tl} (allowed: ${may.join(", ") || "none"})`);
     }
     walk(sf, (node) => {
       if (node.kind === ts.SyntaxKind.AnyKeyword) report(sf, node, "explicit any");
       if (ts.isIdentifier(node) && isValueRef(node)) {
         const n = node.text;
-        if (["fetch", "WebSocket", "XMLHttpRequest"].includes(n) && !NET.has(layer))
-          report(sf, node, `global ${n} outside src/processor`);
-        if (n === "console" && !CONSOLE.has(layer)) report(sf, node, "console outside src/cli");
-        if (n === "process" && !PROCESS.has(layer)) report(sf, node, "process outside src/cli, src/processor, src/acceptance");
-        if ((n === "process" || n === "console") && layer === "cli" && rel !== CLI_ENTRY)
-          report(sf, node, `${n} in ${rel} (only ${CLI_ENTRY} touches it; env, cwd, clock and io are parameters)`);
-        if (n === "Date" && NO_CLOCK.has(layer) && !CLOCK_FORMATTERS.has(rel)) report(sf, node, `Date in the deterministic layer ${layer}`);
-        if (n === "Math" && node.parent && ts.isPropertyAccessExpression(node.parent) &&
-            node.parent.name.text === "random") report(sf, node, "Math.random");
+        rule(node, `uses ${n}`, nameRules(n));
+        if (n === "Math" && node.parent && ts.isPropertyAccessExpression(node.parent) && node.parent.name.text === "random")
+          rule(node, "uses Math.random", ["no-clock", "pure"]);
       }
       if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&
-          node.expression.text === "process" && node.name.text === "exit" && !CONSOLE.has(layer))
-        report(sf, node, "process.exit outside src/cli");
+          node.expression.text === "process" && node.name.text === "env")
+        rule(node, "uses process.env", ["no-env"]);
       if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&
-          node.expression.text === "process" && node.name.text === "exit" && rel === CLI_ENTRY)
-        report(sf, node, `process.exit in ${CLI_ENTRY} (set process.exitCode: exit cuts a piped stdout)`);
-      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&
-          node.expression.text === "Date" && node.name.text === "now" && layer === "cli" && rel !== CLI_ENTRY)
-        report(sf, node, `Date.now in ${rel} (the clock is the parameter now)`);
-      if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) &&
-          node.expression.text === "process" && node.name.text === "env" && NO_ENV.has(layer) &&
-          !ENV_READERS.has(rel))
-        report(sf, node, `process.env in src/${layer} (the environment is a parameter)`);
+          node.expression.text === "process" && node.name.text === "exit")
+        report(sf, node, "process.exit (set process.exitCode: exit cuts a piped stdout)");
     });
   }
 }
@@ -239,9 +191,13 @@ function checkTest(file, min, max, lits) {
   const sf = parse(file);
   const text = sf.getFullText();
   let count = 0;
+  // package.json's "dependencies": the packages the scaffold installed for the declared dependencies; a
+  // test may import them (a judge building a declared library's value). devDependencies stay out, vitest excepted.
+  const deps = fs.existsSync("package.json") ? Object.keys(JSON.parse(fs.readFileSync("package.json", "utf8")).dependencies ?? {}) : [];
   for (const [node, spec] of moduleSpecifiers(sf))
-    if (spec !== "vitest" && !spec.startsWith("node:") && !spec.startsWith("./") && !spec.startsWith("../"))
-      report(sf, node, `import of a package "${spec}" (vitest, node:* and relative paths only)`);
+    if (spec !== "vitest" && !spec.startsWith("node:") && !spec.startsWith("./") && !spec.startsWith("../") &&
+        !deps.some((p) => spec === p || spec.startsWith(p + "/")))
+      report(sf, node, `import of a package "${spec}" (vitest, node:*${deps.length ? ", relative paths, " + deps.join(", ") : " and relative paths"} only)`);
   walk(sf, (node) => {
     if (node.kind === ts.SyntaxKind.AnyKeyword) report(sf, node, "explicit any");
     if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) &&
@@ -253,21 +209,21 @@ function checkTest(file, min, max, lits) {
       if (o === "vi" && ["stubGlobal", "useFakeTimers", "mock", "doMock"].includes(p))
         report(sf, node, `vi.${p} (stubs come from tests/helpers.ts)`);
     }
-    if (ts.isIdentifier(node) && isValueRef(node) &&
-        ["setTimeout", "setInterval", "setImmediate"].includes(node.text))
-      report(sf, node, `${node.text} (real timers are not used under tests/; use fakeClock)`);
+    if (ts.isIdentifier(node) && isValueRef(node) && ["setTimeout", "setInterval", "setImmediate"].includes(node.text))
+      report(sf, node, `${node.text} (real timers are not used under tests/; use fakeClock of tests/helpers.ts)`);
     const declared = (ts.isFunctionDeclaration(node) || ts.isVariableDeclaration(node) ||
       ts.isClassDeclaration(node)) && node.name && ts.isIdentifier(node.name) ? node.name.text : null;
     if (declared && (declared === "fetch" || /^[Ff]ake/.test(declared)))
       report(sf, node, `own stub "${declared}" (stubs come from tests/helpers.ts)`);
   });
-  if (count < min || count > max)
-    bad.push(`guard: ${file} has ${count} test/it calls, expected ${min}..${max}`);
+  if (count < min || count > max) bad.push(`guard: ${file} has ${count} test/it calls, expected ${min}..${max}`);
   for (const lit of lits) if (!text.includes(lit)) bad.push(`guard: ${file} does not mention the example literal ${JSON.stringify(lit)}`);
 }
 
 const [mode, a, b, c, d] = process.argv.slice(2);
-if (mode === "src") checkSrc(a ? a.split(",").filter(Boolean) : null);
+if (mode === "src" && c === undefined) bad.push("guard: no layer edges given — re-cut with morph plan");
+else if (mode === "src" && d === undefined) bad.push("guard: no Guardrail rules given — re-cut with morph plan");
+else if (mode === "src") checkSrc(a ? a.split(",").filter(Boolean) : null, (b ?? "").split(",").filter(Boolean), JSON.parse(c), JSON.parse(d));
 else if (mode === "helpers") checkHelpers(a, (b ?? "").split(",").filter(Boolean));
 else if (mode === "tests") checkTest(a, Number(b), Number(c), d ? JSON.parse(fs.readFileSync(d, "utf8")) : []);
 else bad.push(`guard: unknown mode ${mode}`);

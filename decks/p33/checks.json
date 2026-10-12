@@ -1,0 +1,12 @@
+{
+  "phase": "p33",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "documentation", "decks", "tests/fixtures", "templates"],
+  "cards": [
+    { "id": "plan-command-judge", "files": [
+      { "file": "tests/cli/planChecks.examples.test.ts", "min": 3, "max": 4, "new": false,
+        "drop": ["Plan Command example 8: the P10a deck byte for byte on the repository"],
+        "lits": ["Plan Command example 8: the repository's own cut speaks contract 3", "cli/p33.renderGuard.txt",
+          "cli-plan", "morph-guard-contract: 3", "No Shell Outside Acceptance", "decks/p10/v2deck.json"] }] }
+  ]
+}

@@ -12,7 +12,7 @@
   "Plan Command 1": "tests/fixtures/planner/ledger.yaml, tests/fixtures/planner/ledger.map.json, tests/fixtures/planner/ledger.plan.json",
   "Plan Command 3": "tests/fixtures/cli/literals.json",
   "Plan Command 6": "tests/fixtures/cli/l1.checks.json",
-  "Plan Command 8": "decks/p10/v2deck.json, tests/fixtures/builder/guard.p10.txt",
+  "Plan Command 8": "decks/p10/v2deck.json, tests/fixtures/cli/p33.renderGuard.txt",
   "Plan Command 9": "tests/fixtures/go-mini/ (the Go module of P15), tests/fixtures/cli/goMini.deck.json",
   "Plan Command 10": "tests/fixtures/planner/deps.yaml, tests/fixtures/planner/deps.map.json",
   "Plan Command 11": "tests/fixtures/planner/deps.yaml, tests/fixtures/planner/deps.map.json",

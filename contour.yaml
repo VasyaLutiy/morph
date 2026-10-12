@@ -25,6 +25,7 @@ System:
         beyond reading the files a slice names, no git.
       language: typescript
       requirements: [Deterministic Core]
+      guardrails: [No Shell, No Clock, No Network, No Env, No Process]
       functions:
         - name: Validate Card
           description: Turns an untrusted object into a Card or a list of faults.
@@ -273,6 +274,8 @@ System:
         Reads the slice and target files; never the network, never git.
       language: typescript
       requirements: [Deterministic Core]
+      guardrails: [No Shell, No Clock, No Network, No Env, No Process]
+      dependsOn: [cards]
       functions:
         - name: Compile Card
           description: Builds the conversation for one card.
@@ -412,7 +415,8 @@ System:
         green variant, rolls everything back otherwise, and builds the diagnosis the
         retry carries. The environment of the child is a parameter, never read here.
       language: typescript
-      guardrails: [No Shell Outside Acceptance]
+      guardrails: [No Shell Outside Acceptance, No Clock, No Network, No Env]
+      dependsOn: [compiler]
       functions:
         - name: Snapshot Targets
           description: Remembers the bytes (or absence) of every target before writing.
@@ -610,22 +614,19 @@ System:
         optional saveBatch) is a parameter, the only thing a test mocks.
       language: typescript
       requirements: [Deterministic Core]
+      guardrails: [No Shell, No Clock]
+      dependsOn: [cards, compiler]
       functions:
         - name: Read Registry
           description: MORPH_PROCESSOR_<id>_* env vars into Processor Configs; faults listed, never dropped silently.
           behavior: >
-            readRegistry(env) reads the environment given (default process.env; the
-            Component's only environment read). MORPH_PROCESSOR_<id>_<KEY> names processor
-            <id> ([A-Za-z0-9-]+) and one of the keys TYPE, MODEL, API_KEY, BASE_URL, ROUTE,
-            CONCURRENCY, PROVIDER_ORDER, REASONING_MAX_TOKENS, REASONING_EFFORT, TIMEOUT_MS,
-            MAX_RETRIES, ANSWERS_DIR; values trimmed, an empty value absent. TYPE
-            openrouter|stub required; openrouter requires MODEL and API_KEY, stub
-            ANSWERS_DIR (model "stub"). Defaults: BASE_URL https://openrouter.ai/api/v1,
-            ROUTE sync (sync|batch), CONCURRENCY 1, TIMEOUT_MS 600000 on route sync, 3600000
-            on route batch (the whole batch wait), MAX_RETRIES 2, PROVIDER_ORDER null (else
-            the comma list, trimmed), reasoning null (else {maxTokens} or {effort}, never
-            both). A fault is {key: the variable, message starting with it}; a processor with
-            a fault yields no config. Configs sorted by id, faults by key.
+            readRegistry(env) reads the environment given (default process.env; the Component's only environment read). MORPH_PROCESSOR_<id>_<KEY>
+            names processor <id> ([A-Za-z0-9-]+) and one of the keys TYPE, MODEL, API_KEY, BASE_URL, ROUTE, CONCURRENCY, PROVIDER_ORDER,
+            REASONING_MAX_TOKENS, REASONING_EFFORT, TIMEOUT_MS, MAX_RETRIES, ANSWERS_DIR; values trimmed, an empty value absent. TYPE openrouter|stub
+            required; openrouter requires MODEL and API_KEY, stub ANSWERS_DIR (model "stub"). Defaults: BASE_URL https://openrouter.ai/api/v1, ROUTE
+            sync (sync|batch), CONCURRENCY 1, TIMEOUT_MS 600000 on route sync, 3600000 on route batch (the whole batch wait), MAX_RETRIES 2,
+            PROVIDER_ORDER null (else the comma list, trimmed), reasoning null (else {maxTokens} or {effort}, never both). A fault is {key: the
+            variable, message starting with it}; a processor with a fault yields no config. Configs sorted by id, faults by key.
           steps:
             - produces: Processor Config
           examples:
@@ -1233,7 +1234,7 @@ System:
         no intermediate tree compiles, the full one does (the P21a smoke RED: a judge retried after its generation sibling
         wrote, `supervisor/guard.go:20:23`).
       language: typescript
-      guardrails: [Frozen Tree During Run]
+      guardrails: [Frozen Tree During Run, No Shell, No Clock, No Network, No Env, No Process]
       functions:
         - name: Run Transaction
           description: Write every card, then run every acceptance on the full tree, retry the owners of the red lines to a fixed point, commit all or nothing.
@@ -1360,7 +1361,8 @@ System:
         back: the Morph-Card commits of the history and per path the cards that wrote it (P12b).
       language: typescript
       requirements: [Deterministic Core]
-      guardrails: [No Shell Outside Acceptance]
+      guardrails: [No Shell Outside Acceptance, No Clock, No Network, No Env, No Process]
+      dependsOn: [cards]
       functions:
         - name: Run Git
           description: One synchronous git call with an explicit environment; the only spawner of the Component.
@@ -1387,6 +1389,7 @@ System:
               then: 'runGit gives code 1, stdout "", stderr beginning "error: pathspec ''nope'' did not match"; gitOk throws an Error whose message begins "git checkout failed (exit 1): error: pathspec ''nope'' did not match"'
         - name: Open Run Branch
           description: morph/<runId> from HEAD; refuses a dirty tree (every git status entry, .morph/ included) and an existing branch.
+          guardrails: [No Shell]
           behavior: >
             openRunBranch(root, runId, env): runId must match ^[A-Za-z0-9._-]+$, else
             {ok: false, error: "invalid runId: <runId>"} and no git call. Then `git status
@@ -1419,6 +1422,7 @@ System:
               then: '{ok: false, error: "branch morph/r4 already exists"}, the checkout still main; then {ok: false, error: "invalid runId: a b"}'
         - name: Commit Paths
           description: Stages exactly the given paths and commits them with a subject and trailers; null when nothing changed.
+          guardrails: [No Shell]
           behavior: >
             commitPaths(root, paths, subject, trailers, env, force = false): `git add -A --
             <paths>` (`git add -A -f -- <paths>` when force); `git diff
@@ -1443,6 +1447,7 @@ System:
         - name: Commit Card
           description: >
             Stages exactly the card's targets; subject 'morph <id>: <targets>'; trailers Morph-Card, Morph-Model, Morph-Variant (if given), Morph-Acceptance-Exit; returns sha and diffstat, or null when nothing changed. makeCommitHook binds it into runloop's commit hook.
+          guardrails: [No Shell]
           behavior: >
             commitCard(root, {customId, targets, model, variant, acceptanceExit}, env) is
             Commit Paths over targets with force true (a target under a .gitignore'd path is
@@ -1471,6 +1476,7 @@ System:
               then: '{commit: HEAD, diffstat {files: 1, insertions: 1, deletions: 0}}, no throw; `git show --name-only --format= HEAD` reads "out/g.ts"; the message "morph g: out/g.ts\n\nMorph-Card: g\nMorph-Model: m2\nMorph-Acceptance-Exit: 0"'
         - name: Archive Run
           description: Writes .morph/runs/<runId>/ (deck.json, report.json, answers/ committed with Morph-Run trailers; requests/ ignored); append-only.
+          guardrails: [No Shell]
           behavior: >
             archiveRun(root, {runId, deck, report, answers?}, env): runId must match
             ^[A-Za-z0-9._-]+$, else {ok: false, error: "invalid runId: <runId>"}; an answer whose
@@ -1535,6 +1541,7 @@ System:
               then: '[".morph/batches/batch-1791388269-cp5qOr5IQ0xoz1ntuc8W/clamp-value.v1.md", the same with sign-of.v1.md], the files "A" and "B\n"; then [] three times: .morph/batches holds only that one directory, no x.v1.md, no batch-0 directory'
         - name: Read Morph Log
           description: The Morph-Card commits of HEAD's history, newest first, each with its card, model, run and paths, from one git log.
+          guardrails: [No Shell]
           behavior: >
             readMorphLog(root, env) → Morph Commit[]. Run Git `rev-parse --verify -q HEAD`: exit 1 (no
             commit yet) → []. Else gitOk `log -z --name-only --no-renames --format=<MORPH_LOG_FORMAT>`
@@ -1556,6 +1563,7 @@ System:
             - {given: 'a tmpRoot after `git init -q` (no commit); then a tmpRoot that is no repository', when: readMorphLog, then: '[]; then a thrown Error whose message begins "git log failed (exit 128): "'}
         - name: Read Ownership
           description: The Morph log folded per path, most recently written first, with the commits counted by model.
+          guardrails: [No Shell]
           behavior: >
             readOwnership(commits {card, model, run, paths}[], newest first) → Ownership {commits: the
             count, models: [{model, commits}] in order of first appearance ("" kept), paths: [{path,
@@ -1599,6 +1607,7 @@ System:
         "takes" (command → the flags it accepts).
       language: typescript
       requirements: [One Document Out]
+      guardrails: [No Shell, No Network, No Env, No Process]
       functions:
         - name: Parse Command
           description: argv into one Command or a usage error.
@@ -1736,6 +1745,79 @@ System:
             - {given: 'examples.json["Run Command 10"].given', when: run, then: 'examples.json["Run Command 10"].then'}
             - {given: 'examples.json["Run Command 11"].given', when: run, then: 'examples.json["Run Command 11"].then'}
             - {given: 'examples.json["Run Command 12"].given', when: run, then: 'examples.json["Run Command 12"].then'}
+        - name: Main
+          description: Routing, one document, log lines, exit code; src/cli.ts wires the process.
+          behavior: >
+            main(argv, deps, io) → Promise<ExitCode>. Parse Command; a failure → io.stdout(renderDocument(its error document, pretty = argv holds "--pretty")),
+            io.stderr("morph: <message>\n"), 4. Else root = path.resolve(deps.cwd, command.root); config = Read Project Config(root) (Component config) for every
+            command before it runs: a failure is the result, no command runs. Else by command, in try/catch (a thrown value → classifyThrown): Deck
+            Check (env: deps.env), Plan Command, await Submit Deck(root, deck, processor, D), await Collect Batch(root, batch, D), Primer Command(root, write, {env,
+            now of deps}), await Scout Command(root, command, deps, config.scout), Plan From Scout(root, command), await Review Command(root, command, deps), Card Brief(root,
+            command), accept: await Accept Group(root, {deck, ids: id split on ",", model, fromRun or null, pick or [], commit}, deps) when --id holds "," or fromRun
+            is given, else await Accept Card(root, command, deps), Init Project(root, command, deps.cwd), await Gate Command(root, command, {env, now, readDeck: Read
+            Deck File, builds: Check Builds}), else await Run Command (io.stderr its log); D = {env, now, transport of deps, saveState: git's saveBatchRecord(root, ·),
+            saveAnswers: git's saveBatchAnswers(root, ·, ·)}. Then one io.stdout(renderDocument(result.document, command.pretty)), one io.stderr("morph <command
+            name>: exit <code>\n"), return result.code. The entry src/cli.ts (`#!/usr/bin/env node`) calls main(process.argv.slice(2), {env: process.env without
+            undefined values, now: Date.now, cwd: process.cwd(), transport: null, interrupted: () => the first SIGINT or SIGTERM its own listeners caught, or null},
+            {stdout, stderr: the process streams' write}), sets process.exitCode to the result, never calls process.exit.
+          steps: [{calls: Parse Command}, {calls: Deck Check}, {uses: cli-plan}, {calls: Run Command}, {uses: batches}, {uses: primer}, {uses: scout-session}, {uses: review-session}, {uses: debt}, {uses: scaffold}, {uses: gate}, {uses: config}, {calls: Emit Document}, {calls: Classify Error}]
+          examples:
+            - {given: 'examples.json["Main 1"].given', when: main, then: 'examples.json["Main 1"].then'}
+            - {given: 'examples.json["Main 2"].given', when: main, then: 'examples.json["Main 2"].then'}
+            - {given: 'examples.json["Main 3"].given', when: main, then: 'examples.json["Main 3"].then'}
+            - {given: 'examples.json["Main 4"].given', when: spawned, then: 'examples.json["Main 4"].then'}
+            - {given: 'examples.json["Main 5"].given', when: spawned, then: 'examples.json["Main 5"].then'}
+            - {given: 'examples.json["Main 6"].given', when: 'spawned (spawnSync, timeout 30000 ms)', then: 'examples.json["Main 6"].then'}
+            - {given: 'examples.json["Main 7"].given', when: main, then: 'examples.json["Main 7"].then'}
+            - {given: 'examples.json["Main 8"].given', when: 'main, twice', then: 'examples.json["Main 8"].then'}
+            - {given: 'examples.json["Main 9"].given', when: main, then: 'examples.json["Main 9"].then'}
+            - {given: 'examples.json["Main 10"].given', when: main, then: 'examples.json["Main 10"].then'}
+            - {given: 'examples.json["Main 11"].given', when: main, then: 'examples.json["Main 11"].then'}
+            - {given: 'examples.json["Main 12"].given', when: main, then: 'examples.json["Main 12"].then'}
+            - {given: 'examples.json["Main 13"].given', when: main, then: 'examples.json["Main 13"].then'}
+            - {given: 'examples.json["Main 14"].given', when: main, then: 'examples.json["Main 14"].then'}
+            - {given: 'examples.json["Main 15"].given', when: main, then: 'examples.json["Main 15"].then'}
+            - {given: 'examples.json["Main 16"].given', when: main, then: 'examples.json["Main 16"].then'}
+            - {given: 'examples.json["Main 17"].given', when: main, then: 'examples.json["Main 17"].then'}
+            - {given: 'examples.json["Main 18"].given', when: main, then: 'examples.json["Main 18"].then'}
+            - {given: 'examples.json["Main 19"].given', when: main, then: 'examples.json["Main 19"].then'}
+            - {given: 'examples.json["Main 20"].given', when: main, then: 'examples.json["Main 20"].then'}
+      dataObjects:
+        - name: Command
+          description: One parsed invocation.
+          schema: "every variant also has root: string, pretty: boolean; {name: 'deck check', deck, sliceCapBytes}|{name: 'run', deck, processor, runId: string|null, deadlineSeconds, maxCards: number|null, maxRetryBatches}|{name: 'plan', spec, components: string[], map: string|null, judge: boolean, out: string|null, checks?: string, only?: string[], writeProbes?: true}|{name: 'submit', deck, processor}|{name: 'collect', batch}|{name: 'primer', write: boolean}|{name: 'scout', processor, issue, seedFile: string|null, deadlineSeconds: number|null}|{name: 'plan --from-scout', fromScout, out: string|null}|{name: 'review', base, head, spec: string|null, map: string|null, scout: string|null, mutants: number|null, mutantTimeoutSeconds, test: string|null, write: boolean}|{name: 'card', deck, id, md: boolean}|{name: 'accept', deck, id, model: string|null, commit: boolean, fromRun?: string, pick?: string[]}|{name: 'init', project, language: 'typescript' | 'python' | 'go', module: string|null, templates: string|null}|{name: 'gate', deck, stubs, refs, mutants?: number}"
+        - name: Error Document
+          description: The document of every non-result exit.
+          schema: "{ error: { code: 0|1|2|3|4, kind: 'UsageError'|'NotYetError'|'DeckError'|'RefusalError'|'RuntimeError', message: string } }"
+        - name: Command Result
+          description: What a command returns to main.
+          schema: "{ code: 0|1|2|3|4, document: unknown }"
+        - name: Deck Check Document
+          description: stdout of deck check.
+          schema: "{ deck: string, cards: number, generations: string[][], errors: number, warnings: number, hazards: Hazard[], weights: SliceWeight[], builds?: Build Check[], unproven?: Unproven[] }"
+        - name: Plan Document
+          description: stdout of plan; with --write-probes { spec, components, probes } (the probe paths written).
+          schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]>, out: string | null, proseOnly?: string[], overrides?: string[], warnings?: string[] }"
+        - name: Plan Checks
+          description: What Read Plan Checks returns.
+          schema: "{ ok: true, checks: Checks, texts: BuildTexts } | { ok: false, result: Command Result }"
+        - name: Run Document
+          description: stdout of run.
+          schema: "{ runId: string, branch: string, base: string, report: RunReport, archive: ArchiveResult }"
+      interfaces:
+        - name: morph CLI
+          description: The only entry point.
+          exposes: [Parse Command]
+
+    - name: cli-plan
+      description: >
+        The `morph plan` command of the binary: src/cli/planCommand.ts and src/cli/readPlanChecks.ts; its Data
+        Objects (Plan Document, Plan Checks) are in cli. Fixtures as in cli: tests/fixtures/cli/examples.json,
+        refs.json and flags.json, keyed "<Function> <n>".
+      language: typescript
+      requirements: [One Document Out]
+      guardrails: [No Shell, No Network, No Env, No Process]
+      functions:
         - name: Plan Command
           description: "`morph plan --spec`: record and map cut by Plan Spec, the deck to --out; one Plan Document."
           behavior: >
@@ -1797,69 +1879,6 @@ System:
             - {given: 'examples.json["Read Plan Checks 1"].given', when: "readPlanChecks(root, \"decks/p1/checks.json\")", then: 'examples.json["Read Plan Checks 1"].then'}
             - {given: 'examples.json["Read Plan Checks 2"].given', when: "readPlanChecks(root, \"nope.json\"); then \"decks/p1/checks.json\" twice", then: 'examples.json["Read Plan Checks 2"].then'}
             - {given: 'examples.json["Read Plan Checks 3"].given', when: "readPlanChecks(root, \"c.json\")", then: 'examples.json["Read Plan Checks 3"].then'}
-        - name: Main
-          description: Routing, one document, log lines, exit code; src/cli.ts wires the process.
-          behavior: >
-            main(argv, deps, io) → Promise<ExitCode>. Parse Command; a failure → io.stdout(renderDocument(its error document, pretty = argv holds "--pretty")),
-            io.stderr("morph: <message>\n"), 4. Else root = path.resolve(deps.cwd, command.root); config = Read Project Config(root) (Component config) for every
-            command before it runs: a failure is the result, no command runs. Else by command, in try/catch (a thrown value → classifyThrown): Deck
-            Check (env: deps.env), Plan Command, await Submit Deck(root, deck, processor, D), await Collect Batch(root, batch, D), Primer Command(root, write, {env,
-            now of deps}), await Scout Command(root, command, deps, config.scout), Plan From Scout(root, command), await Review Command(root, command, deps), Card Brief(root,
-            command), accept: await Accept Group(root, {deck, ids: id split on ",", model, fromRun or null, pick or [], commit}, deps) when --id holds "," or fromRun
-            is given, else await Accept Card(root, command, deps), Init Project(root, command, deps.cwd), await Gate Command(root, command, {env, now, readDeck: Read
-            Deck File, builds: Check Builds}), else await Run Command (io.stderr its log); D = {env, now, transport of deps, saveState: git's saveBatchRecord(root, ·),
-            saveAnswers: git's saveBatchAnswers(root, ·, ·)}. Then one io.stdout(renderDocument(result.document, command.pretty)), one io.stderr("morph <command
-            name>: exit <code>\n"), return result.code. The entry src/cli.ts (`#!/usr/bin/env node`) calls main(process.argv.slice(2), {env: process.env without
-            undefined values, now: Date.now, cwd: process.cwd(), transport: null, interrupted: () => the first SIGINT or SIGTERM its own listeners caught, or null},
-            {stdout, stderr: the process streams' write}), sets process.exitCode to the result, never calls process.exit.
-          steps: [{calls: Parse Command}, {calls: Deck Check}, {calls: Plan Command}, {calls: Run Command}, {uses: batches}, {uses: primer}, {uses: scout-session}, {uses: review-session}, {uses: debt}, {uses: scaffold}, {uses: gate}, {uses: config}, {calls: Emit Document}, {calls: Classify Error}]
-          examples:
-            - {given: 'examples.json["Main 1"].given', when: main, then: 'examples.json["Main 1"].then'}
-            - {given: 'examples.json["Main 2"].given', when: main, then: 'examples.json["Main 2"].then'}
-            - {given: 'examples.json["Main 3"].given', when: main, then: 'examples.json["Main 3"].then'}
-            - {given: 'examples.json["Main 4"].given', when: spawned, then: 'examples.json["Main 4"].then'}
-            - {given: 'examples.json["Main 5"].given', when: spawned, then: 'examples.json["Main 5"].then'}
-            - {given: 'examples.json["Main 6"].given', when: 'spawned (spawnSync, timeout 30000 ms)', then: 'examples.json["Main 6"].then'}
-            - {given: 'examples.json["Main 7"].given', when: main, then: 'examples.json["Main 7"].then'}
-            - {given: 'examples.json["Main 8"].given', when: 'main, twice', then: 'examples.json["Main 8"].then'}
-            - {given: 'examples.json["Main 9"].given', when: main, then: 'examples.json["Main 9"].then'}
-            - {given: 'examples.json["Main 10"].given', when: main, then: 'examples.json["Main 10"].then'}
-            - {given: 'examples.json["Main 11"].given', when: main, then: 'examples.json["Main 11"].then'}
-            - {given: 'examples.json["Main 12"].given', when: main, then: 'examples.json["Main 12"].then'}
-            - {given: 'examples.json["Main 13"].given', when: main, then: 'examples.json["Main 13"].then'}
-            - {given: 'examples.json["Main 14"].given', when: main, then: 'examples.json["Main 14"].then'}
-            - {given: 'examples.json["Main 15"].given', when: main, then: 'examples.json["Main 15"].then'}
-            - {given: 'examples.json["Main 16"].given', when: main, then: 'examples.json["Main 16"].then'}
-            - {given: 'examples.json["Main 17"].given', when: main, then: 'examples.json["Main 17"].then'}
-            - {given: 'examples.json["Main 18"].given', when: main, then: 'examples.json["Main 18"].then'}
-            - {given: 'examples.json["Main 19"].given', when: main, then: 'examples.json["Main 19"].then'}
-            - {given: 'examples.json["Main 20"].given', when: main, then: 'examples.json["Main 20"].then'}
-      dataObjects:
-        - name: Command
-          description: One parsed invocation.
-          schema: "every variant also has root: string, pretty: boolean; {name: 'deck check', deck, sliceCapBytes}|{name: 'run', deck, processor, runId: string|null, deadlineSeconds, maxCards: number|null, maxRetryBatches}|{name: 'plan', spec, components: string[], map: string|null, judge: boolean, out: string|null, checks?: string, only?: string[], writeProbes?: true}|{name: 'submit', deck, processor}|{name: 'collect', batch}|{name: 'primer', write: boolean}|{name: 'scout', processor, issue, seedFile: string|null, deadlineSeconds: number|null}|{name: 'plan --from-scout', fromScout, out: string|null}|{name: 'review', base, head, spec: string|null, map: string|null, scout: string|null, mutants: number|null, mutantTimeoutSeconds, test: string|null, write: boolean}|{name: 'card', deck, id, md: boolean}|{name: 'accept', deck, id, model: string|null, commit: boolean, fromRun?: string, pick?: string[]}|{name: 'init', project, language: 'typescript' | 'python' | 'go', module: string|null, templates: string|null}|{name: 'gate', deck, stubs, refs, mutants?: number}"
-        - name: Error Document
-          description: The document of every non-result exit.
-          schema: "{ error: { code: 0|1|2|3|4, kind: 'UsageError'|'NotYetError'|'DeckError'|'RefusalError'|'RuntimeError', message: string } }"
-        - name: Command Result
-          description: What a command returns to main.
-          schema: "{ code: 0|1|2|3|4, document: unknown }"
-        - name: Deck Check Document
-          description: stdout of deck check.
-          schema: "{ deck: string, cards: number, generations: string[][], errors: number, warnings: number, hazards: Hazard[], weights: SliceWeight[], builds?: Build Check[], unproven?: Unproven[] }"
-        - name: Plan Document
-          description: stdout of plan; with --write-probes { spec, components, probes } (the probe paths written).
-          schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]>, out: string | null, proseOnly?: string[], overrides?: string[], warnings?: string[] }"
-        - name: Plan Checks
-          description: What Read Plan Checks returns.
-          schema: "{ ok: true, checks: Checks, texts: BuildTexts } | { ok: false, result: Command Result }"
-        - name: Run Document
-          description: stdout of run.
-          schema: "{ runId: string, branch: string, base: string, report: RunReport, archive: ArchiveResult }"
-      interfaces:
-        - name: morph CLI
-          description: The only entry point.
-          exposes: [Parse Command]
 
     # ---------------------------------------------------------------- P25
     - name: config
@@ -1870,6 +1889,7 @@ System:
         then the config, then the built-in default. No parent-directory search, no cwd, no environment.
       language: typescript
       requirements: [One Document Out]
+      guardrails: [No Shell, No Network, No Env, No Process]
       functions:
         - name: Load Config
           description: morph.config.yaml into a whole Project Config, or every problem it has.
@@ -1922,6 +1942,7 @@ System:
         the env, clock and transport come as parameters.
       language: typescript
       requirements: [Deterministic Core]
+      guardrails: [No Shell, No Clock, No Network, No Env, No Process]
       functions:
         - name: Submit Deck
           description: The first generation of a deck as one batch; its Submitted Batch saved; one Submit Document.
@@ -2029,6 +2050,7 @@ System:
         Finale); with none it is the profile's finale, byte for byte.
       language: typescript
       requirements: [Deterministic Core]
+      guardrails: [Pure]
       functions:
         - name: Resolve Profile
           description: The profile of a Component — its own language, else the map's, else typescript.
@@ -2070,8 +2092,6 @@ System:
             value, taken literally ("$&", "$1" are not replacement patterns), in a single pass
             (a value that itself holds "{x}" is not expanded again). A placeholder whose key is
             not in values stays as it is.
-          steps:
-            - produces: string
           examples:
             - given: 'template "tests/{component}/{name}.test.ts", values {component: "cli", name: "parseCommand"}'
               when: "filled"
@@ -2188,7 +2208,6 @@ System:
             written as given, unquoted.
           steps:
             - calls: Acceptance Lines
-            - produces: string
           examples:
             - given: 'the typescript profile; customId "parse-command"; targets ["src/cli/parse.ts", "tests/cli/parse.test.ts"]'
               ref: "tests/fixtures/language/scriptTs.txt (the whole script)"
@@ -2207,7 +2226,6 @@ System:
             always a true place to point at.
           steps:
             - calls: Fill Template
-            - produces: string
           examples:
             - given: 'the typescript profile; test "tests/cli/parse.examples.test.ts", module "src/cli/parse.ts", docs ["docs/TASK_P7_cli.md", "docs/CONVENTIONS.md"]'
               when: "judgeInstruction"
@@ -2232,7 +2250,6 @@ System:
             passes record order); nothing is sorted.
           steps:
             - reads: Language Profile
-            - produces: string
           examples:
             - given: 'each of the profiles typescript, python, go; deps []'
               when: "dependencyFinale"
@@ -2308,7 +2325,6 @@ System:
             prose. The table is the binary's, never a project file; it never guesses (no aliases, no partial match).
           steps:
             - reads: Language Profile
-            - produces: string
           examples:
             - given: 'guardrailKey("  No   Shell "); guardrailKey("STDLIB\tOnly"); guardrailKey("No-Shell")'
               when: guardrailKey
@@ -2362,6 +2378,7 @@ System:
       language: typescript
       requirements: [Deterministic Core]
       uses: [yaml]
+      guardrails: [Pure]
       functions:
         - name: Validate Record
           description: Turns a parsed record document into a typed Contour Record, or every problem it has.
@@ -2646,6 +2663,8 @@ System:
         then of an example that names it.
       language: typescript
       requirements: [Deterministic Core]
+      guardrails: [Pure]
+      dependsOn: [cards]
       functions:
         - name: Render Examples
           description: A Function's examples as one numbered line each.
@@ -2653,8 +2672,6 @@ System:
             renderExamples(examples) → the lines "<n>. given <given>; when <when>; then <then>",
             n from 1, plus " (ref: <ref>)" when ref is not null, joined by "\n"; every clause
             has each run of whitespace collapsed to one space and is trimmed; [] → "".
-          steps:
-            - produces: string
           examples:
             - {given: 'examples.json["Render Examples 1"].given', when: "rendered", then: 'examples.json["Render Examples 1"].then'}
             - {given: 'examples.json["Render Examples 2"].given', when: "rendered", then: 'examples.json["Render Examples 2"].then'}
@@ -2679,7 +2696,6 @@ System:
           steps:
             - calls: Render Examples
             - reads: Contour Record
-            - produces: string
           examples:
             - {given: 'examples.json["Render Function 1"].given', when: "functionSection", then: 'examples.json["Render Function 1"].then'}
             - {given: 'examples.json["Render Function 2"].given', when: "functionSection", then: 'examples.json["Render Function 2"].then'}
@@ -2705,7 +2721,6 @@ System:
             joined by "\n\n".
           steps:
             - reads: Contour Record
-            - produces: string
           examples:
             - {given: 'examples.json["Render Context 1"].given', when: "preamble", then: 'examples.json["Render Context 1"].then'}
             - {given: 'examples.json["Render Context 2"].given', when: "inheritedSection", then: 'examples.json["Render Context 2"].then'}
@@ -3011,6 +3026,7 @@ System:
         decks/r1/_stubs/.
       language: typescript
       requirements: [Deterministic Core]
+      guardrails: [No Shell, No Network, No Env, No Process]
       functions:
         - name: Select Cards
           description: The plan's cards named by --only, ordered again as a deck of their own.
@@ -3215,6 +3231,7 @@ System:
         build.py's P10a form. typescript here, go in builder-go (P15). No file read, clock or environment; node:path only.
       language: typescript
       requirements: [Deterministic Core]
+      guardrails: [Pure]
       functions:
         - name: Wrap Script
           description: The frame of every acceptance — the attempt snapshot, the subshell, the log.
@@ -3225,8 +3242,6 @@ System:
             <target> $D/<i>-$S<ext> 2>/dev/null\n", ext = path.posix.extname of the target, ".txt" when
             that is "". wrapScript(id, phase, targets, body) = snapshotLines + "(\n set -e\n export
             NO_COLOR=1 CI=1\n" + body + ") > $L 2>&1; rc=$?; cat $L; exit $rc" (no final newline).
-          steps:
-            - produces: string
           examples:
             - given: 'heredoc("$P/x.json", "[1]\n\n", "MORPH_X_EOF")'
               when: "written"
@@ -3250,7 +3265,6 @@ System:
             fullArgs(exclude) = "--passWithNoTests" followed by " --exclude <path>" per path, in order.
           steps:
             - reads: Language Profile
-            - produces: string
           examples:
             - given: 'the typescript profile; tscStep; eslintStep with ["src/a.ts", "tests/a.test.ts"]'
               when: "written"
@@ -3275,8 +3289,6 @@ System:
             the test names of the file at HEAD (git show, every test("…" or it("…")) minus each dropped
             name (" | grep -vxF " + JSON.stringify of the name in double quotes), then every name must
             still be in the file, else "test removed: <name>".
-          steps:
-            - produces: string
           examples:
             - given: 'frozenStep(["docs", "decks"]); untrackedStep(["src/a.ts", "src/b.ts"])'
               ref: "tests/fixtures/builder/frozen.txt, tests/fixtures/builder/untracked.txt"
@@ -3305,7 +3317,6 @@ System:
             $P/<id>.probe.ts (MORPH_PROBE_EOF).
           steps:
             - calls: Wrap Script
-            - produces: string
           examples:
             - given: 'cardTsconfig([]); cardTsconfig(["src/b.ts"])'
               when: "written"
@@ -3339,7 +3350,6 @@ System:
             - calls: Probe Dir
             - reads: Card Context
             - uses: rules
-            - produces: string
           examples:
             - given: 'ctx {id "a", phase "p1", targets ["src/x/a.ts"], siblings ["src/x/b.ts"], frozen DEFAULT_FROZEN, fullExclude [], ownGit false, the typescript profile, guard "// guard\n", firstdiff "// firstdiff\n"}; probe "// probe\n", smoke null, extra null'
               ref: "tests/fixtures/builder/code1.txt (the whole script)"
@@ -3372,7 +3382,6 @@ System:
             - calls: Tree Steps
             - calls: Probe Dir
             - reads: Judge File
-            - produces: string
           examples:
             - given: 'ctx {id "a-judge", phase "p1", targets ["tests/x/a.examples.test.ts"], siblings ["src/x/b.ts"], frozen DEFAULT_FROZEN, fullExclude [], ownGit false, typescript, "// guard\n", "// firstdiff\n"}; files [{file "tests/x/a.examples.test.ts", min 2, max 10, lits ["x \"y\"", "z"], drop [], new true}]'
               ref: "tests/fixtures/builder/judge1.txt (the whole script)"
@@ -3537,6 +3546,7 @@ System:
         firstdiff.mjs (a Go module keeps V2's decks/tools/goguard.mjs and gofirstdiff.mjs under those names).
       language: typescript
       requirements: [Deterministic Core]
+      guardrails: [Pure]
       functions:
         - name: Go Acceptance
           description: The acceptance scripts of a Go code card and a Go judge card, stage by stage.
@@ -3585,7 +3595,6 @@ System:
             - uses: rules
             - reads: Card Context
             - reads: Judge File
-            - produces: string
           examples:
             - given: 'ctx {id "percent-of", phase "m1", targets ["calc/percent_of.go"], siblings ["calc/clamp_value_examples_test.go"], frozen ["go.mod", "internal"], fullExclude [], ownGit false, the go profile, guard "// guard\n", firstdiff "// firstdiff\n"}; probe "package calc\n", smoke null, extra null'
               ref: "tests/fixtures/builder/go/code1.txt (the whole script, no final newline)"
@@ -3644,6 +3653,7 @@ System:
         Rules folds a card's own file entries into its directories, so the guard argument keeps contract 3's shape.
       language: typescript
       requirements: [Deterministic Core]
+      guardrails: [Pure]
       functions:
         - name: Layer Edges
           description: For every code directory of the record, the directories it may import.
@@ -3690,7 +3700,6 @@ System:
             entry d → edges[d] when edges has the own key d, else []. No code target → {}.
           steps:
             - reads: Layer Edges Result
-            - produces: Record<string, string[]>
           examples:
             - given: 'E = the edges of tests/fixtures/rules/morphstudio.edges.json; cardLayers(go, ["users/registry.go"], E); cardLayers(go, ["daemon/pump.go", "daemon/pump_test.go"], E); cardLayers(typescript, ["src/report/line.ts", "tests/report/line.test.ts"], {"src/report": ["src/units"], "src/units": []}); cardLayers(go, ["new/a.go", "new/b.go", "main.go"], {}); cardLayers(go, ["users/registry_examples_test.go"], E)'
               ref: "tests/fixtures/rules/morphstudio.edges.json"
@@ -3708,8 +3717,6 @@ System:
             the importing key's list is red, per importing file (P31b): Go "guard: <file>:<line>: imports <import path>: the
             record has no 'uses' from <dir> to <target dir> (allowed: <list joined by ', '> or none)", TypeScript "guard: <file>:<line> layer
             <layer> imports layer <layer2>: the record has no 'uses' from <layer> to <layer2> (allowed: … or none)".
-          steps:
-            - produces: string
           examples:
             - given: 'layersArg([], undefined); layersArg(["zod"], undefined); layersArg([], {"users": []}); layersArg(["github.com/x/y"], {"pkg": ["x", "y"], ".": []})'
               when: layersArg
@@ -3793,7 +3800,6 @@ System:
             System and Component rules of d plus this card's Function and Interface rules, never a sibling card's.
           steps:
             - reads: Guardrail Rules Result
-            - produces: Record<string, Record<string, string>>
           examples:
             - given: 'RG = the rules of Guardrail Rules example 1, RT = those of example 3; cardRules(go, ["calc/add.go", "calc/add_test.go"], RG); cardRules(typescript, ["src/orders/placeOrder.ts", "tests/orders/placeOrder.test.ts"], RT); cardRules(go, ["new/a.go", "new/b.go", "main.go"], {}); cardRules(go, ["calc/add_examples_test.go"], RG)'
               when: cardRules
@@ -3821,8 +3827,6 @@ System:
             library[, <mods joined by ', '>])", TypeScript as before ("guard: <file>:<line> package import \"<spec>\" (allowed:
             node:*[, <pkgs>])"). Only the card's own files are read, so a package-mate's import is never its red: Blame
             Log blames the card whose acceptance it is, the owner of the named file.
-          steps:
-            - produces: string
           examples:
             - given: 'rulesArg(undefined); rulesArg({}); rulesArg({"calc": {"pure": "Guardrail ''Pure'' of Component calc"}})'
               when: rulesArg
@@ -3839,8 +3843,6 @@ System:
           behavior: >
             guardContract(guard) → number: the digits of the first match of /morph-guard-contract: (\d+)/ in the guard's
             text, as a number; no match → 0 (a hand guard, or a template copy older than P30).
-          steps:
-            - produces: number
           examples:
             - given: 'guardContract("// guard\n"); guardContract("// morph-guard-contract: 2\n"); guardContract("x\n// morph-guard-contract: 3\n// morph-guard-contract: 2\n"); guardContract("// morph-guard-contract: x\n")'
               when: guardContract
@@ -3882,7 +3884,6 @@ System:
             "." when it has none. A note is not an error: the extra keeps running (it is phase data).
           steps:
             - calls: Guard Contract
-            - produces: string
           examples:
             - {given: 'examples.json["Plan Notes 1"].given', ref: "tests/fixtures/rules/examples.json", when: "planNotes", then: 'examples.json["Plan Notes 1"].then'}
             - {given: 'examples.json["Plan Notes 2"].given', ref: "tests/fixtures/rules/examples.json", when: "planNotes", then: 'examples.json["Plan Notes 2"].then'}
@@ -3916,9 +3917,11 @@ System:
         archive total.
       language: typescript
       requirements: [Deterministic Core]
+      guardrails: [No Shell, No Network, No Env, No Process]
       functions:
         - name: Read Runs
           description: Every archived run of both report forms summarised, with totals over both; nothing read twice, nothing thrown.
+          guardrails: [No Clock]
           behavior: >
             readRuns(archives: {dir, report: string | null, answers: number}[]) → Runs Digest. The
             archives sorted by dir (code-unit order); per archive, the first that applies: report
@@ -3950,6 +3953,7 @@ System:
             - {given: 'archives 20261007-155108 = the P11 smoke''s report (V2 on the batch route: processor glm53b, model z-ai/glm-5.3:batch, usageTotals.cost null) and 20261006-135524-8c114477', ref: "tests/fixtures/primer/runs/20261007-155108/report.json", when: readRuns, then: 'exactly runs.json["Read Runs 3"]: the mrph run first (written 1, failed 2, skipped 5 of 8), then the V2 run (cost null); totals unpriced 1, cost = the mrph run''s, models z-ai/glm-5.3 then z-ai/glm-5.3:batch'}
         - name: Read Story
           description: The phase chronology, what is next, the last decisions and the open issues, from the texts of four docs and an issues file.
+          guardrails: [No Clock]
           behavior: >
             readStory(texts {measure, plan, autonomy, decisions, issues: string | null}, runs
             {runId, models}[]) → Story. A table: a line whose trim starts with "|", the next
@@ -3994,6 +3998,7 @@ System:
             - {given: 'every text null, runs []', when: readStory, then: '{chronology: [], next: {phase: null, row: null, handoff: []}, decisions: [], issues: {state: "absent", items: []}, missing: ["measure", "plan", "autonomy", "decisions"]}'}
         - name: Render Primer
           description: The markdown a fresh session reads, its sections and line formats fixed; one cut at the cap.
+          guardrails: [No Clock]
           behavior: >
             renderPrimer(digest {name, generatedAt, files, tests {language, files, tests}, runs
             {skipped, totals}, story: Story}, cap) → string, lines joined "\n", ending "\n". "#
@@ -4129,9 +4134,11 @@ System:
         scout.json, the real file system adapter and `plan --from-scout` are Component scout-session (P13b).
       language: typescript
       requirements: [Deterministic Core]
+      guardrails: [No Shell, No Network, No Env, No Process]
       functions:
         - name: Parse Turn
           description: One model turn of the scout protocol read as one action (the lines not run named), one final answer (with or without the verb) or a malformed turn with its reason.
+          guardrails: [Pure]
           behavior: >
             parseTurn(text: string | null) → Turn. VERBS = ["READ", "GREP", "LIST", "ANSWER"]. 1. null, or a text whose
             trim is "" → malformed "empty turn". 2. lines = text split on "\n", one trailing "\r" removed from each; an
@@ -4172,6 +4179,7 @@ System:
             - {given: '"GREP /Exited\\(/"; "GREP /LimitsUnknown/i -- src"; "GREP a/b"; "GREP //"; "ANSWER {\"targets\": [\"a.ts\"]}\nANSWER {\"targets\": [\"a.ts\"]}"; "ANSWER {\"targets\": [\"a.ts\"], \"reasoning\": \"uses } and {\"}"', when: parseTurn, then: 'actions grep {pattern "Exited\\(", path ""}; {pattern "LimitsUnknown", path "src"}; {pattern "a/b", path ""}; {pattern "//", path ""}; answer {["a.ts"], [], ""} (the first of the two objects); answer {["a.ts"], [], "uses } and {"}'}
         - name: Cage Path
           description: A path the model wrote, admitted only when it names a listed file (or a directory of listed files) whose real path stays inside the root and outside .git.
+          guardrails: [Pure]
           behavior: >
             cagePath(tree {root, files: the listing, root-relative "/" paths}, path, kind "file" | "dir", fs {realpath,
             readFile}) → {ok true, path: the normalised relative path} | {ok false, error}; <p> in a message is the path
@@ -4192,6 +4200,7 @@ System:
             - {given: 'a real tmp dir p: p/t/src/a.ts, p/t/.git/config, p/t-out/secret.txt; symlinks p/t/out.txt → p/t-out/secret.txt, p/t/in.txt → src/a.ts, p/t/gitcfg → .git/config, p/t/gone.ts → nowhere.ts, p/link → p/t; files ["src/a.ts", "out.txt", "in.txt", "gitcfg", "gone.ts"]; fs = node fs (realpathSync, readFileSync utf8)', when: 'cagePath file with root p/t: out.txt, in.txt, gitcfg, gone.ts; then with root p/link: src/a.ts, out.txt', then: '"symlink out of the root refused: out.txt"; ok "in.txt"; "inside .git: gitcfg"; "no such file: gone.ts"; then ok "src/a.ts"; "symlink out of the root refused: out.txt"'}
         - name: Run Tool
           description: One READ, GREP or LIST executed over the listing through the cage and the injected file system, its text capped in lines and characters; LIST shows each file's line count.
+          guardrails: [Pure]
           behavior: >
             runTool(action, tree, fs, caps {readLines, readChars?, grepHits, grepLineChars, listEntries, grepSkip:
             string[] (path prefixes)}) → {text, read: action is a READ, error: string | null}. DEFAULT_TOOL_CAPS = {readLines 400,
@@ -4233,6 +4242,7 @@ System:
             - {given: 'a real tmp dir: docs/TASK_X.md "hit task\n", docs/PLAN.md "hit plan\n", decks/a.json "hit deck\n", src/a.ts "hit src\n"; files those four; K = DEFAULT_TOOL_CAPS with grepSkip [".morph/", "decks/", "docs/TASK_"]', when: 'GREP "hit" in "" (K); in "docs" (K); in "decks" (K); in "" with grepSkip ["decks"]', then: '"GREP /hit/ in the tree: 2 matches in 2 files\ndocs/PLAN.md:1: hit plan\nsrc/a.ts:1: hit src"; "GREP /hit/ in docs/: 2 matches in 2 files\ndocs/PLAN.md:1: hit plan\ndocs/TASK_X.md:1: hit task"; "GREP /hit/ in decks/: 1 match in 1 file\ndecks/a.json:1: hit deck"; "GREP /hit/ in the tree: 3 matches in 3 files\ndocs/PLAN.md:1: hit plan\ndocs/TASK_X.md:1: hit task\nsrc/a.ts:1: hit src"; read false, error null on every one'}
         - name: Spend Budget
           description: One turn charged against the five budgets; the first closed budget and its sentence; the stop_reason.
+          guardrails: [Pure]
           behavior: >
             spendTurn(budgets {calls, reads, chars, rounds, deadlineMs}, spent {calls, reads, chars, rounds}, charge
             {call, read, text}, elapsedMs) → {spent, text, closed, why}; spent is not changed. remaining = budgets.chars −
@@ -4258,6 +4268,7 @@ System:
             - {given: 'stopReason(true, null, null); (true, "reads", "the read budget is spent (2 of 2 reads)"); (false, "deadline", "the deadline (60 s) passed"); (false, null, null)', when: stopReason, then: '"the model answered on its own"; "the model answered after the budget closed: the read budget is spent (2 of 2 reads)"; "no answer: the deadline (60 s) passed"; "no answer: the session ended with every budget open"; FINAL_TURN ["calls", "reads", "chars"]; DEFAULT_BUDGETS as written'}
         - name: Seed From Ownership
           description: The head of git's ownership as the scout's seed — the code the project's cards wrote, newest first — and its round-zero text.
+          guardrails: [Pure]
           behavior: >
             seedFromOwnership(ownership {paths: {path, writes: {card, model, run}[]}[]} (git's Read Ownership result, most
             recently written first), files: the tree's listing, limit) → {source "primer", files, notes}. Walk the paths
@@ -4319,6 +4330,8 @@ System:
         layer's only node:fs files. tests/fixtures/scout/examples.json["<Function> <n>"] holds the given and then of an example naming it.
       language: typescript
       requirements: [Deterministic Core, One Document Out]
+      guardrails: [No Shell, No Network, No Env, No Process]
+      dependsOn: [cards, compiler]
       functions:
         - name: Run Scout
           description: One recon session — round 0, then a model turn per round, read as an action or an answer, until an answer, a closed budget or a failed call; one correction of a refused answer before the close, one after.
@@ -4490,9 +4503,11 @@ System:
         Component review-session (P14b).
       language: typescript
       requirements: [Deterministic Core]
+      guardrails: [No Shell, No Clock, No Network, No Env, No Process]
       functions:
         - name: Find Obligations
           description: The Functions of the record a range touches, each with the examples its tests at head must name.
+          guardrails: [Pure]
           behavior: >
             findObligations({record, map, changed: paths changed in the range, cards: the Morph-Card values of the range's
             commits, titles: the test titles at head}) → {obligations, findings}. Components in record order, Functions in
@@ -4517,6 +4532,7 @@ System:
             - {given: 'cards ["old-total", "add-tax-judge.r11"], changed ["legacy/oldTotal.ts", "tests/shop/addTax.test.ts"]; then changed [] and cards []; exampleTitle, hasTitle, cardUnit called alone', when: findObligations, then: 'legacy (cobol) skipped; Add Tax touched by ["card add-tax-judge", "file tests/shop/addTax.test.ts"]; then {[], []}; "Add Tax example 1", "test_add_tax_example_3"; hasTitle(["Add Tax example 1"], "Add Tax example 1") true, (["Add Tax example 12"], …) false; cardUnit("a.r3") "a", ("a.rx") "a.rx"'}
         - name: Check Envelope
           description: The range's changed files against the cards that wrote them (the envelope) and a scout session's targets (the scope).
+          guardrails: [Pure]
           behavior: >
             readDiff(nameStatus, numstat) reads `git diff --name-status -z --no-renames` and `git diff --numstat -z
             --no-renames` of one range: nameStatus split on "\0" into (letter, path) pairs, an empty letter ends; A → "added",
@@ -4543,6 +4559,7 @@ System:
             - {given: 'the first four changed files, commits as in 2, scout {scoutId "20261008-225320-74e423b1", targets ["src/a.ts", "src/c.ts"], contextSlice ["src/b.ts"]}', when: checkEnvelope, then: 'scopes target, context, outside, null; findings in order: envelope src/b.ts, scope src/b.ts "changed, though the scout named it as context", envelope README.md, scope README.md "changed, though the scout did not name it", scope src/c.ts "unchanged in the range", each scope expected "a target of the scout session (src/a.ts, src/c.ts)" but the last "changed: the scout named it as a target"'}
         - name: Check Guardrails
           description: The reviewer's two guardrails on the test files of a range — no test title lost, no new skipped or focused test.
+          guardrails: [Pure]
           behavior: >
             The profile of a file is language profileForPath(path)'s id; a file without one is skipped. testTitles(text,
             profile): typescript (and nothing for other ids but python) — every match of /(?<![\w$.])(?:test|it)\(\s*(["'`])(.*?)\1/g,
@@ -4564,6 +4581,7 @@ System:
             - {given: 'base and head []; then base and head the same three files with one skip each', when: checkGuardrails, then: 'rows [{Tests Kept, 0, 0}, {No New Skips, 0, 0}], no finding; then files 3 and 3, no finding'}
         - name: Plan Mutants
           description: Single-point mutants of one code file, spread over it when they exceed the limit.
+          guardrails: [Pure]
           behavior: >
             MUTATION_RULES, in this order (from → to; the operators with their spaces): "===" → "!==", "!==" → "===", " <= "
             → " < ", " >= " → " > ", " < " → " <= ", " > " → " >= ", " + " → " - ", " - " → " + ", "&&" → "||", "||" → "&&",
@@ -4583,6 +4601,7 @@ System:
             - {given: 'quotedMask of say("a\"b", ''c'') + 1 (20 chars); src/t.ts "const truey = trueish && untrue;\nconst t = true;\nconst u = !false;\n", limit 10', when: 'quotedMask; planMutants', then: '"00001111110011100000"; [1, 23, "&& → ||"], [2, 11, "true → false"], [3, 12, "false → true"]'}
         - name: Render Findings
           description: The review document — numbered findings with EXPECTED/GOT and a source tag, the counts, the verdict and a markdown page.
+          guardrails: [Pure]
           behavior: >
             KIND_ORDER = ["obligation", "envelope", "scope", "guardrail", "mutation"]. orderFindings(findings): stable sort by
             the kind's index (a kind not in KIND_ORDER after them all), then numbered {id "F<n>" from 1, kind, source, path,
@@ -4636,6 +4655,7 @@ System:
         Acceptance and writes only through Restore Snapshot.
       language: typescript
       requirements: [Deterministic Core, One Document Out]
+      guardrails: [No Shell, No Clock, No Network, No Env, No Process]
       functions:
         - name: Run Mutants
           description: Each planned mutant written over its file, the test command run under a timeout, the file restored; a green baseline first.
@@ -4729,6 +4749,8 @@ System:
         only through acceptance's Run Acceptance and git's Run Git.
       language: typescript
       requirements: [Deterministic Core, One Document Out]
+      guardrails: [No Shell, No Clock, No Network, No Env, No Process]
+      dependsOn: [cards]
       functions:
         - name: Card Brief
           description: "`morph card --deck <deck> --id <card> [--md]`: the card, its targets and slice as they read now, the last run's outcome of it; with --md the same as markdown."
@@ -4857,6 +4879,7 @@ System:
         spawn, no network. The template is data in templates/ beside dist/ (the package root); the code knows no file of it.
       language: typescript
       requirements: [Deterministic Core, One Document Out]
+      guardrails: [No Shell, No Clock, No Network, No Env, No Process]
       functions:
         - name: Init Project
           description: "`morph init --root <dir> --name <name> --language typescript|python|go [--module <path>] [--templates <dir>]`: the template written into an empty directory, the files listed."
@@ -4913,6 +4936,7 @@ System:
         with gate-proof's Gate Mutants in the scratch. tests/fixtures/gate/<name>.json holds the expected values of an example that names it.
       language: typescript
       requirements: [One Document Out, Deterministic Core]
+      guardrails: [No Shell, No Clock, No Network, No Env, No Process]
       functions:
         - name: Stub Verdict
           description: Where an acceptance log stopped, and its compile lines that name a file outside the card's targets.
@@ -5070,6 +5094,7 @@ System:
         process of its own. tests/fixtures/gate/<name>.json holds the expected values of an example that names it.
       language: typescript
       requirements: [Deterministic Core]
+      guardrails: [No Shell, No Clock, No Network, No Env, No Process]
       functions:
         - name: Gate Mutants
           description: The gate's mutants over a deck's reference code, each killed or not by its owner card's acceptance without the full line.
@@ -5154,6 +5179,7 @@ System:
         given and then of an example naming it.
       language: typescript
       requirements: [Deterministic Core]
+      guardrails: [Pure]
       functions:
         - name: Probe Names
           description: The example titles of a probe, and every one the record does not give or the probe lacks.

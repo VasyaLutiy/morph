@@ -31,7 +31,7 @@ test("Cut Component example 1: the dependency-free ledger cut is unchanged", () 
   expect(r.ok && r.cuts.map((c) => c.card)).toStrictEqual(fixtureJson("planner/ledger.cut.json"));
 });
 
-test("Cut Component example 6: the finale of conf, diff and plain", () => {
+test("Cut Component example 5: the finale of conf, diff and plain", () => {
   const conf = cut("conf");
   expect(conf.ok && conf.cuts.map((c) => [c.card.customId, c.card.instruction.endsWith("\n\n" + TYPESCRIPT.finale + TS_TAIL)]))
     .toStrictEqual([["read-config", true], ["check-config", true]]);
@@ -44,7 +44,7 @@ test("Cut Component example 6: the finale of conf, diff and plain", () => {
   expect(componentDependencies(DEPS, comp(DEPS, "plain"))).toStrictEqual([]);
 });
 
-test("Cut Component example 7: a go dependency in a typescript Component", () => {
+test("Cut Component example 6: a go dependency in a typescript Component", () => {
   expect(cut("wrong")).toStrictEqual({ ok: false, error: "Component 'wrong' uses 'github.com/google/go-cmp', a go dependency (the Component is typescript)" });
 });
 
