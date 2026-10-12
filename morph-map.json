@@ -23,18 +23,6 @@
     "run-transaction": [
       "Run Transaction"
     ],
-    "probe-lines-judge": [
-      "Probe Lines"
-    ],
-    "play-gate-judge": [
-      "Play Gate"
-    ],
-    "gate-errors-judge": [
-      "Gate Command"
-    ],
-    "probe-stop-judge": [
-      "Run Transaction"
-    ],
     "hazards": [
       "Find Hazards"
     ],
