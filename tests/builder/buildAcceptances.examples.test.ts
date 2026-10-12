@@ -26,6 +26,8 @@ const PROBE_IDS = ["parse-command", "render", "cut-component", "cut-judges", "pl
 test("Build Acceptances example 1: the P10a golden check, 12 acceptances byte for byte", () => {
   const d = loadDeck(fixture("../../decks/p10/v2deck.json"));
   if (!d.ok) throw new Error("the P10a deck file does not load");
+  const want = loadDeck(fixture("builder/p10.related.json"));
+  if (!want.ok) throw new Error("p10.related.json does not load");
   const inputCards: Card[] = d.deck.cards.map((c) => ({ ...c, acceptance: null }));
   const probes: Record<string, string> = {};
   for (const id of PROBE_IDS) {
@@ -41,7 +43,7 @@ test("Build Acceptances example 1: the P10a golden check, 12 acceptances byte fo
       probes,
     },
   });
-  expect(r).toStrictEqual({ ok: true, cards: d.deck.cards });
+  expect(r).toStrictEqual({ ok: true, cards: want.deck.cards });
 });
 
 test("Build Acceptances example 2: siblings by generation, a non-member untouched", () => {
