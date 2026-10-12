@@ -1999,7 +1999,8 @@
       ],
       "context_slice": [
         "documentation/CONVENTIONS.md",
-        "src/language/types.ts"
+        "src/language/types.ts",
+        "src/primerRecord/recordSection.ts"
       ],
       "depends_on": [
         "record-section"
@@ -3578,7 +3579,10 @@
         "documentation/CONVENTIONS.md",
         "src/contour/load.ts",
         "src/contour/types.ts",
-        "src/language/types.ts"
+        "src/language/types.ts",
+        "src/primerRecord/recordGaps.ts",
+        "src/primerRecord/importGaps.ts",
+        "src/primerRecord/renderRecord.ts"
       ],
       "depends_on": [
         "record-gaps",
