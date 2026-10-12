@@ -1,0 +1,491 @@
+{
+  "runId": "20261012-203103",
+  "completedAt": 1791841127034,
+  "branch": "morph/20261012-203103",
+  "processor": "ds",
+  "generations": 4,
+  "outcomes": [
+    {
+      "customId": "probe-lines",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "probe-lines.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "green"
+    },
+    {
+      "customId": "play-gate",
+      "status": "failed",
+      "reason": "acceptance failed",
+      "attempts": 3,
+      "winningVariant": "play-gate.r2.v2",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/play-gate/play-gate.probe.ts > Play Gate example 4: a probe build error is a probe break, never an outside line\nAssertionError: expected [ { phase: 'stub', generation: +0, card: 'p', exit: 1, timedOut: false, seconds: 1, stage: 'probe', expected: 'probe', outside: [], failures: [], probeBreaks: [], ok: true }, …(1) ] to strictly equal [ { phase: 'stub', generation: +0, card: 'p', exit: 1, timedOut: false, seconds: 1, stage: 'probe', expected: 'probe', outside: [], failures: [], …(2) }, …(1) ]\n\n- Expected\n+ Received\n\n@@ -3,30 +3,30 @@\n      \"card\": \"p\",\n      \"exit\": 1,\n      \"expected\": \"probe\",\n      \"failures\": [],\n      \"generation\": 0,\n-     \"ok\": false,\n+     \"ok\": true,\n      \"outside\": [],\n      \"phase\": \"stub\",\n-     \"probeBreaks\": [\n-       \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n-     ],\n+     \"probeBreaks\": [],\n      \"seconds\": 1,\n      \"stage\": \"probe\",\n      \"timedOut\": false,\n    },\n    {\n      \"card\": \"p\",\n-     \"exit\": 0,\n+     \"exit\": 1,\n      \"expected\": null,\n      \"failures\": [],\n      \"generation\": 0,\n-     \"ok\": true,\n+     \"ok\": false,\n      \"outside\": [],\n      \"phase\": \"ref\",\n-     \"probeBreaks\": [],\n+     \"probeBreaks\": [\n+       \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+     ],\n      \"seconds\": 1,\n      \"stage\": \"probe\",\n      \"timedOut\": false,\n    },\n  ]\n\n ❯ probe/play-gate/play-gate.probe.ts:81:79\n     79|     const acc = \"echo '== probe'\\necho \\\"probe/p/p.probe.ts(2,10): err…\n     80|     const cards: Card[] = [card(\"p\", [\"src/p.txt\"], acc)];\n     81|     expect(await play(r, cards, [[\"p\"]], [\"src/p.txt\"], [\"src/p.txt\"],…\n       |                                                                               ^\n     82|   } finally {\n     83|     r.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 3 passed (4)\n\nfirst difference at char 124 (line 7) of 587/587: expected \"...es\\\": [],\\n    \\\"generation\\\": 0,\\n    \\\"ok\\\": false,\\n    \\\"outside\\\": [],\\n    \\\"phase\\\": \\\"\" received \"...es\\\": [],\\n    \\\"generation\\\": 0,\\n    \\\"ok\\\": true,\\n    \\\"outside\\\": [],\\n    \\\"phase\\\": \\\"s\"\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/play-gate/play-gate.probe.ts > Play Gate example 4: a probe build error is a probe break, never an outside line\nAssertionError: expected [ { phase: 'stub', generation: +0, card: 'p', exit: 1, timedOut: false, seconds: 1, stage: 'probe', expected: 'probe', outside: [], failures: [], probeBreaks: [], ok: true }, …(1) ] to strictly equal [ { phase: 'stub', generation: +0, card: 'p', exit: 1, timedOut: false, seconds: 1, stage: 'probe', expected: 'probe', outside: [], failures: [], …(2) }, …(1) ]\n\n- Expected\n+ Received\n\n@@ -3,30 +3,30 @@\n      \"card\": \"p\",\n      \"exit\": 1,\n      \"expected\": \"probe\",\n      \"failures\": [],\n      \"generation\": 0,\n-     \"ok\": false,\n+     \"ok\": true,\n      \"outside\": [],\n      \"phase\": \"stub\",\n-     \"probeBreaks\": [\n-       \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n-     ],\n+     \"probeBreaks\": [],\n      \"seconds\": 1,\n      \"stage\": \"probe\",\n      \"timedOut\": false,\n    },\n    {\n      \"card\": \"p\",\n-     \"exit\": 0,\n+     \"exit\": 1,\n      \"expected\": null,\n      \"failures\": [],\n      \"generation\": 0,\n-     \"ok\": true,\n+     \"ok\": false,\n      \"outside\": [],\n      \"phase\": \"ref\",\n-     \"probeBreaks\": [],\n+     \"probeBreaks\": [\n+       \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+     ],\n      \"seconds\": 1,\n      \"stage\": \"probe\",\n      \"timedOut\": false,\n    },\n  ]\n\n ❯ probe/play-gate/play-gate.probe.ts:81:79\n     79|     const acc = \"echo '== probe'\\necho \\\"probe/p/p.probe.ts(2,10): err…\n     80|     const cards: Card[] = [card(\"p\", [\"src/p.txt\"], acc)];\n     81|     expect(await play(r, cards, [[\"p\"]], [\"src/p.txt\"], [\"src/p.txt\"],…\n       |                                                                               ^\n     82|   } finally {\n     83|     r.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 3 passed (4)\n\nfirst difference at char 124 (line 7) of 587/587: expected \"...es\\\": [],\\n    \\\"generation\\\": 0,\\n    \\\"ok\\\": false,\\n    \\\"outside\\\": [],\\n    \\\"phase\\\": \\\"\" received \"...es\\\": [],\\n    \\\"generation\\\": 0,\\n    \\\"ok\\\": true,\\n    \\\"outside\\\": [],\\n    \\\"phase\\\": \\\"s\"\n",
+        "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/play-gate/play-gate.probe.ts > Play Gate example 4: a probe build error is a probe break, never an outside line\nAssertionError: expected [ { phase: 'stub', generation: +0, card: 'p', exit: 1, timedOut: false, seconds: 1, stage: 'probe', expected: 'probe', outside: [], failures: [], probeBreaks: [], ok: true }, …(1) ] to strictly equal [ { phase: 'stub', generation: +0, card: 'p', exit: 1, timedOut: false, seconds: 1, stage: 'probe', expected: 'probe', outside: [], failures: [], …(2) }, …(1) ]\n\n- Expected\n+ Received\n\n@@ -3,30 +3,30 @@\n      \"card\": \"p\",\n      \"exit\": 1,\n      \"expected\": \"probe\",\n      \"failures\": [],\n      \"generation\": 0,\n-     \"ok\": false,\n+     \"ok\": true,\n      \"outside\": [],\n      \"phase\": \"stub\",\n-     \"probeBreaks\": [\n-       \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n-     ],\n+     \"probeBreaks\": [],\n      \"seconds\": 1,\n      \"stage\": \"probe\",\n      \"timedOut\": false,\n    },\n    {\n      \"card\": \"p\",\n-     \"exit\": 0,\n+     \"exit\": 1,\n      \"expected\": null,\n      \"failures\": [],\n      \"generation\": 0,\n-     \"ok\": true,\n+     \"ok\": false,\n      \"outside\": [],\n      \"phase\": \"ref\",\n-     \"probeBreaks\": [],\n+     \"probeBreaks\": [\n+       \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+     ],\n      \"seconds\": 1,\n      \"stage\": \"probe\",\n      \"timedOut\": false,\n    },\n  ]\n\n ❯ probe/play-gate/play-gate.probe.ts:81:79\n     79|     const acc = \"echo '== probe'\\necho \\\"probe/p/p.probe.ts(2,10): err…\n     80|     const cards: Card[] = [card(\"p\", [\"src/p.txt\"], acc)];\n     81|     expect(await play(r, cards, [[\"p\"]], [\"src/p.txt\"], [\"src/p.txt\"],…\n       |                                                                               ^\n     82|   } finally {\n     83|     r.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 3 passed (4)\n\nfirst difference at char 124 (line 7) of 587/587: expected \"...es\\\": [],\\n    \\\"generation\\\": 0,\\n    \\\"ok\\\": false,\\n    \\\"outside\\\": [],\\n    \\\"phase\\\": \\\"\" received \"...es\\\": [],\\n    \\\"generation\\\": 0,\\n    \\\"ok\\\": true,\\n    \\\"outside\\\": [],\\n    \\\"phase\\\": \\\"s\"\n"
+      ],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "probe-lines-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "probe-lines-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cards/probe.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "green"
+    },
+    {
+      "customId": "run-transaction",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "run-transaction.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "green"
+    },
+    {
+      "customId": "gate-probe",
+      "status": "failed",
+      "reason": "acceptance failed",
+      "attempts": 3,
+      "winningVariant": "gate-probe.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/gate-probe/gate-probe.probe.ts > Gate Command example 6: a probe build error is named, code 2\nAssertionError: expected { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } } to strictly equal { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } }\n\n- Expected\n+ Received\n\n@@ -7,17 +7,17 @@\n          \"card\": \"p\",\n          \"generation\": 0,\n          \"language\": null,\n          \"missing\": [],\n          \"note\": \"no language profile claims src/p.txt: not built\",\n-         \"stubbed\": 1,\n+         \"stubbed\": 0,\n        },\n      ],\n      \"cards\": 1,\n      \"deck\": \"d.json\",\n      \"errors\": [\n-       \"stub p: probe does not build: probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+       \"ref p: red (exit 1) at probe\",\n      ],\n      \"generations\": [\n        [\n          \"p\",\n        ],\n@@ -29,30 +29,30 @@\n          \"card\": \"p\",\n          \"exit\": 1,\n          \"expected\": \"probe\",\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": false,\n+         \"ok\": true,\n          \"outside\": [],\n          \"phase\": \"stub\",\n-         \"probeBreaks\": [\n-           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n-         ],\n+         \"probeBreaks\": [],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n        {\n          \"card\": \"p\",\n-         \"exit\": 0,\n+         \"exit\": 1,\n          \"expected\": null,\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": true,\n+         \"ok\": false,\n          \"outside\": [],\n          \"phase\": \"ref\",\n-         \"probeBreaks\": [],\n+         \"probeBreaks\": [\n+           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+         ],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n      ],\n\n ❯ probe/gate-probe/gate-probe.probe.ts:39:90\n     37|   });\n     38|   try {\n     39|     expect(await gateCommand(r.root, { deck: \"d.json\", stubs: \"s\", ref…\n       |                                                                                          ^\n     40|   } finally {\n     41|     r.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed (1)\n\nfirst difference at char 197 (line 7) of 1142/1076: expected \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 1,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\" received \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 0,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\"\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/gate-probe/gate-probe.probe.ts > Gate Command example 6: a probe build error is named, code 2\nAssertionError: expected { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } } to strictly equal { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } }\n\n- Expected\n+ Received\n\n@@ -7,17 +7,17 @@\n          \"card\": \"p\",\n          \"generation\": 0,\n          \"language\": null,\n          \"missing\": [],\n          \"note\": \"no language profile claims src/p.txt: not built\",\n-         \"stubbed\": 1,\n+         \"stubbed\": 0,\n        },\n      ],\n      \"cards\": 1,\n      \"deck\": \"d.json\",\n      \"errors\": [\n-       \"stub p: probe does not build: probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+       \"ref p: red (exit 1) at probe\",\n      ],\n      \"generations\": [\n        [\n          \"p\",\n        ],\n@@ -29,30 +29,30 @@\n          \"card\": \"p\",\n          \"exit\": 1,\n          \"expected\": \"probe\",\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": false,\n+         \"ok\": true,\n          \"outside\": [],\n          \"phase\": \"stub\",\n-         \"probeBreaks\": [\n-           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n-         ],\n+         \"probeBreaks\": [],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n        {\n          \"card\": \"p\",\n-         \"exit\": 0,\n+         \"exit\": 1,\n          \"expected\": null,\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": true,\n+         \"ok\": false,\n          \"outside\": [],\n          \"phase\": \"ref\",\n-         \"probeBreaks\": [],\n+         \"probeBreaks\": [\n+           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+         ],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n      ],\n\n ❯ probe/gate-probe/gate-probe.probe.ts:39:90\n     37|   });\n     38|   try {\n     39|     expect(await gateCommand(r.root, { deck: \"d.json\", stubs: \"s\", ref…\n       |                                                                                          ^\n     40|   } finally {\n     41|     r.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed (1)\n\nfirst difference at char 197 (line 7) of 1142/1076: expected \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 1,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\" received \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 0,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\"\n",
+        "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/gate-probe/gate-probe.probe.ts > Gate Command example 6: a probe build error is named, code 2\nAssertionError: expected { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } } to strictly equal { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } }\n\n- Expected\n+ Received\n\n@@ -7,17 +7,17 @@\n          \"card\": \"p\",\n          \"generation\": 0,\n          \"language\": null,\n          \"missing\": [],\n          \"note\": \"no language profile claims src/p.txt: not built\",\n-         \"stubbed\": 1,\n+         \"stubbed\": 0,\n        },\n      ],\n      \"cards\": 1,\n      \"deck\": \"d.json\",\n      \"errors\": [\n-       \"stub p: probe does not build: probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+       \"ref p: red (exit 1) at probe\",\n      ],\n      \"generations\": [\n        [\n          \"p\",\n        ],\n@@ -29,30 +29,30 @@\n          \"card\": \"p\",\n          \"exit\": 1,\n          \"expected\": \"probe\",\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": false,\n+         \"ok\": true,\n          \"outside\": [],\n          \"phase\": \"stub\",\n-         \"probeBreaks\": [\n-           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n-         ],\n+         \"probeBreaks\": [],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n        {\n          \"card\": \"p\",\n-         \"exit\": 0,\n+         \"exit\": 1,\n          \"expected\": null,\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": true,\n+         \"ok\": false,\n          \"outside\": [],\n          \"phase\": \"ref\",\n-         \"probeBreaks\": [],\n+         \"probeBreaks\": [\n+           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+         ],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n      ],\n\n ❯ probe/gate-probe/gate-probe.probe.ts:39:90\n     37|   });\n     38|   try {\n     39|     expect(await gateCommand(r.root, { deck: \"d.json\", stubs: \"s\", ref…\n       |                                                                                          ^\n     40|   } finally {\n     41|     r.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed (1)\n\nfirst difference at char 197 (line 7) of 1142/1076: expected \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 1,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\" received \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 0,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\"\n"
+      ],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "play-gate-judge",
+      "status": "failed",
+      "reason": "acceptance failed",
+      "attempts": 3,
+      "winningVariant": "play-gate-judge.r2.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/gate/playGate.examples.test.ts\n== names tests/gate/playGate.examples.test.ts\n== own\n FAIL  tests/gate/playGate.examples.test.ts > Play Gate example 4: a probe build error is a probe break, never an outside line\nAssertionError: expected [] to strictly equal [ 'probe/p/p.probe.ts(2,10): error TS2304: Cannot find name \\'adaH\\'.' ]\n\n- Expected\n+ Received\n\n- [\n-   \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n- ]\n+ []\n\n ❯ tests/gate/playGate.examples.test.ts:277:34\n    275|         { env: env(), now: clock(1000) },\n    276|       );\n    277|       expect(got[0].probeBreaks).toStrictEqual([\n       |                                  ^\n    278|         \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'ada…\n    279|       ]);\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 6 passed (7)\n\nfirst difference at char 1 (line 1) of 73/2: expected \"[\\n  \\\"probe/p/p.probe.ts(2,10): error TS23\" received \"[]\"\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard tests/gate/playGate.examples.test.ts\nguard: tests/gate/playGate.examples.test.ts does not mention the example literal \"probeBreaks\"\n",
+        "== tsc\n== eslint\n== guard tests/gate/playGate.examples.test.ts\n== names tests/gate/playGate.examples.test.ts\n== own\n FAIL  tests/gate/playGate.examples.test.ts > Play Gate example 4: a probe build error is a probe break, never an outside line\nAssertionError: expected [] to strictly equal [ 'probe/p/p.probe.ts(2,10): error TS2304: Cannot find name \\'adaH\\'.' ]\n\n- Expected\n+ Received\n\n- [\n-   \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n- ]\n+ []\n\n ❯ tests/gate/playGate.examples.test.ts:277:34\n    275|         { env: env(), now: clock(1000) },\n    276|       );\n    277|       expect(got[0].probeBreaks).toStrictEqual([\n       |                                  ^\n    278|         \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'ada…\n    279|       ]);\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 6 passed (7)\n\nfirst difference at char 1 (line 1) of 73/2: expected \"[\\n  \\\"probe/p/p.probe.ts(2,10): error TS23\" received \"[]\"\n"
+      ],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "run-transaction-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "run-transaction-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/runloop/transaction.p50.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "green"
+    },
+    {
+      "customId": "gate-probe-judge",
+      "status": "failed",
+      "reason": "acceptance failed",
+      "attempts": 3,
+      "winningVariant": "gate-probe-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/gate/gateCommand.examples.test.ts\n== names tests/gate/gateCommand.examples.test.ts\n== own\n FAIL  tests/gate/gateCommand.examples.test.ts > Gate Command example 6: a probe build error is named, code 2\nAssertionError: expected { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } } to strictly equal { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } }\n\n- Expected\n+ Received\n\n@@ -7,17 +7,17 @@\n          \"card\": \"p\",\n          \"generation\": 0,\n          \"language\": null,\n          \"missing\": [],\n          \"note\": \"no language profile claims src/p.txt: not built\",\n-         \"stubbed\": 1,\n+         \"stubbed\": 0,\n        },\n      ],\n      \"cards\": 1,\n      \"deck\": \"d.json\",\n      \"errors\": [\n-       \"stub p: probe does not build: probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+       \"ref p: red (exit 1) at probe\",\n      ],\n      \"generations\": [\n        [\n          \"p\",\n        ],\n@@ -29,30 +29,30 @@\n          \"card\": \"p\",\n          \"exit\": 1,\n          \"expected\": \"probe\",\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": false,\n+         \"ok\": true,\n          \"outside\": [],\n          \"phase\": \"stub\",\n-         \"probeBreaks\": [\n-           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n-         ],\n+         \"probeBreaks\": [],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n        {\n          \"card\": \"p\",\n-         \"exit\": 0,\n+         \"exit\": 1,\n          \"expected\": null,\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": true,\n+         \"ok\": false,\n          \"outside\": [],\n          \"phase\": \"ref\",\n-         \"probeBreaks\": [],\n+         \"probeBreaks\": [\n+           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+         ],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n      ],\n\n ❯ tests/gate/gateCommand.examples.test.ts:285:9\n    283|       expect(\n    284|         await gateCommand(r.root, { deck: \"d.json\", stubs: \"s\", refs: …\n    285|       ).toStrictEqual(result(\"probe\"));\n       |         ^\n    286|     } finally {\n    287|       r.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 6 passed (7)\n\nfirst difference at char 197 (line 7) of 1142/1076: expected \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 1,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\" received \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 0,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\"\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard tests/gate/gateCommand.examples.test.ts\nguard: tests/gate/gateCommand.examples.test.ts does not mention the example literal \"probe does not build\"\n",
+        "== tsc\n== eslint\n== guard tests/gate/gateCommand.examples.test.ts\n== names tests/gate/gateCommand.examples.test.ts\n== own\n FAIL  tests/gate/gateCommand.examples.test.ts > Gate Command example 6: a probe build error is named, code 2\nAssertionError: expected { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } } to strictly equal { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } }\n\n- Expected\n+ Received\n\n@@ -7,17 +7,17 @@\n          \"card\": \"p\",\n          \"generation\": 0,\n          \"language\": null,\n          \"missing\": [],\n          \"note\": \"no language profile claims src/p.txt: not built\",\n-         \"stubbed\": 1,\n+         \"stubbed\": 0,\n        },\n      ],\n      \"cards\": 1,\n      \"deck\": \"d.json\",\n      \"errors\": [\n-       \"stub p: probe does not build: probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+       \"ref p: red (exit 1) at probe\",\n      ],\n      \"generations\": [\n        [\n          \"p\",\n        ],\n@@ -29,30 +29,30 @@\n          \"card\": \"p\",\n          \"exit\": 1,\n          \"expected\": \"probe\",\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": false,\n+         \"ok\": true,\n          \"outside\": [],\n          \"phase\": \"stub\",\n-         \"probeBreaks\": [\n-           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n-         ],\n+         \"probeBreaks\": [],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n        {\n          \"card\": \"p\",\n-         \"exit\": 0,\n+         \"exit\": 1,\n          \"expected\": null,\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": true,\n+         \"ok\": false,\n          \"outside\": [],\n          \"phase\": \"ref\",\n-         \"probeBreaks\": [],\n+         \"probeBreaks\": [\n+           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+         ],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n      ],\n\n ❯ tests/gate/gateCommand.examples.test.ts:285:9\n    283|       expect(\n    284|         await gateCommand(r.root, { deck: \"d.json\", stubs: \"s\", refs: …\n    285|       ).toStrictEqual(result(\"probe\"));\n       |         ^\n    286|     } finally {\n    287|       r.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 6 passed (7)\n\nfirst difference at char 197 (line 7) of 1142/1076: expected \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 1,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\" received \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 0,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\"\n"
+      ],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 300332,
+    "outputTokens": 419495,
+    "cost": 0.2887288799999999,
+    "requests": 24
+  },
+  "requests": [
+    {
+      "customId": "probe-lines.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791837064-Z2fvVI62tuxvTquytNsx",
+      "inputTokens": 3181,
+      "outputTokens": 6289,
+      "cost": 0.00425055,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "probe-lines.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791837064-XnN8Lu0TSzwTqfsTQ4mV",
+      "inputTokens": 3181,
+      "outputTokens": 8104,
+      "cost": 0.00533955,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "play-gate.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791837144-hoWJjVPgzRF4NdsjEuCE",
+      "inputTokens": 7080,
+      "outputTokens": 5643,
+      "cost": 0.00361836,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "play-gate.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791837144-ZaexmmImJU8NtCKd1q4T",
+      "inputTokens": 7080,
+      "outputTokens": 2497,
+      "cost": 0.0025602,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "probe-lines-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791837144-HkTRelOGKPLXLKfqIt9j",
+      "inputTokens": 4221,
+      "outputTokens": 517,
+      "cost": 0.00094335,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-transaction.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791837150-tJmkc5BwHaZZU5UN0Wat",
+      "inputTokens": 16951,
+      "outputTokens": 7260,
+      "cost": 0.00689865,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-transaction.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791837165-5p8Q3YurcwGZAe3Shy7i",
+      "inputTokens": 16951,
+      "outputTokens": 6336,
+      "cost": 0.00413241,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "gate-probe.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791837210-zCXcTnUbe8zowLsDMtqJ",
+      "inputTokens": 8193,
+      "outputTokens": 2749,
+      "cost": 0.00287835,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "gate-probe.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791837210-jD6ofCgRJpI7829lX3LJ",
+      "inputTokens": 8193,
+      "outputTokens": 2519,
+      "cost": 0.00274035,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "play-gate-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791837210-FOKAoVQMWtUdto3QmQrq",
+      "inputTokens": 9541,
+      "outputTokens": 3438,
+      "cost": 0.00349395,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-transaction-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791837228-JriIyfyNpk8zLAYYWqGE",
+      "inputTokens": 16528,
+      "outputTokens": 2453,
+      "cost": 0.003951,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "gate-probe-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791837248-kqUMPMK7VXpid6bOcMRj",
+      "inputTokens": 15093,
+      "outputTokens": 2849,
+      "cost": 0.00397335,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "play-gate.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791837323-ypif9FzuglaKhFDWezjt",
+      "inputTokens": 15715,
+      "outputTokens": 72000,
+      "cost": 0.04555725,
+      "finishReason": "length",
+      "error": null
+    },
+    {
+      "customId": "play-gate.r1.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791837323-l5UgHGPv3Kz1OZIUwjCV",
+      "inputTokens": 15715,
+      "outputTokens": 72000,
+      "cost": 0.04555725,
+      "finishReason": "length",
+      "error": null
+    },
+    {
+      "customId": "gate-probe.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791837858-m6gWRNNkNLWgIbjDqFAq",
+      "inputTokens": 15435,
+      "outputTokens": 24000,
+      "cost": 0.01464165,
+      "finishReason": "length",
+      "error": null
+    },
+    {
+      "customId": "gate-probe.r1.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791837858-9fKZpwCekJsMV9AI3h1M",
+      "inputTokens": 15435,
+      "outputTokens": 24000,
+      "cost": 0.01643877,
+      "finishReason": "length",
+      "error": null
+    },
+    {
+      "customId": "play-gate-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791837858-xkjNXjfF3VlFxnUoaex9",
+      "inputTokens": 15725,
+      "outputTokens": 15948,
+      "cost": 0.01165107,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "gate-probe-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791838122-BpxnED2AK5oKXlZ7Bb1C",
+      "inputTokens": 21147,
+      "outputTokens": 3544,
+      "cost": 0.00502197,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "play-gate.r2.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": null,
+      "generationId": null,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "cost": null,
+      "finishReason": null,
+      "error": "transport: The operation was aborted due to timeout (after 3 attempts)"
+    },
+    {
+      "customId": "play-gate.r2.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791839410-pAcl8zmqh5S7H5XfjO3X",
+      "inputTokens": 15715,
+      "outputTokens": 1832,
+      "cost": 0.00138285,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "gate-probe.r2.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791840011-IresKxrm9D2tLVlfksNk",
+      "inputTokens": 15418,
+      "outputTokens": 24000,
+      "cost": 0.0167127,
+      "finishReason": "length",
+      "error": null
+    },
+    {
+      "customId": "gate-probe.r2.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791840011-V5JWmaPKqW5Gj46vy3Ln",
+      "inputTokens": 15418,
+      "outputTokens": 24000,
+      "cost": 0.0167127,
+      "finishReason": "length",
+      "error": null
+    },
+    {
+      "customId": "play-gate-judge.r2.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791840011-okL5mRjY8fra7PrzMIPK",
+      "inputTokens": 16275,
+      "outputTokens": 59517,
+      "cost": 0.03815145,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "gate-probe-judge.r2.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791840554-qzE17BNdNjVXd0Q8n6C0",
+      "inputTokens": 22141,
+      "outputTokens": 48000,
+      "cost": 0.03212115,
+      "finishReason": "length",
+      "error": null
+    }
+  ],
+  "rounds": [
+    {
+      "round": 0,
+      "reds": [
+        {
+          "customId": "play-gate",
+          "blamed": [
+            "play-gate"
+          ],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/play-gate/play-gate.probe.ts > Play Gate example 4: a probe build error is a probe break, never an outside line\nAssertionError: expected [ { phase: 'stub', generation: +0, card: 'p', exit: 1, timedOut: false, seconds: 1, stage: 'probe', expected: 'probe', outside: [], failures: [], probeBreaks: [], ok: true }, …(1) ] to strictly equal [ { phase: 'stub', generation: +0, card: 'p', exit: 1, timedOut: false, seconds: 1, stage: 'probe', expected: 'probe', outside: [], failures: [], …(2) }, …(1) ]\n\n- Expected\n+ Received\n\n@@ -3,30 +3,30 @@\n      \"card\": \"p\",\n      \"exit\": 1,\n      \"expected\": \"probe\",\n      \"failures\": [],\n      \"generation\": 0,\n-     \"ok\": false,\n+     \"ok\": true,\n      \"outside\": [],\n      \"phase\": \"stub\",\n-     \"probeBreaks\": [\n-       \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n-     ],\n+     \"probeBreaks\": [],\n      \"seconds\": 1,\n      \"stage\": \"probe\",\n      \"timedOut\": false,\n    },\n    {\n      \"card\": \"p\",\n-     \"exit\": 0,\n+     \"exit\": 1,\n      \"expected\": null,\n      \"failures\": [],\n      \"generation\": 0,\n-     \"ok\": true,\n+     \"ok\": false,\n      \"outside\": [],\n      \"phase\": \"ref\",\n-     \"probeBreaks\": [],\n+     \"probeBreaks\": [\n+       \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+     ],\n      \"seconds\": 1,\n      \"stage\": \"probe\",\n      \"timedOut\": false,\n    },\n  ]\n\n ❯ probe/play-gate/play-gate.probe.ts:81:79\n     79|     const acc = \"echo '== probe'\\necho \\\"probe/p/p.probe.ts(2,10): err…\n     80|     const cards: Card[] = [card(\"p\", [\"src/p.txt\"], acc)];\n     81|     expect(await play(r, cards, [[\"p\"]], [\"src/p.txt\"], [\"src/p.txt\"],…\n       |                                                                               ^\n     82|   } finally {\n     83|     r.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 3 passed (4)\n\nfirst difference at char 124 (line 7) of 587/587: expected \"...es\\\": [],\\n    \\\"generation\\\": 0,\\n    \\\"ok\\\": false,\\n    \\\"outside\\\": [],\\n    \\\"phase\\\": \\\"\" received \"...es\\\": [],\\n    \\\"generation\\\": 0,\\n    \\\"ok\\\": true,\\n    \\\"outside\\\": [],\\n    \\\"phase\\\": \\\"s\"\n"
+        },
+        {
+          "customId": "gate-probe",
+          "blamed": [
+            "gate-probe"
+          ],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/gate-probe/gate-probe.probe.ts > Gate Command example 6: a probe build error is named, code 2\nAssertionError: expected { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } } to strictly equal { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } }\n\n- Expected\n+ Received\n\n@@ -7,17 +7,17 @@\n          \"card\": \"p\",\n          \"generation\": 0,\n          \"language\": null,\n          \"missing\": [],\n          \"note\": \"no language profile claims src/p.txt: not built\",\n-         \"stubbed\": 1,\n+         \"stubbed\": 0,\n        },\n      ],\n      \"cards\": 1,\n      \"deck\": \"d.json\",\n      \"errors\": [\n-       \"stub p: probe does not build: probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+       \"ref p: red (exit 1) at probe\",\n      ],\n      \"generations\": [\n        [\n          \"p\",\n        ],\n@@ -29,30 +29,30 @@\n          \"card\": \"p\",\n          \"exit\": 1,\n          \"expected\": \"probe\",\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": false,\n+         \"ok\": true,\n          \"outside\": [],\n          \"phase\": \"stub\",\n-         \"probeBreaks\": [\n-           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n-         ],\n+         \"probeBreaks\": [],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n        {\n          \"card\": \"p\",\n-         \"exit\": 0,\n+         \"exit\": 1,\n          \"expected\": null,\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": true,\n+         \"ok\": false,\n          \"outside\": [],\n          \"phase\": \"ref\",\n-         \"probeBreaks\": [],\n+         \"probeBreaks\": [\n+           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+         ],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n      ],\n\n ❯ probe/gate-probe/gate-probe.probe.ts:39:90\n     37|   });\n     38|   try {\n     39|     expect(await gateCommand(r.root, { deck: \"d.json\", stubs: \"s\", ref…\n       |                                                                                          ^\n     40|   } finally {\n     41|     r.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed (1)\n\nfirst difference at char 197 (line 7) of 1142/1076: expected \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 1,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\" received \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 0,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\"\n"
+        },
+        {
+          "customId": "play-gate-judge",
+          "blamed": [
+            "play-gate-judge"
+          ],
+          "log": "== tsc\n== eslint\n== guard tests/gate/playGate.examples.test.ts\nguard: tests/gate/playGate.examples.test.ts does not mention the example literal \"probeBreaks\"\n"
+        },
+        {
+          "customId": "gate-probe-judge",
+          "blamed": [
+            "gate-probe-judge"
+          ],
+          "log": "== tsc\n== eslint\n== guard tests/gate/gateCommand.examples.test.ts\nguard: tests/gate/gateCommand.examples.test.ts does not mention the example literal \"probe does not build\"\n"
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "reds": [
+        {
+          "customId": "play-gate",
+          "blamed": [
+            "play-gate"
+          ],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/play-gate/play-gate.probe.ts > Play Gate example 4: a probe build error is a probe break, never an outside line\nAssertionError: expected [ { phase: 'stub', generation: +0, card: 'p', exit: 1, timedOut: false, seconds: 1, stage: 'probe', expected: 'probe', outside: [], failures: [], probeBreaks: [], ok: true }, …(1) ] to strictly equal [ { phase: 'stub', generation: +0, card: 'p', exit: 1, timedOut: false, seconds: 1, stage: 'probe', expected: 'probe', outside: [], failures: [], …(2) }, …(1) ]\n\n- Expected\n+ Received\n\n@@ -3,30 +3,30 @@\n      \"card\": \"p\",\n      \"exit\": 1,\n      \"expected\": \"probe\",\n      \"failures\": [],\n      \"generation\": 0,\n-     \"ok\": false,\n+     \"ok\": true,\n      \"outside\": [],\n      \"phase\": \"stub\",\n-     \"probeBreaks\": [\n-       \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n-     ],\n+     \"probeBreaks\": [],\n      \"seconds\": 1,\n      \"stage\": \"probe\",\n      \"timedOut\": false,\n    },\n    {\n      \"card\": \"p\",\n-     \"exit\": 0,\n+     \"exit\": 1,\n      \"expected\": null,\n      \"failures\": [],\n      \"generation\": 0,\n-     \"ok\": true,\n+     \"ok\": false,\n      \"outside\": [],\n      \"phase\": \"ref\",\n-     \"probeBreaks\": [],\n+     \"probeBreaks\": [\n+       \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+     ],\n      \"seconds\": 1,\n      \"stage\": \"probe\",\n      \"timedOut\": false,\n    },\n  ]\n\n ❯ probe/play-gate/play-gate.probe.ts:81:79\n     79|     const acc = \"echo '== probe'\\necho \\\"probe/p/p.probe.ts(2,10): err…\n     80|     const cards: Card[] = [card(\"p\", [\"src/p.txt\"], acc)];\n     81|     expect(await play(r, cards, [[\"p\"]], [\"src/p.txt\"], [\"src/p.txt\"],…\n       |                                                                               ^\n     82|   } finally {\n     83|     r.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 3 passed (4)\n\nfirst difference at char 124 (line 7) of 587/587: expected \"...es\\\": [],\\n    \\\"generation\\\": 0,\\n    \\\"ok\\\": false,\\n    \\\"outside\\\": [],\\n    \\\"phase\\\": \\\"\" received \"...es\\\": [],\\n    \\\"generation\\\": 0,\\n    \\\"ok\\\": true,\\n    \\\"outside\\\": [],\\n    \\\"phase\\\": \\\"s\"\n"
+        },
+        {
+          "customId": "gate-probe",
+          "blamed": [
+            "gate-probe"
+          ],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/gate-probe/gate-probe.probe.ts > Gate Command example 6: a probe build error is named, code 2\nAssertionError: expected { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } } to strictly equal { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } }\n\n- Expected\n+ Received\n\n@@ -7,17 +7,17 @@\n          \"card\": \"p\",\n          \"generation\": 0,\n          \"language\": null,\n          \"missing\": [],\n          \"note\": \"no language profile claims src/p.txt: not built\",\n-         \"stubbed\": 1,\n+         \"stubbed\": 0,\n        },\n      ],\n      \"cards\": 1,\n      \"deck\": \"d.json\",\n      \"errors\": [\n-       \"stub p: probe does not build: probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+       \"ref p: red (exit 1) at probe\",\n      ],\n      \"generations\": [\n        [\n          \"p\",\n        ],\n@@ -29,30 +29,30 @@\n          \"card\": \"p\",\n          \"exit\": 1,\n          \"expected\": \"probe\",\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": false,\n+         \"ok\": true,\n          \"outside\": [],\n          \"phase\": \"stub\",\n-         \"probeBreaks\": [\n-           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n-         ],\n+         \"probeBreaks\": [],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n        {\n          \"card\": \"p\",\n-         \"exit\": 0,\n+         \"exit\": 1,\n          \"expected\": null,\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": true,\n+         \"ok\": false,\n          \"outside\": [],\n          \"phase\": \"ref\",\n-         \"probeBreaks\": [],\n+         \"probeBreaks\": [\n+           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+         ],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n      ],\n\n ❯ probe/gate-probe/gate-probe.probe.ts:39:90\n     37|   });\n     38|   try {\n     39|     expect(await gateCommand(r.root, { deck: \"d.json\", stubs: \"s\", ref…\n       |                                                                                          ^\n     40|   } finally {\n     41|     r.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed (1)\n\nfirst difference at char 197 (line 7) of 1142/1076: expected \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 1,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\" received \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 0,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\"\n"
+        },
+        {
+          "customId": "play-gate-judge",
+          "blamed": [
+            "play-gate-judge"
+          ],
+          "log": "== tsc\n== eslint\n== guard tests/gate/playGate.examples.test.ts\n== names tests/gate/playGate.examples.test.ts\n== own\n FAIL  tests/gate/playGate.examples.test.ts > Play Gate example 4: a probe build error is a probe break, never an outside line\nAssertionError: expected [] to strictly equal [ 'probe/p/p.probe.ts(2,10): error TS2304: Cannot find name \\'adaH\\'.' ]\n\n- Expected\n+ Received\n\n- [\n-   \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n- ]\n+ []\n\n ❯ tests/gate/playGate.examples.test.ts:277:34\n    275|         { env: env(), now: clock(1000) },\n    276|       );\n    277|       expect(got[0].probeBreaks).toStrictEqual([\n       |                                  ^\n    278|         \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'ada…\n    279|       ]);\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 6 passed (7)\n\nfirst difference at char 1 (line 1) of 73/2: expected \"[\\n  \\\"probe/p/p.probe.ts(2,10): error TS23\" received \"[]\"\n"
+        },
+        {
+          "customId": "gate-probe-judge",
+          "blamed": [
+            "gate-probe-judge"
+          ],
+          "log": "== tsc\n== eslint\n== guard tests/gate/gateCommand.examples.test.ts\n== names tests/gate/gateCommand.examples.test.ts\n== own\n FAIL  tests/gate/gateCommand.examples.test.ts > Gate Command example 6: a probe build error is named, code 2\nAssertionError: expected { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } } to strictly equal { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } }\n\n- Expected\n+ Received\n\n@@ -7,17 +7,17 @@\n          \"card\": \"p\",\n          \"generation\": 0,\n          \"language\": null,\n          \"missing\": [],\n          \"note\": \"no language profile claims src/p.txt: not built\",\n-         \"stubbed\": 1,\n+         \"stubbed\": 0,\n        },\n      ],\n      \"cards\": 1,\n      \"deck\": \"d.json\",\n      \"errors\": [\n-       \"stub p: probe does not build: probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+       \"ref p: red (exit 1) at probe\",\n      ],\n      \"generations\": [\n        [\n          \"p\",\n        ],\n@@ -29,30 +29,30 @@\n          \"card\": \"p\",\n          \"exit\": 1,\n          \"expected\": \"probe\",\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": false,\n+         \"ok\": true,\n          \"outside\": [],\n          \"phase\": \"stub\",\n-         \"probeBreaks\": [\n-           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n-         ],\n+         \"probeBreaks\": [],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n        {\n          \"card\": \"p\",\n-         \"exit\": 0,\n+         \"exit\": 1,\n          \"expected\": null,\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": true,\n+         \"ok\": false,\n          \"outside\": [],\n          \"phase\": \"ref\",\n-         \"probeBreaks\": [],\n+         \"probeBreaks\": [\n+           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+         ],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n      ],\n\n ❯ tests/gate/gateCommand.examples.test.ts:285:9\n    283|       expect(\n    284|         await gateCommand(r.root, { deck: \"d.json\", stubs: \"s\", refs: …\n    285|       ).toStrictEqual(result(\"probe\"));\n       |         ^\n    286|     } finally {\n    287|       r.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 6 passed (7)\n\nfirst difference at char 197 (line 7) of 1142/1076: expected \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 1,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\" received \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 0,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\"\n"
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "reds": [
+        {
+          "customId": "play-gate",
+          "blamed": [
+            "play-gate"
+          ],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/play-gate/play-gate.probe.ts > Play Gate example 4: a probe build error is a probe break, never an outside line\nAssertionError: expected [ { phase: 'stub', generation: +0, card: 'p', exit: 1, timedOut: false, seconds: 1, stage: 'probe', expected: 'probe', outside: [], failures: [], probeBreaks: [], ok: true }, …(1) ] to strictly equal [ { phase: 'stub', generation: +0, card: 'p', exit: 1, timedOut: false, seconds: 1, stage: 'probe', expected: 'probe', outside: [], failures: [], …(2) }, …(1) ]\n\n- Expected\n+ Received\n\n@@ -3,30 +3,30 @@\n      \"card\": \"p\",\n      \"exit\": 1,\n      \"expected\": \"probe\",\n      \"failures\": [],\n      \"generation\": 0,\n-     \"ok\": false,\n+     \"ok\": true,\n      \"outside\": [],\n      \"phase\": \"stub\",\n-     \"probeBreaks\": [\n-       \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n-     ],\n+     \"probeBreaks\": [],\n      \"seconds\": 1,\n      \"stage\": \"probe\",\n      \"timedOut\": false,\n    },\n    {\n      \"card\": \"p\",\n-     \"exit\": 0,\n+     \"exit\": 1,\n      \"expected\": null,\n      \"failures\": [],\n      \"generation\": 0,\n-     \"ok\": true,\n+     \"ok\": false,\n      \"outside\": [],\n      \"phase\": \"ref\",\n-     \"probeBreaks\": [],\n+     \"probeBreaks\": [\n+       \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+     ],\n      \"seconds\": 1,\n      \"stage\": \"probe\",\n      \"timedOut\": false,\n    },\n  ]\n\n ❯ probe/play-gate/play-gate.probe.ts:81:79\n     79|     const acc = \"echo '== probe'\\necho \\\"probe/p/p.probe.ts(2,10): err…\n     80|     const cards: Card[] = [card(\"p\", [\"src/p.txt\"], acc)];\n     81|     expect(await play(r, cards, [[\"p\"]], [\"src/p.txt\"], [\"src/p.txt\"],…\n       |                                                                               ^\n     82|   } finally {\n     83|     r.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 3 passed (4)\n\nfirst difference at char 124 (line 7) of 587/587: expected \"...es\\\": [],\\n    \\\"generation\\\": 0,\\n    \\\"ok\\\": false,\\n    \\\"outside\\\": [],\\n    \\\"phase\\\": \\\"\" received \"...es\\\": [],\\n    \\\"generation\\\": 0,\\n    \\\"ok\\\": true,\\n    \\\"outside\\\": [],\\n    \\\"phase\\\": \\\"s\"\n"
+        },
+        {
+          "customId": "gate-probe",
+          "blamed": [
+            "gate-probe"
+          ],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/gate-probe/gate-probe.probe.ts > Gate Command example 6: a probe build error is named, code 2\nAssertionError: expected { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } } to strictly equal { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } }\n\n- Expected\n+ Received\n\n@@ -7,17 +7,17 @@\n          \"card\": \"p\",\n          \"generation\": 0,\n          \"language\": null,\n          \"missing\": [],\n          \"note\": \"no language profile claims src/p.txt: not built\",\n-         \"stubbed\": 1,\n+         \"stubbed\": 0,\n        },\n      ],\n      \"cards\": 1,\n      \"deck\": \"d.json\",\n      \"errors\": [\n-       \"stub p: probe does not build: probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+       \"ref p: red (exit 1) at probe\",\n      ],\n      \"generations\": [\n        [\n          \"p\",\n        ],\n@@ -29,30 +29,30 @@\n          \"card\": \"p\",\n          \"exit\": 1,\n          \"expected\": \"probe\",\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": false,\n+         \"ok\": true,\n          \"outside\": [],\n          \"phase\": \"stub\",\n-         \"probeBreaks\": [\n-           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n-         ],\n+         \"probeBreaks\": [],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n        {\n          \"card\": \"p\",\n-         \"exit\": 0,\n+         \"exit\": 1,\n          \"expected\": null,\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": true,\n+         \"ok\": false,\n          \"outside\": [],\n          \"phase\": \"ref\",\n-         \"probeBreaks\": [],\n+         \"probeBreaks\": [\n+           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+         ],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n      ],\n\n ❯ probe/gate-probe/gate-probe.probe.ts:39:90\n     37|   });\n     38|   try {\n     39|     expect(await gateCommand(r.root, { deck: \"d.json\", stubs: \"s\", ref…\n       |                                                                                          ^\n     40|   } finally {\n     41|     r.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed (1)\n\nfirst difference at char 197 (line 7) of 1142/1076: expected \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 1,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\" received \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 0,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\"\n"
+        },
+        {
+          "customId": "play-gate-judge",
+          "blamed": [
+            "play-gate-judge"
+          ],
+          "log": "== tsc\n== eslint\n== guard tests/gate/playGate.examples.test.ts\n== names tests/gate/playGate.examples.test.ts\n== own\n FAIL  tests/gate/playGate.examples.test.ts > Play Gate example 4: a probe build error is a probe break, never an outside line\nAssertionError: expected [] to strictly equal [ 'probe/p/p.probe.ts(2,10): error TS2304: Cannot find name \\'adaH\\'.' ]\n\n- Expected\n+ Received\n\n- [\n-   \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n- ]\n+ []\n\n ❯ tests/gate/playGate.examples.test.ts:277:34\n    275|         { env: env(), now: clock(1000) },\n    276|       );\n    277|       expect(got[0].probeBreaks).toStrictEqual([\n       |                                  ^\n    278|         \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'ada…\n    279|       ]);\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 6 passed (7)\n\nfirst difference at char 1 (line 1) of 73/2: expected \"[\\n  \\\"probe/p/p.probe.ts(2,10): error TS23\" received \"[]\"\n"
+        },
+        {
+          "customId": "gate-probe-judge",
+          "blamed": [
+            "gate-probe-judge"
+          ],
+          "log": "== tsc\n== eslint\n== guard tests/gate/gateCommand.examples.test.ts\n== names tests/gate/gateCommand.examples.test.ts\n== own\n FAIL  tests/gate/gateCommand.examples.test.ts > Gate Command example 6: a probe build error is named, code 2\nAssertionError: expected { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } } to strictly equal { code: 2, document: { deck: 'd.json', transaction: false, cards: 1, generations: [ [ 'p' ] ], missing: [], …(4) } }\n\n- Expected\n+ Received\n\n@@ -7,17 +7,17 @@\n          \"card\": \"p\",\n          \"generation\": 0,\n          \"language\": null,\n          \"missing\": [],\n          \"note\": \"no language profile claims src/p.txt: not built\",\n-         \"stubbed\": 1,\n+         \"stubbed\": 0,\n        },\n      ],\n      \"cards\": 1,\n      \"deck\": \"d.json\",\n      \"errors\": [\n-       \"stub p: probe does not build: probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+       \"ref p: red (exit 1) at probe\",\n      ],\n      \"generations\": [\n        [\n          \"p\",\n        ],\n@@ -29,30 +29,30 @@\n          \"card\": \"p\",\n          \"exit\": 1,\n          \"expected\": \"probe\",\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": false,\n+         \"ok\": true,\n          \"outside\": [],\n          \"phase\": \"stub\",\n-         \"probeBreaks\": [\n-           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n-         ],\n+         \"probeBreaks\": [],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n        {\n          \"card\": \"p\",\n-         \"exit\": 0,\n+         \"exit\": 1,\n          \"expected\": null,\n          \"failures\": [],\n          \"generation\": 0,\n-         \"ok\": true,\n+         \"ok\": false,\n          \"outside\": [],\n          \"phase\": \"ref\",\n-         \"probeBreaks\": [],\n+         \"probeBreaks\": [\n+           \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\",\n+         ],\n          \"seconds\": 1,\n          \"stage\": \"probe\",\n          \"timedOut\": false,\n        },\n      ],\n\n ❯ tests/gate/gateCommand.examples.test.ts:285:9\n    283|       expect(\n    284|         await gateCommand(r.root, { deck: \"d.json\", stubs: \"s\", refs: …\n    285|       ).toStrictEqual(result(\"probe\"));\n       |         ^\n    286|     } finally {\n    287|       r.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 6 passed (7)\n\nfirst difference at char 197 (line 7) of 1142/1076: expected \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 1,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\" received \"...c/p.txt: not built\\\",\\n        \\\"stubbed\\\": 0,\\n      },\\n    ],\\n    \\\"cards\\\": 1,\\n    \\\"\"\n"
+        }
+      ]
+    }
+  ],
+  "stop": "retry cap: play-gate (2 retries), gate-probe (2 retries), play-gate-judge (2 retries), gate-probe-judge (2 retries)"
+}

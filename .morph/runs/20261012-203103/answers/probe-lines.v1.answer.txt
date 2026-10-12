@@ -1,0 +1,55 @@
+```typescript
+/**
+ * Probe Lines: the compile lines of a log that name a probe file.
+ *
+ * Pure text work only — no card, no owners, no disk. The caller passes the
+ * log and the tree profiles' file-line patterns (in order).
+ */
+
+/**
+ * True when `p` names a probe file: its basename ends `_probe_test.go`
+ * (a Go probe lands in its package as `<card>_probe_test.go`) or
+ * `.probe.ts`, or one of its `"/"`-segments is `probe`
+ * (a TypeScript probe runs from `probe/<card>/` at the repo root).
+ */
+export function isProbeFile(p: string): boolean {
+  const segments = p.split("/");
+  const base = segments[segments.length - 1] ?? "";
+  if (base.endsWith("_probe_test.go") || base.endsWith(".probe.ts")) {
+    return true;
+  }
+  return segments.includes("probe");
+}
+
+/**
+ * The compile lines of `log` that name a probe file, sorted.
+ *
+ * For each line of `log.split("\n")`, `trimEnd()`ed: an empty line or a line
+ * starting `#` is skipped. The first of `fileLines` (fresh `RegExp` each, in
+ * order) whose pattern matches the line wins: when its group 1 is a probe
+ * file, group 1 followed by group 2 (or `""`, when absent) is emitted once;
+ * no match, or a group 1 that is not a probe file, emits nothing.
+ */
+export function probeLines(log: string, fileLines: readonly string[]): string[] {
+  const found: string[] = [];
+  for (const raw of log.split("\n")) {
+    const line = raw.trimEnd();
+    if (line === "" || line.startsWith("#")) {
+      continue;
+    }
+    for (const pattern of fileLines) {
+      const match = new RegExp(pattern).exec(line);
+      if (match === null) {
+        continue;
+      }
+      const file: string | undefined = match[1];
+      const tail: string | undefined = match[2];
+      if (typeof file === "string" && isProbeFile(file)) {
+        found.push(file + (tail ?? ""));
+      }
+      break;
+    }
+  }
+  return found.sort();
+}
+```

@@ -1,0 +1,32 @@
+```typescript
+export function isProbeFile(p: string): boolean {
+  const segments = p.split("/");
+  const base = segments[segments.length - 1] ?? "";
+  if (base.endsWith("_probe_test.go") || base.endsWith(".probe.ts")) {
+    return true;
+  }
+  return segments.includes("probe");
+}
+
+export function probeLines(log: string, fileLines: readonly string[]): string[] {
+  const out: string[] = [];
+  for (const raw of log.split("\n")) {
+    const line = raw.trimEnd();
+    if (line === "" || line.startsWith("#")) {
+      continue;
+    }
+    for (const pattern of fileLines) {
+      const match = new RegExp(pattern).exec(line);
+      if (match === null) {
+        continue;
+      }
+      const file = match[1] ?? "";
+      if (isProbeFile(file)) {
+        out.push(file + (match[2] ?? ""));
+      }
+      break;
+    }
+  }
+  return out.sort();
+}
+```
