@@ -6,6 +6,7 @@ import { gitOk } from "../git/run.js";
 import { hasExtension, normalizePath, profileForPath } from "../language/paths.js";
 import { PROFILES } from "../language/profiles.js";
 import type { LanguageProfile } from "../language/types.js";
+import { recordSection } from "../primerRecord/recordSection.js";
 import { readRuns } from "./readRuns.js";
 import type { RunArchive, RunsTotals } from "./readRuns.js";
 import { readStory } from "./readStory.js";
@@ -117,10 +118,11 @@ export function primerCommand(root: string, write: boolean, deps: PrimerDeps): P
   const running = runningLine(texts.measure);
 
   const generatedAt = new Date(deps.now()).toISOString();
-  const markdown = renderPrimer(
-    { name: basename(root), generatedAt, files: files.length, tests, runs, story, ownership, running },
-    PRIMER_CAP,
-  );
+  const markdown =
+    renderPrimer(
+      { name: basename(root), generatedAt, files: files.length, tests, runs, story, ownership, running },
+      PRIMER_CAP,
+    ) + recordSection(root, files, profile, ownership.paths.map((p) => p.path));
 
   let written: string | null = null;
   if (write) {
