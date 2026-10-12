@@ -3602,7 +3602,8 @@
         "documentation/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/primerRecord/recordGaps.ts",
-        "src/contour/load.ts"
+        "src/contour/load.ts",
+        "tests/fixtures/primerRecord/examples.json"
       ],
       "depends_on": [
         "record-gaps"
@@ -3618,7 +3619,8 @@
       "context_slice": [
         "documentation/CONVENTIONS.md",
         "tests/helpers.ts",
-        "src/primerRecord/importGaps.ts"
+        "src/primerRecord/importGaps.ts",
+        "tests/fixtures/primerRecord/examples.json"
       ],
       "depends_on": [
         "import-gaps"
@@ -3635,7 +3637,8 @@
         "documentation/CONVENTIONS.md",
         "tests/helpers.ts",
         "src/primerRecord/renderRecord.ts",
-        "tests/fixtures/primerRecord/section1.md"
+        "tests/fixtures/primerRecord/section1.md",
+        "tests/fixtures/primerRecord/examples.json"
       ],
       "depends_on": [
         "render-record"
@@ -3651,7 +3654,8 @@
       "context_slice": [
         "documentation/CONVENTIONS.md",
         "tests/helpers.ts",
-        "src/primerRecord/recordSection.ts"
+        "src/primerRecord/recordSection.ts",
+        "tests/fixtures/primerRecord/examples.json"
       ],
       "depends_on": [
         "record-section"
