@@ -24,7 +24,9 @@ fixture) reads repository data without importing the changed code: the once-per-
 - `tests/fixtures/builder/p10.related.json`: decks/p10/v2deck.json with each acceptance's `== full` line become
   fullStep's (12 cards, each differs in exactly that line).
 - `tests/fixtures/identity/corpus.json`: p15 1 248 185 B, p21c 363 152 B, p22a 338 048 B (each cut differs from the old
-  one only in its `== full` lines: 12 of 50, 10 of 10, 10 of 10 acceptances); go-mini and go-p7b unchanged.
+  one only in its `== full` lines: 12 of 50, 10 of 10, 10 of 10 acceptances); go-mini and go-p7b unchanged. Check Identity
+  example 1 (record and `tests/gate/identity.examples.test.ts:43-45`) pins these bytes too: fix 1 (run 20261012-125705
+  red on it) adds check-identity-judge, patching the three literals.
 
 Every expected value was measured by a spike (the change applied in a scratch worktree, never committed): the four
 fixture texts, p10.related.json, the three corpus rows, every Suite Net and Run Command 13–15 value.

@@ -5319,7 +5319,7 @@ System:
             - given: 'root = this repository (two levels above tests/fixtures), entries = tests/fixtures/identity/corpus.json (5 entries), deps {env {PATH, HOME}, plan: argv → main(argv, {env, now: () => 0, cwd: "/", transport: null}, an io that drops both streams)}'
               ref: "tests/fixtures/identity/corpus.json (the corpus: name, commit, dir, install, argv, bytes, sha256)"
               when: checkIdentity
-              then: '5 rows, each ok with code 0 and the corpus''s bytes and sha256 (go-mini 75416, go-p7b 100388, p15 1247586, p21c 362610, p22a 337622), errors []; the root''s git status unchanged'
+              then: '5 rows, each ok with code 0 and the corpus''s bytes and sha256 (go-mini 75416, go-p7b 100388, p15 1248185, p21c 363152, p22a 338048; P37: the TypeScript cuts'' == full lines run vitest related), errors []; the root''s git status unchanged'
             - given: 'the go-mini entry alone; plan writes "x\n" to the path after "--out" and resolves 0 (a changed planner output); then plan resolves 2 and writes nothing'
               when: checkIdentity
               then: 'rows [{go-mini, 0, 2, "73cb3858a687a8494ca3323053016282f3dad39d42cf62ca4e79dda2aac7d9ac", false}], errors ["go-mini: 2 B, sha256 73cb3858a687; the corpus has 75416 B, sha256 3568d65a52ff"]; then [{go-mini, 2, 0, "", false}], errors ["go-mini: plan exit 2"]'

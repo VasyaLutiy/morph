@@ -2043,14 +2043,15 @@
       "max_tokens": 12000
     },
     "check-identity-judge": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "tests/gate/identity.examples.test.ts"
       ],
       "depends_on": [
         "check-identity"
       ],
-      "max_tokens": 24000
+      "max_tokens": 12000,
+      "instruction": "Patch tests/gate/identity.examples.test.ts in exactly three lines of the test \"Check Identity example 1: the whole corpus is cut byte for byte\", every other line and every test name as they are: `[\"p15\", 1247586],` becomes `[\"p15\", 1248185],`, `[\"p21c\", 362610],` becomes `[\"p21c\", 363152],`, `[\"p22a\", 337622],` becomes `[\"p22a\", 338048],` (tests/fixtures/identity/corpus.json now holds these bytes: the TypeScript cuts' \"== full\" lines run vitest related, P37). go-mini 75416 and go-p7b 100388 stay."
     },
     "gate-mutants-judge": {
       "intent": "generate",
