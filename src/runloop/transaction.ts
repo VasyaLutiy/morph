@@ -1,7 +1,7 @@
 // src/runloop/transaction.ts — Run Transaction (TASK_P21c §2.2, Run Transaction;
 // Component runloop-subset; PATCHED by TASK_P24 — per-card retry cap, layered
 // retry batch, kept attempt on rollback; PATCHED by TASK_P24c — unattributed
-// stop and round logs).
+// stop and round logs; PATCHED by issue #50 F3 — probe lines stop the run).
 //
 // A deck Transaction Deck marks (a card acceptance starting with
 // TRANSACTION_MARK) is one subset transaction: Run Deck writes every card
@@ -14,7 +14,10 @@
 // on the tree) or every target is restored and nothing is committed. A red
 // line that names an existing file no card owns is outside the subset: a fault
 // naming the whole list of such lines, rolled back. An unattributed red (a
-// test line no card's Blame can name) is a stop with no retry. The whole run
+// test line no card's Blame can name) is a stop with no retry. A red whose log
+// holds a probe file's compile line (issue #50 F3: a probe the card cannot
+// build is the orchestrator's data, not paid for by the card's retries) is a
+// stop with no retry, the line never reaching a retry prompt. The whole run
 // is all-or-nothing: a value thrown after the first commit leaves the committed
 // cards written and the rest skipped "fault"; before it, every target is
 // restored and every card is skipped "fault". The report is RETURNED.
@@ -25,6 +28,7 @@ import { runDeck } from "./deck.js";
 import { processGeneration } from "./generation.js";
 import { buildRetry } from "./retry.js";
 import { blameLog } from "../cards/transaction.js";
+import { probeLines } from "../cards/probe.js";
 import { layerGenerations } from "../cards/layer.js";
 import { TREE_PROFILES, TEST_LINES, NEIGHBOUR_RULES } from "../language/treeProfiles.js";
 import { snapshotTargets, restoreSnapshot } from "../acceptance/snapshot.js";
@@ -60,6 +64,7 @@ interface TxState {
   lastRed: boolean;           // the last round was red
   lastBlamesSelf: boolean;    // the last round's Blame names the card itself
   lastOutside: string[];      // the last round's outside lines for this card
+  lastProbe: string[];        // the last round's probe lines for this card (issue #50 F3)
   hadRound: boolean;          // at least one round ran for this card (P24)
 }
 
@@ -192,6 +197,8 @@ export async function runTransaction(
     let reason: string;
     if (state.lastOutside.length > 0) {
       reason = "outside the subset";
+    } else if (state.lastRed && state.lastProbe.length > 0) {
+      reason = "probe does not build";
     } else if (state.lastRed && state.lastBlamesSelf) {
       reason = "acceptance failed";
     } else {
@@ -300,6 +307,7 @@ export async function runTransaction(
         lastRed: false,
         lastBlamesSelf: false,
         lastOutside: [],
+        lastProbe: [],
         hadRound: false
       });
     }
@@ -362,6 +370,11 @@ export async function runTransaction(
           TEST_LINES,
           NEIGHBOUR_RULES
         );
+        const probe = probeLines(
+          result.log,
+          TREE_PROFILES.map((profile) => profile.fileLine)
+        );
+        state.lastProbe = probe;
         state.lastBlamesSelf = blame.cards.includes(card.customId);
         state.lastOutside = blame.outside;
         state.redLogs.push(result.log);
@@ -391,6 +404,33 @@ export async function runTransaction(
         }
         for (const card of cards) {
           outcomes.push(writtenOutcome(card.customId));
+        }
+        return finish(outcomes, null);
+      }
+
+      // issue #50 F3: a probe file's compile line — a probe the card cannot
+      // build is the orchestrator's data, not paid for by the card's retries.
+      // Stops the transaction with no retry; the line never reaches a retry
+      // prompt.
+      const probeReds = reds.filter(
+        (red) =>
+          probeLines(red.log, TREE_PROFILES.map((profile) => profile.fileLine))
+            .length > 0
+      );
+      if (probeReds.length > 0) {
+        const lines = new Set<string>();
+        for (const red of probeReds) {
+          for (const l of probeLines(
+            red.log,
+            TREE_PROFILES.map((profile) => profile.fileLine)
+          )) {
+            lines.add(l);
+          }
+        }
+        stop = "probe does not build: " + Array.from(lines).sort().join(", ");
+        restoreSnapshot(before);
+        for (const card of cards) {
+          outcomes.push(rollbackOutcome(card.customId, false));
         }
         return finish(outcomes, null);
       }
