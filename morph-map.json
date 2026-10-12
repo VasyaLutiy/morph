@@ -232,7 +232,7 @@
         "tests/fixtures/cards/probeLogs.json"
       ]
     },
-    "gate-errors-judge": {
+    "gate-probe-judge": {
       "intent": "patch",
       "targets": [
         "tests/gate/gateCommand.examples.test.ts"
@@ -248,24 +248,7 @@
         "tests/fixtures/gate/gateCommand.json"
       ]
     },
-    "probe-stop-judge": {
-      "intent": "generate",
-      "targets": [
-        "tests/runloop/transaction.p50.examples.test.ts"
-      ],
-      "depends_on": [
-        "run-transaction"
-      ],
-      "max_tokens": 20000,
-      "instruction": "Write ONLY tests/runloop/transaction.p50.examples.test.ts, one test per the NEW Run Transaction example of the record (runloop-sub; the example of issue #50, F3), named `\"Run Transaction example 16: a probe build error stops the run by name, no retry\"`; examples 1-15 live in other files: do not repeat them. Harness skeleton (≤ 10 lines, tests/helpers.ts): `const M = TRANSACTION_MARK + \"\n\";` `const fence = (body: string): string => \"```ts\\n\" + body + \"```\\n\";` `const card = (id: string, target: string, acceptance: string): Card => ({ customId: id, intent: \"generate\", targets: [target], contextSlice: [], instruction: \"write \" + target, acceptance, model: null, maxTokens: null, reasoning: null, variants: 1, dependsOn: [] });` `const deps = (root: string, commits: string[]): RunDeps => ({ config: { id: \"stub\", type: \"stub\", model: \"stub\", apiKey: null, baseUrl: \"https://openrouter.ai/api/v1\", route: \"sync\", concurrency: 4, providerOrder: null, reasoning: null, timeoutMs: 600000, maxRetries: 0, answersDir: root }, transport: { fetch: fakeFetch().fetch, sleep: async () => {} }, commit: (id, targets) => { commits.push(id); return { commit: \"sha-\" + id, diffstat: { files: targets.length, insertions: 1, deletions: 0 } }; }, now: () => 0, env: { PATH: process.env.PATH ?? \"\" } });` — the types come from `../../src/runloop/types.js` (RunDeps, RunInput) and `../../src/cards/types.js` (Card). One card `t → users/token.go`, acceptance `M + ''echo \"users/token-lookup_probe_test.go:30:72: undefined: adaH\"; echo \"users/token-lookup_probe_test.go:31:72: undefined: zoeH\"; exit 1''`, the stub answer `t.md` fenced `package users…`; input budget `{ maxCards: 99, maxRetryBatches: 2, deadline: 1e12 }`. Read the report through a record like the P28a probe (`rounds`, `stop`, `fault`, `outcomes`, `requests`): assert the outcome `{ status: \"failed\", reason: \"probe does not build\", attempts: 1, winningVariant: \"t.v1\", lastRound: \"red\", acceptanceLog: L, earlierFailures: [] }` (L = the two echoed lines, each `\"\n\"`-ended), `requests` exactly `[\"t.v1\"]`, `commits` empty, `rounds` `[{ round: 0, reds: [{ customId: \"t\", blamed: [\"t\"], log: L }] }]`, `stop` = `\"probe does not build: users/token-lookup_probe_test.go:30:72: undefined: adaH, users/token-lookup_probe_test.go:31:72: undefined: zoeH\"`, `fault` undefined, and `users/token.go` absent (t.exists).",
-      "context_slice": [
-        "tests/helpers.ts",
-        "src/runloop/transaction.ts",
-        "src/cards/probe.ts",
-        "src/runloop/types.ts",
-        "decks/p28a/parts/run-transaction.probe.ts"
-      ]
-    },
+
     "card-model": {
       "intent": "patch",
       "targets": [

@@ -63,7 +63,7 @@
       ]
     },
     {
-      "id": "gate-errors-judge",
+      "id": "gate-probe-judge",
       "files": [
         {
           "file": "tests/gate/gateCommand.examples.test.ts",
@@ -80,7 +80,7 @@
       ]
     },
     {
-      "id": "probe-stop-judge",
+      "id": "run-transaction-judge",
       "files": [
         {
           "file": "tests/runloop/transaction.p50.examples.test.ts",
