@@ -1,0 +1,243 @@
+```ts
+import type { ContourMap, ContourRecord } from "../contour/types.js";
+import type { LanguageProfile } from "../language/types.js";
+import { resolveProfile } from "../language/profiles.js";
+import { cutTargets, slugName } from "../language/naming.js";
+import { codeTargets, hasExtension, isTest, normalizePath } from "../language/paths.js";
+
+export interface NotBuilt {
+  component: string;
+  function: string;
+  reason: string;
+}
+
+export interface ComponentWeight {
+  component: string;
+  bytes: number;
+}
+
+export interface RecordInputs {
+  record: ContourRecord;
+  map: ContourMap;
+  recordText: string;
+  loaderWarnings: string[];
+  files: readonly string[];
+  profile: LanguageProfile;
+  owned: readonly string[];
+}
+
+export interface RecordGaps {
+  components: number;
+  functions: number;
+  notBuilt: NotBuilt[];
+  notRecorded: string[];
+  weights: ComponentWeight[];
+  warnings: string[];
+}
+
+const GROUP_LINE = /^( *)- name:(.*)$/;
+const SKIPPED_DIRS = new Set<string>(["vendor", "testdata", "node_modules"]);
+
+export function codeFiles(profile: LanguageProfile, files: readonly string[]): string[] {
+  const result: string[] = [];
+  for (const file of files) {
+    if (!hasExtension(profile, file)) continue;
+    if (isTest(profile, file)) continue;
+    const segments = normalizePath(file).split("/");
+    if (segments[0] === "decks") continue;
+    let skip = false;
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i];
+      if (segment.length === 0) continue;
+      const first = segment.charAt(0);
+      if (first === "." || first === "_") {
+        skip = true;
+        break;
+      }
+      if (i < segments.length - 1 && SKIPPED_DIRS.has(segment)) {
+        skip = true;
+        break;
+      }
+    }
+    if (skip) continue;
+    result.push(file);
+  }
+  result.sort();
+  return result;
+}
+
+export function componentWeights(text: string): ComponentWeight[] {
+  const lines = text.split("\n");
+  if (lines.length > 0 && lines[lines.length - 1] === "") {
+    lines.pop();
+  }
+
+  let start = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim() === "groups:") {
+      start = i;
+      break;
+    }
+  }
+  if (start < 0) return [];
+
+  const groups: ComponentWeight[] = [];
+  let indent = -1;
+  let current: ComponentWeight | null = null;
+
+  for (let i = start + 1; i < lines.length; i++) {
+    const line = lines[i];
+    const match = GROUP_LINE.exec(line);
+    if (match !== null && indent < 0) {
+      indent = match[1].length;
+    }
+    if (match !== null && match[1].length === indent) {
+      if (current !== null) groups.push(current);
+      let name = match[2].trim();
+      if (name.length >= 2) {
+        const first = name.charAt(0);
+        const last = name.charAt(name.length - 1);
+        if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+          name = name.slice(1, -1);
+        }
+      }
+      current = { component: name, bytes: 0 };
+      current.bytes += Buffer.byteLength(line, "utf8") + 1;
+      continue;
+    }
+    if (current === null) continue;
+    const trimmed = line.trim();
+    if (trimmed !== "" && !trimmed.startsWith("#")) {
+      const lineIndent = line.length - line.trimStart().length;
+      if (lineIndent < indent + 2) {
+        groups.push(current);
+        current = null;
+        break;
+      }
+    }
+    current.bytes += Buffer.byteLength(line, "utf8") + 1;
+  }
+
+  if (current !== null) groups.push(current);
+
+  groups.sort((a, b) => {
+    if (a.bytes !== b.bytes) return b.bytes - a.bytes;
+    if (a.component < b.component) return -1;
+    if (a.component > b.component) return 1;
+    return 0;
+  });
+  return groups;
+}
+
+export function recordGaps(input: RecordInputs): RecordGaps {
+  const components = input.record.system.groups;
+  const listed = new Set<string>(input.files);
+  const named = new Set<string>();
+  const notBuilt: NotBuilt[] = [];
+
+  for (const component of components) {
+    const resolved = resolveProfile(component.language, input.map.language);
+    if (!resolved.ok) continue;
+    const profile = resolved.profile;
+    for (const fn of component.functions) {
+      let unit = fn.name;
+      for (const group of input.map.groups) {
+        if (group.functions.includes(fn.name)) {
+          unit = group.name;
+          break;
+        }
+      }
+      const card = input.map.cards.find((candidate) => candidate.id === slugName(unit));
+      let targets: string[];
+      if (card !== undefined && card.targets !== null) {
+        targets = card.targets;
+      } else {
+        const cut = cutTargets(profile, component.name, unit);
+        if (!cut.ok) continue;
+        targets = [cut.targets.code, cut.targets.test];
+      }
+      for (const target of targets) named.add(target);
+      const codes = codeTargets(profile, targets);
+      const missing = codes.filter((code) => !listed.has(code));
+      if (missing.length > 0) {
+        notBuilt.push({
+          component: component.name,
+          function: fn.name,
+          reason: "missing " + missing.join(", "),
+        });
+      } else if (codes.length > 0 && !codes.some((code) => input.owned.includes(code))) {
+        notBuilt.push({
+          component: component.name,
+          function: fn.name,
+          reason: "no Morph-Card commit",
+        });
+      }
+    }
+  }
+
+  const notRecorded = codeFiles(input.profile, input.files).filter((file) => !named.has(file));
+  const weights = componentWeights(input.recordText);
+
+  const warnings: string[] = [];
+  const seen = new Set<string>();
+  const addWarning = (message: string): void => {
+    if (seen.has(message)) return;
+    seen.add(message);
+    warnings.push(message);
+  };
+
+  for (const warning of input.loaderWarnings) addWarning(warning);
+
+  for (const component of components) {
+    if (component.language === null && input.map.language === null) {
+      addWarning(
+        "no language on Component " +
+          component.name +
+          " and none in the map: typescript assumed",
+      );
+    }
+  }
+
+  const declared = new Set<string>();
+  for (const component of components) {
+    for (const dataObject of component.dataObjects) declared.add(dataObject.name);
+    for (const event of component.events) declared.add(event.name);
+  }
+
+  for (const component of components) {
+    for (const fn of component.functions) {
+      for (const step of fn.steps) {
+        if (step.verb === "reads" || step.verb === "modifies" || step.verb === "produces") {
+          if (!declared.has(step.target)) {
+            addWarning(
+              component.name +
+                "/" +
+                fn.name +
+                ": step " +
+                step.verb +
+                " '" +
+                step.target +
+                "' names no Data Object or Event of the record",
+            );
+          }
+        }
+      }
+      if (fn.examples.length === 0) {
+        addWarning(component.name + "/" + fn.name + ": no examples, no judge");
+      }
+    }
+  }
+
+  let functions = 0;
+  for (const component of components) functions += component.functions.length;
+
+  return {
+    components: components.length,
+    functions,
+    notBuilt,
+    notRecorded,
+    weights,
+    warnings,
+  };
+}
+```

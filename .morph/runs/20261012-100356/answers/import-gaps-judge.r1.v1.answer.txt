@@ -1,0 +1,54 @@
+```
+import { expect, test } from "vitest";
+import { fixture, fixtureJson, fixturePath, tmpRoot } from "../helpers.js";
+import { importGaps } from "../../src/primerRecord/importGaps.js";
+import type { CodeText, LayerGap } from "../../src/primerRecord/importGaps.js";
+
+const EX = fixtureJson("primerRecord/examples.json") as Record<
+  string,
+  { given: unknown; then: unknown }
+>;
+
+interface Given {
+  language: string;
+  module: string;
+  files: CodeText[];
+  edges: Record<string, string[]>;
+}
+
+void fixture;
+void fixturePath;
+void tmpRoot;
+
+test("Import Gaps example 1: typescript relative imports", () => {
+  const ex = EX["Import Gaps 1"] as { given: unknown; then: unknown };
+  const g = ex.given as Given;
+  const then = ex.then as LayerGap[];
+
+  expect(importGaps(g.language, g.module, g.files, g.edges)).toStrictEqual(then);
+});
+
+test("Import Gaps example 2: go module imports", () => {
+  const ex = EX["Import Gaps 2"] as { given: unknown; then: unknown };
+  const g = ex.given as Given;
+  const then = ex.then as LayerGap[];
+
+  expect(importGaps(g.language, g.module, g.files, g.edges)).toStrictEqual(then);
+});
+
+test("Import Gaps example 3: python and empty go module", () => {
+  const ex = EX["Import Gaps 3"] as { given: unknown; then: unknown };
+  const givens = ex.given as Given[];
+  const thens = ex.then as LayerGap[][];
+
+  const first = givens[0] as Given;
+  const second = givens[1] as Given;
+
+  expect(
+    importGaps(first.language, first.module, first.files, first.edges),
+  ).toStrictEqual(thens[0]);
+  expect(
+    importGaps(second.language, second.module, second.files, second.edges),
+  ).toStrictEqual(thens[1]);
+});
+```

@@ -1,0 +1,118 @@
+```ts
+import { posix } from "node:path";
+
+export interface CodeText {
+  path: string;
+  text: string;
+}
+
+export interface LayerGap {
+  from: string;
+  to: string;
+  file: string;
+}
+
+function typescriptDirs(dir: string, text: string): string[] {
+  const result: string[] = [];
+  const re = /\bfrom\s*["']([^"']+)["']|\bimport\s*["']([^"']+)["']/g;
+  let match = re.exec(text);
+  while (match !== null) {
+    const specifier = match[1] ?? match[2];
+    if (
+      specifier !== undefined &&
+      (specifier.startsWith("./") || specifier.startsWith("../"))
+    ) {
+      result.push(posix.dirname(posix.join(dir, specifier)));
+    }
+    match = re.exec(text);
+  }
+  return result;
+}
+
+function goDirs(text: string, module: string): string[] {
+  const result: string[] = [];
+  if (module === "") {
+    return result;
+  }
+  const prefix = module + "/";
+  const collect = (specifier: string | undefined): void => {
+    if (specifier !== undefined && specifier.startsWith(prefix)) {
+      result.push(specifier.slice(prefix.length));
+    }
+  };
+  const lines = text.split("\n");
+  let inBlock = false;
+  for (const line of lines) {
+    if (inBlock) {
+      if (line.trim() === ")") {
+        inBlock = false;
+        continue;
+      }
+      const block = /^\s*(?:[\w.]+\s+)?"([^"]+)"/.exec(line);
+      if (block !== null) {
+        collect(block[1]);
+      }
+      continue;
+    }
+    if (/^\s*import\s*\(/.test(line)) {
+      inBlock = true;
+      continue;
+    }
+    const single = /^\s*import\s+(?:[\w.]+\s+)?"([^"]+)"/.exec(line);
+    if (single !== null) {
+      collect(single[1]);
+    }
+  }
+  return result;
+}
+
+export function importGaps(
+  language: string,
+  module: string,
+  files: readonly CodeText[],
+  edges: Record<string, string[]>,
+): LayerGap[] {
+  const gaps: LayerGap[] = [];
+  const seen = new Set<string>();
+  for (const file of files) {
+    const dir = posix.dirname(file.path);
+    if (!Object.hasOwn(edges, dir)) {
+      continue;
+    }
+    const imported =
+      language === "typescript"
+        ? typescriptDirs(dir, file.text)
+        : language === "go"
+          ? goDirs(file.text, module)
+          : [];
+    const allowed = edges[dir] ?? [];
+    for (const target of imported) {
+      if (target === dir) {
+        continue;
+      }
+      if (!Object.hasOwn(edges, target)) {
+        continue;
+      }
+      if (allowed.includes(target)) {
+        continue;
+      }
+      const key = dir + "\u0000" + target;
+      if (seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      gaps.push({ from: dir, to: target, file: file.path });
+    }
+  }
+  gaps.sort((a, b) => {
+    if (a.from !== b.from) {
+      return a.from < b.from ? -1 : 1;
+    }
+    if (a.to !== b.to) {
+      return a.to < b.to ? -1 : 1;
+    }
+    return 0;
+  });
+  return gaps;
+}
+```

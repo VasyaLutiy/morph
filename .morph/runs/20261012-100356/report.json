@@ -1,0 +1,459 @@
+{
+  "runId": "20261012-100356",
+  "completedAt": 1791801278247,
+  "branch": "morph/20261012-100356",
+  "processor": "ds",
+  "generations": 3,
+  "outcomes": [
+    {
+      "customId": "import-gaps",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "import-gaps.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/import-gaps/import-gaps.probe.ts > Import Gaps example 2: go gaps internal/a → internal/b, internal/b → internal/a\nAssertionError: expected [ { from: 'internal/a', to: 'internal/b', file: 'internal/a/a.go' } ] to strictly equal [ { from: 'internal/a', to: 'internal/b', file: 'internal/a/a.go' }, { from: 'internal/b', to: 'internal/a', file: 'internal/b/b.go' } ]\n\n- Expected\n+ Received\n\n@@ -2,11 +2,6 @@\n    {\n      \"file\": \"internal/a/a.go\",\n      \"from\": \"internal/a\",\n      \"to\": \"internal/b\",\n    },\n-   {\n-     \"file\": \"internal/b/b.go\",\n-     \"from\": \"internal/b\",\n-     \"to\": \"internal/a\",\n-   },\n  ]\n\n ❯ probe/import-gaps/import-gaps.probe.ts:16:51\n     14| \n     15| test(\"Import Gaps example 2: go gaps internal/a → internal/b, internal…\n     16|   expect(run(EX[\"Import Gaps 2\"].given as Given)).toStrictEqual(EX[\"Im…\n       |                                                   ^\n     17| });\n     18| \n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 2 passed (3)\n\nfirst difference at char 105 (line 7) of 196/106: expected \"...ternal/a\\\",\\n    \\\"to\\\": \\\"internal/b\\\",\\n  },\\n  {\\n    \\\"file\\\": \\\"internal/b/b.go\\\",\\n    \\\"\" received \"...ternal/a\\\",\\n    \\\"to\\\": \\\"internal/b\\\",\\n  },\\n]\"\n"
+      ],
+      "commit": "0ac41e468c519c244ddb49fa6de18a7a402dbd24",
+      "diffstat": {
+        "files": 1,
+        "insertions": 125,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "record-gaps",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "record-gaps.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "139bc6d95469ac010568434f605116e62a1b3037",
+      "diffstat": {
+        "files": 1,
+        "insertions": 285,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "render-record",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "render-record.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "5043ddc85eecea1d2d7d5bfbf46527272249d8fd",
+      "diffstat": {
+        "files": 1,
+        "insertions": 97,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "import-gaps-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "import-gaps-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/primerRecord/importGaps.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard tests/primerRecord/importGaps.examples.test.ts\n== own\n FAIL  tests/primerRecord/importGaps.examples.test.ts > Import Gaps example 2: go module imports\nAssertionError: expected [ { from: 'internal/a', to: 'internal/b', file: 'internal/a/a.go' } ] to strictly equal [ { from: 'internal/a', to: 'internal/b', file: 'internal/a/a.go' }, { from: 'internal/b', to: 'internal/a', file: 'internal/b/b.go' } ]\n\n- Expected\n+ Received\n\n@@ -2,11 +2,6 @@\n    {\n      \"file\": \"internal/a/a.go\",\n      \"from\": \"internal/a\",\n      \"to\": \"internal/b\",\n    },\n-   {\n-     \"file\": \"internal/b/b.go\",\n-     \"from\": \"internal/b\",\n-     \"to\": \"internal/a\",\n-   },\n  ]\n\n ❯ tests/primerRecord/importGaps.examples.test.ts:35:62\n     33|   const then = ex.then as LayerGap[];\n     34| \n     35|   expect(importGaps(g.language, g.module, g.files, g.edges)).toStrictE…\n       |                                                              ^\n     36| });\n     37| \n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 2 passed (3)\n\nfirst difference at char 105 (line 7) of 196/106: expected \"...ternal/a\\\",\\n    \\\"to\\\": \\\"internal/b\\\",\\n  },\\n  {\\n    \\\"file\\\": \\\"internal/b/b.go\\\",\\n    \\\"\" received \"...ternal/a\\\",\\n    \\\"to\\\": \\\"internal/b\\\",\\n  },\\n]\"\n"
+      ],
+      "commit": "ac1b3dddea7cf5cf0ec51b032d3fe4634f6a7195",
+      "diffstat": {
+        "files": 1,
+        "insertions": 52,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "record-gaps-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "record-gaps-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/primerRecord/recordGaps.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n\n/home/john/Documents/Work2026/MorphV2/tests/primerRecord/recordGaps.examples.test.ts\n  2:32  error  'fixturePath' is defined but never used  @typescript-eslint/no-unused-vars\n  2:45  error  'tmpRoot' is defined but never used      @typescript-eslint/no-unused-vars\n\n✖ 2 problems (2 errors, 0 warnings)\n\n== guard tests/primerRecord/recordGaps.examples.test.ts\n== own\n== eslint failed (see above); every step between it and here passed\n"
+      ],
+      "commit": "2fad65dca9fe5b3350e1e924f2e2379b85ab0e5d",
+      "diffstat": {
+        "files": 1,
+        "insertions": 49,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "record-section",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "record-section.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/record-section/record-section.probe.ts > Record Section example 4: a Go project, b → a (b/get_b.go)\nAssertionError: expected '\\n## Record vs code\\n\\n- record: read: 2 Components, 2 Functions (contour.yaml, morph-map.json)\\n- recorded, not built (1):\\n  - b/Get B: no Morph-Card commit\\n- built, not recorded: none\\n- Compon…' to be '\\n## Record vs code\\n\\n- record: read: 2 Components, 2 Functions (contour.yaml, morph-map.json)\\n- recorded, not built (1):\\n  - b/Get B: no Morph-Card commit\\n- built, not recorded: none\\n- Compon…' // Object.is equality\n\n- Expected\n+ Received\n\n@@ -7,8 +7,7 @@\n  - built, not recorded: none\n  - Component weight, heaviest first (0 of 2 over 30000 bytes):\n    - b: 246 bytes\n    - a: 237 bytes\n  - record warnings: none\n- - layer gaps (1):\n-   - b → a (b/get_b.go)\n+ - layer gaps: none\n\n\n ❯ probe/record-section/record-section.probe.ts:55:58\n     53|   try {\n     54|     for (const [rel, text] of Object.entries(g.files)) t.write(rel, te…\n     55|     expect(recordSection(t.root, g.listed, GO, g.owned)).toBe(EX[\"Reco…\n       |                                                          ^\n     56|   } finally {\n     57|     t.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 3 passed (4)\n\nfirst difference at char 174 (line 7) of 202/180: expected \"...tes\\n- record warnings: none\\n- layer gaps (1):\\n  - b → a (b/get_b.go)\" received \"...tes\\n- record warnings: none\\n- layer gaps: none\"\n"
+      ],
+      "commit": "07009a94fa04d9847b1be9f3f8d86b47fc8ac26d",
+      "diffstat": {
+        "files": 1,
+        "insertions": 126,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "render-record-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "render-record-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/primerRecord/renderRecord.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard tests/primerRecord/renderRecord.examples.test.ts\nguard: tests/primerRecord/renderRecord.examples.test.ts does not mention the example literal \"- record: not read: no contour.yaml\"\n"
+      ],
+      "commit": "4fac996309c7438d4e2d532ea687074056b4afea",
+      "diffstat": {
+        "files": 1,
+        "insertions": 35,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "primer-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "primer-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "fd30cb0fa23b5696efdba5f50e0bc05af7fb2257",
+      "diffstat": {
+        "files": 1,
+        "insertions": 6,
+        "deletions": 4
+      }
+    },
+    {
+      "customId": "record-section-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 2,
+      "winningVariant": "record-section-judge.r1.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/primerRecord/recordSection.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [
+        "== tsc\n== eslint\n== guard tests/primerRecord/recordSection.examples.test.ts\n== own\n FAIL  tests/primerRecord/recordSection.examples.test.ts > Record Section example 4: a Go tree and its record\nAssertionError: expected '\\n## Record vs code\\n\\n- record: read: 2 Components, 2 Functions (contour.yaml, morph-map.json)\\n- recorded, not built (1):\\n  - b/Get B: no Morph-Card commit\\n- built, not recorded: none\\n- Compon…' to be '\\n## Record vs code\\n\\n- record: read: 2 Components, 2 Functions (contour.yaml, morph-map.json)\\n- recorded, not built (1):\\n  - b/Get B: no Morph-Card commit\\n- built, not recorded: none\\n- Compon…' // Object.is equality\n\n- Expected\n+ Received\n\n@@ -7,8 +7,7 @@\n  - built, not recorded: none\n  - Component weight, heaviest first (0 of 2 over 30000 bytes):\n    - b: 246 bytes\n    - a: 237 bytes\n  - record warnings: none\n- - layer gaps (1):\n-   - b → a (b/get_b.go)\n+ - layer gaps: none\n\n\n ❯ tests/primerRecord/recordSection.examples.test.ts:76:66\n     74|       t.write(rel, text);\n     75|     }\n     76|     expect(recordSection(t.root, given.listed, GO, given.owned)).toBe(…\n       |                                                                  ^\n     77|   } finally {\n     78|     t.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 3 passed (4)\n\nfirst difference at char 174 (line 7) of 202/180: expected \"...tes\\n- record warnings: none\\n- layer gaps (1):\\n  - b → a (b/get_b.go)\" received \"...tes\\n- record warnings: none\\n- layer gaps: none\"\n"
+      ],
+      "commit": "49a5571a4cff1e407cec58505c5e6ffa246a7102",
+      "diffstat": {
+        "files": 1,
+        "insertions": 80,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 222763,
+    "outputTokens": 214822,
+    "cost": 0.3011145,
+    "requests": 22
+  },
+  "requests": [
+    {
+      "customId": "import-gaps.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799436-4VxyVn9g1uIqs7OzxEut",
+      "inputTokens": 3004,
+      "outputTokens": 4141,
+      "cost": 0.0058704,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "import-gaps.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799436-i40xj5amkAE7psMaZlsd",
+      "inputTokens": 3004,
+      "outputTokens": 4934,
+      "cost": 0.006822,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "record-gaps.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799436-bucFSsCZskeTSwRj3w3U",
+      "inputTokens": 6884,
+      "outputTokens": 12612,
+      "cost": 0.0171996,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "record-gaps.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799480-W0dYsiEkcvkFtt48dtrM",
+      "inputTokens": 6884,
+      "outputTokens": 13313,
+      "cost": 0.01624368,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "render-record.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799490-OflCXqIIc7MwEcvK879V",
+      "inputTokens": 3565,
+      "outputTokens": 2998,
+      "cost": 0.0046671,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "render-record.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799519-gmBLuDX6J77dP6v3ZzWS",
+      "inputTokens": 3565,
+      "outputTokens": 9458,
+      "cost": 0.01158966,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "import-gaps-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799626-37SVBbq1NuR7sRImfc7H",
+      "inputTokens": 9196,
+      "outputTokens": 5009,
+      "cost": 0.0087696,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "record-gaps-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799626-g4UFdUe5VNjVQdym4K59",
+      "inputTokens": 11244,
+      "outputTokens": 593,
+      "cost": 0.0040848,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "record-section.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799626-UTHfbwA6Ljg3yznTTQic",
+      "inputTokens": 8995,
+      "outputTokens": 4419,
+      "cost": 0.0080013,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "record-section.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799632-1lnl2EV4DbwfaSVdLdkN",
+      "inputTokens": 8995,
+      "outputTokens": 4825,
+      "cost": 0.00613842,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "render-record-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799670-2gZLTw11WR2tW2fPQKpN",
+      "inputTokens": 9438,
+      "outputTokens": 4319,
+      "cost": 0.0080142,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "primer-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799721-PaohyHJcFPcG5m9i5uZu",
+      "inputTokens": 7450,
+      "outputTokens": 2320,
+      "cost": 0.005019,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "primer-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799721-c73dO1ZaMx44ikuJ6DK4",
+      "inputTokens": 7450,
+      "outputTokens": 2159,
+      "cost": 0.00289044,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "record-section-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799722-aj6UFZeHyqQWK0nN3Nmm",
+      "inputTokens": 11370,
+      "outputTokens": 3601,
+      "cost": 0.0077322,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "import-gaps.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799926-PlVAAbXbSZilxlnf30LK",
+      "inputTokens": 10475,
+      "outputTokens": 4957,
+      "cost": 0.00853794,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "import-gaps.r1.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799926-bTAfyW4lvs6PNLu4fTyh",
+      "inputTokens": 10475,
+      "outputTokens": 5830,
+      "cost": 0.0073737,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "import-gaps-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799986-bHaM0vWazSRwJ6DHUgdb",
+      "inputTokens": 15695,
+      "outputTokens": 16872,
+      "cost": 0.02481666,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "record-gaps-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799986-woNqPL841boT5bAZLYlU",
+      "inputTokens": 17508,
+      "outputTokens": 1072,
+      "cost": 0.00363576,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "record-section.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799986-OQexdSHtLd4r0L2H51Jz",
+      "inputTokens": 16963,
+      "outputTokens": 36000,
+      "cost": 0.04773594,
+      "finishReason": "length",
+      "error": null
+    },
+    {
+      "customId": "record-section.r1.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791799997-kxSX4YkqR3PNR2ZfQHy0",
+      "inputTokens": 16963,
+      "outputTokens": 36000,
+      "cost": 0.04386522,
+      "finishReason": "length",
+      "error": null
+    },
+    {
+      "customId": "render-record-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791800175-fdpJAiCA6DFZXE7KsHMt",
+      "inputTokens": 15375,
+      "outputTokens": 986,
+      "cost": 0.00330738,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "record-section-judge.r1.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791800418-wQY1nIENQmO3ZaaNri8Y",
+      "inputTokens": 18265,
+      "outputTokens": 38404,
+      "cost": 0.0487995,
+      "finishReason": "stop",
+      "error": null
+    }
+  ],
+  "rounds": [
+    {
+      "round": 0,
+      "reds": [
+        {
+          "customId": "import-gaps",
+          "blamed": [
+            "import-gaps"
+          ],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/import-gaps/import-gaps.probe.ts > Import Gaps example 2: go gaps internal/a → internal/b, internal/b → internal/a\nAssertionError: expected [ { from: 'internal/a', to: 'internal/b', file: 'internal/a/a.go' } ] to strictly equal [ { from: 'internal/a', to: 'internal/b', file: 'internal/a/a.go' }, { from: 'internal/b', to: 'internal/a', file: 'internal/b/b.go' } ]\n\n- Expected\n+ Received\n\n@@ -2,11 +2,6 @@\n    {\n      \"file\": \"internal/a/a.go\",\n      \"from\": \"internal/a\",\n      \"to\": \"internal/b\",\n    },\n-   {\n-     \"file\": \"internal/b/b.go\",\n-     \"from\": \"internal/b\",\n-     \"to\": \"internal/a\",\n-   },\n  ]\n\n ❯ probe/import-gaps/import-gaps.probe.ts:16:51\n     14| \n     15| test(\"Import Gaps example 2: go gaps internal/a → internal/b, internal…\n     16|   expect(run(EX[\"Import Gaps 2\"].given as Given)).toStrictEqual(EX[\"Im…\n       |                                                   ^\n     17| });\n     18| \n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 2 passed (3)\n\nfirst difference at char 105 (line 7) of 196/106: expected \"...ternal/a\\\",\\n    \\\"to\\\": \\\"internal/b\\\",\\n  },\\n  {\\n    \\\"file\\\": \\\"internal/b/b.go\\\",\\n    \\\"\" received \"...ternal/a\\\",\\n    \\\"to\\\": \\\"internal/b\\\",\\n  },\\n]\"\n"
+        },
+        {
+          "customId": "import-gaps-judge",
+          "blamed": [
+            "import-gaps-judge"
+          ],
+          "log": "== tsc\n== eslint\n== guard tests/primerRecord/importGaps.examples.test.ts\n== own\n FAIL  tests/primerRecord/importGaps.examples.test.ts > Import Gaps example 2: go module imports\nAssertionError: expected [ { from: 'internal/a', to: 'internal/b', file: 'internal/a/a.go' } ] to strictly equal [ { from: 'internal/a', to: 'internal/b', file: 'internal/a/a.go' }, { from: 'internal/b', to: 'internal/a', file: 'internal/b/b.go' } ]\n\n- Expected\n+ Received\n\n@@ -2,11 +2,6 @@\n    {\n      \"file\": \"internal/a/a.go\",\n      \"from\": \"internal/a\",\n      \"to\": \"internal/b\",\n    },\n-   {\n-     \"file\": \"internal/b/b.go\",\n-     \"from\": \"internal/b\",\n-     \"to\": \"internal/a\",\n-   },\n  ]\n\n ❯ tests/primerRecord/importGaps.examples.test.ts:35:62\n     33|   const then = ex.then as LayerGap[];\n     34| \n     35|   expect(importGaps(g.language, g.module, g.files, g.edges)).toStrictE…\n       |                                                              ^\n     36| });\n     37| \n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 2 passed (3)\n\nfirst difference at char 105 (line 7) of 196/106: expected \"...ternal/a\\\",\\n    \\\"to\\\": \\\"internal/b\\\",\\n  },\\n  {\\n    \\\"file\\\": \\\"internal/b/b.go\\\",\\n    \\\"\" received \"...ternal/a\\\",\\n    \\\"to\\\": \\\"internal/b\\\",\\n  },\\n]\"\n"
+        },
+        {
+          "customId": "record-gaps-judge",
+          "blamed": [
+            "record-gaps-judge"
+          ],
+          "log": "== tsc\n== eslint\n\n/home/john/Documents/Work2026/MorphV2/tests/primerRecord/recordGaps.examples.test.ts\n  2:32  error  'fixturePath' is defined but never used  @typescript-eslint/no-unused-vars\n  2:45  error  'tmpRoot' is defined but never used      @typescript-eslint/no-unused-vars\n\n✖ 2 problems (2 errors, 0 warnings)\n\n== guard tests/primerRecord/recordGaps.examples.test.ts\n== own\n== eslint failed (see above); every step between it and here passed\n"
+        },
+        {
+          "customId": "record-section",
+          "blamed": [
+            "record-section"
+          ],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n FAIL  probe/record-section/record-section.probe.ts > Record Section example 4: a Go project, b → a (b/get_b.go)\nAssertionError: expected '\\n## Record vs code\\n\\n- record: read: 2 Components, 2 Functions (contour.yaml, morph-map.json)\\n- recorded, not built (1):\\n  - b/Get B: no Morph-Card commit\\n- built, not recorded: none\\n- Compon…' to be '\\n## Record vs code\\n\\n- record: read: 2 Components, 2 Functions (contour.yaml, morph-map.json)\\n- recorded, not built (1):\\n  - b/Get B: no Morph-Card commit\\n- built, not recorded: none\\n- Compon…' // Object.is equality\n\n- Expected\n+ Received\n\n@@ -7,8 +7,7 @@\n  - built, not recorded: none\n  - Component weight, heaviest first (0 of 2 over 30000 bytes):\n    - b: 246 bytes\n    - a: 237 bytes\n  - record warnings: none\n- - layer gaps (1):\n-   - b → a (b/get_b.go)\n+ - layer gaps: none\n\n\n ❯ probe/record-section/record-section.probe.ts:55:58\n     53|   try {\n     54|     for (const [rel, text] of Object.entries(g.files)) t.write(rel, te…\n     55|     expect(recordSection(t.root, g.listed, GO, g.owned)).toBe(EX[\"Reco…\n       |                                                          ^\n     56|   } finally {\n     57|     t.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 3 passed (4)\n\nfirst difference at char 174 (line 7) of 202/180: expected \"...tes\\n- record warnings: none\\n- layer gaps (1):\\n  - b → a (b/get_b.go)\" received \"...tes\\n- record warnings: none\\n- layer gaps: none\"\n"
+        },
+        {
+          "customId": "render-record-judge",
+          "blamed": [
+            "render-record-judge"
+          ],
+          "log": "== tsc\n== eslint\n== guard tests/primerRecord/renderRecord.examples.test.ts\nguard: tests/primerRecord/renderRecord.examples.test.ts does not mention the example literal \"- record: not read: no contour.yaml\"\n"
+        },
+        {
+          "customId": "record-section-judge",
+          "blamed": [
+            "record-section-judge"
+          ],
+          "log": "== tsc\n== eslint\n== guard tests/primerRecord/recordSection.examples.test.ts\n== own\n FAIL  tests/primerRecord/recordSection.examples.test.ts > Record Section example 4: a Go tree and its record\nAssertionError: expected '\\n## Record vs code\\n\\n- record: read: 2 Components, 2 Functions (contour.yaml, morph-map.json)\\n- recorded, not built (1):\\n  - b/Get B: no Morph-Card commit\\n- built, not recorded: none\\n- Compon…' to be '\\n## Record vs code\\n\\n- record: read: 2 Components, 2 Functions (contour.yaml, morph-map.json)\\n- recorded, not built (1):\\n  - b/Get B: no Morph-Card commit\\n- built, not recorded: none\\n- Compon…' // Object.is equality\n\n- Expected\n+ Received\n\n@@ -7,8 +7,7 @@\n  - built, not recorded: none\n  - Component weight, heaviest first (0 of 2 over 30000 bytes):\n    - b: 246 bytes\n    - a: 237 bytes\n  - record warnings: none\n- - layer gaps (1):\n-   - b → a (b/get_b.go)\n+ - layer gaps: none\n\n\n ❯ tests/primerRecord/recordSection.examples.test.ts:76:66\n     74|       t.write(rel, text);\n     75|     }\n     76|     expect(recordSection(t.root, given.listed, GO, given.owned)).toBe(…\n       |                                                                  ^\n     77|   } finally {\n     78|     t.rm();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 3 passed (4)\n\nfirst difference at char 174 (line 7) of 202/180: expected \"...tes\\n- record warnings: none\\n- layer gaps (1):\\n  - b → a (b/get_b.go)\" received \"...tes\\n- record warnings: none\\n- layer gaps: none\"\n"
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "reds": []
+    }
+  ]
+}

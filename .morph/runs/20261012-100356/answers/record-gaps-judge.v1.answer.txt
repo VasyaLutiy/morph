@@ -1,0 +1,51 @@
+```typescript
+import { expect, test } from "vitest";
+import { fixture, fixtureJson, fixturePath, tmpRoot } from "../helpers.js";
+import { componentWeights, codeFiles, recordGaps } from "../../src/primerRecord/recordGaps.js";
+import type { ComponentWeight } from "../../src/primerRecord/recordGaps.js";
+import { loadContour, loadMap } from "../../src/contour/load.js";
+import { TYPESCRIPT } from "../../src/language/profiles.js";
+
+const EX = fixtureJson("primerRecord/examples.json") as Record<
+  string,
+  { given: unknown; then: unknown }
+>;
+
+test("Record Gaps example 1: the fixture repo's record, map and code list the gaps", () => {
+  const given = EX["Record Gaps 1"].given as { files: string[]; owned: string[] };
+  const then = EX["Record Gaps 1"].then;
+
+  const text = fixture("primerRecord/repo/contour.yaml");
+  const r = loadContour(text, "contour.yaml");
+  if (!r.ok) throw new Error(r.error);
+  const m = loadMap(fixture("primerRecord/repo/morph-map.json"), "morph-map.json");
+  if (!m.ok) throw new Error(m.error);
+
+  const got = recordGaps({
+    record: r.record,
+    map: m.map,
+    recordText: text,
+    loaderWarnings: r.warnings ?? [],
+    files: given.files,
+    profile: TYPESCRIPT,
+    owned: given.owned,
+  });
+
+  expect(got).toStrictEqual(then);
+});
+
+test("Record Gaps example 2: codeFiles keeps only code, sorted", () => {
+  const given = EX["Record Gaps 2"].given as { files: string[] };
+  const then = EX["Record Gaps 2"].then as string[];
+
+  expect(codeFiles(TYPESCRIPT, given.files)).toStrictEqual(then);
+});
+
+test("Record Gaps example 3: componentWeights measures the groups block", () => {
+  const given = EX["Record Gaps 3"].given as { texts: string[] };
+  const then = EX["Record Gaps 3"].then as ComponentWeight[][];
+
+  expect(componentWeights(given.texts[0])).toStrictEqual(then[0]);
+  expect(componentWeights(given.texts[1])).toStrictEqual(then[1]);
+});
+```
