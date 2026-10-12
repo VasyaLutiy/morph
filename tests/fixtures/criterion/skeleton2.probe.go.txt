@@ -1,0 +1,34 @@
+package calc
+
+// Probe of card 'clamp-value', written by morph plan --write-probes: one test per example of its Functions.
+// Write each body from its example; until you do, it fails.
+
+import "testing"
+
+func TestProbeClampValueExample1(t *testing.T) {
+	// given: v 5, lo 0, hi 3
+	// when: clamped
+	// then: 3
+	t.Fatal("probe clamp-value: write Clamp Value example 1")
+}
+
+func TestProbeClampValueExample2(t *testing.T) {
+	// given: v -2, lo -1, hi 4
+	// when: clamped
+	// then: -1
+	t.Fatal("probe clamp-value: write Clamp Value example 2")
+}
+
+func TestProbeClampValueExample3(t *testing.T) {
+	// given: v 7, lo 9, hi 2
+	// when: clamped
+	// then: 7 — the bounds are swapped to 2..9
+	t.Fatal("probe clamp-value: write Clamp Value example 3")
+}
+
+func TestProbeClampValueExample4(t *testing.T) {
+	// given: v 12, lo 9, hi 2
+	// when: clamped
+	// then: 9
+	t.Fatal("probe clamp-value: write Clamp Value example 4")
+}

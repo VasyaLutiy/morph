@@ -1459,5 +1459,113 @@
         "commit": false
       }
     }
+  ],
+  "26": [
+    {
+      "ok": true,
+      "command": {
+        "name": "plan",
+        "root": ".",
+        "pretty": false,
+        "spec": "s",
+        "components": [],
+        "map": null,
+        "judge": false,
+        "out": null,
+        "checks": "k.json",
+        "writeProbes": true
+      }
+    },
+    {
+      "ok": true,
+      "command": {
+        "name": "plan",
+        "root": ".",
+        "pretty": false,
+        "spec": "s",
+        "components": [
+          "c"
+        ],
+        "map": null,
+        "judge": true,
+        "out": null,
+        "checks": "k.json",
+        "only": [
+          "a",
+          "b"
+        ],
+        "writeProbes": true
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--write-probes needs --checks"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--write-probes writes no deck: drop --out"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --write-probes given twice"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --write-probes does not apply to run"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "flag --write-probes does not apply to plan --from-scout"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "missing --spec"
+        }
+      }
+    },
+    {
+      "ok": false,
+      "error": {
+        "error": {
+          "code": 4,
+          "kind": "UsageError",
+          "message": "--only must be distinct card ids joined by \",\" (got 'a,a')"
+        }
+      }
+    }
   ]
 }

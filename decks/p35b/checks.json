@@ -1,0 +1,25 @@
+{
+  "phase": "p35b",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates"],
+  "fullExclude": ["tests/criterion/probeSkeleton.examples.test.ts", "tests/cli/parse.p35b.examples.test.ts",
+    "tests/cli/planCommand.p35b.examples.test.ts"],
+  "cards": [
+    { "id": "probe-skeleton" },
+    { "id": "parse-command" },
+    { "id": "plan-command" },
+    { "id": "probe-skeleton-judge", "files": [
+      { "file": "tests/criterion/probeSkeleton.examples.test.ts", "min": 3, "max": 9, "new": true,
+        "lits": ["Probe Skeleton example 1", "Probe Skeleton example 3", "criterion/skeleton1.input.json",
+          "criterion/skeleton1.probe.ts.txt", "criterion/skeleton2.probe.go.txt", "TestProbeOwn", "package b"] }] },
+    { "id": "parse-command-judge", "files": [
+      { "file": "tests/cli/parse.p35b.examples.test.ts", "min": 2, "max": 12, "new": true,
+        "lits": ["Parse Command example 26", "cli/parseArgv.json", "--write-probes needs --checks",
+          "--write-probes writes no deck: drop --out", "flag --write-probes does not apply to plan --from-scout"] }] },
+    { "id": "plan-command-judge", "files": [
+      { "file": "tests/cli/planCommand.p35b.examples.test.ts", "min": 2, "max": 8, "new": true,
+        "lits": ["Plan Command example 24", "Plan Command example 25", "criterion/skeleton2.probe.go.txt",
+          "cli/goMini.nope.checks.json", "go-mini/decks/m1/checks.json", "checks override 'nope' is not a card of the cut",
+          "TestProbeClampValueExample4", "decks/m1/parts/_clamp-value_probe_test.go"] }] }
+  ]
+}

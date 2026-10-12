@@ -1619,8 +1619,9 @@ System:
             --language, not typescript, python or go → "--language must be one of typescript, python, go (got '<v>')", --module ~ ^[A-Za-z0-9._/-]+$, else done
             (module, templates null when not given). review: fewer than two refs → "review needs two refs: <base> <head>", --scout ~ I, --mutants then
             --mutant-timeout not a positive integer, else done (mutants null, mutantTimeoutSeconds 120, test null when not given). plan --from-scout:
-            --from-scout ~ I, else done (out null when not given). plan: need --spec; a given --only ≡ I,card ids; else done (components [] and map, out null
-            when not given; checks, then only (ids in order), each key only when given). collect: need --batch, --batch ~ I, else done. primer done (write:
+            --from-scout ~ I, else done (out null when not given). plan: need --spec; a given --only ≡ I,card ids; --write-probes without --checks → "--write-probes needs
+            --checks", with --out → "--write-probes writes no deck: drop --out"; else done (components [] and map, out null when not
+            given; checks, then only (ids in order), then writeProbes true, each key only when given). collect: need --batch, --batch ~ I, else done. primer done (write:
             --write given). scout: need --processor, need --issue, --deadline not a positive integer → "--deadline must be a positive integer (got '<v>')", else
             done (seedFile null, deadlineSeconds null when not given: Main's config gives it). The rest: need --deck; gate: need --stubs, need --refs, --mutants
             as review's, else done (mutants only when given); run or submit: need --processor; submit done; run: --run-id ~ I; numbers in the order
@@ -1655,6 +1656,7 @@ System:
             - {given: 'parseArgv.json["23"]', when: parsed, then: 'parse.json["23"]'}
             - {given: 'parseArgv.json["24"]', when: parsed, then: 'parse.json["24"]'}
             - {given: 'parseArgv.json["25"]', when: parsed, then: 'parse.json["25"]'}
+            - {given: 'parseArgv.json["26"]', when: parsed, then: 'parse.json["26"]'}
         - name: Emit Document
           description: One JSON document + newline on stdout; --pretty indents by 2.
           behavior: >
@@ -1742,16 +1744,19 @@ System:
             empty map: version 1, lists [], the rest null); Plan Spec({record, map, spec: args.spec, components, judge, hasFile: a regular file under root});
             with args.only Select Cards(plan, args.only) (its plan replaces Plan Spec's, the checks keep only its cards); each error → 2 DeckError, it. With
             args.checks: profile = Resolve Profile(the first selected Component's language, map.language), an error → 2 DeckError "the map: " + it; Read Plan
-            Checks(root, args.checks, profile) (a failure is the result); Plan Rules(record, map, hasFile("decks/tools/layers.json"), texts.guard, profile.id)
-            (P31a), an error → 2 DeckError, it; P35a (#45) after the --only filter: criterion's Default Checks (record: every Function; readProbe(id): <parts>/<probeFile(profile, id)>'s text, or null), not ok → 2 DeckError, its message, ok → its checks and probes replace them; Build Acceptances({cards, checks, profile, texts, uses: Plan Spec's, vendor:
+            Checks(root, args.checks, profile) (a failure is the result); Plan Rules(record, map, hasFile("decks/tools/layers.json"), texts.guard, profile.id),
+            an error → 2 DeckError, it; after the --only filter criterion's Default Checks (record: every Function; readProbe(id): <parts>/<probeFile(profile, id)>'s text, or null), not ok → 2 DeckError, its message, ok → its checks and probes replace them;
+            args.writeProbes: per checks card with files null and no probe, in order, criterion's Probe Skeleton({id, profile, functions: its Card
+            Criterion's or [], targets: its plan card's}) written to <parts>/<probeFile(profile, id)> (parents created) → {code: 0, document: {spec,
+            components, probes: those paths}}, no acceptance built, no deck written; Build Acceptances({cards, checks, profile, texts, uses: Plan Spec's, vendor:
             hasFile("vendor/modules.txt"), its layers, then its rules, each when not null, with args.only transaction: true}), errors → 2 DeckError "acceptances
             not built (<n> error|errors):\n" + them "\n"-joined; its cards replace the plan's, except a card the map gives an acceptance (overridden: map card
             by customId ?? id, extra card by customId). args.out not null → the cards to path.resolve(root, args.out) as JSON.stringify(cards, null, 2) + "\n",
             parents created. → {code: 0, document: {spec, components, cards, generations, externalDependsOn, out: args.out, Plan Rules' proseOnly, Default
-            Checks' overrides, last warnings, each of the three only when non-empty}}; warnings (P34) = loadContour's, then per plan component whose record
-            Component's language and map.language are both null "no language on Component <name> and none in the map: typescript assumed", then Plan Spec's
-            (P34b), then with args.checks rules' Plan Notes(per checks card, {id, extra, targets of its plan card or []}, the layers.json fact, texts.guard)
-            (P31b). Nothing else written; nothing on an error.
+            Checks' overrides, last warnings, each of the three only when non-empty}}; warnings = loadContour's, then per plan component whose record
+            Component's language and map.language are both null "no language on Component <name> and none in the map: typescript assumed", then Plan Spec's,
+            then with args.checks rules' Plan Notes(per checks card, {id, extra, targets of its plan card or []}, the layers.json fact, texts.guard).
+            Nothing else written; nothing on an error.
           steps: [{uses: contour}, {uses: planner}, {calls: Read Plan Checks}, {uses: rules}, {uses: builder}, {uses: criterion}, {produces: Plan Document}]
           examples:
             - {given: 'examples.json["Plan Command 1"].given', when: planCommand, then: 'examples.json["Plan Command 1"].then'}
@@ -1777,6 +1782,8 @@ System:
             - {given: 'examples.json["Plan Command 21"].given', when: planCommand, then: 'examples.json["Plan Command 21"].then'}
             - {given: 'examples.json["Plan Command 22"].given', when: planCommand, then: 'examples.json["Plan Command 22"].then'}
             - {given: 'examples.json["Plan Command 23"].given', when: planCommand, then: 'examples.json["Plan Command 23"].then'}
+            - {given: 'examples.json["Plan Command 24"].given', when: planCommand, then: 'examples.json["Plan Command 24"].then'}
+            - {given: 'examples.json["Plan Command 25"].given', when: planCommand, then: 'examples.json["Plan Command 25"].then'}
         - name: Read Plan Checks
           description: Files of `plan --checks`.
           behavior: >
@@ -1830,7 +1837,7 @@ System:
       dataObjects:
         - name: Command
           description: One parsed invocation.
-          schema: "every variant also has root: string, pretty: boolean; {name: 'deck check', deck, sliceCapBytes}|{name: 'run', deck, processor, runId: string|null, deadlineSeconds, maxCards: number|null, maxRetryBatches}|{name: 'plan', spec, components: string[], map: string|null, judge: boolean, out: string|null, checks?: string, only?: string[]}|{name: 'submit', deck, processor}|{name: 'collect', batch}|{name: 'primer', write: boolean}|{name: 'scout', processor, issue, seedFile: string|null, deadlineSeconds: number|null}|{name: 'plan --from-scout', fromScout, out: string|null}|{name: 'review', base, head, spec: string|null, map: string|null, scout: string|null, mutants: number|null, mutantTimeoutSeconds, test: string|null, write: boolean}|{name: 'card', deck, id, md: boolean}|{name: 'accept', deck, id, model: string|null, commit: boolean, fromRun?: string, pick?: string[]}|{name: 'init', project, language: 'typescript' | 'python' | 'go', module: string|null, templates: string|null}|{name: 'gate', deck, stubs, refs, mutants?: number}"
+          schema: "every variant also has root: string, pretty: boolean; {name: 'deck check', deck, sliceCapBytes}|{name: 'run', deck, processor, runId: string|null, deadlineSeconds, maxCards: number|null, maxRetryBatches}|{name: 'plan', spec, components: string[], map: string|null, judge: boolean, out: string|null, checks?: string, only?: string[], writeProbes?: true}|{name: 'submit', deck, processor}|{name: 'collect', batch}|{name: 'primer', write: boolean}|{name: 'scout', processor, issue, seedFile: string|null, deadlineSeconds: number|null}|{name: 'plan --from-scout', fromScout, out: string|null}|{name: 'review', base, head, spec: string|null, map: string|null, scout: string|null, mutants: number|null, mutantTimeoutSeconds, test: string|null, write: boolean}|{name: 'card', deck, id, md: boolean}|{name: 'accept', deck, id, model: string|null, commit: boolean, fromRun?: string, pick?: string[]}|{name: 'init', project, language: 'typescript' | 'python' | 'go', module: string|null, templates: string|null}|{name: 'gate', deck, stubs, refs, mutants?: number}"
         - name: Error Document
           description: The document of every non-result exit.
           schema: "{ error: { code: 0|1|2|3|4, kind: 'UsageError'|'NotYetError'|'DeckError'|'RefusalError'|'RuntimeError', message: string } }"
@@ -1841,7 +1848,7 @@ System:
           description: stdout of deck check.
           schema: "{ deck: string, cards: number, generations: string[][], errors: number, warnings: number, hazards: Hazard[], weights: SliceWeight[], builds?: Build Check[], unproven?: Unproven[] }"
         - name: Plan Document
-          description: stdout of plan.
+          description: stdout of plan; with --write-probes { spec, components, probes } (the probe paths written).
           schema: "{ spec: string, components: string[], cards: Card[], generations: string[][], externalDependsOn: Record<string, string[]>, out: string | null, proseOnly?: string[], overrides?: string[], warnings?: string[] }"
         - name: Plan Checks
           description: What Read Plan Checks returns.
@@ -5142,8 +5149,9 @@ System:
         code card's probe and compares them with the examples of the card's Functions; Default Checks builds the cards
         of a checks document in the cut form (no cards list, only the phase knobs and per-card overrides) from the cut
         itself, each judge's bounds and literals from its Functions' examples. cli's Plan Command calls both; planner's
-        Plan Spec tells which Functions each card holds (Card Criterion). tests/fixtures/criterion/examples.json["<Function>
-        <n>"] holds the given and then of an example naming it.
+        Plan Spec tells which Functions each card holds (Card Criterion). Probe Skeleton writes the text of a missing probe
+        from those examples (plan --write-probes, P35b). tests/fixtures/criterion/examples.json["<Function> <n>"] holds the
+        given and then of an example naming it.
       language: typescript
       requirements: [Deterministic Core]
       functions:
@@ -5225,6 +5233,37 @@ System:
             - {given: 'examples.json["Default Checks 3"].given', ref: "tests/fixtures/cli/goMini.deck.json, tests/fixtures/criterion/goMini.criteria.json", when: defaultChecks, then: 'examples.json["Default Checks 3"].then'}
             - {given: 'examples.json["Default Checks 4"].given', ref: "tests/fixtures/cli/goMini.deck.json, tests/fixtures/criterion/goMini.criteria.json, tests/fixtures/criterion/ts.input.json", when: defaultChecks, then: 'examples.json["Default Checks 4"].then'}
             - {given: 'examples.json["Default Checks 5"].given', when: thenLiterals, then: 'examples.json["Default Checks 5"].then'}
+        - name: Probe Skeleton
+          description: The probe text of a code card with no probe, one failing test per example of its Functions.
+          behavior: >
+            probeSkeleton({id, profile, functions, targets}) → string; functions = the card's Card Criterion functions
+            ({name, examples}, in order), targets = its plan card's. The lines joined by "\n", plus a last "\n". C1 = "// Probe of
+            card '<id>', written by morph plan --write-probes: one test per example of its Functions.", C2 = "// Write each
+            body from its example; until you do, it fails.". An example's value lines, in order: "given: <given>", "ref:
+            <ref>" only when ref is not null, "when: <when>", "then: <then>", each value with every run of whitespace
+            collapsed to one space, trimmed. Per Function in order, per its example n from 1, one test. The go profile:
+            "package <pkg>", "", C1, C2, "", `import "testing"`; per test "", `func TestProbe<X>Example<n>(t *testing.T) {`
+            (X = Probe Names' pascalName(name)), a tab + "// " + each value line, a tab + `t.Fatal("probe <id>: write <name>
+            example <n>")`, "}". pkg: the first of language's codeTargets(profile, targets) up to its last "/"; no such
+            target or no "/" → "main", else that directory's text after its last "/" ("calc/clamp_value.go" → "calc",
+            "a/b/c.go" → "b"). Any other profile: C1, C2, `import { expect, test } from "vitest";`; per test "", `test("<name>
+            example <n>", () => {`, two spaces + "// " + each value line, two spaces + `throw new Error("probe <id>: write
+            <name> example <n>");`, "});". No example in any Function: one test in their place, go "", `func TestProbeOwn(t
+            *testing.T) {`, a tab + "// the record gives no example: write the probe's own tests", a tab + `t.Fatal("probe
+            <id>: no record example")`, "}"; else "", `test("<id> probe", () => {`, two spaces + "// the record gives no
+            example: write the probe's own tests", two spaces + `throw new Error("probe <id>: no record example");`, "});".
+            Probe Names reads every title back: checkProbeNames of a skeleton, strict, own = its functions' Example Counts,
+            is [].
+          steps:
+            - calls: Probe Names
+            - uses: language
+            - uses: contour
+            - uses: planner
+            - reads: Card Criterion
+          examples:
+            - {given: 'examples.json["Probe Skeleton 1"].given', ref: "tests/fixtures/criterion/skeleton1.probe.ts.txt", when: "probeSkeleton; checkProbeNames", then: 'examples.json["Probe Skeleton 1"].then'}
+            - {given: 'examples.json["Probe Skeleton 2"].given', ref: "tests/fixtures/criterion/goMini.criteria.json, tests/fixtures/criterion/skeleton2.probe.go.txt", when: "probeSkeleton; probeTitles; checkProbeNames", then: 'examples.json["Probe Skeleton 2"].then'}
+            - {given: 'examples.json["Probe Skeleton 3"].given', when: probeSkeleton, then: 'examples.json["Probe Skeleton 3"].then'}
       dataObjects:
         - name: Example Count
           description: A Function's name and the number of its examples.

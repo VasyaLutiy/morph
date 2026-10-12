@@ -1,0 +1,37 @@
+{
+  "id": "ab",
+  "functions": [
+    {
+      "name": "A B",
+      "examples": [
+        {
+          "given": "x  1,\n  y 2 ",
+          "when": "added",
+          "then": "\"3\"",
+          "ref": null
+        },
+        {
+          "given": "x 0",
+          "when": "added",
+          "then": "0 — nothing to add",
+          "ref": "tests/fixtures/ab.json"
+        }
+      ]
+    },
+    {
+      "name": "C",
+      "examples": [
+        {
+          "given": "c",
+          "when": "d",
+          "then": "e",
+          "ref": null
+        }
+      ]
+    }
+  ],
+  "targets": [
+    "src/ab.ts",
+    "tests/ab.test.ts"
+  ]
+}

@@ -4,7 +4,8 @@
     "--judge",
     "--write",
     "--md",
-    "--commit"
+    "--commit",
+    "--write-probes"
   ],
   "valued": [
     "--root",
@@ -64,7 +65,8 @@
       "--judge",
       "--out",
       "--checks",
-      "--only"
+      "--only",
+      "--write-probes"
     ],
     "review": [
       "--spec",

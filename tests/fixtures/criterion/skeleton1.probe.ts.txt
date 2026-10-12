@@ -1,0 +1,25 @@
+// Probe of card 'ab', written by morph plan --write-probes: one test per example of its Functions.
+// Write each body from its example; until you do, it fails.
+import { expect, test } from "vitest";
+
+test("A B example 1", () => {
+  // given: x 1, y 2
+  // when: added
+  // then: "3"
+  throw new Error("probe ab: write A B example 1");
+});
+
+test("A B example 2", () => {
+  // given: x 0
+  // ref: tests/fixtures/ab.json
+  // when: added
+  // then: 0 — nothing to add
+  throw new Error("probe ab: write A B example 2");
+});
+
+test("C example 1", () => {
+  // given: c
+  // when: d
+  // then: e
+  throw new Error("probe ab: write C example 1");
+});
