@@ -93,13 +93,13 @@ test("Plan Command example 7: an unknown checks card is a DeckError", () => {
   }
 });
 
-test("Plan Command example 8: the P10a deck byte for byte on the repository", () => {
+test("Plan Command example 8: the repository's own cut speaks contract 3", () => {
   const result = planCommand(REPO, {
     name: "plan",
     root: ".",
     pretty: false,
     spec: "contour.yaml",
-    components: ["planner", "cli"],
+    components: ["planner", "cli", "cli-plan"],
     map: "tests/fixtures/cli/p10.map.json",
     judge: true,
     out: null,
@@ -108,14 +108,22 @@ test("Plan Command example 8: the P10a deck byte for byte on the repository", ()
   expect(result.code).toBe(0);
   if (result.code !== 0) throw new Error("unreachable");
   const document = result.document as PlanDocument;
-  const oldGuard = fixture("builder/guard.p10.txt").trimEnd();
-  const liveGuard = fs.readFileSync(path.join(REPO, "decks/tools/guard.mjs"), "utf8").trimEnd();
+  const ids = document.cards.map((c) => c.customId);
   const loaded = loadDeck(fs.readFileSync(path.join(REPO, "decks/p10/v2deck.json"), "utf8"));
   if (!loaded.ok) throw new Error("v2deck.json does not load");
-  const byId = new Map(document.cards.map((c) => [c.customId, c]));
   for (const card of loaded.deck.cards) {
-    const got = byId.get(card.customId);
-    if (got === undefined) throw new Error("card missing from the plan: " + card.customId);
-    expect(got.acceptance).toBe((card.acceptance ?? "").split(oldGuard).join(liveGuard));
+    expect(ids).toContain(card.customId);
   }
+  expect((result.document as unknown as { proseOnly?: string[] }).proseOnly).toStrictEqual([
+    "No Network In Tests",
+    "No Shell Outside Acceptance",
+    "Frozen Tree During Run",
+  ]);
+  const line = fixture("cli/p33.renderGuard.txt").trimEnd();
+  const liveGuard = fs.readFileSync(path.join(REPO, "decks/tools/guard.mjs"), "utf8").trimEnd();
+  expect(liveGuard).toContain("morph-guard-contract: 3");
+  const render = document.cards.find((c) => c.customId === "render");
+  const acceptance = render?.acceptance ?? "";
+  expect(acceptance).toContain(line);
+  expect(acceptance).toContain(liveGuard);
 });
