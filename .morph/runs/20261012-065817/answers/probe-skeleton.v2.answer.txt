@@ -1,0 +1,116 @@
+```
+import { codeTargets } from "../language/paths.js";
+import { pascalName } from "./probeNames.js";
+import type { Example } from "../contour/types.js";
+import type { LanguageProfile } from "../language/types.js";
+
+export interface SkeletonInput {
+  id: string;
+  profile: LanguageProfile;
+  functions: { name: string; examples: Example[] }[];
+  targets: string[];
+}
+
+function collapse(s: string): string {
+  return s.replace(/\s+/g, " ").trim();
+}
+
+function headerLine(id: string): string {
+  return `// Probe of card '${id}', written by morph plan --write-probes: one test per example of its Functions.`;
+}
+
+const SECOND = "// Write each body from its example; until you do, it fails.";
+
+function valueLines(e: Example): string[] {
+  const lines = [`given: ${collapse(e.given)}`];
+  if (e.ref !== null) {
+    lines.push(`ref: ${collapse(e.ref)}`);
+  }
+  lines.push(`when: ${collapse(e.when)}`);
+  lines.push(`then: ${collapse(e.then)}`);
+  return lines;
+}
+
+function goPackage(profile: LanguageProfile, targets: string[]): string {
+  const code = codeTargets(profile, targets);
+  const first: string | undefined = code[0];
+  if (first === undefined) {
+    return "main";
+  }
+  const slash = first.lastIndexOf("/");
+  if (slash < 0) {
+    return "main";
+  }
+  const dir = first.slice(0, slash);
+  const last = dir.lastIndexOf("/");
+  return last < 0 ? dir : dir.slice(last + 1);
+}
+
+export function probeSkeleton(input: SkeletonInput): string {
+  const isGo = input.profile.id === "go";
+  const lines: string[] = [];
+
+  if (isGo) {
+    lines.push(`package ${goPackage(input.profile, input.targets)}`);
+    lines.push("");
+    lines.push(headerLine(input.id));
+    lines.push(SECOND);
+    lines.push("");
+    lines.push(`import "testing"`);
+  } else {
+    lines.push(headerLine(input.id));
+    lines.push(SECOND);
+    lines.push(`import { expect, test } from "vitest";`);
+  }
+
+  const tests: { name: string; n: number; ex: Example }[] = [];
+  for (const fn of input.functions) {
+    for (let i = 0; i < fn.examples.length; i++) {
+      const ex: Example | undefined = fn.examples[i];
+      if (ex === undefined) {
+        continue;
+      }
+      tests.push({ name: fn.name, n: i + 1, ex });
+    }
+  }
+
+  if (tests.length === 0) {
+    if (isGo) {
+      lines.push("");
+      lines.push(`func TestProbeOwn(t *testing.T) {`);
+      lines.push(`\t// the record gives no example: write the probe's own tests`);
+      lines.push(`\tt.Fatal("probe ${input.id}: no record example")`);
+      lines.push(`}`);
+    } else {
+      lines.push("");
+      lines.push(`test("${input.id} probe", () => {`);
+      lines.push(`  // the record gives no example: write the probe's own tests`);
+      lines.push(`  throw new Error("probe ${input.id}: no record example");`);
+      lines.push(`});`);
+    }
+    return lines.join("\n") + "\n";
+  }
+
+  for (const t of tests) {
+    if (isGo) {
+      lines.push("");
+      lines.push(`func TestProbe${pascalName(t.name)}Example${t.n}(t *testing.T) {`);
+      for (const v of valueLines(t.ex)) {
+        lines.push(`\t// ${v}`);
+      }
+      lines.push(`\tt.Fatal("probe ${input.id}: write ${t.name} example ${t.n}")`);
+      lines.push(`}`);
+    } else {
+      lines.push("");
+      lines.push(`test("${t.name} example ${t.n}", () => {`);
+      for (const v of valueLines(t.ex)) {
+        lines.push(`  // ${v}`);
+      }
+      lines.push(`  throw new Error("probe ${input.id}: write ${t.name} example ${t.n}");`);
+      lines.push(`});`);
+    }
+  }
+
+  return lines.join("\n") + "\n";
+}
+```

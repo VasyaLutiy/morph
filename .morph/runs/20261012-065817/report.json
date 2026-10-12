@@ -1,0 +1,212 @@
+{
+  "runId": "20261012-065817",
+  "completedAt": 1791788894359,
+  "branch": "morph/20261012-065817",
+  "processor": "ds",
+  "generations": 3,
+  "outcomes": [
+    {
+      "customId": "parse-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "fb73acad676d29e4f67780be2a8476793b717411",
+      "diffstat": {
+        "files": 2,
+        "insertions": 14,
+        "deletions": 2
+      }
+    },
+    {
+      "customId": "probe-skeleton",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "probe-skeleton.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "f0ccca48c69624bc83ebdffcb81b07c69b760568",
+      "diffstat": {
+        "files": 1,
+        "insertions": 114,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "parse-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "parse-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/parse.p35b.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "849a2060bfc9930d335aa3fd093d3d59b636d68f",
+      "diffstat": {
+        "files": 1,
+        "insertions": 139,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-command",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "eba3b99fedd20c8a990c04d6a3f052a4ce3f9215",
+      "diffstat": {
+        "files": 1,
+        "insertions": 19,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "probe-skeleton-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "probe-skeleton-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/criterion/probeSkeleton.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "0f0440b4af97f68fe418b84c3894d5ec6ac11a33",
+      "diffstat": {
+        "files": 1,
+        "insertions": 153,
+        "deletions": 0
+      }
+    },
+    {
+      "customId": "plan-command-judge",
+      "status": "written",
+      "reason": null,
+      "attempts": 1,
+      "winningVariant": "plan-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/planCommand.p35b.examples.test.ts\n== own\n== full\n== own git\n== frozen\n",
+      "earlierFailures": [],
+      "commit": "2e3a7f44a2e3d418c595cb2927b73e5679170daa",
+      "diffstat": {
+        "files": 1,
+        "insertions": 120,
+        "deletions": 0
+      }
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 115791,
+    "outputTokens": 69660,
+    "cost": 0.11183201999999998,
+    "requests": 9
+  },
+  "requests": [
+    {
+      "customId": "parse-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791788298-sZZR9ECivCDqFyYAM7Y5",
+      "inputTokens": 14582,
+      "outputTokens": 7710,
+      "cost": 0.0136266,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791788298-CQDbGxXtuY5rH4bADdZ0",
+      "inputTokens": 14582,
+      "outputTokens": 7705,
+      "cost": 0.0136206,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "probe-skeleton.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791788298-RCM0fjI9DUk9Ebpac5ho",
+      "inputTokens": 7709,
+      "outputTokens": 3274,
+      "cost": 0.0062415,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "probe-skeleton.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791788333-0pmLnbqSayLY4ZPe4ja5",
+      "inputTokens": 7709,
+      "outputTokens": 3748,
+      "cost": 0.00487494,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "parse-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791788367-QSXXGhH084eu7AgN2MtF",
+      "inputTokens": 8504,
+      "outputTokens": 23411,
+      "cost": 0.0299532,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791788367-fDiuqKsIFEmPrmXfqRgr",
+      "inputTokens": 11152,
+      "outputTokens": 2790,
+      "cost": 0.0039288,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791788367-6B4kncUZRcOOEo6HT98F",
+      "inputTokens": 11152,
+      "outputTokens": 5060,
+      "cost": 0.0094176,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "probe-skeleton-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791788387-qANesXAq9S1OcocMwenV",
+      "inputTokens": 12389,
+      "outputTokens": 11094,
+      "cost": 0.01647654,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "plan-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791788613-51K5ka5q9XkBNoT2dVuO",
+      "inputTokens": 28012,
+      "outputTokens": 4868,
+      "cost": 0.01369224,
+      "finishReason": "stop",
+      "error": null
+    }
+  ],
+  "rounds": [
+    {
+      "round": 0,
+      "reds": []
+    }
+  ]
+}

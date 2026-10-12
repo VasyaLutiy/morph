@@ -1,0 +1,9 @@
+morph run: parse-command.v1 accepted stage 0 finish stop chars 26844
+morph run: parse-command.v2 untried stage 0 finish stop chars 26867
+morph run: probe-skeleton.v1 accepted stage 0 finish stop chars 3670
+morph run: probe-skeleton.v2 untried stage 0 finish stop chars 3513
+morph run: parse-command-judge.v1 accepted stage 0 finish stop chars 3762
+morph run: plan-command.v1 accepted stage 0 finish stop chars 8074
+morph run: plan-command.v2 untried stage 0 finish stop chars 8076
+morph run: probe-skeleton-judge.v1 accepted stage 0 finish stop chars 4873
+morph run: plan-command-judge.v1 accepted stage 0 finish stop chars 3975
