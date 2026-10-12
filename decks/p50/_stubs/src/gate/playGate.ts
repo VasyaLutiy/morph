@@ -21,7 +21,6 @@ export interface PlayRow {
   expected: string | null;
   outside: string[];
   failures: string[];
-  probeBreaks: string[];
   ok: boolean;
 }
 
