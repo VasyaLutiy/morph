@@ -3359,10 +3359,7 @@ System:
               ref: "tests/fixtures/builder/code2.txt (the whole script)"
               when: "codeAcceptance"
               then: 'exactly the fixture text: own git around the stages, "node $P/guard.mjs tests tests/x/a.test.ts 1 5", an own step, the extra line after the verdict, the full step with --exclude tests/x/old.test.ts'
-            - given: 'allowArg([]), allowArg(["zod"]), allowArg(["yaml", "@scope/pkg"]); codeAcceptance of the ctx of example 1 with allowed ["yaml", "@scope/pkg"]; of the ctx of example 2 with allowed ["ajv"] and vendor true (probe, smoke 5 and extra as there); of the ctx of example 1 with allowed [] and vendor false'
-              ref: "tests/fixtures/builder/code1.txt, tests/fixtures/builder/code2.txt"
-              when: "written"
-              then: '""; " ''zod''"; " ''yaml,@scope/pkg''"; code1.txt with its line "echo ''== guard''; node $P/guard.mjs src src/x/a.ts" ending in " ''yaml,@scope/pkg''", nothing else changed; code2.txt with "guard.mjs src src/x/a.ts; node" become "guard.mjs src src/x/a.ts ''ajv''; node", nothing else changed; exactly code1.txt'
+            - {given: 'examples.json["Code Acceptance 3"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/code1.txt, tests/fixtures/builder/code2.txt", when: written, then: 'examples.json["Code Acceptance 3"].then'}
             - {given: 'examples.json["Code Acceptance 4"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/code1.txt, tests/fixtures/builder/code2.txt", when: codeAcceptance, then: 'examples.json["Code Acceptance 4"].then'}
             - {given: 'examples.json["Code Acceptance 5"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/code1.txt, tests/fixtures/builder/code2.txt", when: codeAcceptance, then: 'examples.json["Code Acceptance 5"].then'}
         - name: Judge Acceptance
@@ -3394,10 +3391,7 @@ System:
             - given: 'litsJson(["a", "é"]); litsJson([])'
               when: "written"
               then: '"[\"a\", \"é\"]" (not escaped to \u00e9); "[]"'
-            - given: 'judgeAcceptance of the ctx and files of example 1 with allowed ["zod"] and vendor true'
-              ref: "tests/fixtures/builder/judge1.txt"
-              when: "judgeAcceptance"
-              then: 'exactly judge1.txt: a judge''s acceptance reads neither allowed nor vendor (P19: judges keep their import rules)'
+            - {given: 'examples.json["Judge Acceptance 4"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/judge1.txt", when: judgeAcceptance, then: 'examples.json["Judge Acceptance 4"].then'}
         - name: Read Checks
           description: Turns a parsed checks document into typed Checks, or every problem it has.
           behavior: >
@@ -3436,10 +3430,7 @@ System:
               ref: "tests/fixtures/builder/p10.checks.json (the document), tests/fixtures/builder/p10.checks.typed.json (the whole typed Checks)"
               when: "validated"
               then: '{ok: true, checks} with checks equal to p10.checks.typed.json'
-            - given: 'the bad checks document: an unknown root key, version 2, a bad phase, frozen as a string, an empty exclude, a non-boolean ownGit, five bad cards'
-              ref: "tests/fixtures/builder/badChecks.json (the document), tests/fixtures/builder/badChecks.problems.json (the 21 problems in order)"
-              when: "validated"
-              then: "{ok: false, problems} equal to the 21 lines of badChecks.problems.json, first \"(root): unknown key 'extra' (known: version, phase, parts, frozen, fullExclude, ownGit, cards, overrides)\", last \"cards[4].files[1]: must be an object\""
+            - {given: 'examples.json["Read Checks 3"].given', ref: "tests/fixtures/builder/examples.json, tests/fixtures/builder/badChecks.json, tests/fixtures/builder/badChecks.problems.json", when: validated, then: 'examples.json["Read Checks 3"].then'}
             - given: 'the documents [], null and "x"; then {}'
               when: "validated"
               then: '{ok: false, problems: ["(root): checks must be an object"]} for each; then {ok: false, problems: ["phase: required"]} (P35a: no cards is the cut form)'
