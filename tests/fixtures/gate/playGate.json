@@ -13,6 +13,7 @@
    "failures": [
     "FAIL probe/a.probe.ts > A example 1"
    ],
+   "probeBreaks": [],
    "ok": true
   },
   {
@@ -26,6 +27,7 @@
    "expected": null,
    "outside": [],
    "failures": [],
+   "probeBreaks": [],
    "ok": true
   },
   {
@@ -41,6 +43,7 @@
     "src/zz.ts(1,1): error TS2: zz"
    ],
    "failures": [],
+   "probeBreaks": [],
    "ok": false
   },
   {
@@ -54,6 +57,7 @@
    "expected": null,
    "outside": [],
    "failures": [],
+   "probeBreaks": [],
    "ok": true
   },
   {
@@ -67,6 +71,7 @@
    "expected": null,
    "outside": [],
    "failures": [],
+   "probeBreaks": [],
    "ok": true
   },
   {
@@ -80,6 +85,7 @@
    "expected": null,
    "outside": [],
    "failures": [],
+   "probeBreaks": [],
    "ok": true
   },
   {
@@ -93,6 +99,7 @@
    "expected": "guard",
    "outside": [],
    "failures": [],
+   "probeBreaks": [],
    "ok": true
   },
   {
@@ -106,6 +113,7 @@
    "expected": null,
    "outside": [],
    "failures": [],
+   "probeBreaks": [],
    "ok": true
   }
  ],
@@ -121,6 +129,7 @@
    "expected": "probe",
    "outside": [],
    "failures": [],
+   "probeBreaks": [],
    "ok": true
   },
   {
@@ -134,6 +143,7 @@
    "expected": null,
    "outside": [],
    "failures": [],
+   "probeBreaks": [],
    "ok": true
   }
  ],
@@ -149,6 +159,7 @@
    "expected": "guard",
    "outside": [],
    "failures": [],
+   "probeBreaks": [],
    "ok": false
   },
   {
@@ -162,6 +173,7 @@
    "expected": null,
    "outside": [],
    "failures": [],
+   "probeBreaks": [],
    "ok": true
   },
   {
@@ -175,6 +187,7 @@
    "expected": "probe",
    "outside": [],
    "failures": [],
+   "probeBreaks": [],
    "ok": true
   },
   {
@@ -188,7 +201,40 @@
    "expected": null,
    "outside": [],
    "failures": [],
+   "probeBreaks": [],
    "ok": false
+  }
+ ],
+ "probe": [
+  {
+   "phase": "stub",
+   "generation": 0,
+   "card": "p",
+   "exit": 1,
+   "timedOut": false,
+   "seconds": 1,
+   "stage": "probe",
+   "expected": "probe",
+   "outside": [],
+   "failures": [],
+   "probeBreaks": [
+    "probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'."
+   ],
+   "ok": false
+  },
+  {
+   "phase": "ref",
+   "generation": 0,
+   "card": "p",
+   "exit": 0,
+   "timedOut": false,
+   "seconds": 1,
+   "stage": "probe",
+   "expected": null,
+   "outside": [],
+   "failures": [],
+   "probeBreaks": [],
+   "ok": true
   }
  ]
 }

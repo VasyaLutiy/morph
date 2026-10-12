@@ -11,6 +11,30 @@
     "layering": [
       "Layer Generations"
     ],
+    "probe-lines": [
+      "Probe Lines"
+    ],
+    "play-gate": [
+      "Play Gate"
+    ],
+    "gate-probe": [
+      "Gate Command"
+    ],
+    "run-transaction": [
+      "Run Transaction"
+    ],
+    "probe-lines-judge": [
+      "Probe Lines"
+    ],
+    "play-gate-judge": [
+      "Play Gate"
+    ],
+    "gate-errors-judge": [
+      "Gate Command"
+    ],
+    "probe-stop-judge": [
+      "Run Transaction"
+    ],
     "hazards": [
       "Find Hazards"
     ],
@@ -174,6 +198,86 @@
     ]
   },
   "cards": {
+    "probe-lines": {
+      "intent": "generate",
+      "targets": [
+        "src/cards/probe.ts"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 8000,
+      "instruction": "Write src/cards/probe.ts, a new file, pure (string work only: no fs, no card, no owners, no disk). Export exactly `isProbeFile(p: string): boolean` — true when p''s basename ends `_probe_test.go` or `.probe.ts`, or one of p''s `\"/\"`-segments is `probe` — and `probeLines(log: string, fileLines: readonly string[]): string[]` — per line of log.split(\"\n\"), trimEnd()ed: `\"\"` or starting `#` skipped; the FIRST of fileLines (new RegExp each, in order) that matches the line trimmed: group 1 a probe file (isProbeFile) → group 1 + (group 2 ?? `\"\"`), once each; no match, or a file that is not a probe file → nothing. Sorted (JavaScript''s default sort). The record''s cards/Probe Lines behaviour and examples (tests/fixtures/cards/probeLogs.json) are the contract.",
+      "context_slice": [
+        "src/language/treeProfiles.ts",
+        "tests/fixtures/cards/probeLogs.json"
+      ]
+    },
+    "gate-probe": {
+      "intent": "patch",
+      "targets": [
+        "src/gate/gateCommand.ts"
+      ],
+      "depends_on": [
+        "play-gate"
+      ],
+      "variants": 2,
+      "max_tokens": 8000,
+      "instruction": "Patch src/gate/gateCommand.ts, every other line as it is (issue #50, F1). In the per-row error loop''s stub branch, after the `for (const line of row.outside)` loop: `for (const line of row.probeBreaks) { errors.push(prefix + \"probe does not build: \" + line); }` — the gate fails a probe it cannot build by name (code 2), never as a silent row.",
+      "context_slice": [
+        "src/gate/playGate.ts"
+      ]
+    },
+    "probe-lines-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/cards/probe.examples.test.ts"
+      ],
+      "depends_on": [
+        "probe-lines"
+      ],
+      "max_tokens": 12000,
+      "instruction": "Write ONLY tests/cards/probe.examples.test.ts, one test per Probe Lines example of the record (cards), named `\"Probe Lines example <n>: <what>\"`. Imports: `import { expect, test } from \"vitest\";`, `import { probeLines } from \"../../src/cards/probe.js\";`, `import { fixtureJson } from \"../../tests/helpers.js\";`, `import { TREE_PROFILES } from \"../../src/language/treeProfiles.js\";` — all values string (logs) and string[] (fileLines, the result): no number, no object, no tmp root (the Function is pure, no disk). `const logs = () => fixtureJson(\"cards/probeLogs.json\") as Record<string, string>;` holds the logs: `go` (a go build log, two probe lines + a `#` package line + a FAIL<tab> line), `ts` (a tsc log: one probe line + a target''s own red line), `none` (pytest: a location line and a FAILED line, no probe file), `absolute` (an absolute toolchain frame + an indented goroutine line). fileLines = TREE_PROFILES.map((p) => p.fileLine) (three string regex patterns, in order). Compare whole results with toStrictEqual: example 1 → the two `users/token-lookup_probe_test.go:30|31:72: undefined: adaH|zoeH` lines; example 2 → the one `probe/w3/w3.probe.ts(2,10): error TS2305 …` line on `ts`, `[]` on `none`, `[]` on `absolute`, and the same two `go` lines with fileLines `[TREE_PROFILES[TREE_PROFILES.length - 1].fileLine]` alone (the go profile claims `.go`).",
+      "context_slice": [
+        "tests/helpers.ts",
+        "src/cards/probe.ts",
+        "src/language/treeProfiles.ts",
+        "tests/fixtures/cards/probeLogs.json"
+      ]
+    },
+    "gate-errors-judge": {
+      "intent": "patch",
+      "targets": [
+        "tests/gate/gateCommand.examples.test.ts"
+      ],
+      "depends_on": [
+        "gate-probe"
+      ],
+      "max_tokens": 16000,
+      "instruction": "Patch tests/gate/gateCommand.examples.test.ts, every test and line as it is, adding exactly one test after the last, named `\"Gate Command example 6: a probe build error is named, code 2\"`. Setup of the file''s own helpers (repo, card, deps, result): `const acc = \"echo ''== probe''\necho \\\"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name ''adaH''.\\\"\nexit 1\";` a tmpRepo holding one commit of `d.json` = a deck array of one card `p → [\"src/p.txt\"]` with that acceptance, `s/src/p.txt` = `\"s\\n\"`, `f/src/p.txt` = `\"P1\\n\"`; `expect(await gateCommand(r.root, { deck: \"d.json\", stubs: \"s\", refs: \"f\" }, deps())).toStrictEqual(result(\"probe\"))` (the case in tests/fixtures/gate/gateCommand.json: code 2, errors [`\"stub p: probe does not build: probe/p/p.probe.ts(2,10): error TS2304: Cannot find name ''adaH''.\"`]); `r.rm()` in the finally. Do not repeat the other examples.",
+      "context_slice": [
+        "tests/helpers.ts",
+        "src/gate/gateCommand.ts",
+        "tests/fixtures/gate/gateCommand.json"
+      ]
+    },
+    "probe-stop-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/runloop/transaction.p50.examples.test.ts"
+      ],
+      "depends_on": [
+        "run-transaction"
+      ],
+      "max_tokens": 20000,
+      "instruction": "Write ONLY tests/runloop/transaction.p50.examples.test.ts, one test per the NEW Run Transaction example of the record (runloop-sub; the example of issue #50, F3), named `\"Run Transaction example 16: a probe build error stops the run by name, no retry\"`; examples 1-15 live in other files: do not repeat them. Harness skeleton (≤ 10 lines, tests/helpers.ts): `const M = TRANSACTION_MARK + \"\n\";` `const fence = (body: string): string => \"```ts\\n\" + body + \"```\\n\";` `const card = (id: string, target: string, acceptance: string): Card => ({ customId: id, intent: \"generate\", targets: [target], contextSlice: [], instruction: \"write \" + target, acceptance, model: null, maxTokens: null, reasoning: null, variants: 1, dependsOn: [] });` `const deps = (root: string, commits: string[]): RunDeps => ({ config: { id: \"stub\", type: \"stub\", model: \"stub\", apiKey: null, baseUrl: \"https://openrouter.ai/api/v1\", route: \"sync\", concurrency: 4, providerOrder: null, reasoning: null, timeoutMs: 600000, maxRetries: 0, answersDir: root }, transport: { fetch: fakeFetch().fetch, sleep: async () => {} }, commit: (id, targets) => { commits.push(id); return { commit: \"sha-\" + id, diffstat: { files: targets.length, insertions: 1, deletions: 0 } }; }, now: () => 0, env: { PATH: process.env.PATH ?? \"\" } });` — the types come from `../../src/runloop/types.js` (RunDeps, RunInput) and `../../src/cards/types.js` (Card). One card `t → users/token.go`, acceptance `M + ''echo \"users/token-lookup_probe_test.go:30:72: undefined: adaH\"; echo \"users/token-lookup_probe_test.go:31:72: undefined: zoeH\"; exit 1''`, the stub answer `t.md` fenced `package users…`; input budget `{ maxCards: 99, maxRetryBatches: 2, deadline: 1e12 }`. Read the report through a record like the P28a probe (`rounds`, `stop`, `fault`, `outcomes`, `requests`): assert the outcome `{ status: \"failed\", reason: \"probe does not build\", attempts: 1, winningVariant: \"t.v1\", lastRound: \"red\", acceptanceLog: L, earlierFailures: [] }` (L = the two echoed lines, each `\"\n\"`-ended), `requests` exactly `[\"t.v1\"]`, `commits` empty, `rounds` `[{ round: 0, reds: [{ customId: \"t\", blamed: [\"t\"], log: L }] }]`, `stop` = `\"probe does not build: users/token-lookup_probe_test.go:30:72: undefined: adaH, users/token-lookup_probe_test.go:31:72: undefined: zoeH\"`, `fault` undefined, and `users/token.go` absent (t.exists).",
+      "context_slice": [
+        "tests/helpers.ts",
+        "src/runloop/transaction.ts",
+        "src/cards/probe.ts",
+        "src/runloop/types.ts",
+        "decks/p28a/parts/run-transaction.probe.ts"
+      ]
+    },
     "card-model": {
       "intent": "patch",
       "targets": [
@@ -1925,7 +2029,15 @@
       ],
       "depends_on": [
         "transaction-deck",
-        "tree-profiles"
+        "tree-profiles",
+        "probe-lines"
+      ],
+      "instruction": "Patch src/runloop/transaction.ts, every other line as it is (issue #50, F3). `import { probeLines } from \"../cards/probe.js\";`. The card state gains `lastProbe: string[]` (start []). In the round''s red branch, after `blameLog(…)`: `const probe = probeLines(result.log, TREE_PROFILES.map((profile) => profile.fileLine)); state.lastProbe = probe;`. After the reds are collected and BEFORE the outside check: `const probeReds = reds.filter((red) => probeLines(red.log, TREE_PROFILES.map((profile) => profile.fileLine)).length > 0); if (probeReds.length > 0) { const lines = new Set<string>(); for (const red of probeReds) for (const l of probeLines(red.log, TREE_PROFILES.map((profile) => profile.fileLine))) lines.add(l); stop = \"probe does not build: \" + Array.from(lines).sort().join(\", \"); restoreSnapshot(before); for (const card of cards) outcomes.push(rollbackOutcome(card.customId, false)); return finish(outcomes, null); }` — no retry, the line never in a retry prompt. rollbackOutcome''s reason chain gains, after the outside branch: `else if (state.lastRed && state.lastProbe.length > 0) { reason = \"probe does not build\"; }`.",
+      "context_slice": [
+        "src/cards/transaction.ts",
+        "src/cards/probe.ts",
+        "src/language/treeProfiles.ts",
+        "src/runloop/retry.ts"
       ],
       "variants": 2,
       "max_tokens": 16000
@@ -1959,16 +2071,23 @@
       "max_tokens": 8000
     },
     "play-gate": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "src/gate/playGate.ts"
       ],
       "depends_on": [
         "stub-verdict",
-        "gate-plan"
+        "gate-plan",
+        "probe-lines"
       ],
       "variants": 2,
-      "max_tokens": 24000
+      "max_tokens": 24000,
+      "instruction": "Patch src/gate/playGate.ts, every other line as it is (issue #50, F1). `import { isProbeFile } from \"../cards/probe.js\";`. After each `const verdict = stubVerdict(…)` (the stub step and the ref/retry step): `const probeBreaks = verdict.outside.filter((line) => { for (const source of FILE_LINES) { const m = new RegExp(source).exec(line); if (m !== null) return isProbeFile(m[1] ?? \"\"); } return false; });` and `outside = verdict.outside.filter((line) => !probeBreaks.includes(line));` — a compile line naming a probe file is the orchestrator''s data, never an outside line; the stub step''s ok gains `&& probeBreaks.length === 0`; the Row pushed gains `probeBreaks` between `failures` and `ok` (an empty list written, never omitted). PlayRow gains `probeBreaks: string[]` after `failures`.",
+      "context_slice": [
+        "src/gate/stubVerdict.ts",
+        "src/gate/gatePlan.ts",
+        "src/cards/probe.ts"
+      ]
     },
     "gate-command": {
       "intent": "patch",
@@ -2003,14 +2122,20 @@
       "max_tokens": 32000
     },
     "play-gate-judge": {
-      "intent": "generate",
+      "intent": "patch",
       "targets": [
         "tests/gate/playGate.examples.test.ts"
       ],
       "depends_on": [
         "play-gate"
       ],
-      "max_tokens": 24000
+      "max_tokens": 24000,
+      "instruction": "Patch tests/gate/playGate.examples.test.ts, every test and its name as it is (the fixture rows it compares carry `probeBreaks` now): add exactly one test after the last, named `\"Play Gate example 4: a probe build error is a probe break, never an outside line\"`, on the pattern of the file''s own `repo`/`card`/`gatePlan`/`rows` helpers: a tmpRepo of one commit `d.json` = `\"[]\\n\"`, `st/src/p.txt` = `\"s\\n\"`, `rf/src/p.txt` = `\"P1\\n\"`; card `p → [\"src/p.txt\"]`, acceptance `\"echo ''== probe''\\necho \\\"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name ''adaH''.\\\"\\nexit 1\"`; `gatePlan(cards, [[\"p\"]], [\"src/p.txt\"], [\"src/p.txt\"])`; `playGate({ root: r.root, cards, steps: plan.steps, stubDir: r.path(\"st\"), refDir: r.path(\"rf\") }, { env: env(), now: clock(1000) })` compared `toStrictEqual(rows(\"probe\"))` (tests/fixtures/gate/playGate.json: 2 rows, the stub''s `probeBreaks` holding the line and `ok` false, the ref''s `probeBreaks` empty); `r.rm()` in the finally. Do not repeat the other examples.",
+      "context_slice": [
+        "tests/helpers.ts",
+        "src/gate/playGate.ts",
+        "tests/fixtures/gate/playGate.json"
+      ]
     },
     "gate-command-judge": {
       "intent": "generate",

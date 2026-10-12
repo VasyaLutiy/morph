@@ -1,0 +1,98 @@
+{
+  "phase": "p50",
+  "ownGit": true,
+  "frozen": [
+    "contour.yaml",
+    "morph-map.json",
+    "docs",
+    "decks",
+    "tests/fixtures",
+    "templates",
+    "documentation"
+  ],
+  "fullExclude": [
+    "tests/cards/probe.examples.test.ts",
+    "tests/runloop/transaction.p50.examples.test.ts",
+    "tests/gate/playGate.examples.test.ts",
+    "tests/gate/gateCommand.examples.test.ts"
+  ],
+  "cards": [
+    {
+      "id": "probe-lines"
+    },
+    {
+      "id": "play-gate"
+    },
+    {
+      "id": "gate-probe"
+    },
+    {
+      "id": "run-transaction"
+    },
+    {
+      "id": "probe-lines-judge",
+      "files": [
+        {
+          "file": "tests/cards/probe.examples.test.ts",
+          "min": 2,
+          "max": 5,
+          "new": true,
+          "lits": [
+            "Probe Lines example 1",
+            "Probe Lines example 2",
+            "cards/probeLogs.json"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "play-gate-judge",
+      "files": [
+        {
+          "file": "tests/gate/playGate.examples.test.ts",
+          "min": 7,
+          "max": 10,
+          "new": false,
+          "drop": [],
+          "lits": [
+            "Play Gate example 4",
+            "gate/playGate.json",
+            "probeBreaks"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gate-errors-judge",
+      "files": [
+        {
+          "file": "tests/gate/gateCommand.examples.test.ts",
+          "min": 7,
+          "max": 9,
+          "new": false,
+          "drop": [],
+          "lits": [
+            "Gate Command example 6",
+            "gate/gateCommand.json",
+            "probe does not build"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probe-stop-judge",
+      "files": [
+        {
+          "file": "tests/runloop/transaction.p50.examples.test.ts",
+          "min": 1,
+          "max": 3,
+          "new": true,
+          "lits": [
+            "Run Transaction example 16",
+            "probe does not build"
+          ]
+        }
+      ]
+    }
+  ]
+}

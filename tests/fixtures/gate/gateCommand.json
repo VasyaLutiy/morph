@@ -114,6 +114,7 @@
      "failures": [
       "--- FAIL: TestProbeControlContractExample1 (0.00s)"
      ],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -127,6 +128,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -140,6 +142,7 @@
      "expected": "guard",
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -153,6 +156,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -168,6 +172,7 @@
      "failures": [
       "--- FAIL: TestProbePhaseLoopExample1 (0.00s)"
      ],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -181,6 +186,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -196,6 +202,7 @@
       "supervisor/guard.go:20:23: l.Resumes undefined (type *Loop has no field or method Resumes)"
      ],
      "failures": [],
+     "probeBreaks": [],
      "ok": false
     },
     {
@@ -209,6 +216,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -222,6 +230,7 @@
      "expected": "guard",
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -235,6 +244,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -250,6 +260,7 @@
      "failures": [
       "--- FAIL: TestProbeRuntimeGuardExample1 (0.00s)"
      ],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -263,6 +274,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -276,6 +288,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -289,6 +302,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -304,6 +318,7 @@
      "failures": [
       "--- FAIL: TestProbeDaemonCoreExample1 (0.00s)"
      ],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -317,6 +332,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -330,6 +346,7 @@
      "expected": "guard",
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -343,6 +360,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -356,6 +374,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -369,6 +388,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -382,6 +402,7 @@
      "expected": "guard",
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -395,6 +416,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     }
    ],
@@ -453,6 +475,7 @@
      "failures": [
       "FAIL probe/t1.probe.ts > T1 example 1"
      ],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -466,6 +489,7 @@
      "expected": "probe",
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -479,6 +503,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -492,6 +517,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     }
    ],
@@ -546,6 +572,7 @@
      "expected": "probe",
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": false
     },
     {
@@ -561,6 +588,7 @@
       "lib/old.ts(3,4): error TS2304: Cannot find name q7."
      ],
      "failures": [],
+     "probeBreaks": [],
      "ok": false
     },
     {
@@ -574,6 +602,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -587,6 +616,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     }
    ],
@@ -702,6 +732,7 @@
      "expected": "probe",
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -715,6 +746,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     }
    ],
@@ -722,6 +754,67 @@
    "errors": [
     "stub x: 300 s, over the 250 s limit",
     "ref x: 300 s, over the 250 s limit"
+   ]
+  }
+ },
+ "probe": {
+  "code": 2,
+  "document": {
+   "deck": "d.json",
+   "transaction": false,
+   "cards": 1,
+   "generations": [
+    [
+     "p"
+    ]
+   ],
+   "missing": [],
+   "builds": [
+    {
+     "card": "p",
+     "generation": 0,
+     "language": null,
+     "stubbed": 1,
+     "missing": [],
+     "breaks": [],
+     "note": "no language profile claims src/p.txt: not built"
+    }
+   ],
+   "rows": [
+    {
+     "phase": "stub",
+     "generation": 0,
+     "card": "p",
+     "exit": 1,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": "probe",
+     "outside": [],
+     "failures": [],
+     "probeBreaks": [
+      "probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'."
+     ],
+     "ok": false
+    },
+    {
+     "phase": "ref",
+     "generation": 0,
+     "card": "p",
+     "exit": 0,
+     "timedOut": false,
+     "seconds": 1,
+     "stage": "probe",
+     "expected": null,
+     "outside": [],
+     "failures": [],
+     "probeBreaks": [],
+     "ok": true
+    }
+   ],
+   "maxSeconds": 1,
+   "errors": [
+    "stub p: probe does not build: probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'."
    ]
   }
  }

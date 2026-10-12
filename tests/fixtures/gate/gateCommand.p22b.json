@@ -36,6 +36,7 @@
      "failures": [
       "FAIL probe/a.probe.ts > A example 1"
      ],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -49,6 +50,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     }
    ],
@@ -118,6 +120,7 @@
      "failures": [
       "FAIL probe/a.probe.ts > A example 1"
      ],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -131,6 +134,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     }
    ],
@@ -185,6 +189,7 @@
      "failures": [
       "FAIL probe/a.probe.ts > A example 1"
      ],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -198,6 +203,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     }
    ],
@@ -242,6 +248,7 @@
      "failures": [
       "FAIL probe/a.probe.ts > A example 1"
      ],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -255,6 +262,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     }
    ],
@@ -331,6 +339,7 @@
      "failures": [
       "FAIL probe/a.probe.ts > A example 1"
      ],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -344,6 +353,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": false
     }
    ],
@@ -420,6 +430,7 @@
      "expected": "probe",
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     },
     {
@@ -433,6 +444,7 @@
      "expected": null,
      "outside": [],
      "failures": [],
+     "probeBreaks": [],
      "ok": true
     }
    ],

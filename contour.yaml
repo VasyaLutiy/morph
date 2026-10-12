@@ -229,10 +229,36 @@ System:
             - given: 'P28, issue #22, TypeScript. card "a"; owners {"src/a.ts": "a", "tests/a.examples.test.ts": "aj"}; the three fileLines; exists always true; TEST_LINES; NEIGHBOUR_RULES; logs T1 = "src/b.ts(1,10): error TS2305: Module ''\"./a.js\"'' has no exported member ''fmtOut''.\nsrc/cli/c.ts(1,10): error TS2305: Module ''\"../a.js\"'' has no exported member ''fmtOut''.\n" (tsc, measured), then "src/a2.ts(3,4): error TS2304: Cannot find name ''q7''.\n", then "src/b.ts(1,10): error TS2305: Module ''\"./z.js\"'' has no exported member ''q''.\n"; then T1 without the neighbours argument'
               when: blameLog
               then: '{cards: ["a"], outside: []} (./a.js from src and ../a.js from src/cli both resolve to src/a.ts); then {cards: [], outside: ["src/a2.ts(3,4): error TS2304: Cannot find name ''q7''."]} (TypeScript is not by directory: no module named); then {cards: [], outside: ["src/b.ts(1,10): error TS2305: Module ''\"./z.js\"'' has no exported member ''q''."]} (src/z.ts is no target); then {cards: [], outside: [the two T1 lines]} (before P28)'
+        - name: Probe Lines
+          description: The compile lines of a log that name a probe file (issue #50, F3): the orchestrator's data, never a card's code.
+          behavior: >
+            src/cards/probe.ts, pure. isProbeFile(p): true when p's basename ends "_probe_test.go" or ".probe.ts", or
+            one of p's "/"-segments is "probe" (a TypeScript probe runs from probe/<card>/ at the repo root; a Go probe
+            lands in its package as "<card>_probe_test.go"). probeLines(log, fileLines) → string[]: per line of
+            log.split("\n"), trimEnd()ed: "" or starting "#" skipped; the FIRST of fileLines (new RegExp each, in order)
+            that matches the line trimmed: group 1 a probe file → group 1 + (group 2 ?? ""), once each; no match, or a
+            file that is not a probe file → nothing (a FAIL line, a test line, a frame is not a probe line). Sorted
+            (JavaScript's default sort). Reads the text it is given only: no card, no owners, no disk.
+          steps:
+            - uses: language
+            - produces: Probe Lines
+          examples:
+            - given: 'probeLogs.json "go" (go build of P9a, issue #50: the probe uses package vars another card''s probe
+                declares); fileLines the three Tree Profiles in their order'
+              ref: "tests/fixtures/cards/probeLogs.json"
+              when: probeLines
+              then: '["users/token-lookup_probe_test.go:30:72: undefined: adaH", "users/token-lookup_probe_test.go:31:72: undefined: zoeH"] — the "#" and FAIL<tab> lines match no fileLine'
+            - given: 'probeLogs.json "ts" (tsc), "none" (pytest), "absolute" (a toolchain frame); the three fileLines; then "go" with fileLines [the go profile''s] alone'
+              ref: "tests/fixtures/cards/probeLogs.json"
+              when: probeLines
+              then: '["probe/w3/w3.probe.ts(2,10): error TS2305: Module ''\"../../src/units/len.js\"'' has no exported member ''toYards''."] (len.ts is a target, not a probe file: not this Function''s line); [] (tests/test_calc.py is no probe file); [] (/usr/lib/go-1.22/src/a_test.go: no segment "probe", the basename ends "_test.go", not "_probe_test.go"); then the same two "go" lines as example 1'
       dataObjects:
         - name: Blame
           description: What one red acceptance log blames.
           schema: "{ cards: string[]; outside: string[] } — both sorted, each entry once"
+        - name: Probe Lines
+          description: The compile lines of a log that name a probe file.
+          schema: "string[] — group 1 + group 2 of the fileLine match, once each, sorted"
         - name: Card
           description: One unit of work for an executor; what morph run compiles into a request.
           schema:
@@ -1252,7 +1278,11 @@ System:
             log, its customId, owners, TREE_PROFILES' fileLine in order, p → a file or directory exists at root/p,
             TEST_LINES; P24c, then NEIGHBOUR_RULES; P28, issue #22: a kept file of a target's package blames the target's owner). All
             green → deps.commit(id, targets) per card in deck order, id = the customId of the attempt whose files are on the
-            tree (the card's, or "<customId>.r<n>" of its last written retry); done. Some red: any outside line → fault
+            tree (the card's, or "<customId>.r<n>" of its last written retry); done. Some red: Probe Lines (cards) of some
+            red card's log, its fileLines, non-empty (issue #50, F3: a probe file's build error is the orchestrator's data —
+            a probe the card cannot build is not paid for by its retries, and the line never reaches a retry prompt) → the
+            report's stop = "probe does not build: " + every such card's probe lines (each once, sorted) joined ", ", then
+            rollback. Any outside line → fault
             "outside the subset: " + every red card's outside lines (each once, sorted) joined ", ", then rollback. Some
             red card's Blame names no card (an unattributed red; P24c, issue #19 item 2) → the report's stop =
             "unattributed red: " + every such card's customId, deck order, joined ", ", then rollback (no retry: a red no
@@ -1275,7 +1305,8 @@ System:
             (W's and these), winningVariant its last written attempt's, acceptanceLog its last round's log, earlierFailures:
             W's + its red round logs in order, commit and diffstat from the hook}. Rollback: before restored (Restore
             Snapshot); a card W did not write keeps W's outcome; every other → {status "failed" (or "budget-exceeded"
-            above), reason: "outside the subset" when its last log named an outside line, else "acceptance failed" when its
+            above), reason: "outside the subset" when its last log named an outside line, else "probe does not build" when
+            its last round was red and Probe Lines (cards) of its last log, its fileLines, is non-empty, else "acceptance failed" when its
             last round was red and its Blame names itself, else "transaction rolled back"; attempts 1 + its retries,
             winningVariant the variant whose files are on the tree at the rollback (W's, or its last written retry's; P24,
             issue #16 item 3), acceptanceLog its last round's log (W's when no round ran), earlierFailures W's + its red
@@ -1345,6 +1376,10 @@ System:
             - given: 'P28, issue #22 acceptance, TypeScript. The stub, maxRetryBatches 2; out/k.ts ''import { fmtOut } from "./a.js";\nexport const k = fmtOut;\n'' on disk, no card''s target; T = "out/k.ts(1,10): error TS2305: Module ''\"./a.js\"'' has no exported member ''fmtOut''." (tsc''s text, measured) written to k.log as T + "\n"; fenced a.md ''export const sum = 1;\n'', a.r1.md ''export const sum = 1;\nexport const fmtOut = 2;\n''; one card a → out/a.ts M + "grep -q fmtOut out/a.ts || { cat k.log; exit 1; }"; deps.onVariant pushes each record'
               when: runTransaction
               then: 'round 0: a red, blaming a (out/k.ts names the module ./a.js, which resolves to the target out/a.ts); a retried, its request holding "error TS2305"; round 1 green: a "written" attempts 2 winningVariant "a.r1.v1" acceptanceLog "" earlierFailures [T + "\n"]; requests a.v1, a.r1.v1; the hook fired a.r1; report.rounds [{round: 0, reds: [{customId: "a", blamed: ["a"], log: T + "\n"}]}, {round: 1, reds: []}]; no stop key, no fault key'
+            - given: 'issue #50, F3. The stub, maxRetryBatches 2; fenced t.md "package users\n\nfunc Token(ada string) string { return ada }\n"; L = "users/token-lookup_probe_test.go:30:72: undefined: adaH\nusers/token-lookup_probe_test.go:31:72: undefined: zoeH\n"; card t → users/token.go M + "echo \\"" + L + "\\"; exit 1"'
+              ref: "tests/fixtures/cards/probeLogs.json (the two lines verbatim)"
+              when: runTransaction
+              then: 'round 0: t red, its Blame names itself (the probe file is on no disk), but Probe Lines of its log holds the two lines: no retry, the request t.v1 the only one; rollback; report.stop "probe does not build: users/token-lookup_probe_test.go:30:72: undefined: adaH, users/token-lookup_probe_test.go:31:72: undefined: zoeH", the last key; t "failed" reason "probe does not build" attempts 1 winningVariant "t.v1" lastRound "red" acceptanceLog L earlierFailures []; report.rounds [{round: 0, reds: [{customId: "t", blamed: ["t"], log: L}]}], the key before stop; no fault key; no commit; users/token.go absent'
 
     # ---------------------------------------------------------------- P6
     - name: git
@@ -5170,10 +5205,16 @@ System:
             copies <stubDir or refDir>/<target> to scratch/<target>, parents created; start = deps.now(); Run
             Acceptance(card.acceptance ?? "", scratch, {env: deps.env, timeoutMs: deps.timeoutMs}); seconds =
             Math.round((deps.now() − start) / 100) / 10. A stub step: v = Stub Verdict(log, expectedStage(acceptance ?? ""),
-            targets, TREE_PROFILES' fileLine), ok = exit !== 0 and v.stage === v.expected and v.outside empty; a ref or
-            retry step: v = Stub Verdict(log, "", targets, the fileLines, null) (every stage), ok = exit === 0. Row
+            targets, TREE_PROFILES' fileLine), probeBreaks = the lines of v.outside whose FIRST fileLine match (new
+            RegExp each, in order) has a probe file (cards' isProbeFile) as group 1, once each, order kept, outside = the
+            rest (issue #50, F1: a build error naming a probe file — the card's own or another card's — is the
+            orchestrator's data, not an outside line); ok = exit !== 0 and v.stage === v.expected and v.outside empty and
+            probeBreaks empty; a ref or
+            retry step: v = Stub Verdict(log, "", targets, the fileLines, null) (every stage), the same probeBreaks split
+            of v.outside, ok = exit === 0. Row
             {phase, generation, card, exit, timedOut, seconds, stage: v.stage, expected: v.expected for a stub step else
-            null, outside: v.outside, failures: v.failures, ok}. Then a non-empty commit: gitOk(scratch, ["add", "-A", "-f",
+            null, outside, failures: v.failures, probeBreaks, ok} — probeBreaks after failures, an empty list written,
+            never omitted. Then a non-empty commit: gitOk(scratch, ["add", "-A", "-f",
             "--", ...commit]); gitOk(scratch, ["-c", "user.name=morph gate", "-c", "user.email=gate@morph.invalid", "commit",
             "-q", "--allow-empty", "-m", "gate: <card>"]). After the last step, deps.after?(scratch, rows) is awaited (P22b:
             the mutants run there); base is removed in a finally; root's HEAD, refs, index and files are never touched.
@@ -5182,13 +5223,17 @@ System:
             - given: 'a tmpRepo r, one commit "base" of d.json, src/a.txt "old a\n", st/ and rf/ (src/a.txt, src/b.txt, tests/c.txt: "s\n" / "A1\n", "B2\n", "C3\n"); cards a → src/a.txt "echo ''== probe''; grep -q A1 src/a.txt || { echo ''FAIL probe/a.probe.ts > A example 1''; exit 1; }; echo ''== frozen''", b → src/b.txt "echo ''== tsc''; grep -q B2 src/b.txt || { echo ''src/zz.ts(1,1): error TS2: zz''; exit 2; }\necho ''== probe''", c → tests/c.txt dependsOn [a, b] "echo ''== guard tests/c.txt''; grep -q C3 tests/c.txt || exit 1\necho ''== own git''; [ \"$(git log -3 --format=%s | tr ''\\n'' ,)\" = ''gate: b,gate: a,base,'' ]"; steps of Gate Plan(cards, [[a, b], [c]], the three, the three); env {PATH, HOME}; now +1000 per call'
               ref: "tests/fixtures/gate/playGate.json (name → the rows)"
               when: playGate
-              then: 'playGate.json "shell": 8 rows, seconds 1 each; stub a ok (stage "probe", failures ["FAIL probe/a.probe.ts > A example 1"]); stub b NOT ok (exit 2, stage "tsc", expected "probe", outside ["src/zz.ts(1,1): error TS2: zz"]); refs and retries green; stub c ok at "guard"; ref c green (the scratch holds the commits "gate: a", "gate: b" over "base"); r''s HEAD, refs, `git status --porcelain` "" and `git worktree list` (one line) unchanged'
+              then: 'playGate.json "shell": 8 rows, seconds 1 each, every row probeBreaks []; stub a ok (stage "probe", failures ["FAIL probe/a.probe.ts > A example 1"]); stub b NOT ok (exit 2, stage "tsc", expected "probe", outside ["src/zz.ts(1,1): error TS2: zz"], probeBreaks []); refs and retries green; stub c ok at "guard"; ref c green (the scratch holds the commits "gate: a", "gate: b" over "base"); r''s HEAD, refs, `git status --porcelain` "" and `git worktree list` (one line) unchanged'
             - given: 'a tmpRepo q: .gitignore "node_modules/\n", node_modules/q/index.js (ignored), d.json, st/src/n.txt "s\n", rf/src/n.txt "N1\n" committed; card n → src/n.txt "echo ''== probe''; test -L node_modules && test -f node_modules/q/index.js && grep -q N1 src/n.txt && [ -z \"$(git ls-files --others --exclude-standard | grep -vx src/n.txt)\" ]"; now +2500 per call; before records its argument'
               when: playGate
               then: 'playGate.json "node_modules": stub ok at "probe", ref green, seconds 2.5; before called once, with a directory named "w" under os.tmpdir() holding d.json and the node_modules link; that directory gone when the promise resolves; q unchanged'
             - given: 'a tmpRepo, one commit of st/ and rf/ (z.txt, s.txt); cards z → z.txt with acceptance null, s → s.txt "echo ''== probe''; echo started; sleep 5; echo late"; steps: a stub step of a card "nope" (no such card), then Gate Plan(cards, [[z], [s]], …); deps.timeoutMs 700; now +100'
               when: playGate
               then: 'playGate.json "timeout": "nope" skipped; z''s stub runs "" (exit 0, stage null, expected "guard", NOT ok), its ref ok; s''s stub exit null, timedOut true, stage "probe", ok (red at its probe), its ref exit null, timedOut, NOT ok; seconds 0.1 each — the 700 ms reached Run Acceptance'
+            - given: 'a tmpRepo, one commit "base" of d.json = [] and st/src/p.txt "s\n" and rf/src/p.txt "P1\n"; card p → src/p.txt, acceptance "echo ''== probe''\necho \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name ''adaH''.\"\nexit 1"; steps Gate Plan(cards, [[p]], the stubs, the refs); env {PATH, HOME}; now +1000 per call'
+              ref: "tests/fixtures/gate/playGate.json (name → the rows)"
+              when: playGate
+              then: 'playGate.json "probe": 2 rows, seconds 1 each; stub p NOT ok (exit 1, stage "probe", expected "probe", outside [], failures [], probeBreaks ["probe/p/p.probe.ts(2,10): error TS2304: Cannot find name ''adaH''."]); ref p green (outside [], probeBreaks []) — a probe build error is a named stop, never an outside line (issue #50, F1)'
         - name: Gate Command
           description: "`morph gate --deck <deck> --stubs <dir> --refs <dir>`: the gate played, one Gate Document."
           behavior: >
@@ -5203,7 +5248,9 @@ System:
             the copy removed and the moved directory put back}); else rows [] and builds null. errors, in order: the missing;
             per build check "build <card>: no stub for <m>" per missing, "build <card>: <line>" per break; per row (prefix
             "<phase> <card>: "): a stub row with exit 0 "green on its stubs", else with stage ≠ expected "red at <stage or "no
-            stage">, expected <expected>"; then per outside line "names a file outside its targets: <line>"; a ref or retry
+            stage">, expected <expected>"; then per outside line "names a file outside its targets: <line>", then per
+            probeBreaks line "probe does not build: <line>" (issue #50, F1: the gate fails a probe it cannot build by
+            name, code 2, never as a silent row); a ref or retry
             row with exit ≠ 0 "timed out" | "red (exit <exit>)" + " at <stage or "no stage">" + (": " + its first outside
             line, when any); any row with seconds >= 250 "<seconds> s, over the 250 s limit". → {code: 2 when errors, else
             0, document {deck, transaction, cards: the count, generations, missing, builds, rows, maxSeconds: the largest
@@ -5237,6 +5284,10 @@ System:
             - given: 'the same repo with f/src/a.ts = "export const g = (a: number, b: number): boolean => a !== b && a > 0;\n" (red references), mutants 30; then a repo whose acceptance is "echo ''== probe''\ngrep -q ''a === b'' src/a.ts || exit 1\necho ''== full''; touch full.txt\necho ''== own''; test -f full.txt && rm full.txt" and f/src/a.ts = H'
               when: gateCommand
               then: '"ref red": code 2, errors ["ref a: red (exit 1) at probe"], mutants planned 3, tried 0, seconds 0, untried [{a, src/a.ts, 1, 55, "!== → ==="}, {…, 61, "&& → ||"}, {…, 66, "> → >="}]; "baseline": code 2, rows ok, errors ["mutants a: red (exit 1) on its references without a mutant"] (the killer drops the full line the own stage needs), baselines [{a, 1, false}], tried 0, untried the three spots'
+            - given: 'issue #50, F1. a tmpRepo, one commit "base" of d.json = card p → src/p.txt, acceptance "echo ''== probe''\necho \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name ''adaH''.\"\nexit 1"; s/src/p.txt "s\n", f/src/p.txt "P1\n"; args {deck "d.json", stubs "s", refs "f"}; deps() (now +1000)'
+              ref: "tests/fixtures/gate/gateCommand.json (name → the result)"
+              when: gateCommand
+              then: 'gateCommand.json "probe": code 2, transaction false, cards 1, generations [[p]], missing [], builds [p''s note "no language profile claims src/p.txt: not built"], rows the two of Play Gate example 4 (probeBreaks and all), maxSeconds 1, errors ["stub p: probe does not build: probe/p/p.probe.ts(2,10): error TS2304: Cannot find name ''adaH''."] — the ref row green, no error of it'
       dataObjects:
         - name: Stub Verdict
           description: What Stub Verdict reads off one log.
@@ -5246,7 +5297,7 @@ System:
           schema: "{ transaction: boolean, steps: { phase: 'stub' | 'ref' | 'retry', generation: number, card: string, put: Record<string, 'stub' | 'ref'>, commit: string[] }[], missing: string[] }"
         - name: Play Row
           description: One acceptance run of a gate play.
-          schema: "{ phase: 'stub' | 'ref' | 'retry', generation: number, card: string, exit: number | null, timedOut: boolean, seconds: number, stage: string | null, expected: string | null, outside: string[], failures: string[], ok: boolean }"
+          schema: "{ phase: 'stub' | 'ref' | 'retry', generation: number, card: string, exit: number | null, timedOut: boolean, seconds: number, stage: string | null, expected: string | null, outside: string[], failures: string[], probeBreaks: string[], ok: boolean }"
         - name: Gate Document
           description: stdout of morph gate.
           schema: "{ deck: string, transaction: boolean, cards: number, generations: string[][], missing: string[], builds: Build Check[] | null, rows: Play Row[], maxSeconds: number, errors: string[], mutants?: Gate Mutants | null }"
