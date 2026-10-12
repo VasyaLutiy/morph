@@ -1,0 +1,285 @@
+import type { ContourMap, ContourRecord } from "../contour/types.js";
+import type { LanguageProfile } from "../language/types.js";
+import { resolveProfile } from "../language/profiles.js";
+import { cutTargets, slugName } from "../language/naming.js";
+import { codeTargets, hasExtension, isTest, normalizePath } from "../language/paths.js";
+
+export interface NotBuilt {
+  component: string;
+  function: string;
+  reason: string;
+}
+
+export interface ComponentWeight {
+  component: string;
+  bytes: number;
+}
+
+export interface RecordInputs {
+  record: ContourRecord;
+  map: ContourMap;
+  recordText: string;
+  loaderWarnings: string[];
+  files: readonly string[];
+  profile: LanguageProfile;
+  owned: readonly string[];
+}
+
+export interface RecordGaps {
+  components: number;
+  functions: number;
+  notBuilt: NotBuilt[];
+  notRecorded: string[];
+  weights: ComponentWeight[];
+  warnings: string[];
+}
+
+function leadingSpaces(line: string): number {
+  let n = 0;
+  while (n < line.length && line.charAt(n) === " ") {
+    n++;
+  }
+  return n;
+}
+
+function stripQuotes(value: string): string {
+  if (value.length >= 2) {
+    const first = value.charAt(0);
+    if ((first === "\"" || first === "'") && value.charAt(value.length - 1) === first) {
+      return value.slice(1, value.length - 1);
+    }
+  }
+  return value;
+}
+
+function compareStrings(a: string, b: string): number {
+  if (a < b) return -1;
+  if (a > b) return 1;
+  return 0;
+}
+
+export function codeFiles(profile: LanguageProfile, files: readonly string[]): string[] {
+  const result: string[] = [];
+  for (const file of files) {
+    if (!hasExtension(profile, file)) continue;
+    if (isTest(profile, file)) continue;
+    const parts = normalizePath(file).split("/");
+    if (parts.length === 0) continue;
+    if (parts[0] === "decks") continue;
+    let ok = true;
+    for (let i = 0; i < parts.length; i++) {
+      const segment = parts[i];
+      if (segment.startsWith(".") || segment.startsWith("_")) {
+        ok = false;
+        break;
+      }
+      if (
+        i < parts.length - 1 &&
+        (segment === "vendor" || segment === "testdata" || segment === "node_modules")
+      ) {
+        ok = false;
+        break;
+      }
+    }
+    if (!ok) continue;
+    result.push(file);
+  }
+  result.sort((a, b) => compareStrings(a, b));
+  return result;
+}
+
+const OPEN_GROUP = /^( *)- name:(.*)$/;
+
+export function componentWeights(text: string): ComponentWeight[] {
+  const raw = text.split("\n");
+  const lines = raw.length > 0 && raw[raw.length - 1] === "" ? raw.slice(0, raw.length - 1) : raw;
+
+  let groupsAt = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim() === "groups:") {
+      groupsAt = i;
+      break;
+    }
+  }
+  if (groupsAt === -1) return [];
+
+  interface Group {
+    name: string;
+    lines: string[];
+  }
+  const groups: Group[] = [];
+  let groupIndent = -1;
+  let current: Group | null = null;
+
+  for (let i = groupsAt + 1; i < lines.length; i++) {
+    const line = lines[i];
+    const match = OPEN_GROUP.exec(line);
+    const indent = match !== null ? match[1].length : leadingSpaces(line);
+    if (match !== null) {
+      if (groupIndent === -1) {
+        groupIndent = indent;
+      }
+      if (indent === groupIndent) {
+        const name = stripQuotes(match[2].trim());
+        current = { name, lines: [line] };
+        groups.push(current);
+        continue;
+      }
+    }
+    if (current === null) continue;
+    const trimmed = line.trim();
+    if (trimmed !== "" && !trimmed.startsWith("#") && indent < groupIndent + 2) {
+      break;
+    }
+    current.lines.push(line);
+  }
+
+  const result: ComponentWeight[] = groups.map((group) => {
+    let bytes = 0;
+    for (const line of group.lines) {
+      bytes += Buffer.byteLength(line, "utf8") + 1;
+    }
+    return { component: group.name, bytes };
+  });
+  result.sort((a, b) => b.bytes - a.bytes || compareStrings(a.component, b.component));
+  return result;
+}
+
+export function recordGaps(input: RecordInputs): RecordGaps {
+  const { record, map, recordText, loaderWarnings, files, profile, owned } = input;
+
+  const listed = new Set<string>(files);
+
+  const dataEventNames = new Set<string>();
+  for (const component of record.system.groups) {
+    for (const dataObject of component.dataObjects) {
+      dataEventNames.add(dataObject.name);
+    }
+    for (const event of component.events) {
+      dataEventNames.add(event.name);
+    }
+  }
+
+  const groupOfFunction = new Map<string, string>();
+  for (const group of map.groups) {
+    for (const functionName of group.functions) {
+      if (!groupOfFunction.has(functionName)) {
+        groupOfFunction.set(functionName, group.name);
+      }
+    }
+  }
+
+  const cardById = new Map<string, (typeof map.cards)[number]>();
+  for (const card of map.cards) {
+    cardById.set(card.id, card);
+  }
+
+  const warnings: string[] = [];
+  const seenWarnings = new Set<string>();
+  const addWarning = (text: string): void => {
+    if (!seenWarnings.has(text)) {
+      seenWarnings.add(text);
+      warnings.push(text);
+    }
+  };
+
+  for (const warning of loaderWarnings) {
+    addWarning(warning);
+  }
+
+  for (const component of record.system.groups) {
+    if (component.language === null && map.language === null) {
+      addWarning(
+        "no language on Component " +
+          component.name +
+          " and none in the map: typescript assumed",
+      );
+    }
+  }
+
+  for (const component of record.system.groups) {
+    for (const fn of component.functions) {
+      for (const step of fn.steps) {
+        if (step.verb === "reads" || step.verb === "modifies" || step.verb === "produces") {
+          if (!dataEventNames.has(step.target)) {
+            addWarning(
+              component.name +
+                "/" +
+                fn.name +
+                ": step " +
+                step.verb +
+                " '" +
+                step.target +
+                "' names no Data Object or Event of the record",
+            );
+          }
+        }
+      }
+    }
+  }
+
+  for (const component of record.system.groups) {
+    for (const fn of component.functions) {
+      if (fn.examples.length === 0) {
+        addWarning(component.name + "/" + fn.name + ": no examples, no judge");
+      }
+    }
+  }
+
+  const named = new Set<string>();
+  const notBuilt: NotBuilt[] = [];
+  const ownedSet = new Set<string>(owned);
+
+  let components = 0;
+  let functions = 0;
+
+  for (const component of record.system.groups) {
+    components++;
+    const resolved = resolveProfile(component.language, map.language);
+    for (const fn of component.functions) {
+      functions++;
+      if (!resolved.ok) continue;
+      const activeProfile = resolved.profile;
+      const unit = groupOfFunction.get(fn.name) ?? fn.name;
+      let targets: readonly string[];
+      const card = cardById.get(slugName(unit));
+      if (card !== undefined && card.targets !== null) {
+        targets = card.targets;
+      } else {
+        const cut = cutTargets(activeProfile, component.name, unit);
+        if (!cut.ok) continue;
+        targets = [cut.targets.code, cut.targets.test];
+      }
+      for (const target of targets) {
+        named.add(target);
+      }
+      const codes = codeTargets(activeProfile, targets);
+      const missing = codes.filter((code) => !listed.has(code));
+      if (missing.length > 0) {
+        notBuilt.push({
+          component: component.name,
+          function: fn.name,
+          reason: "missing " + missing.join(", "),
+        });
+      } else if (codes.length > 0 && !codes.some((code) => ownedSet.has(code))) {
+        notBuilt.push({
+          component: component.name,
+          function: fn.name,
+          reason: "no Morph-Card commit",
+        });
+      }
+    }
+  }
+
+  const notRecorded = codeFiles(profile, files).filter((file) => !named.has(file));
+  const weights = componentWeights(recordText);
+
+  return {
+    components,
+    functions,
+    notBuilt,
+    notRecorded,
+    weights,
+    warnings,
+  };
+}
