@@ -63,3 +63,7 @@ phase · date · builder · models · written/planned · runs · $ · notes
 
 - #6 P15 golang: Go language profile written by Morph itself + live validation on a small Go project [P15-golang]
 - #1 primer: на TypeScript 0 тестов — счёт только по def test_* (Python) [P12-primer]
+
+## Record vs code
+
+- record: not read: no contour.yaml

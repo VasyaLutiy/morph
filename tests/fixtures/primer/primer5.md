@@ -33,3 +33,7 @@ missing: docs/MEASURE.md, docs/PLAN.md, docs/AUTONOMY.md, docs/DECISIONS.md
 ## Open issues (.morph/issues.json)
 
 - not read: no .morph/issues.json (the primer makes no network call; `gh issue list --state open --json number,title,labels > .morph/issues.json` writes it)
+
+## Record vs code
+
+- record: not read: no contour.yaml

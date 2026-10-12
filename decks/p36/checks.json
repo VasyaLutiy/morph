@@ -1,0 +1,29 @@
+{
+  "phase": "p36",
+  "ownGit": true,
+  "frozen": ["contour.yaml", "morph-map.json", "docs", "decks", "tests/fixtures", "templates", "documentation"],
+  "fullExclude": ["tests/primerRecord/recordGaps.examples.test.ts", "tests/primerRecord/importGaps.examples.test.ts",
+    "tests/primerRecord/renderRecord.examples.test.ts", "tests/primerRecord/recordSection.examples.test.ts"],
+  "cards": [
+    { "id": "record-gaps" },
+    { "id": "import-gaps" },
+    { "id": "render-record" },
+    { "id": "record-section" },
+    { "id": "primer-command" },
+    { "id": "record-gaps-judge", "files": [
+      { "file": "tests/primerRecord/recordGaps.examples.test.ts", "min": 3, "max": 9, "new": true,
+        "lits": ["Record Gaps example 1", "Record Gaps example 2", "Record Gaps example 3", "primerRecord/examples.json",
+          "primerRecord/repo/contour.yaml", "primerRecord/repo/morph-map.json"] }] },
+    { "id": "import-gaps-judge", "files": [
+      { "file": "tests/primerRecord/importGaps.examples.test.ts", "min": 3, "max": 9, "new": true,
+        "lits": ["Import Gaps example 1", "Import Gaps example 2", "Import Gaps example 3", "primerRecord/examples.json"] }] },
+    { "id": "render-record-judge", "files": [
+      { "file": "tests/primerRecord/renderRecord.examples.test.ts", "min": 4, "max": 10, "new": true,
+        "lits": ["Render Record example 1", "Render Record example 4", "primerRecord/examples.json",
+          "primerRecord/section1.md", "- record: not read: no contour.yaml"] }] },
+    { "id": "record-section-judge", "files": [
+      { "file": "tests/primerRecord/recordSection.examples.test.ts", "min": 4, "max": 10, "new": true,
+        "lits": ["Record Section example 1", "Record Section example 4", "primerRecord/examples.json",
+          "primerRecord/repo", "primerRecord/section1.md", "// the old guard", "decks/tools/guard.mjs"] }] }
+  ]
+}

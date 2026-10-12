@@ -1,0 +1,497 @@
+{
+  "Record Gaps 1": {
+    "given": {
+      "files": [
+        "README.md",
+        "contour.yaml",
+        "decks/p1/parts/add-cents.probe.ts",
+        "decks/tools/guard.mjs",
+        "morph-map.json",
+        "src/index.ts",
+        "src/report/renderReport.ts",
+        "src/units/addCents.ts",
+        "src/units/money.ts",
+        "src/units/parse.ts"
+      ],
+      "owned": [
+        "src/report/renderReport.ts",
+        "src/units/addCents.ts",
+        "tests/units/addCents.test.ts"
+      ]
+    },
+    "then": {
+      "components": 3,
+      "functions": 4,
+      "notBuilt": [
+        {
+          "component": "units",
+          "function": "Format Total",
+          "reason": "missing src/units/formatTotal.ts"
+        },
+        {
+          "component": "units",
+          "function": "Parse Line",
+          "reason": "no Morph-Card commit"
+        }
+      ],
+      "notRecorded": [
+        "src/index.ts",
+        "src/units/money.ts"
+      ],
+      "weights": [
+        {
+          "component": "heavy",
+          "bytes": 31358
+        },
+        {
+          "component": "units",
+          "bytes": 1007
+        },
+        {
+          "component": "report",
+          "bytes": 497
+        }
+      ],
+      "warnings": [
+        "System.groups[0]: unknown key 'owner' (ignored)",
+        "no language on Component report and none in the map: typescript assumed",
+        "units/Format Total: step produces 'Total Text' names no Data Object or Event of the record",
+        "units/Parse Line: step reads 'Line' names no Data Object or Event of the record",
+        "units/Parse Line: no examples, no judge"
+      ]
+    }
+  },
+  "Record Gaps 2": {
+    "given": {
+      "files": [
+        "src/b.ts",
+        "src/a.ts",
+        "src/a.test.ts",
+        "tests/helpers.ts",
+        "decks/p1/parts/x.probe.ts",
+        "src/_gen/y.ts",
+        ".github/z.ts",
+        "src/.cache/w.ts",
+        "vendor/v.ts",
+        "node_modules/m/i.ts",
+        "src/vendor.ts",
+        "README.md",
+        "src/c.tsx"
+      ]
+    },
+    "then": [
+      "src/a.ts",
+      "src/b.ts",
+      "src/c.tsx",
+      "src/vendor.ts"
+    ]
+  },
+  "Record Gaps 3": {
+    "given": {
+      "texts": [
+        "version: 1\nSystem:\n  name: s\n  groups:\n    - name: a\n      description: x\n\n    # c\n    - name: \"b\"\n      functions: []\n    - name: 'é'\n      functions: []\n  dependencies: []\nActor: []\n",
+        "version: 1\nSystem:\n  name: s\n"
+      ]
+    },
+    "then": [
+      [
+        {
+          "component": "a",
+          "bytes": 44
+        },
+        {
+          "component": "é",
+          "bytes": 37
+        },
+        {
+          "component": "b",
+          "bytes": 36
+        }
+      ],
+      []
+    ]
+  },
+  "Import Gaps 1": {
+    "given": {
+      "language": "typescript",
+      "module": "",
+      "files": [
+        {
+          "path": "src/a/x.ts",
+          "text": "import { y } from \"../b/y.js\";\nimport type { Z } from \"../c/z.js\";\nexport * from \"./w.js\";\nimport \"../d/side.js\";\nimport { q } from \"node:fs\";\n"
+        },
+        {
+          "path": "src/a/w.ts",
+          "text": "import {\n  z,\n} from \"../c/z.js\";\nexport const w = z;\n"
+        },
+        {
+          "path": "src/b/y.ts",
+          "text": "import { q } from '../a/q.js';\nexport const y = q;\n"
+        },
+        {
+          "path": "src/e/k.ts",
+          "text": "import { x } from \"../a/x.js\";\n"
+        }
+      ],
+      "edges": {
+        "src/a": [
+          "src/b"
+        ],
+        "src/b": [],
+        "src/c": [],
+        "src/d": []
+      }
+    },
+    "then": [
+      {
+        "from": "src/a",
+        "to": "src/c",
+        "file": "src/a/x.ts"
+      },
+      {
+        "from": "src/a",
+        "to": "src/d",
+        "file": "src/a/x.ts"
+      },
+      {
+        "from": "src/b",
+        "to": "src/a",
+        "file": "src/b/y.ts"
+      }
+    ]
+  },
+  "Import Gaps 2": {
+    "given": {
+      "language": "go",
+      "module": "example.com/m",
+      "files": [
+        {
+          "path": "internal/a/a.go",
+          "text": "package a\n\nimport (\n\t\"fmt\"\n\tb \"example.com/m/internal/b\"\n\t\"example.com/m/internal/c\"\n)\n\nvar _ = fmt.Sprint(b.B, c.C)\n"
+        },
+        {
+          "path": "internal/b/b.go",
+          "text": "package b\n\nimport \"example.com/m/internal/a\"\n\nvar B = a.A\n"
+        },
+        {
+          "path": "internal/b/b2.go",
+          "text": "package b\n\nimport x \"example.com/m/internal/a\"\n\nvar B2 = x.A\n"
+        },
+        {
+          "path": "cmd/main.go",
+          "text": "package main\n\nimport \"example.com/m/internal/b\"\n"
+        }
+      ],
+      "edges": {
+        "internal/a": [
+          "internal/c"
+        ],
+        "internal/b": [],
+        "internal/c": []
+      }
+    },
+    "then": [
+      {
+        "from": "internal/a",
+        "to": "internal/b",
+        "file": "internal/a/a.go"
+      },
+      {
+        "from": "internal/b",
+        "to": "internal/a",
+        "file": "internal/b/b.go"
+      }
+    ]
+  },
+  "Import Gaps 3": {
+    "given": [
+      {
+        "language": "python",
+        "module": "",
+        "files": [
+          {
+            "path": "src/a/x.py",
+            "text": "from ..b import y\n"
+          }
+        ],
+        "edges": {
+          "src/a": [],
+          "src/b": []
+        }
+      },
+      {
+        "language": "go",
+        "module": "",
+        "files": [
+          {
+            "path": "internal/a/a.go",
+            "text": "package a\n\nimport (\n\t\"fmt\"\n\tb \"example.com/m/internal/b\"\n\t\"example.com/m/internal/c\"\n)\n\nvar _ = fmt.Sprint(b.B, c.C)\n"
+          },
+          {
+            "path": "internal/b/b.go",
+            "text": "package b\n\nimport \"example.com/m/internal/a\"\n\nvar B = a.A\n"
+          },
+          {
+            "path": "internal/b/b2.go",
+            "text": "package b\n\nimport x \"example.com/m/internal/a\"\n\nvar B2 = x.A\n"
+          },
+          {
+            "path": "cmd/main.go",
+            "text": "package main\n\nimport \"example.com/m/internal/b\"\n"
+          }
+        ],
+        "edges": {
+          "internal/a": [
+            "internal/c"
+          ],
+          "internal/b": [],
+          "internal/c": []
+        }
+      }
+    ],
+    "then": [
+      [],
+      []
+    ]
+  },
+  "Render Record 1": {
+    "given": {
+      "state": "read",
+      "gaps": {
+        "components": 3,
+        "functions": 4,
+        "notBuilt": [
+          {
+            "component": "units",
+            "function": "Format Total",
+            "reason": "missing src/units/formatTotal.ts"
+          },
+          {
+            "component": "units",
+            "function": "Parse Line",
+            "reason": "no Morph-Card commit"
+          }
+        ],
+        "notRecorded": [
+          "src/index.ts",
+          "src/units/money.ts"
+        ],
+        "weights": [
+          {
+            "component": "heavy",
+            "bytes": 31358
+          },
+          {
+            "component": "units",
+            "bytes": 1007
+          },
+          {
+            "component": "report",
+            "bytes": 497
+          }
+        ],
+        "warnings": [
+          "System.groups[0]: unknown key 'owner' (ignored)",
+          "no language on Component report and none in the map: typescript assumed",
+          "units/Format Total: step produces 'Total Text' names no Data Object or Event of the record",
+          "units/Parse Line: step reads 'Line' names no Data Object or Event of the record",
+          "units/Parse Line: no examples, no judge"
+        ]
+      },
+      "layers": {
+        "checked": true,
+        "gaps": [
+          {
+            "from": "src/units",
+            "to": "src/report",
+            "file": "src/units/money.ts"
+          }
+        ]
+      }
+    },
+    "then": "section1.md"
+  },
+  "Render Record 2": {
+    "given": {
+      "state": "read",
+      "gaps": {
+        "components": 11,
+        "functions": 0,
+        "notBuilt": [],
+        "notRecorded": [
+          "src/f01.ts",
+          "src/f02.ts",
+          "src/f03.ts",
+          "src/f04.ts",
+          "src/f05.ts",
+          "src/f06.ts",
+          "src/f07.ts",
+          "src/f08.ts",
+          "src/f09.ts",
+          "src/f10.ts",
+          "src/f11.ts",
+          "src/f12.ts"
+        ],
+        "weights": [
+          {
+            "component": "c01",
+            "bytes": 30002
+          },
+          {
+            "component": "c02",
+            "bytes": 30001
+          },
+          {
+            "component": "c03",
+            "bytes": 30000
+          },
+          {
+            "component": "c04",
+            "bytes": 29999
+          },
+          {
+            "component": "c05",
+            "bytes": 29998
+          },
+          {
+            "component": "c06",
+            "bytes": 29997
+          },
+          {
+            "component": "c07",
+            "bytes": 29996
+          },
+          {
+            "component": "c08",
+            "bytes": 29995
+          },
+          {
+            "component": "c09",
+            "bytes": 29994
+          },
+          {
+            "component": "c10",
+            "bytes": 29993
+          },
+          {
+            "component": "c11",
+            "bytes": 29992
+          }
+        ],
+        "warnings": []
+      },
+      "layers": {
+        "checked": false,
+        "reason": "decks/tools/guard.mjs speaks contract 1"
+      }
+    },
+    "then": "\n## Record vs code\n\n- record: read: 11 Components, 0 Functions (contour.yaml, morph-map.json)\n- recorded, not built: none\n- built, not recorded (12):\n  - src/f01.ts\n  - src/f02.ts\n  - src/f03.ts\n  - src/f04.ts\n  - src/f05.ts\n  - src/f06.ts\n  - src/f07.ts\n  - src/f08.ts\n  - src/f09.ts\n  - src/f10.ts\n  - … +2 more\n- Component weight, heaviest first (2 of 11 over 30000 bytes):\n  - c01: 30002 bytes — over the rule\n  - c02: 30001 bytes — over the rule\n  - c03: 30000 bytes\n  - c04: 29999 bytes\n  - c05: 29998 bytes\n  - c06: 29997 bytes\n  - c07: 29996 bytes\n  - c08: 29995 bytes\n  - c09: 29994 bytes\n  - c10: 29993 bytes\n  - … +1 more\n- record warnings: none\n- layer gaps: not checked: decks/tools/guard.mjs speaks contract 1\n"
+  },
+  "Render Record 3": {
+    "given": {
+      "state": "not read",
+      "reason": "no contour.yaml"
+    },
+    "then": "\n## Record vs code\n\n- record: not read: no contour.yaml\n"
+  },
+  "Render Record 4": {
+    "given": {
+      "state": "read",
+      "gaps": {
+        "components": 1,
+        "functions": 1,
+        "notBuilt": [
+          {
+            "component": "k",
+            "function": "F",
+            "reason": "no Morph-Card commit"
+          }
+        ],
+        "notRecorded": [],
+        "weights": [],
+        "warnings": [
+          "w"
+        ]
+      },
+      "layers": {
+        "checked": true,
+        "gaps": []
+      }
+    },
+    "then": "\n## Record vs code\n\n- record: read: 1 Component, 1 Function (contour.yaml, morph-map.json)\n- recorded, not built (1):\n  - k/F: no Morph-Card commit\n- built, not recorded: none\n- Component weight: none\n- record warnings (1):\n  - w\n- layer gaps: none\n"
+  },
+  "Record Section 1": {
+    "given": {
+      "root": "tests/fixtures/primerRecord/repo",
+      "files": [
+        "README.md",
+        "contour.yaml",
+        "decks/p1/parts/add-cents.probe.ts",
+        "decks/tools/guard.mjs",
+        "morph-map.json",
+        "src/index.ts",
+        "src/report/renderReport.ts",
+        "src/units/addCents.ts",
+        "src/units/money.ts",
+        "src/units/parse.ts"
+      ],
+      "owned": [
+        "src/report/renderReport.ts",
+        "src/units/addCents.ts",
+        "tests/units/addCents.test.ts"
+      ]
+    },
+    "then": "section1.md"
+  },
+  "Record Section 2": {
+    "given": [
+      "a tmp root with no file",
+      "only contour.yaml = repo/contour.yaml",
+      "contour.yaml \"- a\\n\" and morph-map.json \"{}\"",
+      "contour.yaml = repo/contour.yaml and morph-map.json \"{\\\"cards\\\": 5}\""
+    ],
+    "then": [
+      "\n## Record vs code\n\n- record: not read: no contour.yaml\n",
+      "\n## Record vs code\n\n- record: not read: no morph-map.json\n",
+      "\n## Record vs code\n\n- record: not read: contour.yaml is not a mapping at the top level\n",
+      "\n## Record vs code\n\n- record: not read: morph-map.json is not a valid map (1 problem)\n"
+    ]
+  },
+  "Record Section 3": {
+    "given": [
+      "a copy of repo/ with decks/tools/guard.mjs \"// the old guard\\n\"",
+      "the same copy without decks/tools/guard.mjs",
+      "repo/ itself with profile PYTHON"
+    ],
+    "then": [
+      "\n## Record vs code\n\n- record: read: 3 Components, 4 Functions (contour.yaml, morph-map.json)\n- recorded, not built (2):\n  - units/Format Total: missing src/units/formatTotal.ts\n  - units/Parse Line: no Morph-Card commit\n- built, not recorded (2):\n  - src/index.ts\n  - src/units/money.ts\n- Component weight, heaviest first (1 of 3 over 30000 bytes):\n  - heavy: 31358 bytes — over the rule\n  - units: 1007 bytes\n  - report: 497 bytes\n- record warnings (5):\n  - System.groups[0]: unknown key 'owner' (ignored)\n  - no language on Component report and none in the map: typescript assumed\n  - units/Format Total: step produces 'Total Text' names no Data Object or Event of the record\n  - units/Parse Line: step reads 'Line' names no Data Object or Event of the record\n  - units/Parse Line: no examples, no judge\n- layer gaps: not checked: decks/tools/guard.mjs speaks contract 0\n",
+      "\n## Record vs code\n\n- record: read: 3 Components, 4 Functions (contour.yaml, morph-map.json)\n- recorded, not built (2):\n  - units/Format Total: missing src/units/formatTotal.ts\n  - units/Parse Line: no Morph-Card commit\n- built, not recorded (2):\n  - src/index.ts\n  - src/units/money.ts\n- Component weight, heaviest first (1 of 3 over 30000 bytes):\n  - heavy: 31358 bytes — over the rule\n  - units: 1007 bytes\n  - report: 497 bytes\n- record warnings (5):\n  - System.groups[0]: unknown key 'owner' (ignored)\n  - no language on Component report and none in the map: typescript assumed\n  - units/Format Total: step produces 'Total Text' names no Data Object or Event of the record\n  - units/Parse Line: step reads 'Line' names no Data Object or Event of the record\n  - units/Parse Line: no examples, no judge\n- layer gaps: not checked: decks/tools/guard.mjs speaks contract 0\n",
+      "\n## Record vs code\n\n- record: read: 3 Components, 4 Functions (contour.yaml, morph-map.json)\n- recorded, not built (2):\n  - units/Format Total: missing src/units/formatTotal.ts\n  - units/Parse Line: no Morph-Card commit\n- built, not recorded: none\n- Component weight, heaviest first (1 of 3 over 30000 bytes):\n  - heavy: 31358 bytes — over the rule\n  - units: 1007 bytes\n  - report: 497 bytes\n- record warnings (5):\n  - System.groups[0]: unknown key 'owner' (ignored)\n  - no language on Component report and none in the map: typescript assumed\n  - units/Format Total: step produces 'Total Text' names no Data Object or Event of the record\n  - units/Parse Line: step reads 'Line' names no Data Object or Event of the record\n  - units/Parse Line: no examples, no judge\n- layer gaps: not checked: no import rule for python\n"
+    ]
+  },
+  "Record Section 4": {
+    "given": {
+      "files": {
+        "go.mod": "module example.com/m\n\ngo 1.25\n",
+        "decks/tools/guard.mjs": "// morph-guard-contract: 3\n",
+        "contour.yaml": "version: 1\nSystem:\n  name: m\n  description: A Go fixture.\n  groups:\n    - name: a\n      description: Package a.\n      functions:\n        - name: Get A\n          description: A.\n          behavior: GetA() → 1.\n          steps: []\n          examples:\n            - {given: nothing, when: GetA, then: '1'}\n    - name: b\n      description: Package b.\n      functions:\n        - name: Get B\n          description: B.\n          behavior: GetB() → GetA() + 1.\n          steps: []\n          examples:\n            - {given: nothing, when: GetB, then: '2'}\n",
+        "morph-map.json": "{\n  \"version\": 1,\n  \"language\": \"go\",\n  \"docs\": [],\n  \"groups\": {},\n  \"cards\": {}\n}\n",
+        "a/get_a.go": "package a\n\nfunc GetA() int { return 1 }\n",
+        "b/get_b.go": "package b\n\nimport \"example.com/m/a\"\n\nfunc GetB() int { return a.GetA() + 1 }\n"
+      },
+      "listed": [
+        "a/get_a.go",
+        "b/get_b.go",
+        "contour.yaml",
+        "decks/tools/guard.mjs",
+        "go.mod",
+        "morph-map.json"
+      ],
+      "owned": [
+        "a/get_a.go"
+      ],
+      "profile": "GO"
+    },
+    "then": "\n## Record vs code\n\n- record: read: 2 Components, 2 Functions (contour.yaml, morph-map.json)\n- recorded, not built (1):\n  - b/Get B: no Morph-Card commit\n- built, not recorded: none\n- Component weight, heaviest first (0 of 2 over 30000 bytes):\n  - b: 246 bytes\n  - a: 237 bytes\n- record warnings: none\n- layer gaps (1):\n  - b → a (b/get_b.go)\n"
+  }
+}

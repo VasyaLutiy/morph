@@ -2001,9 +2001,12 @@
         "documentation/CONVENTIONS.md",
         "src/language/types.ts"
       ],
-      "depends_on": [],
+      "depends_on": [
+        "record-section"
+      ],
       "variants": 2,
-      "max_tokens": 16000
+      "max_tokens": 16000,
+      "instruction": "Patch src/primer/primerCommand.ts in one place: add `import { recordSection } from \"../primerRecord/recordSection.js\";` and make markdown = renderPrimer(<the same digest>, PRIMER_CAP) + recordSection(root, files, profile, ownership.paths.map((p) => p.path)). Every other line of the file stays as it is."
     },
     "read-runs-judge": {
       "intent": "generate",
@@ -3520,6 +3523,137 @@
         "probe-skeleton"
       ],
       "max_tokens": 10000
+    },
+    "record-gaps": {
+      "intent": "generate",
+      "targets": [
+        "src/primerRecord/recordGaps.ts"
+      ],
+      "context_slice": [
+        "documentation/CONVENTIONS.md",
+        "src/contour/types.ts",
+        "src/language/types.ts",
+        "src/language/paths.ts",
+        "src/language/naming.ts",
+        "src/language/profiles.ts"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 12000,
+      "instruction": "Write src/primerRecord/recordGaps.ts, a new file. Imports: `import type { ContourMap, ContourRecord } from \"../contour/types.js\"`, `import type { LanguageProfile } from \"../language/types.js\"`, resolveProfile from \"../language/profiles.js\", cutTargets and slugName from \"../language/naming.js\", codeTargets, hasExtension, isTest and normalizePath from \"../language/paths.js\"; nothing else. Export exactly: the interfaces NotBuilt {component: string; function: string; reason: string}, ComponentWeight {component: string; bytes: number}, RecordInputs and RecordGaps with the fields of the Data Objects Record Inputs and Record Gaps (notBuilt: NotBuilt[], weights: ComponentWeight[]), and the functions recordGaps, codeFiles and componentWeights. A map card in ContourMap is an element of map.cards (an array of {id, targets, ...}); a map group is an element of map.groups ({name, functions}). UTF-8 byte length: Buffer.byteLength(line, \"utf8\")."
+    },
+    "import-gaps": {
+      "intent": "generate",
+      "targets": [
+        "src/primerRecord/importGaps.ts"
+      ],
+      "context_slice": [
+        "documentation/CONVENTIONS.md"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 8000,
+      "instruction": "Write src/primerRecord/importGaps.ts, a new file. Its only import: `import { posix } from \"node:path\"`. Export exactly the interfaces CodeText {path: string; text: string} and LayerGap {from: string; to: string; file: string} and the function importGaps(language: string, module: string, files: readonly CodeText[], edges: Record<string, string[]>): LayerGap[]. \"An own key of edges\" is Object.hasOwn(edges, key)."
+    },
+    "render-record": {
+      "intent": "generate",
+      "targets": [
+        "src/primerRecord/renderRecord.ts"
+      ],
+      "context_slice": [
+        "documentation/CONVENTIONS.md",
+        "tests/fixtures/primerRecord/section1.md"
+      ],
+      "depends_on": [],
+      "variants": 2,
+      "max_tokens": 8000,
+      "instruction": "Write src/primerRecord/renderRecord.ts, a new file. Its only imports: `import type { RecordGaps } from \"./recordGaps.js\"` and `import type { LayerGap } from \"./importGaps.js\"` (another card writes those files: RecordGaps is {components: number; functions: number; notBuilt: {component: string; function: string; reason: string}[]; notRecorded: string[]; weights: {component: string; bytes: number}[]; warnings: string[]}, LayerGap is {from: string; to: string; file: string}). Export exactly: `export type RecordSection = { state: \"not read\"; reason: string } | { state: \"read\"; gaps: RecordGaps; layers: { checked: false; reason: string } | { checked: true; gaps: LayerGap[] } }`, `export const RECORD_CAP = 10`, `export const WEIGHT_RULE = 30000` and renderRecord. tests/fixtures/primerRecord/section1.md in your context is the exact output for a section read with every list; it begins with an empty line."
+    },
+    "record-section": {
+      "intent": "generate",
+      "targets": [
+        "src/primerRecord/recordSection.ts"
+      ],
+      "context_slice": [
+        "documentation/CONVENTIONS.md",
+        "src/contour/load.ts",
+        "src/contour/types.ts",
+        "src/language/types.ts"
+      ],
+      "depends_on": [
+        "record-gaps",
+        "import-gaps",
+        "render-record"
+      ],
+      "variants": 2,
+      "max_tokens": 12000,
+      "instruction": "Write src/primerRecord/recordSection.ts, a new file. Imports: readFileSync and statSync from \"node:fs\"; join and posix from \"node:path\"; loadContour and loadMap from \"../contour/load.js\"; `layerEdges(record: ContourRecord, map: ContourMap): { ok: true; edges: Record<string, string[]> } | { ok: false; errors: string[] }` from \"../rules/layers.js\"; `guardContract(guard: string): number` from \"../rules/guardrails.js\"; `import type { LanguageProfile } from \"../language/types.js\"`; recordGaps and codeFiles from \"./recordGaps.js\"; importGaps and `type CodeText` from \"./importGaps.js\"; renderRecord and `type RecordSection` from \"./renderRecord.js\". Export exactly recordSection(root: string, files: readonly string[], profile: LanguageProfile, owned: readonly string[]): string. Read a text with statSync(p).isFile() then readFileSync(p, \"utf8\") inside try/catch (null on any error)."
+    },
+    "record-gaps-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/primerRecord/recordGaps.examples.test.ts"
+      ],
+      "context_slice": [
+        "documentation/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/primerRecord/recordGaps.ts",
+        "src/contour/load.ts"
+      ],
+      "depends_on": [
+        "record-gaps"
+      ],
+      "max_tokens": 16000,
+      "instruction": "Write ONLY tests/primerRecord/recordGaps.examples.test.ts: three tests named \"Record Gaps example 1: …\", \"Record Gaps example 2: …\", \"Record Gaps example 3: …\". Every expected value comes from tests/fixtures/primerRecord/examples.json, read with `const EX = fixtureJson(\"primerRecord/examples.json\") as Record<string, { given: unknown; then: unknown }>;` and narrowed with `as` to the types named here; never `any`. Imports: `import { expect, test } from \"vitest\";`, the helpers from \"../helpers.js\" (fixture, fixtureJson, fixturePath, tmpRoot), the module under test from \"../../src/primerRecord/<file>.js\". Also `import { loadContour, loadMap } from \"../../src/contour/load.js\"` and `import { TYPESCRIPT } from \"../../src/language/profiles.js\"`. Example 1: `const text = fixture(\"primerRecord/repo/contour.yaml\")`; `const r = loadContour(text, \"contour.yaml\")` and `const m = loadMap(fixture(\"primerRecord/repo/morph-map.json\"), \"morph-map.json\")` (throw when not ok); given is {files: string[]; owned: string[]}; expect(recordGaps({record: r.record, map: m.map, recordText: text, loaderWarnings: r.warnings ?? [], files, profile: TYPESCRIPT, owned})).toStrictEqual(then). Example 2: given {files: string[]}, expect(codeFiles(TYPESCRIPT, files)).toStrictEqual(then) (then is string[]). Example 3: given {texts: string[]} of two texts, then is ComponentWeight[][]: expect(componentWeights(texts[i])).toStrictEqual(then[i]) for i 0 and 1."
+    },
+    "import-gaps-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/primerRecord/importGaps.examples.test.ts"
+      ],
+      "context_slice": [
+        "documentation/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/primerRecord/importGaps.ts"
+      ],
+      "depends_on": [
+        "import-gaps"
+      ],
+      "max_tokens": 16000,
+      "instruction": "Write ONLY tests/primerRecord/importGaps.examples.test.ts: three tests named \"Import Gaps example 1: …\", \"Import Gaps example 2: …\", \"Import Gaps example 3: …\". Every expected value comes from tests/fixtures/primerRecord/examples.json, read with `const EX = fixtureJson(\"primerRecord/examples.json\") as Record<string, { given: unknown; then: unknown }>;` and narrowed with `as` to the types named here; never `any`. Imports: `import { expect, test } from \"vitest\";`, the helpers from \"../helpers.js\" (fixture, fixtureJson, fixturePath, tmpRoot), the module under test from \"../../src/primerRecord/<file>.js\". A given of examples 1 and 2 is {language: string; module: string; files: CodeText[]; edges: Record<string, string[]>}: expect(importGaps(g.language, g.module, g.files, g.edges)).toStrictEqual(then) (LayerGap[]). Example 3: given is an array of two such objects and then an array of two LayerGap[]: compare each in turn."
+    },
+    "render-record-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/primerRecord/renderRecord.examples.test.ts"
+      ],
+      "context_slice": [
+        "documentation/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/primerRecord/renderRecord.ts",
+        "tests/fixtures/primerRecord/section1.md"
+      ],
+      "depends_on": [
+        "render-record"
+      ],
+      "max_tokens": 16000,
+      "instruction": "Write ONLY tests/primerRecord/renderRecord.examples.test.ts: four tests named \"Render Record example 1: …\" … \"Render Record example 4: …\". Every expected value comes from tests/fixtures/primerRecord/examples.json, read with `const EX = fixtureJson(\"primerRecord/examples.json\") as Record<string, { given: unknown; then: unknown }>;` and narrowed with `as` to the types named here; never `any`. Imports: `import { expect, test } from \"vitest\";`, the helpers from \"../helpers.js\" (fixture, fixtureJson, fixturePath, tmpRoot), the module under test from \"../../src/primerRecord/<file>.js\". Each given is a RecordSection (`import type { RecordSection }` from the module): example 1 expects renderRecord(given) toBe fixture(\"primerRecord/section1.md\") (its then is only the file name); examples 2 and 4 expect toBe their then (a string); example 3: renderRecord({ state: \"not read\", reason: \"no contour.yaml\" }) toBe \"\\n## Record vs code\\n\\n- record: not read: no contour.yaml\\n\"."
+    },
+    "record-section-judge": {
+      "intent": "generate",
+      "targets": [
+        "tests/primerRecord/recordSection.examples.test.ts"
+      ],
+      "context_slice": [
+        "documentation/CONVENTIONS.md",
+        "tests/helpers.ts",
+        "src/primerRecord/recordSection.ts"
+      ],
+      "depends_on": [
+        "record-section"
+      ],
+      "max_tokens": 16000,
+      "instruction": "Write ONLY tests/primerRecord/recordSection.examples.test.ts: four tests named \"Record Section example 1: …\" … \"Record Section example 4: …\". Every expected value comes from tests/fixtures/primerRecord/examples.json, read with `const EX = fixtureJson(\"primerRecord/examples.json\") as Record<string, { given: unknown; then: unknown }>;` and narrowed with `as` to the types named here; never `any`. Imports: `import { expect, test } from \"vitest\";`, the helpers from \"../helpers.js\" (fixture, fixtureJson, fixturePath, tmpRoot), the module under test from \"../../src/primerRecord/<file>.js\". Also `import { cpSync, rmSync, writeFileSync } from \"node:fs\"` and `import { GO, PYTHON, TYPESCRIPT } from \"../../src/language/profiles.js\"`. REPO = fixturePath(\"primerRecord/repo\"); E1 = EX[\"Record Section 1\"].given as {files: string[]; owned: string[]}. Example 1: recordSection(REPO, E1.files, TYPESCRIPT, E1.owned) toBe fixture(\"primerRecord/section1.md\"). Example 2: then is string[4]; each case in its own tmpRoot() (t.write(rel, text); t.rm() in finally), files [], owned [], TYPESCRIPT: (0) nothing written; (1) t.write(\"contour.yaml\", fixture(\"primerRecord/repo/contour.yaml\")); (2) t.write(\"contour.yaml\", \"- a\\n\") and t.write(\"morph-map.json\", \"{}\"); (3) the repo contour.yaml and t.write(\"morph-map.json\", \"{\\\"cards\\\": 5}\"); recordSection(t.root, [], TYPESCRIPT, []) toBe then[i]. Example 3: then is string[3]; t = tmpRoot(); cpSync(REPO, t.root, { recursive: true }); writeFileSync(t.path(\"decks/tools/guard.mjs\"), \"// the old guard\\n\"); recordSection(t.root, E1.files, TYPESCRIPT, E1.owned) toBe then[0]; rmSync(t.path(\"decks/tools/guard.mjs\")); the same call toBe then[1]; recordSection(REPO, E1.files, PYTHON, E1.owned) toBe then[2]. Example 4: given is {files: Record<string, string>; listed: string[]; owned: string[]; profile: string}; t = tmpRoot(); write every entry of files; recordSection(t.root, listed, GO, owned) toBe then (a string)."
     }
   }
 }

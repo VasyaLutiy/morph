@@ -1,0 +1,314 @@
+version: 1
+System:
+  name: Ledger
+  description: A fixture project for the record section of the primer.
+  groups:
+    - name: units
+      description: Money in cents.
+      owner: ledger team
+      language: typescript
+      functions:
+        - name: Add Cents
+          description: The sum of two amounts.
+          behavior: addCents(a, b) → a + b.
+          steps: [{reads: Amount}, {produces: Amount}]
+          examples:
+            - {given: '1 and 2', when: addCents, then: '3'}
+        - name: Format Total
+          description: An amount as text.
+          behavior: formatTotal(cents) → the amount in units with two decimals.
+          steps: [{reads: Amount}, {produces: Total Text}]
+          examples:
+            - {given: '150', when: formatTotal, then: '"1.50"'}
+        - name: Parse Line
+          description: One amount read from a line.
+          behavior: parseLine(line) → the integer the line holds.
+          steps: [{reads: Line}, {produces: Amount}]
+      dataObjects:
+        - name: Amount
+          description: An amount in cents.
+          schema: "number"
+
+    # ---- the report
+    - name: report
+      description: The report of a ledger.
+      functions:
+        - name: Render Report
+          description: The report text.
+          behavior: renderReport(amounts) → one line per amount.
+          steps: [{reads: Amount}, {uses: units}, {produces: Report Text}]
+          examples:
+            - {given: '[1, 2]', when: renderReport, then: '"1, 2"'}
+      dataObjects:
+        - name: Report Text
+          description: The rendered report.
+          schema: "string"
+    - name: "heavy"
+      description: >
+        Heavy line 001: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 002: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 003: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 004: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 005: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 006: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 007: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 008: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 009: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 010: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 011: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 012: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 013: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 014: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 015: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 016: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 017: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 018: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 019: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 020: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 021: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 022: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 023: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 024: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 025: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 026: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 027: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 028: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 029: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 030: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 031: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 032: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 033: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 034: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 035: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 036: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 037: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 038: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 039: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 040: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 041: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 042: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 043: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 044: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 045: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 046: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 047: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 048: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 049: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 050: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 051: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 052: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 053: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 054: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 055: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 056: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 057: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 058: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 059: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 060: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 061: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 062: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 063: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 064: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 065: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 066: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 067: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 068: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 069: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 070: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 071: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 072: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 073: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 074: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 075: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 076: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 077: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 078: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 079: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 080: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 081: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 082: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 083: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 084: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 085: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 086: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 087: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 088: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 089: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 090: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 091: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 092: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 093: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 094: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 095: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 096: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 097: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 098: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 099: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 100: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 101: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 102: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 103: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 104: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 105: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 106: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 107: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 108: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 109: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 110: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 111: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 112: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 113: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 114: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 115: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 116: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 117: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 118: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 119: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 120: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 121: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 122: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 123: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 124: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 125: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 126: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 127: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 128: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 129: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 130: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 131: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 132: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 133: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 134: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 135: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 136: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 137: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 138: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 139: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 140: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 141: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 142: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 143: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 144: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 145: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 146: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 147: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 148: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 149: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 150: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 151: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 152: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 153: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 154: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 155: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 156: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 157: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 158: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 159: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 160: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 161: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 162: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 163: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 164: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 165: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 166: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 167: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 168: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 169: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 170: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 171: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 172: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 173: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 174: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 175: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 176: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 177: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 178: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 179: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 180: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 181: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 182: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 183: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 184: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 185: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 186: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 187: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 188: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 189: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 190: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 191: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 192: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 193: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 194: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 195: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 196: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 197: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 198: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 199: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 200: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 201: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 202: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 203: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 204: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 205: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 206: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 207: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 208: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 209: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 210: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 211: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 212: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 213: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 214: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 215: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 216: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 217: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 218: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 219: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 220: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 221: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 222: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 223: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 224: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 225: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 226: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 227: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 228: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 229: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 230: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 231: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 232: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 233: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 234: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 235: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 236: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 237: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 238: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 239: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 240: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 241: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 242: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 243: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 244: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 245: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 246: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 247: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 248: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 249: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 250: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 251: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 252: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 253: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 254: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 255: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 256: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 257: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 258: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 259: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 260: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 261: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 262: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 263: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 264: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+        Heavy line 265: the weight of a Component is the raw bytes of its group in the record text, counted per line.
+      language: typescript
+      functions: []

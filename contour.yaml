@@ -4084,20 +4084,21 @@ System:
             trimmed, cut before its first " (", over 200 chars → 199 + "…"; null without one.
             7. generatedAt = new Date(deps.now()).toISOString() (the only clock); markdown =
             Render Primer({name: path.basename(root), generatedAt, files: the count, tests, runs,
-            story, ownership, running}, 16000). 8. write → <root>/.morph/primer.md = markdown (mkdir -p), written
+            story, ownership, running}, 16000) + primer-record's Record Section(root, the listed files, profile, the
+            ownership paths' path in order), appended after the cut. 8. write → <root>/.morph/primer.md = markdown (mkdir -p), written
             ".morph/primer.md"; else null and nothing written. → {code 0, document {root,
             generatedAt, files, tests, runs: the totals, skipped: the skipped count, chronology:
             the line count, next: the next phase, missing, issues: the issues state, ownership:
             {commits, paths: the paths' count}, running, chars: the markdown's length, written,
             markdown}}, keys in that order. Nothing else is read or
             written; no network, no model.
-          steps: [{uses: git}, {uses: language}, {calls: Read Runs}, {calls: Read Story}, {calls: Render Primer}, {produces: Primer Document}]
+          steps: [{uses: git}, {uses: language}, {uses: primer-record}, {calls: Read Runs}, {calls: Read Story}, {calls: Render Primer}, {produces: Primer Document}]
           examples:
             - {given: 'a tmpRepo with tests/a.test.ts "test(\"a\", () => {});\ntest (\"b\", () => {});\n", tests/b.spec.ts "it(\"c\", () => {});\nit.skip(\"d\", () => {});\ntest.todo(\"e\");\nexpect(/x/.test(\"x\")).toBe(true);\n", src/c.ts "export const test = (s: string): string => s;\ntest(\"not a test file\");\n"; env {PATH}', when: 'primerCommand(t, false, {env, now: () => 1791400000000}); and countTests(typescript, those three files)', then: 'code 0; document.tests {language: "typescript", files: 2, tests: 3} — two test( and one it( give 3; files 3; generatedAt "2026-10-07T19:06:40.000Z"; written null; countTests gives the same'}
             - {given: 'examples.json["Primer Command 2"].given', ref: "tests/fixtures/primer/examples.json", when: 'primerCommand(t, false, deps)', then: 'examples.json["Primer Command 2"].then'}
-            - {given: 'a tmpRepo t: docs/MEASURE.md, PLAN.md, AUTONOMY.md, DECISIONS.md and .morph/issues.json = the story fixtures; .morph/runs/<dir>/report.json for the five runs fixtures; .morph/runs/20261007-204822/answers/a.v1.answer.txt "A" and lines.txt "L"; .morph/runs/broken/deck.json "[]" (no report); tests/a.test.ts, tests/b.spec.ts, src/c.ts of example 1; now 1791400000000', ref: "tests/fixtures/primer/command.json, primer3.md", when: 'primerCommand(t, true, deps)', then: 'code 0; the document without root and markdown exactly command.json["Primer Command 3"] (files 16, tests 2 files 3 tests, runs 5: V2 3 and mrph 2, unpriced 1, answers 1, skipped 1, chronology 16, next "P12a", issues "read", ownership {commits 0, paths 0}, running null, written ".morph/primer.md"); root t; markdown = primer3.md with "{name}" replaced by the base name of t; .morph/primer.md holds the same text'}
+            - {given: 'a tmpRepo t: docs/MEASURE.md, PLAN.md, AUTONOMY.md, DECISIONS.md and .morph/issues.json = the story fixtures; .morph/runs/<dir>/report.json for the five runs fixtures; .morph/runs/20261007-204822/answers/a.v1.answer.txt "A" and lines.txt "L"; .morph/runs/broken/deck.json "[]" (no report); tests/a.test.ts, tests/b.spec.ts, src/c.ts of example 1; now 1791400000000', ref: "tests/fixtures/primer/command.json, primer3.md", when: 'primerCommand(t, true, deps)', then: 'code 0; the document without root and markdown exactly command.json["Primer Command 3"] (files 16, tests 2 files 3 tests, runs 5: V2 3 and mrph 2, unpriced 1, answers 1, skipped 1, chronology 16, next "P12a", issues "read", ownership {commits 0, paths 0}, running null, written ".morph/primer.md"); root t; markdown = primer3.md (ending in the record line of example 5) with "{name}" replaced by the base name of t; .morph/primer.md holds the same text'}
             - {given: 'example 1''s repo with write false; then a tmp root that is not a git repository', when: primerCommand, then: 'written null and no .morph/primer.md; then a thrown Error whose message begins "git ls-files failed (exit 128): "'}
-            - {given: 'a tmpRepo with only its first empty commit; now () => 0', ref: "tests/fixtures/primer/primer5.md", when: 'primerCommand(t, false, deps)', then: 'code 0; files 0, tests {language: "typescript", files: 0, tests: 0}, runs.runs 0, skipped 0, chronology 0, next null, missing ["measure", "plan", "autonomy", "decisions"], issues "absent", generatedAt "1970-01-01T00:00:00.000Z"; markdown = primer5.md with "{name}" replaced'}
+            - {given: 'a tmpRepo with only its first empty commit; now () => 0', ref: "tests/fixtures/primer/primer5.md", when: 'primerCommand(t, false, deps)', then: 'code 0; files 0, tests {language: "typescript", files: 0, tests: 0}, runs.runs 0, skipped 0, chronology 0, next null, missing ["measure", "plan", "autonomy", "decisions"], issues "absent", generatedAt "1970-01-01T00:00:00.000Z"; markdown = primer5.md with "{name}" replaced (its end "- record: not read: no contour.yaml")'}
             - {given: 'examples.json["Primer Command 6"].given', ref: "tests/fixtures/primer/examples.json", when: 'primerCommand(t, false, deps); runningLine', then: 'examples.json["Primer Command 6"].then'}
             - {given: 'examples.json["Primer Command 7"].given', ref: "tests/fixtures/primer/examples.json", when: 'primerCommand(t, false, deps); countTests', then: 'examples.json["Primer Command 7"].then'}
             - {given: 'examples.json["Primer Command 8"].given (files, ts)', ref: "tests/fixtures/primer/examples.json", when: 'primerCommand(t, false, deps); countTests', then: 'examples.json["Primer Command 8"].then'}
@@ -4121,6 +4122,146 @@ System:
         - name: Primer Document
           description: stdout of primer.
           schema: "{ root, generatedAt, files, tests: { language, files, tests }, runs: totals, skipped, chronology, next: string | null, missing: string[], issues, ownership: { commits, paths }, running: string | null, chars, written: string | null, markdown }"
+
+    - name: primer-record
+      description: >
+        The primer's "Record vs code" section (P36, issue #47): src/primerRecord/*.ts. `morph primer` reads the record
+        with the loader `plan` uses (contour's Load Contour and Load Map on contour.yaml and morph-map.json) and lists, at
+        $0 and with no model call, what the record names and the tree lacks, what the tree holds and the record does not
+        name, each Component's raw bytes against the 30 000-byte rule, the record warnings `plan` prints, and the imports
+        between code directories the record's `uses` steps and `dependsOn` do not allow (the guard's layer rule, when the
+        project's guard speaks contract 2 or later). Record Gaps, Import Gaps and Render Record are pure; Record Section
+        alone reads files. Primer Command appends the section after Render Primer's text, so the existing sections and
+        their 16 000-char cut stay byte-identical. tests/fixtures/primerRecord/ holds a fixture project (repo/), the
+        examples' values (examples.json) and the expected section of repo/ (section1.md).
+      language: typescript
+      requirements: [Deterministic Core]
+      guardrails: [No Shell, No Network, No Env, No Process]
+      functions:
+        - name: Record Gaps
+          description: What the record names and the tree lacks, what the tree holds and the record does not name, the Components' weights and the record warnings; pure.
+          guardrails: [No Clock]
+          behavior: >
+            src/primerRecord/recordGaps.ts exports recordGaps(input: RecordInputs): RecordGaps, codeFiles(profile:
+            LanguageProfile, files: readonly string[]): string[] and componentWeights(text: string): ComponentWeight[],
+            and the interfaces RecordInputs, RecordGaps, NotBuilt and ComponentWeight. codeFiles: the files with
+            language's hasExtension(profile, f) and not isTest(profile, f), whose normalizePath(f).split("/") has a
+            first segment other than "decks", no segment beginning with "." or "_", and no directory segment (any but
+            the last) named "vendor", "testdata" or "node_modules"; sorted in code-unit order. componentWeights: the
+            text split on "\n", a last empty piece dropped; the first line whose trim is "groups:" opens the groups
+            (none → []); after it, a line matching ^( *)- name:(.*)$ whose indentation equals the first such line's
+            opens a group named by the rest trimmed (one pair of surrounding " or ' removed); a group runs until the
+            next opening line, or until a line that is not blank, whose trim does not start with "#", and whose
+            indentation is less than the opening indentation + 2 — such a line ends the groups (blank and comment
+            lines inside a group belong to it); bytes = the sum over the group's lines of their UTF-8 byte length + 1.
+            Sorted by bytes descending, then component in code-unit order. recordGaps: listed = the set of
+            input.files. For each Component c in record order and each of its Functions f — the targets as Layer
+            Edges finds them: profile = language's resolveProfile(c.language, map.language) (not ok → the
+            Component's Functions are skipped); unit = the name of the map group whose functions hold f.name, else
+            f.name; the map card whose id is slugName(unit) with targets not null gives its targets, else
+            cutTargets(profile, c.name, unit) (not ok → skipped) gives [code, test]. Every target joins the named
+            set. codes = codeTargets(profile, targets); missing = the codes not listed: any → notBuilt {component,
+            function, reason "missing " + missing ", "-joined}; else when codes is not empty and none is in
+            input.owned → reason "no Morph-Card commit". notRecorded = codeFiles(input.profile, input.files) not
+            in the named set. weights = componentWeights(input.recordText). warnings, each text once (the first
+            kept): input.loaderWarnings in order; then per Component in record order with language null and
+            map.language null "no language on Component <name> and none in the map: typescript assumed"; then per
+            Component and Function in record order, per step with verb reads, modifies or produces whose target is
+            no Data Object or Event name of any Component "<Component>/<Function>: step <verb> '<target>' names no
+            Data Object or Event of the record", then when f has no examples "<Component>/<Function>: no examples, no
+            judge". components = the Components' count; functions = the count of their Functions.
+          steps: [{uses: contour}, {uses: language}, {reads: Record Inputs}, {produces: Record Gaps}]
+          examples:
+            - {given: 'examples.json["Record Gaps 1"].given: the fixture project repo/ — its contour.yaml loaded by loadContour (record, warnings as loaderWarnings; recordText = the text) and morph-map.json by loadMap, files and owned as listed, profile TYPESCRIPT', ref: "tests/fixtures/primerRecord/examples.json, tests/fixtures/primerRecord/repo/", when: recordGaps, then: 'exactly examples.json["Record Gaps 1"].then: components 3, functions 4; notBuilt units/Format Total "missing src/units/formatTotal.ts" then units/Parse Line "no Morph-Card commit"; notRecorded ["src/index.ts", "src/units/money.ts"]; weights heavy 31358, units 1007, report 497; 5 warnings, the first "System.groups[0]: unknown key ''owner'' (ignored)"'}
+            - {given: 'examples.json["Record Gaps 2"].given: 13 paths, profile TYPESCRIPT', ref: "tests/fixtures/primerRecord/examples.json", when: codeFiles, then: 'exactly examples.json["Record Gaps 2"].then: ["src/a.ts", "src/b.ts", "src/c.tsx", "src/vendor.ts"]'}
+            - {given: 'examples.json["Record Gaps 3"].given.texts: a record text with groups a, "b" (quoted) and ''é'', a blank line and a comment inside a; then a text with no "groups:" line', ref: "tests/fixtures/primerRecord/examples.json", when: componentWeights, then: 'exactly examples.json["Record Gaps 3"].then: [{component "a", bytes 44}, {component "é", bytes 37}, {component "b", bytes 36}]; then []'}
+        - name: Import Gaps
+          description: The imports between code directories that the record's layer edges do not allow, one per pair of directories; pure.
+          guardrails: [No Clock]
+          behavior: >
+            src/primerRecord/importGaps.ts exports importGaps(language: string, module: string, files: readonly
+            CodeText[], edges: Record<string, string[]>): LayerGap[] and the interfaces CodeText {path, text} and
+            LayerGap {from, to, file}; it imports node:path only. edges is rules' Layer Edges result (a code
+            directory → the directories it may import). Per file in the given order, dir = posix.dirname(path); a
+            file whose dir is not an own key of edges is skipped. Its imported directories: typescript — every
+            match of /\bfrom\s*["']([^"']+)["']|\bimport\s*["']([^"']+)["']/g in the text (import and export
+            from, a side-effect import; a type import too) whose specifier starts with "./" or "../", each
+            posix.dirname(posix.join(dir, specifier)); package and node: specifiers are no directory. go — the
+            quoted path of each import: a line matching ^\s*import\s+(?:[\w.]+\s+)?"([^"]+)"; and, after a
+            line matching ^\s*import\s*\(, each line matching ^\s*(?:[\w.]+\s+)?"([^"]+)" up to the first
+            line whose trim is ")"; a path beginning module + "/" gives its rest (module "" → none). Any other
+            language → []. A directory t gives a gap {from: dir, to: t, file: path} when t differs from dir, t is
+            an own key of edges, and edges[dir] does not hold t; one gap per (from, to), the first file kept. The
+            gaps sorted by from, then to (code-unit order).
+          steps: [{reads: Code Text}, {produces: Layer Gap}]
+          examples:
+            - {given: 'examples.json["Import Gaps 1"].given: typescript, four files of src/a, src/b and src/e (a type import, an export from, a side-effect import, a multi-line import, a node: import, single quotes), edges {"src/a": ["src/b"], "src/b": [], "src/c": [], "src/d": []}', ref: "tests/fixtures/primerRecord/examples.json", when: importGaps, then: 'exactly examples.json["Import Gaps 1"].then: [{from "src/a", to "src/c", file "src/a/x.ts"}, {from "src/a", to "src/d", file "src/a/x.ts"}, {from "src/b", to "src/a", file "src/b/y.ts"}]'}
+            - {given: 'examples.json["Import Gaps 2"].given: go, module "example.com/m", an import block with an alias and a standard package, two single-line imports of one package (one aliased), a file of cmd/ (no key of edges), edges {"internal/a": ["internal/c"], "internal/b": [], "internal/c": []}', ref: "tests/fixtures/primerRecord/examples.json", when: importGaps, then: 'exactly examples.json["Import Gaps 2"].then: [{from "internal/a", to "internal/b", file "internal/a/a.go"}, {from "internal/b", to "internal/a", file "internal/b/b.go"}]'}
+            - {given: 'examples.json["Import Gaps 3"].given: python with a relative import; then example 2''s go files with module ""', ref: "tests/fixtures/primerRecord/examples.json", when: importGaps, then: '[]; then []'}
+        - name: Render Record
+          description: The "Record vs code" section as markdown, every list capped and its cap named; pure.
+          guardrails: [No Clock]
+          behavior: >
+            src/primerRecord/renderRecord.ts exports renderRecord(section: RecordSection): string, the type
+            RecordSection, and RECORD_CAP = 10 and WEIGHT_RULE = 30000; it imports only the types RecordGaps (from
+            ./recordGaps.js) and LayerGap (from ./importGaps.js). Lines joined "\n", the text ending "\n": "", "##
+            Record vs code", "". state "not read" → "- record: not read: <reason>" and nothing else. state "read":
+            "- record: read: <components> Component|Components, <functions> Function|Functions (contour.yaml,
+            morph-map.json)" (the singular for 1). A list with a title and items: none → "- <title>: none"; else
+            "- <title> (<n>):", then "  - <item>" for each of the first RECORD_CAP items, then "  - … +<n − RECORD_CAP>
+            more" when n > RECORD_CAP. In order: the list "recorded, not built" of notBuilt as "<component>/<function>:
+            <reason>"; the list "built, not recorded" of notRecorded; weights — none → "- Component weight: none",
+            else "- Component weight, heaviest first (<k> of <n> over 30000 bytes):" (k = the weights with bytes >
+            WEIGHT_RULE), "  - <component>: <bytes> bytes" + " — over the rule" when bytes > WEIGHT_RULE for the
+            first RECORD_CAP, then the "… +<m> more" line as a list's; the list "record warnings" of warnings; layers
+            checked false → "- layer gaps: not checked: <reason>", else the list "layer gaps" of the gaps as "<from> →
+            <to> (<file>)".
+          steps: [{reads: Record Section}]
+          examples:
+            - {given: 'examples.json["Render Record 1"].given: state "read", gaps = Record Gaps 1''s result, layers checked with the gap src/units → src/report (src/units/money.ts)', ref: "tests/fixtures/primerRecord/examples.json, tests/fixtures/primerRecord/section1.md", when: renderRecord, then: 'exactly section1.md: "- record: read: 3 Components, 4 Functions (contour.yaml, morph-map.json)", "- recorded, not built (2):", "- Component weight, heaviest first (1 of 3 over 30000 bytes):", "  - heavy: 31358 bytes — over the rule", "- record warnings (5):", "- layer gaps (1):", "  - src/units → src/report (src/units/money.ts)"'}
+            - {given: 'examples.json["Render Record 2"].given: 11 Components, 0 Functions, 12 paths not recorded, 11 weights 30002 down to 29992, no warnings, layers not checked "decks/tools/guard.mjs speaks contract 1"', ref: "tests/fixtures/primerRecord/examples.json", when: renderRecord, then: 'exactly examples.json["Render Record 2"].then: "- recorded, not built: none", "- built, not recorded (12):" with src/f01.ts … src/f10.ts then "  - … +2 more", "- Component weight, heaviest first (2 of 11 over 30000 bytes):" (30000 is not over), "  - … +1 more", "- record warnings: none", "- layer gaps: not checked: decks/tools/guard.mjs speaks contract 1"'}
+            - {given: '{state "not read", reason "no contour.yaml"}', when: renderRecord, then: '"\n## Record vs code\n\n- record: not read: no contour.yaml\n"'}
+            - {given: 'examples.json["Render Record 4"].given: 1 Component, 1 Function, notBuilt k/F "no Morph-Card commit", no weights, warnings ["w"], layers checked with no gap', ref: "tests/fixtures/primerRecord/examples.json", when: renderRecord, then: 'exactly examples.json["Render Record 4"].then: "- record: read: 1 Component, 1 Function (contour.yaml, morph-map.json)", "- Component weight: none", "- layer gaps: none"'}
+        - name: Record Section
+          description: Reads the record, the map, the guard and the code of a project, and renders its "Record vs code" section.
+          behavior: >
+            src/primerRecord/recordSection.ts exports recordSection(root: string, files: readonly string[], profile:
+            LanguageProfile, owned: readonly string[]): string. A text is read as UTF-8 from <root>/<rel>, null
+            when it is not a regular file or cannot be read. 1. contour.yaml null → Render Record {state "not read",
+            reason "no contour.yaml"}; morph-map.json null → reason "no morph-map.json". 2. contour's
+            loadContour(text, "contour.yaml") not ok → reason = its error's first line (up to the first "\n"), a
+            trailing ":" removed; then loadMap(text, "morph-map.json") the same. 3. gaps = Record Gaps({record, map,
+            recordText: the contour.yaml text, loaderWarnings: the load's warnings ?? [], files, profile, owned}).
+            4. layers: contract = rules' guardContract(the text of decks/tools/guard.mjs, "" when null); contract < 2
+            → {checked false, reason "decks/tools/guard.mjs speaks contract <contract>"}; else profile.id neither
+            "typescript" nor "go" → reason "no import rule for <profile.id>"; else rules' layerEdges(record, map) not
+            ok → reason its errors "; "-joined; else module = for go the rest (trimmed) of the first line of go.mod
+            whose trim starts "module " ("" without one or without go.mod), "" otherwise; the texts {path, text} of
+            Record Gaps' codeFiles(profile, files) whose posix.dirname is an own key of the edges (in that order, an
+            unreadable one left out); {checked true, gaps: Import Gaps(profile.id, module, those texts, the edges)}.
+            5. Render Record {state "read", gaps, layers}. Nothing is written; no git, no clock, no environment.
+          steps: [{uses: contour}, {uses: rules}, {uses: language}, {calls: Record Gaps}, {calls: Import Gaps}, {calls: Render Record}, {produces: Record Section}]
+          examples:
+            - {given: 'root = tests/fixtures/primerRecord/repo (its contour.yaml, morph-map.json, decks/tools/guard.mjs with "morph-guard-contract: 3", src/units/*.ts, src/report/renderReport.ts, src/index.ts); files and owned = examples.json["Record Section 1"].given; profile TYPESCRIPT', ref: "tests/fixtures/primerRecord/repo/, tests/fixtures/primerRecord/examples.json, tests/fixtures/primerRecord/section1.md", when: recordSection, then: 'exactly section1.md: Format Total missing, Parse Line with no Morph-Card commit, src/index.ts and src/units/money.ts not recorded, heavy over the rule, 5 record warnings, the layer gap src/units → src/report (src/units/money.ts)'}
+            - {given: 'examples.json["Record Section 2"].given, each a tmpRoot: no file; only contour.yaml (= repo/contour.yaml); contour.yaml "- a\n" and morph-map.json "{}"; repo/contour.yaml and morph-map.json "{\"cards\": 5}"; files [], owned [], TYPESCRIPT', ref: "tests/fixtures/primerRecord/examples.json", when: recordSection, then: 'exactly examples.json["Record Section 2"].then: "- record: not read: no contour.yaml"; "… no morph-map.json"; "… contour.yaml is not a mapping at the top level"; "… morph-map.json is not a valid map (1 problem)"'}
+            - {given: 'examples.json["Record Section 3"].given: a tmpRoot copy of repo/ whose decks/tools/guard.mjs is "// the old guard\n"; the same copy without the guard; repo/ itself with profile PYTHON; files and owned of example 1', ref: "tests/fixtures/primerRecord/examples.json", when: recordSection, then: 'exactly examples.json["Record Section 3"].then: section1.md with its last two lines replaced by "- layer gaps: not checked: decks/tools/guard.mjs speaks contract 0" (twice); then built, not recorded none and "- layer gaps: not checked: no import rule for python"'}
+            - {given: 'examples.json["Record Section 4"].given: a tmpRoot holding its files (go.mod "module example.com/m", a contract-3 guard, a Go record a and b with no uses step, b/get_b.go importing example.com/m/a), files = their sorted paths, owned ["a/get_a.go"], profile GO', ref: "tests/fixtures/primerRecord/examples.json", when: recordSection, then: 'exactly examples.json["Record Section 4"].then: "- recorded, not built (1):", "  - b/Get B: no Morph-Card commit", "- layer gaps (1):", "  - b → a (b/get_b.go)"'}
+      dataObjects:
+        - name: Record Inputs
+          description: What Record Gaps reads (TypeScript RecordInputs in src/primerRecord/recordGaps.ts).
+          schema: "{ record: ContourRecord, map: ContourMap, recordText: string, loaderWarnings: string[], files: readonly string[], profile: LanguageProfile, owned: readonly string[] }"
+        - name: Record Gaps
+          description: What Record Gaps returns (RecordGaps; NotBuilt and ComponentWeight beside it in recordGaps.ts).
+          schema: "{ components: number, functions: number, notBuilt: { component: string, function: string, reason: string }[], notRecorded: string[], weights: { component: string, bytes: number }[], warnings: string[] }"
+        - name: Code Text
+          description: One code file and its text (CodeText in src/primerRecord/importGaps.ts).
+          schema: "{ path: string, text: string }"
+        - name: Layer Gap
+          description: An import the record's layer edges do not allow (LayerGap in src/primerRecord/importGaps.ts).
+          schema: "{ from: string, to: string, file: string }"
+        - name: Record Section
+          description: What Render Record renders (RecordSection in src/primerRecord/renderRecord.ts).
+          schema: "{ state: 'not read', reason: string } | { state: 'read', gaps: RecordGaps, layers: { checked: false, reason: string } | { checked: true, gaps: LayerGap[] } }"
 
     # ---------------------------------------------------------------- P13a
     - name: scout
