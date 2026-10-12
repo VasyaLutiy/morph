@@ -5,6 +5,7 @@ import type { ArchiveResult } from "../git/types.js";
 import type { Plan } from "../planner/types.js";
 import type { BuildCheck } from "./checkBuilds.js";
 import type { Unproven } from "./unprovenStubs.js";
+import type { SuiteResult } from "./suiteNet.js";
 
 export type ExitCode = 0 | 1 | 2 | 3 | 4;
 export type ErrorKind = "UsageError" | "NotYetError" | "DeckError" | "RefusalError" | "RuntimeError";
@@ -49,7 +50,7 @@ export interface DeckCheckDocument {
   deck: string; cards: number; generations: string[][]; errors: number; warnings: number;
   hazards: Hazard[]; weights: SliceWeight[]; builds?: BuildCheck[]; unproven?: Unproven[];
 }
-export interface RunDocument { runId: string; branch: string; base: string; report: RunReport; archive: ArchiveResult }
+export interface RunDocument { runId: string; branch: string; base: string; report: RunReport; archive: ArchiveResult; suite?: SuiteResult }
 export interface PlanDocument extends Plan { out: string | null }
 export interface CliDeps {
   env: Record<string, string>; now: () => number; cwd: string; transport: Transport | null;

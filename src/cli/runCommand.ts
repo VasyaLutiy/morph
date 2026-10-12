@@ -6,6 +6,7 @@ import { openRunBranch } from "../git/branch.js";
 import { makeCommitHook } from "../git/commit.js";
 import { archiveRun, saveBatchRecord } from "../git/archive.js";
 import { errorDocument, readDeckFile, runExitCode } from "./document.js";
+import { suiteNet } from "./suiteNet.js";
 import type { CliDeps, CommandResult, RunArgs, RunDocument } from "./types.js";
 import type { ArchivedAnswer } from "../git/types.js";
 import type { VariantRecord } from "../runloop/types.js";
@@ -180,6 +181,8 @@ export async function runCommand(
     deps.env
   );
 
+  const suite = result.report.fault === undefined ? await suiteNet(root, deck.cards, deps.env) : null;
+
   // 8. the Run Document, its keys in the type's order; a caught fault is
   // code 3, the partial report archived as always
   const document: RunDocument = {
@@ -189,6 +192,10 @@ export async function runCommand(
     report: result.report,
     archive
   };
-  const code = result.report.fault !== undefined ? 3 : runExitCode(result.report, archive);
+  if (suite !== null) {
+    document.suite = suite;
+  }
+  const baseCode = result.report.fault !== undefined ? 3 : runExitCode(result.report, archive);
+  const code = baseCode === 0 && suite !== null && !suite.ok ? 1 : baseCode;
   return { code, document };
 }
