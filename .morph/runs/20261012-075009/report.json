@@ -1,0 +1,53 @@
+{
+  "runId": "20261012-075009",
+  "completedAt": 1791791525338,
+  "branch": "morph/20261012-075009",
+  "processor": "ds",
+  "generations": 1,
+  "outcomes": [
+    {
+      "customId": "plan-command-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "plan-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/planChecks.examples.test.ts\n== names tests/cli/planChecks.examples.test.ts\n== own\n== full\n\n RUN  v3.2.7 /home/john/Documents/Work2026/MorphV2\n\n·································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································\n⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯\n\nVitest caught 1 unhandled error during the test run.\nThis might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.\n\n⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯\nError: [vitest-worker]: Timeout calling \"onTaskUpdate\"\n ❯ Object.onTimeoutError node_modules/vitest/dist/chunks/rpc.-pEldfrD.js:53:10\n ❯ Timeout._onTimeout node_modules/vitest/dist/chunks/index.B521nVV-.js:59:62\n ❯ listOnTimeout node:internal/timers:608:17\n ❯ processTimers node:internal/timers:543:7\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n\n\n Test Files  194 passed (194)\n      Tests  1089 passed (1089)\n     Errors  1 error\n   Start at  08:51:01\n   Duration  63.61s (transform 5.45s, setup 1.82s, collect 27.85s, tests 236.44s, environment 62ms, prepare 24.00s)\n\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 7258,
+    "outputTokens": 5956,
+    "cost": 0.0093246,
+    "requests": 1
+  },
+  "requests": [
+    {
+      "customId": "plan-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791791409-6e2K3segTQZkzTQU1pnU",
+      "inputTokens": 7258,
+      "outputTokens": 5956,
+      "cost": 0.0093246,
+      "finishReason": "stop",
+      "error": null
+    }
+  ],
+  "rounds": [
+    {
+      "round": 0,
+      "reds": [
+        {
+          "customId": "plan-command-judge",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard tests/cli/planChecks.examples.test.ts\n== names tests/cli/planChecks.examples.test.ts\n== own\n== full\n\n RUN  v3.2.7 /home/john/Documents/Work2026/MorphV2\n\n·································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································································\n⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯\n\nVitest caught 1 unhandled error during the test run.\nThis might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.\n\n⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯\nError: [vitest-worker]: Timeout calling \"onTaskUpdate\"\n ❯ Object.onTimeoutError node_modules/vitest/dist/chunks/rpc.-pEldfrD.js:53:10\n ❯ Timeout._onTimeout node_modules/vitest/dist/chunks/index.B521nVV-.js:59:62\n ❯ listOnTimeout node:internal/timers:608:17\n ❯ processTimers node:internal/timers:543:7\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n\n\n Test Files  194 passed (194)\n      Tests  1089 passed (1089)\n     Errors  1 error\n   Start at  08:51:01\n   Duration  63.61s (transform 5.45s, setup 1.82s, collect 27.85s, tests 236.44s, environment 62ms, prepare 24.00s)\n\n"
+        }
+      ]
+    }
+  ],
+  "stop": "unattributed red: plan-command-judge"
+}
