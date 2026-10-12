@@ -1,0 +1,70 @@
+```ts
+import { test, expect } from "vitest";
+import { fullStep, RELATED_LINE } from "../../src/builder/compose.js";
+import { DEFAULT_FROZEN } from "../../src/builder/readChecks.js";
+import { TYPESCRIPT } from "../../src/language/profiles.js";
+import { fixture } from "../helpers.js";
+import type { CardContext } from "../../src/builder/types.js";
+
+const ctx1: CardContext = {
+  id: "a",
+  phase: "p1",
+  targets: ["src/x/a.ts"],
+  siblings: ["src/x/b.ts"],
+  frozen: DEFAULT_FROZEN,
+  fullExclude: [],
+  ownGit: false,
+  profile: TYPESCRIPT,
+  guard: "// guard\n",
+  firstdiff: "// firstdiff\n",
+};
+
+const ctx2: CardContext = {
+  id: "a",
+  phase: "p2",
+  targets: ["src/x/a.ts", "tests/x/a.test.ts"],
+  siblings: [],
+  frozen: DEFAULT_FROZEN,
+  fullExclude: ["tests/x/old.test.ts"],
+  ownGit: true,
+  profile: TYPESCRIPT,
+  guard: "// guard\n",
+  firstdiff: "// firstdiff\n",
+};
+
+function fullLine(name: string): string {
+  const line = fixture(name)
+    .split("\n")
+    .find((candidate) => candidate.startsWith("echo '== full'; "));
+
+  if (line === undefined) {
+    throw new Error(`no full step line in ${name}`);
+  }
+
+  return line + "\n";
+}
+
+test("Code Acceptance example 6: RELATED_LINE is the related invocation", () => {
+  expect(RELATED_LINE).toBe(
+    "node_modules/.bin/vitest related --run {test} --reporter=dot",
+  );
+});
+
+test("Code Acceptance example 6: fullStep of the example 1 context", () => {
+  const line = fullLine("builder/code1.txt");
+
+  expect(fullStep(ctx1)).toBe(line);
+  expect(fullStep(ctx1)).toContain(
+    "vitest related --run src/x/a.ts --passWithNoTests --reporter=dot",
+  );
+});
+
+test("Code Acceptance example 6: fullStep of the example 2 context", () => {
+  const line = fullLine("builder/code2.txt");
+
+  expect(fullStep(ctx2)).toBe(line);
+  expect(fullStep(ctx2)).toContain(
+    "vitest related --run src/x/a.ts tests/x/a.test.ts --passWithNoTests --exclude tests/x/old.test.ts --reporter=dot",
+  );
+});
+```

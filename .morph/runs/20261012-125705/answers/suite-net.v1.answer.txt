@@ -1,0 +1,159 @@
+```ts
+import fs from "node:fs";
+import { posix } from "node:path";
+import { runAcceptance, DEFAULT_TIMEOUT_MS } from "../acceptance/run.js";
+import { RELATED_LINE } from "../builder/compose.js";
+import type { Card } from "../cards/types.js";
+
+export const RELATED_MARK =
+  "echo '== full'; " + RELATED_LINE.slice(0, RELATED_LINE.indexOf("{test}"));
+
+export const SUITE_LINE = "node_modules/.bin/vitest run --reporter=dot";
+
+export const SUITE_SCRIPT =
+  "L=$(mktemp); " +
+  SUITE_LINE +
+  " > $L 2>&1; rc=$?; [ $rc = 0 ] || grep -E '^ FAIL ' $L || tail -20 $L; rm -f $L; exit $rc";
+
+export interface SuiteResult {
+  command: string;
+  ok: boolean;
+  failing: string[];
+  cards: string[];
+  log: string;
+}
+
+const FAIL_PREFIX = " FAIL  ";
+
+const SPEC_RE =
+  /from\s+["']([^"']+)["']|import\s*\(\s*["']([^"']+)["']\s*\)|import\s+["']([^"']+)["']/g;
+
+function readText(root: string, rel: string): string | null {
+  const abs = posix.join(root, rel);
+  try {
+    if (!fs.statSync(abs).isFile()) {
+      return null;
+    }
+  } catch {
+    return null;
+  }
+  try {
+    return fs.readFileSync(abs, "utf8");
+  } catch {
+    return null;
+  }
+}
+
+function isRegularFile(root: string, rel: string): boolean {
+  const abs = posix.join(root, rel);
+  try {
+    return fs.statSync(abs).isFile();
+  } catch {
+    return false;
+  }
+}
+
+export async function suiteNet(
+  root: string,
+  cards: readonly Card[],
+  env: Record<string, string>,
+  timeoutMs?: number,
+): Promise<SuiteResult | null> {
+  const anyRelated = cards.some(
+    (c) => typeof c.acceptance === "string" && c.acceptance.includes(RELATED_MARK),
+  );
+  if (!anyRelated) {
+    return null;
+  }
+
+  const r = await runAcceptance(SUITE_SCRIPT, root, {
+    env,
+    timeoutMs: timeoutMs ?? DEFAULT_TIMEOUT_MS,
+  });
+
+  if (r.exit === 0) {
+    return { command: SUITE_LINE, ok: true, failing: [], cards: [], log: r.log };
+  }
+
+  const failing: string[] = [];
+  const seenFailing = new Set<string>();
+  for (const line of r.log.split("\n")) {
+    if (!line.startsWith(FAIL_PREFIX)) {
+      continue;
+    }
+    const rest = line.slice(FAIL_PREFIX.length);
+    if (seenFailing.has(rest)) {
+      continue;
+    }
+    seenFailing.add(rest);
+    failing.push(rest);
+  }
+
+  const files = new Set<string>();
+  const queue: string[] = [];
+  for (const f of failing) {
+    const word = f.split(" ")[0];
+    if (word !== undefined && word.length > 0 && !files.has(word)) {
+      files.add(word);
+      queue.push(word);
+    }
+  }
+
+  while (queue.length > 0) {
+    const file = queue.shift();
+    if (file === undefined) {
+      continue;
+    }
+    const text = readText(root, file);
+    if (text === null) {
+      continue;
+    }
+    SPEC_RE.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = SPEC_RE.exec(text)) !== null) {
+      const spec = m[1] ?? m[2] ?? m[3];
+      if (spec === undefined) {
+        continue;
+      }
+      if (!spec.startsWith("./") && !spec.startsWith("../")) {
+        continue;
+      }
+      const dir = posix.dirname(file);
+      let resolved = posix.normalize(posix.join(dir, spec));
+      if (resolved.endsWith(".js")) {
+        resolved = resolved.slice(0, -3) + ".ts";
+      }
+      if (files.has(resolved)) {
+        continue;
+      }
+      if (!isRegularFile(root, resolved)) {
+        continue;
+      }
+      files.add(resolved);
+      queue.push(resolved);
+    }
+  }
+
+  const cardIds: string[] = [];
+  for (const card of cards) {
+    let hit = false;
+    for (const t of card.targets) {
+      if (files.has(posix.normalize(t))) {
+        hit = true;
+        break;
+      }
+    }
+    if (hit) {
+      cardIds.push(card.customId);
+    }
+  }
+
+  return {
+    command: SUITE_LINE,
+    ok: false,
+    failing,
+    cards: cardIds,
+    log: r.log,
+  };
+}
+```

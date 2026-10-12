@@ -1,0 +1,182 @@
+```typescript
+import fs from "node:fs";
+import { posix } from "node:path";
+import { runAcceptance, DEFAULT_TIMEOUT_MS } from "../acceptance/run.js";
+import { RELATED_LINE } from "../builder/compose.js";
+import type { Card } from "../cards/types.js";
+
+/**
+ * The mark a card's acceptance carries when it ran only the related tests: the
+ * builder's related-run line, up to its `{test}` placeholder, prefixed by the
+ * separator that opens the acceptance's "full suite" branch.
+ */
+export const RELATED_MARK =
+  "echo '== full'; " + RELATED_LINE.slice(0, RELATED_LINE.indexOf("{test}"));
+
+/** The typescript profile's full-run line: the whole suite, once, compactly. */
+export const SUITE_LINE = "node_modules/.bin/vitest run --reporter=dot";
+
+/**
+ * The shell of the whole-suite run: the full suite writes its output to a temp
+ * file; on success nothing is echoed; on failure the ` FAIL ` lines are shown,
+ * or, when there are none, the last 20 lines; the temp file goes and vitest's
+ * own exit code is the script's.
+ */
+export const SUITE_SCRIPT =
+  "L=$(mktemp); " +
+  SUITE_LINE +
+  " > $L 2>&1; rc=$?; [ $rc = 0 ] || grep -E '^ FAIL ' $L || tail -20 $L; rm -f $L; exit $rc";
+
+export interface SuiteResult {
+  command: string;
+  ok: boolean;
+  failing: string[];
+  cards: string[];
+  log: string;
+}
+
+const FAIL_PREFIX = " FAIL  ";
+
+const SPECIFIER_PATTERNS: readonly RegExp[] = [
+  /\bfrom\s+["']([^"']+)["']/g,
+  /\bimport\s+["']([^"']+)["']/g,
+  /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g,
+];
+
+/** Every module specifier of a `from "…"`, `import "…"` or `import("…")`. */
+function specifiers(text: string): string[] {
+  const found: string[] = [];
+  for (const pattern of SPECIFIER_PATTERNS) {
+    pattern.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(text)) !== null) {
+      const spec = match[1];
+      if (spec !== undefined) {
+        found.push(spec);
+      }
+    }
+  }
+  return found;
+}
+
+/** Reads a root-relative file when it is a regular file; null otherwise. */
+function readText(root: string, file: string): string | null {
+  try {
+    const abs = posix.join(root, file);
+    if (!fs.statSync(abs).isFile()) {
+      return null;
+    }
+    return fs.readFileSync(abs, "utf8");
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Runs the whole suite once, after the last generation, when some card's
+ * acceptance ran only the related tests. Returns null, running nothing, when no
+ * card holds RELATED_MARK. On green nothing else; on red the failing lines, and
+ * the deck's cards whose targets are the failing files or what those files
+ * import, directly or through other files.
+ */
+export async function suiteNet(
+  root: string,
+  cards: readonly Card[],
+  env: Record<string, string>,
+  timeoutMs?: number,
+): Promise<SuiteResult | null> {
+  const related = cards.some(
+    (card) => typeof card.acceptance === "string" && card.acceptance.includes(RELATED_MARK),
+  );
+  if (!related) {
+    return null;
+  }
+
+  const result = await runAcceptance(SUITE_SCRIPT, root, {
+    env,
+    timeoutMs: timeoutMs ?? DEFAULT_TIMEOUT_MS,
+  });
+
+  if (result.exit === 0) {
+    return { command: SUITE_LINE, ok: true, failing: [], cards: [], log: result.log };
+  }
+
+  const failing: string[] = [];
+  const seenFailing = new Set<string>();
+  for (const line of result.log.split("\n")) {
+    if (!line.startsWith(FAIL_PREFIX)) {
+      continue;
+    }
+    const text = line.slice(FAIL_PREFIX.length);
+    if (seenFailing.has(text)) {
+      continue;
+    }
+    seenFailing.add(text);
+    failing.push(text);
+  }
+
+  const reached = new Set<string>();
+  const pending: string[] = [];
+  const enqueued = new Set<string>();
+  const cache = new Map<string, string | null>();
+
+  const readOnce = (file: string): string | null => {
+    if (cache.has(file)) {
+      return cache.get(file) ?? null;
+    }
+    const text = readText(root, file);
+    cache.set(file, text);
+    return text;
+  };
+
+  const enqueue = (file: string, mustExist: boolean): void => {
+    if (enqueued.has(file)) {
+      return;
+    }
+    if (mustExist && readOnce(file) === null) {
+      return;
+    }
+    enqueued.add(file);
+    reached.add(file);
+    pending.push(file);
+  };
+
+  for (const entry of failing) {
+    const space = entry.indexOf(" ");
+    const file = space === -1 ? entry : entry.slice(0, space);
+    if (file.length > 0) {
+      enqueue(file, false);
+    }
+  }
+
+  while (pending.length > 0) {
+    const file = pending.shift();
+    if (file === undefined) {
+      break;
+    }
+    const text = readOnce(file);
+    if (text === null) {
+      continue;
+    }
+    for (const spec of specifiers(text)) {
+      if (!spec.startsWith("./") && !spec.startsWith("../")) {
+        continue;
+      }
+      let resolved = posix.normalize(posix.join(posix.dirname(file), spec));
+      if (resolved.endsWith(".js")) {
+        resolved = resolved.slice(0, -3) + ".ts";
+      }
+      enqueue(resolved, true);
+    }
+  }
+
+  const matched: string[] = [];
+  for (const card of cards) {
+    if (card.targets.some((target) => reached.has(target))) {
+      matched.push(card.customId);
+    }
+  }
+
+  return { command: SUITE_LINE, ok: false, failing, cards: matched, log: result.log };
+}
+```

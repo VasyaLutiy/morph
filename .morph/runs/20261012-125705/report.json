@@ -1,0 +1,254 @@
+{
+  "runId": "20261012-125705",
+  "completedAt": 1791810468904,
+  "branch": "morph/20261012-125705",
+  "processor": "ds",
+  "generations": 3,
+  "outcomes": [
+    {
+      "customId": "compose",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "compose.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/gate/identity.examples.test.ts > Check Identity example 1: the whole corpus is cut byte for byte\nAssertionError: expected [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1248185 ], [ 'p21c', 363152 ], [ 'p22a', 338048 ] ] to strictly equal [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1247586 ], [ 'p21c', 362610 ], [ 'p22a', 337622 ] ]\n\n- Expected\n+ Received\n\n@@ -7,16 +7,16 @@\n      \"go-p7b\",\n      100388,\n    ],\n    [\n      \"p15\",\n-     1247586,\n+     1248185,\n    ],\n    [\n      \"p21c\",\n-     362610,\n+     363152,\n    ],\n    [\n      \"p22a\",\n-     337622,\n+     338048,\n    ],\n  ]\n\n ❯ tests/gate/identity.examples.test.ts:40:51\n     38|   async () => {\n     39|     const entries = corpus();\n     40|     expect(entries.map((e) => [e.name, e.bytes])).toStrictEqual([\n       |                                                   ^\n     41|       [\"go-mini\", 75416],\n     42|       [\"go-p7b\", 100388],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 196 passed (197)\n      Tests  1 failed | 1094 passed (1095)\n\nfirst difference at char 69 (line 7) of 147/147: expected \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1247586,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    362610,\\n \" received \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1248185,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    363152,\\n \"\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "suite-net",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "suite-net.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/gate/identity.examples.test.ts > Check Identity example 1: the whole corpus is cut byte for byte\nAssertionError: expected [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1248185 ], [ 'p21c', 363152 ], [ 'p22a', 338048 ] ] to strictly equal [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1247586 ], [ 'p21c', 362610 ], [ 'p22a', 337622 ] ]\n\n- Expected\n+ Received\n\n@@ -7,16 +7,16 @@\n      \"go-p7b\",\n      100388,\n    ],\n    [\n      \"p15\",\n-     1247586,\n+     1248185,\n    ],\n    [\n      \"p21c\",\n-     362610,\n+     363152,\n    ],\n    [\n      \"p22a\",\n-     337622,\n+     338048,\n    ],\n  ]\n\n ❯ tests/gate/identity.examples.test.ts:40:51\n     38|   async () => {\n     39|     const entries = corpus();\n     40|     expect(entries.map((e) => [e.name, e.bytes])).toStrictEqual([\n       |                                                   ^\n     41|       [\"go-mini\", 75416],\n     42|       [\"go-p7b\", 100388],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 196 passed (197)\n      Tests  1 failed | 1094 passed (1095)\n\nfirst difference at char 69 (line 7) of 147/147: expected \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1247586,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    362610,\\n \" received \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1248185,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    363152,\\n \"\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "build-acceptances-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "build-acceptances-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/buildAcceptances.examples.test.ts\n== names tests/builder/buildAcceptances.examples.test.ts\n== own\n== full\n FAIL  tests/gate/identity.examples.test.ts > Check Identity example 1: the whole corpus is cut byte for byte\nAssertionError: expected [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1248185 ], [ 'p21c', 363152 ], [ 'p22a', 338048 ] ] to strictly equal [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1247586 ], [ 'p21c', 362610 ], [ 'p22a', 337622 ] ]\n\n- Expected\n+ Received\n\n@@ -7,16 +7,16 @@\n      \"go-p7b\",\n      100388,\n    ],\n    [\n      \"p15\",\n-     1247586,\n+     1248185,\n    ],\n    [\n      \"p21c\",\n-     362610,\n+     363152,\n    ],\n    [\n      \"p22a\",\n-     337622,\n+     338048,\n    ],\n  ]\n\n ❯ tests/gate/identity.examples.test.ts:40:51\n     38|   async () => {\n     39|     const entries = corpus();\n     40|     expect(entries.map((e) => [e.name, e.bytes])).toStrictEqual([\n       |                                                   ^\n     41|       [\"go-mini\", 75416],\n     42|       [\"go-p7b\", 100388],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 196 passed (197)\n      Tests  1 failed | 1094 passed (1095)\n\nfirst difference at char 69 (line 7) of 147/147: expected \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1247586,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    362610,\\n \" received \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1248185,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    363152,\\n \"\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "compose-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "compose-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/builder/compose.p37.examples.test.ts\n== own\n== full\n FAIL  tests/gate/identity.examples.test.ts > Check Identity example 1: the whole corpus is cut byte for byte\nAssertionError: expected [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1248185 ], [ 'p21c', 363152 ], [ 'p22a', 338048 ] ] to strictly equal [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1247586 ], [ 'p21c', 362610 ], [ 'p22a', 337622 ] ]\n\n- Expected\n+ Received\n\n@@ -7,16 +7,16 @@\n      \"go-p7b\",\n      100388,\n    ],\n    [\n      \"p15\",\n-     1247586,\n+     1248185,\n    ],\n    [\n      \"p21c\",\n-     362610,\n+     363152,\n    ],\n    [\n      \"p22a\",\n-     337622,\n+     338048,\n    ],\n  ]\n\n ❯ tests/gate/identity.examples.test.ts:40:51\n     38|   async () => {\n     39|     const entries = corpus();\n     40|     expect(entries.map((e) => [e.name, e.bytes])).toStrictEqual([\n       |                                                   ^\n     41|       [\"go-mini\", 75416],\n     42|       [\"go-p7b\", 100388],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 196 passed (197)\n      Tests  1 failed | 1094 passed (1095)\n\nfirst difference at char 69 (line 7) of 147/147: expected \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1247586,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    362610,\\n \" received \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1248185,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    363152,\\n \"\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "run-command",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "run-command.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/gate/identity.examples.test.ts > Check Identity example 1: the whole corpus is cut byte for byte\nAssertionError: expected [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1248185 ], [ 'p21c', 363152 ], [ 'p22a', 338048 ] ] to strictly equal [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1247586 ], [ 'p21c', 362610 ], [ 'p22a', 337622 ] ]\n\n- Expected\n+ Received\n\n@@ -7,16 +7,16 @@\n      \"go-p7b\",\n      100388,\n    ],\n    [\n      \"p15\",\n-     1247586,\n+     1248185,\n    ],\n    [\n      \"p21c\",\n-     362610,\n+     363152,\n    ],\n    [\n      \"p22a\",\n-     337622,\n+     338048,\n    ],\n  ]\n\n ❯ tests/gate/identity.examples.test.ts:40:51\n     38|   async () => {\n     39|     const entries = corpus();\n     40|     expect(entries.map((e) => [e.name, e.bytes])).toStrictEqual([\n       |                                                   ^\n     41|       [\"go-mini\", 75416],\n     42|       [\"go-p7b\", 100388],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 196 passed (197)\n      Tests  1 failed | 1094 passed (1095)\n\nfirst difference at char 69 (line 7) of 147/147: expected \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1247586,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    362610,\\n \" received \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1248185,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    363152,\\n \"\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "suite-net-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "suite-net-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/suiteNet.examples.test.ts\n== own\n== full\n FAIL  tests/gate/identity.examples.test.ts > Check Identity example 1: the whole corpus is cut byte for byte\nAssertionError: expected [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1248185 ], [ 'p21c', 363152 ], [ 'p22a', 338048 ] ] to strictly equal [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1247586 ], [ 'p21c', 362610 ], [ 'p22a', 337622 ] ]\n\n- Expected\n+ Received\n\n@@ -7,16 +7,16 @@\n      \"go-p7b\",\n      100388,\n    ],\n    [\n      \"p15\",\n-     1247586,\n+     1248185,\n    ],\n    [\n      \"p21c\",\n-     362610,\n+     363152,\n    ],\n    [\n      \"p22a\",\n-     337622,\n+     338048,\n    ],\n  ]\n\n ❯ tests/gate/identity.examples.test.ts:40:51\n     38|   async () => {\n     39|     const entries = corpus();\n     40|     expect(entries.map((e) => [e.name, e.bytes])).toStrictEqual([\n       |                                                   ^\n     41|       [\"go-mini\", 75416],\n     42|       [\"go-p7b\", 100388],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 196 passed (197)\n      Tests  1 failed | 1094 passed (1095)\n\nfirst difference at char 69 (line 7) of 147/147: expected \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1247586,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    362610,\\n \" received \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1248185,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    363152,\\n \"\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    },
+    {
+      "customId": "run-command-judge",
+      "status": "failed",
+      "reason": "transaction rolled back",
+      "attempts": 1,
+      "winningVariant": "run-command-judge.v1",
+      "acceptanceLog": "== tsc\n== eslint\n== guard tests/cli/runCommand.p37.examples.test.ts\n== own\n== full\n FAIL  tests/gate/identity.examples.test.ts > Check Identity example 1: the whole corpus is cut byte for byte\nAssertionError: expected [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1248185 ], [ 'p21c', 363152 ], [ 'p22a', 338048 ] ] to strictly equal [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1247586 ], [ 'p21c', 362610 ], [ 'p22a', 337622 ] ]\n\n- Expected\n+ Received\n\n@@ -7,16 +7,16 @@\n      \"go-p7b\",\n      100388,\n    ],\n    [\n      \"p15\",\n-     1247586,\n+     1248185,\n    ],\n    [\n      \"p21c\",\n-     362610,\n+     363152,\n    ],\n    [\n      \"p22a\",\n-     337622,\n+     338048,\n    ],\n  ]\n\n ❯ tests/gate/identity.examples.test.ts:40:51\n     38|   async () => {\n     39|     const entries = corpus();\n     40|     expect(entries.map((e) => [e.name, e.bytes])).toStrictEqual([\n       |                                                   ^\n     41|       [\"go-mini\", 75416],\n     42|       [\"go-p7b\", 100388],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 196 passed (197)\n      Tests  1 failed | 1094 passed (1095)\n\nfirst difference at char 69 (line 7) of 147/147: expected \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1247586,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    362610,\\n \" received \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1248185,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    363152,\\n \"\n",
+      "earlierFailures": [],
+      "commit": null,
+      "diffstat": null,
+      "lastRound": "red"
+    }
+  ],
+  "usageTotals": {
+    "inputTokens": 139537,
+    "outputTokens": 58431,
+    "cost": 0.10396038,
+    "requests": 10
+  },
+  "requests": [
+    {
+      "customId": "compose.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791809826-vVgNLdRLwnDcH9zvnMwC",
+      "inputTokens": 5569,
+      "outputTokens": 1643,
+      "cost": 0.0036423,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "compose.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791809826-f8L2pge8VZ4NaDl8VzBI",
+      "inputTokens": 5569,
+      "outputTokens": 1131,
+      "cost": 0.0030279,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "suite-net.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791809826-iDIcnIRyCQAAq06rkNHQ",
+      "inputTokens": 23200,
+      "outputTokens": 10169,
+      "cost": 0.0191628,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "suite-net.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791809834-RZA1G9fGcwl57AKQMarY",
+      "inputTokens": 23200,
+      "outputTokens": 11753,
+      "cost": 0.0148428,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "build-acceptances-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791809953-b2mvUUqwVFB4ymsAvQY6",
+      "inputTokens": 7257,
+      "outputTokens": 8720,
+      "cost": 0.0126411,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "compose-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791809953-abhHcb5fC3tw3ssOeAVV",
+      "inputTokens": 9003,
+      "outputTokens": 3445,
+      "cost": 0.0068349,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-command.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791809953-Ydw9IUFG0seRD10vIvcz",
+      "inputTokens": 7114,
+      "outputTokens": 3543,
+      "cost": 0.0063858,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-command.v2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791809981-daMRs0NU3yvDzWWdPSFd",
+      "inputTokens": 7114,
+      "outputTokens": 2854,
+      "cost": 0.00376188,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "suite-net-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791809990-8MUv8PRoPRncxKXoEcOJ",
+      "inputTokens": 22633,
+      "outputTokens": 7273,
+      "cost": 0.0155175,
+      "finishReason": "stop",
+      "error": null
+    },
+    {
+      "customId": "run-command-judge.v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "Alibaba",
+      "generationId": "gen-1791810067-gAx1ktV66uVylrl23EGp",
+      "inputTokens": 28878,
+      "outputTokens": 7900,
+      "cost": 0.0181434,
+      "finishReason": "stop",
+      "error": null
+    }
+  ],
+  "rounds": [
+    {
+      "round": 0,
+      "reds": [
+        {
+          "customId": "compose",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/gate/identity.examples.test.ts > Check Identity example 1: the whole corpus is cut byte for byte\nAssertionError: expected [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1248185 ], [ 'p21c', 363152 ], [ 'p22a', 338048 ] ] to strictly equal [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1247586 ], [ 'p21c', 362610 ], [ 'p22a', 337622 ] ]\n\n- Expected\n+ Received\n\n@@ -7,16 +7,16 @@\n      \"go-p7b\",\n      100388,\n    ],\n    [\n      \"p15\",\n-     1247586,\n+     1248185,\n    ],\n    [\n      \"p21c\",\n-     362610,\n+     363152,\n    ],\n    [\n      \"p22a\",\n-     337622,\n+     338048,\n    ],\n  ]\n\n ❯ tests/gate/identity.examples.test.ts:40:51\n     38|   async () => {\n     39|     const entries = corpus();\n     40|     expect(entries.map((e) => [e.name, e.bytes])).toStrictEqual([\n       |                                                   ^\n     41|       [\"go-mini\", 75416],\n     42|       [\"go-p7b\", 100388],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 196 passed (197)\n      Tests  1 failed | 1094 passed (1095)\n\nfirst difference at char 69 (line 7) of 147/147: expected \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1247586,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    362610,\\n \" received \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1248185,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    363152,\\n \"\n"
+        },
+        {
+          "customId": "suite-net",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/gate/identity.examples.test.ts > Check Identity example 1: the whole corpus is cut byte for byte\nAssertionError: expected [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1248185 ], [ 'p21c', 363152 ], [ 'p22a', 338048 ] ] to strictly equal [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1247586 ], [ 'p21c', 362610 ], [ 'p22a', 337622 ] ]\n\n- Expected\n+ Received\n\n@@ -7,16 +7,16 @@\n      \"go-p7b\",\n      100388,\n    ],\n    [\n      \"p15\",\n-     1247586,\n+     1248185,\n    ],\n    [\n      \"p21c\",\n-     362610,\n+     363152,\n    ],\n    [\n      \"p22a\",\n-     337622,\n+     338048,\n    ],\n  ]\n\n ❯ tests/gate/identity.examples.test.ts:40:51\n     38|   async () => {\n     39|     const entries = corpus();\n     40|     expect(entries.map((e) => [e.name, e.bytes])).toStrictEqual([\n       |                                                   ^\n     41|       [\"go-mini\", 75416],\n     42|       [\"go-p7b\", 100388],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 196 passed (197)\n      Tests  1 failed | 1094 passed (1095)\n\nfirst difference at char 69 (line 7) of 147/147: expected \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1247586,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    362610,\\n \" received \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1248185,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    363152,\\n \"\n"
+        },
+        {
+          "customId": "build-acceptances-judge",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard tests/builder/buildAcceptances.examples.test.ts\n== names tests/builder/buildAcceptances.examples.test.ts\n== own\n== full\n FAIL  tests/gate/identity.examples.test.ts > Check Identity example 1: the whole corpus is cut byte for byte\nAssertionError: expected [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1248185 ], [ 'p21c', 363152 ], [ 'p22a', 338048 ] ] to strictly equal [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1247586 ], [ 'p21c', 362610 ], [ 'p22a', 337622 ] ]\n\n- Expected\n+ Received\n\n@@ -7,16 +7,16 @@\n      \"go-p7b\",\n      100388,\n    ],\n    [\n      \"p15\",\n-     1247586,\n+     1248185,\n    ],\n    [\n      \"p21c\",\n-     362610,\n+     363152,\n    ],\n    [\n      \"p22a\",\n-     337622,\n+     338048,\n    ],\n  ]\n\n ❯ tests/gate/identity.examples.test.ts:40:51\n     38|   async () => {\n     39|     const entries = corpus();\n     40|     expect(entries.map((e) => [e.name, e.bytes])).toStrictEqual([\n       |                                                   ^\n     41|       [\"go-mini\", 75416],\n     42|       [\"go-p7b\", 100388],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 196 passed (197)\n      Tests  1 failed | 1094 passed (1095)\n\nfirst difference at char 69 (line 7) of 147/147: expected \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1247586,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    362610,\\n \" received \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1248185,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    363152,\\n \"\n"
+        },
+        {
+          "customId": "compose-judge",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard tests/builder/compose.p37.examples.test.ts\n== own\n== full\n FAIL  tests/gate/identity.examples.test.ts > Check Identity example 1: the whole corpus is cut byte for byte\nAssertionError: expected [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1248185 ], [ 'p21c', 363152 ], [ 'p22a', 338048 ] ] to strictly equal [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1247586 ], [ 'p21c', 362610 ], [ 'p22a', 337622 ] ]\n\n- Expected\n+ Received\n\n@@ -7,16 +7,16 @@\n      \"go-p7b\",\n      100388,\n    ],\n    [\n      \"p15\",\n-     1247586,\n+     1248185,\n    ],\n    [\n      \"p21c\",\n-     362610,\n+     363152,\n    ],\n    [\n      \"p22a\",\n-     337622,\n+     338048,\n    ],\n  ]\n\n ❯ tests/gate/identity.examples.test.ts:40:51\n     38|   async () => {\n     39|     const entries = corpus();\n     40|     expect(entries.map((e) => [e.name, e.bytes])).toStrictEqual([\n       |                                                   ^\n     41|       [\"go-mini\", 75416],\n     42|       [\"go-p7b\", 100388],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 196 passed (197)\n      Tests  1 failed | 1094 passed (1095)\n\nfirst difference at char 69 (line 7) of 147/147: expected \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1247586,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    362610,\\n \" received \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1248185,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    363152,\\n \"\n"
+        },
+        {
+          "customId": "run-command",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard\n== probe\n== full\n FAIL  tests/gate/identity.examples.test.ts > Check Identity example 1: the whole corpus is cut byte for byte\nAssertionError: expected [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1248185 ], [ 'p21c', 363152 ], [ 'p22a', 338048 ] ] to strictly equal [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1247586 ], [ 'p21c', 362610 ], [ 'p22a', 337622 ] ]\n\n- Expected\n+ Received\n\n@@ -7,16 +7,16 @@\n      \"go-p7b\",\n      100388,\n    ],\n    [\n      \"p15\",\n-     1247586,\n+     1248185,\n    ],\n    [\n      \"p21c\",\n-     362610,\n+     363152,\n    ],\n    [\n      \"p22a\",\n-     337622,\n+     338048,\n    ],\n  ]\n\n ❯ tests/gate/identity.examples.test.ts:40:51\n     38|   async () => {\n     39|     const entries = corpus();\n     40|     expect(entries.map((e) => [e.name, e.bytes])).toStrictEqual([\n       |                                                   ^\n     41|       [\"go-mini\", 75416],\n     42|       [\"go-p7b\", 100388],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 196 passed (197)\n      Tests  1 failed | 1094 passed (1095)\n\nfirst difference at char 69 (line 7) of 147/147: expected \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1247586,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    362610,\\n \" received \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1248185,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    363152,\\n \"\n"
+        },
+        {
+          "customId": "suite-net-judge",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard tests/cli/suiteNet.examples.test.ts\n== own\n== full\n FAIL  tests/gate/identity.examples.test.ts > Check Identity example 1: the whole corpus is cut byte for byte\nAssertionError: expected [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1248185 ], [ 'p21c', 363152 ], [ 'p22a', 338048 ] ] to strictly equal [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1247586 ], [ 'p21c', 362610 ], [ 'p22a', 337622 ] ]\n\n- Expected\n+ Received\n\n@@ -7,16 +7,16 @@\n      \"go-p7b\",\n      100388,\n    ],\n    [\n      \"p15\",\n-     1247586,\n+     1248185,\n    ],\n    [\n      \"p21c\",\n-     362610,\n+     363152,\n    ],\n    [\n      \"p22a\",\n-     337622,\n+     338048,\n    ],\n  ]\n\n ❯ tests/gate/identity.examples.test.ts:40:51\n     38|   async () => {\n     39|     const entries = corpus();\n     40|     expect(entries.map((e) => [e.name, e.bytes])).toStrictEqual([\n       |                                                   ^\n     41|       [\"go-mini\", 75416],\n     42|       [\"go-p7b\", 100388],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 196 passed (197)\n      Tests  1 failed | 1094 passed (1095)\n\nfirst difference at char 69 (line 7) of 147/147: expected \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1247586,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    362610,\\n \" received \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1248185,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    363152,\\n \"\n"
+        },
+        {
+          "customId": "run-command-judge",
+          "blamed": [],
+          "log": "== tsc\n== eslint\n== guard tests/cli/runCommand.p37.examples.test.ts\n== own\n== full\n FAIL  tests/gate/identity.examples.test.ts > Check Identity example 1: the whole corpus is cut byte for byte\nAssertionError: expected [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1248185 ], [ 'p21c', 363152 ], [ 'p22a', 338048 ] ] to strictly equal [ [ 'go-mini', 75416 ], [ 'go-p7b', 100388 ], [ 'p15', 1247586 ], [ 'p21c', 362610 ], [ 'p22a', 337622 ] ]\n\n- Expected\n+ Received\n\n@@ -7,16 +7,16 @@\n      \"go-p7b\",\n      100388,\n    ],\n    [\n      \"p15\",\n-     1247586,\n+     1248185,\n    ],\n    [\n      \"p21c\",\n-     362610,\n+     363152,\n    ],\n    [\n      \"p22a\",\n-     337622,\n+     338048,\n    ],\n  ]\n\n ❯ tests/gate/identity.examples.test.ts:40:51\n     38|   async () => {\n     39|     const entries = corpus();\n     40|     expect(entries.map((e) => [e.name, e.bytes])).toStrictEqual([\n       |                                                   ^\n     41|       [\"go-mini\", 75416],\n     42|       [\"go-p7b\", 100388],\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 196 passed (197)\n      Tests  1 failed | 1094 passed (1095)\n\nfirst difference at char 69 (line 7) of 147/147: expected \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1247586,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    362610,\\n \" received \"...\\n    100388,\\n  ],\\n  [\\n    \\\"p15\\\",\\n    1248185,\\n  ],\\n  [\\n    \\\"p21c\\\",\\n    363152,\\n \"\n"
+        }
+      ]
+    }
+  ],
+  "stop": "unattributed red: compose, suite-net, build-acceptances-judge, compose-judge, run-command, suite-net-judge, run-command-judge"
+}
