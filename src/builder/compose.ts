@@ -5,6 +5,9 @@ import { heredoc, OWN_GIT_AFTER, OWN_GIT_BEFORE, eslintStep, ESLINT_VERDICT, fro
 import { probeDir } from "./probeDir.js";
 import type { CardContext, JudgeFile } from "./types.js";
 
+export const RELATED_LINE = "node_modules/.bin/vitest related --run {test} --reporter=dot";
+export function fullStep(ctx: CardContext): string { return "echo '== full'; " + vitestStep({ ...ctx.profile, ownTestLine: RELATED_LINE }, ctx.targets.join(" ") + " " + fullArgs(ctx.fullExclude)); }
+
 export function litsJson(lits: readonly string[]): string {
   return "[" + lits.map((lit) => JSON.stringify(lit)).join(", ") + "]";
 }
@@ -40,7 +43,7 @@ export function codeAcceptance(
   if (extra !== null) {
     body += extra;
   }
-  body += "echo '== full'; " + vitestStep(ctx.profile, fullArgs(ctx.fullExclude));
+  body += fullStep(ctx);
   if (ctx.ownGit) {
     body += OWN_GIT_AFTER;
   }
@@ -69,7 +72,7 @@ export function judgeAcceptance(ctx: CardContext, files: readonly JudgeFile[]): 
   }
   body += "echo '== own'; " + vitestStep(ctx.profile, ctx.targets.join(" "));
   body += ESLINT_VERDICT;
-  body += "echo '== full'; " + vitestStep(ctx.profile, fullArgs(ctx.fullExclude));
+  body += fullStep(ctx);
   if (ctx.ownGit) {
     body += OWN_GIT_AFTER;
   }
