@@ -40,9 +40,9 @@ test(
     expect(entries.map((e) => [e.name, e.bytes])).toStrictEqual([
       ["go-mini", 75416],
       ["go-p7b", 100388],
-      ["p15", 1247586],
-      ["p21c", 362610],
-      ["p22a", 337622],
+      ["p15", 1248185],
+      ["p21c", 363152],
+      ["p22a", 338048],
     ]);
     const before = gitStatus();
     const result = await checkIdentity(ROOT, entries, { env: env(), plan });
