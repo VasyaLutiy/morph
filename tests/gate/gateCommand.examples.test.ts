@@ -265,3 +265,33 @@ test(
   },
   120000,
 );
+
+test(
+  "Gate Command example 6: a probe build error is named, code 2",
+  async () => {
+    // Issue #50, F1: a probe file's compile line prints at the probe stage,
+    // where the Stub Verdict's stages collect nothing — so "probe does not
+    // build" is the orchestrator's own error, not an outside line.
+    const acc =
+      "echo '== probe'\ngrep -q P1 src/p.txt || { echo \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\"; exit 1; }";
+    const r = repo({
+      "d.json": JSON.stringify([card("p", ["src/p.txt"], acc)]),
+      "s/src/p.txt": "s\n",
+      "f/src/p.txt": "P1\n",
+    });
+    try {
+      const out = (await gateCommand(
+        r.root,
+        { deck: "d.json", stubs: "s", refs: "f" },
+        deps(),
+      )) as unknown as { code: number; document: GateDocument };
+      expect(out).toStrictEqual(result("probe"));
+      expect(out.document.errors).toStrictEqual([
+        "stub p: probe does not build: probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.",
+      ]);
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
