@@ -2,6 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { runAcceptance } from "../acceptance/run.js";
+import { probeLines } from "../cards/probe.js";
 import { gitOk } from "../git/run.js";
 import { TREE_PROFILES } from "../language/treeProfiles.js";
 import { expectedStage, stubVerdict } from "./stubVerdict.js";
@@ -21,6 +22,7 @@ export interface PlayRow {
   expected: string | null;
   outside: string[];
   failures: string[];
+  probeBreaks: string[];
   ok: boolean;
 }
 
@@ -102,21 +104,28 @@ export async function playGate(input: PlayInput, deps: PlayDeps): Promise<PlayRo
       let expected: string | null;
       let outside: string[];
       let failures: string[];
+      let probeBreaks: string[];
       let ok: boolean;
 
       if (step.phase === "stub") {
         const want = expectedStage(acceptance);
         const verdict = stubVerdict(result.log, want, card.targets, FILE_LINES);
+        probeBreaks = probeLines(result.log, FILE_LINES);
+        outside = verdict.outside.filter((line) => !probeBreaks.includes(line));
         stage = verdict.stage;
         expected = verdict.expected;
-        outside = verdict.outside;
         failures = verdict.failures;
-        ok = result.exit !== 0 && verdict.stage === verdict.expected && verdict.outside.length === 0;
+        ok =
+          result.exit !== 0 &&
+          verdict.stage === verdict.expected &&
+          outside.length === 0 &&
+          probeBreaks.length === 0;
       } else {
         const verdict = stubVerdict(result.log, "", card.targets, FILE_LINES, null);
+        probeBreaks = probeLines(result.log, FILE_LINES);
+        outside = verdict.outside.filter((line) => !probeBreaks.includes(line));
         stage = verdict.stage;
         expected = null;
-        outside = verdict.outside;
         failures = verdict.failures;
         ok = result.exit === 0;
       }
@@ -132,6 +141,7 @@ export async function playGate(input: PlayInput, deps: PlayDeps): Promise<PlayRo
         expected,
         outside,
         failures,
+        probeBreaks,
         ok,
       });
 
