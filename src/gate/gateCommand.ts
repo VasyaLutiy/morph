@@ -259,6 +259,9 @@ export async function gateCommand(
       for (const line of row.outside) {
         errors.push(prefix + "names a file outside its targets: " + line);
       }
+      for (const line of row.probeBreaks) {
+        errors.push(prefix + "probe does not build: " + line);
+      }
     } else if (row.exit !== 0) {
       const why = row.timedOut ? "timed out" : "red (exit " + row.exit + ")";
       const at = " at " + (row.stage ?? "no stage");
