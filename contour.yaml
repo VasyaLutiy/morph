@@ -230,7 +230,7 @@ System:
               when: blameLog
               then: '{cards: ["a"], outside: []} (./a.js from src and ../a.js from src/cli both resolve to src/a.ts); then {cards: [], outside: ["src/a2.ts(3,4): error TS2304: Cannot find name ''q7''."]} (TypeScript is not by directory: no module named); then {cards: [], outside: ["src/b.ts(1,10): error TS2305: Module ''\"./z.js\"'' has no exported member ''q''."]} (src/z.ts is no target); then {cards: [], outside: [the two T1 lines]} (before P28)'
         - name: Probe Lines
-          description: The compile lines of a log that name a probe file (issue #50, F3): the orchestrator's data, never a card's code.
+          description: "The compile lines of a log that name a probe file: the orchestrator's data, never a card's code."
           behavior: >
             src/cards/probe.ts, pure. isProbeFile(p): true when p's basename ends "_probe_test.go" or ".probe.ts", or
             one of p's "/"-segments is "probe" (a TypeScript probe runs from probe/<card>/ at the repo root; a Go probe
@@ -1786,7 +1786,7 @@ System:
             - {given: 'examples.json["Run Command 14"].given', ref: "tests/fixtures/cli/suiteNet.json", when: run, then: 'examples.json["Run Command 14"].then'}
             - {given: 'examples.json["Run Command 15"].given', when: run, then: 'examples.json["Run Command 15"].then'}
         - name: Suite Net
-          description: The whole suite once per run, after the last generation, when the deck's acceptances ran only the related tests (P37, #49).
+          description: "The whole suite once per run, after the last generation, when the deck's acceptances ran only the related tests."
           behavior: >
             suiteNet(root, cards, env, timeoutMs?) → Promise<Suite Result | null>, src/cli/suiteNet.ts. RELATED_MARK = "echo '== full'; "
             + builder's RELATED_LINE up to "{test}" (= "echo '== full'; node_modules/.bin/vitest related --run "). No card's
@@ -2378,7 +2378,7 @@ System:
               when: matched
               then: 'typescript file matches src/b.ts and src/cli/c.mts only; go file calc/b.go and calc/b_test.go only; python file pkg/b.py only; README.md none; testFile true, false; module group 1 ["./a.js"], ["../units/gone.js"], [] (measured with node)'
         - name: Canonical Guardrail
-          description: The rule id a Guardrail name stands for in one language, from the binary's own table (P31a, issue #42).
+          description: "The rule id a Guardrail name stands for in one language, from the binary's own table."
           behavior: >
             src/language/guardrails.ts, pure data and pure functions, importing types only. GUARDRAIL_RULES (exported) =
             {typescript: {"no shell": "no-shell", "no clock": "no-clock", "no network": "no-network", "no env": "no-env",
@@ -2404,10 +2404,10 @@ System:
           description: How deck check compiles a stub tree in one language.
           schema: "{ id: string; fileLine: string; config: string | null; command: string | null }"
         - name: Test Profile
-          description: Per language, how a failing test's lines read (P24c, issue #19); Blame Log reads them.
+          description: "Per language, how a failing test's lines read; Blame Log reads them."
           schema: "{ id: string; failLine: string | null; locationLine: string | null; packageLine: string | null }"
         - name: Neighbour Profile
-          description: Per language, which targets a kept file can use names of (P28, issue #22); Blame Log reads them.
+          description: "Per language, which targets a kept file can use names of; Blame Log reads them."
           schema: "{ id: string; file: string; directory: boolean; testFile: string | null; module: string | null }"
         - name: Language Profile
           description: Everything the planner and the acceptance need to know about one language; templates hold {component}, {name}, {files}, {test}, {module}, {docs}.
@@ -3808,7 +3808,7 @@ System:
               when: planLayers
               then: '{ok: true, layers: {}} — no directory to emit, so the old guard is not refused'
         - name: Guardrail Rules
-          description: For every code directory of the record, the guard rule ids its canonical Guardrails give, and the names that stay prose (P31a, issue #42).
+          description: "For every code directory of the record, the guard rule ids its canonical Guardrails give, and the names that stay prose."
           behavior: >
             guardrailRules(record, map) → Guardrail Rules Result, over the WHOLE record and map (never a cut's subset). Per
             Component C in record order: profile = Resolve Profile(C.language, map.language), an error → "Component '<C>':
@@ -3910,7 +3910,7 @@ System:
               when: guardContract
               then: '0; 2; 3; 0'
         - name: Plan Rules
-          description: What `plan --checks` gives the builder — layers and rules when the project guard speaks their contract (P31a, issues #42 and #46).
+          description: "What `plan --checks` gives the builder — layers and rules when the project guard speaks their contract."
           behavior: >
             planRules(record, map, layersFile, guard, language) → Plan Rules Result. n = Guard Contract(guard). n < 2 and
             layersFile false → {ok: true, layers: null, rules: null, proseOnly: []}, nothing else read (a hand guard: MorphV2's
@@ -3933,7 +3933,7 @@ System:
             - {given: 'examples.json["Plan Rules 4"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/single/cases.json", when: "planRules and planSpec, then the Go guard (the environment of Rules Arg 2)", then: 'examples.json["Plan Rules 4"].then'}
             - {given: 'examples.json["Plan Rules 5"].given', ref: "tests/fixtures/rules/examples.json, tests/fixtures/rules/single/cases.json", when: "planRules and planSpec, then the TypeScript guard", then: 'examples.json["Plan Rules 5"].then'}
         - name: Plan Notes
-          description: The notes `plan --checks` adds to the plan document when a file beside the record repeats what the record states (P31b, issue #42 Must hold 3 and ledger 3).
+          description: "The notes `plan --checks` adds to the plan document when a file beside the record repeats what the record states."
           behavior: >
             src/rules/notes.ts, pure (imports Guard Contract from ./guardrails.js and node:path's posix only):
             `export interface NoteCard { id: string; extra: string | null; targets: readonly string[] }` and
