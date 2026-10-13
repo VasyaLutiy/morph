@@ -29,7 +29,7 @@ function repo(files: Record<string, string>): TmpRepo {
 const deck = (cards: Card[]): string => JSON.stringify(cards) + "\n";
 
 test("Gate Command example 6: a probe build error is named, code 2", async () => {
-  const acc = "echo '== probe'\necho \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\"\nexit 1";
+  const acc = "echo '== probe'\ngrep -q P1 src/p.txt || { echo \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\"; exit 1; }";
   const r = repo({
     "d.json": deck([card("p", ["src/p.txt"], acc)]),
     "s/src/p.txt": "s\n",

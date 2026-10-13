@@ -76,7 +76,7 @@ test("Play Gate example 3: the 700 ms timeout reaches Run Acceptance", async () 
 test("Play Gate example 4: a probe build error is a probe break, never an outside line", async () => {
   const r = repo({ "d.json": "[]\n", "st/src/p.txt": "s\n", "rf/src/p.txt": "P1\n" });
   try {
-    const acc = "echo '== probe'\necho \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\"\nexit 1";
+    const acc = "echo '== probe'\ngrep -q P1 src/p.txt || { echo \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\"; exit 1; }";
     const cards: Card[] = [card("p", ["src/p.txt"], acc)];
     expect(await play(r, cards, [["p"]], ["src/p.txt"], ["src/p.txt"], 1000)).toStrictEqual(rows("probe"));
   } finally {
