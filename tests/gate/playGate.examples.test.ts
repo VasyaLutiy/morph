@@ -183,6 +183,7 @@ test(
         "expected",
         "outside",
         "failures",
+        "probeBreaks",
         "ok",
       ]);
       expect(got[0].phase).toBe("stub");
@@ -249,6 +250,34 @@ test(
       expect(got[2].ok).toBe(true);
       expect(got[3].ok).toBe(true);
       expect(got[3].stage).toBe("probe");
+    } finally {
+      r.rm();
+    }
+  },
+  120000,
+);
+
+test(
+  "Play Gate example 4: a probe build error is a probe break, never an outside line",
+  async () => {
+    const r = repo({
+      "d.json": "[]\n",
+      "st/src/p.txt": "s\n",
+      "rf/src/p.txt": "P1\n",
+    });
+    try {
+      const p = card(
+        "p",
+        ["src/p.txt"],
+        "echo '== probe'\ngrep -q P1 src/p.txt || { echo \"probe/p/p.probe.ts(2,10): error TS2304: Cannot find name 'adaH'.\"; exit 1; }",
+      );
+      const cards: Card[] = [p];
+      const plan = gatePlan(cards, [["p"]], ["src/p.txt"], ["src/p.txt"]);
+      const got = await playGate(
+        { root: r.root, cards, steps: plan.steps, stubDir: r.path("st"), refDir: r.path("rf") },
+        { env: env(), now: clock(1000) },
+      );
+      expect(got).toStrictEqual(rows("probe"));
     } finally {
       r.rm();
     }
