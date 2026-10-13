@@ -1,0 +1,8 @@
+morph run: play-gate.v1 accepted stage 0 finish stop chars 5666
+morph run: play-gate.v2 untried stage 0 finish stop chars 5624
+morph run: gate-probe.v1 accepted stage 0 finish stop chars 8914
+morph run: gate-probe.v2 untried stage 0 finish stop chars 8906
+morph run: play-gate-judge.v1 accepted stage 0 finish stop chars 9443
+morph run: gate-probe-judge.v1 accepted stage 0 finish stop chars 8182
+morph run: gate-probe-judge.r1.v1 corrupt stage 0 finish error chars none
+morph run: gate-probe-judge.r2.v1 accepted stage 0 finish stop chars 8655
